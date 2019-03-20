@@ -20,6 +20,14 @@ class AssignmentModel:
         self.process = self.emme_modeller.tool(
             "inro.emme.data.function.function_transaction")
         self.path = os.path.dirname(self.emme_modeller.emmebank.path)
+        create_matrix = self.emme_modeller.tool(
+            "inro.emme.data.matrix.create_matrix")
+        for mtx_type in param.emme_mtx:
+            for ass_class in param.emme_mtx[mtx_type]:
+                create_matrix(matrix_id=param.emme_mtx[mtx_type][ass_class],
+                              matrix_name=mtx_type+ass_class,
+                              default_value=0,
+                              overwrite=True)
     
     def write(self, message):
         """Write to logbook."""
@@ -38,31 +46,36 @@ class AssignmentModel:
         """Flush the logbook (i.e., do nothing)."""
         pass
     
-    def assign(self):
-        """Assign cars, bikes and transit for all time periods."""
+    def assign(self, scen_id, matrices):
+        """Assign cars, bikes and transit for one time period."""
         self.logger.info("Assignment starts...")
+        self.set_matrices(matrices)
         function_file = os.path.join(self.path,"d411_pituusriippuvaiset_HM30.in")
         self.process(function_file)
-        self.calc_road_cost(21)
-        self.calc_road_cost(22)
-        self.calc_road_cost(23)
-        self.assign_cars(21, param.stopping_criteria_coarse, param.aht_mtx_id)
-        # self.assign_cars(22, param.stopping_criteria_coarse, param.pt_mtx_id)
-        # self.assign_cars(23, param.stopping_criteria_coarse, param.iht_mtx_id)
+        self.calc_road_cost(scen_id)
+        self.assign_cars(scen_id, param.stopping_criteria_coarse)
 
-    def set_matrix(self, id, name, mtx):
-        emme_mtx = self.emme_modeller.emmebank.matrix(id)
-        if emme_mtx:
-            emme_mtx.initialize()
-        else:
-            emme_mtx = self.emme_modeller.emmebank.create_matrix(id)
-        emme_mtx.name = name
-        # emme_mtx.description = "demand matrix"
-        emme_mtx.set_numpy_data(mtx)
+    # def create_matrix(self, id, name="", description=""):
+        # emme_mtx = self.emme_modeller.emmebank.matrix(id)
+        # if emme_mtx:
+            # emme_mtx.initialize()
+        # else:
+            # emme_mtx = self.emme_modeller.emmebank.create_matrix(id)
+        # emme_mtx.name = name
+        # emme_mtx.description = description
+        
+    def set_matrix(self, id, mtx):
+        self.emme_modeller.emmebank.matrix(id).set_numpy_data(mtx)
+    
+    def set_matrices(self, matrices):
+        emmebank = self.emme_modeller.emmebank
+        for mtx in matrices:
+            id = param.emme_mtx["demand"][mtx]
+            emmebank.matrix(id).set_numpy_data(matrices[mtx])
     
     def calc_road_cost(self, scen_id):
         """Calculate road charges and driving costs for one scenario."""
-        self.logger.info("Calculates road charges for scenario " + str(scen_id) + "...")
+        self.logger.info("Calculates road charges for scenario " + str(scen_id))
         emmebank = self.emme_modeller.emmebank
         scenario = emmebank.scenario(scen_id)
         netw_specs = []
@@ -100,140 +113,17 @@ class AssignmentModel:
             "inro.emme.network_calculation.network_calculator")
         netcalc(netw_specs, scenario)
         
-    def assign_cars(self, scen_id, stopping_criteria, mtx_id):
+    def assign_cars(self, scen_id, stopping_criteria):
         """Perform car traffic assignment for one scenario."""
         emmebank = self.emme_modeller.emmebank
         scenario = emmebank.scenario(scen_id)
-        self.logger.info("Creates car cost matrices...")
-        create_matrix = self.emme_modeller.tool(
-            "inro.emme.data.matrix.create_matrix")
-        create_matrix(matrix_id=mtx_id["car_time"],
-                      matrix_name="hatim",
-                      matrix_description="ha-aikamatr s="+str(scen_id),
-                      default_value=0,
-                      overwrite=True)
-        create_matrix(matrix_id=mtx_id["car_dist"],
-                      matrix_name="halen",
-                      matrix_description="ha-pituusmatr s="+str(scen_id),
-                      default_value=0,
-                      overwrite=True)
-        create_matrix(matrix_id=mtx_id["car_cost"],
-                      matrix_name="ruma",
-                      matrix_description="ruuhkamaksumatr s="+str(scen_id),
-                      default_value=0,
-                      overwrite=True)
         spec = {
             "type": "SOLA_TRAFFIC_ASSIGNMENT",
             "classes": [
-                {
-                    "mode": "c",
-                    "demand": mtx_id["car_demand"],
-                    "generalized_cost": {
-                        "link_costs": "@rumsi",
-                        "perception_factor": param.vot_inv,
-                    },
-                    "results": {
-                        "link_volumes": None,
-                        "turn_volumes": None,
-                        "od_travel_times": {
-                            "shortest_paths": mtx_id["car_time"]
-                        }
-                    },
-                    "path_analyses": [
-                        {
-                            "link_component": "length",
-                            "turn_component": None,
-                            "operator": "+",
-                            "selection_threshold": {
-                                "lower": None,
-                                "upper": None,
-                            },
-                            "path_to_od_composition": {
-                                "considered_paths": "ALL",
-                                "multiply_path_proportions_by": {
-                                    "analyzed_demand": False,
-                                    "path_value": True,
-                                }
-                            },
-                            "analyzed_demand": None,
-                            "results": {
-                                "selected_link_volumes": None,
-                                "selected_turn_volumes": None,
-                                "od_values": mtx_id["car_dist"],
-                            },
-                        },
-                        {
-                            "link_component": "@ruma",
-                            "turn_component": None,
-                            "operator": "+",
-                            "selection_threshold": {
-                                "lower": None,
-                                "upper": None,
-                            },
-                            "path_to_od_composition": {
-                                "considered_paths": "ALL",
-                                "multiply_path_proportions_by": {
-                                    "analyzed_demand": False,
-                                    "path_value": True
-                                }
-                            },
-                            "analyzed_demand": None,
-                            "results": {
-                                "selected_link_volumes": None,
-                                "selected_turn_volumes": None,
-                                "od_values": mtx_id["car_cost"],
-                            },
-                        },
-                    ]
-                },
-                {
-                    "mode": "y",
-                    "demand": mtx_id["trailer_truck_demand"],
-                    "generalized_cost": {
-                        "link_costs": "length",
-                        "perception_factor": 0.2,
-                    },
-                    "results": {
-                        "link_volumes": "@yhd",
-                        "turn_volumes": None,
-                        "od_travel_times": {
-                            "shortest_paths": None
-                        }
-                    },
-                    "path_analyses": []
-                },
-                {
-                    "mode": "k",
-                    "demand": mtx_id["truck_demand"],
-                    "generalized_cost": {
-                        "link_costs": "length",
-                        "perception_factor": 0.2,
-                    },
-                    "results": {
-                        "link_volumes": "@ka",
-                        "turn_volumes": None,
-                        "od_travel_times": {
-                            "shortest_paths": None
-                        }
-                    },
-                    "path_analyses": []
-                },
-                {
-                    "mode": "v",
-                    "demand": mtx_id["van_demand"],
-                    "generalized_cost": {
-                        "link_costs": "length",
-                        "perception_factor": 0.2,
-                    },
-                    "results": {
-                        "link_volumes": "@pa",
-                        "turn_volumes": None,
-                        "od_travel_times": {
-                            "shortest_paths": None
-                        }
-                    },
-                    "path_analyses": []
-                },
+                param.cars,
+                param.trailer_trucks,
+                param.trucks,
+                param.vans,
             ],
             "background_traffic": None,
             "performance_settings": {
@@ -241,21 +131,20 @@ class AssignmentModel:
             },
             "stopping_criteria": stopping_criteria,
         }
-        self.logger.info("Traffic assignment started...")
+        self.logger.info("Car assignment started...")
         car_assignment = self.emme_modeller.tool(
             "inro.emme.traffic_assignment.sola_traffic_assignment")
         car_assignment(spec, scenario)
-        self.logger.info("Traffic assignment performed for scenario " + str(scen_id))
-        
+        self.logger.info("Car assignment performed for scenario " + str(scen_id))
         # Traffic assignment produces a generalized cost matrix.
         # To get travel time, monetary cost is removed from generalized cost.
-        self.logger.info("Extracts time matrix from generalized cost...")
+        self.logger.info("Extracts time matrix from generalized cost")
         matrix_spec = {
             "type": "MATRIX_CALCULATION",
-            "expression": mtx_id["car_time"]
-                          +"-"+str(param.vot_inv)+"*("+mtx_id["car_cost"]
-                          +"+"+str(param.dist_cost)+"*"+mtx_id["car_dist"]+")",
-            "result": mtx_id["car_time"],
+            "expression": param.emme_mtx["time"]["car"]
+                          +"-"+str(param.vot_inv)+"*("+param.emme_mtx["cost"]["car"]
+                          +"+"+str(param.dist_cost)+"*"+param.emme_mtx["dist"]["car"]+")",
+            "result": param.emme_mtx["time"]["car"],
             "constraint": {
                 "by_value": None,
                 "by_zone": None,
