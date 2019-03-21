@@ -23,11 +23,14 @@ class AssignmentModel:
         create_matrix = self.emme_modeller.tool(
             "inro.emme.data.matrix.create_matrix")
         for mtx_type in param.emme_mtx:
-            for ass_class in param.emme_mtx[mtx_type]:
-                create_matrix(matrix_id=param.emme_mtx[mtx_type][ass_class],
-                              matrix_name=mtx_type+ass_class,
-                              default_value=0,
-                              overwrite=True)
+            mtx = param.emme_mtx[mtx_type]
+            for ass_class in mtx:
+                create_matrix(
+                    matrix_id=mtx[ass_class]["id"],
+                    matrix_name=mtx_type+"_"+ass_class,
+                    matrix_description=mtx[ass_class]["description"],
+                    default_value=0,
+                    overwrite=True)
     
     def write(self, message):
         """Write to logbook."""
@@ -55,15 +58,6 @@ class AssignmentModel:
         self.calc_road_cost(scen_id)
         self.assign_cars(scen_id, param.stopping_criteria_coarse)
         self.assign_transit(scen_id)
-
-    # def create_matrix(self, id, name="", description=""):
-        # emme_mtx = self.emme_modeller.emmebank.matrix(id)
-        # if emme_mtx:
-            # emme_mtx.initialize()
-        # else:
-            # emme_mtx = self.emme_modeller.emmebank.create_matrix(id)
-        # emme_mtx.name = name
-        # emme_mtx.description = description
         
     def set_matrix(self, id, mtx):
         self.emme_modeller.emmebank.matrix(id).set_numpy_data(mtx)
@@ -71,7 +65,7 @@ class AssignmentModel:
     def set_matrices(self, matrices):
         emmebank = self.emme_modeller.emmebank
         for mtx in matrices:
-            id = param.emme_mtx["demand"][mtx]
+            id = param.emme_mtx["demand"][mtx]["id"]
             emmebank.matrix(id).set_numpy_data(matrices[mtx])
     
     def calc_road_cost(self, scen_id):
@@ -127,25 +121,26 @@ class AssignmentModel:
                 param.vans,
             ],
             "background_traffic": None,
-            "performance_settings": {
-                "number_of_processors": "max"
-            },
+            "performance_settings": param.performance_settings,
             "stopping_criteria": stopping_criteria,
         }
         self.logger.info("Car assignment started...")
         car_assignment = self.emme_modeller.tool(
             "inro.emme.traffic_assignment.sola_traffic_assignment")
         car_assignment(spec, scenario)
-        self.logger.info("Car assignment performed for scenario " + str(scen_id))
+        self.logger.info("Car assignment performed for scenario " 
+                        + str(scen_id))
         # Traffic assignment produces a generalized cost matrix.
         # To get travel time, monetary cost is removed from generalized cost.
         self.logger.info("Extracts time matrix from generalized cost")
         matrix_spec = {
             "type": "MATRIX_CALCULATION",
-            "expression": param.emme_mtx["time"]["car"]
-                          +"-"+str(param.vot_inv)+"*("+param.emme_mtx["cost"]["car"]
-                          +"+"+str(param.dist_cost)+"*"+param.emme_mtx["dist"]["car"]+")",
-            "result": param.emme_mtx["time"]["car"],
+            "expression": ( param.emme_mtx["time"]["car"]["id"]
+                          + "-" + str(param.vot_inv)
+                          + "*(" + param.emme_mtx["cost"]["car"]["id"]
+                          + "+" + str(param.dist_cost)
+                          + "*" + param.emme_mtx["dist"]["car"]["id"] + ")"),
+            "result": param.emme_mtx["time"]["car"]["id"],
             "constraint": {
                 "by_value": None,
                 "by_zone": None,
@@ -208,103 +203,29 @@ class AssignmentModel:
                     speed = int(speedstr[-2:])
                     cumulative_time += ((segment.link.length / speed) * 60
                                        + segment.dwell_time)
-                if (cumulative_time > 0):
+                if cumulative_time > 0:
                     cumulative_speed = cumulative_length / cumulative_time * 60
-                # Headway standard deviation for buses
-                if (line.mode.id == 'b' or line.mode.id == 'd'):
-                    headway_sd = ( 2.164 
-                                 + 0.078 * cumulative_time 
-                                 - 0.028 * cumulative_speed)
-                # Headway standard deviation for trunk buses
-                if (line.mode.id == 'g'):
-                    headway_sd = ( 2.127 
-                                 + 0.034 * cumulative_time 
-                                 - 0.021 * cumulative_speed)
-                # Headway standard deviation for trams
-                if (line.mode.id == 't'):
-                    headway_sd = ( 1.442 
-                                 + 0.060 * cumulative_time 
-                                 - 0.039 * cumulative_speed)
-                # Headway standard deviation for light rail
-                if (line.mode.id == 'p'):
-                    headway_sd = ( 1.442 
-                                 + 0.034 * cumulative_time 
-                                 - 0.039 * cumulative_speed)
+                # Headway standard deviation for buses and trams
+                if line.mode.id in param.headway_sd:
+                    headway_sd = param.headway_sd[line.mode.id](
+                        cumulative_time,
+                        cumulative_speed)
                 # Estimated waiting time addition caused by headway deviation
                 segment["@wait_time_dev"] = headway_sd**2 / (2*line.headway)
         scenario.publish_network(network)
         # Definition of line specific boarding penalties
         netw_specs = []
         # Bus
-        netw_specs.append({
-            "type": "NETWORK_CALCULATION",
-            "selections": {
-                "transit_line": "mode=b",
-            },
-            "expression": "3",
-            "result": "ut3",
-            "aggregation": None,
-        })
-        # Trunk bus
-        netw_specs.append({
-            "type": "NETWORK_CALCULATION",
-            "selections": {
-                "transit_line": "mode=g",
-            },
-            "expression": "3",
-            "result": "ut3",
-            "aggregation": None,
-        })
-        # Long-distance and express buses
-        netw_specs.append({
-            "type": "NETWORK_CALCULATION",
-            "selections": {
-                "transit_line": "mode=de",
-            },
-            "expression": "5",
-            "result": "ut3",
-            "aggregation": None,
-        })
-        # Train
-        netw_specs.append({
-            "type": "NETWORK_CALCULATION",
-            "selections": {
-                "transit_line": "mode=rj",
-            },
-            "expression": "2",
-            "result": "ut3",
-            "aggregation": None,
-        })
-        # Metro and ferry
-        netw_specs.append({
-            "type": "NETWORK_CALCULATION",
-            "selections": {
-                "transit_line": "mode=mw",
-            },
-            "expression": "0",
-            "result": "ut3",
-            "aggregation": None,
-        })
-        # Tram and light rail
-        netw_specs.append({
-            "type": "NETWORK_CALCULATION",
-            "selections": {
-                "transit_line": "mode=tp",
-            },
-            "expression": "0",
-            "result": "ut3",
-            "aggregation": None,
-        })
-        # netw_specs.append({
-            # "type": "NETWORK_CALCULATION",
-            # "selections": {
-                # "link": "all",
-                # "transit_line": "mode=bgde",
-            # },
-            # "expression": "0.1*index2",
-            # "result": "us3",
-            # "aggregation": None,
-        # })
+        for mode in param.boarding_penalty:
+            netw_specs.append({
+                "type": "NETWORK_CALCULATION",
+                "selections": {
+                    "transit_line": "mode=" + mode,
+                },
+                "expression": str(param.boarding_penalty[mode]),
+                "result": "ut3",
+                "aggregation": None,
+            })
         netcalc = self.emme_modeller.tool(
             "inro.emme.network_calculation.network_calculator")
         netcalc(netw_specs, scenario)
@@ -315,103 +236,20 @@ class AssignmentModel:
                 "mode": mode,
                 "next_journey_level": 1
             })
-        func = {
-            "type": "BPR",
-            "weight": 1.23,
-            "exponent": 3,
-            "assignment_period": 1,
-            "orig_func": False,
-            "congestion_attribute": "us3",
-        }
-        # func = {
-            # "type": "CUSTOM",
-            # "assignment_period": 1,
-            # "orig_func": False,
-            # "congestion_attribute": "us3",
-            # "python_function": """def calc_segment_cost(transit_volume, capacity, segment):
-                                    # return 0.53 * ((transit_volume / capacity) ** 2)"""
-        # }
-        stop = {
-            "max_iterations": 10,
-            "normalized_gap": 0.01,
-            "relative_gap": 0.001
-        }
+        trass_spec = param.trass_spec
+        trass_spec["journey_levels"][0]["transition_rules"] = transitions
+        trass_spec["journey_levels"][1]["transition_rules"] = transitions
         self.logger.info("Transit assignment started")
         transit_assignment = self.emme_modeller.tool(
             "inro.emme.transit_assignment.extended_transit_assignment")
         congested_assignment = self.emme_modeller.tool(
             "inro.emme.transit_assignment.congested_transit_assignment")
-        transit_assignment(param.trass_spec, scenario)
+        transit_assignment(trass_spec, scenario)
         # congested_assignment(transit_assignment_spec=trass_spec, 
-                             # congestion_function=func,
-                             # stopping_criteria=stop, 
+                             # congestion_function=param.trass_func,
+                             # stopping_criteria=param.trass_stop, 
                              # log_worksheets=False, 
                              # scenario=scenario)
-        
-        # tottim_id = "mf" + result_mat_id + "0"
-        # inveht_id = "mf" + result_mat_id + "1"
-        # auxtim_id = "mf" + result_mat_id + "2"
-        # twtime_id = "mf" + result_mat_id + "3"
-        # fwtime_id = "mf" + result_mat_id + "4"
-        # boatim_id = "mf" + result_mat_id + "5"
-        # noboa_id = "mf" + result_mat_id + "6"
-        # invlen_id = "mf" + result_mat_id + "7"
-        # create_matrix = emme_modeller.tool(
-            # "inro.emme.data.matrix.create_matrix")
-        # create_matrix(matrix_id=tottim_id,
-                      # matrix_name="tottim",
-                      # matrix_description="total time s="+str(scen_id),
-                      # default_value=0,
-                      # overwrite=True)
-        # create_matrix(matrix_id=inveht_id,
-                      # matrix_name="inveht",
-                      # matrix_description="in veh time s="+str(scen_id),
-                      # default_value=0,
-                      # overwrite=True)
-        # create_matrix(matrix_id=auxtim_id,
-                      # matrix_name="auxtim",
-                      # matrix_description="aux time s="+str(scen_id),
-                      # default_value=0,
-                      # overwrite=True)
-        # create_matrix(matrix_id=twtime_id,
-                      # matrix_name="twtime",
-                      # matrix_description="tot wait time s="+str(scen_id),
-                      # default_value=0,
-                      # overwrite=True)
-        # create_matrix(matrix_id=fwtime_id,
-                      # matrix_name="fwtime",
-                      # matrix_description="first wait time s="+str(scen_id),
-                      # default_value=0,
-                      # overwrite=True)
-        # create_matrix(matrix_id=boatim_id,
-                      # matrix_name="boatim",
-                      # matrix_description="board time s="+str(scen_id),
-                      # default_value=0,
-                      # overwrite=True)
-        # create_matrix(matrix_id=noboa_id,
-                      # matrix_name="noboa",
-                      # matrix_description="no of board s="+str(scen_id),
-                      # default_value=0,
-                      # overwrite=True)
-        # create_matrix(matrix_id=invlen_id,
-                      # matrix_name="invlen",
-                      # matrix_description="in veh lenght s="+str(scen_id),
-                      # default_value=0,
-                      # overwrite=True)
-        # result_spec = {
-            # "type": "EXTENDED_TRANSIT_MATRIX_RESULTS",
-            # "total_impedance": tottim_id,
-            # "actual_first_waiting_times": fwtime_id,
-            # "actual_total_waiting_times": twtime_id,
-            # "by_mode_subset": {
-                # "modes": transit_modes,
-                # "distance": invlen_id,
-                # "avg_boardings": noboa_id,
-                # "actual_total_boarding_times": boatim_id,
-                # "actual_in_vehicle_times": inveht_id,
-                # "actual_aux_transit_times": auxtim_id,
-            # },
-        # }
         matrix_results = self.emme_modeller.tool(
             "inro.emme.transit_assignment.extended.matrix_results")
         matrix_results(param.result_spec, scenario)

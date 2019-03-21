@@ -1,7 +1,35 @@
+performance_settings = {
+    "number_of_processors": "max"
+}
 # Inversed value of time [min/eur]
 vot_inv = 6
 # Distance cost [eur/km]
 dist_cost = 0.12
+# Boarding penalties for differnt transit modes
+boarding_penalty = {
+    "b": 3,  # Bus
+    "g": 3,  # Trunk bus
+    "de": 5, # Long-distance and express bus
+    "tp": 0, # Tram and light rail
+    "mw": 0, # Metro and ferry
+    "rj": 2, # Train
+}
+# Headway standard deviation for different transit modes
+def headway_sd_bus(cumulative_time, cumulative_speed):
+    return 2.164 + 0.078*cumulative_time - 0.028*cumulative_speed
+def headway_sd_trunk_bus(cumulative_time, cumulative_speed):
+    return 2.127 + 0.034*cumulative_time - 0.021*cumulative_speed
+def headway_sd_tram(cumulative_time, cumulative_speed):
+    return 1.442 + 0.060*cumulative_time - 0.039*cumulative_speed
+def headway_sd_light_rail(cumulative_time, cumulative_speed):
+    return 1.442 + 0.034*cumulative_time - 0.039*cumulative_speed
+headway_sd = {
+    'b': headway_sd_bus,
+    'd': headway_sd_bus,
+    'g': headway_sd_trunk_bus,
+    't': headway_sd_tram,
+    'p': headway_sd_light_rail,
+}
 # Stopping criteria for last traffic assignment
 stopping_criteria_fine = {
     "max_iterations": 200,
@@ -15,6 +43,21 @@ stopping_criteria_coarse = {
     "relative_gap": 0.0001,
     "best_relative_gap": 0.01,
     "normalized_gap": 0.005,
+}
+# Congestion function for congested transit assignment
+trass_func = {
+    "type": "BPR",
+    "weight": 1.23,
+    "exponent": 3,
+    "assignment_period": 1,
+    "orig_func": False,
+    "congestion_attribute": "us3",
+}
+# Stopping criteria for congested transit assignment
+trass_stop = {
+    "max_iterations": 10,
+    "normalized_gap": 0.01,
+    "relative_gap": 0.001
 }
 # Emme matrix IDs for time periods
 emme_scenario = {
@@ -41,22 +84,79 @@ aux_modes = [
 transit_assignment_modes = transit_modes + aux_modes
 emme_mtx = {
     "demand": {
-        "car": "mf1",
-        "trailer_truck": "mf71",
-        "truck": "mf72",
-        "van": "mf73",
-        "transit": "mf4",
+        "car": {
+            "id": "mf1",
+            "description": "car private demand",
+        },
+        "trailer_truck": {
+            "id": "mf71",
+            "description": "trailer truck demand",
+        },
+        "truck":  {
+            "id":"mf72",
+            "description": "truck demand",
+        },
+        "van":  {
+            "id":"mf73",
+            "description": "van demand",
+        },
+        "transit":  {
+            "id":"mf4",
+            "description": "transit demand",
+        },
     },
     "time": {
-        "car": "mf380",
-        "transit": "mf20"
+        "car": {
+            "id": "mf380",
+            "description": "car travel time",
+        },
+        "transit": {
+            "id": "mf20",
+            "description": "transit travel time",
+        },
     },
     "dist": {
-        "car": "mf381",
+        "car": {
+            "id": "mf381",
+            "description": "car travel distance",
+        },
+        "transit": {
+            "id": "mf27",
+            "description": "transit in-vehicle distance",
+        },
     },
     "cost": {
-        "car": "mf370",
+        "car": {
+            "id": "mf370",
+            "description": "car travel cost",
+        },
     },
+    "transit": {
+        "inv_time": {
+            "id": "mf21",
+            "description": "transit in-vehicle time",
+        },
+        "aux_time": {
+            "id": "mf22",
+            "description": "transit auxilliary time",
+        },
+        "tw_time": {
+            "id": "mf23",
+            "description": "transit total waiting time",
+        },
+        "fw_time": {
+            "id": "mf24",
+            "description": "transit first waiting time",
+        },
+        "board_time": {
+            "id": "mf25",
+            "description": "transit boarding time",
+        },
+        "num_board": {
+            "id": "mf26",
+            "description": "transit trip number of boardings",
+        },
+    }
 }
 # pt_mtx_id = {
     # "car_demand": "mf2",
@@ -105,7 +205,7 @@ demand_share = {
 }
 cars = {
     "mode": "c",
-    "demand": emme_mtx["demand"]["car"],
+    "demand": emme_mtx["demand"]["car"]["id"],
     "generalized_cost": {
         "link_costs": "@rumsi",
         "perception_factor": vot_inv,
@@ -114,7 +214,7 @@ cars = {
         "link_volumes": None,
         "turn_volumes": None,
         "od_travel_times": {
-            "shortest_paths": emme_mtx["time"]["car"]
+            "shortest_paths": emme_mtx["time"]["car"]["id"]
         }
     },
     "path_analyses": [
@@ -137,7 +237,7 @@ cars = {
             "results": {
                 "selected_link_volumes": None,
                 "selected_turn_volumes": None,
-                "od_values": emme_mtx["dist"]["car"],
+                "od_values": emme_mtx["dist"]["car"]["id"],
             },
         },
         {
@@ -159,14 +259,14 @@ cars = {
             "results": {
                 "selected_link_volumes": None,
                 "selected_turn_volumes": None,
-                "od_values": emme_mtx["cost"]["car"],
+                "od_values": emme_mtx["cost"]["car"]["id"],
             },
         },
     ]
 }
 trailer_trucks = {
     "mode": "y",
-    "demand": emme_mtx["demand"]["trailer_truck"],
+    "demand": emme_mtx["demand"]["trailer_truck"]["id"],
     "generalized_cost": {
         "link_costs": "length",
         "perception_factor": 0.2,
@@ -182,7 +282,7 @@ trailer_trucks = {
 }
 trucks = {
     "mode": "k",
-    "demand": emme_mtx["demand"]["truck"],
+    "demand": emme_mtx["demand"]["truck"]["id"],
     "generalized_cost": {
         "link_costs": "length",
         "perception_factor": 0.2,
@@ -198,7 +298,7 @@ trucks = {
 }
 vans = {
     "mode": "v",
-    "demand": emme_mtx["demand"]["van"],
+    "demand": emme_mtx["demand"]["van"]["id"],
     "generalized_cost": {
         "link_costs": "length",
         "perception_factor": 0.2,
@@ -212,17 +312,11 @@ vans = {
     },
     "path_analyses": []
 }
-transitions = []
-for mode in transit_modes:
-    transitions.append({
-        "mode": mode,
-        "next_journey_level": 1
-    })
 # Specification of the transit assignment
 trass_spec = {
     "type": "EXTENDED_TRANSIT_ASSIGNMENT",
     "modes": transit_assignment_modes,
-    "demand": emme_mtx["demand"]["transit"],
+    "demand": emme_mtx["demand"]["transit"]["id"],
     "waiting_time": {
         "headway_fraction": 0.5,
         "effective_headways": "hdw",
@@ -278,7 +372,7 @@ trass_spec = {
         {
             "description": "Not boarded yet",
             "destinations_reachable": False,
-            "transition_rules": transitions,
+            "transition_rules": None,
             "boarding_time": {
                 "global": None,
                 "at_nodes": None,
@@ -297,7 +391,7 @@ trass_spec = {
         {
             "description": "Boarded at least once",
             "destinations_reachable": True,
-            "transition_rules": transitions,
+            "transition_rules": None,
             "boarding_time": {
                 "global": None,
                 "at_nodes": None,
@@ -322,21 +416,19 @@ trass_spec = {
             "waiting_time": None
         }
     ],
-    "performance_settings": {
-        "number_of_processors": "max"
-    },
+    "performance_settings": performance_settings,
 }
 result_spec = {
     "type": "EXTENDED_TRANSIT_MATRIX_RESULTS",
-    "total_impedance": emme_mtx["time"]["transit"],
-    "actual_first_waiting_times": None,
-    "actual_total_waiting_times": None,
+    "total_impedance": emme_mtx["time"]["transit"]["id"],
+    "actual_first_waiting_times": emme_mtx["transit"]["fw_time"]["id"],
+    "actual_total_waiting_times": emme_mtx["transit"]["tw_time"]["id"],
     "by_mode_subset": {
         "modes": transit_modes,
-        "distance": None,
-        "avg_boardings": None,
-        "actual_total_boarding_times": None,
-        "actual_in_vehicle_times": None,
-        "actual_aux_transit_times": None,
+        "distance": emme_mtx["dist"]["transit"]["id"],
+        "avg_boardings": emme_mtx["transit"]["num_board"]["id"],
+        "actual_total_boarding_times": emme_mtx["transit"]["board_time"]["id"],
+        "actual_in_vehicle_times": emme_mtx["transit"]["inv_time"]["id"],
+        "actual_aux_transit_times": emme_mtx["transit"]["aux_time"]["id"],
     },
 }
