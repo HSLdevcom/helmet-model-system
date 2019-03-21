@@ -17,8 +17,6 @@ class AssignmentModel:
         self.logger.addHandler(sh)
         self.emme_modeller = _m.Modeller(emme_desktop)
         self.logger.info("Emme started.")
-        self.process = self.emme_modeller.tool(
-            "inro.emme.data.function.function_transaction")
         self.path = os.path.dirname(self.emme_modeller.emmebank.path)
         create_matrix = self.emme_modeller.tool(
             "inro.emme.data.matrix.create_matrix")
@@ -49,18 +47,30 @@ class AssignmentModel:
         """Flush the logbook (i.e., do nothing)."""
         pass
     
-    def assign(self, scen_id, matrices):
+    def assign(self, scen_id, time_period, matrices):
         """Assign cars, bikes and transit for one time period."""
         self.logger.info("Assignment starts...")
         self.set_matrices(matrices)
-        function_file = os.path.join(self.path,"d411_pituusriippuvaiset_HM30.in")
-        self.process(function_file)
+        function_file = os.path.join(self.path,
+                                     "d411_pituusriippuvaiset_HM30.in")
+        process = self.emme_modeller.tool(
+            "inro.emme.data.function.function_transaction")
+        process(function_file)
         self.calc_road_cost(scen_id)
         self.assign_cars(scen_id, param.stopping_criteria_coarse)
         self.assign_transit(scen_id)
-        
-    def set_matrix(self, id, mtx):
-        self.emme_modeller.emmebank.matrix(id).set_numpy_data(mtx)
+        function_file = os.path.join(self.path,
+                                     "d411_pituusriippuvaiset_pyora.in")
+        process(function_file)
+        self.assign_bikes(param.bike_scenario, 
+                          param.emme_mtx["time"]["bike"]["id"], 
+                          "all", 
+                          "@fvol_"+time_period)
+        matrices = {}
+        matrices["time"] = self.get_matrices("time")
+        matrices["dist"] = self.get_matrices("dist")
+        matrices["cost"] = self.get_matrices("cost")
+        return matrices
     
     def set_matrices(self, matrices):
         emmebank = self.emme_modeller.emmebank
@@ -68,9 +78,18 @@ class AssignmentModel:
             id = param.emme_mtx["demand"][mtx]["id"]
             emmebank.matrix(id).set_numpy_data(matrices[mtx])
     
+    def get_matrices(self, mtx_type):
+        emmebank = self.emme_modeller.emmebank
+        matrices = dict.fromkeys(param.emme_mtx[mtx_type].keys())
+        for mtx in matrices:
+            id = param.emme_mtx[mtx_type][mtx]["id"]
+            matrices[mtx] = emmebank.matrix(id).get_numpy_data()
+        return matrices
+    
     def calc_road_cost(self, scen_id):
         """Calculate road charges and driving costs for one scenario."""
-        self.logger.info("Calculates road charges for scenario " + str(scen_id))
+        self.logger.info("Calculates road charges for scenario "
+                        + str(scen_id))
         emmebank = self.emme_modeller.emmebank
         scenario = emmebank.scenario(scen_id)
         netw_specs = []
@@ -154,16 +173,107 @@ class AssignmentModel:
             "inro.emme.matrix_calculation.matrix_calculator")
         matcalc(matrix_spec, scenario)
     
-    def assign_bikes(self, scen_id):
-        pass
-        
+    def assign_bikes(self, scen_id, length_mat_id, length_for_links, link_vol):
+        """Perform bike traffic assignment for one scenario."""
+        emmebank = self.emme_modeller.emmebank
+        scen = emmebank.scenario(scen_id)
+        create_matrix = self.emme_modeller.tool(
+            "inro.emme.data.matrix.create_matrix")
+        netcalc = self.emme_modeller.tool(
+            "inro.emme.network_calculation.network_calculator")
+        # Reset ul3 to zero
+        netw_spec = {
+            "type": "NETWORK_CALCULATION",
+            "selections": {
+                "link": "all",
+            },
+            "expression": "0",
+            "result": "ul3",
+            "aggregation": None,
+        }
+        netcalc(netw_spec, scen)
+        # Define for which links to calculate length and save in ul3
+        netw_spec = {
+            "type": "NETWORK_CALCULATION",
+            "selections": {
+                "link": length_for_links,
+            },
+            "expression": "length",
+            "result": "ul3",
+            "aggregation": None,
+        }
+        netcalc(netw_spec, scen)
+        spec = {
+            "type": "STANDARD_TRAFFIC_ASSIGNMENT",
+            "classes": [ 
+                {
+                    "mode": param.bike_mode,
+                    "demand": param.emme_mtx["demand"]["bike"]["id"],
+                    "generalized_cost": None,
+                    "results": {
+                         "od_travel_times": {
+                             "shortest_paths": param.emme_mtx["time"]["bike"]["id"],
+                         },
+                         "link_volumes": link_vol,
+                         "turn_volumes": None,
+                    },
+                    "analysis": {
+                        "analyzed_demand": None,
+                        "results": {
+                            "od_values": length_mat_id,
+                            "selected_link_volumes": None,
+                            "selected_turn_volumes": None,
+                        },
+                    },
+                }
+            ],
+            "path_analysis": {
+                "link_component": "ul3",
+                "turn_component": None,
+                "operator": "+",
+                "selection_threshold": {
+                    "lower": None,
+                    "upper": None,
+                },
+                "path_to_od_composition": {
+                    "considered_paths": "ALL",
+                    "multiply_path_proportions_by": {
+                        "analyzed_demand": False,
+                        "path_value": True,
+                    }
+                },
+            },
+            "background_traffic": None,
+            "stopping_criteria": {
+                "max_iterations": 1,
+                "best_relative_gap": 1,
+                "relative_gap": 1,
+                "normalized_gap": 1,
+            },
+            "performance_settings": param.performance_settings
+        }  
+        self.logger.info("Bike assignment started")
+        bike_assignment = self.emme_modeller.tool(
+            "inro.emme.traffic_assignment.standard_traffic_assignment")
+        bike_assignment(specification=spec,  
+                        scenario=scen)
+        stoch_bike_assignment = self.emme_modeller.tool(
+            "inro.emme.traffic_assignment.stochastic_traffic_assignment")
+        # stoch_bike_assignment(traffic_assignment_spec=spec, 
+                        # dist_par=param.bike_dist, 
+                        # replications=10, 
+                        # scenario=scen)
+        self.logger.info("Bike assignment performed for scenario "
+                        + str(scen_id))
+    
     def assign_transit(self, scen_id):
         """Perform transit assignment for one scenario."""
         emmebank = self.emme_modeller.emmebank
         scenario = emmebank.scenario(scen_id)
         network = scenario.get_network()
         # Calculation of cumulative line segment travel time and speed
-        self.logger.info("Calculates cumulative travel times for scenario "  + str(scen_id))
+        self.logger.info("Calculates cumulative travel times for scenario "
+                         + str(scen_id))
         for line in network.transit_lines():
             cumulative_length = 0
             cumulative_time = 0
@@ -184,8 +294,9 @@ class AssignmentModel:
                 # Travel time for trams AHT
                 if segment.transit_time_func == 3:
                     speedstr = str(int(segment.link.data1))
-                    # Digits 5-6 from end (1-2 from beg.) represent AHT speed.
-                    # If AHT speed is less than 10, data1 will have only 5 digits.
+                    # Digits 5-6 from end (1-2 from beg.) represent AHT
+                    # speed. If AHT speed is less than 10, data1 will 
+                    # have only 5 digits.
                     speed = int(speedstr[:-4])
                     cumulative_time += ((segment.link.length / speed) * 60
                                        + segment.dwell_time)
@@ -204,7 +315,9 @@ class AssignmentModel:
                     cumulative_time += ((segment.link.length / speed) * 60
                                        + segment.dwell_time)
                 if cumulative_time > 0:
-                    cumulative_speed = cumulative_length / cumulative_time * 60
+                    cumulative_speed = ( cumulative_length 
+                                       / cumulative_time 
+                                       * 60)
                 # Headway standard deviation for buses and trams
                 if line.mode.id in param.headway_sd:
                     headway_sd = param.headway_sd[line.mode.id](
@@ -253,4 +366,5 @@ class AssignmentModel:
         matrix_results = self.emme_modeller.tool(
             "inro.emme.transit_assignment.extended.matrix_results")
         matrix_results(param.result_spec, scenario)
-        self.logger.info("Transit assignment performed for scenario " + str(scen_id))
+        self.logger.info("Transit assignment performed for scenario " 
+                        + str(scen_id))

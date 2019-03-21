@@ -59,12 +59,13 @@ trass_stop = {
     "normalized_gap": 0.01,
     "relative_gap": 0.001
 }
-# Emme matrix IDs for time periods
 emme_scenario = {
     "aht": 21,
     "pt": 22,
     "iht": 23,
 }
+bike_scenario = 19
+bike_mode = 'f'
 transit_modes = [
     'b',
     'd',
@@ -82,6 +83,7 @@ aux_modes = [
     's',
 ]
 transit_assignment_modes = transit_modes + aux_modes
+# Emme matrix IDs for time periods
 emme_mtx = {
     "demand": {
         "car": {
@@ -104,6 +106,10 @@ emme_mtx = {
             "id":"mf4",
             "description": "transit demand",
         },
+        "bike":  {
+            "id":"mf7",
+            "description": "bicyclist demand",
+        },
     },
     "time": {
         "car": {
@@ -114,6 +120,10 @@ emme_mtx = {
             "id": "mf20",
             "description": "transit travel time",
         },
+        "bike": {
+            "id": "mf386",
+            "description": "bike travel time",
+        },
     },
     "dist": {
         "car": {
@@ -123,6 +133,10 @@ emme_mtx = {
         "transit": {
             "id": "mf27",
             "description": "transit in-vehicle distance",
+        },
+        "bike": {
+            "id": "mf387",
+            "description": "bike travel distance",
         },
     },
     "cost": {
@@ -156,7 +170,13 @@ emme_mtx = {
             "id": "mf26",
             "description": "transit trip number of boardings",
         },
-    }
+    },
+    "bike": {
+        "baana_dist": {
+            "id": "mf100",
+            "description": "bike baana distance",
+        },
+    },
 }
 # pt_mtx_id = {
     # "car_demand": "mf2",
@@ -431,4 +451,9 @@ result_spec = {
         "actual_in_vehicle_times": emme_mtx["transit"]["inv_time"]["id"],
         "actual_aux_transit_times": emme_mtx["transit"]["aux_time"]["id"],
     },
+}
+bike_dist = {
+    "type": "UNIFORM", 
+    "A": 0.5, 
+    "B": 1.5,
 }
