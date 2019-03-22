@@ -1,8 +1,16 @@
+# Performance settings
 performance_settings = {
     "number_of_processors": "max"
 }
+# Volume-delay function files
+func_car = "d411_pituusriippuvaiset_HM30.in"
+func_bike = "d411_pituusriippuvaiset_pyora.in"
 # Inversed value of time [min/eur]
-vot_inv = 6
+vot_inv = {
+    "work": 6,
+    "business": 6,
+    "leisure": 6,
+}
 # Distance cost [eur/km]
 dist_cost = 0.12
 # Boarding penalties for differnt transit modes
@@ -77,6 +85,13 @@ emme_scenario = {
     "iht": 23,
 }
 bike_scenario = 19
+car_mode = 'c'
+mode = {
+    "car": 'c',
+    "trailer_truck": 'y',
+    "truck": 'k',
+    "van": 'v',
+}
 bike_mode = 'f'
 transit_modes = [
     'b',
@@ -95,7 +110,7 @@ aux_modes = [
     's',
 ]
 transit_assignment_modes = transit_modes + aux_modes
-# Emme matrix IDs for time periods
+# Emme matrix IDs
 emme_mtx = {
     "demand": {
         "car": {
@@ -121,6 +136,12 @@ emme_mtx = {
         "bike":  {
             "id":"mf7",
             "description": "bicyclist demand",
+        },
+    },
+    "gen_cost": {
+        "car": {
+            "id": "mf371",
+            "description": "car travel generalized cost",
         },
     },
     "time": {
@@ -184,9 +205,17 @@ emme_mtx = {
         },
     },
     "bike": {
-        "baana_dist": {
+        "separate_dist": {
             "id": "mf100",
-            "description": "bike baana distance",
+            "description": "separate bike way distance",
+        },
+        "streetside_dist": {
+            "id": "mf101",
+            "description": "street-side bike way distance",
+        },
+        "mixed_dist": {
+            "id": "mf102",
+            "description": "bike distance in mixed traffic",
         },
     },
 }
@@ -218,115 +247,11 @@ demand_share = {
         "iht": 0.1,
     },
 }
-# Assignment class specifications
-cars = {
-    "mode": "c",
-    "demand": emme_mtx["demand"]["car"]["id"],
-    "generalized_cost": {
-        "link_costs": "@rumsi",
-        "perception_factor": vot_inv,
-    },
-    "results": {
-        "link_volumes": None,
-        "turn_volumes": None,
-        "od_travel_times": {
-            "shortest_paths": emme_mtx["time"]["car"]["id"]
-        }
-    },
-    "path_analyses": [
-        {
-            "link_component": "length",
-            "turn_component": None,
-            "operator": "+",
-            "selection_threshold": {
-                "lower": None,
-                "upper": None,
-            },
-            "path_to_od_composition": {
-                "considered_paths": "ALL",
-                "multiply_path_proportions_by": {
-                    "analyzed_demand": False,
-                    "path_value": True,
-                }
-            },
-            "analyzed_demand": None,
-            "results": {
-                "selected_link_volumes": None,
-                "selected_turn_volumes": None,
-                "od_values": emme_mtx["dist"]["car"]["id"],
-            },
-        },
-        {
-            "link_component": "@ruma",
-            "turn_component": None,
-            "operator": "+",
-            "selection_threshold": {
-                "lower": None,
-                "upper": None,
-            },
-            "path_to_od_composition": {
-                "considered_paths": "ALL",
-                "multiply_path_proportions_by": {
-                    "analyzed_demand": False,
-                    "path_value": True
-                }
-            },
-            "analyzed_demand": None,
-            "results": {
-                "selected_link_volumes": None,
-                "selected_turn_volumes": None,
-                "od_values": emme_mtx["cost"]["car"]["id"],
-            },
-        },
-    ]
-}
-trailer_trucks = {
-    "mode": "y",
-    "demand": emme_mtx["demand"]["trailer_truck"]["id"],
-    "generalized_cost": {
-        "link_costs": "length",
-        "perception_factor": 0.2,
-    },
-    "results": {
-        "link_volumes": "@yhd",
-        "turn_volumes": None,
-        "od_travel_times": {
-            "shortest_paths": None
-        }
-    },
-    "path_analyses": []
-}
-trucks = {
-    "mode": "k",
-    "demand": emme_mtx["demand"]["truck"]["id"],
-    "generalized_cost": {
-        "link_costs": "length",
-        "perception_factor": 0.2,
-    },
-    "results": {
-        "link_volumes": "@ka",
-        "turn_volumes": None,
-        "od_travel_times": {
-            "shortest_paths": None
-        }
-    },
-    "path_analyses": []
-}
-vans = {
-    "mode": "v",
-    "demand": emme_mtx["demand"]["van"]["id"],
-    "generalized_cost": {
-        "link_costs": "length",
-        "perception_factor": 0.2,
-    },
-    "results": {
-        "link_volumes": "@pa",
-        "turn_volumes": None,
-        "od_travel_times": {
-            "shortest_paths": None
-        }
-    },
-    "path_analyses": []
+link_volumes = {
+    "car": None,
+    "trailer_truck": "@yhd",
+    "truck": "@ka",
+    "van": "@pa",
 }
 # Specification for the transit assignment
 trass_spec = {
@@ -434,21 +359,7 @@ trass_spec = {
     ],
     "performance_settings": performance_settings,
 }
-# Transit assignment result specification
-result_spec = {
-    "type": "EXTENDED_TRANSIT_MATRIX_RESULTS",
-    "total_impedance": emme_mtx["time"]["transit"]["id"],
-    "actual_first_waiting_times": emme_mtx["transit"]["fw_time"]["id"],
-    "actual_total_waiting_times": emme_mtx["transit"]["tw_time"]["id"],
-    "by_mode_subset": {
-        "modes": transit_modes,
-        "distance": emme_mtx["dist"]["transit"]["id"],
-        "avg_boardings": emme_mtx["transit"]["num_board"]["id"],
-        "actual_total_boarding_times": emme_mtx["transit"]["board_time"]["id"],
-        "actual_in_vehicle_times": emme_mtx["transit"]["inv_time"]["id"],
-        "actual_aux_transit_times": emme_mtx["transit"]["aux_time"]["id"],
-    },
-}
+# Bike assignment specification
 biass_spec = {
     "type": "STANDARD_TRAFFIC_ASSIGNMENT",
     "classes": [ 

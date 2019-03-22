@@ -51,16 +51,15 @@ class AssignmentModel:
         """Assign cars, bikes and transit for one time period."""
         self.logger.info("Assignment starts...")
         self.set_matrices(matrices)
-        function_file = os.path.join(self.path,
-                                     "d411_pituusriippuvaiset_HM30.in")
+        function_file = os.path.join(self.path, param.func_car)
         process = self.emme_modeller.tool(
             "inro.emme.data.function.function_transaction")
         process(function_file)
         self.calc_road_cost(scen_id)
         self.assign_cars(scen_id, param.stopping_criteria_coarse)
+        self.calc_boarding_penalties(scen_id)
         self.assign_transit(scen_id)
-        function_file = os.path.join(self.path,
-                                     "d411_pituusriippuvaiset_pyora.in")
+        function_file = os.path.join(self.path, param.func_bike)
         process(function_file)
         self.assign_bikes(param.bike_scenario, 
                           param.emme_mtx["time"]["bike"]["id"], 
@@ -70,6 +69,13 @@ class AssignmentModel:
         matrices["time"] = self.get_matrices("time")
         matrices["dist"] = self.get_matrices("dist")
         matrices["cost"] = self.get_matrices("cost")
+        tt = matrices["time"]["transit"]
+        fwt_id = param.emme_mtx["transit"]["fw_time"]["id"]
+        fwt = self.emme_modeller.emmebank.matrix(fwt_id).get_numpy_data()
+        wt_weight = param.trass_spec["waiting_time"]["perception_factor"]
+        # Calculate transit travel time where first waiting time is damped
+        dtt = tt + wt_weight*((5/3*fwt)**0.8 - fwt)
+        matrices["time"]["transit"] = dtt
         return matrices
     
     def set_matrices(self, matrices):
@@ -131,13 +137,31 @@ class AssignmentModel:
         """Perform car traffic assignment for one scenario."""
         emmebank = self.emme_modeller.emmebank
         scenario = emmebank.scenario(scen_id)
+        car = Car(demand=param.emme_mtx["demand"]["car"]["id"],
+                  ass_class="car",
+                  value_of_time_inv=param.vot_inv["work"],
+                  od_travel_times=param.emme_mtx["gen_cost"]["car"]["id"])
+        car.add_analysis("length", param.emme_mtx["dist"]["car"]["id"])
+        car.add_analysis("@ruma", param.emme_mtx["cost"]["car"]["id"])
+        van = Car(demand=param.emme_mtx["demand"]["van"]["id"],
+                  ass_class="van",
+                  value_of_time_inv=param.vot_inv["business"])
+        truck = Car(demand=param.emme_mtx["demand"]["truck"]["id"],
+                    ass_class="truck",
+                    value_of_time_inv=0.2,
+                    link_costs="length")
+        trailer_truck = Car(
+            demand=param.emme_mtx["demand"]["trailer_truck"]["id"],
+            ass_class="trailer_truck",
+            value_of_time_inv=0.2,
+            link_costs="length")
         spec = {
             "type": "SOLA_TRAFFIC_ASSIGNMENT",
             "classes": [
-                param.cars,
-                param.trailer_trucks,
-                param.trucks,
-                param.vans,
+                car.spec,
+                trailer_truck.spec,
+                truck.spec,
+                van.spec,
             ],
             "background_traffic": None,
             "performance_settings": param.performance_settings,
@@ -154,8 +178,8 @@ class AssignmentModel:
         self.logger.info("Extracts time matrix from generalized cost")
         matrix_spec = {
             "type": "MATRIX_CALCULATION",
-            "expression": ( param.emme_mtx["time"]["car"]["id"]
-                          + "-" + str(param.vot_inv)
+            "expression": ( param.emme_mtx["gen_cost"]["car"]["id"]
+                          + "-" + str(param.vot_inv["work"])
                           + "*(" + param.emme_mtx["cost"]["car"]["id"]
                           + "+" + str(param.dist_cost)
                           + "*" + param.emme_mtx["dist"]["car"]["id"] + ")"),
@@ -220,8 +244,8 @@ class AssignmentModel:
         self.logger.info("Bike assignment performed for scenario "
                         + str(scen_id))
     
-    def assign_transit(self, scen_id):
-        """Perform transit assignment for one scenario."""
+    def calc_boarding_penalties(self, scen_id):
+        """Calculate boarding penalties for transit assignment."""
         emmebank = self.emme_modeller.emmebank
         scenario = emmebank.scenario(scen_id)
         network = scenario.get_network()
@@ -297,6 +321,11 @@ class AssignmentModel:
         netcalc = self.emme_modeller.tool(
             "inro.emme.network_calculation.network_calculator")
         netcalc(netw_specs, scenario)
+        
+    def assign_transit(self, scen_id):
+        """Perform transit assignment for one scenario."""
+        emmebank = self.emme_modeller.emmebank
+        scenario = emmebank.scenario(scen_id)
         # Definition of transition rules: all modes are allowed
         transitions = []
         for mode in param.transit_modes:
@@ -320,6 +349,71 @@ class AssignmentModel:
                              # scenario=scenario)
         matrix_results = self.emme_modeller.tool(
             "inro.emme.transit_assignment.extended.matrix_results")
-        matrix_results(param.result_spec, scenario)
+        # Transit assignment result specification
+        mtx = param.emme_mtx
+        result_spec = {
+            "type": "EXTENDED_TRANSIT_MATRIX_RESULTS",
+            "total_impedance": mtx["time"]["transit"]["id"],
+            "actual_first_waiting_times": mtx["transit"]["fw_time"]["id"],
+            "actual_total_waiting_times": mtx["transit"]["tw_time"]["id"],
+            "by_mode_subset": {
+                "modes": param.transit_modes,
+                "distance": mtx["dist"]["transit"]["id"],
+                "avg_boardings": mtx["transit"]["num_board"]["id"],
+                "actual_total_boarding_times": mtx["transit"]["board_time"]["id"],
+                "actual_in_vehicle_times": mtx["transit"]["inv_time"]["id"],
+                "actual_aux_transit_times": mtx["transit"]["aux_time"]["id"],
+            },
+        }
+        matrix_results(result_spec, scenario)
         self.logger.info("Transit assignment performed for scenario " 
                         + str(scen_id))
+        
+class Car:
+    def __init__(self, demand, ass_class, value_of_time_inv, 
+                 od_travel_times=None, link_costs="@rumsi"):
+        self.spec = {
+            "mode": param.mode[ass_class],
+            "demand": demand,
+            "generalized_cost": {
+                "link_costs": "@rumsi",
+                "perception_factor": value_of_time_inv,
+            },
+            "results": {
+                "link_volumes": param.link_volumes[ass_class],
+                "turn_volumes": None,
+                "od_travel_times": {
+                    "shortest_paths": od_travel_times
+                }
+            },
+            "path_analyses": []
+        }
+    
+    def add_analysis (self, link_component, od_values):
+        analysis = PathAnalysis(link_component, od_values)
+        self.spec["path_analyses"].append(analysis.spec)
+
+class PathAnalysis:
+    def __init__(self, link_component, od_values):
+        self.spec = {
+            "link_component": link_component,
+            "turn_component": None,
+            "operator": "+",
+            "selection_threshold": {
+                "lower": None,
+                "upper": None,
+            },
+            "path_to_od_composition": {
+                "considered_paths": "ALL",
+                "multiply_path_proportions_by": {
+                    "analyzed_demand": False,
+                    "path_value": True,
+                }
+            },
+            "analyzed_demand": None,
+            "results": {
+                "selected_link_volumes": None,
+                "selected_turn_volumes": None,
+                "od_values": od_values,
+            },
+        }
