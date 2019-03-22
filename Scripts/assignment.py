@@ -181,6 +181,9 @@ class AssignmentModel:
             "inro.emme.data.matrix.create_matrix")
         netcalc = self.emme_modeller.tool(
             "inro.emme.network_calculation.network_calculator")
+        spec = param.biass_spec
+        spec["classes"][0]["results"]["link_volumes"] = link_vol
+        spec["classes"][0]["analysis"]["results"]["od_values"] = length_mat_id
         # Reset ul3 to zero
         netw_spec = {
             "type": "NETWORK_CALCULATION",
@@ -188,7 +191,7 @@ class AssignmentModel:
                 "link": "all",
             },
             "expression": "0",
-            "result": "ul3",
+            "result": spec["path_analysis"]["link_component"],
             "aggregation": None,
         }
         netcalc(netw_spec, scen)
@@ -199,59 +202,10 @@ class AssignmentModel:
                 "link": length_for_links,
             },
             "expression": "length",
-            "result": "ul3",
+            "result": spec["path_analysis"]["link_component"],
             "aggregation": None,
         }
         netcalc(netw_spec, scen)
-        spec = {
-            "type": "STANDARD_TRAFFIC_ASSIGNMENT",
-            "classes": [ 
-                {
-                    "mode": param.bike_mode,
-                    "demand": param.emme_mtx["demand"]["bike"]["id"],
-                    "generalized_cost": None,
-                    "results": {
-                         "od_travel_times": {
-                             "shortest_paths": param.emme_mtx["time"]["bike"]["id"],
-                         },
-                         "link_volumes": link_vol,
-                         "turn_volumes": None,
-                    },
-                    "analysis": {
-                        "analyzed_demand": None,
-                        "results": {
-                            "od_values": length_mat_id,
-                            "selected_link_volumes": None,
-                            "selected_turn_volumes": None,
-                        },
-                    },
-                }
-            ],
-            "path_analysis": {
-                "link_component": "ul3",
-                "turn_component": None,
-                "operator": "+",
-                "selection_threshold": {
-                    "lower": None,
-                    "upper": None,
-                },
-                "path_to_od_composition": {
-                    "considered_paths": "ALL",
-                    "multiply_path_proportions_by": {
-                        "analyzed_demand": False,
-                        "path_value": True,
-                    }
-                },
-            },
-            "background_traffic": None,
-            "stopping_criteria": {
-                "max_iterations": 1,
-                "best_relative_gap": 1,
-                "relative_gap": 1,
-                "normalized_gap": 1,
-            },
-            "performance_settings": param.performance_settings
-        }  
         self.logger.info("Bike assignment started")
         bike_assignment = self.emme_modeller.tool(
             "inro.emme.traffic_assignment.standard_traffic_assignment")
@@ -319,10 +273,11 @@ class AssignmentModel:
                                        / cumulative_time 
                                        * 60)
                 # Headway standard deviation for buses and trams
-                if line.mode.id in param.headway_sd:
-                    headway_sd = param.headway_sd[line.mode.id](
-                        cumulative_time,
-                        cumulative_speed)
+                if line.mode.id in param.headway_sd_func:
+                    b = param.headway_sd_func[line.mode.id]
+                    headway_sd = ( b["asc"] 
+                                 + b["ctime"]*cumulative_time 
+                                 + b["cspeed"]*cumulative_speed)
                 # Estimated waiting time addition caused by headway deviation
                 segment["@wait_time_dev"] = headway_sd**2 / (2*line.headway)
         scenario.publish_network(network)

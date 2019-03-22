@@ -14,21 +14,33 @@ boarding_penalty = {
     "mw": 0, # Metro and ferry
     "rj": 2, # Train
 }
-# Headway standard deviation for different transit modes
-def headway_sd_bus(cumulative_time, cumulative_speed):
-    return 2.164 + 0.078*cumulative_time - 0.028*cumulative_speed
-def headway_sd_trunk_bus(cumulative_time, cumulative_speed):
-    return 2.127 + 0.034*cumulative_time - 0.021*cumulative_speed
-def headway_sd_tram(cumulative_time, cumulative_speed):
-    return 1.442 + 0.060*cumulative_time - 0.039*cumulative_speed
-def headway_sd_light_rail(cumulative_time, cumulative_speed):
-    return 1.442 + 0.034*cumulative_time - 0.039*cumulative_speed
-headway_sd = {
-    'b': headway_sd_bus,
-    'd': headway_sd_bus,
-    'g': headway_sd_trunk_bus,
-    't': headway_sd_tram,
-    'p': headway_sd_light_rail,
+# Headway standard deviation function parameters for different transit modes
+headway_sd_func = {
+    'b': {
+        "asc": 2.164,
+        "ctime": 0.078,
+        "cspeed": -0.028,
+    },
+    'd':  {
+        "asc": 2.164,
+        "ctime": 0.078,
+        "cspeed": -0.028,
+    },
+    'g':  {
+        "asc": 2.127,
+        "ctime": 0.034,
+        "cspeed": -0.021,
+    },
+    't':  {
+        "asc": 1.442,
+        "ctime": 0.060,
+        "cspeed": -0.039,
+    },
+    'p':  {
+        "asc": 1.442,
+        "ctime": 0.034,
+        "cspeed": -0.039,
+    },
 }
 # Stopping criteria for last traffic assignment
 stopping_criteria_fine = {
@@ -178,24 +190,7 @@ emme_mtx = {
         },
     },
 }
-# pt_mtx_id = {
-    # "car_demand": "mf2",
-    # "car_time": "mf382",
-    # "car_dist": "mf383",
-    # "car_cost": "mf371",
-    # "trailer_truck_demand": "mf74",
-    # "truck_demand": "mf75",
-    # "van_demand": "mf76",
-# }
-# iht_mtx_id = {
-    # "car_demand": "mf3",
-    # "car_time": "mf384",
-    # "car_dist": "mf385",
-    # "car_cost": "mf372",
-    # "trailer_truck_demand": "mf77",
-    # "truck_demand": "mf78",
-    # "van_demand": "mf79",
-# }
+# Demand shares for different time periods
 demand_share = {
     "car": {
         "aht": 0.1,
@@ -223,6 +218,7 @@ demand_share = {
         "iht": 0.1,
     },
 }
+# Assignment class specifications
 cars = {
     "mode": "c",
     "demand": emme_mtx["demand"]["car"]["id"],
@@ -332,7 +328,7 @@ vans = {
     },
     "path_analyses": []
 }
-# Specification of the transit assignment
+# Specification for the transit assignment
 trass_spec = {
     "type": "EXTENDED_TRANSIT_ASSIGNMENT",
     "modes": transit_assignment_modes,
@@ -438,6 +434,7 @@ trass_spec = {
     ],
     "performance_settings": performance_settings,
 }
+# Transit assignment result specification
 result_spec = {
     "type": "EXTENDED_TRANSIT_MATRIX_RESULTS",
     "total_impedance": emme_mtx["time"]["transit"]["id"],
@@ -452,6 +449,56 @@ result_spec = {
         "actual_aux_transit_times": emme_mtx["transit"]["aux_time"]["id"],
     },
 }
+biass_spec = {
+    "type": "STANDARD_TRAFFIC_ASSIGNMENT",
+    "classes": [ 
+        {
+            "mode": bike_mode,
+            "demand": emme_mtx["demand"]["bike"]["id"],
+            "generalized_cost": None,
+            "results": {
+                 "od_travel_times": {
+                     "shortest_paths": emme_mtx["time"]["bike"]["id"],
+                 },
+                 "link_volumes": None,
+                 "turn_volumes": None,
+            },
+            "analysis": {
+                "analyzed_demand": None,
+                "results": {
+                    "od_values": None,
+                    "selected_link_volumes": None,
+                    "selected_turn_volumes": None,
+                },
+            },
+        }
+    ],
+    "path_analysis": {
+        "link_component": "ul3",
+        "turn_component": None,
+        "operator": "+",
+        "selection_threshold": {
+            "lower": None,
+            "upper": None,
+        },
+        "path_to_od_composition": {
+            "considered_paths": "ALL",
+            "multiply_path_proportions_by": {
+                "analyzed_demand": False,
+                "path_value": True,
+            }
+        },
+    },
+    "background_traffic": None,
+    "stopping_criteria": {
+        "max_iterations": 1,
+        "best_relative_gap": 1,
+        "relative_gap": 1,
+        "normalized_gap": 1,
+    },
+    "performance_settings": performance_settings
+}  
+# Stochastic bike assignment distribution
 bike_dist = {
     "type": "UNIFORM", 
     "A": 0.5, 
