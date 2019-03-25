@@ -87,7 +87,8 @@ emme_scenario = {
 bike_scenario = 19
 car_mode = 'c'
 mode = {
-    "car": 'c',
+    "car_work": 'c',
+    "car_leisure": 'c',
     "trailer_truck": 'y',
     "truck": 'k',
     "van": 'v',
@@ -113,9 +114,13 @@ transit_assignment_modes = transit_modes + aux_modes
 # Emme matrix IDs
 emme_mtx = {
     "demand": {
-        "car": {
+        "car_work": {
             "id": "mf1",
-            "description": "car private demand",
+            "description": "car work demand",
+        },
+        "car_leisure": {
+            "id": "mf2",
+            "description": "car leisure demand",
         },
         "trailer_truck": {
             "id": "mf71",
@@ -139,15 +144,23 @@ emme_mtx = {
         },
     },
     "gen_cost": {
-        "car": {
+        "car_work": {
             "id": "mf371",
-            "description": "car travel generalized cost",
+            "description": "car work travel generalized cost",
+        },
+        "car_leisure": {
+            "id": "mf372",
+            "description": "car leisure travel generalized cost",
         },
     },
     "time": {
-        "car": {
+        "car_work": {
             "id": "mf380",
-            "description": "car travel time",
+            "description": "car work travel time",
+        },
+        "car_leisure": {
+            "id": "mf382",
+            "description": "car leisure travel time",
         },
         "transit": {
             "id": "mf20",
@@ -159,9 +172,13 @@ emme_mtx = {
         },
     },
     "dist": {
-        "car": {
+        "car_work": {
             "id": "mf381",
-            "description": "car travel distance",
+            "description": "car work travel distance",
+        },
+        "car_leisure": {
+            "id": "mf383",
+            "description": "car leisure travel distance",
         },
         "transit": {
             "id": "mf27",
@@ -173,9 +190,13 @@ emme_mtx = {
         },
     },
     "cost": {
-        "car": {
+        "car_work": {
             "id": "mf370",
-            "description": "car travel cost",
+            "description": "car work travel cost",
+        },
+        "car_leisure": {
+            "id": "mf371",
+            "description": "car leisure travel cost",
         },
     },
     "transit": {
@@ -221,7 +242,12 @@ emme_mtx = {
 }
 # Demand shares for different time periods
 demand_share = {
-    "car": {
+    "car_work": {
+        "aht": 0.1,
+        "pt": 0.05,
+        "iht": 0.1,
+    },
+    "car_leisure": {
         "aht": 0.1,
         "pt": 0.05,
         "iht": 0.1,
@@ -248,7 +274,8 @@ demand_share = {
     },
 }
 link_volumes = {
-    "car": None,
+    "car_work": None,
+    "car_leisure": None,
     "trailer_truck": "@yhd",
     "truck": "@ka",
     "van": "@pa",
