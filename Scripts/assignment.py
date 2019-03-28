@@ -2,9 +2,32 @@ import os
 import logging
 import inro.emme.desktop.app as _app
 import inro.modeller as _m
+import omx
+import numpy
 import parameters as param
 
-class AssignmentModel:
+class TestAssignmentModel:
+    def __init__(self, matrix_dir):
+        self.path = matrix_dir
+    
+    def assign(self, time_period, matrices):
+        """Get travel impedance matrices for one time period from files."""
+        mtxs = {}
+        mtxs["time"] = self.get_matrices(time_period, "time")
+        mtxs["cost"] = self.get_matrices(time_period, "cost")
+        mtxs["dist"] = self.get_matrices(time_period, "dist")
+        return mtxs
+    
+    def get_matrices(self, time_period, mtx_type):
+        file_name = os.path.join(self.path, mtx_type+'_'+time_period+".omx")
+        costs_file = omx.openFile(file_name)
+        matrices = dict.fromkeys(param.emme_mtx[mtx_type].keys())
+        for mtx in matrices:
+            matrices[mtx] = numpy.array(costs_file[mtx])
+        costs_file.close()
+        return matrices
+
+class EmmeAssignmentModel:
     def __init__(self, filepath):
         self.logger = logging.getLogger()
         self.logger.info("Starting Emme...")
@@ -47,25 +70,26 @@ class AssignmentModel:
         """Flush the logbook (i.e., do nothing)."""
         pass
     
-    def assign(self, scen_id, time_period, matrices):
+    def assign(self, time_period, matrices):
         """Assign cars, bikes and transit for one time period."""
         self.logger.info("Assignment starts...")
         self.set_matrices(matrices)
-        self.calc_road_cost(scen_id)
-        self.assign_cars(scen_id, param.stopping_criteria_coarse)
-        self.calc_boarding_penalties(scen_id)
-        self.assign_transit(scen_id)
-        self.assign_bikes(param.bike_scenario, 
-                          param.emme_mtx["time"]["bike"]["id"], 
-                          "all", 
-                          "@fvol_"+time_period)
+        scen_id = param.emme_scenario[time_period]
+        self._calc_road_cost(scen_id)
+        self._assign_cars(scen_id, param.stopping_criteria_coarse)
+        self._calc_boarding_penalties(scen_id)
+        self._assign_transit(scen_id)
+        self._assign_bikes(param.bike_scenario, 
+                           param.emme_mtx["time"]["bike"]["id"], 
+                           "all", 
+                           "@fvol_"+time_period)
         mtxs = {}
         mtxs["time"] = self.get_matrices("time")
         mtxs["dist"] = self.get_matrices("dist")
         mtxs["cost"] = self.get_matrices("cost")
-        mtxs["time"]["transit"] = self.damp(mtxs["time"]["transit"])
-        mtxs["time"]["car_work"] = self.gcost_to_time("car_work", "work")
-        mtxs["time"]["car_leisure"] = self.gcost_to_time("car_leisure", "leisure")
+        mtxs["time"]["transit"] = self._damp(mtxs["time"]["transit"])
+        mtxs["time"]["car_work"] = self._gcost_to_time("car_work", "work")
+        mtxs["time"]["car_leisure"] = self._gcost_to_time("car_leisure", "leisure")
         return mtxs
     
     def set_matrices(self, matrices):
@@ -85,7 +109,7 @@ class AssignmentModel:
         emme_id = param.emme_mtx[type1][type2]["id"]
         return self.emme_modeller.emmebank.matrix(emme_id).get_numpy_data()
     
-    def damp(self, travel_time):
+    def _damp(self, travel_time):
         """Reduce the impact from first waiting time on total travel time."""
         fwt = self.get_matrix("transit", "fw_time")
         wt_weight = param.trass_spec["waiting_time"]["perception_factor"]
@@ -93,7 +117,7 @@ class AssignmentModel:
         dtt = travel_time + wt_weight*((5/3*fwt)**0.8 - fwt)
         return dtt
     
-    def gcost_to_time(self, ass_class, tour_type):
+    def _gcost_to_time(self, ass_class, tour_type):
         """Remove monetary cost from generalized cost."""
         # Traffic assignment produces a generalized cost matrix.
         # To get travel time, monetary cost is removed from generalized cost.
@@ -103,7 +127,7 @@ class AssignmentModel:
         tdist = self.get_matrix("dist", ass_class)
         return gcost - vot_inv *(tcost + param.dist_cost*tdist)
         
-    def calc_road_cost(self, scen_id):
+    def _calc_road_cost(self, scen_id):
         """Calculate road charges and driving costs for one scenario."""
         self.logger.info("Calculates road charges for scenario "
                         + str(scen_id))
@@ -144,7 +168,7 @@ class AssignmentModel:
             "inro.emme.network_calculation.network_calculator")
         netcalc(netw_specs, scenario)
         
-    def assign_cars(self, scen_id, stopping_criteria):
+    def _assign_cars(self, scen_id, stopping_criteria):
         """Perform car_work traffic assignment for one scenario."""
         emmebank = self.emme_modeller.emmebank
         scenario = emmebank.scenario(scen_id)
@@ -181,7 +205,7 @@ class AssignmentModel:
         self.logger.info("Car assignment performed for scenario " 
                         + str(scen_id))
     
-    def assign_bikes(self, scen_id, length_mat_id, length_for_links, link_vol):
+    def _assign_bikes(self, scen_id, length_mat_id, length_for_links, link_vol):
         """Perform bike traffic assignment for one scenario."""
         emmebank = self.emme_modeller.emmebank
         scen = emmebank.scenario(scen_id)
@@ -230,7 +254,7 @@ class AssignmentModel:
         self.logger.info("Bike assignment performed for scenario "
                         + str(scen_id))
     
-    def calc_boarding_penalties(self, scen_id):
+    def _calc_boarding_penalties(self, scen_id):
         """Calculate boarding penalties for transit assignment."""
         emmebank = self.emme_modeller.emmebank
         scenario = emmebank.scenario(scen_id)
@@ -308,7 +332,7 @@ class AssignmentModel:
             "inro.emme.network_calculation.network_calculator")
         netcalc(netw_specs, scenario)
         
-    def assign_transit(self, scen_id):
+    def _assign_transit(self, scen_id):
         """Perform transit assignment for one scenario."""
         emmebank = self.emme_modeller.emmebank
         scenario = emmebank.scenario(scen_id)
