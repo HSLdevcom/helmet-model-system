@@ -26,6 +26,21 @@ class TestAssignmentModel:
             matrices[mtx] = numpy.array(costs_file[mtx])
         costs_file.close()
         return matrices
+    
+    def get_zone_numbers(self):
+        file_name = os.path.join(self.path, "time_aht.omx")
+        costs_file = omx.openFile(file_name)
+        # zone_numbers = costs_file.mapentries("zone_number")
+        zone_numbers = [5, 6, 7]
+        costs_file.close()
+        return zone_numbers
+    
+    def get_mapping(self):
+        file_name = os.path.join(self.path, "time_aht.omx")
+        costs_file = omx.openFile(file_name)
+        mapping = costs_file.mapping("zone_number")
+        costs_file.close()
+        return mapping
 
 class EmmeAssignmentModel:
     def __init__(self, filepath):
@@ -108,6 +123,17 @@ class EmmeAssignmentModel:
         """Get matrix with type pair (e.g., demand, car_work)"""
         emme_id = param.emme_mtx[type1][type2]["id"]
         return self.emme_modeller.emmebank.matrix(emme_id).get_numpy_data()
+
+    def get_zone_numbers(self):
+        emmebank = self.emme_modeller.emmebank
+        scen = emmebank.scenario(param.emme_scenario["aht"])
+        return scen.zone_numbers
+    
+    def get_mapping(self):
+        mapping = {}
+        for idx, zone in enumerate(self.get_zone_numbers()):
+            mapping[zone] = idx
+        return mapping
     
     def _damp(self, travel_time):
         """Reduce the impact from first waiting time on total travel time."""
@@ -383,7 +409,7 @@ class Car:
     def __init__(self, ass_class, value_of_time_inv, 
                  od_travel_times=None, link_costs="@rumsi"):
         self.spec = {
-            "mode": param.mode[ass_class],
+            "mode": param.assignment_mode[ass_class],
             "demand": param.emme_mtx["demand"][ass_class]["id"],
             "generalized_cost": {
                 "link_costs": link_costs,

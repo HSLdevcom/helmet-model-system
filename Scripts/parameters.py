@@ -84,9 +84,14 @@ emme_scenario = {
     "pt": 22,
     "iht": 23,
 }
+assignment_class = {
+    "hbw": "car_work",
+    "hbs": "car_leisure",
+    "hbo": "car_leisure",
+}
 bike_scenario = 19
 car_mode = 'c'
-mode = {
+assignment_mode = {
     "car_work": 'c',
     "car_leisure": 'c',
     "trailer_truck": 'y',
@@ -241,36 +246,106 @@ emme_mtx = {
     },
 }
 # Demand shares for different time periods
+# demand_share = {
+#     "car_work": {
+#         "aht": 0.1,
+#         "pt": 0.05,
+#         "iht": 0.1,
+#     },
+#     "car_leisure": {
+#         "aht": 0.1,
+#         "pt": 0.05,
+#         "iht": 0.1,
+#     },
+#     "trailer_truck": {
+#         "aht": 0.1,
+#         "pt": 0.05,
+#         "iht": 0.1,
+#     },
+#     "truck": {
+#         "aht": 0.1,
+#         "pt": 0.05,
+#         "iht": 0.1,
+#     },
+#     "van": {
+#         "aht": 0.1,
+#         "pt": 0.05,
+#         "iht": 0.1,
+#     },
+#     "transit": {
+#         "aht": 0.1,
+#         "pt": 0.05,
+#         "iht": 0.1,
+#     },
+# }
 demand_share = {
-    "car_work": {
-        "aht": 0.1,
-        "pt": 0.05,
-        "iht": 0.1,
+    "hbw": {
+        "car": {
+            "aht": 0.1,
+            "pt": 0.05,
+            "iht": 0.1,
+        },
+        "transit": {
+            "aht": 0.1,
+            "pt": 0.05,
+            "iht": 0.1,
+        },
+        "bike": {
+            "aht": 0.1,
+            "pt": 0.05,
+            "iht": 0.1,
+        },
     },
-    "car_leisure": {
-        "aht": 0.1,
-        "pt": 0.05,
-        "iht": 0.1,
+    "hbs": {
+        "car": {
+            "aht": 0.1,
+            "pt": 0.05,
+            "iht": 0.1,
+        },
+        "transit": {
+            "aht": 0.1,
+            "pt": 0.05,
+            "iht": 0.1,
+        },
+        "bike": {
+            "aht": 0.1,
+            "pt": 0.05,
+            "iht": 0.1,
+        },
     },
-    "trailer_truck": {
-        "aht": 0.1,
-        "pt": 0.05,
-        "iht": 0.1,
+    "hbo": {
+        "car": {
+            "aht": 0.1,
+            "pt": 0.05,
+            "iht": 0.1,
+        },
+        "transit": {
+            "aht": 0.1,
+            "pt": 0.05,
+            "iht": 0.1,
+        },
+        "bike": {
+            "aht": 0.1,
+            "pt": 0.05,
+            "iht": 0.1,
+        },
     },
-    "truck": {
-        "aht": 0.1,
-        "pt": 0.05,
-        "iht": 0.1,
-    },
-    "van": {
-        "aht": 0.1,
-        "pt": 0.05,
-        "iht": 0.1,
-    },
-    "transit": {
-        "aht": 0.1,
-        "pt": 0.05,
-        "iht": 0.1,
+    "freight": {
+        "trailer_truck": {
+            "aht": 0.1,
+            "pt": 0.05,
+            "iht": 0.1,
+        },
+        "truck": {
+            "aht": 0.1,
+            "pt": 0.05,
+            "iht": 0.1,
+        },
+        "van": {
+            "aht": 0.1,
+            "pt": 0.05,
+            "iht": 0.1,
+        },
     },
 }
 link_volumes = {
