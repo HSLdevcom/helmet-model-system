@@ -85,9 +85,9 @@ emme_scenario = {
     "iht": 23,
 }
 assignment_class = {
-    "hbw": "car_work",
-    "hbs": "car_leisure",
-    "hbo": "car_leisure",
+    "hw": "car_work",
+    "hs": "car_leisure",
+    "ho": "car_leisure",
 }
 bike_scenario = 19
 car_mode = 'c'
@@ -246,108 +246,78 @@ emme_mtx = {
     },
 }
 # Demand shares for different time periods
-# demand_share = {
-#     "car_work": {
-#         "aht": 0.1,
-#         "pt": 0.05,
-#         "iht": 0.1,
-#     },
-#     "car_leisure": {
-#         "aht": 0.1,
-#         "pt": 0.05,
-#         "iht": 0.1,
-#     },
-#     "trailer_truck": {
-#         "aht": 0.1,
-#         "pt": 0.05,
-#         "iht": 0.1,
-#     },
-#     "truck": {
-#         "aht": 0.1,
-#         "pt": 0.05,
-#         "iht": 0.1,
-#     },
-#     "van": {
-#         "aht": 0.1,
-#         "pt": 0.05,
-#         "iht": 0.1,
-#     },
-#     "transit": {
-#         "aht": 0.1,
-#         "pt": 0.05,
-#         "iht": 0.1,
-#     },
-# }
 demand_share = {
-    "hbw": {
+    "hw": {
         "car": {
-            "aht": 0.1,
-            "pt": 0.05,
-            "iht": 0.1,
+            "aht": (0.1, 0.01),
+            "pt": (0.01, 0.01),
+            "iht": (0.01, 0.1),
         },
         "transit": {
-            "aht": 0.1,
-            "pt": 0.05,
-            "iht": 0.1,
+            "aht": (0.1, 0.01),
+            "pt": (0.01, 0.01),
+            "iht": (0.01, 0.1),
         },
         "bike": {
-            "aht": 0.1,
-            "pt": 0.05,
-            "iht": 0.1,
+            "aht": (0.1, 0.01),
+            "pt": (0.01, 0.01),
+            "iht": (0.01, 0.1),
         },
     },
-    "hbs": {
+    "hs": {
         "car": {
-            "aht": 0.1,
-            "pt": 0.05,
-            "iht": 0.1,
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
         },
         "transit": {
-            "aht": 0.1,
-            "pt": 0.05,
-            "iht": 0.1,
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
         },
         "bike": {
-            "aht": 0.1,
-            "pt": 0.05,
-            "iht": 0.1,
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
         },
     },
-    "hbo": {
+    "ho": {
         "car": {
-            "aht": 0.1,
-            "pt": 0.05,
-            "iht": 0.1,
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
         },
         "transit": {
-            "aht": 0.1,
-            "pt": 0.05,
-            "iht": 0.1,
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
         },
         "bike": {
-            "aht": 0.1,
-            "pt": 0.05,
-            "iht": 0.1,
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
         },
     },
     "freight": {
         "trailer_truck": {
-            "aht": 0.1,
-            "pt": 0.05,
-            "iht": 0.1,
+            "aht": (0.1, 0.1),
+            "pt": (0.1, 0.1),
+            "iht": (0.1, 0.1),
         },
         "truck": {
-            "aht": 0.1,
-            "pt": 0.05,
-            "iht": 0.1,
+            "aht": (0.1, 0.1),
+            "pt": (0.1, 0.1),
+            "iht": (0.1, 0.1),
         },
         "van": {
-            "aht": 0.1,
-            "pt": 0.05,
-            "iht": 0.1,
+            "aht": (0.1, 0.1),
+            "pt": (0.1, 0.1),
+            "iht": (0.1, 0.1),
         },
     },
 }
+# This needs to be changed
+impedance_share = demand_share
 link_volumes = {
     "car_work": None,
     "car_leisure": None,
