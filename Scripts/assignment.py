@@ -67,6 +67,10 @@ class EmmeAssignmentModel:
                     matrix_description=mtx[ass_class]["description"],
                     default_value=0,
                     overwrite=True)
+        for time_period in param.emme_scenario:
+            self._calc_road_cost(param.emme_scenario[time_period])
+            self._calc_boarding_penalties(param.emme_scenario[time_period])
+            self._calc_background_traffic(param.emme_scenario[time_period])
     
     def write(self, message):
         """Write to logbook."""
@@ -90,9 +94,7 @@ class EmmeAssignmentModel:
         self.logger.info("Assignment starts...")
         self.set_matrices(matrices)
         scen_id = param.emme_scenario[time_period]
-        self._calc_road_cost(scen_id)
         self._assign_cars(scen_id, param.stopping_criteria_coarse)
-        self._calc_boarding_penalties(scen_id)
         self._assign_transit(scen_id)
         self._assign_bikes(param.bike_scenario, 
                            param.emme_mtx["time"]["bike"]["id"], 
@@ -152,7 +154,81 @@ class EmmeAssignmentModel:
         tcost = self.get_matrix("cost", ass_class)
         tdist = self.get_matrix("dist", ass_class)
         return gcost - vot_inv *(tcost + param.dist_cost*tdist)
-        
+
+    def _calc_background_traffic(self, scen_id):
+        """Calculate background traffic (buses)."""
+        emmebank = self.emme_modeller.emmebank
+        scen = emmebank.scenario(scen_id)
+        netcalc = self.emme_modeller.tool(
+            "inro.emme.network_calculation.network_calculator")
+        # Reset @vm1 to zero
+        netw_spec = {
+            "type": "NETWORK_CALCULATION",
+            "selections": {
+                "transit_line": "all",
+            },
+            "expression": "0",
+            "result": "@vm1",
+            "aggregation": None,
+        }
+        netcalc(netw_spec, scen)
+        # Calculate number of line departures per hour
+        netw_spec = {
+            "type": "NETWORK_CALCULATION",
+            "selections": {
+                "transit_line": "hdw=1,900",
+            },
+            "expression": "60/hdw",
+            "result": "@vm1",
+            "aggregation": None,
+        }
+        netcalc(netw_spec, scen)
+        # Reset @vm to zero
+        netw_spec = {
+            "type": "NETWORK_CALCULATION",
+            "selections": {
+                "link": "all",
+            },
+            "expression": "0",
+            "result": "@vm",
+            "aggregation": None,
+        }
+        netcalc(netw_spec, scen)
+        # Calculate number of link departures per hour
+        netw_spec = {
+            "type": "NETWORK_CALCULATION",
+            "selections": {
+                "link": "all",
+                "transit_line": "all"
+            },
+            "expression": "@vm1",
+            "result": "@vm",
+            "aggregation": "+",
+        }
+        netcalc(netw_spec, scen)
+        # Reset ul3 to zero
+        netw_spec = {
+            "type": "NETWORK_CALCULATION",
+            "selections": {
+                "link": "all",
+            },
+            "expression": "0",
+            "result": "ul3",
+            "aggregation": None,
+        }
+        netcalc(netw_spec, scen)
+        # Set ul3 to @vm for links without bus lane
+        netw_spec = {
+            "type": "NETWORK_CALCULATION",
+            "selections": {
+                "link": "vdf=1,5",
+            },
+            "expression": "@vm",
+            "result": "ul3",
+            "aggregation": None,
+        }
+        netcalc(netw_spec, scen)
+
     def _calc_road_cost(self, scen_id):
         """Calculate road charges and driving costs for one scenario."""
         self.logger.info("Calculates road charges for scenario "
@@ -220,7 +296,11 @@ class EmmeAssignmentModel:
                 truck.spec,
                 van.spec,
             ],
-            "background_traffic": None,
+            "background_traffic": {
+                "link_component": "ul3",
+                "turn_component": None,
+                "add_transit_vehicles": False,
+            },
             "performance_settings": param.performance_settings,
             "stopping_criteria": stopping_criteria,
         }
@@ -271,8 +351,8 @@ class EmmeAssignmentModel:
             "inro.emme.traffic_assignment.standard_traffic_assignment")
         bike_assignment(specification=spec,  
                         scenario=scen)
-        stoch_bike_assignment = self.emme_modeller.tool(
-            "inro.emme.traffic_assignment.stochastic_traffic_assignment")
+        # stoch_bike_assignment = self.emme_modeller.tool(
+            # "inro.emme.traffic_assignment.stochastic_traffic_assignment")
         # stoch_bike_assignment(traffic_assignment_spec=spec, 
                         # dist_par=param.bike_dist, 
                         # replications=10, 
@@ -282,6 +362,27 @@ class EmmeAssignmentModel:
     
     def _calc_boarding_penalties(self, scen_id):
         """Calculate boarding penalties for transit assignment."""
+        emmebank = self.emme_modeller.emmebank
+        scenario = emmebank.scenario(scen_id)
+        # Definition of line specific boarding penalties
+        netw_specs = []
+        # Bus
+        for mode in param.boarding_penalty:
+            netw_specs.append({
+                "type": "NETWORK_CALCULATION",
+                "selections": {
+                    "transit_line": "mode=" + mode,
+                },
+                "expression": str(param.boarding_penalty[mode]),
+                "result": "ut3",
+                "aggregation": None,
+            })
+        netcalc = self.emme_modeller.tool(
+            "inro.emme.network_calculation.network_calculator")
+        netcalc(netw_specs, scenario)
+        
+    def _assign_transit(self, scen_id):
+        """Perform transit assignment for one scenario."""
         emmebank = self.emme_modeller.emmebank
         scenario = emmebank.scenario(scen_id)
         network = scenario.get_network()
@@ -341,27 +442,6 @@ class EmmeAssignmentModel:
                 # Estimated waiting time addition caused by headway deviation
                 segment["@wait_time_dev"] = headway_sd**2 / (2*line.headway)
         scenario.publish_network(network)
-        # Definition of line specific boarding penalties
-        netw_specs = []
-        # Bus
-        for mode in param.boarding_penalty:
-            netw_specs.append({
-                "type": "NETWORK_CALCULATION",
-                "selections": {
-                    "transit_line": "mode=" + mode,
-                },
-                "expression": str(param.boarding_penalty[mode]),
-                "result": "ut3",
-                "aggregation": None,
-            })
-        netcalc = self.emme_modeller.tool(
-            "inro.emme.network_calculation.network_calculator")
-        netcalc(netw_specs, scenario)
-        
-    def _assign_transit(self, scen_id):
-        """Perform transit assignment for one scenario."""
-        emmebank = self.emme_modeller.emmebank
-        scenario = emmebank.scenario(scen_id)
         # Definition of transition rules: all modes are allowed
         transitions = []
         for mode in param.transit_modes:
