@@ -5,6 +5,7 @@ import numpy
 import omx
 import os
 from parameters import emme_scenario, demand_share
+from emme_context import EmmeContext
 
 logging.basicConfig(format='%(asctime)s %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
@@ -14,7 +15,9 @@ project_dir = os.path.join(script_dir, "..")
 for file_name in os.listdir(project_dir):
     if file_name.endswith(".emp"):
         empfile = os.path.join(project_dir, file_name)
-ass_model = ass.EmmeAssignmentModel(empfile)
+
+emme_context = EmmeContext(empfile)
+ass_model = ass.EmmeAssignmentModel(emme_context)
 dtm = dt.DepartureTimeModel(ass_model)
 nr_zones = len(ass_model.get_zone_numbers())
 car_matrix = numpy.arange(nr_zones**2).reshape(nr_zones, nr_zones)

@@ -1,32 +1,19 @@
 import os
 import logging
-import inro.emme.desktop.app as _app
-import inro.modeller as _m
 import parameters as param
 from assignment_model import AssignmentModel
 from datatypes.car import Car, PrivateCar
 from datatypes.journey_level import JourneyLevel
 
 class EmmeAssignmentModel(AssignmentModel):
-    def __init__(self, filepath):
-        self.logger = logging.getLogger()
-        self.logger.info("Starting Emme...")
-        emme_desktop = _app.start_dedicated(
-            project=filepath, 
-            visible=False, 
-            user_initials="HSL"
-        )
-        sh = logging.StreamHandler(stream=self)
-        self.logger.addHandler(sh)
-        self.emme_modeller = _m.Modeller(emme_desktop)
-        self.logger.info("Emme started.")
-        self.path = os.path.dirname(self.emme_modeller.emmebank.path)
-        create_matrix = self.emme_modeller.tool(
-            "inro.emme.data.matrix.create_matrix")
+    def __init__(self, emme_context):
+        self.emme_modeller = emme_context.modeller
+        self.emme = emme_context
+        
         for mtx_type in param.emme_mtx:
             mtx = param.emme_mtx[mtx_type]
             for ass_class in mtx:
-                create_matrix(
+                self.emme.create_matrix(
                     matrix_id=mtx[ass_class]["id"],
                     matrix_name=mtx_type+"_"+ass_class,
                     matrix_description=mtx[ass_class]["description"],
@@ -38,26 +25,9 @@ class EmmeAssignmentModel(AssignmentModel):
             self._calc_background_traffic(param.emme_scenario[time_period])
         self._specify()
     
-    def write(self, message):
-        """Write to logbook."""
-        # _m.logbook_write(message)
-        try:
-            self.cm.__exit__(None, None, None)
-        except AttributeError:
-            pass
-        # Logbook_trace returns a content manager that can be used to create 
-        # hierarchies. By entering the cm, everything that Emme itself writes
-        # to the logbook will be nested underneath this logbook entry.
-        self.cm = _m.logbook_trace(message)
-        self.cm.__enter__()
-        
-    def flush(self):
-        """Flush the logbook (i.e., do nothing)."""
-        pass
-    
     def assign(self, time_period, matrices):
         """Assign cars, bikes and transit for one time period."""
-        self.logger.info("Assignment starts...")
+        self.emme.logger.info("Assignment starts...")
         self.set_matrices(matrices)
         scen_id = param.emme_scenario[time_period]
         self._assign_cars(scen_id, param.stopping_criteria_coarse)
@@ -198,7 +168,7 @@ class EmmeAssignmentModel(AssignmentModel):
 
     def _calc_road_cost(self, scen_id):
         """Calculate road charges and driving costs for one scenario."""
-        self.logger.info("Calculates road charges for scenario "
+        self.emme.logger.info("Calculates road charges for scenario "
                         + str(scen_id))
         emmebank = self.emme_modeller.emmebank
         scenario = emmebank.scenario(scen_id)
@@ -379,23 +349,23 @@ class EmmeAssignmentModel(AssignmentModel):
         """Perform car_work traffic assignment for one scenario."""
         emmebank = self.emme_modeller.emmebank
         scenario = emmebank.scenario(scen_id)
-        function_file = os.path.join(self.path, param.func_car)
+        function_file = os.path.join(self.emme.path, param.func_car) # TODO refactor paths out from here
         process = self.emme_modeller.tool(
             "inro.emme.data.function.function_transaction")
         process(function_file)
-        self.logger.info("Car assignment started...")
+        self.emme.logger.info("Car assignment started...")
         self.car_spec["stopping_criteria"] = stopping_criteria
         car_assignment = self.emme_modeller.tool(
             "inro.emme.traffic_assignment.sola_traffic_assignment")
         car_assignment(self.car_spec, scenario)
-        self.logger.info("Car assignment performed for scenario " 
+        self.emme.logger.info("Car assignment performed for scenario " 
                         + str(scen_id))
     
     def _assign_bikes(self, scen_id, length_mat_id, length_for_links, link_vol):
         """Perform bike traffic assignment for one scenario."""
         emmebank = self.emme_modeller.emmebank
         scen = emmebank.scenario(scen_id)
-        function_file = os.path.join(self.path, param.func_bike)
+        function_file = os.path.join(self.emme.path, param.func_bike)  # TODO refactor paths out from here
         process = self.emme_modeller.tool(
             "inro.emme.data.function.function_transaction")
         process(function_file)
@@ -426,7 +396,7 @@ class EmmeAssignmentModel(AssignmentModel):
             "aggregation": None,
         }
         netcalc(netw_spec, scen)
-        self.logger.info("Bike assignment started")
+        self.emme.logger.info("Bike assignment started")
         bike_assignment = self.emme_modeller.tool(
             "inro.emme.traffic_assignment.standard_traffic_assignment")
         bike_assignment(specification=spec,  
@@ -437,7 +407,7 @@ class EmmeAssignmentModel(AssignmentModel):
                         # dist_par=param.bike_dist, 
                         # replications=10, 
                         # scenario=scen)
-        self.logger.info("Bike assignment performed for scenario "
+        self.emme.logger.info("Bike assignment performed for scenario "
                         + str(scen_id))
     
     def _calc_boarding_penalties(self, scen_id):
@@ -467,7 +437,7 @@ class EmmeAssignmentModel(AssignmentModel):
         scenario = emmebank.scenario(scen_id)
         network = scenario.get_network()
         # Calculation of cumulative line segment travel time and speed
-        self.logger.info("Calculates cumulative travel times for scenario "
+        self.emme.logger.info("Calculates cumulative travel times for scenario "
                          + str(scen_id))
         for line in network.transit_lines():
             cumulative_length = 0
@@ -527,21 +497,21 @@ class EmmeAssignmentModel(AssignmentModel):
         """Perform transit assignment for one scenario."""
         emmebank = self.emme_modeller.emmebank
         scenario = emmebank.scenario(scen_id)
-        self.logger.info("Transit assignment started")
+        self.emme.logger.info("Transit assignment started")
         transit_assignment = self.emme_modeller.tool(
             "inro.emme.transit_assignment.extended_transit_assignment")
         transit_assignment(self.transit_spec, scenario)
         matrix_results = self.emme_modeller.tool(
             "inro.emme.transit_assignment.extended.matrix_results")
         matrix_results(self.transit_result_spec, scenario)
-        self.logger.info("Transit assignment performed for scenario " 
+        self.emme.logger.info("Transit assignment performed for scenario " 
                         + str(scen_id))
 
     def _assign_congested_transit(self, scen_id):
         """Perform congested transit assignment for one scenario."""
         emmebank = self.emme_modeller.emmebank
         scenario = emmebank.scenario(scen_id)
-        self.logger.info("Congested transit assignment started")
+        self.emme.logger.info("Congested transit assignment started")
         congested_assignment = self.emme_modeller.tool(
             "inro.emme.transit_assignment.congested_transit_assignment")
         congested_assignment(transit_assignment_spec=self.transit_spec, 
@@ -552,6 +522,6 @@ class EmmeAssignmentModel(AssignmentModel):
         matrix_results = self.emme_modeller.tool(
             "inro.emme.transit_assignment.extended.matrix_results")
         matrix_results(self.transit_result_spec, scenario)
-        self.logger.info("Transit assignment performed for scenario " 
+        self.emme.logger.info("Transit assignment performed for scenario " 
                         + str(scen_id))
         
