@@ -1,4 +1,4 @@
-*.mac
+*vscode*
 *.pyc
 *.doc
 *.docx
@@ -27,7 +27,6 @@
 *.shp
 *.shx
 *.omx
-*.in
 *.gfsum
 *.old
 usemacro_*

@@ -1,0 +1,32 @@
+~# *** tee_luokittelumuuttujat.mac
+~#
+~# Makro tekee havainnollistuksissa hyodyllisia extra-attribuutteja (TE 25.9.2017)
+~# Muista ajaa joka skenaarioon
+~# ~<tee_luokittelumuuttujat.mac
+~# 
+ 2.42
+ 2
+ 2 \linkkimuuttuja
+ @kunc
+ kunnan kelakoodi
+ 0
+~#
+ 2
+ 2 \linkkimuuttuja
+ @lvari
+ linkin varikoodi
+ 0
+~#
+ 2
+ 2 \linkkimuuttuja
+ @neli
+ nelialuekoodi (kuten gc)
+ 0
+~#
+ 2
+ 1 \solmumuuttuja
+ @sij16
+ sijoittelualue 2016
+ 0
+~#
+ q

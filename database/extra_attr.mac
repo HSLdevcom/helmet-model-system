@@ -1,0 +1,19 @@
+~# *** extra_attr.mac
+~#
+~# Makro tekee HELMET 2.5:n tarvitsemat extra-attribuutit ajamalla ne luovat makrot
+~# nykyisessa skenaariossa
+~# WSP/ARa 3.6.2014, HSL/TE 18.7.2014, HSL/TE 10.12.2014, HSL/TE 5.5.2017
+~#
+~<tee_luokittelumuuttujat.mac
+~<tee_ruuhkamaksumuuttujat.mac
+~<tee_sijoitteluapumuuttujat.mac
+~<tee_tavaraliikennemuuttujat.mac
+~<tee_vuoromaaramuuttujat.mac
+~<tee_vuorovalimuuttujat.mac
+~#
+ 2.42
+ 5
+~?q=2
+ 1
+ q
+~#

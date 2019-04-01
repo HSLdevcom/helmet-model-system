@@ -1,0 +1,27 @@
+c Emme Module:    2.01(v15397)  Date: 17-03-22 08:59   User: E065/HSL/HRT...meq
+c Project:        UUSI EMMEVERKKO 2016                                        
+c Scenario 1022:  Nykytila S2017 21.3.2017                                    
+c
+c TE 6.11.2018 vaihdettu fillarisijoittelua varten mode type c 1-->4 ja f 3-->1
+c
+t modes init
+c** a c 'Auto      ' 1   1   0.00   0.00   0.00   0.00
+a c 'Auto      ' 4   1
+a v 'Pakettiaut' 4   1
+a k 'Kuorma-aut' 4   1
+a y 'KA peravau' 4   1
+a b 'HSL-bussi ' 2   1
+a g 'HSL-runkob' 2   1
+a d 'Muu bussi ' 2   1
+a e 'Pikavuoro ' 2   1
+a m 'Metro     ' 2   1
+a r 'HSL-juna  ' 2   1
+a j 'Muu juna  ' 2   1
+a t 'Ratikka   ' 2   1
+a p 'Pikaratikk' 2   1
+a w 'Vesiliiken' 2   1
+a a 'Kavely    ' 3   1   0.00   0.00   0.00   0.00         5.00
+a s 'Ulkokavely' 3   1   0.00   0.00   0.00   0.00         5.00
+c** a f 'Polkupyora' 3   1   0.00   0.00   0.00   0.00        17.00
+a f 'Polkupyora' 1   1   0.00   0.00   0.00   0.00
+
