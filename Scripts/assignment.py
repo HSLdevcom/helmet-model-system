@@ -4,6 +4,8 @@ import inro.emme.desktop.app as _app
 import inro.modeller as _m
 import parameters as param
 from assignment_model import AssignmentModel
+from datatypes.car import Car, PrivateCar
+from datatypes.journey_level import JourneyLevel
 
 class EmmeAssignmentModel:
     def __init__(self, filepath):
@@ -554,96 +556,3 @@ class EmmeAssignmentModel:
                         + str(scen_id))
         
 AssignmentModel.register(EmmeAssignmentModel)
-
-class Car:
-    def __init__(self, ass_class, value_of_time_inv, 
-                 od_travel_times=None, link_costs="@rumsi"):
-        self.spec = {
-            "mode": param.assignment_mode[ass_class],
-            "demand": param.emme_mtx["demand"][ass_class]["id"],
-            "generalized_cost": {
-                "link_costs": link_costs,
-                "perception_factor": value_of_time_inv,
-            },
-            "results": {
-                "link_volumes": param.link_volumes[ass_class],
-                "turn_volumes": None,
-                "od_travel_times": {
-                    "shortest_paths": od_travel_times
-                }
-            },
-            "path_analyses": []
-        }
-    
-    def add_analysis (self, link_component, od_values):
-        analysis = PathAnalysis(link_component, od_values)
-        self.spec["path_analyses"].append(analysis.spec)
-
-class PrivateCar (Car):
-    def __init__(self, ass_class, value_of_time_inv):
-        od_travel_times = param.emme_mtx["gen_cost"][ass_class]["id"]
-        Car.__init__(self, ass_class, value_of_time_inv, od_travel_times)
-        self.add_analysis("length", param.emme_mtx["dist"][ass_class]["id"])
-        self.add_analysis("@ruma", param.emme_mtx["cost"][ass_class]["id"])
-        
-class PathAnalysis:
-    def __init__(self, link_component, od_values):
-        self.spec = {
-            "link_component": link_component,
-            "turn_component": None,
-            "operator": "+",
-            "selection_threshold": {
-                "lower": None,
-                "upper": None,
-            },
-            "path_to_od_composition": {
-                "considered_paths": "ALL",
-                "multiply_path_proportions_by": {
-                    "analyzed_demand": False,
-                    "path_value": True,
-                }
-            },
-            "analyzed_demand": None,
-            "results": {
-                "selected_link_volumes": None,
-                "selected_turn_volumes": None,
-                "od_values": od_values,
-            },
-        }
-
-class JourneyLevel:
-    def __init__(self, boarded):
-        if boarded:
-            description = "Boarded at least once"
-            dest_reachable = True
-            boarding_penalty = {
-                "penalty": param.transfer_penalty,
-                "perception_factor": 1,
-            }
-        else:
-            description = "Not boarded yet"
-            dest_reachable = False
-            boarding_penalty = None
-        # Definition of transition rules: all modes are allowed
-        transitions = []
-        for mode in param.transit_modes:
-            transitions.append({
-                "mode": mode,
-                "next_journey_level": 1
-            })
-        self.spec = {
-            "description": description,
-            "destinations_reachable": dest_reachable,
-            "transition_rules": transitions,
-            "boarding_time": {
-                "global": boarding_penalty,
-                "at_nodes": None,
-                "on_lines": {
-                    "penalty": "ut3",
-                    "perception_factor": 1
-                },
-                "on_segments": param.extra_waiting_time,
-            },
-            "boarding_cost": None,
-            "waiting_time": None
-        }
