@@ -84,9 +84,14 @@ emme_scenario = {
     "pt": 22,
     "iht": 23,
 }
+assignment_class = {
+    "hw": "car_work",
+    "hs": "car_leisure",
+    "ho": "car_leisure",
+}
 bike_scenario = 19
 car_mode = 'c'
-mode = {
+assignment_mode = {
     "car_work": 'c',
     "car_leisure": 'c',
     "trailer_truck": 'y',
@@ -242,37 +247,78 @@ emme_mtx = {
 }
 # Demand shares for different time periods
 demand_share = {
-    "car_work": {
-        "aht": 0.1,
-        "pt": 0.05,
-        "iht": 0.1,
+    "hw": {
+        "car": {
+            "aht": (0.1, 0.01),
+            "pt": (0.01, 0.01),
+            "iht": (0.01, 0.1),
+        },
+        "transit": {
+            "aht": (0.1, 0.01),
+            "pt": (0.01, 0.01),
+            "iht": (0.01, 0.1),
+        },
+        "bike": {
+            "aht": (0.1, 0.01),
+            "pt": (0.01, 0.01),
+            "iht": (0.01, 0.1),
+        },
     },
-    "car_leisure": {
-        "aht": 0.1,
-        "pt": 0.05,
-        "iht": 0.1,
+    "hs": {
+        "car": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
+        "transit": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
+        "bike": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
     },
-    "trailer_truck": {
-        "aht": 0.1,
-        "pt": 0.05,
-        "iht": 0.1,
+    "ho": {
+        "car": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
+        "transit": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
+        "bike": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
     },
-    "truck": {
-        "aht": 0.1,
-        "pt": 0.05,
-        "iht": 0.1,
-    },
-    "van": {
-        "aht": 0.1,
-        "pt": 0.05,
-        "iht": 0.1,
-    },
-    "transit": {
-        "aht": 0.1,
-        "pt": 0.05,
-        "iht": 0.1,
+    "freight": {
+        "trailer_truck": {
+            "aht": (0.1, 0.1),
+            "pt": (0.1, 0.1),
+            "iht": (0.1, 0.1),
+        },
+        "truck": {
+            "aht": (0.1, 0.1),
+            "pt": (0.1, 0.1),
+            "iht": (0.1, 0.1),
+        },
+        "van": {
+            "aht": (0.1, 0.1),
+            "pt": (0.1, 0.1),
+            "iht": (0.1, 0.1),
+        },
     },
 }
+# This needs to be changed
+impedance_share = demand_share
+# Link attribute for volumes
 link_volumes = {
     "car_work": None,
     "car_leisure": None,
@@ -281,164 +327,24 @@ link_volumes = {
     "van": "@pa",
 }
 # Specification for the transit assignment
-trass_spec = {
-    "type": "EXTENDED_TRANSIT_ASSIGNMENT",
-    "modes": transit_assignment_modes,
-    "demand": emme_mtx["demand"]["transit"]["id"],
-    "waiting_time": {
-        "headway_fraction": 0.5,
-        "effective_headways": "hdw",
-        "spread_factor": 1,
-        "perception_factor": 1.5
-    },
-    # Boarding time is defined for each journey level separately,
-    # so here we just set the default to zero.
-    "boarding_time": {
-        "global": {
-            "penalty": 0,
-            "perception_factor": 1,
-        },
-        "at_nodes": None,
-        "on_lines": None,
-        "on_segments": None,
-    },
-    "boarding_cost": {
-        "global": {
-            "penalty": 0,
-            "perception_factor": 1,
-        },
-        "at_nodes": None,
-        "on_lines": None,
-        "on_segments": None,
-    },
-    "in_vehicle_time": {
-        "perception_factor": 1
-    },
-    "in_vehicle_cost": None,
-    "aux_transit_time": {
-        "perception_factor": 1.75
-    },
-    "aux_transit_cost": None,
-    "flow_distribution_at_origins": {
-        "choices_at_origins": "OPTIMAL_STRATEGY",
-        "fixed_proportions_on_connectors": None
-    },
-    "flow_distribution_at_regular_nodes_with_aux_transit_choices": {
-        "choices_at_regular_nodes": "OPTIMAL_STRATEGY"
-    },
-    "flow_distribution_between_lines": {
-        "consider_total_impedance": False
-    },
-    "connector_to_connector_path_prohibition": None,
-    "od_results": {
-        "total_impedance": None
-    },
-    # The two journey levels are identical, except that at the second
-    # level an extra boarding penalty is implemented,
-    # hence a transfer penalty. Walk only trips are not allowed.
-    "journey_levels": [
-        {
-            "description": "Not boarded yet",
-            "destinations_reachable": False,
-            "transition_rules": None,
-            "boarding_time": {
-                "global": None,
-                "at_nodes": None,
-                "on_lines": {
-                    "penalty": "ut3",
-                    "perception_factor": 1
-                },
-                "on_segments": {
-                    "penalty": "@wait_time_dev",
-                    "perception_factor": 3.5
-                },
-            },
-            "boarding_cost": None,
-            "waiting_time": None
-        },
-        {
-            "description": "Boarded at least once",
-            "destinations_reachable": True,
-            "transition_rules": None,
-            "boarding_time": {
-                "global": None,
-                "at_nodes": None,
-                "on_lines": {
-                    "penalty": "ut3",
-                    "perception_factor": 1
-                },
-                "on_segments": {
-                    "penalty": "@wait_time_dev",
-                    "perception_factor": 3.5
-                }
-            },
-            "boarding_cost": {
-                "global": {
-                    "penalty": 5,
-                    "perception_factor": 1,
-                },
-                "at_nodes": None,
-                "on_lines": None,
-                "on_segments": None,                    
-            },
-            "waiting_time": None
-        }
-    ],
-    "performance_settings": performance_settings,
+transfer_penalty = 5
+extra_waiting_time = {
+    "penalty": "@wait_time_dev",
+    "perception_factor": 3.5
 }
-# Bike assignment specification
-biass_spec = {
-    "type": "STANDARD_TRAFFIC_ASSIGNMENT",
-    "classes": [ 
-        {
-            "mode": bike_mode,
-            "demand": emme_mtx["demand"]["bike"]["id"],
-            "generalized_cost": None,
-            "results": {
-                 "od_travel_times": {
-                     "shortest_paths": emme_mtx["time"]["bike"]["id"],
-                 },
-                 "link_volumes": None,
-                 "turn_volumes": None,
-            },
-            "analysis": {
-                "analyzed_demand": None,
-                "results": {
-                    "od_values": None,
-                    "selected_link_volumes": None,
-                    "selected_turn_volumes": None,
-                },
-            },
-        }
-    ],
-    "path_analysis": {
-        "link_component": "ul3",
-        "turn_component": None,
-        "operator": "+",
-        "selection_threshold": {
-            "lower": None,
-            "upper": None,
-        },
-        "path_to_od_composition": {
-            "considered_paths": "ALL",
-            "multiply_path_proportions_by": {
-                "analyzed_demand": False,
-                "path_value": True,
-            }
-        },
-    },
-    "background_traffic": None,
-    "stopping_criteria": {
-        "max_iterations": 1,
-        "best_relative_gap": 1,
-        "relative_gap": 1,
-        "normalized_gap": 1,
-    },
-    "performance_settings": performance_settings
-}  
+waiting_time = {
+    "headway_fraction": 0.5,
+    "effective_headways": "hdw",
+    "spread_factor": 1,
+    "perception_factor": 1.5
+}
+aux_transit_time = {
+    "perception_factor": 1.75
+}
 # Stochastic bike assignment distribution
 bike_dist = {
     "type": "UNIFORM", 
     "A": 0.5, 
     "B": 1.5,
 }
+background_traffic = "ul3"
