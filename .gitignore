@@ -26,7 +26,6 @@
 *.qpj
 *.shp
 *.shx
-*.omx
 *.gfsum
 *.old
 usemacro_*
