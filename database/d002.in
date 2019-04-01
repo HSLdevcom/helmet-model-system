@@ -1,0 +1,117 @@
+Non-graphic terminal (24x80 FF)
+
+
+
+
+NO GIN!!
+NO GRAPHICS ON THIS TERMINAL!!
+-->
+0,1,0,0,24,4800,0,0,0
+Emtool
+[H[2J
+[H[2J
+[H[2J
+:
+^Z
+;
+-->
+0,5,169886971,16,50,9600,0,0,0
+Emtool (colored background)
+TG!11000TG!10E0E0E0:[H[2J
+[H[2J
+TG!10E8E0E0[H[2J
+TG!10D0E0E0:
+^Z
+TG!11?00TG!10E0E0E0:
+-->
+0,5,169886971,16,50,9600,0,0,0
+Emtool mono (hardware chars)
+[H[2J
+[H[2J
+[H[2J
+:
+^Z
+;
+-->
+0,5,169870587,5,50,9600,0,0,0
+Emtool graphtext
+[H[2J
+[H[2J
+[H[2J
+:
+^Z
+;
+-->
+0,5,169895163,16,50,9600,0,0,0
+Emtool high resolution
+[H[2J
+[H[2J
+[H[2J
+:
+^Z
+;
+-->
+0,5,169887483,16,50,9600,0,0,0
+Emtool (non-graphic report /40l)
+[H[2J
+[H[2J
+[H[2J
+
+^Z
+;
+-->
+0,5,169886971,16,40,9600,0,0,0
+ASCII 60 lines/page (FF)
+
+
+
+
+
+
+
+0,2,0,0,60,0,0,0,0
+ASCII 80 lines/page (FF)
+
+
+
+
+
+
+
+0,2,0,0,80,0,0,0,0
+EPSON (8lpi 17cpi)
+
+
+
+0
+
+
+
+0,2,0,0,80,0,0,0,0
+HP Laserjet (8lpi/15cpi)
+
+
+
+ (s0p15H&l6C
+
+
+ 
+0,2,0,0,79,0,0,0,0
+ASCII (no page / no header)
+
+
+
+
+
+
+
+0,2,0,0,999,0,0,0,0
+ASCII (no page / header)
+
+
+
+
+
+
+
+0,2,0,0,9990,0,0,0,0

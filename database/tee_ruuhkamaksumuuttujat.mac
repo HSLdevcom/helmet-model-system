@@ -1,0 +1,57 @@
+~# *** tee_ruuhkamaksumuuttujat.mac
+~#
+~# Makro tekee ruuhkamaksumuuttujat (extra-attribuutit) @hinta, @ruma, @rumsi, @rumpi
+~# Muista ajaa joka skenaarioon
+~# ~<tee_ruuhkamaksumuuttujat.mac
+~# 
+ 2.42
+ 2
+ 2 \linkkimuuttuja
+ @hinta
+ ruuhkamaksu euroa per km
+ 0
+~#
+ 2
+ 2 \linkkimuuttuja
+ @ruma
+ ruuhkamaksu euroa per linkki
+ 0
+~#
+ 2
+ 2 \linkkimuuttuja
+ @rumpi
+ ruuhkamaksu pituudeksi muutettuna (km)
+ 0
+~#
+ 2
+ 2 \linkkimuuttuja
+ @rumsi
+ pituus ja ruuhkamaksu painotettuna (km)
+ 0
+~# TE lisannyt 5.5.2017, jotta tietulleja voidaan kasitella
+ 2
+ 2
+ @mvyo
+ maksuvyohyke
+ 0 
+~#
+ 2
+ 2 \linkkimuuttuja
+ @hinah
+ ruuhkamaksu euroa per km aht
+ 0
+~#
+ 2
+ 2 \linkkimuuttuja
+ @hinih
+ ruuhkamaksu euroa per km iht
+ 0
+~#
+ 2
+ 2 \linkkimuuttuja
+ @hinpt
+ ruuhkamaksu euroa per km pt
+ 0
+~#
+ q
+

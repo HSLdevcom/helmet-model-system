@@ -1,0 +1,19 @@
+~# *** aja_extra_attr_HM31.mac
+~#
+~# Makro tekee HELMET 3.1:n tarvitsemat extra-attribuutit ajamalla ne luovat makrot
+~# Extra-attribuutit luodaan skenaarioihin 19 ja 21-23
+~# WSP/ARa 3.6.2014, HSL/TE 18.2.2019
+~#
+s=21
+~<extra_attr.mac
+~#
+s=22
+~<extra_attr.mac
+~#
+s=23
+~<extra_attr.mac
+~#
+s=19
+~<extra_attr_pyora.mac
+~#
+~/ kaikki makrot extra_attr_HM31.mac ajettu

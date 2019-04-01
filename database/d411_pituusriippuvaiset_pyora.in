@@ -1,0 +1,16 @@
+t  functions init
+c
+c lisatty pyoraliikenteen funktiot (TE 2.11.2018)
+c uusittu JW 17.12.2018
+c 
+a fd70  = length*(60/19)
+a fd71  = length*(60/17)
+a fd72  = length*(60/17)
+a fd73  = length*(60/16)
+a fd74  = length*(60/15)
+a fd75  = length*(60/15)
+a fd76  = length*(60/12)
+a fd77  = length*(60/10)
+a fd78  = length*(60/12)
+a fd99  = length*(60/12)
+c
