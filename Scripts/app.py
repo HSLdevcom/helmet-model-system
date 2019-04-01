@@ -1,7 +1,7 @@
 import logging
 import os
 import numpy
-import assignment as ass
+from test_assignment_model import TestAssignmentModel
 import departure_time as dt
 
 logging.basicConfig(format='%(asctime)s %(message)s',
@@ -10,7 +10,7 @@ logging.basicConfig(format='%(asctime)s %(message)s',
 script_dir = os.path.dirname(os.path.realpath('__file__'))
 project_dir = os.path.join(script_dir, "..")
 matrix_dir = os.path.join(project_dir, "Matrices")
-ass_model = ass.TestAssignmentModel(matrix_dir)
+ass_model = TestAssignmentModel(matrix_dir)
 dtm = dt.DepartureTimeModel(ass_model)
 # nr_zones = len(ass_model.get_zone_numbers())
 car_matrix = numpy.arange(6).reshape(2, 3)
