@@ -2,9 +2,9 @@ import os
 import omx
 import numpy
 import parameters as param
-from assignment_model import AssignmentModel
+from assignment_model import AssignmentModel 
 
-class TestAssignmentModel:
+class TestAssignmentModel(AssignmentModel):
     def __init__(self, matrix_dir):
         self.path = matrix_dir
     
@@ -39,5 +39,3 @@ class TestAssignmentModel:
         mapping = costs_file.mapping("zone_number")
         costs_file.close()
         return mapping
-
-AssignmentModel.register(TestAssignmentModel)

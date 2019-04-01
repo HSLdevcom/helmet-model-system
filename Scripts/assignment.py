@@ -7,7 +7,7 @@ from assignment_model import AssignmentModel
 from datatypes.car import Car, PrivateCar
 from datatypes.journey_level import JourneyLevel
 
-class EmmeAssignmentModel:
+class EmmeAssignmentModel(AssignmentModel):
     def __init__(self, filepath):
         self.logger = logging.getLogger()
         self.logger.info("Starting Emme...")
@@ -555,4 +555,3 @@ class EmmeAssignmentModel:
         self.logger.info("Transit assignment performed for scenario " 
                         + str(scen_id))
         
-AssignmentModel.register(EmmeAssignmentModel)
