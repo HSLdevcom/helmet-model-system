@@ -2,7 +2,7 @@ import os
 import omx
 import numpy
 import parameters as param
-from assignment_model import AssignmentModel 
+from abstract_assignment import AssignmentModel 
 
 class TestAssignmentModel(AssignmentModel):
     def __init__(self, matrix_dir):

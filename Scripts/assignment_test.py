@@ -1,5 +1,5 @@
-import assignments.assignment as ass
-import assignments.departure_time as dt
+import assignment.emme_assignment as ass
+import assignment.departure_time as dt
 import logging
 import numpy
 import omx
@@ -15,7 +15,6 @@ project_dir = os.path.join(script_dir, "..")
 for file_name in os.listdir(project_dir):
     if file_name.endswith(".emp"):
         empfile = os.path.join(project_dir, file_name)
-
 emme_context = EmmeContext(empfile)
 ass_model = ass.EmmeAssignmentModel(emme_context)
 dtm = dt.DepartureTimeModel(ass_model)
