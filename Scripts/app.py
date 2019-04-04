@@ -1,8 +1,8 @@
 import logging
 import os
 import numpy
-from test_assignment_model import TestAssignmentModel
-import departure_time as dt
+from assignments.test_assignment_model import TestAssignmentModel
+import assignments.departure_time as dt
 
 logging.basicConfig(format='%(asctime)s %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',

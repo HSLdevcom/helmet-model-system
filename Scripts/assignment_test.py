@@ -1,11 +1,11 @@
-import assignment as ass
-import departure_time as dt
+import assignments.assignment as ass
+import assignments.departure_time as dt
 import logging
 import numpy
 import omx
 import os
 from parameters import emme_scenario, demand_share
-from emme_context import EmmeContext
+from emme.emme_context import EmmeContext
 
 logging.basicConfig(format='%(asctime)s %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
