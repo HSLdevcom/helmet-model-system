@@ -11,9 +11,9 @@ class TestAssignmentModel(AssignmentModel):
     def assign(self, time_period, matrices):
         """Get travel impedance matrices for one time period from files."""
         mtxs = {}
-        mtxs["time"] = self.get_matrices(time_period, "time")
-        mtxs["cost"] = self.get_matrices(time_period, "cost")
-        mtxs["dist"] = self.get_matrices(time_period, "dist")
+        mtxs["time"] = self.get_matrices("time", time_period)
+        mtxs["cost"] = self.get_matrices("cost", time_period)
+        mtxs["dist"] = self.get_matrices("dist", time_period)
         return mtxs
     
     def get_matrices(self, mtx_type, time_period):
