@@ -1,4 +1,4 @@
-import assignment as ass
+import test_assignment as ass
 import logging
 import numpy
 import openmatrix as omx

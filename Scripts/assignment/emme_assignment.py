@@ -1,7 +1,7 @@
 import os
 import logging
 import parameters as param
-from assignment_model import AssignmentModel
+from abstract_assignment import AssignmentModel
 from datatypes.car import Car, PrivateCar
 from datatypes.journey_level import JourneyLevel
 
