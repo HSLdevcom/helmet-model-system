@@ -1,5 +1,5 @@
 import os
-import omx
+import openmatrix as omx
 import numpy
 import parameters as param
 from abstract_assignment import AssignmentModel 
