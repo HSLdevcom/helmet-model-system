@@ -1,7 +1,7 @@
 import assignment as ass
 import logging
 import numpy
-import omx
+import openmatrix as omx
 import os
 from parameters import emme_scenario, demand_share, assignment_class, emme_mtx
 
