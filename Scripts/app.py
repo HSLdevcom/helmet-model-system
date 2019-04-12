@@ -3,6 +3,8 @@ import os
 import numpy
 from assignment.test_assignment import TestAssignmentModel
 import assignment.departure_time as dt
+from data_handling import ZoneData, MatrixData
+from demand.freight import FreightModel
 
 logging.basicConfig(format='%(asctime)s %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
@@ -13,7 +15,11 @@ script_dir = os.path.dirname(os.path.realpath('__file__'))
 project_dir = os.path.join(script_dir, "..")
 matrix_dir = os.path.join(project_dir, "Matrices")
 logger.info("Reading Matrices from " + str(matrix_dir))
-
+zdata_base = ZoneData()
+zdata_forecast = ZoneData()
+mdata = MatrixData()
+fm = FreightModel(zdata_base, zdata_forecast, mdata)
+fm.calc_freight_traffic("truck")
 ass_model = TestAssignmentModel(matrix_dir)
 dtm = dt.DepartureTimeModel(ass_model)
 # nr_zones = len(ass_model.get_zone_numbers())
