@@ -19,7 +19,8 @@ zdata_base = ZoneData()
 zdata_forecast = ZoneData()
 mdata = MatrixData()
 fm = FreightModel(zdata_base, zdata_forecast, mdata)
-fm.calc_freight_traffic("truck")
+trucks = fm.calc_freight_traffic("truck")
+trailer_trucks = fm.calc_freight_traffic("trailer_truck")
 ass_model = TestAssignmentModel(matrix_dir)
 dtm = dt.DepartureTimeModel(ass_model)
 # nr_zones = len(ass_model.get_zone_numbers())
@@ -36,11 +37,6 @@ demand = {
     "ho": {
         "car": car_matrix,
     },
-    "freight": {
-        "trailer_truck": car_matrix,
-        "truck": car_matrix,
-        "van": car_matrix,
-    },
 }
 
 logger.info("Adding demand and assigning")
@@ -48,6 +44,8 @@ logger.info("Adding demand and assigning")
 for purpose in demand:
     for mode in demand[purpose]:
         dtm.add_demand(purpose, mode, demand[purpose][mode])
+dtm.add_demand("freight", "truck", trucks)
+dtm.add_demand("freight", "trailer_truck", trailer_trucks)
 dtm.assign()
 
 logger.info("Done")
