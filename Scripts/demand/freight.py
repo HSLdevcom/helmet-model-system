@@ -32,20 +32,20 @@ class FreightModel:
         b = pandas.Series(parameters.trip_generation[mode])
         trucks = (b * zone_data).sum(1) + 0.001
         if mode == "truck":
-            garbage = 0.000125 * ( zone_data["population"] 
-                                + 0.2 * zone_data["workplaces"])
+            garbage = ( 0.000125 * zone_data["population"] 
+                      + 0.000025 * zone_data["workplaces"])
             trucks += garbage
             garbage_destination = 6
             trucks[garbage_destination] += garbage.sum()
         return trucks
 
     def fratar(self, prod, trips, max_iter = 10):
-        '''Performs fratar adjustment of matrix
+        """Perform fratar adjustment of matrix
         prod = Production target as array
         trips = Seed trip matrix
         max_iter (optional) = maximum iterations, default is 10
         Returns fratared trip matrix
-        '''
+        """
         #Run 2D balancing
         for _ in xrange(0, max_iter):
             origfac = prod / trips.sum(1)
@@ -55,7 +55,9 @@ class FreightModel:
         return trips
 
     def calibrate(self, b, n, s):
-        # Erotusmenetelma: P = (B-N)+S
-        # Osamaaramenetelma: P = (B/N)S
-        p = b / n * s
-        return p
+        """Calibrate a vector
+        b = true value for base
+        n = forecast for base
+        s = forecast to calibrate
+        """
+        return numpy.where(s < 5*b, s * b/n, s + 5*(b - n))
