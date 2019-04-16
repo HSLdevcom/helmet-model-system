@@ -7,7 +7,7 @@ verify_ssl = true
 
 [packages]
 pytest = "*"
-numpy = "~=1.9.3"
+numpy = "~=1.9"
 tables = ">=2.4"
 
 [requires]
