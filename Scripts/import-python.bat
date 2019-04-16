@@ -3,3 +3,5 @@
 @REM set PATH=%PATH%;%APPDATA%/Python/Scripts/;%EMME_PYTHON_PATH%
 set MY_PYTHON_PATH=C:/Python27/
 set PATH=%MY_PYTHON_PATH%;%MY_PYTHON_PATH%/Scripts/;%APPDATA%/Python/Scripts/;%PATH%
+@REM import dependencies.
+set PYTHONPATH=%PYTHONPATH%;./pythonlibs/
