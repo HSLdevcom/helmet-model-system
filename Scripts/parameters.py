@@ -348,3 +348,19 @@ bike_dist = {
     "B": 1.5,
 }
 background_traffic = "ul3"
+trip_generation = {
+    "truck": {
+        "population": 0.01,
+        "workplaces": 0.025,
+        "logistics": 0.35,
+        "industry": 0.035,
+        "shops": 0.05,
+    },
+    "trailer_truck": {
+        "population": None,
+        "workplaces": 0.005,
+        "logistics": 0.38,
+        "industry": 0.038,
+        "shops": 0.005,
+    }
+}
