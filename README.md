@@ -11,16 +11,30 @@ We have two execution environments:
 In both cases we're using Python version 2.7 because our final deployment target (EMME) supports only 2.7.
 Also the final prodution version is always run on Windows because EMME only supports windows.
 
-*Deployed production env*
+### Dependencies
+
+We have several external dependencies in our codebase, f.ex NumPy and OMX, etc. Importing these dependencies depend 
+on the environment (local-development or production). 
+
+
+*Deployed production env: EMME*
 
 In "Production-mode" we are using python library dependencies that come with EMME installation.
 Add ```%EMMEPATH%\Programs``` to your local PATH-variable to get access to these dependencies.
 At the moment user is not expected to install any software, other than the provided scripts in the [Scripts-folder](Scripts).
 
-*Local development env*
 
-In the development setup we're using *pipenv* to isolate our environment from the other python modules.
-intro to pipenv can be found from these links:
+*Local development env: Pipenv*
+
+In the development setup we're using two approaches to import the libraries:
+
+- part of the libraries are included as static depencies and are located in [./Scripts/pythonlibs/ folder](./Scripts/pythonlibs/). This is because they don't install very nicely from PyPi-public repositories.
+  - When developing locally you need to import the libraries to PYTHONPATH. 
+    - This can happen either by using the script [import-dev-dependencies.bat](./Scripts/import-dev-dependencies.bat)
+	- OR by using pipenv, which then loads the PYTHONPATH via the [.env file](./Scripts/.env)
+- Other more compatible libraries are installed via *pipenv*. Pipenv isolates our environment from the other global python modules and makes sure we don't break anything else with our setup.   
+
+Intro to pipenv can be found from these links:
 - https://docs.python-guide.org/dev/virtualenvs/
 - https://jcutrer.com/python/pipenv-pipfile
 
@@ -38,7 +52,7 @@ pip install --user pipenv
 
 ```   
 # First setup:
-pipenv --python 2.7 install
+pipenv --python 2.7 install --dev 
 # Once setup is done you can just run
 pipenv --python 2.7 sync
 ```
@@ -50,7 +64,7 @@ pipenv --python 2.7 install <your-new-library>
 ```
 
 
-### Create EMME Bank
+### For Production setup: Create EMME Bank
 
 - Open EMME Desktop application
 - Create new project named 'helmet-model-system' where the path should match your project name & path
@@ -65,9 +79,10 @@ our [Scripts-folder](Scripts) being one of those folders.
 We're using PyTest framework. Test are in [tests-folder](Scripts/tests) and can be invoked with
 
 ```   
-pipenv run pytest
+pipenv run pytest tests
 ```
 
+Remember to give the folder as parameter, otherwise pytest will run all the tests with the dependencies also.
 
 ## Running
 
@@ -87,7 +102,7 @@ pipenv run python assignment_test.py
 
 ## Licenses
 
-The dependencies included in this repository are licensed under their own terms.
+The dependencies included in this repository are licensed under their own terms:
 
 - Numpy: https://www.numpy.org/license.html
 - PyTables: https://github.com/PyTables/PyTables/blob/master/LICENSE.txt
