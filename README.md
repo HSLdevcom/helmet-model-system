@@ -5,11 +5,11 @@ This repository contains python files for Helmet 4.0 Model System. Source codes 
 ## Setup
 
 We have two execution environments:
-- deployed "production" environment 
-- local development environment 
+- deployed "production" environment
+- local development environment
 
 In both cases we're using Python version 2.7 because our final deployment target (EMME) supports only 2.7.
-Also the final prodution version is always run on Windows because EMME only supports windows. 
+Also the final prodution version is always run on Windows because EMME only supports windows.
 
 *Deployed production env*
 
@@ -50,7 +50,7 @@ pipenv --python 2.7 install <your-new-library>
 ```
 
 
-### Create EMME Bank 
+### Create EMME Bank
 
 - Open EMME Desktop application
 - Create new project named 'helmet-model-system' where the path should match your project name & path
@@ -85,3 +85,10 @@ cd Scripts
 pipenv run python assignment_test.py
 ```   
 
+## Licenses
+
+The dependencies included in this repository are licensed under their own terms.
+
+- Numpy: https://www.numpy.org/license.html
+- PyTables: https://github.com/PyTables/PyTables/blob/master/LICENSE.txt
+- OpenMatrix: https://github.com/osPlanning/omx-python/blob/master/LICENSE.TXT
