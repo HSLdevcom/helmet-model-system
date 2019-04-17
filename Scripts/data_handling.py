@@ -5,7 +5,7 @@ import pandas
 class MatrixData:
     def __init__(self):
         # Here we should actually set up a link to data files
-        self.base_demand = numpy.arange(9).reshape(3, 3)
+        self.base_demand = numpy.arange(49).reshape(7, 7)
     
     def get_data(self, mode):
         return self.base_demand

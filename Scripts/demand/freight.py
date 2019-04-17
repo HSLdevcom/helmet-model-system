@@ -35,7 +35,7 @@ class FreightModel:
             garbage = ( 0.000125 * zone_data["population"] 
                       + 0.000025 * zone_data["workplaces"])
             trucks += garbage
-            garbage_destination = 6
+            garbage_destination = 2792
             trucks[garbage_destination] += garbage.sum()
         return trucks
 
