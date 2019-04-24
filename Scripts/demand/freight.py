@@ -24,25 +24,25 @@ class FreightModel:
         # external_production = external_growth * external_base
         # production = numpy.append(production, external_production)
         zone_numbers = self.base_demand.get_zone_numbers()
-        pd_mtx = pandas.DataFrame(base_mtx, zone_numbers, zone_numbers)
-        ave1000 = pandas.DataFrame(0, zone_numbers, zone_numbers)
+        mtx = pandas.DataFrame(base_mtx, zone_numbers, zone_numbers)
+        prod = pandas.Series(production, zone_numbers)
+        # If forecast>5*base, destination choice is replaced by area average
+        cond = production_forecast < 5*production_base
         for i in xrange(0, 30):
             l = i * 1000
             u = l + 999
-            sum1000 = pd_mtx.loc[l:u].sum()
+            sum1000 = mtx.loc[l:u].sum().values
             scaling = 1 / max(sum1000.sum(), 1)
-            ave1000vector = sum1000 * scaling
-            ave1000.loc[l:u] += ave1000vector
-        # If forecast>5*base, destination choice is replaced by area average
-        cond = production_forecast < 5*production_base
-        base_mtx = numpy.where(cond, base_mtx, ave1000*production)
-        # The same check is done also for other axis
-        cond1 = cond.values[:, numpy.newaxis]
-        prod1 = production[:, numpy.newaxis]
-        ave1000T = ave1000.values.T
-        base_mtx = numpy.where(cond1, base_mtx, ave1000T*prod1)
+            ave1 = sum1000 * scaling
+            ave2 = ave1[:, numpy.newaxis]
+            cond1 = cond.loc[l:u]
+            cond2 = cond1[:, numpy.newaxis]
+            prod1 = prod.loc[l:u].values
+            prod2 = prod1[:, numpy.newaxis]
+            mtx.loc[l:u] = numpy.where(cond2, mtx.loc[l:u], ave1*prod2)
+            mtx.loc[:, l:u] = numpy.where(cond1, mtx.loc[:, l:u], ave2*prod1)
         # TODO Add harbour traffic!
-        demand = self.fratar(production, base_mtx)
+        demand = self.fratar(production, mtx.values)
         return demand
 
     def generate_trips(self, zone_data, mode):
