@@ -25,13 +25,14 @@ class FreightModel:
         # production = numpy.append(production, external_production)
         zone_numbers = self.base_demand.get_zone_numbers()
         pd_mtx = pandas.DataFrame(base_mtx, zone_numbers, zone_numbers)
-        ave1000 = pandas.DataFrame(1, zone_numbers, zone_numbers)
+        ave1000 = pandas.DataFrame(0, zone_numbers, zone_numbers)
         for i in xrange(0, 30):
             l = i * 1000
             u = l + 999
             sum1000 = pd_mtx.loc[l:u].sum()
             scaling = 1 / max(sum1000.sum(), 1)
-            ave1000.loc[l:u] = ave1000.loc[l:u] * sum1000 * scaling
+            ave1000vector = sum1000 * scaling
+            ave1000.loc[l:u] += ave1000vector
         # If forecast>5*base, destination choice is replaced by area average
         cond = production_forecast < 5*production_base
         base_mtx = numpy.where(cond, base_mtx, ave1000*production)
