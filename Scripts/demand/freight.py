@@ -42,18 +42,18 @@ class FreightModel:
             mtx.loc[l:u] = numpy.where(cond2, mtx.loc[l:u], ave1*prod2)
             mtx.loc[:, l:u] = numpy.where(cond1, mtx.loc[:, l:u], ave2*prod1)
         # TODO Add harbour traffic!
-        demand = self.fratar(production, mtx.values)
-        return demand
+        demand = self.fratar(production, mtx)
+        if mode == "truck":
+            b = parameters.garbage_generation
+            garbage = ( b["population"] * zone_data_forecast["population"] 
+                      + b["workplaces"] * zone_data_forecast["workplaces"])
+            demand[parameters.garbage_destination] += garbage
+            demand.loc[parameters.garbage_destination] += garbage
+        return demand.values
 
     def generate_trips(self, zone_data, mode):
         b = pandas.Series(parameters.trip_generation[mode])
         trucks = (b * zone_data).sum(1) + 0.001
-        if mode == "truck":
-            garbage = ( 0.000125 * zone_data["population"] 
-                      + 0.000025 * zone_data["workplaces"])
-            trucks += garbage
-            garbage_destination = 2792
-            trucks[garbage_destination] += garbage.sum()
         return trucks
 
     def fratar(self, prod, trips, max_iter = 10):
@@ -65,10 +65,10 @@ class FreightModel:
         """
         #Run 2D balancing
         for _ in xrange(0, max_iter):
-            origfac = prod / trips.sum(1)
-            trips = trips * origfac[:, numpy.newaxis]
-            destfac = prod / trips.sum(0)
-            trips = trips * destfac
+            origfac = prod / trips.sum("columns")
+            trips = trips.mul(origfac, "index")
+            destfac = prod / trips.sum("index")
+            trips = trips.mul(destfac, "columns")
         return trips
 
     def calibrate(self, b, n, s):
