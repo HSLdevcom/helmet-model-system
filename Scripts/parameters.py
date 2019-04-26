@@ -370,3 +370,4 @@ garbage_generation = {
 }
 garbage_destination = 2792
 trailers_prohibited = [5, 6]
+vector_calibration_threshold = 5

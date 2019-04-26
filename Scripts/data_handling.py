@@ -4,14 +4,21 @@ import pandas
 
 class MatrixData:
     def __init__(self):
-        # Here we should actually set up a link to data files
+        # TODO Here we should actually set up a link to data files
         self.base_demand = numpy.arange(25).reshape(5, 5)
     
     def get_data(self, mode):
         return self.base_demand
 
     def get_zone_numbers(self):
+        # TODO Get zone numbers from matrix file
         return [5, 6, 7, 2792, 16001]
+
+    def get_mapping(self):
+        mapping = {}
+        for idx, zone in enumerate(self.get_zone_numbers()):
+            mapping[zone] = idx
+        return mapping
 
 class ZoneData:
     def __init__(self, scenario):
