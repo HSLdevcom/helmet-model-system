@@ -21,10 +21,12 @@ class DepartureTimeModel:
                 self.demand[time_period][ass_class] = zeros
 
     def add_demand(self, purpose, mode, mtx, mtx_position=[0, 0]):
+        """Add demand matrix for whole day."""
         for time_period in emme_scenario:
             self.add_tp_demand(purpose, mode, time_period, mtx, mtx_position)
 
     def add_tp_demand(self, purpose, mode, time_period, mtx, mtx_position):
+        """Slice demand, include transpose and add for one time period."""
         r_0 = mtx_position[0]
         c_0 = mtx_position[1]
         r_n = r_0 + mtx.shape[0]
@@ -40,7 +42,9 @@ class DepartureTimeModel:
         large_mtx[c_0:c_n, r_0:r_n] += return_share * mtx.T
     
     def add_vans(self, time_period):
-        n = self.assignment.get_mapping()[6] # Parametrize!
+        """Add vans as a share of private car trips for one time period."""
+        # n is the first external zone.
+        n = self.assignment.get_mapping()[31001] # Parametrize!
         car_demand = ( self.demand[time_period]["car_work"][0:n, 0:n]
                         + self.demand[time_period]["car_leisure"][0:n, 0:n])
         self.add_tp_demand("freight", "van", time_period, car_demand, [0, 0])
@@ -49,6 +53,7 @@ class DepartureTimeModel:
         travel_cost = {}
         for tp in emme_scenario:
             self.add_vans(tp)
-            travel_cost[tp] = self.assignment.assign(tp, self.demand[tp])
+            self.assignment.assign(tp, self.demand[tp])
+            travel_cost[tp] = self.assignment.get_impedance()
         self._init_demand()
         return travel_cost

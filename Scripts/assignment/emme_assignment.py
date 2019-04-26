@@ -37,6 +37,8 @@ class EmmeAssignmentModel(AssignmentModel):
                            param.emme_mtx["time"]["bike"]["id"], 
                            "all", 
                            "@fvol_"+time_period)
+        
+    def get_impedance(self):
         mtxs = {}
         mtxs["time"] = self.get_matrices("time")
         mtxs["dist"] = self.get_matrices("dist")

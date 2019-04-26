@@ -9,6 +9,9 @@ class TestAssignmentModel(AssignmentModel):
         self.path = matrix_dir
     
     def assign(self, time_period, matrices):
+        pass
+    
+    def get_impendance(self, time_period):
         """Get travel impedance matrices for one time period from files."""
         mtxs = {}
         mtxs["time"] = self.get_matrices("time", time_period)
@@ -29,7 +32,7 @@ class TestAssignmentModel(AssignmentModel):
         file_name = os.path.join(self.path, "time_aht.omx")
         costs_file = omx.openFile(file_name)
         # zone_numbers = costs_file.mapentries("zone_number")
-        zone_numbers = [5, 6, 7]
+        zone_numbers = costs_file.mapping("zone_number").keys()
         costs_file.close()
         return zone_numbers
     
