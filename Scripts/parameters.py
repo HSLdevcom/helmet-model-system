@@ -364,3 +364,10 @@ trip_generation = {
         "shops": 0.005,
     }
 }
+garbage_generation = {
+    "population": 0.000125,
+    "workplaces": 0.000025,
+}
+garbage_destination = 2792
+trailers_prohibited = [5, 6]
+vector_calibration_threshold = 5
