@@ -369,3 +369,4 @@ garbage_generation = {
     "workplaces": 0.000025,
 }
 garbage_destination = 2792
+trailers_prohibited = [5, 6]

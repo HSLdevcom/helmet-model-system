@@ -49,32 +49,37 @@ class FreightModel:
                       + b["workplaces"] * zone_data_forecast["workplaces"])
             demand[parameters.garbage_destination] += garbage
             demand.loc[parameters.garbage_destination] += garbage
+        if mode == "trailer_truck":
+            demand[parameters.trailers_prohibited] = 0
+            demand.loc[parameters.trailers_prohibited] = 0
         return demand.values
 
     def generate_trips(self, zone_data, mode):
         b = pandas.Series(parameters.trip_generation[mode])
-        trucks = (b * zone_data).sum(1) + 0.001
-        return trucks
+        return (b * zone_data).sum(1) + 0.001
 
     def fratar(self, prod, trips, max_iter = 10):
-        """Perform fratar adjustment of matrix
-        prod = Production target as array
-        trips = Seed trip matrix
-        max_iter (optional) = maximum iterations, default is 10
+        """Perform fratar adjustment of matrix\n
+        prod = Production target as array\n
+        trips = Seed trip matrix\n
+        max_iter (optional) = maximum iterations, default is 10\n
         Return fratared trip matrix
         """
         #Run 2D balancing
         for _ in xrange(0, max_iter):
-            origfac = prod / trips.sum("columns")
-            trips = trips.mul(origfac, "index")
-            destfac = prod / trips.sum("index")
-            trips = trips.mul(destfac, "columns")
+            colsum = trips.sum("columns")
+            colsum[colsum == 0] = 1
+            trips = trips.mul(prod/colsum, "index")
+            rowsum = trips.sum("index")
+            rowsum[rowsum == 0] = 1
+            trips = trips.mul(prod/rowsum, "columns")
         return trips
 
     def calibrate(self, b, n, s):
         """Calibrate a vector\n
         b = true value for base\n
         n = forecast for base\n
-        s = forecast to calibrate\n
+        s = forecast to calibrate
         """
+        n[n==0] = 0.000001
         return numpy.where(s < 5*n, s * b/n, s + 5*(b - n))
