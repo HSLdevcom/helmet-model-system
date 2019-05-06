@@ -1,0 +1,1 @@
+call run-pipenv.bat run pytest tests
