@@ -3,6 +3,8 @@ import os
 import numpy
 from assignment.test_assignment import TestAssignmentModel
 import assignment.departure_time as dt
+from data_handling import ZoneData, MatrixData
+from demand.freight import FreightModel
 
 logging.basicConfig(format='%(asctime)s %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
@@ -13,7 +15,12 @@ script_dir = os.path.dirname(os.path.realpath('__file__'))
 project_dir = os.path.join(script_dir, "..")
 matrix_dir = os.path.join(project_dir, "Matrices")
 logger.info("Reading Matrices from " + str(matrix_dir))
-
+zdata_base = ZoneData("2016")
+zdata_forecast = ZoneData("2030")
+mdata = MatrixData()
+fm = FreightModel(zdata_base, zdata_forecast, mdata)
+trucks = fm.calc_freight_traffic("truck")
+trailer_trucks = fm.calc_freight_traffic("trailer_truck")
 ass_model = TestAssignmentModel(matrix_dir)
 dtm = dt.DepartureTimeModel(ass_model)
 # nr_zones = len(ass_model.get_zone_numbers())
@@ -30,11 +37,6 @@ demand = {
     "ho": {
         "car": car_matrix,
     },
-    "freight": {
-        "trailer_truck": car_matrix,
-        "truck": car_matrix,
-        "van": car_matrix,
-    },
 }
 
 logger.info("Adding demand and assigning")
@@ -42,6 +44,8 @@ logger.info("Adding demand and assigning")
 for purpose in demand:
     for mode in demand[purpose]:
         dtm.add_demand(purpose, mode, demand[purpose][mode])
+dtm.add_demand("freight", "truck", trucks)
+dtm.add_demand("freight", "trailer_truck", trailer_trucks)
 dtm.assign()
 
 logger.info("Done")
