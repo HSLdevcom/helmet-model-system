@@ -13,8 +13,9 @@ Also the final prodution version is always run on Windows because EMME only supp
 
 ### Dependencies
 
-We have several external dependencies in our codebase, f.ex NumPy and OMX, etc. Importing these dependencies depend 
-on the environment (local-development or production). 
+We have several external dependencies in our codebase, f.ex NumPy and OMX, etc. Reason for including them to this repository is because the version of the OMX-library used by EMME is highly custom and cannot be found from normal PyPi repositories. 
+
+Importing the dependencies depend on the environment (local-development or production). In production-mode they come via EMME and in development we use PipEnv.
 
 
 *Deployed production env: EMME*
