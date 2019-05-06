@@ -54,7 +54,7 @@ pip install --user pipenv
 # First setup:
 pipenv --python 2.7 install --dev 
 # Once setup is done you can just run
-pipenv --python 2.7 sync
+pipenv --python 2.7 sync --dev
 ```
 
 Install new libraries when needed (will update Pipfile, please commit that to repository):
