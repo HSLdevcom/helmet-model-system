@@ -1,11 +1,11 @@
 import os
 import logging
 import parameters as param
-from abstract_assignment import AssignmentModel
+from abstract_assignment import AssignmentModel, ImpedanceSource
 from datatypes.car import Car, PrivateCar
 from datatypes.journey_level import JourneyLevel
 
-class EmmeAssignmentModel(AssignmentModel):
+class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
     def __init__(self, emme_context):
         self.emme_modeller = emme_context.modeller
         self.emme = emme_context

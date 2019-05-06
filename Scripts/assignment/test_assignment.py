@@ -2,9 +2,9 @@ import os
 import omx
 import numpy
 import parameters as param
-from abstract_assignment import AssignmentModel 
+from abstract_assignment import AssignmentModel, ImpedanceSource 
 
-class TestAssignmentModel(AssignmentModel):
+class TestAssignmentModel(AssignmentModel, ImpedanceSource):
     def __init__(self, matrix_dir):
         self.path = matrix_dir
     

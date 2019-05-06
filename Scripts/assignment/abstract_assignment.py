@@ -18,7 +18,7 @@ class ImpedanceSource:
         pass
 
     @abstractmethod
-    def get_impendance(self, time_period=None):
+    def get_impedance(self, time_period=None):
         pass
 
     @abstractmethod
