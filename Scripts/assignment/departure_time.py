@@ -53,6 +53,7 @@ class DepartureTimeModel:
         travel_cost = {}
         for tp in emme_scenario:
             self.add_vans(tp)
-            travel_cost[tp] = self.assignment.assign(tp, self.demand[tp])
+            self.assignment.assign(tp, self.demand[tp])
+            travel_cost[tp] = self.assignment.get_impedance()
         self._init_demand()
         return travel_cost

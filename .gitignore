@@ -15,6 +15,7 @@
 *.emx
 *.emp
 *.ems
+*.omx
 *.db
 *.dat
 *.prj

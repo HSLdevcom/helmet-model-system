@@ -5,6 +5,7 @@ verify_ssl = true
 
 [dev-packages]
 pytest = "*"
+pylint = "<2.0.0"
 
 [packages]
 pandas = "==0.16.0"

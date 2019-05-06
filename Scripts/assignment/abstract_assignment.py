@@ -7,8 +7,18 @@ class AssignmentModel:
     def assign(self):
         pass
 
+
+class ImpedanceSource:
+    __metaclass__ = ABCMeta
+
+    MATRIX_TYPE_FREIGHT_KEY = "freight"
+
     @abstractmethod
     def get_mapping(self):
+        pass
+
+    @abstractmethod
+    def get_impedance(self, time_period=None):
         pass
 
     @abstractmethod
