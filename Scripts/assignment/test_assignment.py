@@ -9,14 +9,14 @@ class TestAssignmentModel(AssignmentModel):
         self.path = matrix_dir
     
     def assign(self, time_period, matrices):
-        pass
+        self.time_period = time_period
     
-    def get_impendance(self, time_period):
+    def get_impedance(self):
         """Get travel impedance matrices for one time period from files."""
         mtxs = {}
-        mtxs["time"] = self.get_matrices("time", time_period)
-        mtxs["cost"] = self.get_matrices("cost", time_period)
-        mtxs["dist"] = self.get_matrices("dist", time_period)
+        mtxs["time"] = self.get_matrices("time", self.time_period)
+        mtxs["cost"] = self.get_matrices("cost", self.time_period)
+        mtxs["dist"] = self.get_matrices("dist", self.time_period)
         return mtxs
     
     def get_matrices(self, mtx_type, time_period):
