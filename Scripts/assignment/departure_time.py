@@ -1,4 +1,3 @@
-import test_assignment as ass
 import logging
 import numpy
 import omx
