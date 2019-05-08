@@ -1,13 +1,20 @@
 language: python
 
+os: windows
+
 python:
   - '2.7'
 
 env:
   global:
     # Our .env file uses Windows-specific commands so we need to override it
-    - PIPENV_DOTENV_LOCATION=".env-nix"
+    #- PIPENV_DOTENV_LOCATION=".env-nix"
+    - PATH=/c/Python27:/c/Python27/Scripts:$PATH
 
+before_install:
+  - choco install python2
+  - python -m pip install --upgrade pip
+  
 install:
   - 'pip install pipenv'
   - 'cd Scripts && pipenv --python 2.7 install --dev'
