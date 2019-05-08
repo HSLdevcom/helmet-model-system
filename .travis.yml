@@ -1,13 +1,8 @@
-language: sh
+language: sh # 'language: python' is not yet supported on Windows
 os: windows
-
-#python:
-#  - '2.7'
 
 env:
   global:
-    # Our .env file uses Windows-specific commands so we need to override it
-    #- PIPENV_DOTENV_LOCATION=".env-nix"
     - PATH=/c/Python27:/c/Python27/Scripts:$PATH
 
 before_install:
@@ -15,8 +10,10 @@ before_install:
   - python -m pip install --upgrade pip
 
 install:
-  - 'pip install pipenv'
-  - 'cd Scripts && pipenv --python 2.7 install --dev'
+  - pip install pipenv
+  - cd Scripts
+  - pipenv --python 2.7 install --dev
 
 script:
-  - 'pipenv run pytest tests'
+  - pipenv run pytest tests
+  - pipenv run python app.py
