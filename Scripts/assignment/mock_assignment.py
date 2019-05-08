@@ -4,7 +4,7 @@ import numpy
 import parameters as param
 from abstract_assignment import AssignmentModel, ImpedanceSource 
 
-class TestAssignmentModel(AssignmentModel, ImpedanceSource):
+class MockAssignmentModel(AssignmentModel, ImpedanceSource):
     def __init__(self, matrix_dir):
         self.path = matrix_dir
     

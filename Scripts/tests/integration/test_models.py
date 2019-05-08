@@ -3,7 +3,7 @@ import unittest
 import logging
 import os
 import numpy
-from assignment.test_assignment import TestAssignmentModel
+from assignment.mock_assignment import MockAssignmentModel
 import assignment.departure_time as dt
 from data_handling import ZoneData, MatrixData
 from demand.freight import FreightModel
@@ -29,7 +29,7 @@ class ModelTest(unittest.TestCase):
         fm = FreightModel(zdata_base, zdata_forecast, mdata)
         trucks = fm.calc_freight_traffic("truck")
         trailer_trucks = fm.calc_freight_traffic("trailer_truck")
-        ass_model = TestAssignmentModel(matrix_dir)
+        ass_model = MockAssignmentModel(matrix_dir)
         dtm = dt.DepartureTimeModel(ass_model)
         # nr_zones = len(ass_model.get_zone_numbers())
         car_matrix = numpy.arange(6).reshape(2, 3)
