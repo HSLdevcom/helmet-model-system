@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/HSLdevcom/helmet-model-system.svg?branch=master)](https://travis-ci.org/HSLdevcom/helmet-model-system)
+
+
 # helmet-model-system
 
 This repository contains python files for Helmet 4.0 Model System. Source codes can be found in the [Scripts-folder](Scripts).
@@ -13,7 +16,7 @@ Also the final prodution version is always run on Windows because EMME only supp
 
 ### Dependencies
 
-We have several external dependencies in our codebase, f.ex NumPy and OMX, etc. Reason for including them to this repository is because the version of the OMX-library used by EMME is highly custom and cannot be found from normal PyPi repositories. 
+We have several external dependencies in our codebase, f.ex NumPy and OMX, etc. Reason for including them to this repository is because the version of the OMX-library used by EMME is highly custom and cannot be found from normal PyPi repositories.
 
 Importing the dependencies depend on the environment (local-development or production). In production-mode they come via EMME and in development we use PipEnv.
 
@@ -30,7 +33,7 @@ At the moment user is not expected to install any software, other than the provi
 In the development setup we're using two approaches to import the libraries:
 
 - part of the libraries are included as static depencies and are located in [./Scripts/pythonlibs/ folder](./Scripts/pythonlibs/). This is because they don't install very nicely from PyPi-public repositories.
-  - When developing locally you need to import the libraries to PYTHONPATH. 
+  - When developing locally you need to import the libraries to PYTHONPATH.
     - This can happen either by using the script [import-dev-dependencies.bat](./Scripts/import-dev-dependencies.bat)
 	- OR by using pipenv, which then loads the PYTHONPATH via the [.env file](./Scripts/.env)
 - Other more compatible libraries are installed via *pipenv*. Pipenv isolates our environment from the other global python modules and makes sure we don't break anything else with our setup.   
@@ -53,7 +56,7 @@ pip install --user pipenv
 
 ```   
 # First setup:
-pipenv --python 2.7 install --dev 
+pipenv --python 2.7 install --dev
 # Once setup is done you can just run
 pipenv --python 2.7 sync --dev
 ```
