@@ -79,7 +79,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
     def _damp(self, travel_time):
         """Reduce the impact from first waiting time on total travel time."""
         fwt = self.get_matrix("transit", "fw_time")
-        wt_weight = param.waiting_time["perception_factor"]
+        wt_weight = param.waiting_time_perception_factor
         # Calculate transit travel time where first waiting time is damped
         dtt = travel_time + wt_weight*((5/3*fwt)**0.8 - fwt)
         return dtt
@@ -302,7 +302,12 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "type": "EXTENDED_TRANSIT_ASSIGNMENT",
             "modes": param.transit_assignment_modes,
             "demand": param.emme_mtx["demand"]["transit"]["id"],
-            "waiting_time": param.waiting_time,
+            "waiting_time": {
+                "headway_fraction": param.standard_headway_fraction,
+                "effective_headways": "hdw",
+                "spread_factor": 1,
+                "perception_factor": param.waiting_time_perception_factor
+            },
             # Boarding time is defined for each journey level separately,
             # so here we just set the default to zero.
             "boarding_time": no_penalty,
