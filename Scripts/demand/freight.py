@@ -14,11 +14,11 @@ class FreightModel:
         production_base = self.generate_trips(zone_data_base, mode)
         production_forecast = self.generate_trips(zone_data_forecast, mode)
         # Remove zero values
-        base_mtx = self.base_demand.get_data(mode).clip(0.000001, None) 
+        base_mtx = self.base_demand.get_data("freight", mode, "vrk").clip(0.000001, None)
         production = self.calibrate(base_mtx.sum(1), #[:len(production_base)], 
                                     production_base, 
                                     production_forecast)
-        zone_numbers = self.base_demand.get_zone_numbers()
+        zone_numbers = self.base_demand.get_zone_numbers("freight", "vrk")
         mtx = pandas.DataFrame(base_mtx, zone_numbers, zone_numbers)
         prod = pandas.Series(production, zone_numbers)
         # If forecast>5*base, destination choice is replaced by area average

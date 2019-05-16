@@ -41,6 +41,11 @@ demand = {
 for purpose in demand:
     for mode in demand[purpose]:
         dtm.add_demand(purpose, mode, demand[purpose][mode])
+# filename = os.path.join(project_dir, "Matrices", "freight_vrk"+".omx")
+# freight_file = omx.openFile(filename, 'w')
+# freight_file.createMapping("zone_number", [5, 6, 7, 2792, 16001])
+# for mode in demand["freight"]:
+#     freight_file[mode] = demand["freight"][mode][:5,:5]
 travel_cost = dtm.assign()
 for time_period in travel_cost:
     for mtx_type in travel_cost[time_period]:

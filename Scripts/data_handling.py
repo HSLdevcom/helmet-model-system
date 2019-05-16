@@ -1,23 +1,35 @@
 import os
+import omx
 import numpy
 import pandas
+import parameters as param
 
 class MatrixData:
-    def __init__(self):
-        # TODO Here we should actually set up a link to data files
-        self.base_demand = numpy.arange(25).reshape(5, 5)
+    def __init__(self, scenario):
+        script_dir = os.path.dirname(os.path.realpath('__file__'))
+        project_dir = os.path.join(script_dir, "..")
+        self.path = os.path.join(project_dir, "Matrices", scenario)
     
-    def get_data(self, mode):
-        return self.base_demand
+    def get_data(self, mtx_type, mode, time_period):
+        file_name = os.path.join(self.path, mtx_type+'_'+time_period+".omx")
+        mtx_file = omx.openFile(file_name)
+        mtx = numpy.array(mtx_file[mode])
+        mtx_file.close()
+        return mtx
 
-    def get_zone_numbers(self):
-        # TODO Get zone numbers from matrix file
-        return [5, 6, 7, 2792, 16001]
+    def get_zone_numbers(self, mtx_type, time_period):
+        file_name = os.path.join(self.path, mtx_type+'_'+time_period+".omx")
+        mtx_file = omx.openFile(file_name)
+        # zone_numbers = mtx_file.mapentries("zone_number")
+        zone_numbers = mtx_file.mapping("zone_number").keys()
+        mtx_file.close()
+        return zone_numbers
 
-    def get_mapping(self):
-        mapping = {}
-        for idx, zone in enumerate(self.get_zone_numbers()):
-            mapping[zone] = idx
+    def get_mapping(self, mtx_type, time_period):
+        file_name = os.path.join(self.path, mtx_type+'_'+time_period+".omx")
+        mtx_file = omx.openFile(file_name)
+        mapping = mtx_file.mapping("zone_number")
+        mtx_file.close()
         return mapping
 
 class ZoneData:
