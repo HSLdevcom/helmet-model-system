@@ -10,27 +10,38 @@ class MatrixData:
         project_dir = os.path.join(script_dir, "..")
         self.path = os.path.join(project_dir, "Matrices", scenario)
     
-    def get_data(self, mtx_type, mode, time_period):
+    def _open_file(self, mtx_type, time_period, m='r'):
         file_name = os.path.join(self.path, mtx_type+'_'+time_period+".omx")
-        mtx_file = omx.openFile(file_name)
+        return omx.openFile(file_name, m)
+    
+    def get_data(self, mtx_type, mode, time_period):
+        mtx_file = self._open_file(mtx_type, time_period)
         mtx = numpy.array(mtx_file[mode])
         mtx_file.close()
         return mtx
 
+    def set_data(self, data, mtx_type, mode, time_period):
+        mtx_file = self._open_file(mtx_type, time_period, 'w')
+        mtx_file[mode] = data
+        mtx_file.close()
+
     def get_zone_numbers(self, mtx_type, time_period):
-        file_name = os.path.join(self.path, mtx_type+'_'+time_period+".omx")
-        mtx_file = omx.openFile(file_name)
+        mtx_file = self._open_file(mtx_type, time_period)
         # zone_numbers = mtx_file.mapentries("zone_number")
         zone_numbers = mtx_file.mapping("zone_number").keys()
         mtx_file.close()
         return zone_numbers
 
     def get_mapping(self, mtx_type, time_period):
-        file_name = os.path.join(self.path, mtx_type+'_'+time_period+".omx")
-        mtx_file = omx.openFile(file_name)
+        mtx_file = self._open_file(mtx_type, time_period)
         mapping = mtx_file.mapping("zone_number")
         mtx_file.close()
         return mapping
+
+    def set_mapping(self, zone_numbers, mtx_type, time_period):
+        mtx_file = self._open_file(mtx_type, time_period)
+        mtx_file.createMapping("zone_number", zone_numbers)
+        mtx_file.close()
 
 class ZoneData:
     def __init__(self, scenario):
