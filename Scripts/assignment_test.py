@@ -2,7 +2,7 @@ import assignment.emme_assignment as ass
 import assignment.departure_time as dt
 import logging
 import numpy
-import omx
+import pythonlibs.omx
 import os
 from parameters import emme_scenario, demand_share
 from data_handling import MatrixData
@@ -52,7 +52,8 @@ costs_files = MatrixData("2016")
 for time_period in travel_cost:
     for mtx_type in travel_cost[time_period]:
         zone_numbers = ass_model.get_zone_numbers()
-        costs_files.set_mapping(zone_numbers, mtx_type, time_period)
+        costs_files.open_file(mtx_type, time_period)
+        costs_files.set_mapping(zone_numbers)
         for ass_class in travel_cost[time_period][mtx_type]:
             cost_data = travel_cost[time_period][mtx_type][ass_class]
-            costs_files.set_data(cost_data, mtx_type, ass_class, time_period)
+            costs_files.set_data(cost_data, ass_class)

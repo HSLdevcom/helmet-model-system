@@ -10,38 +10,30 @@ class MatrixData:
         project_dir = os.path.join(script_dir, "..")
         self.path = os.path.join(project_dir, "Matrices", scenario)
     
-    def _open_file(self, mtx_type, time_period, m='r'):
+    def open_file(self, mtx_type, time_period, m='r'):
         file_name = os.path.join(self.path, mtx_type+'_'+time_period+".omx")
-        return omx.openFile(file_name, m)
+        self.mtx_file = omx.openFile(file_name, m)
     
-    def get_data(self, mtx_type, mode, time_period):
-        mtx_file = self._open_file(mtx_type, time_period)
-        mtx = numpy.array(mtx_file[mode])
-        mtx_file.close()
-        return mtx
+    def close(self):
+        self.mtx_file.close()
+    
+    def get_data(self, mode):
+        return numpy.array(self.mtx_file[mode])
 
-    def set_data(self, data, mtx_type, mode, time_period):
-        mtx_file = self._open_file(mtx_type, time_period, 'w')
-        mtx_file[mode] = data
-        mtx_file.close()
+    def set_data(self, data, mode):
+        self.mtx_file[mode] = data
 
-    def get_zone_numbers(self, mtx_type, time_period):
-        mtx_file = self._open_file(mtx_type, time_period)
+    def get_zone_numbers(self):
         # zone_numbers = mtx_file.mapentries("zone_number")
-        zone_numbers = mtx_file.mapping("zone_number").keys()
-        mtx_file.close()
+        zone_numbers = self.mtx_file.mapping("zone_number").keys()
         return zone_numbers
 
-    def get_mapping(self, mtx_type, time_period):
-        mtx_file = self._open_file(mtx_type, time_period)
-        mapping = mtx_file.mapping("zone_number")
-        mtx_file.close()
+    def get_mapping(self):
+        mapping = self.mtx_file.mapping("zone_number")
         return mapping
 
-    def set_mapping(self, zone_numbers, mtx_type, time_period):
-        mtx_file = self._open_file(mtx_type, time_period)
-        mtx_file.createMapping("zone_number", zone_numbers)
-        mtx_file.close()
+    def set_mapping(self, zone_numbers):
+        self.mtx_file.createMapping("zone_number", zone_numbers)
 
 class ZoneData:
     def __init__(self, scenario):
