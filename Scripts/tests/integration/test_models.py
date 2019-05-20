@@ -10,15 +10,10 @@ from demand.freight import FreightModel
 from parameters import emme_scenario, emme_mtx
 
 class ModelTest(unittest.TestCase):
-    def __init__(self, *args, **kwargs):
-        super(ModelTest, self).__init__(*args, **kwargs)
-        logging.basicConfig(format='%(asctime)s %(message)s',
-                    datefmt='%Y-%m-%d %H:%M:%S',
-                    level=logging.INFO)
-        
+    
+    def test_models(self):
+        print("Testing assignment..")
 
-    def test_models(self):     
-        logger = logging.getLogger()
         zdata_base = ZoneData("2016")
         zdata_forecast = ZoneData("2030")
         basematrices = MatrixData("base")
@@ -29,6 +24,9 @@ class ModelTest(unittest.TestCase):
         ass_model = MockAssignmentModel(costs)
         dtm = dt.DepartureTimeModel(ass_model)
         ass_classes = dict.fromkeys(emme_mtx["demand"].keys())
+
+        self.assertEqual(7, len(ass_classes))
+
         travel_cost = {}
         for tp in emme_scenario:
             base_demand = {}
@@ -37,7 +35,16 @@ class ModelTest(unittest.TestCase):
                 base_demand[ass_class] = basematrices.get_data(ass_class)
             basematrices.close()
             ass_model.assign(tp, base_demand)
-            travel_cost[tp] = ass_model.get_impedance()
+            
+            impendance = ass_model.get_impedance()
+            travel_cost[tp] = impendance
+            print("Validating impedance")
+            self.assertEqual(3, len(impendance))
+            self.assertIsNotNone(impendance["time"])
+            self.assertIsNotNone(impendance["cost"])
+            self.assertIsNotNone(impendance["dist"])
+            
+
         nr_zones = len(ass_model.get_zone_numbers())
         car_matrix = numpy.arange(6).reshape(2, 3)
         demand = {
@@ -54,7 +61,7 @@ class ModelTest(unittest.TestCase):
             },
         }
 
-        logger.info("Adding demand and assigning")
+        print("Adding demand and assigning")
 
         for purpose in demand:
             for mode in demand[purpose]:
@@ -63,4 +70,4 @@ class ModelTest(unittest.TestCase):
         dtm.add_demand("freight", "trailer_truck", trailer_trucks)
         dtm.assign()
 
-        logger.info("Done")
+        print("Assignment test done")
