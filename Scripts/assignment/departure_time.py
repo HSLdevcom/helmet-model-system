@@ -1,6 +1,5 @@
 import logging
 import numpy
-import omx
 import os
 from parameters import emme_scenario, demand_share, assignment_class, emme_mtx
 

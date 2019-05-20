@@ -332,12 +332,9 @@ extra_waiting_time = {
     "penalty": "@wait_time_dev",
     "perception_factor": 3.5
 }
-waiting_time = {
-    "headway_fraction": 0.5,
-    "effective_headways": "hdw",
-    "spread_factor": 1,
-    "perception_factor": 1.5
-}
+first_headway_fraction = 0.3
+standard_headway_fraction = 0.5
+waiting_time_perception_factor = 1.5
 aux_transit_time = {
     "perception_factor": 1.75
 }
