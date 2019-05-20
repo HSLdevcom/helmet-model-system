@@ -15,6 +15,11 @@ class ZoneDataTest(unittest.TestCase):
         #print(df)
         return df
 
+    def test_csv_file_read(self):
+        zdata = ZoneData("2016")
+        self.assertIsNotNone(zdata.population)
+        self.assertIsNotNone(zdata.workplaces)
+
     def test_all_cols_have_values_2016(self):
         df = self._get_freight_data()
         row = df.loc[7, :] # Let's pick some row and validate it
