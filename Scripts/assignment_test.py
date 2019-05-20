@@ -2,9 +2,10 @@ import assignment.emme_assignment as ass
 import assignment.departure_time as dt
 import logging
 import numpy
-import omx
+import pythonlibs.omx
 import os
 from parameters import emme_scenario, demand_share
+from data_handling import MatrixData
 from emme.emme_context import EmmeContext
 
 logging.basicConfig(format='%(asctime)s %(message)s',
@@ -41,12 +42,18 @@ demand = {
 for purpose in demand:
     for mode in demand[purpose]:
         dtm.add_demand(purpose, mode, demand[purpose][mode])
+# filename = os.path.join(project_dir, "Matrices", "freight_vrk"+".omx")
+# freight_file = omx.openFile(filename, 'w')
+# freight_file.createMapping("zone_number", [5, 6, 7, 2792, 16001])
+# for mode in demand["freight"]:
+#     freight_file[mode] = demand["freight"][mode][:5,:5]
 travel_cost = dtm.assign()
+costs_files = MatrixData("2016")
 for time_period in travel_cost:
     for mtx_type in travel_cost[time_period]:
-        filename = os.path.join(project_dir, "Matrices", mtx_type+'_'+time_period+".omx")
-        costs_file = omx.openFile(filename, 'w')
-        costs_file.createMapping("zone_number", ass_model.get_zone_numbers())
+        zone_numbers = ass_model.get_zone_numbers()
+        costs_files.open_file(mtx_type, time_period)
+        costs_files.set_mapping(zone_numbers)
         for ass_class in travel_cost[time_period][mtx_type]:
-            costs_file[ass_class] = travel_cost[time_period][mtx_type][ass_class]
-        costs_file.close()
+            cost_data = travel_cost[time_period][mtx_type][ass_class]
+            costs_files.set_data(cost_data, ass_class)
