@@ -68,6 +68,20 @@ class ModelTest(unittest.TestCase):
                 dtm.add_demand(purpose, mode, demand[purpose][mode])
         dtm.add_demand("freight", "truck", trucks)
         dtm.add_demand("freight", "trailer_truck", trailer_trucks)
-        dtm.assign()
-
+        demand_travel_costs = dtm.assign()
+        self.assertEquals(len(emme_scenario), len(demand_travel_costs))
+        self._validate_demand_impedances(demand_travel_costs["aht"])
+        self._validate_demand_impedances(demand_travel_costs["pt"])
+        self._validate_demand_impedances(demand_travel_costs["iht"])
+        
         print("Assignment test done")
+
+
+    def _validate_demand_impedances(self, impedances):
+        self.assertIsNotNone(impedances)
+        assert type(impedances) is dict
+        self.assertEquals(len(impedances), 3)
+        self.assertIsNotNone(impedances["time"])
+        self.assertIsNotNone(impedances["cost"])
+        self.assertIsNotNone(impedances["dist"])
+        
