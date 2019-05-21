@@ -1,10 +1,52 @@
 import unittest
 
-from data_handling import ZoneData
+from data_handling import ZoneData, MatrixData
 import pandas
+import os
+import parameters as params
+import numpy
 
-# Integration test for validating that we can read the matrices from OMX and CSV files correctly.
+# Integration tests for validating that we can read the matrices from OMX and CSV files correctly.
 # Assumes that the matrix is fixed and the values don't change throughout the project.
+
+class MatrixDataTest(unittest.TestCase):
+    
+    def test_constructor(self):
+        m = MatrixData("2016")
+        # Verify that the base folder exists
+        self.assertTrue(os.path.isdir(m.path))
+        self.assertTrue(m.path.endswith("2016"))
+
+    def test_matrix_operations(self):
+        m = MatrixData("2016")
+        # TODO add matrices for gen_cost, transit, bike? 
+        # TODO now MockAssignmentModel writes the demand-matrices in it's tests, think about this.. 
+        MATRIX_TYPES = ["time", "dist", "cost"]
+        for matrix_type in MATRIX_TYPES:
+            print("validatimg matrix type", matrix_type)
+            self._validate_matrix_operations(m, matrix_type)
+
+    def _validate_matrix_operations(self, matrix_data, matrix_type):
+        
+        for key in params.emme_scenario.keys():
+            print("Opening matrix for time period", key)
+            matrix_data.open_file(matrix_type, time_period=key)
+            self.assertIsNotNone(matrix_data.mtx_file)
+            # Validate that has some zone numbers and mapping
+            self.assertTrue(len(matrix_data.get_zone_numbers()) > 0)
+            self.assertTrue(len(matrix_data.get_zone_numbers()), len(matrix_data.get_mapping()))
+
+            modes_for_this_type = params.emme_mtx[matrix_type].keys()
+            for mode in modes_for_this_type:
+                # Validata that there is some data for each mode
+                print("validating data for matrix mode", mode)
+                data = matrix_data.get_data(mode)
+                assert type(data) is numpy.ndarray
+                self.assertTrue(len(data) > 0)          
+            
+            matrix_data.close()
+
+
 class ZoneDataTest(unittest.TestCase):
     FREIGHT_DATA_INDEXES = [5, 6, 7, 2792, 16001]
 
