@@ -7,9 +7,9 @@ from parameters import emme_scenario, demand_share, assignment_class, emme_mtx
 class DepartureTimeModel:
     def __init__(self, assignment_model):
         self.assignment = assignment_model
-        self._init_demand()
+        self.init_demand()
 
-    def _init_demand(self):
+    def init_demand(self):
         self.demand = dict.fromkeys(emme_scenario.keys())
         nr_zones = len(self.assignment.get_mapping())
         for time_period in self.demand:
@@ -54,5 +54,5 @@ class DepartureTimeModel:
             self.add_vans(tp)
             self.assignment.assign(tp, self.demand[tp])
             travel_cost[tp] = self.assignment.get_impedance()
-        self._init_demand()
+        self.init_demand()
         return travel_cost

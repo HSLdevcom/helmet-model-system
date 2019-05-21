@@ -5,7 +5,9 @@ from assignment.test_assignment import TestAssignmentModel
 import assignment.departure_time as dt
 from data_handling import ZoneData, MatrixData
 from demand.freight import FreightModel
-from parameters import emme_scenario, emme_mtx
+import demand.hs15 as hs15
+from transform.impedance_transformer import ImpedanceTransformer
+from parameters import emme_scenario, emme_mtx, tour_purposes, tour_modes
 
 logging.basicConfig(format='%(asctime)s %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
@@ -29,30 +31,22 @@ for tp in emme_scenario:
         base_demand[ass_class] = basematrices.get_data(ass_class)
     basematrices.close()
     ass_model.assign(tp, base_demand)
-    travel_cost[tp] = ass_model.get_impedance()
-nr_zones = len(ass_model.get_zone_numbers())
-car_matrix = numpy.arange(6).reshape(2, 3)
-demand = {
-    "hw": {
-        "car": car_matrix,
-        "transit": car_matrix,
-        "bike": car_matrix,
-    },
-    "hs": {
-        "car": car_matrix,
-    },
-    "ho": {
-        "car": car_matrix,
-    },
-}
+    travel_cost = ass_model.get_impedance()
+    impedance = ImpedanceTransformer.transform(travel_cost)
 
 logger.info("Adding demand and assigning")
 
-for purpose in demand:
-    for mode in demand[purpose]:
-        dtm.add_demand(purpose, mode, demand[purpose][mode])
+for purpose in tour_purposes:
+    for mode in tour_modes:
+        demand = hs15.calc_demand(purpose, mode, impedance)
+        dtm.add_demand(purpose, mode, demand)
 dtm.add_demand("freight", "truck", trucks)
 dtm.add_demand("freight", "trailer_truck", trailer_trucks)
-dtm.assign()
+travel_cost = {}
+for tp in emme_scenario:
+    dtm.add_vans(tp)
+    ass_model.assign(tp, dtm.demand[tp])
+    travel_cost[tp] = ass_model.get_impedance()
+dtm.init_demand()
 
 logger.info("Done")
