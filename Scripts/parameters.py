@@ -357,16 +357,6 @@ impedance_share = demand_share
 
 ### DEMAND MODEL PARAMETERS ###
 
-tour_purposes = {
-    "hw": "home-work",
-    "hs": "home-shopping",
-    "ho": "home-other",
-}
-tour_modes = [
-    "car",
-    "transit",
-    "bike",
-]
 trip_generation = {
     "truck": {
         "population": 0.01,
@@ -390,3 +380,16 @@ garbage_generation = {
 garbage_destination = 2792
 trailers_prohibited = [5, 6]
 vector_calibration_threshold = 5
+
+### DEMAND MODEL REFERENCES ###
+
+tour_purposes = {
+    "hw": "home-work",
+    "hs": "home-shopping",
+    "ho": "home-other",
+}
+tour_modes = [
+    "car",
+    "transit",
+    "bike",
+]
