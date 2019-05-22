@@ -22,6 +22,7 @@ trailer_trucks = fm.calc_freight_traffic("trailer_truck")
 costs = MatrixData("2016")
 ass_model = TestAssignmentModel(costs)
 dtm = dt.DepartureTimeModel(ass_model)
+imptrans = ImpedanceTransformer()
 ass_classes = dict.fromkeys(emme_mtx["demand"].keys())
 travel_cost = {}
 for tp in emme_scenario:
@@ -32,7 +33,7 @@ for tp in emme_scenario:
     basematrices.close()
     ass_model.assign(tp, base_demand)
     travel_cost = ass_model.get_impedance()
-    impedance = ImpedanceTransformer.transform(travel_cost)
+    impedance = imptrans.transform(travel_cost)
 
 logger.info("Adding demand and assigning")
 

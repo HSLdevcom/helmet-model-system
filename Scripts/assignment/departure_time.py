@@ -8,6 +8,7 @@ class DepartureTimeModel:
     def __init__(self, assignment_model):
         self.assignment = assignment_model
         self.init_demand()
+        self.logger = logging.getLogger()
 
     def init_demand(self):
         self.demand = dict.fromkeys(emme_scenario.keys())
@@ -23,6 +24,7 @@ class DepartureTimeModel:
         """Add demand matrix for whole day."""
         for time_period in emme_scenario:
             self.add_tp_demand(purpose, mode, time_period, mtx, mtx_position)
+        self.logger.debug("Added demand for " + purpose + ", " + mode)
 
     def add_tp_demand(self, purpose, mode, time_period, mtx, mtx_position):
         """Slice demand, include transpose and add for one time period."""
