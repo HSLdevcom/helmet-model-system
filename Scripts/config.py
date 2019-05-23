@@ -1,8 +1,10 @@
-import ConfigParser
 import os
 import json
 
 class Config():
+    
+    KEY_ITERATION_COUNT = 'ITERATION_COUNT'
+    KEY_USE_EMME = 'USE_EMME'
     
     def __init__(self):
         self.__config = None
