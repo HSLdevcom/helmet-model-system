@@ -6,9 +6,10 @@ from parameters import emme_scenario, demand_share, assignment_class, emme_mtx
 class DepartureTimeModel:
     def __init__(self, assignment_model):
         self.assignment = assignment_model
-        self._init_demand()
+        self.init_demand()
+        self.logger = logging.getLogger()
 
-    def _init_demand(self):
+    def init_demand(self):
         self.demand = dict.fromkeys(emme_scenario.keys())
         nr_zones = len(self.assignment.get_mapping())
         for time_period in self.demand:
@@ -22,6 +23,7 @@ class DepartureTimeModel:
         """Add demand matrix for whole day."""
         for time_period in emme_scenario:
             self.add_tp_demand(purpose, mode, time_period, mtx, mtx_position)
+        self.logger.debug("Added demand for " + purpose + ", " + mode)
 
     def add_tp_demand(self, purpose, mode, time_period, mtx, mtx_position):
         """Slice demand, include transpose and add for one time period."""
@@ -53,5 +55,5 @@ class DepartureTimeModel:
             self.add_vans(tp)
             self.assignment.assign(tp, self.demand[tp])
             travel_cost[tp] = self.assignment.get_impedance()
-        self._init_demand()
+        self.init_demand()
         return travel_cost

@@ -7,7 +7,9 @@ from assignment.mock_assignment import MockAssignmentModel
 import assignment.departure_time as dt
 from data_handling import ZoneData, MatrixData
 from demand.freight import FreightModel
-from parameters import emme_scenario, emme_mtx
+import demand.hs15 as hs15
+from transform.impedance_transformer import ImpedanceTransformer
+from parameters import emme_scenario, emme_mtx, tour_purposes, tour_modes
 
 class ModelTest(unittest.TestCase):
     
@@ -23,6 +25,7 @@ class ModelTest(unittest.TestCase):
         costs = MatrixData("2016")
         ass_model = MockAssignmentModel(costs)
         dtm = dt.DepartureTimeModel(ass_model)
+        imptrans = ImpedanceTransformer()
         ass_classes = dict.fromkeys(emme_mtx["demand"].keys())
 
         self.assertEqual(7, len(ass_classes))
@@ -35,44 +38,32 @@ class ModelTest(unittest.TestCase):
                 base_demand[ass_class] = basematrices.get_data(ass_class)
             basematrices.close()
             ass_model.assign(tp, base_demand)
-            
-            impendance = ass_model.get_impedance()
-            travel_cost[tp] = impendance
+            impedance = ass_model.get_impedance()
+            travel_cost[tp] = impedance
             print("Validating impedance")
-            self.assertEqual(3, len(impendance))
-            self.assertIsNotNone(impendance["time"])
-            self.assertIsNotNone(impendance["cost"])
-            self.assertIsNotNone(impendance["dist"])
+            self.assertEqual(3, len(impedance))
+            self.assertIsNotNone(impedance["time"])
+            self.assertIsNotNone(impedance["cost"])
+            self.assertIsNotNone(impedance["dist"])
             
-
-        nr_zones = len(ass_model.get_zone_numbers())
-        car_matrix = numpy.arange(6).reshape(2, 3)
-        demand = {
-            "hw": {
-                "car": car_matrix,
-                "transit": car_matrix,
-                "bike": car_matrix,
-            },
-            "hs": {
-                "car": car_matrix,
-            },
-            "ho": {
-                "car": car_matrix,
-            },
-        }
-
         print("Adding demand and assigning")
 
-        for purpose in demand:
-            for mode in demand[purpose]:
-                dtm.add_demand(purpose, mode, demand[purpose][mode])
+        for purpose in tour_purposes:
+            for mode in tour_modes:
+                demand = hs15.calc_demand(purpose, mode, impedance)
+                dtm.add_demand(purpose, mode, demand)
         dtm.add_demand("freight", "truck", trucks)
         dtm.add_demand("freight", "trailer_truck", trailer_trucks)
-        demand_travel_costs = dtm.assign()
-        self.assertEquals(len(emme_scenario), len(demand_travel_costs))
-        self._validate_demand_impedances(demand_travel_costs["aht"])
-        self._validate_demand_impedances(demand_travel_costs["pt"])
-        self._validate_demand_impedances(demand_travel_costs["iht"])
+        travel_cost = {}
+        for tp in emme_scenario:
+            dtm.add_vans(tp)
+            ass_model.assign(tp, dtm.demand[tp])
+            travel_cost[tp] = ass_model.get_impedance()
+        dtm.init_demand()
+        self.assertEquals(len(emme_scenario), len(travel_cost))
+        self._validate_demand_impedances(travel_cost["aht"])
+        self._validate_demand_impedances(travel_cost["pt"])
+        self._validate_demand_impedances(travel_cost["iht"])
         
         print("Assignment test done")
 

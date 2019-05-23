@@ -8,7 +8,7 @@ class MockAssignmentModel(AssignmentModel, ImpedanceSource):
     def __init__(self, matrices):
         self.matrices = matrices
         self.logger = logging.getLogger()
-        self.logger.info("Reading Matrices from " + str(self.matrices.path))
+        self.logger.info("Reading matrices from " + str(self.matrices.path))
     
     def assign(self, time_period, matrices):
         self.time_period = time_period
@@ -16,6 +16,7 @@ class MockAssignmentModel(AssignmentModel, ImpedanceSource):
         for ass_class in matrices:
             self.matrices.set_data(matrices[ass_class], ass_class)
         self.matrices.close()
+        self.logger.info("Saved demand matrices for " + str(time_period))
     
     def get_impedance(self):
         """Get travel impedance matrices for one time period from files."""

@@ -1,10 +1,9 @@
+### ASSIGNMENT PARAMETERS ###
+
 # Performance settings
 performance_settings = {
     "number_of_processors": "max"
 }
-# Volume-delay function files
-func_car = "d411_pituusriippuvaiset_HM30.in"
-func_bike = "d411_pituusriippuvaiset_pyora.in"
 # Inversed value of time [min/eur]
 vot_inv = {
     "work": 6,
@@ -13,7 +12,7 @@ vot_inv = {
 }
 # Distance cost [eur/km]
 dist_cost = 0.12
-# Boarding penalties for differnt transit modes
+# Boarding penalties for different transit modes
 boarding_penalty = {
     "b": 3,  # Bus
     "g": 3,  # Trunk bus
@@ -79,17 +78,42 @@ trass_stop = {
     "normalized_gap": 0.01,
     "relative_gap": 0.001
 }
+# Specification for the transit assignment
+transfer_penalty = 5
+extra_waiting_time = {
+    "penalty": "@wait_time_dev",
+    "perception_factor": 3.5
+}
+first_headway_fraction = 0.3
+standard_headway_fraction = 0.5
+waiting_time_perception_factor = 1.5
+aux_transit_time = {
+    "perception_factor": 1.75
+}
+# Stochastic bike assignment distribution
+bike_dist = {
+    "type": "UNIFORM", 
+    "A": 0.5, 
+    "B": 1.5,
+}
+
+### ASSIGNMENT REFERENCES ###
+
+# Volume-delay function files
+func_car = "d411_pituusriippuvaiset_HM30.in"
+func_bike = "d411_pituusriippuvaiset_pyora.in"
+# Emme scenarios used in assignment
 emme_scenario = {
     "aht": 21,
     "pt": 22,
     "iht": 23,
 }
+bike_scenario = 19
 assignment_class = {
     "hw": "car_work",
     "hs": "car_leisure",
     "ho": "car_leisure",
 }
-bike_scenario = 19
 car_mode = 'c'
 assignment_mode = {
     "car_work": 'c',
@@ -116,6 +140,14 @@ aux_modes = [
     's',
 ]
 transit_assignment_modes = transit_modes + aux_modes
+# Link attribute for volumes
+link_volumes = {
+    "car_work": None,
+    "car_leisure": None,
+    "trailer_truck": "@yhd",
+    "truck": "@ka",
+    "van": "@pa",
+}
 # Emme matrix IDs
 emme_mtx = {
     "demand": {
@@ -245,6 +277,10 @@ emme_mtx = {
         },
     },
 }
+background_traffic = "ul3"
+
+### DEPARTURE TIME PARAMETERS ###
+
 # Demand shares for different time periods
 demand_share = {
     "hw": {
@@ -318,33 +354,9 @@ demand_share = {
 }
 # This needs to be changed
 impedance_share = demand_share
-# Link attribute for volumes
-link_volumes = {
-    "car_work": None,
-    "car_leisure": None,
-    "trailer_truck": "@yhd",
-    "truck": "@ka",
-    "van": "@pa",
-}
-# Specification for the transit assignment
-transfer_penalty = 5
-extra_waiting_time = {
-    "penalty": "@wait_time_dev",
-    "perception_factor": 3.5
-}
-first_headway_fraction = 0.3
-standard_headway_fraction = 0.5
-waiting_time_perception_factor = 1.5
-aux_transit_time = {
-    "perception_factor": 1.75
-}
-# Stochastic bike assignment distribution
-bike_dist = {
-    "type": "UNIFORM", 
-    "A": 0.5, 
-    "B": 1.5,
-}
-background_traffic = "ul3"
+
+### DEMAND MODEL PARAMETERS ###
+
 trip_generation = {
     "truck": {
         "population": 0.01,
@@ -368,3 +380,16 @@ garbage_generation = {
 garbage_destination = 2792
 trailers_prohibited = [5, 6]
 vector_calibration_threshold = 5
+
+### DEMAND MODEL REFERENCES ###
+
+tour_purposes = {
+    "hw": "home-work",
+    "hs": "home-shopping",
+    "ho": "home-other",
+}
+tour_modes = [
+    "car",
+    "transit",
+    "bike",
+]
