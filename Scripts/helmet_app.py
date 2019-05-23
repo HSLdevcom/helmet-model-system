@@ -16,14 +16,15 @@ class HelmetApplication():
             try:
                 self.logger.info("Starting round {}".format(round))
             except Exception as error:
-                is_fatal = self.handle_error(error)
+                is_fatal = self.handle_error("Exception at estimation round {}".format(round), error)
                 if is_fatal:
                     self.logger.error("Fatal error occured, stopping estimation loop")
-                    break    
+                    break
+
         self.logger.info("All done, thank you!")
 
-    def handle_error(self, error):
-        self.logger.error("Error occured: {}".format(error.__traceback__))
+    def handle_error(self, msg, exception):
+        self.logger.error(msg, exception)
         fatal = True
         return fatal
 

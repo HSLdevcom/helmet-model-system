@@ -12,7 +12,7 @@ class Log:
     __instance = None
     
     def __init__(self):
-        self.logger = logging.getLogger()
+        self.__logger = logging.getLogger()
 
     @staticmethod
     def get_instance():
@@ -28,16 +28,17 @@ class Log:
 
         logging.basicConfig(filename='helmet.log',level=numeric_level, format='%(asctime)s [%(levelname)s] %(message)s')
         # Add output also to stdout
-        self.logger.addHandler(logging.StreamHandler(sys.stdout))
+        self.__logger.addHandler(logging.StreamHandler(sys.stdout))
 
     def info(self, msg):
-        self.logger.info(msg)
+        self.__logger.info(msg)
 
     def warn(self, msg):
-        self.logger.warn(msg)
+        self.__logger.warn(msg)
 
-    def error(self, msg):
-        self.logger.error(msg)
-
+    def error(self, msg, exception=None):
+        print_stacktrace = exception is not None 
+        self.__logger.error(msg, exc_info=print_stacktrace)
+        
 
 
