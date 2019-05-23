@@ -1,4 +1,5 @@
 import os
+from utils.log import Log
 import logging
 import inro.emme.desktop.app as _app
 import inro.modeller as _m
@@ -6,15 +7,18 @@ import inro.modeller as _m
 # Creates and initializes EMME-resources
 class EmmeContext:
     def __init__(self, filepath):
-        self.logger = logging.getLogger()
+        self.logger = Log.get_instance()
+
         self.logger.info("Starting Emme...")
         emme_desktop = _app.start_dedicated(
             project=filepath, 
             visible=False, 
             user_initials="HSL"
         )
+        # Add logging to EMME
         sh = logging.StreamHandler(stream=self)
-        self.logger.addHandler(sh)
+        self.logger.add_stream_handler(sh)
+
         self.modeller = _m.Modeller(emme_desktop)
         self.logger.info("Emme started.")
         self.path = os.path.dirname(self.modeller.emmebank.path)

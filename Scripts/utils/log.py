@@ -30,9 +30,12 @@ class Log:
         # Add output also to stdout
         self.__logger.addHandler(logging.StreamHandler(sys.stdout))
 
+    def add_stream_handler(self, handler):
+        self.__logger.addHandler(handler)
+
     def info(self, msg):
         self.__logger.info(msg)
-
+        
     def warn(self, msg):
         self.__logger.warn(msg)
 
