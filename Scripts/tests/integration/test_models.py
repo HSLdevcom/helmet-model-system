@@ -39,7 +39,7 @@ class ModelTest(unittest.TestCase):
             basematrices.close()
             ass_model.assign(tp, base_demand)
             impedance = ass_model.get_impedance()
--           travel_cost[tp] = impedance
+            travel_cost[tp] = impedance
             print("Validating impedance")
             self.assertEqual(3, len(impedance))
             self.assertIsNotNone(impedance["time"])
@@ -60,10 +60,10 @@ class ModelTest(unittest.TestCase):
             ass_model.assign(tp, dtm.demand[tp])
             travel_cost[tp] = ass_model.get_impedance()
         dtm.init_demand()
-        self.assertEquals(len(emme_scenario), len(demand_travel_costs))
-        self._validate_demand_impedances(demand_travel_costs["aht"])
-        self._validate_demand_impedances(demand_travel_costs["pt"])
-        self._validate_demand_impedances(demand_travel_costs["iht"])
+        self.assertEquals(len(emme_scenario), len(travel_cost))
+        self._validate_demand_impedances(travel_cost["aht"])
+        self._validate_demand_impedances(travel_cost["pt"])
+        self._validate_demand_impedances(travel_cost["iht"])
         
         print("Assignment test done")
 
