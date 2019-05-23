@@ -5,7 +5,7 @@ class Config():
     
     KEY_ITERATION_COUNT = 'ITERATION_COUNT'
     KEY_USE_EMME = 'USE_EMME'
-    
+    KEY_LOG_LEVEL = 'LOG_LEVEL'
     def __init__(self):
         self.__config = None
 
