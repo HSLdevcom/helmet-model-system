@@ -4,7 +4,7 @@ import logging
 import parameters as param
 from abstract_assignment import AssignmentModel, ImpedanceSource 
 
-class TestAssignmentModel(AssignmentModel, ImpedanceSource):
+class MockAssignmentModel(AssignmentModel, ImpedanceSource):
     def __init__(self, matrices):
         self.matrices = matrices
         self.logger = logging.getLogger()
