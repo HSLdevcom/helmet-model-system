@@ -1,18 +1,26 @@
 from utils.config import Config
 from utils.log import Log
 import os
+from assignment.abstract_assignment import AssignmentModel
+from assignment.emme_assignment import EmmeAssignmentModel
+from assignment.mock_assignment import MockAssignmentModel
+from data_handling import MatrixData
 
 class HelmetApplication():
 
     def __init__(self, config):
         self.__config = config
         self.logger = Log.get_instance()
+        # TODO clean up the model initialization and initialize other relevant classes
+        # We could also perhaps wrap these under some class..?
         if config.get_value(Config.KEY_USE_EMME):
             self.logger.info("Configuration set to use EMME, initializing")
             self.initialize_EMME()
+            self.assignment_model = EmmeAssignmentModel(self.emme_context)
         else:
             self.logger.info("Configuration NOT using EMME")
-            
+            costs = MatrixData("2016")
+            self.assignment_model = MockAssignmentModel(costs)
 
     
     def start_estimation(self):
@@ -26,6 +34,7 @@ class HelmetApplication():
         for round in range(1, iterations+1):
             try:
                 self.logger.info("Starting round {}".format(round))
+                self.estimate()
             except Exception as error:
                 is_fatal = self.handle_error("Exception at estimation round {}".format(round), error)
                 if is_fatal:
@@ -39,6 +48,9 @@ class HelmetApplication():
         fatal = True
         return fatal
 
+    def estimate(self):
+        #TODO Put the estimation logic for this round here
+        pass
 
     def validate_input(self):
         # TODO read the scenario from parameters / config and read input data & validate it
