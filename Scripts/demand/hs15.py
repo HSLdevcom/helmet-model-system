@@ -1,4 +1,14 @@
 import numpy
 
-def calc_demand(purpose, mode, impedance):
-    return numpy.arange(6).reshape(2, 3)
+class DemandHS15:
+    def __init__(self, zone_data):
+        self.zone_data = zone_data
+
+    def calc_demand(self, purpose, impedance):
+        mtx = numpy.arange(6).reshape(2, 3)
+        demand = {
+            "car": mtx,
+            "transit": mtx,
+            "bike": mtx,
+        }
+        return demand
