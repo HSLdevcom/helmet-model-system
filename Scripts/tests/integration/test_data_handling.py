@@ -59,18 +59,18 @@ class ZoneDataTest(unittest.TestCase):
 
     def test_csv_file_read(self):
         zdata2016 = ZoneData("2016")
-        self.assertIsNotNone(zdata2016.population)
-        self.assertIsNotNone(zdata2016.workplaces)
+        self.assertIsNotNone(zdata2016.values["population"])
+        self.assertIsNotNone(zdata2016.values["workplaces"])
 
         zdata2030 = ZoneData("2030")
-        self.assertIsNotNone(zdata2030.population)
-        self.assertIsNotNone(zdata2030.workplaces)
+        self.assertIsNotNone(zdata2030.values["population"])
+        self.assertIsNotNone(zdata2030.values["workplaces"])
 
-        self.assertEquals(len(zdata2016.population), len(zdata2030.population))
-        self.assertEquals(len(zdata2016.workplaces), len(zdata2030.workplaces))
+        self.assertEquals(len(zdata2016.values["population"]), len(zdata2030.values["population"]))
+        self.assertEquals(len(zdata2016.values["workplaces"]), len(zdata2030.values["workplaces"]))
         #Assert that data content is a bit different so we know we're not reading the same file all over again
-        self.assertFalse(zdata2016.population.equals(zdata2030.population))
-        self.assertFalse(zdata2016.workplaces.equals(zdata2030.workplaces))
+        self.assertFalse(zdata2016.values["population"].equals(zdata2030.values["population"]))
+        self.assertFalse(zdata2016.values["workplaces"].equals(zdata2030.values["workplaces"]))
 
 
     def test_all_cols_have_values_2016(self):

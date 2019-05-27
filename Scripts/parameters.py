@@ -409,6 +409,89 @@ impedance_share = {
 
 ### DEMAND MODEL PARAMETERS ###
 
+destination_choice = {
+    "hw": {
+        "car": {
+            "impedance": {
+                "time": 0.3,
+                "cost": 0.1,
+            },
+            "attraction": {
+                "workplaces": 0.3,
+            },
+        },
+        "transit": {
+            "impedance": {
+                "time": 0.3,
+            },
+            "attraction": {
+                "workplaces": 0.3,
+            },
+        },
+        "bike": {
+            "impedance": {
+                "time": 0.3,
+            },
+            "attraction": {
+                "workplaces": 0.3,
+            },
+        },
+    },
+        "hs": {
+        "car": {
+            "impedance": {
+                "time": 0.3,
+                "cost": 0.1,
+            },
+            "attraction": {
+                "workplaces": 0.3,
+            },
+        },
+        "transit": {
+            "impedance": {
+                "time": 0.3,
+            },
+            "attraction": {
+                "workplaces": 0.3,
+            },
+        },
+        "bike": {
+            "impedance": {
+                "time": 0.3,
+            },
+            "attraction": {
+                "workplaces": 0.3,
+            },
+        },
+    },
+        "ho": {
+        "car": {
+            "impedance": {
+                "time": 0.3,
+                "cost": 0.1,
+            },
+            "attraction": {
+                "workplaces": 0.3,
+            },
+        },
+        "transit": {
+            "impedance": {
+                "time": 0.3,
+            },
+            "attraction": {
+                "workplaces": 0.3,
+            },
+        },
+        "bike": {
+            "impedance": {
+                "time": 0.3,
+            },
+            "attraction": {
+                "workplaces": 0.3,
+            },
+        },
+    },
+}
 trip_generation = {
     "truck": {
         "population": 0.01,
@@ -429,8 +512,6 @@ garbage_generation = {
     "population": 0.000125,
     "workplaces": 0.000025,
 }
-garbage_destination = 2792
-trailers_prohibited = [5, 6]
 vector_calibration_threshold = 5
 
 ### DEMAND MODEL REFERENCES ###
@@ -445,3 +526,7 @@ tour_modes = [
     "transit",
     "bike",
 ]
+
+first_external_zone = 31001
+garbage_destination = 2792
+trailers_prohibited = [5, 6]

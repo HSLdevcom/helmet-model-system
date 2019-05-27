@@ -1,7 +1,7 @@
 import logging
 import numpy
 import os
-from parameters import emme_scenario, demand_share, assignment_class, emme_mtx
+from parameters import emme_scenario, demand_share, assignment_class, emme_mtx, first_external_zone
 
 class DepartureTimeModel:
     def __init__(self, assignment_model):
@@ -44,7 +44,7 @@ class DepartureTimeModel:
     def add_vans(self, time_period):
         """Add vans as a share of private car trips for one time period."""
         # n is the first external zone.
-        n = self.assignment.get_mapping()[31001] # Parametrize!
+        n = self.assignment.get_mapping()[first_external_zone]
         car_demand = ( self.demand[time_period]["car_work"][0:n, 0:n]
                         + self.demand[time_period]["car_leisure"][0:n, 0:n])
         self.add_tp_demand("freight", "van", time_period, car_demand, [0, 0])

@@ -1,10 +1,15 @@
-from parameters import impedance_share
+from parameters import impedance_share, first_external_zone
 
 class ImpedanceTransformer:
-    """Perform aggregation/transformation for source matrices from this data source
-        Returns Dictionary containing transformed matrices
-    """
+    def __init__(self, assignment_model):
+        self.assignment = assignment_model
+
     def transform(self, purpose, impedance):
+        """Perform transformation for source matrices from this data source
+        Return Dictionary containing transformed matrices
+        """
+        n = self.assignment.get_mapping()[first_external_zone]
+        # TODO split matrices in parts based on origin (hs15/ympk)?
         day_imp = {}
         for mtx_type in impedance["aht"]:
             day_imp[mtx_type] = {}
@@ -20,7 +25,7 @@ class ImpedanceTransformer:
                 for idx, time_period in enumerate(impedance):
                     if ass_class in impedance[time_period][mtx_type]:
                         share = impedance_share[purpose][mode][time_period]
-                        imp = impedance[time_period][mtx_type][ass_class]
+                        imp = impedance[time_period][mtx_type][ass_class][0:n, 0:n]
                         if idx == 0:
                             day_imp[mtx_type][mode] = share[0] * imp
                         else:

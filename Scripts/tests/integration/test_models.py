@@ -26,7 +26,7 @@ class ModelTest(unittest.TestCase):
         costs = MatrixData("2016")
         ass_model = MockAssignmentModel(costs)
         dtm = dt.DepartureTimeModel(ass_model)
-        imptrans = ImpedanceTransformer()
+        imptrans = ImpedanceTransformer(ass_model)
         ass_classes = dict.fromkeys(emme_mtx["demand"].keys())
 
         self.assertEqual(7, len(ass_classes))
