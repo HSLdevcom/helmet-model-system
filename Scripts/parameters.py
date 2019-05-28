@@ -437,7 +437,7 @@ destination_choice = {
             },
         },
     },
-        "hs": {
+    "hs": {
         "car": {
             "impedance": {
                 "time": 0.3,
@@ -464,7 +464,7 @@ destination_choice = {
             },
         },
     },
-        "ho": {
+    "ho": {
         "car": {
             "impedance": {
                 "time": 0.3,
@@ -492,7 +492,21 @@ destination_choice = {
         },
     },
 }
+mode_choice = {
+    "car": 3,
+    "transit": 5,
+    "bike": 2,
+}
 trip_generation = {
+    "hw": {
+        "population": 0.5,
+    },
+    "hs": {
+        "population": 0.5,
+    },
+    "ho": {
+        "population": 0.5,
+    },
     "truck": {
         "population": 0.01,
         "workplaces": 0.025,
