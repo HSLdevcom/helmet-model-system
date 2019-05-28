@@ -23,22 +23,22 @@ class HelmetApplication():
             self.assignment_model = MockAssignmentModel(costs)
 
     
-    def start_estimation(self):
+    def run(self):
 
         if not self.validate_input():
-            self.logger.error("Failed to validate input, aborting estimation")
+            self.logger.error("Failed to validate input, aborting simulation")
             return
 
         iterations = self.__config.get_value(Config.KEY_ITERATION_COUNT)
-        self.logger.info("Start estimation loop with {} iterations".format(self.__config.get_value(Config.KEY_ITERATION_COUNT)))
+        self.logger.info("Start simulation loop with {} iterations".format(self.__config.get_value(Config.KEY_ITERATION_COUNT)))
         for round in range(1, iterations+1):
             try:
                 self.logger.info("Starting round {}".format(round))
-                self.estimate()
+                self.simulate()
             except Exception as error:
-                is_fatal = self.handle_error("Exception at estimation round {}".format(round), error)
+                is_fatal = self.handle_error("Exception at simulation round {}".format(round), error)
                 if is_fatal:
-                    self.logger.error("Fatal error occured, stopping estimation loop")
+                    self.logger.error("Fatal error occured, stopping simulation loop")
                     break
 
         self.logger.info("All done, thank you!")
@@ -48,8 +48,8 @@ class HelmetApplication():
         fatal = True
         return fatal
 
-    def estimate(self):
-        #TODO Put the estimation logic for this round here
+    def simulate(self):
+        #TODO Put the simulation logic for this round here
         pass
 
     def validate_input(self):
@@ -78,4 +78,4 @@ if __name__ == "__main__":
     Log.get_instance().info("Launching application")
     
     app = HelmetApplication(config)
-    app.start_estimation()
+    app.run()
