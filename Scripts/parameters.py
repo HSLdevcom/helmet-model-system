@@ -353,11 +353,160 @@ demand_share = {
     },
 }
 # This needs to be changed
-impedance_share = demand_share
+impedance_share = {
+    "hw": {
+        "car": {
+            "aht": (0.1, 0.01),
+            "pt": (0.01, 0.01),
+            "iht": (0.01, 0.1),
+        },
+        "transit": {
+            "aht": (0.1, 0.01),
+            "pt": (0.01, 0.01),
+            "iht": (0.01, 0.1),
+        },
+        "bike": {
+            "aht": (0.1, 0.01),
+            "pt": (0.01, 0.01),
+            "iht": (0.01, 0.1),
+        },
+    },
+    "hs": {
+        "car": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
+        "transit": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
+        "bike": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
+    },
+    "ho": {
+        "car": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
+        "transit": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
+        "bike": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
+    },
+}
 
 ### DEMAND MODEL PARAMETERS ###
 
+destination_choice = {
+    "hw": {
+        "car": {
+            "impedance": {
+                "time": 0.3,
+                "cost": 0.1,
+            },
+            "attraction": {
+                "workplaces": 0.3,
+            },
+        },
+        "transit": {
+            "impedance": {
+                "time": 0.3,
+            },
+            "attraction": {
+                "workplaces": 0.3,
+            },
+        },
+        "bike": {
+            "impedance": {
+                "time": 0.3,
+            },
+            "attraction": {
+                "workplaces": 0.3,
+            },
+        },
+    },
+    "hs": {
+        "car": {
+            "impedance": {
+                "time": 0.3,
+                "cost": 0.1,
+            },
+            "attraction": {
+                "workplaces": 0.3,
+            },
+        },
+        "transit": {
+            "impedance": {
+                "time": 0.3,
+            },
+            "attraction": {
+                "workplaces": 0.3,
+            },
+        },
+        "bike": {
+            "impedance": {
+                "time": 0.3,
+            },
+            "attraction": {
+                "workplaces": 0.3,
+            },
+        },
+    },
+    "ho": {
+        "car": {
+            "impedance": {
+                "time": 0.3,
+                "cost": 0.1,
+            },
+            "attraction": {
+                "workplaces": 0.3,
+            },
+        },
+        "transit": {
+            "impedance": {
+                "time": 0.3,
+            },
+            "attraction": {
+                "workplaces": 0.3,
+            },
+        },
+        "bike": {
+            "impedance": {
+                "time": 0.3,
+            },
+            "attraction": {
+                "workplaces": 0.3,
+            },
+        },
+    },
+}
+mode_choice = {
+    "car": 3,
+    "transit": 5,
+    "bike": 2,
+}
 trip_generation = {
+    "hw": {
+        "population": 0.5,
+    },
+    "hs": {
+        "population": 0.5,
+    },
+    "ho": {
+        "population": 0.5,
+    },
     "truck": {
         "population": 0.01,
         "workplaces": 0.025,
@@ -377,8 +526,6 @@ garbage_generation = {
     "population": 0.000125,
     "workplaces": 0.000025,
 }
-garbage_destination = 2792
-trailers_prohibited = [5, 6]
 vector_calibration_threshold = 5
 
 ### DEMAND MODEL REFERENCES ###
@@ -393,3 +540,7 @@ tour_modes = [
     "transit",
     "bike",
 ]
+
+first_external_zone = 31001
+garbage_destination = 2792
+trailers_prohibited = [5, 6]
