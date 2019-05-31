@@ -113,6 +113,7 @@ assignment_class = {
     "hw": "car_work",
     "hs": "car_leisure",
     "ho": "car_leisure",
+    "hwp": "car_work",
 }
 car_mode = 'c'
 assignment_mode = {
@@ -334,6 +335,18 @@ demand_share = {
             "iht": (0.05, 0.05),
         },
     },
+    "hwp": {
+        "car": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
+        "transit": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
+    },
     "freight": {
         "trailer_truck": {
             "aht": (0.1, 0),
@@ -400,6 +413,18 @@ impedance_share = {
             "iht": (0.05, 0.05),
         },
         "bike": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
+    },
+    "hwp": {
+        "car": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
+        "transit": {
             "aht": (0.01, 0.01),
             "pt": (0.05, 0.05),
             "iht": (0.05, 0.05),
@@ -491,11 +516,68 @@ destination_choice = {
             },
         },
     },
+    "hwp": {
+        "car": {
+            "impedance": {
+                "time": 0.3,
+                "cost": 0.1,
+            },
+            "attraction": {
+                "workplaces": 0.3,
+            },
+        },
+        "transit": {
+            "impedance": {
+                "time": 0.3,
+            },
+            "attraction": {
+                "workplaces": 0.3,
+            },
+        },
+    },
 }
 mode_choice = {
-    "car": 3,
-    "transit": 5,
-    "bike": 2,
+    "hw": {
+        "car": {
+            "logsum": 3,
+        },
+        "transit": {
+            "logsum": 5,
+        },
+        "bike": {
+            "logsum": 2,
+        }, 
+    },
+    "hs": {
+        "car": {
+            "logsum": 3,
+        },
+        "transit": {
+            "logsum": 5,
+        },
+        "bike": {
+            "logsum": 2,
+        }, 
+    },
+    "ho": {
+        "car": {
+            "logsum": 3,
+        },
+        "transit": {
+            "logsum": 5,
+        },
+        "bike": {
+            "logsum": 2,
+        }, 
+    },
+    "hwp": {
+        "car": {
+            "logsum": 3,
+        },
+        "transit": {
+            "logsum": 5,
+        },
+    },
 }
 trip_generation = {
     "hw": {
@@ -505,6 +587,9 @@ trip_generation = {
         "population": 0.5,
     },
     "ho": {
+        "population": 0.5,
+    },
+    "hwp": {
         "population": 0.5,
     },
     "truck": {
@@ -531,16 +616,29 @@ vector_calibration_threshold = 5
 ### DEMAND MODEL REFERENCES ###
 
 tour_purposes = {
-    "hw": "home-work",
-    "hs": "home-shopping",
-    "ho": "home-other",
+    "hw": {
+        "type": "home-work",
+        "area": "hs15",
+    },
+    "hs": {
+        "type": "home-shopping",
+        "area": "hs15",
+    },
+    "ho": {
+        "type": "home-other",
+        "area": "hs15",
+    },
+    "hwp": {
+        "type": "home-work",
+        "area": "peripheral",
+    },
 }
 tour_modes = [
     "car",
     "transit",
     "bike",
 ]
-
+first_peripheral_zone = 16001
 first_external_zone = 31001
 garbage_destination = 2792
 trailers_prohibited = [5, 6]
