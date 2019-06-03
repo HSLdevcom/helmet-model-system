@@ -15,7 +15,6 @@ class ImpedanceTransformer:
             r_0 = self.assignment.get_mapping()[first_peripheral_zone]
             r_n = self.assignment.get_mapping()[first_external_zone]
         c_n = self.assignment.get_mapping()[first_external_zone]
-        # TODO split matrices in parts based on origin (hs15/ympk)?
         day_imp = {}
         for mtx_type in impedance["aht"]:
             day_imp[mtx_type] = {}
