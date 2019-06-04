@@ -46,7 +46,11 @@ class ZoneData:
         path = os.path.join(data_dir, "workplaces.csv")
         workdata = pandas.read_csv(filepath_or_buffer=path, 
                                    delim_whitespace=True)
+        path = os.path.join(data_dir, "area.csv")
+        areadata = pandas.read_csv(filepath_or_buffer=path, 
+                                   delim_whitespace=True)
         population = popdata["total"]
+        car_density = popdata["car_density"]
         workplaces = workdata["total"]
         shops = ( workdata["share_shops"] 
                 * workdata["total"])
@@ -54,12 +58,21 @@ class ZoneData:
                     * workdata["total"])
         industry = ( workdata["share_industry"] 
                    * workdata["total"])
+        parking_cost = workdata["parking_cost"]
+        area = areadata["area"]
+        zeros = numpy.zeros_like(population)
+        downtown = pandas.Series(zeros, population.index)
+        downtown.loc[:999] = 1
         self.values = {
             "population": population,
+            "car_density": car_density,
             "workplaces": workplaces,
             "shops": shops,
             "logistics": logistics,
             "industry": industry,
+            "parking_cost": parking_cost,
+            "area": area,
+            "downtown": downtown,
         }
 
     def get_freight_data(self):

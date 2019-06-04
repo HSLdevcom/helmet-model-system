@@ -438,8 +438,9 @@ destination_choice = {
     "hw": {
         "car": {
             "impedance": {
-                "time": 0.3,
-                "cost": 0.1,
+                "time": -0.3,
+                "cost": -0.1,
+                "zone_area": -0.2,
             },
             "log": {
                 "attraction": 0.2,
@@ -450,7 +451,7 @@ destination_choice = {
         },
         "transit": {
             "impedance": {
-                "time": 0.3,
+                "time": -0.3,
             },
             "log": {
                 "attraction": 0.2,
@@ -461,7 +462,7 @@ destination_choice = {
         },
         "bike": {
             "impedance": {
-                "time": 0.3,
+                "time": -0.3,
             },
             "log": {
                 "attraction": 0.2,
@@ -474,8 +475,8 @@ destination_choice = {
     "hs": {
         "car": {
             "impedance": {
-                "time": 0.3,
-                "cost": 0.1,
+                "time": -0.3,
+                "cost": -0.1,
             },
             "log": {
                 "attraction": 0.2,
@@ -486,7 +487,7 @@ destination_choice = {
         },
         "transit": {
             "impedance": {
-                "time": 0.3,
+                "time": -0.3,
             },
             "log": {
                 "attraction": 0.2,
@@ -497,7 +498,7 @@ destination_choice = {
         },
         "bike": {
             "impedance": {
-                "time": 0.3,
+                "time": -0.3,
             },
             "log": {
                 "attraction": 0.2,
@@ -510,8 +511,8 @@ destination_choice = {
     "ho": {
         "car": {
             "impedance": {
-                "time": 0.3,
-                "cost": 0.1,
+                "time": -0.3,
+                "cost": -0.1,
             },
             "log": {
                 "attraction": 0.2,
@@ -522,7 +523,7 @@ destination_choice = {
         },
         "transit": {
             "impedance": {
-                "time": 0.3,
+                "time": -0.3,
             },
             "log": {
                 "attraction": 0.2,
@@ -533,7 +534,7 @@ destination_choice = {
         },
         "bike": {
             "impedance": {
-                "time": 0.3,
+                "time": -0.3,
             },
             "log": {
                 "attraction": 0.2,
@@ -559,18 +560,26 @@ destination_choice = {
 mode_choice = {
     "hw": {
         "car": {
+            "generation": {
+                "car_density": 0.3,
+            },
+            "attraction": {},
             "impedance": {},
             "log_impedance": {
                 "logsum": 3,
             },
         },
         "transit": {
+            "generation": {},
+            "attraction": {},
             "impedance": {},
             "log_impedance": {
                 "logsum": 5,
             },
         },
         "bike": {
+            "generation": {},
+            "attraction": {},
             "impedance": {},
             "log_impedance": {
                 "logsum": 2,
@@ -579,18 +588,24 @@ mode_choice = {
     },
     "hs": {
         "car": {
+            "generation": {},
+            "attraction": {},
             "impedance": {},
             "log_impedance": {
                 "logsum": 3,
             },
         },
         "transit": {
+            "generation": {},
+            "attraction": {},
             "impedance": {},
             "log_impedance": {
                 "logsum": 5,
             },
         },
         "bike": {
+            "generation": {},
+            "attraction": {},
             "impedance": {},
             "log_impedance": {
                 "logsum": 2,
@@ -599,18 +614,24 @@ mode_choice = {
     },
     "ho": {
         "car": {
+            "generation": {},
+            "attraction": {},
             "impedance": {},
             "log_impedance": {
                 "logsum": 3,
             },
         },
         "transit": {
+            "generation": {},
+            "attraction": {},
             "impedance": {},
             "log_impedance": {
                 "logsum": 5,
             },
         },
         "bike": {
+            "generation": {},
+            "attraction": {},
             "impedance": {},
             "log_impedance": {
                 "logsum": 2,
@@ -619,15 +640,26 @@ mode_choice = {
     },
     "hwp": {
         "car": {
+            "generation": {
+                "car_density": 0.3,
+            },
+            "attraction": {
+                "parking_cost": -0.1,
+            },
             "impedance": {
-                "time": 0.3,
-                "cost": 0.1,
+                "time": -0.3,
+                "cost": -0.1,
+                "zone_area": -0.2,
             },
             "log_impedance": {},
         },
         "transit": {
+            "generation": {},
+            "attraction": {
+                "downtown": 0.3,
+            },
             "impedance": {
-                "time": 0.3,
+                "time": -0.3,
             },
             "log_impedance": {},
         },
