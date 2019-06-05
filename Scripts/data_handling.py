@@ -60,6 +60,7 @@ class ZoneData:
                    * workdata["total"])
         parking_cost = workdata["parking_cost"]
         area = areadata["area"]
+        share_detached_houses = areadata["share_detached_houses"]
         zeros = numpy.zeros_like(population)
         downtown = pandas.Series(zeros, population.index)
         downtown.loc[:999] = 1
@@ -73,6 +74,7 @@ class ZoneData:
             "parking_cost": parking_cost,
             "area": area,
             "downtown": downtown,
+            "share_detached_houses": share_detached_houses,
         }
 
     def get_freight_data(self):

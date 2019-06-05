@@ -107,7 +107,7 @@ class DemandHS15:
             utility += b[i] * impedance[i][mode]
         self.dest_exps[mode] = numpy.exp(utility)
         nr_zones = len(self.zone_data.values["workplaces"])
-        attraction = numpy.zeros(nr_zones)
+        attraction = numpy.ones(nr_zones)
         b = parameters.destination_choice[purpose][mode]["attraction"]
         for i in b:
             attraction += b[i] * self.zone_data.values[i]

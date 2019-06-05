@@ -548,11 +548,11 @@ destination_choice = {
         "logsum": {
             "impedance": {},
             "log": {
-                "logsum": 0.1,
+                "logsum": 0.168,
                 "attraction": 1,
             },
             "attraction": {
-                "workplaces": 0.3,
+                "workplaces": 1,
             },
         },
     },
@@ -641,25 +641,27 @@ mode_choice = {
     "hwp": {
         "car": {
             "generation": {
-                "car_density": 0.3,
+                "car_density": 0.273e-1,
             },
             "attraction": {
-                "parking_cost": -0.1,
+                "parking_cost": -0.991e-1,
+                "share_detached_houses": 0.812e-2,
             },
             "impedance": {
-                "time": -0.3,
-                "cost": -0.1,
-                "zone_area": -0.2,
+                "time": -0.155e-1,
+                "cost": -0.199,
+                "zone_area": -0.230e-1,
             },
             "log_impedance": {},
         },
         "transit": {
             "generation": {},
             "attraction": {
-                "downtown": 0.3,
+                "downtown": 0.567,
             },
             "impedance": {
-                "time": -0.3,
+                "time": -0.693e-2,
+                "zone_area": -0.106,
             },
             "log_impedance": {},
         },
