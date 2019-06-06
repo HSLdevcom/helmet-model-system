@@ -114,6 +114,8 @@ assignment_class = {
     "hs": "car_leisure",
     "ho": "car_leisure",
     "hwp": "car_work",
+    "hop": "car_leisure",
+    "oop": "car_leisure",
 }
 car_mode = 'c'
 assignment_mode = {
@@ -347,6 +349,30 @@ demand_share = {
             "iht": (0.05, 0.05),
         },
     },
+    "hop": {
+        "car": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
+        "transit": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
+    },
+    "oop": {
+        "car": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
+        "transit": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
+    },
     "freight": {
         "trailer_truck": {
             "aht": (0.1, 0),
@@ -419,6 +445,30 @@ impedance_share = {
         },
     },
     "hwp": {
+        "car": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
+        "transit": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
+    },
+    "hop": {
+        "car": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
+        "transit": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
+    },
+    "oop": {
         "car": {
             "aht": (0.01, 0.01),
             "pt": (0.05, 0.05),
@@ -549,10 +599,40 @@ destination_choice = {
             "impedance": {},
             "log": {
                 "logsum": 0.168,
-                "attraction": 1,
+                "attraction": 0.168,
             },
             "attraction": {
                 "workplaces": 1,
+            },
+        },
+    },
+    "hop": {
+        "logsum": {
+            "impedance": {},
+            "log": {
+                "logsum": 0.852,
+                "attraction": 0.852,
+            },
+            "attraction": {
+                "population": 1,
+                "workplaces": 8.52,
+                "service": 101,
+                "shops": 237,
+                "comprehensive_schools": 5.91,
+            },
+        },
+    },
+    "oop": {
+        "logsum": {
+            "impedance": {},
+            "log": {
+                "logsum": 0.737,
+                "attraction": 0.737,
+            },
+            "attraction": {
+                "population": 1,
+                "workplaces": 4.10,
+                "shops": 15.2,
             },
         },
     },
@@ -560,6 +640,7 @@ destination_choice = {
 mode_choice = {
     "hw": {
         "car": {
+            "constant": 0,
             "generation": {
                 "car_density": 0.3,
             },
@@ -570,6 +651,7 @@ mode_choice = {
             },
         },
         "transit": {
+            "constant": 0,
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -578,6 +660,7 @@ mode_choice = {
             },
         },
         "bike": {
+            "constant": 0,
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -588,6 +671,7 @@ mode_choice = {
     },
     "hs": {
         "car": {
+            "constant": 0,
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -596,6 +680,7 @@ mode_choice = {
             },
         },
         "transit": {
+            "constant": 0,
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -604,6 +689,7 @@ mode_choice = {
             },
         },
         "bike": {
+            "constant": 0,
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -614,6 +700,7 @@ mode_choice = {
     },
     "ho": {
         "car": {
+            "constant": 0,
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -622,6 +709,7 @@ mode_choice = {
             },
         },
         "transit": {
+            "constant": 0,
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -630,6 +718,7 @@ mode_choice = {
             },
         },
         "bike": {
+            "constant": 0,
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -640,6 +729,7 @@ mode_choice = {
     },
     "hwp": {
         "car": {
+            "constant": 0,
             "generation": {
                 "car_density": 0.273e-1,
             },
@@ -655,6 +745,7 @@ mode_choice = {
             "log_impedance": {},
         },
         "transit": {
+            "constant": 0,
             "generation": {},
             "attraction": {
                 "downtown": 0.567,
@@ -662,6 +753,56 @@ mode_choice = {
             "impedance": {
                 "time": -0.693e-2,
                 "zone_area": -0.106,
+            },
+            "log_impedance": {},
+        },
+    },
+    "hop": {
+        "car": {
+            "constant": 0,
+            "generation": {},
+            "attraction": {
+                "population_density": 0.498e-4,
+                "car_density": 0.417e-2,
+            },
+            "impedance": {
+                "time": -0.233e-1,
+                "cost": -0.197,
+                "zone_area": -0.661e-2,
+            },
+            "log_impedance": {},
+        },
+        "transit": {
+            "constant": 0,
+            "generation": {},
+            "attraction": {},
+            "impedance": {
+                "time": -0.601e-2,
+            },
+            "log_impedance": {},
+        },
+    },
+    "oop": {
+        "car": {
+            "constant": 0,
+            "generation": {},
+            "attraction": {
+                "parking_cost": 0.498e-4,
+            },
+            "impedance": {
+                "time": -0.428e-1,
+                "cost": -0.226,
+            },
+            "log_impedance": {},
+        },
+        "transit": {
+            "constant": -3.38,
+            "generation": {},
+            "attraction": {
+                "downtown": 3.09,
+            },
+            "impedance": {
+                "time": -0.820e-2,
             },
             "log_impedance": {},
         },
@@ -678,6 +819,12 @@ trip_generation = {
         "population": 0.5,
     },
     "hwp": {
+        "population": 0.5,
+    },
+    "hop": {
+        "population": 0.5,
+    },
+    "oop": {
         "population": 0.5,
     },
     "truck": {
@@ -719,6 +866,14 @@ tour_purposes = {
     "hwp": {
         "type": "home-work",
         "area": "peripheral",
+    },
+    "hop": {
+        "type": "home-other",
+        "area": "peripheral",
+    },
+    "oop": {
+        "type": "other-other",
+        "area": "all",
     },
 }
 tour_modes = [

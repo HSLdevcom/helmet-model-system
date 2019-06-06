@@ -23,10 +23,10 @@ class DemandHS15:
             "transit": zone_area,
             "bike": zone_area,
         }
-        if parameters.tour_purposes[purpose]["area"] == "peripheral":
-            demand = self.calc_dest_mode(purpose, impedance, trips)
-        else:
+        if parameters.tour_purposes[purpose]["area"] == "hs15":
             demand = self.calc_mode_dest(purpose, impedance, trips)
+        else:
+            demand = self.calc_dest_mode(purpose, impedance, trips)
         return demand
 
     def calc_mode_dest(self, purpose, impedance, trips):
@@ -72,6 +72,9 @@ class DemandHS15:
             l_label = parameters.first_peripheral_zone
             l = self.zone_data.values["population"].index.get_loc(l_label)
             u = len(self.zone_data.values["population"])
+        if parameters.tour_purposes[purpose]["area"] == "all":
+            l = 0
+            u = len(self.zone_data.values["population"])
         return l, u
 
     def calc_mode_util(self, purpose, impedance):
@@ -79,6 +82,7 @@ class DemandHS15:
         l, u = self.get_bounds(purpose)
         for mode in parameters.mode_choice[purpose]:
             utility = numpy.zeros_like(expsum)
+            utility += parameters.mode_choice[purpose][mode]["constant"]
             utility = utility.T
             b = parameters.mode_choice[purpose][mode]["generation"]
             for i in b:

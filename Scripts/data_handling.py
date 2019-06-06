@@ -46,12 +46,19 @@ class ZoneData:
         path = os.path.join(data_dir, "workplaces.csv")
         workdata = pandas.read_csv(filepath_or_buffer=path, 
                                    delim_whitespace=True)
+        path = os.path.join(data_dir, "schools.csv")
+        schooldata = pandas.read_csv(filepath_or_buffer=path, 
+                                     delim_whitespace=True)
         path = os.path.join(data_dir, "area.csv")
         areadata = pandas.read_csv(filepath_or_buffer=path, 
                                    delim_whitespace=True)
         population = popdata["total"]
+        population_density = ( popdata["total"]
+                             / areadata["area"])
         car_density = popdata["car_density"]
         workplaces = workdata["total"]
+        service = ( workdata["share_service"] 
+                  * workdata["total"])
         shops = ( workdata["share_shops"] 
                 * workdata["total"])
         logistics = ( workdata["share_logistics"] 
@@ -59,6 +66,7 @@ class ZoneData:
         industry = ( workdata["share_industry"] 
                    * workdata["total"])
         parking_cost = workdata["parking_cost"]
+        comprehensive_schools = schooldata["comprehensive"]
         area = areadata["area"]
         share_detached_houses = areadata["share_detached_houses"]
         zeros = numpy.zeros_like(population)
@@ -66,12 +74,15 @@ class ZoneData:
         downtown.loc[:999] = 1
         self.values = {
             "population": population,
+            "population_density": population_density,
             "car_density": car_density,
             "workplaces": workplaces,
+            "service": service,
             "shops": shops,
             "logistics": logistics,
             "industry": industry,
             "parking_cost": parking_cost,
+            "comprehensive_schools": comprehensive_schools,
             "area": area,
             "downtown": downtown,
             "share_detached_houses": share_detached_houses,

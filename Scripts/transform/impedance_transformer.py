@@ -14,6 +14,9 @@ class ImpedanceTransformer:
         if tour_purposes[purpose]["area"] == "peripheral":
             r_0 = self.assignment.get_mapping()[first_peripheral_zone]
             r_n = self.assignment.get_mapping()[first_external_zone]
+        if tour_purposes[purpose]["area"] == "all":
+            r_0 = 0
+            r_n = self.assignment.get_mapping()[first_external_zone]
         c_n = self.assignment.get_mapping()[first_external_zone]
         day_imp = {}
         for mtx_type in impedance["aht"]:
