@@ -7,7 +7,7 @@ from assignment.mock_assignment import MockAssignmentModel
 import assignment.departure_time as dt
 from data_handling import ZoneData, MatrixData
 from demand.freight import FreightModel
-from demand.hs15 import DemandHS15
+from demand.hs15 import DemandModel
 from transform.impedance_transformer import ImpedanceTransformer
 from parameters import emme_scenario, emme_mtx, tour_purposes
 
@@ -19,7 +19,7 @@ class ModelTest(unittest.TestCase):
         zdata_base = ZoneData("2016")
         zdata_forecast = ZoneData("2030")
         basematrices = MatrixData("base")
-        dm = DemandHS15(zdata_forecast)
+        dm = DemandModel(zdata_forecast)
         fm = FreightModel(zdata_base, zdata_forecast, basematrices)
         trucks = fm.calc_freight_traffic("truck")
         trailer_trucks = fm.calc_freight_traffic("trailer_truck")

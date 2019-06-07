@@ -1,7 +1,7 @@
 import numpy
 import parameters
 
-class DemandHS15:
+class DemandModel:
     def __init__(self, zone_data):
         self.zone_data = zone_data
         self.dest_exps = {}
@@ -11,47 +11,12 @@ class DemandHS15:
         self.zone_area = numpy.zeros((nr_zones, nr_zones))
         self.zone_area[di] = zone_data.values["area"]
 
-    def get_zone_area(self, purpose):
-        l, u = self.get_bounds(purpose)
-        return self.zone_area[l:u, :]
-
     def calc_demand(self, purpose, impedance):
         trips = self.generate_trips(purpose)
-        zone_area = self.get_zone_area(purpose)
-        impedance["zone_area"] = {
-            "car": zone_area,
-            "transit": zone_area,
-            "bike": zone_area,
-        }
-        if parameters.tour_purposes[purpose]["area"] == "hs15":
-            demand = self.calc_mode_dest(purpose, impedance, trips)
-        else:
-            demand = self.calc_dest_mode(purpose, impedance, trips)
-        return demand
-
-    def calc_mode_dest(self, purpose, impedance, trips):
-        dest_expsums = {"logsum": {}}
-        for mode in parameters.destination_choice[purpose]:
-            expsum = self.calc_dest_util(purpose, mode, impedance)
-            dest_expsums["logsum"][mode] = expsum
-        mode_expsum = self.calc_mode_util(purpose, dest_expsums)
+        prob = self.calc_prob(purpose, impedance)
         demand = {}
         for mode in parameters.mode_choice[purpose]:
-            mode_prob = self.mode_exps[mode] / mode_expsum
-            dest_expsum = dest_expsums["logsum"][mode]
-            dest_prob = self.dest_exps[mode].T / dest_expsum
-            demand[mode] = (mode_prob * dest_prob * trips).T
-        return demand
-
-    def calc_dest_mode(self, purpose, impedance, trips):
-        mode_expsum = self.calc_mode_util(purpose, impedance)
-        logsum = {"log": {"logsum": mode_expsum}}
-        dest_expsum = self.calc_dest_util(purpose, "logsum", logsum)
-        demand = {}
-        dest_prob = self.dest_exps["logsum"].T / dest_expsum
-        for mode in parameters.mode_choice[purpose]:
-            mode_prob = self.mode_exps[mode] / mode_expsum
-            demand[mode] = (mode_prob * dest_prob * trips).T
+            demand[mode] = (prob[mode] * trips).T
         return demand
 
     def generate_trips(self, purpose):
@@ -62,6 +27,48 @@ class DemandHS15:
         for i in b:
             trips += b[i] * self.zone_data.values[i][l:u]
         return trips
+
+    def calc_prob(self, purpose, impedance):
+        zone_area = self.get_zone_area(purpose)
+        impedance["zone_area"] = {
+            "car": zone_area,
+            "transit": zone_area,
+            "bike": zone_area,
+        }
+        if parameters.tour_purposes[purpose]["area"] == "hs15":
+            prob = self.calc_mode_dest_prob(purpose, impedance)
+        else:
+            prob = self.calc_dest_mode_prob(purpose, impedance)
+        return prob
+
+    def get_zone_area(self, purpose):
+        l, u = self.get_bounds(purpose)
+        return self.zone_area[l:u, :]
+    
+    def calc_mode_dest_prob(self, purpose, impedance):
+        dest_expsums = {"logsum": {}}
+        for mode in parameters.destination_choice[purpose]:
+            expsum = self.calc_dest_util(purpose, mode, impedance)
+            dest_expsums["logsum"][mode] = expsum
+        mode_expsum = self.calc_mode_util(purpose, dest_expsums)
+        prob = {}
+        for mode in parameters.mode_choice[purpose]:
+            mode_prob = self.mode_exps[mode] / mode_expsum
+            dest_expsum = dest_expsums["logsum"][mode]
+            dest_prob = self.dest_exps[mode].T / dest_expsum
+            prob[mode] = mode_prob * dest_prob
+        return prob
+
+    def calc_dest_mode_prob(self, purpose, impedance):
+        mode_expsum = self.calc_mode_util(purpose, impedance)
+        logsum = {"log": {"logsum": mode_expsum}}
+        dest_expsum = self.calc_dest_util(purpose, "logsum", logsum)
+        prob = {}
+        dest_prob = self.dest_exps["logsum"].T / dest_expsum
+        for mode in parameters.mode_choice[purpose]:
+            mode_prob = self.mode_exps[mode] / mode_expsum
+            prob[mode] = mode_prob * dest_prob
+        return prob
 
     def get_bounds(self, purpose):
         if parameters.tour_purposes[purpose]["area"] == "hs15":
