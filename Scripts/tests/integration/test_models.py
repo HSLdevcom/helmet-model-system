@@ -7,7 +7,7 @@ from assignment.mock_assignment import MockAssignmentModel
 import assignment.departure_time as dt
 from data_handling import ZoneData, MatrixData
 from demand.freight import FreightModel
-from demand.hs15 import DemandModel
+from demand.trips import DemandModel
 from transform.impedance_transformer import ImpedanceTransformer
 from parameters import emme_scenario, emme_mtx, tour_purposes
 
