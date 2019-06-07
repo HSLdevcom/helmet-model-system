@@ -44,6 +44,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         mtxs["dist"] = self.get_matrices("dist")
         mtxs["cost"] = self.get_matrices("cost")
         mtxs["time"]["transit"] = self._damp(mtxs["time"]["transit"])
+        mtxs["time"]["bike"] = self._cap(mtxs["time"]["bike"])
         mtxs["time"]["car_work"] = self._gcost_to_time("car_work", "work")
         mtxs["time"]["car_leisure"] = self._gcost_to_time("car_leisure", "leisure")
         return mtxs
@@ -83,6 +84,10 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         # Calculate transit travel time where first waiting time is damped
         dtt = travel_time + wt_weight*((5/3*fwt)**0.8 - fwt)
         return dtt
+
+    def _cap(self, travel_time):
+        travel_time = travel_time.clip(None, 9999)
+        return travel_time
     
     def _gcost_to_time(self, ass_class, tour_type):
         """Remove monetary cost from generalized cost."""

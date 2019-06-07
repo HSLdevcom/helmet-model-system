@@ -52,8 +52,9 @@ costs_files = MatrixData("2016")
 for time_period in travel_cost:
     for mtx_type in travel_cost[time_period]:
         zone_numbers = ass_model.get_zone_numbers()
-        costs_files.open_file(mtx_type, time_period)
+        costs_files.open_file(mtx_type, time_period, 'w')
         costs_files.set_mapping(zone_numbers)
         for ass_class in travel_cost[time_period][mtx_type]:
             cost_data = travel_cost[time_period][mtx_type][ass_class]
             costs_files.set_data(cost_data, ass_class)
+        costs_files.close()
