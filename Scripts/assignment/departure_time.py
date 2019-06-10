@@ -19,10 +19,22 @@ class DepartureTimeModel:
                 zeros = numpy.zeros((nr_zones, nr_zones))
                 self.demand[time_period][ass_class] = zeros
 
-    def add_demand(self, purpose, mode, mtx, mtx_position=[0, 0]):
-        """Add demand matrix for whole day."""
-        for time_period in emme_scenario:
-            self.add_tp_demand(purpose, mode, time_period, mtx, mtx_position)
+    def add_demand(self, purpose, mode, demand, mtx_position=(0, 0)):
+        """Add demand matrix for whole day.
+        
+        Parameters
+        ----------
+        purpose : str
+            Travel purpose (hw/hs/ho...)
+        mode: str
+            Travel mode (car/transit/bike)
+        demand : numpy 2-d matrix or number
+            Travel demand matrix or number of travellers
+        mtx_position : tuple
+            Where to insert the demand
+        """
+        for tp in emme_scenario:
+            self.add_tp_demand(purpose, mode, tp, demand, mtx_position)
         self.logger.debug("Added demand for " + purpose + ", " + mode)
 
     def add_tp_demand(self, purpose, mode, time_period, mtx, mtx_position):
