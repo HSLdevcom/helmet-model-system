@@ -26,6 +26,7 @@ class MatrixData:
     def get_zone_numbers(self):
         # zone_numbers = mtx_file.mapentries("zone_number")
         zone_numbers = self.mtx_file.mapping("zone_number").keys()
+        zone_numbers.sort()
         return zone_numbers
 
     def get_mapping(self):
