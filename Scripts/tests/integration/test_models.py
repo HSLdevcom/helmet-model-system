@@ -51,8 +51,13 @@ class ModelTest(unittest.TestCase):
         for purpose in tour_purposes:
             purpose_impedance = imptrans.transform(purpose, impedance)
             demand = dm.calc_demand(purpose, purpose_impedance)
+            if tour_purposes[purpose]["area"] == "peripheral":
+                pos = ass_model.get_mapping()[16001]
+                mtx_position = (pos, 0)
+            else:
+                mtx_position = (0, 0)
             for mode in demand:
-                dtm.add_demand(purpose, mode, demand[mode])
+                dtm.add_demand(purpose, mode, demand[mode], mtx_position)
         dtm.add_demand("freight", "truck", trucks)
         dtm.add_demand("freight", "trailer_truck", trailer_trucks)
         impedance = {}
