@@ -66,7 +66,7 @@ class DemandModel:
         prob = {}
         dest_prob = self.dest_exps["logsum"].T / dest_expsum
         for mode in parameters.mode_choice[purpose]:
-            mode_prob = self.mode_exps[mode] / mode_expsum
+            mode_prob = (self.mode_exps[mode] / mode_expsum).T
             prob[mode] = mode_prob * dest_prob
         return prob
 
@@ -93,7 +93,6 @@ class DemandModel:
             utility = utility.T
             b = parameters.mode_choice[purpose][mode]["generation"]
             for i in b:
-                # TODO Check that this works for ympk also with several zones
                 utility += b[i] * self.zone_data.values[i][l:u]
             utility = utility.T
             b = parameters.mode_choice[purpose][mode]["attraction"]
