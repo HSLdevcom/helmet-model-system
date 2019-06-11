@@ -234,6 +234,20 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "inro.emme.network_calculation.network_calculator")
         netcalc(netw_specs, scenario)
 
+    def _calc_transit_cost(self):
+        # TODO Calculate distance-based costs from inv-distance.
+        # TODO For each zone:
+        #        Set tag to 1 for nodes in zone and 0 elsewhere.
+        #        Perform transit assignment with node tag as boarding cost 
+        #        with perception factor 0.
+        #        Save boarding cost matrix for zone (normalized to one?)
+        #      For each OD-pair:
+        #        Check if criteria for each zone ticket type is met
+        #        (which zones are visited?)
+        #        Set ticket price (add)
+        #        If no zone ticket matches, set to distance-based
+        pass
+
     def _specify(self):
         # Car assignment specification
         car_work = PrivateCar("car_work", param.vot_inv["work"])

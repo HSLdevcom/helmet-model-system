@@ -246,6 +246,10 @@ emme_mtx = {
             "id": "mf371",
             "description": "car leisure travel cost",
         },
+        "transit": {
+            "id": "mf31",
+            "description": "transit travel cost",
+        },
     },
     "transit": {
         "inv_time": {
