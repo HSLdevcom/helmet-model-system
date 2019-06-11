@@ -294,7 +294,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         self.walk_spec = {
             "type": "STANDARD_TRANSIT_ASSIGNMENT",
             "modes": param.aux_modes,
-            "demand": "mf7",
+            "demand": param.emme_mtx["demand"]["bike"]["id"],
             "waiting_time": {
                 "headway_fraction": 0.01,
                 "effective_headways": "hdw",
