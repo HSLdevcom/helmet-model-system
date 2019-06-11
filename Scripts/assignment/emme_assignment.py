@@ -41,6 +41,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         self._assign_cars(scen_id, param.stopping_criteria_coarse)
         self._calc_extra_wait_time(scen_id)
         self._assign_transit(scen_id)
+        self._assign_pedestrians(scen_id)
         self._assign_bikes(param.bike_scenario, 
                            param.emme_mtx["time"]["bike"]["id"], 
                            "all", 
@@ -310,6 +311,44 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             },
             "performance_settings": param.performance_settings
         }  
+        # Pedestrian assignment specification
+        self.walk_spec = {
+            "type": "STANDARD_TRANSIT_ASSIGNMENT",
+            "modes": param.aux_modes,
+            "demand": "mf7",
+            "waiting_time": {
+                "headway_fraction": 0.01,
+                "effective_headways": "hdw",
+                "perception_factor": 0,
+            },
+            "boarding_time": {
+                "penalty": 0,
+                "perception_factor": 0,
+            },
+            "aux_transit_time": {
+                "perception_factor": 1,
+            },
+            "od_results": {
+                "transit_times": param.emme_mtx["time"]["walk"]["id"],
+            },
+            "strategy_analysis": {
+                "sub_path_combination_operator": "+",
+                "sub_strategy_combination_operator": "average",
+                "trip_components": {
+                    "aux_transit": "length",
+                },
+                "selected_demand_and_transit_volumes": {
+                    "sub_strategies_to_retain": "ALL",
+                    "selection_threshold": {
+                        "lower": None,
+                        "upper": None,
+                    },
+                },
+                "results": {
+                    "od_values": param.emme_mtx["dist"]["walk"]["id"],
+                },
+            },
+        }
         # Transit assignment specification
         # The two journey levels are identical, except that at the second
         # level an extra boarding penalty is implemented,
@@ -441,6 +480,17 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         self.emme.logger.info("Bike assignment performed for scenario "
                         + str(scen_id))
     
+    def _assign_pedestrians(self, scen_id):
+        """Perform pedestrian assignment for one scenario."""
+        emmebank = self.emme_modeller.emmebank
+        scen = emmebank.scenario(scen_id)
+        self.emme.logger.info("Pedestrian assignment started")
+        pedestrian_assignment = self.emme_modeller.tool(
+            "inro.emme.transit_assignment.standard_transit_assignment")
+        pedestrian_assignment(specification=self.walk_spec, scenario=scen)
+        self.emme.logger.info("Pedestrian assignment performed for scenario "
+                              + str(scen_id))
+
     def _calc_boarding_penalties(self, scen_id):
         """Calculate boarding penalties for transit assignment."""
         emmebank = self.emme_modeller.emmebank
