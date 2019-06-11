@@ -313,7 +313,8 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         # Transit assignment specification
         # The two journey levels are identical, except that at the second
         # level an extra boarding penalty is implemented,
-        # hence a transfer penalty. Walk only trips are not allowed.
+        # hence a transfer penalty. Waiting time length is also different. 
+        # Walk only trips are not allowed.
         jlevel1 = JourneyLevel(boarded=False)
         jlevel2 = JourneyLevel(boarded=True)
         no_penalty = dict.fromkeys(["at_nodes", "on_lines", "on_segments"])
