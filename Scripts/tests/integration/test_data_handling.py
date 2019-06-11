@@ -48,7 +48,7 @@ class MatrixDataTest(unittest.TestCase):
 
 
 class ZoneDataTest(unittest.TestCase):
-    FREIGHT_DATA_INDEXES = [5, 6, 7, 2792, 16001]
+    FREIGHT_DATA_INDEXES = [5, 6, 7, 2792, 16001, 17000]
 
     def _get_freight_data_2016(self):
         zdata = ZoneData("2016")
