@@ -378,22 +378,15 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "in_vehicle_time": {
                 "perception_factor": 1
             },
-            "in_vehicle_cost": None,
             "aux_transit_time": param.aux_transit_time,
-            "aux_transit_cost": None,
             "flow_distribution_at_origins": {
                 "choices_at_origins": "OPTIMAL_STRATEGY",
-                "fixed_proportions_on_connectors": None
             },
             "flow_distribution_at_regular_nodes_with_aux_transit_choices": {
-                "choices_at_regular_nodes": "OPTIMAL_STRATEGY"
+                "choices_at_regular_nodes": "OPTIMAL_STRATEGY",
             },
             "flow_distribution_between_lines": {
                 "consider_total_impedance": False
-            },
-            "connector_to_connector_path_prohibition": None,
-            "od_results": {
-                "total_impedance": None
             },
             "journey_levels": [jlevel1.spec, jlevel2.spec],
             "performance_settings": param.performance_settings,
