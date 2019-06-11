@@ -48,7 +48,7 @@ class MatrixDataTest(unittest.TestCase):
 
 
 class ZoneDataTest(unittest.TestCase):
-    FREIGHT_DATA_INDEXES = [5, 6, 7, 2792, 16001]
+    FREIGHT_DATA_INDEXES = [5, 6, 7, 2792, 16001, 17000]
 
     def _get_freight_data_2016(self):
         zdata = ZoneData("2016")
@@ -85,6 +85,6 @@ class ZoneDataTest(unittest.TestCase):
     def test_industry_series_and_indexes_2016(self):
         df = self._get_freight_data_2016()
         industry = df["industry"] # Let's pick a column and validate it
-        expected_industry = pandas.Series([0.7, 0.0, 0.0, 0.9, 0.0], index = self.FREIGHT_DATA_INDEXES)
+        expected_industry = pandas.Series([0.7, 0.0, 0.0, 0.9, 0.0, 0.0], index = self.FREIGHT_DATA_INDEXES)
         pandas.util.testing.assert_series_equal(industry, expected_industry)
         

@@ -26,7 +26,15 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         self._specify()
     
     def assign(self, time_period, matrices):
-        """Assign cars, bikes and transit for one time period."""
+        """Assign cars, bikes and transit for one time period.
+        
+        Parameters
+        ----------
+        time_period : str
+            Time period (aht/pt/iht)
+        matrices: dict
+            Assignment class (car_work/transit/...) : numpy 2-d matrix
+        """
         self.emme.logger.info("Assignment starts...")
         self.set_matrices(matrices)
         scen_id = param.emme_scenario[time_period]
@@ -39,6 +47,14 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                            "@fvol_"+time_period)
         
     def get_impedance(self):
+        """Get travel impedance matrices for one time period from assignment.
+        
+        Return
+        ------
+        dict
+            Type (time/cost/dist) : dict
+                Assignment class (car_work/transit/...) : numpy 2-d matrix
+        """
         mtxs = {}
         mtxs["time"] = self.get_matrices("time")
         mtxs["dist"] = self.get_matrices("dist")
@@ -62,7 +78,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         return matrices
     
     def get_matrix(self, type1, type2):
-        """Get matrix with type pair (e.g., demand, car_work)"""
+        """Get matrix with type pair (e.g., demand, car_work)."""
         emme_id = param.emme_mtx[type1][type2]["id"]
         return self.emme_modeller.emmebank.matrix(emme_id).get_numpy_data()
 
@@ -72,6 +88,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         return scen.zone_numbers
     
     def get_mapping(self):
+        """Get dictionary of zone numbers and corresponding indices."""
         mapping = {}
         for idx, zone in enumerate(self.get_zone_numbers()):
             mapping[zone] = idx
@@ -86,6 +103,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         return dtt
 
     def _cap(self, travel_time):
+        """Cap travel time to 9999."""
         travel_time = travel_time.clip(None, 9999)
         return travel_time
     

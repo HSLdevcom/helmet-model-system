@@ -45,3 +45,4 @@ Logbook/project.mlbk-shm
 Logbook/project.mlbk-wal
 Matrices/
 Scripts/.pytest_cache
+Scripts/tests/.pytest_cache

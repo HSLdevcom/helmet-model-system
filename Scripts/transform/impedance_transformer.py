@@ -5,8 +5,22 @@ class ImpedanceTransformer:
         self.assignment = assignment_model
 
     def transform(self, purpose, impedance):
-        """Perform transformation for source matrices from this data source
-        Return Dictionary containing transformed matrices
+        """Perform transformation from time period dependent matrices 
+        to aggregate impedance matrices for specific travel purpose.
+
+        Parameters
+        ----------
+        purpose : str
+            Travel purpose (hw/hs/ho...)
+        impedance: dict
+            Time period (aht/pt/iht) : dict
+                Type (time/cost/dist) : dict
+                    Assignment class (car_work/transit/...) : numpy 2d matrix
+        Return 
+        ------
+        dict 
+            Type (time/cost/dist) : dict
+                Mode (car/transit/bike) : numpy 2d matrix
         """
         if tour_purposes[purpose]["area"] == "hs15":
             r_0 = 0
