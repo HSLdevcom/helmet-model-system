@@ -4,6 +4,7 @@ import parameters as param
 from abstract_assignment import AssignmentModel, ImpedanceSource
 from datatypes.car import Car, PrivateCar
 from datatypes.journey_level import JourneyLevel
+from datatypes.path_analysis import PathAnalysis
 
 class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
     def __init__(self, emme_context):
@@ -255,11 +256,10 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             ],
             "background_traffic": {
                 "link_component": param.background_traffic,
-                "turn_component": None,
                 "add_transit_vehicles": False,
             },
             "performance_settings": param.performance_settings,
-            "stopping_criteria": None,
+            "stopping_criteria": None, # This is definced later
         }
         # Bike assignment specification
         self.bike_spec = {
@@ -281,21 +281,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                     },
                 }
             ],
-            "path_analysis": {
-                "link_component": "ul3",
-                "operator": "+",
-                "selection_threshold": {
-                    "lower": None,
-                    "upper": None,
-                },
-                "path_to_od_composition": {
-                    "considered_paths": "ALL",
-                    "multiply_path_proportions_by": {
-                        "analyzed_demand": False,
-                        "path_value": True,
-                    }
-                },
-            },
+            "path_analysis": PathAnalysis("ul3").spec,
             "stopping_criteria": {
                 "max_iterations": 1,
                 "best_relative_gap": 1,
