@@ -268,27 +268,21 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                 {
                     "mode": param.bike_mode,
                     "demand": param.emme_mtx["demand"]["bike"]["id"],
-                    "generalized_cost": None,
                     "results": {
                         "od_travel_times": {
                             "shortest_paths": param.emme_mtx["time"]["bike"]["id"],
                         },
-                        "link_volumes": None,
-                        "turn_volumes": None,
+                        "link_volumes": None, # This is defined later
                     },
                     "analysis": {
-                        "analyzed_demand": None,
                         "results": {
-                            "od_values": None,
-                            "selected_link_volumes": None,
-                            "selected_turn_volumes": None,
+                            "od_values": None, # This is defined later
                         },
                     },
                 }
             ],
             "path_analysis": {
                 "link_component": "ul3",
-                "turn_component": None,
                 "operator": "+",
                 "selection_threshold": {
                     "lower": None,
@@ -302,7 +296,6 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                     }
                 },
             },
-            "background_traffic": None,
             "stopping_criteria": {
                 "max_iterations": 1,
                 "best_relative_gap": 1,
