@@ -210,6 +210,10 @@ emme_mtx = {
             "id": "mf386",
             "description": "bike travel time",
         },
+        "walk": {
+            "id": "mf376",
+            "description": "walk travel time",
+        },
     },
     "dist": {
         "car_work": {
@@ -227,6 +231,10 @@ emme_mtx = {
         "bike": {
             "id": "mf387",
             "description": "bike travel distance",
+        },
+        "walk": {
+            "id": "mf377",
+            "description": "walk travel distance",
         },
     },
     "cost": {

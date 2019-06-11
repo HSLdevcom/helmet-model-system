@@ -1,8 +1,7 @@
 class PathAnalysis:
-    def __init__(self, link_component, od_values):
+    def __init__(self, link_component, od_values=None):
         self.spec = {
             "link_component": link_component,
-            "turn_component": None,
             "operator": "+",
             "selection_threshold": {
                 "lower": None,
@@ -15,10 +14,8 @@ class PathAnalysis:
                     "path_value": True,
                 }
             },
-            "analyzed_demand": None,
-            "results": {
-                "selected_link_volumes": None,
-                "selected_turn_volumes": None,
-                "od_values": od_values,
-            },
         }
+        if od_values is not None:
+            self.spec["results"] = {
+                "od_values": od_values,
+            }

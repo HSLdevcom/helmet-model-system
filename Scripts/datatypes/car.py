@@ -13,7 +13,6 @@ class Car:
             },
             "results": {
                 "link_volumes": param.link_volumes[ass_class],
-                "turn_volumes": None,
                 "od_travel_times": {
                     "shortest_paths": od_travel_times
                 }

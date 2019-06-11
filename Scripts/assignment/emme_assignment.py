@@ -4,6 +4,7 @@ import parameters as param
 from abstract_assignment import AssignmentModel, ImpedanceSource
 from datatypes.car import Car, PrivateCar
 from datatypes.journey_level import JourneyLevel
+from datatypes.path_analysis import PathAnalysis
 
 class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
     def __init__(self, emme_context):
@@ -41,6 +42,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         self._assign_cars(scen_id, param.stopping_criteria_coarse)
         self._calc_extra_wait_time(scen_id)
         self._assign_transit(scen_id)
+        self._assign_pedestrians(scen_id)
         self._assign_bikes(param.bike_scenario, 
                            param.emme_mtx["time"]["bike"]["id"], 
                            "all", 
@@ -254,11 +256,10 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             ],
             "background_traffic": {
                 "link_component": param.background_traffic,
-                "turn_component": None,
                 "add_transit_vehicles": False,
             },
             "performance_settings": param.performance_settings,
-            "stopping_criteria": None,
+            "stopping_criteria": None, # This is definced later
         }
         # Bike assignment specification
         self.bike_spec = {
@@ -267,41 +268,20 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                 {
                     "mode": param.bike_mode,
                     "demand": param.emme_mtx["demand"]["bike"]["id"],
-                    "generalized_cost": None,
                     "results": {
                         "od_travel_times": {
                             "shortest_paths": param.emme_mtx["time"]["bike"]["id"],
                         },
-                        "link_volumes": None,
-                        "turn_volumes": None,
+                        "link_volumes": None, # This is defined later
                     },
                     "analysis": {
-                        "analyzed_demand": None,
                         "results": {
-                            "od_values": None,
-                            "selected_link_volumes": None,
-                            "selected_turn_volumes": None,
+                            "od_values": None, # This is defined later
                         },
                     },
                 }
             ],
-            "path_analysis": {
-                "link_component": "ul3",
-                "turn_component": None,
-                "operator": "+",
-                "selection_threshold": {
-                    "lower": None,
-                    "upper": None,
-                },
-                "path_to_od_composition": {
-                    "considered_paths": "ALL",
-                    "multiply_path_proportions_by": {
-                        "analyzed_demand": False,
-                        "path_value": True,
-                    }
-                },
-            },
-            "background_traffic": None,
+            "path_analysis": PathAnalysis("ul3").spec,
             "stopping_criteria": {
                 "max_iterations": 1,
                 "best_relative_gap": 1,
@@ -310,10 +290,49 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             },
             "performance_settings": param.performance_settings
         }  
+        # Pedestrian assignment specification
+        self.walk_spec = {
+            "type": "STANDARD_TRANSIT_ASSIGNMENT",
+            "modes": param.aux_modes,
+            "demand": param.emme_mtx["demand"]["bike"]["id"],
+            "waiting_time": {
+                "headway_fraction": 0.01,
+                "effective_headways": "hdw",
+                "perception_factor": 0,
+            },
+            "boarding_time": {
+                "penalty": 0,
+                "perception_factor": 0,
+            },
+            "aux_transit_time": {
+                "perception_factor": 1,
+            },
+            "od_results": {
+                "transit_times": param.emme_mtx["time"]["walk"]["id"],
+            },
+            "strategy_analysis": {
+                "sub_path_combination_operator": "+",
+                "sub_strategy_combination_operator": "average",
+                "trip_components": {
+                    "aux_transit": "length",
+                },
+                "selected_demand_and_transit_volumes": {
+                    "sub_strategies_to_retain": "ALL",
+                    "selection_threshold": {
+                        "lower": None,
+                        "upper": None,
+                    },
+                },
+                "results": {
+                    "od_values": param.emme_mtx["dist"]["walk"]["id"],
+                },
+            },
+        }
         # Transit assignment specification
         # The two journey levels are identical, except that at the second
         # level an extra boarding penalty is implemented,
-        # hence a transfer penalty. Walk only trips are not allowed.
+        # hence a transfer penalty. Waiting time length is also different. 
+        # Walk only trips are not allowed.
         jlevel1 = JourneyLevel(boarded=False)
         jlevel2 = JourneyLevel(boarded=True)
         no_penalty = dict.fromkeys(["at_nodes", "on_lines", "on_segments"])
@@ -338,22 +357,15 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "in_vehicle_time": {
                 "perception_factor": 1
             },
-            "in_vehicle_cost": None,
             "aux_transit_time": param.aux_transit_time,
-            "aux_transit_cost": None,
             "flow_distribution_at_origins": {
                 "choices_at_origins": "OPTIMAL_STRATEGY",
-                "fixed_proportions_on_connectors": None
             },
             "flow_distribution_at_regular_nodes_with_aux_transit_choices": {
-                "choices_at_regular_nodes": "OPTIMAL_STRATEGY"
+                "choices_at_regular_nodes": "OPTIMAL_STRATEGY",
             },
             "flow_distribution_between_lines": {
                 "consider_total_impedance": False
-            },
-            "connector_to_connector_path_prohibition": None,
-            "od_results": {
-                "total_impedance": None
             },
             "journey_levels": [jlevel1.spec, jlevel2.spec],
             "performance_settings": param.performance_settings,
@@ -440,6 +452,17 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         self.emme.logger.info("Bike assignment performed for scenario "
                         + str(scen_id))
     
+    def _assign_pedestrians(self, scen_id):
+        """Perform pedestrian assignment for one scenario."""
+        emmebank = self.emme_modeller.emmebank
+        scen = emmebank.scenario(scen_id)
+        self.emme.logger.info("Pedestrian assignment started")
+        pedestrian_assignment = self.emme_modeller.tool(
+            "inro.emme.transit_assignment.standard_transit_assignment")
+        pedestrian_assignment(specification=self.walk_spec, scenario=scen)
+        self.emme.logger.info("Pedestrian assignment performed for scenario "
+                              + str(scen_id))
+
     def _calc_boarding_penalties(self, scen_id):
         """Calculate boarding penalties for transit assignment."""
         emmebank = self.emme_modeller.emmebank
