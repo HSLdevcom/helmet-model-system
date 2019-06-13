@@ -1,4 +1,5 @@
 import numpy
+import pandas
 import parameters
 
 class DemandModel:
@@ -8,8 +9,20 @@ class DemandModel:
         self.mode_exps = {}
         nr_zones = len(zone_data.values["area"])
         di = numpy.diag_indices(nr_zones)
+        # TODO Create more general create_compound_variables function
+        self.compound = {}
         self.zone_area = numpy.zeros((nr_zones, nr_zones))
         self.zone_area[di] = zone_data.values["area"]
+        # Create matrix where value is 1 if origin and destination is in
+        # same municipality
+        zone_numbers = zone_data.values["population"].index
+        home_municipality = pandas.DataFrame(0, zone_numbers, zone_numbers)
+        municipalities = parameters.pandas_municipality
+        for municipality in municipalities:
+            l = municipalities[municipality][0]
+            u = municipalities[municipality][1]
+            home_municipality.loc[l:u, l:u] = 1
+        self.compound["population_own"] = home_municipality.values * zone_data.values["population"].values
 
     def calc_demand(self, purpose, impedance):
         trips = self.generate_trips(purpose)
@@ -29,12 +42,18 @@ class DemandModel:
         return trips
 
     def calc_prob(self, purpose, impedance):
-        zone_area = self.get_zone_area(purpose)
-        impedance["zone_area"] = {
-            "car": zone_area,
-            "transit": zone_area,
-            "bike": zone_area,
-        }
+        for mode in parameters.mode_choice[purpose]:
+            if "zone_area" in parameters.mode_choice[purpose][mode]["impedance"]:
+                if "zone_area" not in impedance:
+                    impedance["zone_area"] = {}
+                    zone_area = self.get_zone_area(purpose)
+                impedance["zone_area"][mode] = zone_area
+        for mode in parameters.destination_choice[purpose]:
+            if "zone_area" in parameters.destination_choice[purpose][mode]["impedance"]:
+                if "zone_area" not in impedance:
+                    impedance["zone_area"] = {}
+                    zone_area = self.get_zone_area(purpose)
+                impedance["zone_area"][mode] = zone_area
         if parameters.tour_purposes[purpose]["area"] == "hs15":
             prob = self.calc_mode_dest_prob(purpose, impedance)
         else:
@@ -44,6 +63,10 @@ class DemandModel:
     def get_zone_area(self, purpose):
         l, u = self.get_bounds(purpose)
         return self.zone_area[l:u, :]
+
+    def get_compound(self, compound_type, purpose):
+        l, u = self.get_bounds(purpose)
+        return self.compound[compound_type][l:u, :]
     
     def calc_mode_dest_prob(self, purpose, impedance):
         dest_expsums = {"logsum": {}}
@@ -121,6 +144,9 @@ class DemandModel:
         b = parameters.destination_choice[purpose][mode]["attraction"]
         for i in b:
             attraction += b[i] * self.zone_data.values[i]
+        b = parameters.destination_choice[purpose][mode]["compound"]
+        for i in b:
+            attraction = attraction + b[i] * self.get_compound(i, purpose)
         logs = {}
         logs["attraction"] = attraction
         if "log" in impedance:

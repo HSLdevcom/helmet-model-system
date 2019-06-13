@@ -510,6 +510,7 @@ destination_choice = {
             "attraction": {
                 "workplaces": 0.3,
             },
+            "compound": {},
         },
         "transit": {
             "impedance": {
@@ -521,6 +522,7 @@ destination_choice = {
             "attraction": {
                 "workplaces": 0.3,
             },
+            "compound": {},
         },
         "bike": {
             "impedance": {
@@ -532,6 +534,7 @@ destination_choice = {
             "attraction": {
                 "workplaces": 0.3,
             },
+            "compound": {},
         },
     },
     "hs": {
@@ -546,6 +549,7 @@ destination_choice = {
             "attraction": {
                 "workplaces": 0.3,
             },
+            "compound": {},
         },
         "transit": {
             "impedance": {
@@ -557,6 +561,7 @@ destination_choice = {
             "attraction": {
                 "workplaces": 0.3,
             },
+            "compound": {},
         },
         "bike": {
             "impedance": {
@@ -568,6 +573,7 @@ destination_choice = {
             "attraction": {
                 "workplaces": 0.3,
             },
+            "compound": {},
         },
     },
     "ho": {
@@ -582,6 +588,7 @@ destination_choice = {
             "attraction": {
                 "workplaces": 0.3,
             },
+            "compound": {},
         },
         "transit": {
             "impedance": {
@@ -593,6 +600,7 @@ destination_choice = {
             "attraction": {
                 "workplaces": 0.3,
             },
+            "compound": {},
         },
         "bike": {
             "impedance": {
@@ -604,6 +612,7 @@ destination_choice = {
             "attraction": {
                 "workplaces": 0.3,
             },
+            "compound": {},
         },
     },
     "hwp": {
@@ -616,6 +625,7 @@ destination_choice = {
             "attraction": {
                 "workplaces": 1,
             },
+            "compound": {},
         },
     },
     "hop": {
@@ -632,6 +642,9 @@ destination_choice = {
                 "shops": 237,
                 "comprehensive_schools": 5.91,
             },
+            "compound": {
+                "population_own": 1,
+            },
         },
     },
     "oop": {
@@ -646,6 +659,7 @@ destination_choice = {
                 "workplaces": 4.10,
                 "shops": 15.2,
             },
+            "compound": {},
         },
     },
 }
@@ -897,3 +911,85 @@ first_peripheral_zone = 16001
 first_external_zone = 31001
 garbage_destination = 2792
 trailers_prohibited = [5, 6]
+numpy_municipality = { # Avoid using
+    "Helsinki": (100, 2001),
+    "Espoo": (2001, 3500),
+    "Kauniainen": (3500, 4001),
+    "Vantaa": (4001, 6000),
+    "Kirkkonummi": (6000, 7001),
+    "Vihti": (7001, 8001),
+    "Nurmijarvi": (8001, 9001),
+    "Tuusula": (9001, 10001),
+    "Kerava": (10001, 11001),
+    "Jarvenpaa": (11001, 12000),
+    "Sipoo": (12000, 13001),
+    "Mantsala": (13001, 14001),
+    "Hyvinkaa": (14001, 15000),
+    "Pornainen": (15000, 15501),
+    "Siuntio": (15501, 16000),
+    "Salo": (16000, 16500),
+    "Somero": (16500, 17000),
+    "Raasepori": (17000, 17501),
+    "Hanko": (17501, 18001),
+    "Inkoo": (18001, 18501),
+    "Karkkila": (18501, 19001),
+    "Lohja": (19001, 20000),
+    "Hameenlinna": (20000, 21000),
+    "Janakkala": (21000, 21500),
+    "Hattula": (21500, 22001),
+    "Loppi": (22001, 22500),
+    "Tammela": (22500, 23001),
+    "Riihimaki": (23001, 24001),
+    "Hausjarvi": (24001, 24500),
+    "Karkola": (24500, 25000),
+    "Orimattila": (25000, 25500),
+    "Hollola": (25500, 26000),
+    "Lahti": (26000, 27000),
+    "Porvoo": (27000, 28000),
+    "Pukkila": (28000, 28501),
+    "Askola": (28501, 29000),
+    "Myrskyla": (29000, 29501),
+    "Lapinjarvi": (29501, 30000),
+    "Loviisa": (30000, ),
+}
+pandas_municipality = {
+    "Helsinki": (0, 1999),
+    "Espoo": (2000, 3499),
+    "Kauniainen": (3500, 3999),
+    "Vantaa": (4000, 5999),
+    "Kirkkonummi": (6000, 6999),
+    "Vihti": (7000, 7999),
+    "Nurmijarvi": (8000, 8999),
+    "Tuusula": (9000, 9999),
+    "Kerava": (10000, 10999),
+    "Jarvenpaa": (11000, 11999),
+    "Sipoo": (12000, 12999),
+    "Mantsala": (13000, 13999),
+    "Hyvinkaa": (14000, 14999),
+    "Pornainen": (15000, 15499),
+    "Siuntio": (15500, 15499),
+    "Salo": (16000, 16499),
+    "Somero": (16500, 16999),
+    "Raasepori": (17000, 17499),
+    "Hanko": (17500, 17499),
+    "Inkoo": (18000, 18499),
+    "Karkkila": (18500, 18999),
+    "Lohja": (19000, 19999),
+    "Hameenlinna": (20000, 20999),
+    "Janakkala": (21000, 21499),
+    "Hattula": (21500, 21999),
+    "Loppi": (22000, 22499),
+    "Tammela": (22500, 22999),
+    "Riihimaki": (23000, 23999),
+    "Hausjarvi": (24000, 24499),
+    "Karkola": (24500, 24999),
+    "Orimattila": (25000, 25499),
+    "Hollola": (25500, 25999),
+    "Lahti": (26000, 26999),
+    "Porvoo": (27000, 27999),
+    "Pukkila": (28000, 28499),
+    "Askola": (28500, 28999),
+    "Myrskyla": (29000, 29499),
+    "Lapinjarvi": (29500, 29999),
+    "Loviisa": (30000, 30999),
+}
