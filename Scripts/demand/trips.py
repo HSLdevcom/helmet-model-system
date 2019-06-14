@@ -1,4 +1,5 @@
 import numpy
+import pandas
 import parameters
 
 class DemandModel:
@@ -6,44 +7,45 @@ class DemandModel:
         self.zone_data = zone_data
         self.dest_exps = {}
         self.mode_exps = {}
-        nr_zones = len(zone_data.values["area"])
-        di = numpy.diag_indices(nr_zones)
-        self.zone_area = numpy.zeros((nr_zones, nr_zones))
-        self.zone_area[di] = zone_data.values["area"]
 
     def calc_demand(self, purpose, impedance):
-        trips = self.generate_trips(purpose)
+        trips = self.generate_tours(purpose)
         prob = self.calc_prob(purpose, impedance)
         demand = {}
         for mode in parameters.mode_choice[purpose]:
             demand[mode] = (prob[mode] * trips).T
         return demand
 
-    def generate_trips(self, purpose):
+    def generate_tours(self, purpose):
         l, u = self.get_bounds(purpose)
         nr_zones = u - l
-        b = parameters.trip_generation[purpose]
+        b = parameters.tour_generation[purpose]
         trips = numpy.zeros(nr_zones)
         for i in b:
             trips += b[i] * self.zone_data.values[i][l:u]
         return trips
 
     def calc_prob(self, purpose, impedance):
-        zone_area = self.get_zone_area(purpose)
-        impedance["zone_area"] = {
-            "car": zone_area,
-            "transit": zone_area,
-            "bike": zone_area,
-        }
+        self.insert_compound(purpose, impedance, "own_zone_area")
         if parameters.tour_purposes[purpose]["area"] == "hs15":
             prob = self.calc_mode_dest_prob(purpose, impedance)
         else:
             prob = self.calc_dest_mode_prob(purpose, impedance)
         return prob
 
-    def get_zone_area(self, purpose):
+    def insert_compound(self, purpose, impedance, compound_type):
+        choices = (parameters.mode_choice, parameters.destination_choice)
+        for choice in choices:
+            for mode in choice[purpose]:
+                if compound_type in choice[purpose][mode]["impedance"]:
+                    if compound_type not in impedance:
+                        impedance[compound_type] = {}
+                        zone_area = self.get_compound(compound_type, purpose)
+                    impedance[compound_type][mode] = zone_area
+
+    def get_compound(self, compound_type, purpose):
         l, u = self.get_bounds(purpose)
-        return self.zone_area[l:u, :]
+        return self.zone_data.values[compound_type][l:u, :]
     
     def calc_mode_dest_prob(self, purpose, impedance):
         dest_expsums = {"logsum": {}}
@@ -121,6 +123,9 @@ class DemandModel:
         b = parameters.destination_choice[purpose][mode]["attraction"]
         for i in b:
             attraction += b[i] * self.zone_data.values[i]
+        b = parameters.destination_choice[purpose][mode]["compound"]
+        for i in b:
+            attraction = attraction + b[i] * self.get_compound(i, purpose)
         logs = {}
         logs["attraction"] = attraction
         if "log" in impedance:
@@ -130,9 +135,4 @@ class DemandModel:
         for i in b:
             self.dest_exps[mode] *= numpy.power(logs[i], b[i])
         return numpy.sum(self.dest_exps[mode], 1)
-
-    def _mul(self, parameter, variable):
-        result = numpy.zeros(len(variable[0]))
-        for i in parameter:
-            result += parameter[i] * variable[i]
-        return result
+        

@@ -68,23 +68,45 @@ class ZoneData:
                    * workdata["total"])
         parking_cost = workdata["parking_cost"]
         comprehensive_schools = schooldata["comprehensive"]
-        area = areadata["area"]
+        zone_area = areadata["area"]
         share_detached_houses = areadata["share_detached_houses"]
-        zeros = numpy.zeros_like(population)
-        downtown = pandas.Series(zeros, population.index)
+        downtown = pandas.Series(0, population.index)
         downtown.loc[:999] = 1
+        shops_downtown = downtown * shops
+        shops_elsewhere = (1-downtown) * shops
+        # Create diagonal matrix with zone area
+        nr_zones = len(zone_area)
+        di = numpy.diag_indices(nr_zones)
+        own_zone_area = numpy.zeros((nr_zones, nr_zones))
+        own_zone_area[di] = zone_area
+        # Create matrix where value is 1 if origin and destination is in
+        # same municipality
+        zone_numbers = population.index
+        home_municipality = pandas.DataFrame(0, zone_numbers, zone_numbers)
+        municipalities = param.municipality
+        for municipality in municipalities:
+            l = municipalities[municipality][0]
+            u = municipalities[municipality][1]
+            home_municipality.loc[l:u, l:u] = 1
+        population_own = home_municipality.values * population.values
+        population_other = (1-home_municipality.values) * population.values
         self.values = {
             "population": population,
+            "population_own": population_own,
+            "population_other": population_other,
             "population_density": population_density,
             "car_density": car_density,
             "workplaces": workplaces,
             "service": service,
             "shops": shops,
+            "shops_downtown": shops_downtown,
+            "shops_elsewhere": shops_elsewhere,
             "logistics": logistics,
             "industry": industry,
             "parking_cost": parking_cost,
             "comprehensive_schools": comprehensive_schools,
-            "area": area,
+            "zone_area": zone_area,
+            "own_zone_area": own_zone_area,
             "downtown": downtown,
             "share_detached_houses": share_detached_houses,
         }

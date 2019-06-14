@@ -54,7 +54,7 @@ class FreightModel:
         return demand.values
 
     def generate_trips(self, zone_data, mode):
-        b = pandas.Series(parameters.trip_generation[mode])
+        b = pandas.Series(parameters.tour_generation[mode])
         return (b * zone_data).sum(1) + 0.001
 
     def fratar(self, prod, trips, max_iter = 10):
