@@ -619,8 +619,8 @@ destination_choice = {
         "logsum": {
             "impedance": {},
             "log": {
-                "logsum": 0.168,
-                "attraction": 0.168,
+                "logsum": 1,
+                "attraction": 0.909,
             },
             "attraction": {
                 "workplaces": 1,
@@ -632,18 +632,18 @@ destination_choice = {
         "logsum": {
             "impedance": {},
             "log": {
-                "logsum": 0.852,
-                "attraction": 0.852,
+                "logsum": 1,
+                "attraction": 1,
             },
             "attraction": {
-                "population": 1,
-                "workplaces": 8.52,
-                "service": 101,
-                "shops": 237,
-                "comprehensive_schools": 5.91,
+                "workplaces": 1.16,
+                "service": 110,
+                "shops": 211,
+                "comprehensive_schools": 14.1,
             },
             "compound": {
-                "population_own": 1,
+                "population_own": 28.8,
+                "population_other": 1,
             },
         },
     },
@@ -651,13 +651,14 @@ destination_choice = {
         "logsum": {
             "impedance": {},
             "log": {
-                "logsum": 0.737,
-                "attraction": 0.737,
+                "logsum": 0.786,
+                "attraction": 0.786,
             },
             "attraction": {
                 "population": 1,
-                "workplaces": 4.10,
-                "shops": 15.2,
+                "workplaces": 3.37,
+                "shops_downtown": 43.3,
+                "shops_elsewhere": 9.11,
             },
             "compound": {},
         },
@@ -756,29 +757,28 @@ mode_choice = {
     "hwp": {
         "car": {
             "constant": 0,
-            "generation": {
-                "car_density": 0.273e-1,
-            },
+            "generation": {},
             "attraction": {
-                "parking_cost": -0.991e-1,
-                "share_detached_houses": 0.812e-2,
+                "parking_cost": -0.141,
+                "share_detached_houses": 0.559e-2,
             },
             "impedance": {
-                "time": -0.155e-1,
-                "cost": -0.199,
-                "own_zone_area": -0.230e-1,
+                "time": -0.245e-1,
+                "cost": -0.141,
+                "own_zone_area": -0.216e-1,
             },
             "log_impedance": {},
         },
         "transit": {
-            "constant": 0,
+            "constant": -2.20,
             "generation": {},
             "attraction": {
-                "downtown": 0.567,
+                "downtown": 0.238,
             },
             "impedance": {
-                "time": -0.693e-2,
-                "own_zone_area": -0.106,
+                "time": -0.714e-2,
+                "cost": -0.141,
+                "own_zone_area": -0.853e-1,
             },
             "log_impedance": {},
         },
@@ -788,22 +788,22 @@ mode_choice = {
             "constant": 0,
             "generation": {},
             "attraction": {
-                "population_density": 0.498e-4,
-                "car_density": 0.417e-2,
+                "car_density": 0.198e-2,
             },
             "impedance": {
-                "time": -0.233e-1,
-                "cost": -0.197,
-                "own_zone_area": -0.661e-2,
+                "time": -0.302e-1,
+                "cost": -0.182,
+                "own_zone_area": -0.186e-1,
             },
             "log_impedance": {},
         },
         "transit": {
-            "constant": 0,
+            "constant": -1.14,
             "generation": {},
             "attraction": {},
             "impedance": {
-                "time": -0.601e-2,
+                "time": -0.611e-2,
+                "cost": -0.182,
             },
             "log_impedance": {},
         },
@@ -813,22 +813,23 @@ mode_choice = {
             "constant": 0,
             "generation": {},
             "attraction": {
-                "parking_cost": 0.498e-4,
+                "parking_cost": -0.221,
             },
             "impedance": {
-                "time": -0.428e-1,
-                "cost": -0.226,
+                "time": -0.407e-1,
+                "cost": -0.221,
             },
             "log_impedance": {},
         },
         "transit": {
-            "constant": -3.38,
+            "constant": -3.24,
             "generation": {},
             "attraction": {
-                "downtown": 3.09,
+                "downtown": 2.79,
             },
             "impedance": {
-                "time": -0.820e-2,
+                "time": -0.828e-2,
+                "cost": -0.221,
             },
             "log_impedance": {},
         },

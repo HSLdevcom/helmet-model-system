@@ -135,9 +135,4 @@ class DemandModel:
         for i in b:
             self.dest_exps[mode] *= numpy.power(logs[i], b[i])
         return numpy.sum(self.dest_exps[mode], 1)
-
-    def _mul(self, parameter, variable):
-        result = numpy.zeros(len(variable[0]))
-        for i in parameter:
-            result += parameter[i] * variable[i]
-        return result
+        

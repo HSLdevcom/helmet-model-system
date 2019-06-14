@@ -72,6 +72,8 @@ class ZoneData:
         share_detached_houses = areadata["share_detached_houses"]
         downtown = pandas.Series(0, population.index)
         downtown.loc[:999] = 1
+        shops_downtown = downtown * shops
+        shops_elsewhere = (1-downtown) * shops
         # Create diagonal matrix with zone area
         nr_zones = len(zone_area)
         di = numpy.diag_indices(nr_zones)
@@ -97,6 +99,8 @@ class ZoneData:
             "workplaces": workplaces,
             "service": service,
             "shops": shops,
+            "shops_downtown": shops_downtown,
+            "shops_elsewhere": shops_elsewhere,
             "logistics": logistics,
             "industry": industry,
             "parking_cost": parking_cost,
