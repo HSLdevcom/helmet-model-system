@@ -852,7 +852,8 @@ tour_generation = {
         "population": 0.5,
     },
     "oop": {
-        "population": 0.5,
+        "hwp": 0.5,
+        "hop": 0.5,
     },
     "truck": {
         "population": 0.01,
@@ -877,6 +878,7 @@ vector_calibration_threshold = 5
 
 ### DEMAND MODEL REFERENCES ###
 
+tour_calculation = ("hw", "hs", "ho", "hwp", "hop", "oop")
 tour_purposes = {
     "hw": {
         "type": "home-work",
@@ -900,6 +902,7 @@ tour_purposes = {
     },
     "oop": {
         "type": "other-other",
+        "source": ("hwp", "hop"),
         "area": "all",
     },
 }

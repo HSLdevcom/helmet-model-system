@@ -7,23 +7,38 @@ class DemandModel:
         self.zone_data = zone_data
         self.dest_exps = {}
         self.mode_exps = {}
+        self.attracted_tours = {}
 
     def calc_demand(self, purpose, impedance):
-        trips = self.generate_tours(purpose)
         prob = self.calc_prob(purpose, impedance)
+        nr_zones = len(self.zone_data.values["population"])
+        if parameters.tour_purposes[purpose]["type"] == "other-other":
+            tours = numpy.zeros(nr_zones)
+            for source in parameters.tour_purposes[purpose]["source"]:
+                source_tours = self.attracted_tours[source]
+                tours += self.generate_non_home(purpose, source, source_tours)
+        else:
+            tours = self.generate_tours(purpose)
+            self.attracted_tours[purpose] = numpy.zeros(nr_zones)
         demand = {}
         for mode in parameters.mode_choice[purpose]:
-            demand[mode] = (prob[mode] * trips).T
+            demand[mode] = (prob[mode] * tours).T
+            if parameters.tour_purposes[purpose]["type"] != "other-other":
+                self.attracted_tours[purpose] += numpy.sum(demand[mode], 0)
         return demand
+
+    def generate_non_home(self, purpose, source, source_tours):
+        b = parameters.tour_generation[purpose][source]
+        return b * source_tours
 
     def generate_tours(self, purpose):
         l, u = self.get_bounds(purpose)
         nr_zones = u - l
         b = parameters.tour_generation[purpose]
-        trips = numpy.zeros(nr_zones)
+        tours = numpy.zeros(nr_zones)
         for i in b:
-            trips += b[i] * self.zone_data.values[i][l:u]
-        return trips
+            tours += b[i] * self.zone_data.values[i][l:u]
+        return tours
 
     def calc_prob(self, purpose, impedance):
         self.insert_compound(purpose, impedance, "own_zone_area")

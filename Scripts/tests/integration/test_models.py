@@ -9,7 +9,7 @@ from data_handling import ZoneData, MatrixData
 from demand.freight import FreightModel
 from demand.trips import DemandModel
 from transform.impedance_transformer import ImpedanceTransformer
-from parameters import emme_scenario, emme_mtx, tour_purposes
+from parameters import emme_scenario, emme_mtx, tour_calculation, tour_purposes
 
 class ModelTest(unittest.TestCase):
     
@@ -48,7 +48,7 @@ class ModelTest(unittest.TestCase):
             
         print("Adding demand and assigning")
 
-        for purpose in tour_purposes:
+        for purpose in tour_calculation:
             purpose_impedance = imptrans.transform(purpose, impedance)
             demand = dm.calc_demand(purpose, purpose_impedance)
             if tour_purposes[purpose]["area"] == "peripheral":
@@ -72,8 +72,7 @@ class ModelTest(unittest.TestCase):
         self._validate_impedances(impedance["iht"])
         
         print("Assignment test done")
-
-
+    
     def _validate_impedances(self, impedances):
         self.assertIsNotNone(impedances)
         assert type(impedances) is dict
