@@ -8,6 +8,7 @@ import assignment.departure_time as dt
 from data_handling import ZoneData, MatrixData
 from demand.freight import FreightModel
 from demand.trips import DemandModel
+from demand.external import calc_external
 from transform.impedance_transformer import ImpedanceTransformer
 from parameters import emme_scenario, emme_mtx, tour_calculation, tour_purposes
 
@@ -23,6 +24,7 @@ class ModelTest(unittest.TestCase):
         fm = FreightModel(zdata_base, zdata_forecast, basematrices)
         trucks = fm.calc_freight_traffic("truck")
         trailer_trucks = fm.calc_freight_traffic("trailer_truck")
+        ext_cars = calc_external(basematrices)
         costs = MatrixData("2016")
         ass_model = MockAssignmentModel(costs)
         dtm = dt.DepartureTimeModel(ass_model)
@@ -61,6 +63,8 @@ class ModelTest(unittest.TestCase):
                 dtm.add_demand(purpose, mode, demand[mode], mtx_position)
         dtm.add_demand("freight", "truck", trucks)
         dtm.add_demand("freight", "trailer_truck", trailer_trucks)
+        pos = ass_model.get_mapping()[31001]
+        dtm.add_demand("external", "car", ext_cars, (pos, 0))
         impedance = {}
         for tp in emme_scenario:
             dtm.add_vans(tp)

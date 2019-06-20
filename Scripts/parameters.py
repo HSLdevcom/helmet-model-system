@@ -116,6 +116,7 @@ assignment_class = {
     "hwp": "car_work",
     "hop": "car_leisure",
     "oop": "car_leisure",
+    "external": "car_leisure"
 }
 car_mode = 'c'
 assignment_mode = {
@@ -386,6 +387,28 @@ demand_share = {
         },
     },
     "freight": {
+        "trailer_truck": {
+            "aht": (0.1, 0),
+            "pt": (0.1, 0),
+            "iht": (0.1, 0),
+        },
+        "truck": {
+            "aht": (0.1, 0),
+            "pt": (0.1, 0),
+            "iht": (0.1, 0),
+        },
+        "van": {
+            "aht": (0.1, 0),
+            "pt": (0.1, 0),
+            "iht": (0.1, 0),
+        },
+    },
+    "external": {
+        "car": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
         "trailer_truck": {
             "aht": (0.1, 0),
             "pt": (0.1, 0),
