@@ -51,6 +51,7 @@ class ModelTest(unittest.TestCase):
         for purpose in tour_calculation:
             purpose_impedance = imptrans.transform(purpose, impedance)
             demand = dm.calc_demand(purpose, purpose_impedance)
+            self._validate_demand(demand)
             if tour_purposes[purpose]["area"] == "peripheral":
                 pos = ass_model.get_mapping()[16001]
                 mtx_position = (pos, 0)
@@ -75,9 +76,23 @@ class ModelTest(unittest.TestCase):
     
     def _validate_impedances(self, impedances):
         self.assertIsNotNone(impedances)
-        assert type(impedances) is dict
+        self.assertIs(type(impedances), dict)
         self.assertEquals(len(impedances), 3)
         self.assertIsNotNone(impedances["time"])
         self.assertIsNotNone(impedances["cost"])
         self.assertIsNotNone(impedances["dist"])
+        self.assertIs(type(impedances["time"]), dict)
+        self.assertEquals(len(impedances["time"]), 5)
+        self.assertIsNotNone(impedances["time"]["transit"])
+        self.assertIs(type(impedances["time"]["transit"]), numpy.ndarray)
+        self.assertEquals(impedances["time"]["transit"].ndim, 2)
+        self.assertEquals(len(impedances["time"]["transit"]), 8)
+
+    def _validate_demand(self, demand):
+        self.assertIsNotNone(demand)
+        self.assertIs(type(demand), dict)
+        self.assertIsNotNone(demand["transit"])
+        self.assertIs(type(demand["transit"]), numpy.ndarray)
+        self.assertEquals(demand["transit"].ndim, 2)
+        self.assertEquals(demand["transit"].shape[1], 6)
         
