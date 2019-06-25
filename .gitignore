@@ -43,6 +43,5 @@ Database/STRAT_s22
 Database/STRAT_s23
 Logbook/project.mlbk-shm
 Logbook/project.mlbk-wal
-Matrices/
 Scripts/.pytest_cache
 Scripts/tests/.pytest_cache
