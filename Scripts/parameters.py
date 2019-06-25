@@ -934,6 +934,12 @@ tour_modes = [
     "transit",
     "bike",
 ]
+external_modes = [
+    "car",
+    "transit",
+    "truck",
+    "trailer_truck",
+]
 first_peripheral_zone = 16001
 first_external_zone = 31001
 garbage_destination = 2792
