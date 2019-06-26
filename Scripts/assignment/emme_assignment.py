@@ -63,8 +63,10 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         mtxs["cost"] = self.get_matrices("cost")
         mtxs["time"]["transit"] = self._damp(mtxs["time"]["transit"])
         mtxs["time"]["bike"] = self._cap(mtxs["time"]["bike"])
-        mtxs["time"]["car_work"] = self._gcost_to_time("car_work", "work")
-        mtxs["time"]["car_leisure"] = self._gcost_to_time("car_leisure", "leisure")
+        mtxs["time"]["car_work"] = self._gcost_to_time("car_work")
+        mtxs["time"]["car_leisure"] = self._gcost_to_time("car_leisure")
+        for ass_cl in ("car_work", "car_leisure"):
+            mtxs["cost"][ass_cl] += param.dist_cost * mtxs["dist"][ass_cl]
         return mtxs
     
     def set_matrices(self, matrices):
@@ -109,11 +111,11 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         travel_time = travel_time.clip(None, 9999)
         return travel_time
     
-    def _gcost_to_time(self, ass_class, tour_type):
+    def _gcost_to_time(self, ass_class):
         """Remove monetary cost from generalized cost."""
         # Traffic assignment produces a generalized cost matrix.
         # To get travel time, monetary cost is removed from generalized cost.
-        vot_inv = param.vot_inv[tour_type]
+        vot_inv = param.vot_inv[param.vot_class[ass_class]]
         gcost = self.get_matrix("gen_cost", ass_class)
         tcost = self.get_matrix("cost", ass_class)
         tdist = self.get_matrix("dist", ass_class)
@@ -250,9 +252,9 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
 
     def _specify(self):
         # Car assignment specification
-        car_work = PrivateCar("car_work", param.vot_inv["work"])
-        car_leisure = PrivateCar("car_leisure", param.vot_inv["leisure"])
-        van = Car("van", param.vot_inv["business"])
+        car_work = PrivateCar("car_work")
+        car_leisure = PrivateCar("car_leisure")
+        van = Car("van")
         truck = Car(ass_class="truck",
                     value_of_time_inv=0.2,
                     link_costs="length")
