@@ -8,8 +8,9 @@ import assignment.departure_time as dt
 from data_handling import ZoneData, MatrixData
 from demand.freight import FreightModel
 from demand.trips import DemandModel
+from demand.external import ExternalModel
 from transform.impedance_transformer import ImpedanceTransformer
-from parameters import emme_scenario, emme_mtx, tour_calculation, tour_purposes
+from parameters import emme_scenario, emme_mtx, tour_calculation, tour_purposes, external_modes
 
 class ModelTest(unittest.TestCase):
     
@@ -23,6 +24,7 @@ class ModelTest(unittest.TestCase):
         fm = FreightModel(zdata_base, zdata_forecast, basematrices)
         trucks = fm.calc_freight_traffic("truck")
         trailer_trucks = fm.calc_freight_traffic("trailer_truck")
+        em = ExternalModel(basematrices, zdata_forecast.externalgrowth)
         costs = MatrixData("2016")
         ass_model = MockAssignmentModel(costs)
         dtm = dt.DepartureTimeModel(ass_model)
@@ -48,6 +50,12 @@ class ModelTest(unittest.TestCase):
             
         print("Adding demand and assigning")
 
+        dtm.add_demand("freight", "truck", trucks)
+        dtm.add_demand("freight", "trailer_truck", trailer_trucks)
+        pos = ass_model.get_mapping()[31001]
+        for mode in external_modes:
+            ext_demand = em.calc_external(mode)
+            dtm.add_demand("external", mode, ext_demand, (pos, 0))
         for purpose in tour_calculation:
             purpose_impedance = imptrans.transform(purpose, impedance)
             demand = dm.calc_demand(purpose, purpose_impedance)
@@ -59,8 +67,6 @@ class ModelTest(unittest.TestCase):
                 mtx_position = (0, 0)
             for mode in demand:
                 dtm.add_demand(purpose, mode, demand[mode], mtx_position)
-        dtm.add_demand("freight", "truck", trucks)
-        dtm.add_demand("freight", "trailer_truck", trailer_trucks)
         impedance = {}
         for tp in emme_scenario:
             dtm.add_vans(tp)

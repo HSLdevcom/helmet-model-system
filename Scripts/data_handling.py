@@ -53,6 +53,9 @@ class ZoneData:
         path = os.path.join(data_dir, "area.csv")
         areadata = pandas.read_csv(filepath_or_buffer=path, 
                                    delim_whitespace=True)
+        path = os.path.join(data_dir, "external.csv")
+        self.externalgrowth = pandas.read_csv(filepath_or_buffer=path, 
+                                              delim_whitespace=True)
         population = popdata["total"]
         population_density = ( popdata["total"]
                              / areadata["area"])
