@@ -126,6 +126,13 @@ assignment_mode = {
     "truck": 'k',
     "van": 'v',
 }
+vot_class = {
+    "car_work": "work",
+    "car_leisure": "leisure",
+    "trailer_truck": "business",
+    "truck": "business",
+    "van": "business",
+}
 bike_mode = 'f'
 transit_modes = [
     'b',
