@@ -12,6 +12,13 @@ vot_inv = {
 }
 # Distance cost [eur/km]
 dist_cost = 0.12
+# Transit zone fare
+transit_cost = {
+    "AB": 59,
+    "BC": 59,
+    "ABC": 107,
+}
+transit_zones = ['A', 'B', 'C']
 # Boarding penalties for different transit modes
 boarding_penalty = {
     "b": 3,  # Bus
@@ -279,6 +286,10 @@ emme_mtx = {
         "board_time": {
             "id": "mf25",
             "description": "transit boarding time",
+        },
+        "board_cost": {
+            "id": "mf27",
+            "description": "transit boarding cost",
         },
         "num_board": {
             "id": "mf26",
