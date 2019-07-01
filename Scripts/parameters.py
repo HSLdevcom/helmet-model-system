@@ -18,7 +18,7 @@ transit_cost = {
     "BC": 59,
     "ABC": 107,
 }
-transit_zones = ['A', 'B', 'C']
+transit_dist_cost = 200
 # Boarding penalties for different transit modes
 boarding_penalty = {
     "b": 3,  # Bus
@@ -288,7 +288,7 @@ emme_mtx = {
             "description": "transit boarding time",
         },
         "board_cost": {
-            "id": "mf27",
+            "id": "mf28",
             "description": "transit boarding cost",
         },
         "num_board": {
