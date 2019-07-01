@@ -10,10 +10,11 @@ class HelmetApplication():
 
     def __init__(self, config):
         self.__config = config
-        self.logger = Log.get_instance()
+        self.logger = Log.get_instance().initialize(config)
+        self.logger.info("Initializing the application..")
         # TODO clean up the model initialization and initialize other relevant classes
         # We could also perhaps wrap these under some class..?
-        if config.get_value(Config.KEY_USE_EMME):
+        if config.get_value(Config.USE_EMME):
             self.logger.info("Configuration set to use EMME, initializing")
             self.initialize_EMME()
             self.assignment_model = EmmeAssignmentModel(self.emme_context)
@@ -24,13 +25,13 @@ class HelmetApplication():
 
     
     def run(self):
-
+        self.logger.info("Launching application..")
         if not self.validate_input():
             self.logger.error("Failed to validate input, aborting simulation")
             return
 
-        iterations = self.__config.get_value(Config.KEY_ITERATION_COUNT)
-        self.logger.info("Start simulation loop with {} iterations".format(self.__config.get_value(Config.KEY_ITERATION_COUNT)))
+        iterations = self.__config.get_value(Config.ITERATION_COUNT)
+        self.logger.info("Start simulation loop with {} iterations".format(self.__config.get_value(Config.ITERATION_COUNT)))
         for round in range(1, iterations+1):
             try:
                 self.logger.info("Starting round {}".format(round))
@@ -61,21 +62,19 @@ class HelmetApplication():
         from emme.emme_context import EmmeContext
 
         script_dir = os.path.dirname(os.path.realpath('__file__'))
-        project_dir = os.path.join(script_dir, "..")
-        for file_name in os.listdir(project_dir):
+        emp_dir = os.path.join(script_dir, "..")
+        
+        if config.get_value(Config.EMME_PATH) is not None:
+            emp_dir = config.get_value(Config.EMME_PATH)
+        
+        for file_name in os.listdir(emp_dir):
             if file_name.endswith(".emp"):
-                empfile = os.path.join(project_dir, file_name)
+                empfile = os.path.join(emp_dir, file_name)
         self.emme_context = EmmeContext(empfile)
 
 
 # Main entry point for the application
 if __name__ == "__main__":
-    print "Initializing the application.."
-    
     config = Config.read_from_file()
-    Log.get_instance().initialize(config)
-    
-    Log.get_instance().info("Launching application")
-    
     app = HelmetApplication(config)
     app.run()

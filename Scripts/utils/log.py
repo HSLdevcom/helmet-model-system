@@ -21,17 +21,22 @@ class Log:
         return Log.__instance
 
     def initialize(self, config, emme_context=None):
-        numeric_level = getattr(logging, config.get_value(Config.KEY_LOG_LEVEL), None)
+        numeric_level = getattr(logging, config.get_value(Config.LOG_LEVEL), None)
         if not isinstance(numeric_level, int):
-            print "Could not read log level from config, using level INFO"
+            # print "Could not read log level from config, using level INFO"
             numeric_level = 20 # INFO = 20
 
-        logging.basicConfig(filename='helmet.log',level=numeric_level, format='%(asctime)s [%(levelname)s] %(message)s')
-        # Add output also to stdout
-        self.__logger.addHandler(logging.StreamHandler(sys.stdout))
+        if config.get_value(Config.LOG_FORMAT) == 'JSON':
+            logging.basicConfig(level=numeric_level, format='{"level":"%(levelname)s", "msg":"%(message)s"}')
+        else:
+            logging.basicConfig(filename='helmet.log', level=numeric_level, format='%(asctime)s [%(levelname)s] %(message)s')
+        return Log.__instance
 
     def add_stream_handler(self, handler):
         self.__logger.addHandler(handler)
+
+    def debug(self, msg):
+        self.__logger.debug(msg)
 
     def info(self, msg):
         self.__logger.info(msg)
