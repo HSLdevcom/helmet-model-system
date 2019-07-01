@@ -1,6 +1,7 @@
 import os
 import logging
 import copy
+import numpy
 import parameters as param
 from abstract_assignment import AssignmentModel, ImpedanceSource
 from datatypes.car import Car, PrivateCar
@@ -237,18 +238,46 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         netcalc(netw_specs, scenario)
 
     def _calc_transit_cost(self):
-        # TODO Calculate distance-based costs from inv-distance.
+        emmebank = self.emme.modeller.emmebank
+        scen_id = param.emme_scenario["aht"]
+        scenario = emmebank.scenario(scen_id)
         has_visited = {}
-        for zone in param.transit_zones:
-            # TODO Set tag to 1 for nodes in ticket zone and 0 elsewhere.
-            self._assign_transit(param.emme_scenario["aht"], True)
+        mapping = self.get_mapping()
+        network = scenario.get_network()
+        transit_zones = set()
+        for node in network.nodes():
+            transit_zones.add(node.label)
+        for transit_zone in transit_zones:
+            # Set tag to 1 for nodes in transit zone and 0 elsewhere
+            for node in network.nodes():
+                node.data1 = (node.label == transit_zone)
+            scenario.publish_network(network)
+            # Transit assignment with zone tag as weightless boarding cost
+            self._assign_transit(scen_id, True)
             nr_visits = self.get_matrix("transit", "board_cost")
-            has_visited[zone] = (nr_visits > 0)
-        # TODO For each OD-pair:
-        #        Check if criteria for each zone ticket type is met
-        #        (which ticket zones are visited?)
-        #        Set ticket price (add)
-        #        If no zone ticket matches, set to distance-based
+            dist = self.get_matrix("dist", "transit")
+            # If the number of visits is less than 1, there seem to
+            # be an easy way to avoid visiting this transit zone
+            has_visited[transit_zone] = (nr_visits >= 1)
+        for centroid in network.centroids():
+            # Add transit zone of destination to visited
+            has_visited[centroid.label][:, mapping[centroid.number]] = 1
+        # Calculate distance-based cost from inv-distance
+        # TODO Always overwrite distance price
+        price = param.transit_dist_cost * dist
+        mtx = next(iter(has_visited.values()))
+        for zone_combination in param.transit_cost:
+            goes_outside = numpy.full_like(mtx, False)
+            for transit_zone in has_visited:
+                # Check if the OD-flow has been at a node that is
+                # outside of this zone combination 
+                if transit_zone not in zone_combination:
+                    goes_outside |= has_visited[transit_zone]
+            is_inside = ~goes_outside
+            zone_price = param.transit_cost[zone_combination]
+            # If the OD-flow matches several combinations, pick the cheapest
+            price[is_inside] = numpy.minimum(price[is_inside], zone_price)
+            print price
 
     def _specify(self):
         # Car assignment specification
@@ -583,6 +612,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             bcost = None
         for jlevel in self.transit_spec["journey_levels"]:
             jlevel["boarding_cost"] = bcost
+        # self.transit_spec["boarding_cost"] = bcost
         emmebank = self.emme.modeller.emmebank
         scenario = emmebank.scenario(scen_id)
         self.emme.logger.info("Transit assignment started")
