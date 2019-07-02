@@ -11,6 +11,7 @@ class DemandModel:
 
     def calc_demand(self, purpose, impedance):
         prob = self.calc_prob(purpose, impedance)
+        origin_prob = self.calc_origin_prob(purpose, impedance)
         nr_zones = len(self.zone_data.values["population"])
         if parameters.tour_purposes[purpose]["type"] == "other-other":
             tours = numpy.zeros(nr_zones)
@@ -150,4 +151,26 @@ class DemandModel:
         for i in b:
             self.dest_exps[mode] *= numpy.power(logs[i], b[i])
         return numpy.sum(self.dest_exps[mode], 1)
-        
+
+    def calc_origin_util(self, purpose, impedance):
+        utility = numpy.zeros_like(next(iter(impedance.values()))["car"])
+        if purpose == "oop":
+            # TODO ???
+            return utility + 1
+        model = parameters.tour_purposes[purpose]["area"]
+        modes = parameters.origin_choice[model]["impedance"]
+        for mode in modes:
+            b = parameters.origin_choice[model]["impedance"][mode]
+            for i in b:
+                utility += b[i] * impedance[i][mode]
+        b = parameters.origin_choice[model]["attraction"]
+        for i in b:
+            utility += b[i] * self.zone_data.values[i]
+        return utility
+
+    def calc_origin_prob(self, purpose, impedance):
+        utility = self.calc_origin_util(purpose, impedance)
+        exps = numpy.exp(utility)
+        expsums = numpy.sum(exps, axis=0)
+        prob = exps / expsums
+        return prob

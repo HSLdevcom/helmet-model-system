@@ -865,6 +865,43 @@ mode_choice = {
         },
     },
 }
+origin_choice = {
+    "hs15": {
+        # TODO: replace hs15 values with correct ones after estimation is finished
+        "impedance": {
+            "car": {
+                "cost": -0.01,
+                "time": -0.01,
+            },
+            "transit": {
+                "cost": -0.01,
+                "time": -0.01,
+            },
+        },
+        "attraction": {
+            # TODO: replace with parking_fee_other (zone_data should also include parking_fee_work)
+            "parking_cost": -0.01,
+            "population_density": -0.01,
+        },
+    },
+    "peripheral": {
+        "impedance": {
+            "car": {
+                "cost": 0.94 * -0.609e-1,
+                "time": 0.94 * -0.264e-1,
+            },
+            "transit": {
+                "cost": 0.04 * -0.609e-1,
+                "time": 0.04 * -0.264e-1,
+            },
+        },
+        "attraction": {
+            # TODO: replace with parking_fee_other (zone_data should also include parking_fee_work)
+            "parking_cost": 0.94 * -0.609e-1,
+            "population_density": -0.109e-3,
+        },
+    },
+}
 tour_generation = {
     "hw": {
         "population": 0.5,
