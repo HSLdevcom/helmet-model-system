@@ -25,7 +25,6 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             self._calc_boarding_penalties(param.emme_scenario[time_period])
             self._calc_background_traffic(param.emme_scenario[time_period])
         self._specify()
-        self._calc_transit_cost()
     
     def assign(self, time_period, matrices):
         """Assign cars, bikes and transit for one time period.
@@ -237,9 +236,10 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "inro.emme.network_calculation.network_calculator")
         netcalc(netw_specs, scenario)
 
-    def _calc_transit_cost(self):
+    def calc_transit_cost(self):
         emmebank = self.emme.modeller.emmebank
         scen_id = param.emme_scenario["aht"]
+        self._calc_boarding_penalties(scen_id, 5)
         scenario = emmebank.scenario(scen_id)
         has_visited = {}
         mapping = self.get_mapping()
@@ -278,6 +278,8 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             # If the OD-flow matches several combinations, pick the cheapest
             price[is_inside] = numpy.minimum(price[is_inside], zone_price)
             print price
+        # Reset boarding penalties
+        self._calc_boarding_penalties(scen_id)
 
     def _specify(self):
         # Car assignment specification
@@ -374,12 +376,11 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             },
         }
         # Transit assignment specification
+        # Two journey levels are added at a later stage.
         # The two journey levels are identical, except that at the second
         # level an extra boarding penalty is implemented,
         # hence a transfer penalty. Waiting time length is also different. 
         # Walk only trips are not allowed.
-        jlevel1 = JourneyLevel(boarded=False)
-        jlevel2 = JourneyLevel(boarded=True)
         no_penalty = dict.fromkeys(["at_nodes", "on_lines", "on_segments"])
         no_penalty["global"] = {
             "penalty": 0, 
@@ -395,9 +396,17 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                 "spread_factor": 1,
                 "perception_factor": param.waiting_time_perception_factor
             },
-            # Boarding time is defined for each journey level separately,
+            "boarding_time": {
+                "global": None,
+                "at_nodes": None,
+                "on_lines": {
+                    "penalty": "ut3",
+                    "perception_factor": 1
+                },
+                "on_segments": param.extra_waiting_time,
+            },
+            # Boarding cost is defined for each journey level separately,
             # so here we just set the default to zero.
-            "boarding_time": no_penalty,
             "boarding_cost": no_penalty,
             "in_vehicle_time": {
                 "perception_factor": 1
@@ -412,7 +421,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "flow_distribution_between_lines": {
                 "consider_total_impedance": False
             },
-            "journey_levels": [jlevel1.spec, jlevel2.spec],
+            "journey_levels": None,
             "performance_settings": param.performance_settings,
         }
         # Transit assignment result specification
@@ -508,10 +517,11 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         self.emme.logger.info("Pedestrian assignment performed for scenario "
                               + str(scen_id))
 
-    def _calc_boarding_penalties(self, scen_id):
+    def _calc_boarding_penalties(self, scen_id, extra_penalty=0):
         """Calculate boarding penalties for transit assignment."""
         emmebank = self.emme.modeller.emmebank
         scenario = emmebank.scenario(scen_id)
+        extrastr = "+" + str(extra_penalty)
         # Definition of line specific boarding penalties
         netw_specs = []
         # Bus
@@ -521,7 +531,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                 "selections": {
                     "transit_line": "mode=" + mode,
                 },
-                "expression": str(param.boarding_penalty[mode]),
+                "expression": str(param.boarding_penalty[mode]) + extrastr,
                 "result": "ut3",
                 "aggregation": None,
             })
@@ -593,12 +603,13 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
 
     def _assign_transit(self, scen_id, count_zone_boardings=False):
         """Perform transit assignment for one scenario."""
+        bcost = dict.fromkeys(["global", 
+                               "at_nodes", 
+                               "on_lines", 
+                               "on_segments"])
         if count_zone_boardings:
-            bcost = dict.fromkeys(["global", "on_lines", "on_segments"])
-            bcost["at_nodes"] = {
-                "penalty": "ui1", 
-                "perception_factor": 0,
-            }
+            jlevel1 = JourneyLevel(False, True)
+            jlevel2 = JourneyLevel(True, True)
             mtx = param.emme_mtx["transit"]["board_cost"]["id"]
             bcost_spec = {
                 "type": "EXTENDED_TRANSIT_MATRIX_RESULTS",
@@ -609,9 +620,9 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                 },
             }
         else:
-            bcost = None
-        for jlevel in self.transit_spec["journey_levels"]:
-            jlevel["boarding_cost"] = bcost
+            jlevel1 = JourneyLevel(boarded=False)
+            jlevel2 = JourneyLevel(boarded=True)
+        self.transit_spec["journey_levels"] = [jlevel1.spec, jlevel2.spec]
         # self.transit_spec["boarding_cost"] = bcost
         emmebank = self.emme.modeller.emmebank
         scenario = emmebank.scenario(scen_id)
