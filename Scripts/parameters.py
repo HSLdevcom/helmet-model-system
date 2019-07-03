@@ -1,3 +1,5 @@
+import numpy
+
 ### ASSIGNMENT PARAMETERS ###
 
 # Performance settings
@@ -928,6 +930,19 @@ origin_choice = {
             # TODO: replace with parking_fee_other (zone_data should also include parking_fee_work)
             "parking_cost": 0.94 * -0.609e-1,
             "population_density": -0.109e-3,
+        },
+    },
+    "logsum": {
+        "impedance": {},
+        "log": {
+            "attraction": 1,
+        },
+        "attraction": {
+            "workplaces": numpy.exp(2.53759200723),
+        },
+        "compound": {
+            "population_own": numpy.exp(1.17058855327),
+            "population_other": 1,
         },
     },
 }

@@ -173,6 +173,16 @@ class DemandModel:
     def calc_origin_prob(self, purpose, impedance):
         utility = self.calc_origin_util(purpose, impedance)
         exps = numpy.exp(utility)
+        # Here, size means kokotekija in Finnish
+        size = numpy.zeros_like(exps) + 1
+        b = parameters.origin_choice["logsum"]["attraction"]
+        for i in b:
+            size += b[i] * self.zone_data.values[i]
+        b = parameters.origin_choice["logsum"]["compound"]
+        for i in b:
+            size += b[i] * self.get_compound(i, purpose)
+        size = numpy.power(size, parameters.origin_choice["logsum"]["log"]["attraction"])
+        exps = size * exps
         expsums = numpy.sum(exps, axis=0)
         prob = {}
         # Both modes are needed here to be able to run calc_demand() even
