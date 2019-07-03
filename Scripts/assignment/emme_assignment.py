@@ -261,10 +261,9 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             has_visited[transit_zone] = (nr_visits >= 1)
         for centroid in network.centroids():
             # Add transit zone of destination to visited
-            has_visited[centroid.label][:, mapping[centroid.number]] = 1
-        # Calculate distance-based cost from inv-distance
-        # TODO Always overwrite distance price
-        price = param.transit_dist_cost * dist
+            has_visited[centroid.label][:, mapping[centroid.number]] = True
+        maxprice = 999
+        price = numpy.full_like(dist, maxprice)
         mtx = next(iter(has_visited.values()))
         for zone_combination in param.transit_cost:
             goes_outside = numpy.full_like(mtx, False)
@@ -274,10 +273,17 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                 if transit_zone not in zone_combination:
                     goes_outside |= has_visited[transit_zone]
             is_inside = ~goes_outside
+            if zone_combination in param.exclusive_tickets:
+                municipality = param.exclusive_tickets[zone_combination]
+                inclusion = param.numpy_municipality[municipality]
+                is_inside[:mapping[inclusion[0]],:] = False
+                is_inside[mapping[inclusion[1]]:,:] = False
             zone_price = param.transit_cost[zone_combination]
             # If the OD-flow matches several combinations, pick the cheapest
             price[is_inside] = numpy.minimum(price[is_inside], zone_price)
-            print price
+        # Calculate distance-based cost from inv-distance
+        dist_price = param.transit_start_cost + param.transit_dist_cost*dist
+        price[price==maxprice] = dist_price[price==maxprice]
         # Reset boarding penalties
         self._calc_boarding_penalties(scen_id)
 
