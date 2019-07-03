@@ -115,6 +115,7 @@ assignment_class = {
     "ho": "car_leisure",
     "hwp": "car_work",
     "hop": "car_leisure",
+    "sop": "car_leisure",
     "oop": "car_leisure",
     "external": "car_leisure"
 }
@@ -381,6 +382,18 @@ demand_share = {
             "iht": (0.05, 0.05),
         },
     },
+    "sop": {
+        "car": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
+        "transit": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
+    },
     "oop": {
         "car": {
             "aht": (0.01, 0.01),
@@ -499,6 +512,18 @@ impedance_share = {
         },
     },
     "hop": {
+        "car": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
+        "transit": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
+    },
+    "sop": {
         "car": {
             "aht": (0.01, 0.01),
             "pt": (0.05, 0.05),
@@ -838,6 +863,10 @@ mode_choice = {
             "log_impedance": {},
         },
     },
+    "sop": {
+        "car": {},
+        "transit": {},
+    },
     "oop": {
         "car": {
             "constant": 0,
@@ -918,9 +947,11 @@ tour_generation = {
     "hop": {
         "population": 0.5,
     },
+    "sop": {
+        "population": 0.5,
+    },
     "oop": {
-        "hwp": 0.5,
-        "hop": 0.5,
+        "sop": 0.5,
     },
     "truck": {
         "population": 0.01,
@@ -945,7 +976,7 @@ vector_calibration_threshold = 5
 
 ### DEMAND MODEL REFERENCES ###
 
-tour_calculation = ("hw", "hs", "ho", "hwp", "hop", "oop")
+tour_calculation = ("hw", "hs", "ho", "hwp", "hop", "sop", "oop")
 tour_purposes = {
     "hw": {
         "type": "home-work",
@@ -967,9 +998,13 @@ tour_purposes = {
         "type": "home-other",
         "area": "peripheral",
     },
+    "sop": {
+        "type": "source-other-peripheral",
+        "area": "peripheral",
+    },
     "oop": {
         "type": "other-other",
-        "source": ("hwp", "hop"),
+        "source": ["sop"],
         "area": "all",
     },
 }

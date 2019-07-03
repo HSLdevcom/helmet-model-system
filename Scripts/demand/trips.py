@@ -11,7 +11,6 @@ class DemandModel:
 
     def calc_demand(self, purpose, impedance):
         prob = self.calc_prob(purpose, impedance)
-        origin_prob = self.calc_origin_prob(purpose, impedance)
         nr_zones = len(self.zone_data.values["population"])
         if parameters.tour_purposes[purpose]["type"] == "other-other":
             tours = numpy.zeros(nr_zones)
@@ -42,11 +41,14 @@ class DemandModel:
         return tours
 
     def calc_prob(self, purpose, impedance):
-        self.insert_compound(purpose, impedance, "own_zone_area")
-        if parameters.tour_purposes[purpose]["area"] == "hs15":
-            prob = self.calc_mode_dest_prob(purpose, impedance)
+        if parameters.tour_purposes[purpose]["type"] == "source-other-peripheral":
+            prob = self.calc_origin_prob(purpose, impedance)
         else:
-            prob = self.calc_dest_mode_prob(purpose, impedance)
+            self.insert_compound(purpose, impedance, "own_zone_area")
+            if parameters.tour_purposes[purpose]["area"] == "hs15":
+                prob = self.calc_mode_dest_prob(purpose, impedance)
+            else:
+                prob = self.calc_dest_mode_prob(purpose, impedance)
         return prob
 
     def insert_compound(self, purpose, impedance, compound_type):
@@ -172,5 +174,9 @@ class DemandModel:
         utility = self.calc_origin_util(purpose, impedance)
         exps = numpy.exp(utility)
         expsums = numpy.sum(exps, axis=0)
-        prob = exps / expsums
+        prob = {}
+        # Both modes are needed here to be able to run calc_demand() even
+        # though the origin model does not take modes into account.
+        prob["car"] = (exps / expsums).T
+        prob["transit"] = numpy.zeros_like(prob["car"])
         return prob
