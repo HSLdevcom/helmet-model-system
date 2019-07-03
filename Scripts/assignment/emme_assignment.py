@@ -276,12 +276,12 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             is_inside = ~goes_outside
             if zone_combination in param.exclusive_tickets:
                 zn = self.get_zone_numbers()
-                is_inside_p = pandas.DataFrame(is_inside, zn, zn)
+                exclusion = pandas.DataFrame(is_inside, zn, zn)
                 municipality = param.exclusive_tickets[zone_combination]
                 inclusion = param.municipality[municipality]
-                is_inside_p.loc[:inclusion[0]] = False
-                is_inside_p.loc[inclusion[1]:] = False
-                is_inside = is_inside_p.values
+                exclusion.loc[:inclusion[0]-1] = False
+                exclusion.loc[inclusion[1]+1:] = False
+                is_inside = exclusion.values
             zone_price = param.transit_cost[zone_combination]
             # If the OD-flow matches several combinations, pick the cheapest
             price[is_inside] = numpy.minimum(price[is_inside], zone_price)
