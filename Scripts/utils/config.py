@@ -3,11 +3,15 @@ import json
 
 class Config():
     
-    KEY_ITERATION_COUNT = 'ITERATION_COUNT'
-    KEY_USE_EMME = 'USE_EMME'
-    KEY_LOG_LEVEL = 'LOG_LEVEL'
+    ITERATION_COUNT = 'ITERATION_COUNT'
+    USE_EMME = 'USE_EMME'
+    LOG_LEVEL = 'LOG_LEVEL'
+    LOG_FORMAT = 'LOG_FORMAT'
+    DATA_PATH = 'DATA_PATH'
+    EMME_PATH = 'EMME_PATH'
+
     def __init__(self):
-        self.__config = None
+        self.__config = {}
 
     @staticmethod
     def read_from_file(path="dev-config.json"):
@@ -26,3 +30,6 @@ class Config():
             return from_env
         else:
             return self.__config[key]
+
+    def set_value(self, key, value):
+        self.__config[key] = value
