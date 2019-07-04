@@ -62,3 +62,6 @@ class MockAssignmentModel(AssignmentModel, ImpedanceSource):
         mapping = self.matrices.get_mapping()
         self.matrices.close()
         return mapping
+
+    def calc_transit_cost(self):
+        pass
