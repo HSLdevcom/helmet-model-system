@@ -185,8 +185,7 @@ class DemandModel:
         exps = size * exps
         expsums = numpy.sum(exps, axis=0)
         prob = {}
-        # Both modes are needed here to be able to run calc_demand() even
+        # Mode is needed here to get through tests even
         # though the origin model does not take modes into account.
-        prob["car"] = (exps / expsums).T
-        prob["transit"] = numpy.zeros_like(prob["car"])
+        prob["transit"] = (exps / expsums).T
         return prob
