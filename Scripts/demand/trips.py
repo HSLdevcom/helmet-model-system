@@ -7,6 +7,7 @@ class DemandModel:
         self.zone_data = zone_data
         self.dest_exps = {}
         self.mode_exps = {}
+        self.generated_tours = {}
         self.attracted_tours = {}
 
     def calc_demand(self, purpose, impedance):
@@ -15,21 +16,20 @@ class DemandModel:
         if parameters.tour_purposes[purpose]["type"] == "other-other":
             tours = numpy.zeros(nr_zones)
             for source in parameters.tour_purposes[purpose]["source"]:
-                source_tours = self.attracted_tours[source]
-                tours += self.generate_non_home(purpose, source, source_tours)
+                b = parameters.tour_generation[purpose][source]
+                for mode in self.attracted_tours[source]:
+                    source_tours = self.attracted_tours[source][mode]
+                    tours += b * source_tours
         else:
             tours = self.generate_tours(purpose)
-            self.attracted_tours[purpose] = numpy.zeros(nr_zones)
         demand = {}
+        self.generated_tours[purpose] = {}
+        self.attracted_tours[purpose] = {}
         for mode in parameters.mode_choice[purpose]:
             demand[mode] = (prob[mode] * tours).T
-            if parameters.tour_purposes[purpose]["type"] != "other-other":
-                self.attracted_tours[purpose] += numpy.sum(demand[mode], 0)
+            self.attracted_tours[purpose][mode] = demand[mode].sum(0)
+            self.generated_tours[purpose][mode] = demand[mode].sum(1)
         return demand
-
-    def generate_non_home(self, purpose, source, source_tours):
-        b = parameters.tour_generation[purpose][source]
-        return b * source_tours
 
     def generate_tours(self, purpose):
         l, u = self.get_bounds(purpose)
@@ -62,6 +62,15 @@ class DemandModel:
         l, u = self.get_bounds(purpose)
         return self.zone_data.values[compound_type][l:u, :]
     
+    def get_sum(self, mode):
+        nr_zones = len(self.zone_data.zone_numbers)
+        trips = numpy.zeros(nr_zones)
+        for purpose in self.generated_tours:
+            l, u = self.get_bounds(purpose)
+            trips[l:u] += self.generated_tours[purpose][mode]
+            trips += self.attracted_tours[purpose][mode]
+        return trips
+
     def calc_mode_dest_prob(self, purpose, impedance):
         dest_expsums = {"logsum": {}}
         for mode in parameters.destination_choice[purpose]:
