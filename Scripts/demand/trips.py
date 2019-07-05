@@ -174,7 +174,7 @@ class DemandModel:
         utility = self.calc_origin_util(purpose, impedance)
         exps = numpy.exp(utility)
         # Here, size means kokotekija in Finnish
-        size = numpy.zeros_like(exps) + 1
+        size = numpy.ones_like(exps)
         b = parameters.origin_choice["logsum"]["attraction"]
         for i in b:
             size += b[i] * self.zone_data.values[i]
