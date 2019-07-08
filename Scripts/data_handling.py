@@ -1,6 +1,6 @@
 import os
 import omx
-import numpy
+import numpy as np
 import pandas
 import parameters as param
 
@@ -18,7 +18,7 @@ class MatrixData:
         self.mtx_file.close()
     
     def get_data(self, mode):
-        return numpy.array(self.mtx_file[mode])
+        return np.array(self.mtx_file[mode])
 
     def get_external(self, mode):
         path = os.path.join(self.path, "external_"+mode+".csv")
@@ -80,15 +80,19 @@ class ZoneData:
         comprehensive_schools = schooldata["comprehensive"]
         zone_area = areadata["area"]
         share_detached_houses = areadata["share_detached_houses"]
-        downtown = pandas.Series(0, population.index)
+        downtown = pandas.Series(0, self.zone_numbers)
         downtown.loc[:999] = 1
+        capital_region = pandas.Series(0, self.zone_numbers)
+        capital_region.loc[:5999] = 1
         shops_downtown = downtown * shops
         shops_elsewhere = (1-downtown) * shops
         # Create diagonal matrix with zone area
         nr_zones = len(zone_area)
-        di = numpy.diag_indices(nr_zones)
-        own_zone_area = numpy.zeros((nr_zones, nr_zones))
+        di = np.diag_indices(nr_zones)
+        own_zone_area = np.zeros((nr_zones, nr_zones))
         own_zone_area[di] = zone_area
+        own_zone_area_sq_capital = np.sqrt(capital_region*own_zone_area)
+        own_zone_area_sq_surround = np.sqrt((1-capital_region)*own_zone_area)
         # Create matrix where value is 1 if origin and destination is in
         # same municipality
         idx = self.zone_numbers
@@ -117,6 +121,8 @@ class ZoneData:
             "comprehensive_schools": comprehensive_schools,
             "zone_area": zone_area,
             "own_zone_area": own_zone_area,
+            "own_zone_area_sq_capital": own_zone_area_sq_capital,
+            "own_zone_area_sq_surround": own_zone_area_sq_surround,
             "downtown": downtown,
             "share_detached_houses": share_detached_houses,
         }

@@ -148,6 +148,8 @@ emme_scenario = {
 bike_scenario = 19
 assignment_class = {
     "hw": "car_work",
+    "hc": "car_leisure",
+    "hu": "car_leisure",
     "hs": "car_leisure",
     "ho": "car_leisure",
     "hwp": "car_work",
@@ -365,6 +367,40 @@ demand_share = {
             "iht": (0.01, 0.1),
         },
     },
+    "hc": {
+        "car": {
+            "aht": (0.1, 0.01),
+            "pt": (0.01, 0.01),
+            "iht": (0.01, 0.1),
+        },
+        "transit": {
+            "aht": (0.1, 0.01),
+            "pt": (0.01, 0.01),
+            "iht": (0.01, 0.1),
+        },
+        "bike": {
+            "aht": (0.1, 0.01),
+            "pt": (0.01, 0.01),
+            "iht": (0.01, 0.1),
+        },
+    },
+    "hu": {
+        "car": {
+            "aht": (0.1, 0.01),
+            "pt": (0.01, 0.01),
+            "iht": (0.01, 0.1),
+        },
+        "transit": {
+            "aht": (0.1, 0.01),
+            "pt": (0.01, 0.01),
+            "iht": (0.01, 0.1),
+        },
+        "bike": {
+            "aht": (0.1, 0.01),
+            "pt": (0.01, 0.01),
+            "iht": (0.01, 0.1),
+        },
+    },
     "hs": {
         "car": {
             "aht": (0.01, 0.01),
@@ -501,6 +537,40 @@ impedance_share = {
             "iht": (0.01, 0.1),
         },
     },
+    "hc": {
+        "car": {
+            "aht": (0.1, 0.01),
+            "pt": (0.01, 0.01),
+            "iht": (0.01, 0.1),
+        },
+        "transit": {
+            "aht": (0.1, 0.01),
+            "pt": (0.01, 0.01),
+            "iht": (0.01, 0.1),
+        },
+        "bike": {
+            "aht": (0.1, 0.01),
+            "pt": (0.01, 0.01),
+            "iht": (0.01, 0.1),
+        },
+    },
+    "hu": {
+        "car": {
+            "aht": (0.1, 0.01),
+            "pt": (0.01, 0.01),
+            "iht": (0.01, 0.1),
+        },
+        "transit": {
+            "aht": (0.1, 0.01),
+            "pt": (0.01, 0.01),
+            "iht": (0.01, 0.1),
+        },
+        "bike": {
+            "aht": (0.1, 0.01),
+            "pt": (0.01, 0.01),
+            "iht": (0.01, 0.1),
+        },
+    },
     "hs": {
         "car": {
             "aht": (0.01, 0.01),
@@ -589,6 +659,92 @@ impedance_share = {
 
 destination_choice = {
     "hw": {
+        "car": {
+            "attraction": {},
+            "impedance": {
+                "time": -0.3,
+                "cost": -0.1,
+                "own_zone_area": -0.2,
+            },
+            "log": {
+                "size": 0.2,
+            },
+            "size": {
+                "workplaces": 0.3,
+            },
+            "compound": {},
+        },
+        "transit": {
+            "attraction": {},
+            "impedance": {
+                "time": -0.3,
+            },
+            "log": {
+                "size": 0.2,
+            },
+            "size": {
+                "workplaces": 0.3,
+            },
+            "compound": {},
+        },
+        "bike": {
+            "attraction": {},
+            "impedance": {
+                "time": -0.3,
+            },
+            "log": {
+                "size": 0.2,
+            },
+            "size": {
+                "workplaces": 0.3,
+            },
+            "compound": {},
+        },
+    },
+    "hc": {
+        "car": {
+            "attraction": {},
+            "impedance": {
+                "time": -0.3,
+                "cost": -0.1,
+                "own_zone_area": -0.2,
+            },
+            "log": {
+                "size": 0.2,
+            },
+            "size": {
+                "workplaces": 0.3,
+            },
+            "compound": {},
+        },
+        "transit": {
+            "attraction": {},
+            "impedance": {
+                "time": -0.3,
+            },
+            "log": {
+                "size": 0.2,
+            },
+            "size": {
+                "workplaces": 0.3,
+            },
+            "compound": {},
+        },
+        "bike": {
+            "attraction": {},
+            "impedance": {
+                "time": -0.3,
+            },
+            "log": {
+                "size": 0.2,
+            },
+            "size": {
+                "workplaces": 0.3,
+            },
+            "compound": {},
+        },
+    },
+    "hu": {
         "car": {
             "attraction": {},
             "impedance": {
@@ -870,6 +1026,68 @@ mode_choice = {
             },
         }, 
     },
+    "hc": {
+        "car": {
+            "constant": 0,
+            "generation": {
+                "car_density": 0.3,
+            },
+            "attraction": {},
+            "impedance": {},
+            "log_impedance": {
+                "logsum": 3,
+            },
+        },
+        "transit": {
+            "constant": 0,
+            "generation": {},
+            "attraction": {},
+            "impedance": {},
+            "log_impedance": {
+                "logsum": 5,
+            },
+        },
+        "bike": {
+            "constant": 0,
+            "generation": {},
+            "attraction": {},
+            "impedance": {},
+            "log_impedance": {
+                "logsum": 2,
+            },
+        }, 
+    },
+    "hu": {
+        "car": {
+            "constant": 0,
+            "generation": {
+                "car_density": 0.3,
+            },
+            "attraction": {},
+            "impedance": {},
+            "log_impedance": {
+                "logsum": 3,
+            },
+        },
+        "transit": {
+            "constant": 0,
+            "generation": {},
+            "attraction": {},
+            "impedance": {},
+            "log_impedance": {
+                "logsum": 5,
+            },
+        },
+        "bike": {
+            "constant": 0,
+            "generation": {},
+            "attraction": {},
+            "impedance": {},
+            "log_impedance": {
+                "logsum": 2,
+            },
+        }, 
+    },
     "hs": {
         "car": {
             "constant": 0,
@@ -1046,6 +1264,12 @@ tour_generation = {
     "hw": {
         "population": 0.5,
     },
+    "hc": {
+        "population": 0.5,
+    },
+    "hu": {
+        "population": 0.5,
+    },
     "hs": {
         "population": 0.5,
     },
@@ -1087,10 +1311,18 @@ vector_calibration_threshold = 5
 
 ### DEMAND MODEL REFERENCES ###
 
-tour_calculation = ("hw", "hs", "ho", "hwp", "hop", "sop", "oop")
+tour_calculation = ("hw", "hc", "hu", "hs", "ho", "hwp", "hop", "sop", "oop")
 tour_purposes = {
     "hw": {
         "type": "home-work",
+        "area": "metropolitan",
+    },
+    "hc": {
+        "type": "home-comprehensive_school",
+        "area": "metropolitan",
+    },
+    "hu": {
+        "type": "home-tertiary_education",
         "area": "metropolitan",
     },
     "hs": {
@@ -1119,11 +1351,11 @@ tour_purposes = {
         "area": "all",
     },
 }
-tour_modes = [
-    "car",
-    "transit",
-    "bike",
-]
+# tour_modes = [
+#     "car",
+#     "transit",
+#     "bike",
+# ]
 external_modes = [
     "car",
     "transit",

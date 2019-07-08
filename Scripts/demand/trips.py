@@ -44,10 +44,19 @@ class DemandModel:
         if parameters.tour_purposes[purpose]["type"] == "source-other-peripheral":
             prob = self.calc_origin_prob(purpose, impedance)
         else:
-            self.insert_compound(purpose, impedance, "own_zone_area")
+            self.insert_compounds(purpose, impedance)
             prob = self.calc_mode_dest_prob(purpose, impedance)
         return prob
 
+    def insert_compounds(self, purpose, impedance):
+        compounds = (
+            "own_zone_area", 
+            "own_zone_area_sq_capital",
+            "own_zone_area_sq_surround",
+        )
+        for compound in compounds:
+            self.insert_compound(purpose, impedance, compound)
+    
     def insert_compound(self, purpose, impedance, compound_type):
         choices = (parameters.mode_choice, parameters.destination_choice)
         for choice in choices:
