@@ -590,39 +590,42 @@ impedance_share = {
 destination_choice = {
     "hw": {
         "car": {
+            "attraction": {}
             "impedance": {
                 "time": -0.3,
                 "cost": -0.1,
                 "own_zone_area": -0.2,
             },
             "log": {
-                "attraction": 0.2,
+                "size": 0.2,
             },
-            "attraction": {
+            "size": {
                 "workplaces": 0.3,
             },
             "compound": {},
         },
         "transit": {
+            "attraction": {}
             "impedance": {
                 "time": -0.3,
             },
             "log": {
-                "attraction": 0.2,
+                "size": 0.2,
             },
-            "attraction": {
+            "size": {
                 "workplaces": 0.3,
             },
             "compound": {},
         },
         "bike": {
+            "attraction": {}
             "impedance": {
                 "time": -0.3,
             },
             "log": {
-                "attraction": 0.2,
+                "size": 0.2,
             },
-            "attraction": {
+            "size": {
                 "workplaces": 0.3,
             },
             "compound": {},
@@ -630,38 +633,41 @@ destination_choice = {
     },
     "hs": {
         "car": {
+            "attraction": {}
             "impedance": {
                 "time": -0.3,
                 "cost": -0.1,
             },
             "log": {
-                "attraction": 0.2,
+                "size": 0.2,
             },
-            "attraction": {
+            "size": {
                 "workplaces": 0.3,
             },
             "compound": {},
         },
         "transit": {
+            "attraction": {}
             "impedance": {
                 "time": -0.3,
             },
             "log": {
-                "attraction": 0.2,
+                "size": 0.2,
             },
-            "attraction": {
+            "size": {
                 "workplaces": 0.3,
             },
             "compound": {},
         },
         "bike": {
+            "attraction": {}
             "impedance": {
                 "time": -0.3,
             },
             "log": {
-                "attraction": 0.2,
+                "size": 0.2,
             },
-            "attraction": {
+            "size": {
                 "workplaces": 0.3,
             },
             "compound": {},
@@ -669,64 +675,117 @@ destination_choice = {
     },
     "ho": {
         "car": {
+            "attraction": {}
             "impedance": {
                 "time": -0.3,
                 "cost": -0.1,
             },
             "log": {
-                "attraction": 0.2,
+                "size": 0.2,
             },
-            "attraction": {
+            "size": {
                 "workplaces": 0.3,
             },
             "compound": {},
         },
         "transit": {
+            "attraction": {}
             "impedance": {
                 "time": -0.3,
             },
             "log": {
-                "attraction": 0.2,
+                "size": 0.2,
             },
-            "attraction": {
+            "size": {
                 "workplaces": 0.3,
             },
             "compound": {},
         },
         "bike": {
+            "attraction": {}
             "impedance": {
                 "time": -0.3,
             },
             "log": {
-                "attraction": 0.2,
+                "size": 0.2,
             },
-            "attraction": {
+            "size": {
                 "workplaces": 0.3,
             },
             "compound": {},
         },
     },
     "hwp": {
-        "logsum": {
-            "impedance": {},
-            "log": {
-                "logsum": 1,
-                "attraction": 0.909,
-            },
+        "car": {
             "attraction": {
+                "parking_cost": -0.141,
+                "share_detached_houses": 0.559e-2,
+            },
+            "impedance": {
+                "time": -0.245e-1,
+                "cost": -0.141,
+                "own_zone_area": -0.216e-1,
+            },
+            "log": {
+                "size": 0.909,
+            },
+            "size": {
+                "workplaces": 1,
+            },
+            "compound": {},
+        },
+        "transit": {
+            "attraction": {
+                "downtown": 0.238,
+            },
+            "impedance": {
+                "time": -0.714e-2,
+                "cost": -0.141,
+                "own_zone_area": -0.853e-1,
+            },
+            "log": {
+                "size": 0.909,
+            },
+            "size": {
                 "workplaces": 1,
             },
             "compound": {},
         },
     },
     "hop": {
-        "logsum": {
-            "impedance": {},
-            "log": {
-                "logsum": 1,
-                "attraction": 1,
-            },
+        "car": {
             "attraction": {
+                "car_density": 0.198e-2,
+            },
+            "impedance": {
+                "time": -0.302e-1,
+                "cost": -0.182,
+                "own_zone_area": -0.186e-1,
+            },
+            "log": {
+                "size": 1,
+            },
+            "size": {
+                "workplaces": 1.16,
+                "service": 110,
+                "shops": 211,
+                "comprehensive_schools": 14.1,
+            },
+            "compound": {
+                "population_own": 28.8,
+                "population_other": 1,
+            },
+        },
+        "transit": {
+            "attraction": {},
+            "impedance": {
+                "time": -0.611e-2,
+                "cost": -0.182,
+            },
+            "log": {
+                "size": 1,
+            },
+            "size": {
                 "workplaces": 1.16,
                 "service": 110,
                 "shops": 211,
@@ -739,13 +798,37 @@ destination_choice = {
         },
     },
     "oop": {
-        "logsum": {
-            "impedance": {},
-            "log": {
-                "logsum": 0.786,
-                "attraction": 0.786,
-            },
+        "car": {
             "attraction": {
+                "parking_cost": -0.221,
+            },
+            "impedance": {
+                "time": -0.407e-1,
+                "cost": -0.221,
+            },
+            "log": {
+                "size": 1,
+            },
+            "size": {
+                "population": 1,
+                "workplaces": 3.37,
+                "shops_downtown": 43.3,
+                "shops_elsewhere": 9.11,
+            },
+            "compound": {},
+        },
+        "transit": {
+            "attraction": {
+                "downtown": 2.79,
+            },
+            "impedance": {
+                "time": -0.828e-2,
+                "cost": -0.221,
+            },
+            "log": {
+                "size": 1,
+            },
+            "size": {
                 "population": 1,
                 "workplaces": 3.37,
                 "shops_downtown": 43.3,
@@ -849,54 +932,40 @@ mode_choice = {
         "car": {
             "constant": 0,
             "generation": {},
-            "attraction": {
-                "parking_cost": -0.141,
-                "share_detached_houses": 0.559e-2,
+            "attraction": {},
+            "impedance": {},
+            "log_impedance": {
+                "logsum": 1,
             },
-            "impedance": {
-                "time": -0.245e-1,
-                "cost": -0.141,
-                "own_zone_area": -0.216e-1,
-            },
-            "log_impedance": {},
         },
         "transit": {
             "constant": -2.20,
             "generation": {},
-            "attraction": {
-                "downtown": 0.238,
+            "attraction": {},
+            "impedance": {},
+            "log_impedance": {
+                "logsum": 1,
             },
-            "impedance": {
-                "time": -0.714e-2,
-                "cost": -0.141,
-                "own_zone_area": -0.853e-1,
-            },
-            "log_impedance": {},
         },
     },
     "hop": {
         "car": {
             "constant": 0,
             "generation": {},
-            "attraction": {
-                "car_density": 0.198e-2,
+            "attraction": {},
+            "impedance": {},
+            "log_impedance": {
+                "logsum": 1,
             },
-            "impedance": {
-                "time": -0.302e-1,
-                "cost": -0.182,
-                "own_zone_area": -0.186e-1,
-            },
-            "log_impedance": {},
         },
         "transit": {
             "constant": -1.14,
             "generation": {},
             "attraction": {},
-            "impedance": {
-                "time": -0.611e-2,
-                "cost": -0.182,
+            "impedance": {},
+            "log_impedance": {
+                "logsum": 1,
             },
-            "log_impedance": {},
         },
     },
     "sop": {
@@ -906,32 +975,26 @@ mode_choice = {
         "car": {
             "constant": 0,
             "generation": {},
-            "attraction": {
-                "parking_cost": -0.221,
+            "attraction": {},
+            "impedance": {},
+            "log_impedance": {
+                "logsum": 0.786,
             },
-            "impedance": {
-                "time": -0.407e-1,
-                "cost": -0.221,
-            },
-            "log_impedance": {},
         },
         "transit": {
             "constant": -3.24,
             "generation": {},
-            "attraction": {
-                "downtown": 2.79,
+            "attraction": {},
+            "impedance": {},
+            "log_impedance": {
+                "logsum": 0.786,
             },
-            "impedance": {
-                "time": -0.828e-2,
-                "cost": -0.221,
-            },
-            "log_impedance": {},
         },
     },
 }
 origin_choice = {
-    "hs15": {
-        # TODO: replace hs15 values with correct ones after estimation is finished
+    "metropolitan": {
+        # TODO: replace metropolitan values with correct ones after estimation is finished
         "impedance": {
             "car": {
                 "cost": -0.01,
@@ -1028,15 +1091,15 @@ tour_calculation = ("hw", "hs", "ho", "hwp", "hop", "sop", "oop")
 tour_purposes = {
     "hw": {
         "type": "home-work",
-        "area": "hs15",
+        "area": "metropolitan",
     },
     "hs": {
         "type": "home-shopping",
-        "area": "hs15",
+        "area": "metropolitan",
     },
     "ho": {
         "type": "home-other",
-        "area": "hs15",
+        "area": "metropolitan",
     },
     "hwp": {
         "type": "home-work",

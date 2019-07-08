@@ -12,7 +12,7 @@ class DemandModel:
 
     def calc_demand(self, purpose, impedance):
         prob = self.calc_prob(purpose, impedance)
-        nr_zones = len(self.zone_data.values["population"])
+        nr_zones = len(self.zone_data.zone_numbers)
         if parameters.tour_purposes[purpose]["type"] == "other-other":
             tours = numpy.zeros(nr_zones)
             for source in parameters.tour_purposes[purpose]["source"]:
@@ -45,10 +45,7 @@ class DemandModel:
             prob = self.calc_origin_prob(purpose, impedance)
         else:
             self.insert_compound(purpose, impedance, "own_zone_area")
-            if parameters.tour_purposes[purpose]["area"] == "hs15":
-                prob = self.calc_mode_dest_prob(purpose, impedance)
-            else:
-                prob = self.calc_dest_mode_prob(purpose, impedance)
+            prob = self.calc_mode_dest_prob(purpose, impedance)
         return prob
 
     def insert_compound(self, purpose, impedance, compound_type):
@@ -101,7 +98,7 @@ class DemandModel:
         return prob
 
     def get_bounds(self, purpose):
-        if parameters.tour_purposes[purpose]["area"] == "hs15":
+        if parameters.tour_purposes[purpose]["area"] == "metropolitan":
             l = 0
             u_label = parameters.first_peripheral_zone
             u = self.zone_data.values["population"].index.get_loc(u_label)
@@ -142,20 +139,23 @@ class DemandModel:
         type_mtxs = next(iter(impedance.values()))
         mode_mtxs = next(iter(type_mtxs.values()))
         utility = numpy.zeros_like(mode_mtxs)
+        b = parameters.destination_choice[purpose][mode]["attraction"]
+        for i in b:
+            utility += b[i] * self.zone_data.values[i]
         b = parameters.destination_choice[purpose][mode]["impedance"]
         for i in b:
             utility += b[i] * impedance[i][mode]
         self.dest_exps[mode] = numpy.exp(utility)
-        nr_zones = len(self.zone_data.values["workplaces"])
-        attraction = numpy.ones(nr_zones)
-        b = parameters.destination_choice[purpose][mode]["attraction"]
+        nr_zones = len(self.zone_data.zone_numbers)
+        size = numpy.ones(nr_zones)
+        b = parameters.destination_choice[purpose][mode]["size"]
         for i in b:
-            attraction += b[i] * self.zone_data.values[i]
+            size += b[i] * self.zone_data.values[i]
         b = parameters.destination_choice[purpose][mode]["compound"]
         for i in b:
-            attraction = attraction + b[i] * self.get_compound(i, purpose)
+            size = size + b[i] * self.get_compound(i, purpose)
         logs = {}
-        logs["attraction"] = attraction
+        logs["size"] = size
         if "log" in impedance:
             for i in impedance["log"]:
                 logs[i] = impedance["log"][i]
