@@ -20,6 +20,12 @@ class MatrixData:
     def get_data(self, mode):
         return numpy.array(self.mtx_file[mode])
 
+    def get_external(self, mode):
+        path = os.path.join(self.path, "external_"+mode+".csv")
+        extdata = pandas.read_csv(filepath_or_buffer=path, 
+                                  delim_whitespace=True)
+        return extdata
+
     def set_data(self, data, mode):
         self.mtx_file[mode] = data
 
@@ -57,6 +63,7 @@ class ZoneData:
         self.externalgrowth = pandas.read_csv(filepath_or_buffer=path, 
                                               delim_whitespace=True)
         population = popdata["total"]
+        self.zone_numbers = population.index
         population_density = ( popdata["total"]
                              / areadata["area"])
         car_density = popdata["car_density"]
@@ -84,8 +91,8 @@ class ZoneData:
         own_zone_area[di] = zone_area
         # Create matrix where value is 1 if origin and destination is in
         # same municipality
-        zone_numbers = population.index
-        home_municipality = pandas.DataFrame(0, zone_numbers, zone_numbers)
+        idx = self.zone_numbers
+        home_municipality = pandas.DataFrame(0, idx, idx)
         municipalities = param.municipality
         for municipality in municipalities:
             l = municipalities[municipality][0]
