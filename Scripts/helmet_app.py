@@ -60,16 +60,7 @@ class HelmetApplication():
     def initialize_EMME(self):
         #TODO figure out if we only need to do this once in the beginning or between simulations?
         from emme.emme_context import EmmeContext
-
-        script_dir = os.path.dirname(os.path.realpath('__file__'))
-        emp_dir = os.path.join(script_dir, "..")
-        
-        if config.get_value(Config.EMME_PATH) is not None:
-            emp_dir = config.get_value(Config.EMME_PATH)
-        
-        for file_name in os.listdir(emp_dir):
-            if file_name.endswith(".emp"):
-                empfile = os.path.join(emp_dir, file_name)
+        empfile = Config.get_value(Config.EMME_PROJECT_PATH)
         self.emme_context = EmmeContext(empfile)
 
 
