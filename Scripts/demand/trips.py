@@ -41,11 +41,14 @@ class DemandModel:
         return tours
 
     def calc_prob(self, purpose, impedance):
-        self.insert_compound(purpose, impedance, "own_zone_area")
-        if parameters.tour_purposes[purpose]["area"] == "hs15":
-            prob = self.calc_mode_dest_prob(purpose, impedance)
+        if parameters.tour_purposes[purpose]["type"] == "source-other-peripheral":
+            prob = self.calc_origin_prob(purpose, impedance)
         else:
-            prob = self.calc_dest_mode_prob(purpose, impedance)
+            self.insert_compound(purpose, impedance, "own_zone_area")
+            if parameters.tour_purposes[purpose]["area"] == "hs15":
+                prob = self.calc_mode_dest_prob(purpose, impedance)
+            else:
+                prob = self.calc_dest_mode_prob(purpose, impedance)
         return prob
 
     def insert_compound(self, purpose, impedance, compound_type):
@@ -150,4 +153,39 @@ class DemandModel:
         for i in b:
             self.dest_exps[mode] *= numpy.power(logs[i], b[i])
         return numpy.sum(self.dest_exps[mode], 1)
-        
+
+    def calc_origin_util(self, purpose, impedance):
+        utility = numpy.zeros_like(next(iter(impedance.values()))["car"])
+        if purpose == "oop":
+            # TODO ???
+            return utility + 1
+        model = parameters.tour_purposes[purpose]["area"]
+        modes = parameters.origin_choice[model]["impedance"]
+        for mode in modes:
+            b = parameters.origin_choice[model]["impedance"][mode]
+            for i in b:
+                utility += b[i] * impedance[i][mode]
+        b = parameters.origin_choice[model]["attraction"]
+        for i in b:
+            utility += b[i] * self.zone_data.values[i]
+        return utility
+
+    def calc_origin_prob(self, purpose, impedance):
+        utility = self.calc_origin_util(purpose, impedance)
+        exps = numpy.exp(utility)
+        # Here, size means kokotekija in Finnish
+        size = numpy.ones_like(exps)
+        b = parameters.origin_choice["logsum"]["attraction"]
+        for i in b:
+            size += b[i] * self.zone_data.values[i]
+        b = parameters.origin_choice["logsum"]["compound"]
+        for i in b:
+            size += b[i] * self.get_compound(i, purpose)
+        size = numpy.power(size, parameters.origin_choice["logsum"]["log"]["attraction"])
+        exps = size * exps
+        expsums = numpy.sum(exps, axis=0)
+        prob = {}
+        # Mode is needed here to get through tests even
+        # though the origin model does not take modes into account.
+        prob["transit"] = (exps / expsums).T
+        return prob

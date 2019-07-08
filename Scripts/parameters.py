@@ -1,3 +1,5 @@
+import numpy
+
 ### ASSIGNMENT PARAMETERS ###
 
 # Performance settings
@@ -150,6 +152,7 @@ assignment_class = {
     "ho": "car_leisure",
     "hwp": "car_work",
     "hop": "car_leisure",
+    "sop": "car_leisure",
     "oop": "car_leisure",
     "external": "car_leisure"
 }
@@ -420,6 +423,13 @@ demand_share = {
             "iht": (0.05, 0.05),
         },
     },
+    "sop": {
+        "transit": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
+    },
     "oop": {
         "car": {
             "aht": (0.01, 0.01),
@@ -538,6 +548,18 @@ impedance_share = {
         },
     },
     "hop": {
+        "car": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
+        "transit": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
+    },
+    "sop": {
         "car": {
             "aht": (0.01, 0.01),
             "pt": (0.05, 0.05),
@@ -877,6 +899,9 @@ mode_choice = {
             "log_impedance": {},
         },
     },
+    "sop": {
+        "transit": {},
+    },
     "oop": {
         "car": {
             "constant": 0,
@@ -904,6 +929,56 @@ mode_choice = {
         },
     },
 }
+origin_choice = {
+    "hs15": {
+        # TODO: replace hs15 values with correct ones after estimation is finished
+        "impedance": {
+            "car": {
+                "cost": -0.01,
+                "time": -0.01,
+            },
+            "transit": {
+                "cost": -0.01,
+                "time": -0.01,
+            },
+        },
+        "attraction": {
+            # TODO: replace with parking_fee_other (zone_data should also include parking_fee_work)
+            "parking_cost": -0.01,
+            "population_density": -0.01,
+        },
+    },
+    "peripheral": {
+        "impedance": {
+            "car": {
+                "cost": 0.94 * -0.609e-1,
+                "time": 0.94 * -0.264e-1,
+            },
+            "transit": {
+                "cost": 0.04 * -0.609e-1,
+                "time": 0.04 * -0.264e-1,
+            },
+        },
+        "attraction": {
+            # TODO: replace with parking_fee_other (zone_data should also include parking_fee_work)
+            "parking_cost": 0.94 * -0.609e-1,
+            "population_density": -0.109e-3,
+        },
+    },
+    "logsum": {
+        "impedance": {},
+        "log": {
+            "attraction": 1,
+        },
+        "attraction": {
+            "workplaces": numpy.exp(2.53759200723),
+        },
+        "compound": {
+            "population_own": numpy.exp(1.17058855327),
+            "population_other": 1,
+        },
+    },
+}
 tour_generation = {
     "hw": {
         "population": 0.5,
@@ -920,9 +995,11 @@ tour_generation = {
     "hop": {
         "population": 0.5,
     },
+    "sop": {
+        "population": 0.5,
+    },
     "oop": {
-        "hwp": 0.5,
-        "hop": 0.5,
+        "sop": 0.5,
     },
     "truck": {
         "population": 0.01,
@@ -947,7 +1024,7 @@ vector_calibration_threshold = 5
 
 ### DEMAND MODEL REFERENCES ###
 
-tour_calculation = ("hw", "hs", "ho", "hwp", "hop", "oop")
+tour_calculation = ("hw", "hs", "ho", "hwp", "hop", "sop", "oop")
 tour_purposes = {
     "hw": {
         "type": "home-work",
@@ -969,9 +1046,13 @@ tour_purposes = {
         "type": "home-other",
         "area": "peripheral",
     },
+    "sop": {
+        "type": "source-other-peripheral",
+        "area": "peripheral",
+    },
     "oop": {
         "type": "other-other",
-        "source": ("hwp", "hop"),
+        "source": ["sop"],
         "area": "all",
     },
 }
