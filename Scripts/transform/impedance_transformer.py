@@ -22,7 +22,7 @@ class ImpedanceTransformer:
             Type (time/cost/dist) : dict
                 Mode (car/transit/bike) : numpy 2d matrix
         """
-        if tour_purposes[purpose]["area"] == "hs15":
+        if tour_purposes[purpose]["area"] == "metropolitan":
             r_0 = 0
             r_n = self.assignment.get_mapping()[first_peripheral_zone]
         if tour_purposes[purpose]["area"] == "peripheral":

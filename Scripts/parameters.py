@@ -590,7 +590,7 @@ impedance_share = {
 destination_choice = {
     "hw": {
         "car": {
-            "attraction": {}
+            "attraction": {},
             "impedance": {
                 "time": -0.3,
                 "cost": -0.1,
@@ -605,7 +605,7 @@ destination_choice = {
             "compound": {},
         },
         "transit": {
-            "attraction": {}
+            "attraction": {},
             "impedance": {
                 "time": -0.3,
             },
@@ -618,7 +618,7 @@ destination_choice = {
             "compound": {},
         },
         "bike": {
-            "attraction": {}
+            "attraction": {},
             "impedance": {
                 "time": -0.3,
             },
@@ -633,7 +633,7 @@ destination_choice = {
     },
     "hs": {
         "car": {
-            "attraction": {}
+            "attraction": {},
             "impedance": {
                 "time": -0.3,
                 "cost": -0.1,
@@ -647,7 +647,7 @@ destination_choice = {
             "compound": {},
         },
         "transit": {
-            "attraction": {}
+            "attraction": {},
             "impedance": {
                 "time": -0.3,
             },
@@ -660,7 +660,7 @@ destination_choice = {
             "compound": {},
         },
         "bike": {
-            "attraction": {}
+            "attraction": {},
             "impedance": {
                 "time": -0.3,
             },
@@ -675,7 +675,7 @@ destination_choice = {
     },
     "ho": {
         "car": {
-            "attraction": {}
+            "attraction": {},
             "impedance": {
                 "time": -0.3,
                 "cost": -0.1,
@@ -689,7 +689,7 @@ destination_choice = {
             "compound": {},
         },
         "transit": {
-            "attraction": {}
+            "attraction": {},
             "impedance": {
                 "time": -0.3,
             },
@@ -702,7 +702,7 @@ destination_choice = {
             "compound": {},
         },
         "bike": {
-            "attraction": {}
+            "attraction": {},
             "impedance": {
                 "time": -0.3,
             },
