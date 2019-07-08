@@ -69,9 +69,10 @@ class DemandModel:
         nr_zones = len(self.zone_data.zone_numbers)
         trips = numpy.zeros(nr_zones)
         for purpose in self.generated_tours:
-            l, u = self.get_bounds(purpose)
-            trips[l:u] += self.generated_tours[purpose][mode]
-            trips += self.attracted_tours[purpose][mode]
+            if purpose != "sop":
+                l, u = self.get_bounds(purpose)
+                trips[l:u] += self.generated_tours[purpose][mode]
+                trips += self.attracted_tours[purpose][mode]
         return trips
 
     def calc_mode_dest_prob(self, purpose, impedance):
