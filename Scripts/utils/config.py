@@ -8,7 +8,7 @@ class Config():
     LOG_LEVEL = 'LOG_LEVEL'
     LOG_FORMAT = 'LOG_FORMAT'
     DATA_PATH = 'DATA_PATH'
-    EMME_PATH = 'EMME_PATH'
+    EMME_PROJECT_PATH = 'EMME_PROJECT_PATH'
 
     def __init__(self):
         self.__config = {}

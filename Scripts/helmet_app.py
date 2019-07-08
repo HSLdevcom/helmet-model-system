@@ -60,7 +60,7 @@ class HelmetApplication():
     def initialize_EMME(self):
         #TODO figure out if we only need to do this once in the beginning or between simulations?
         from emme.emme_context import EmmeContext
-        empfile = Config.get_value(Config.EMME_PATH)
+        empfile = Config.get_value(Config.EMME_PROJECT_PATH)
         self.emme_context = EmmeContext(empfile)
 
 

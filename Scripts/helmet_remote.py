@@ -22,7 +22,7 @@ config = Config()
 config.set_value(Config.LOG_FORMAT, 'JSON')
 config.set_value(Config.LOG_LEVEL, log_level)
 config.set_value(Config.DATA_PATH, data_path)
-config.set_value(Config.EMME_PATH, emme_path)
+config.set_value(Config.EMME_PROJECT_PATH, emme_path)
 config.set_value(Config.ITERATION_COUNT, iterations)
 config.set_value(Config.USE_EMME, True)
 

@@ -3,6 +3,6 @@
     "USE_EMME": false,
     "LOG_LEVEL": "INFO",
     "LOG_FORMAT": "TEXT",
-    "EMME_PATH": "",
+    "EMME_PROJECT_PATH": "",
     "DATA_PATH": ""
 }
