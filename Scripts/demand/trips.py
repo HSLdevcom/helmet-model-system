@@ -62,10 +62,8 @@ class DemandModel:
         for choice in choices:
             for mode in choice[purpose]:
                 if compound_type in choice[purpose][mode]["impedance"]:
-                    if compound_type not in impedance:
-                        impedance[compound_type] = {}
-                        zone_area = self.get_compound(compound_type, purpose)
-                    impedance[compound_type][mode] = zone_area
+                    compound = self.get_compound(compound_type, purpose)
+                    impedance[mode][compound_type] = compound
 
     def get_compound(self, compound_type, purpose):
         l, u = self.get_bounds(purpose)
@@ -82,15 +80,16 @@ class DemandModel:
         return trips
 
     def calc_mode_dest_prob(self, purpose, impedance):
-        dest_expsums = {"logsum": {}}
+        dest_expsums = {}
         for mode in parameters.destination_choice[purpose]:
             expsum = self.calc_dest_util(purpose, mode, impedance)
-            dest_expsums["logsum"][mode] = expsum
+            dest_expsums[mode] = {}
+            dest_expsums[mode]["logsum"] = expsum
         mode_expsum = self.calc_mode_util(purpose, dest_expsums)
         prob = {}
         for mode in parameters.mode_choice[purpose]:
             mode_prob = self.mode_exps[mode] / mode_expsum
-            dest_expsum = dest_expsums["logsum"][mode]
+            dest_expsum = dest_expsums[mode]["logsum"]
             dest_prob = self.dest_exps[mode].T / dest_expsum
             prob[mode] = mode_prob * dest_prob
         return prob
@@ -121,7 +120,7 @@ class DemandModel:
         return l, u
 
     def calc_mode_util(self, purpose, impedance):
-        expsum = numpy.zeros_like(next(iter(impedance.values()))["car"])
+        expsum = numpy.zeros_like(next(iter(impedance["car"].values())))
         l, u = self.get_bounds(purpose)
         for mode in parameters.mode_choice[purpose]:
             utility = numpy.zeros_like(expsum)
@@ -136,11 +135,11 @@ class DemandModel:
                 utility += b[i] * self.zone_data.values[i].values
             b = parameters.mode_choice[purpose][mode]["impedance"]
             for i in b:
-                utility += b[i] * impedance[i][mode]
+                utility += b[i] * impedance[mode][i]
             self.mode_exps[mode] = numpy.exp(utility)
             b = parameters.mode_choice[purpose][mode]["log_impedance"]
             for i in b:
-                self.mode_exps[mode] *= numpy.power(impedance[i][mode], b[i])
+                self.mode_exps[mode] *= numpy.power(impedance[mode][i], b[i])
             expsum += self.mode_exps[mode]
         return expsum
     
@@ -153,7 +152,7 @@ class DemandModel:
             utility += b[i] * self.zone_data.values[i]
         b = parameters.destination_choice[purpose][mode]["impedance"]
         for i in b:
-            utility += b[i] * impedance[i][mode]
+            utility += b[i] * impedance[mode][i]
         self.dest_exps[mode] = numpy.exp(utility)
         nr_zones = len(self.zone_data.zone_numbers)
         size = numpy.ones(nr_zones)
@@ -174,7 +173,7 @@ class DemandModel:
         return numpy.sum(self.dest_exps[mode], 1)
 
     def calc_origin_util(self, purpose, impedance):
-        utility = numpy.zeros_like(next(iter(impedance.values()))["car"])
+        utility = numpy.zeros_like(next(iter(impedance["car"].values())))
         if purpose == "oop":
             # TODO ???
             return utility + 1
@@ -183,7 +182,7 @@ class DemandModel:
         for mode in modes:
             b = parameters.origin_choice[model]["impedance"][mode]
             for i in b:
-                utility += b[i] * impedance[i][mode]
+                utility += b[i] * impedance[mode][i]
         b = parameters.origin_choice[model]["attraction"]
         for i in b:
             utility += b[i] * self.zone_data.values[i]

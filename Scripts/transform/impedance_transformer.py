@@ -19,8 +19,8 @@ class ImpedanceTransformer:
         Return 
         ------
         dict 
-            Type (time/cost/dist) : dict
-                Mode (car/transit/bike) : numpy 2d matrix
+            Mode (car/transit/bike) : dict
+                Type (time/cost/dist) : numpy 2d matrix
         """
         if tour_purposes[purpose]["area"] == "metropolitan":
             r_0 = 0
@@ -33,9 +33,8 @@ class ImpedanceTransformer:
             r_n = self.assignment.get_mapping()[first_external_zone]
         c_n = self.assignment.get_mapping()[first_external_zone]
         day_imp = {}
-        for mtx_type in impedance["aht"]:
-            day_imp[mtx_type] = {}
         for mode in impedance_share[purpose]:
+            day_imp[mode] = {}
             if mode == "car":
                 if purpose == "hw":
                     ass_class = "car_work"
@@ -43,15 +42,15 @@ class ImpedanceTransformer:
                     ass_class = "car_leisure"
             else:
                 ass_class = mode
-            for mtx_type in day_imp:
-                for idx, time_period in enumerate(impedance):
+            for idx, time_period in enumerate(impedance):
+                for mtx_type in impedance[time_period]:
                     if ass_class in impedance[time_period][mtx_type]:
                         share = impedance_share[purpose][mode][time_period]
                         imp = impedance[time_period][mtx_type][ass_class][r_0:r_n, 0:c_n]
                         if idx == 0:
-                            day_imp[mtx_type][mode] = share[0] * imp
+                            day_imp[mode][mtx_type] = share[0] * imp
                         else:
-                            day_imp[mtx_type][mode] += share[0] * imp
+                            day_imp[mode][mtx_type] += share[0] * imp
                         imp = impedance[time_period][mtx_type][ass_class][0:c_n, r_0:r_n]
-                        day_imp[mtx_type][mode] += share[1] * imp.T
+                        day_imp[mode][mtx_type] += share[1] * imp.T
         return day_imp
