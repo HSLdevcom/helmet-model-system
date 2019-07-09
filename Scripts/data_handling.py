@@ -84,6 +84,7 @@ class ZoneData:
         downtown.loc[:999] = 1
         capital_region = pandas.Series(0, self.zone_numbers)
         capital_region.loc[:5999] = 1
+        downtown_if_capital = capital_region[:, np.newaxis] * downtown.values
         shops_downtown = downtown * shops
         shops_elsewhere = (1-downtown) * shops
         # Create diagonal matrix with zone area
@@ -91,10 +92,7 @@ class ZoneData:
         di = np.diag_indices(nr_zones)
         own_zone_area = np.zeros((nr_zones, nr_zones))
         own_zone_area[di] = zone_area
-        own_zone_area_sq_capital = np.sqrt( capital_region.values
-                                          * own_zone_area)
-        own_zone_area_sq_surround = np.sqrt((1-capital_region.values)
-                                           * own_zone_area)
+        own_zone_area_sqrt = np.sqrt(own_zone_area)
         # Create matrix where value is 1 if origin and destination is in
         # same municipality
         idx = self.zone_numbers
@@ -106,6 +104,8 @@ class ZoneData:
             home_municipality.loc[l:u, l:u] = 1
         population_own = home_municipality.values * population.values
         population_other = (1-home_municipality.values) * population.values
+        workplaces_own = home_municipality.values * workplaces.values
+        workplaces_other = (1-home_municipality.values) * workplaces.values
         self.values = {
             "population": population,
             "population_own": population_own,
@@ -113,6 +113,8 @@ class ZoneData:
             "population_density": population_density,
             "car_density": car_density,
             "workplaces": workplaces,
+            "workplaces_own": workplaces_own,
+            "workplaces_other": workplaces_other,
             "service": service,
             "shops": shops,
             "shops_downtown": shops_downtown,
@@ -123,9 +125,9 @@ class ZoneData:
             "comprehensive_schools": comprehensive_schools,
             "zone_area": zone_area,
             "own_zone_area": own_zone_area,
-            "own_zone_area_sq_capital": own_zone_area_sq_capital,
-            "own_zone_area_sq_surround": own_zone_area_sq_surround,
+            "own_zone_area_sqrt": own_zone_area_sqrt,
             "downtown": downtown,
+            "downtown_if_capital": downtown_if_capital,
             "share_detached_houses": share_detached_houses,
         }
 
@@ -139,3 +141,32 @@ class ZoneData:
         )
         data = {k: self.values[k] for k in freight_variables}
         return pandas.DataFrame(data)
+
+    def get_data(self, data_type, purpose, generation=False, part=None):
+        l, u = self.get_bounds(purpose)
+        k = self.zone_numbers.get_loc(2792)
+        if self.values[data_type].ndim == 1:
+            if generation:
+                return self.values[data_type][l:u]
+            else:
+                return self.values[data_type]
+        if part is None:
+            return self.values[data_type][l:u, :]
+        elif part == 0:
+            return self.values[data_type][:k, :]
+        else:
+            return self.values[data_type][k:u, :]
+
+    def get_bounds(self, purpose):
+        if param.tour_purposes[purpose]["area"] == "metropolitan":
+            l = 0
+            u_label = param.first_peripheral_zone
+            u = self.zone_numbers.get_loc(u_label)
+        if param.tour_purposes[purpose]["area"] == "peripheral":
+            l_label = param.first_peripheral_zone
+            l = self.zone_numbers.get_loc(l_label)
+            u = len(self.zone_numbers)
+        if param.tour_purposes[purpose]["area"] == "all":
+            l = 0
+            u = len(self.zone_numbers)
+        return l, u

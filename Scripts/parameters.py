@@ -685,11 +685,12 @@ impedance_share = {
 destination_choice = {
     "hw": {
         "car": {
-            "attraction": {},
+            "attraction": {
+                "own_zone_area": -0.2,
+            },
             "impedance": {
                 "time": -0.3,
                 "cost": -0.1,
-                "own_zone_area": -0.2,
             },
             "log": {
                 "size": 0.2,
@@ -697,7 +698,6 @@ destination_choice = {
             "size": {
                 "workplaces": 0.3,
             },
-            "compound": {},
         },
         "transit": {
             "attraction": {},
@@ -710,7 +710,6 @@ destination_choice = {
             "size": {
                 "workplaces": 0.3,
             },
-            "compound": {},
         },
         "bike": {
             "attraction": {},
@@ -723,29 +722,31 @@ destination_choice = {
             "size": {
                 "workplaces": 0.3,
             },
-            "compound": {},
         },
         "walk": {
-            "attraction": {},
-            "impedance": {
-                "time": -0.3,
+            "attraction": {
+                "own_zone_area_sqrt": (1, 1),
             },
+            "impedance": {},
             "log": {
-                "size": 0.2,
+                "dist": 1,
+                "size": 1,
             },
             "size": {
-                "workplaces": 0.3,
+                "downtown": (1, 1),
+                "workplaces_own": (1, 1),
+                "workplaces_other": 1,
             },
-            "compound": {},
         },
     },
     "hc": {
         "car": {
-            "attraction": {},
+            "attraction": {
+                "own_zone_area": -0.2,
+            },
             "impedance": {
                 "time": -0.3,
                 "cost": -0.1,
-                "own_zone_area": -0.2,
             },
             "log": {
                 "size": 0.2,
@@ -753,7 +754,6 @@ destination_choice = {
             "size": {
                 "workplaces": 0.3,
             },
-            "compound": {},
         },
         "transit": {
             "attraction": {},
@@ -766,7 +766,6 @@ destination_choice = {
             "size": {
                 "workplaces": 0.3,
             },
-            "compound": {},
         },
         "bike": {
             "attraction": {},
@@ -779,7 +778,6 @@ destination_choice = {
             "size": {
                 "workplaces": 0.3,
             },
-            "compound": {},
         },
         "walk": {
             "attraction": {},
@@ -792,16 +790,16 @@ destination_choice = {
             "size": {
                 "workplaces": 0.3,
             },
-            "compound": {},
         },
     },
     "hu": {
         "car": {
-            "attraction": {},
+            "attraction": {
+                "own_zone_area": -0.2,
+            },
             "impedance": {
                 "time": -0.3,
                 "cost": -0.1,
-                "own_zone_area": -0.2,
             },
             "log": {
                 "size": 0.2,
@@ -809,7 +807,6 @@ destination_choice = {
             "size": {
                 "workplaces": 0.3,
             },
-            "compound": {},
         },
         "transit": {
             "attraction": {},
@@ -822,7 +819,6 @@ destination_choice = {
             "size": {
                 "workplaces": 0.3,
             },
-            "compound": {},
         },
         "bike": {
             "attraction": {},
@@ -835,7 +831,6 @@ destination_choice = {
             "size": {
                 "workplaces": 0.3,
             },
-            "compound": {},
         },
         "walk": {
             "attraction": {},
@@ -848,7 +843,6 @@ destination_choice = {
             "size": {
                 "workplaces": 0.3,
             },
-            "compound": {},
         },
     },
     "hs": {
@@ -864,7 +858,6 @@ destination_choice = {
             "size": {
                 "workplaces": 0.3,
             },
-            "compound": {},
         },
         "transit": {
             "attraction": {},
@@ -877,7 +870,6 @@ destination_choice = {
             "size": {
                 "workplaces": 0.3,
             },
-            "compound": {},
         },
         "bike": {
             "attraction": {},
@@ -890,7 +882,6 @@ destination_choice = {
             "size": {
                 "workplaces": 0.3,
             },
-            "compound": {},
         },
         "walk": {
             "attraction": {},
@@ -903,7 +894,6 @@ destination_choice = {
             "size": {
                 "workplaces": 0.3,
             },
-            "compound": {},
         },
     },
     "ho": {
@@ -919,7 +909,6 @@ destination_choice = {
             "size": {
                 "workplaces": 0.3,
             },
-            "compound": {},
         },
         "transit": {
             "attraction": {},
@@ -932,7 +921,6 @@ destination_choice = {
             "size": {
                 "workplaces": 0.3,
             },
-            "compound": {},
         },
         "bike": {
             "attraction": {},
@@ -945,7 +933,6 @@ destination_choice = {
             "size": {
                 "workplaces": 0.3,
             },
-            "compound": {},
         },
         "walk": {
             "attraction": {},
@@ -958,7 +945,6 @@ destination_choice = {
             "size": {
                 "workplaces": 0.3,
             },
-            "compound": {},
         },
     },
     "hwp": {
@@ -966,11 +952,11 @@ destination_choice = {
             "attraction": {
                 "parking_cost": -0.141,
                 "share_detached_houses": 0.559e-2,
+                "own_zone_area": -0.216e-1,
             },
             "impedance": {
                 "time": -0.245e-1,
                 "cost": -0.141,
-                "own_zone_area": -0.216e-1,
             },
             "log": {
                 "size": 0.909,
@@ -978,16 +964,15 @@ destination_choice = {
             "size": {
                 "workplaces": 1,
             },
-            "compound": {},
         },
         "transit": {
             "attraction": {
                 "downtown": 0.238,
+                "own_zone_area": -0.853e-1,
             },
             "impedance": {
                 "time": -0.714e-2,
                 "cost": -0.141,
-                "own_zone_area": -0.853e-1,
             },
             "log": {
                 "size": 0.909,
@@ -995,18 +980,17 @@ destination_choice = {
             "size": {
                 "workplaces": 1,
             },
-            "compound": {},
         },
     },
     "hop": {
         "car": {
             "attraction": {
                 "car_density": 0.198e-2,
+                "own_zone_area": -0.186e-1,
             },
             "impedance": {
                 "time": -0.302e-1,
                 "cost": -0.182,
-                "own_zone_area": -0.186e-1,
             },
             "log": {
                 "size": 1,
@@ -1016,8 +1000,6 @@ destination_choice = {
                 "service": 110,
                 "shops": 211,
                 "comprehensive_schools": 14.1,
-            },
-            "compound": {
                 "population_own": 28.8,
                 "population_other": 1,
             },
@@ -1036,8 +1018,6 @@ destination_choice = {
                 "service": 110,
                 "shops": 211,
                 "comprehensive_schools": 14.1,
-            },
-            "compound": {
                 "population_own": 28.8,
                 "population_other": 1,
             },
@@ -1061,7 +1041,6 @@ destination_choice = {
                 "shops_downtown": 43.3,
                 "shops_elsewhere": 9.11,
             },
-            "compound": {},
         },
         "transit": {
             "attraction": {
@@ -1080,7 +1059,6 @@ destination_choice = {
                 "shops_downtown": 43.3,
                 "shops_elsewhere": 9.11,
             },
-            "compound": {},
         },
     },
 }
@@ -1388,8 +1366,6 @@ origin_choice = {
         },
         "attraction": {
             "workplaces": numpy.exp(2.53759200723),
-        },
-        "compound": {
             "population_own": numpy.exp(1.17058855327),
             "population_other": 1,
         },

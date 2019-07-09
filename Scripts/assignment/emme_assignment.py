@@ -66,6 +66,8 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         mtxs["time"]["bike"] = self._cap(mtxs["time"]["bike"])
         mtxs["time"]["car_work"] = self._gcost_to_time("car_work")
         mtxs["time"]["car_leisure"] = self._gcost_to_time("car_leisure")
+        mtxs["dist"]["walk"] += 1
+        mtxs["dist"]["bike"] += 1
         for ass_cl in ("car_work", "car_leisure"):
             mtxs["cost"][ass_cl] += param.dist_cost * mtxs["dist"][ass_cl]
         return mtxs
