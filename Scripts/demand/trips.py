@@ -32,7 +32,7 @@ class DemandModel:
         return demand
 
     def generate_tours(self, purpose):
-        l, u = self.get_bounds(purpose)
+        l, u = self.zone_data.get_bounds(purpose)
         nr_zones = u - l
         b = parameters.tour_generation[purpose]
         tours = numpy.zeros(nr_zones)
@@ -46,25 +46,13 @@ class DemandModel:
         else:
             prob = self.calc_mode_dest_prob(purpose, impedance)
         return prob
-
-    def get_compound(self, data_type, purpose, part=None):
-        l, u = self.get_bounds(purpose)
-        k = self.zone_data.zone_numbers.get_loc(2792)
-        if self.zone_data.values[data_type].ndim == 1:
-            return self.zone_data.values[data_type]
-        if part is None:
-            return self.zone_data.values[data_type][l:u, :]
-        elif part == 0:
-            return self.zone_data.values[data_type][l:u, :][:k, :]
-        else:
-            return self.zone_data.values[data_type][l:u, :][k:, :]
     
     def get_sum(self, mode):
         nr_zones = len(self.zone_data.zone_numbers)
         trips = numpy.zeros(nr_zones)
         for purpose in self.generated_tours:
             if purpose != "sop":
-                l, u = self.get_bounds(purpose)
+                l, u = self.zone_data.get_bounds(purpose)
                 trips[l:u] += self.generated_tours[purpose][mode]
                 trips += self.attracted_tours[purpose][mode]
         return trips
@@ -94,20 +82,6 @@ class DemandModel:
             mode_prob = (self.mode_exps[mode] / mode_expsum).T
             prob[mode] = mode_prob * dest_prob
         return prob
-
-    def get_bounds(self, purpose):
-        if parameters.tour_purposes[purpose]["area"] == "metropolitan":
-            l = 0
-            u_label = parameters.first_peripheral_zone
-            u = self.zone_data.zone_numbers.get_loc(u_label)
-        if parameters.tour_purposes[purpose]["area"] == "peripheral":
-            l_label = parameters.first_peripheral_zone
-            l = self.zone_data.zone_numbers.get_loc(l_label)
-            u = len(self.zone_data.zone_numbers)
-        if parameters.tour_purposes[purpose]["area"] == "all":
-            l = 0
-            u = len(self.zone_data.zone_numbers)
-        return l, u
 
     def calc_mode_util(self, purpose, impedance):
         expsum = numpy.zeros_like(next(iter(impedance["car"].values())))
