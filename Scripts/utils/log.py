@@ -29,6 +29,7 @@ class Log:
             h = logging.StreamHandler(sys.stderr)
             f = logging.Formatter('{"level":"%(levelname)s", "msg":"%(message)s"}')
             h.flush = sys.stderr.flush
+            h.setFormatter(f)
             self.__logger.addHandler(h)
             self.__logger.setLevel(numeric_level)
         else:
