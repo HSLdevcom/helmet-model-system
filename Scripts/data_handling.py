@@ -91,8 +91,10 @@ class ZoneData:
         di = np.diag_indices(nr_zones)
         own_zone_area = np.zeros((nr_zones, nr_zones))
         own_zone_area[di] = zone_area
-        own_zone_area_sq_capital = np.sqrt(capital_region*own_zone_area)
-        own_zone_area_sq_surround = np.sqrt((1-capital_region)*own_zone_area)
+        own_zone_area_sq_capital = np.sqrt( capital_region.values
+                                          * own_zone_area)
+        own_zone_area_sq_surround = np.sqrt((1-capital_region.values)
+                                           * own_zone_area)
         # Create matrix where value is 1 if origin and destination is in
         # same municipality
         idx = self.zone_numbers

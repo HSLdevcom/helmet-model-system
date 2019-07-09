@@ -532,9 +532,14 @@ impedance_share = {
             "iht": (0.01, 0.1),
         },
         "bike": {
-            "aht": (0.1, 0.01),
-            "pt": (0.01, 0.01),
-            "iht": (0.01, 0.1),
+            "aht": (0, 0),
+            "pt": (0.5, 0.5),
+            "iht": (0, 0),
+        },
+        "walk": {
+            "aht": (0, 0),
+            "pt": (0.5, 0.5),
+            "iht": (0, 0),
         },
     },
     "hc": {
@@ -549,9 +554,14 @@ impedance_share = {
             "iht": (0.01, 0.1),
         },
         "bike": {
-            "aht": (0.1, 0.01),
-            "pt": (0.01, 0.01),
-            "iht": (0.01, 0.1),
+            "aht": (0, 0),
+            "pt": (0.5, 0.5),
+            "iht": (0, 0),
+        },
+        "walk": {
+            "aht": (0, 0),
+            "pt": (0.5, 0.5),
+            "iht": (0, 0),
         },
     },
     "hu": {
@@ -566,9 +576,14 @@ impedance_share = {
             "iht": (0.01, 0.1),
         },
         "bike": {
-            "aht": (0.1, 0.01),
-            "pt": (0.01, 0.01),
-            "iht": (0.01, 0.1),
+            "aht": (0, 0),
+            "pt": (0.5, 0.5),
+            "iht": (0, 0),
+        },
+        "walk": {
+            "aht": (0, 0),
+            "pt": (0.5, 0.5),
+            "iht": (0, 0),
         },
     },
     "hs": {
@@ -583,9 +598,14 @@ impedance_share = {
             "iht": (0.05, 0.05),
         },
         "bike": {
-            "aht": (0.01, 0.01),
-            "pt": (0.05, 0.05),
-            "iht": (0.05, 0.05),
+            "aht": (0, 0),
+            "pt": (0.5, 0.5),
+            "iht": (0, 0),
+        },
+        "walk": {
+            "aht": (0, 0),
+            "pt": (0.5, 0.5),
+            "iht": (0, 0),
         },
     },
     "ho": {
@@ -600,9 +620,14 @@ impedance_share = {
             "iht": (0.05, 0.05),
         },
         "bike": {
-            "aht": (0.01, 0.01),
-            "pt": (0.05, 0.05),
-            "iht": (0.05, 0.05),
+            "aht": (0, 0),
+            "pt": (0.5, 0.5),
+            "iht": (0, 0),
+        },
+        "walk": {
+            "aht": (0, 0),
+            "pt": (0.5, 0.5),
+            "iht": (0, 0),
         },
     },
     "hwp": {
@@ -700,6 +725,19 @@ destination_choice = {
             },
             "compound": {},
         },
+        "walk": {
+            "attraction": {},
+            "impedance": {
+                "time": -0.3,
+            },
+            "log": {
+                "size": 0.2,
+            },
+            "size": {
+                "workplaces": 0.3,
+            },
+            "compound": {},
+        },
     },
     "hc": {
         "car": {
@@ -731,6 +769,19 @@ destination_choice = {
             "compound": {},
         },
         "bike": {
+            "attraction": {},
+            "impedance": {
+                "time": -0.3,
+            },
+            "log": {
+                "size": 0.2,
+            },
+            "size": {
+                "workplaces": 0.3,
+            },
+            "compound": {},
+        },
+        "walk": {
             "attraction": {},
             "impedance": {
                 "time": -0.3,
@@ -786,6 +837,19 @@ destination_choice = {
             },
             "compound": {},
         },
+        "walk": {
+            "attraction": {},
+            "impedance": {
+                "time": -0.3,
+            },
+            "log": {
+                "size": 0.2,
+            },
+            "size": {
+                "workplaces": 0.3,
+            },
+            "compound": {},
+        },
     },
     "hs": {
         "car": {
@@ -828,6 +892,19 @@ destination_choice = {
             },
             "compound": {},
         },
+        "walk": {
+            "attraction": {},
+            "impedance": {
+                "time": -0.3,
+            },
+            "log": {
+                "size": 0.2,
+            },
+            "size": {
+                "workplaces": 0.3,
+            },
+            "compound": {},
+        },
     },
     "ho": {
         "car": {
@@ -858,6 +935,19 @@ destination_choice = {
             "compound": {},
         },
         "bike": {
+            "attraction": {},
+            "impedance": {
+                "time": -0.3,
+            },
+            "log": {
+                "size": 0.2,
+            },
+            "size": {
+                "workplaces": 0.3,
+            },
+            "compound": {},
+        },
+        "walk": {
             "attraction": {},
             "impedance": {
                 "time": -0.3,
@@ -1025,6 +1115,15 @@ mode_choice = {
                 "logsum": 2,
             },
         }, 
+        "walk": {
+            "constant": 0,
+            "generation": {},
+            "attraction": {},
+            "impedance": {},
+            "log_impedance": {
+                "logsum": 2,
+            },
+        },
     },
     "hc": {
         "car": {
@@ -1055,7 +1154,16 @@ mode_choice = {
             "log_impedance": {
                 "logsum": 2,
             },
-        }, 
+        },  
+        "walk": {
+            "constant": 0,
+            "generation": {},
+            "attraction": {},
+            "impedance": {},
+            "log_impedance": {
+                "logsum": 2,
+            },
+        },
     },
     "hu": {
         "car": {
@@ -1086,7 +1194,16 @@ mode_choice = {
             "log_impedance": {
                 "logsum": 2,
             },
-        }, 
+        },  
+        "walk": {
+            "constant": 0,
+            "generation": {},
+            "attraction": {},
+            "impedance": {},
+            "log_impedance": {
+                "logsum": 2,
+            },
+        },
     },
     "hs": {
         "car": {
@@ -1115,7 +1232,16 @@ mode_choice = {
             "log_impedance": {
                 "logsum": 2,
             },
-        }, 
+        },  
+        "walk": {
+            "constant": 0,
+            "generation": {},
+            "attraction": {},
+            "impedance": {},
+            "log_impedance": {
+                "logsum": 2,
+            },
+        },
     },
     "ho": {
         "car": {
@@ -1144,7 +1270,16 @@ mode_choice = {
             "log_impedance": {
                 "logsum": 2,
             },
-        }, 
+        },  
+        "walk": {
+            "constant": 0,
+            "generation": {},
+            "attraction": {},
+            "impedance": {},
+            "log_impedance": {
+                "logsum": 2,
+            },
+        },
     },
     "hwp": {
         "car": {

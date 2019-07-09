@@ -33,9 +33,10 @@ class DepartureTimeModel:
         mtx_position : tuple
             Where to insert the demand
         """
-        for tp in emme_scenario:
-            self.add_tp_demand(purpose, mode, tp, demand, mtx_position)
-        self.logger.debug("Added demand for " + purpose + ", " + mode)
+        if mode != "walk":
+            for tp in emme_scenario:
+                self.add_tp_demand(purpose, mode, tp, demand, mtx_position)
+            self.logger.debug("Added demand for " + purpose + ", " + mode)
 
     def add_tp_demand(self, purpose, mode, time_period, mtx, mtx_position):
         """Slice demand, include transpose and add for one time period."""
