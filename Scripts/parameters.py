@@ -1427,7 +1427,13 @@ garbage_generation = {
     "workplaces": 0.000025,
 }
 vector_calibration_threshold = 5
-
+# Maximum possible distance to destination
+distance_boundary = {
+    "car": 9999,
+    "transit": 9999,
+    "bike": 60,
+    "walk": 15,
+}
 ### DEMAND MODEL REFERENCES ###
 
 tour_calculation = ("hw", "hc", "hu", "hs", "ho", "hwp", "hop", "sop", "oop")

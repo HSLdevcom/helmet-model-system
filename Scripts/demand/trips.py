@@ -114,6 +114,9 @@ class DemandModel:
         impedance["size"] = size
         b = parameters.destination_choice[purpose][mode]["log"]
         self.add_log_impedance(self.dest_exps[mode], impedance, b)
+        if mode != "logsum":
+            threshold = parameters.distance_boundary[mode]
+            self.dest_exps[mode][impedance["dist"] > threshold] = 0
         return numpy.sum(self.dest_exps[mode], 1)
 
     def add_constant(self, utility, b):
