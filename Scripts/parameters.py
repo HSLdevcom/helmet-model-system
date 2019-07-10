@@ -1440,38 +1440,56 @@ tour_calculation = ("hw", "hc", "hu", "hs", "ho", "hwp", "hop", "sop", "oop")
 tour_purposes = {
     "hw": {
         "type": "home-work",
+        "orig": "home",
+        "dest": "work",
         "area": "metropolitan",
     },
     "hc": {
         "type": "home-comprehensive_school",
+        "orig": "home",
+        "dest": "comprehensive_school",
         "area": "metropolitan",
     },
     "hu": {
         "type": "home-tertiary_education",
+        "orig": "home",
+        "dest": "tertiary_education",
         "area": "metropolitan",
     },
     "hs": {
         "type": "home-shopping",
+        "orig": "home",
+        "dest": "shopping",
         "area": "metropolitan",
     },
     "ho": {
         "type": "home-other",
+        "orig": "home",
+        "dest": "other",
         "area": "metropolitan",
     },
     "hwp": {
         "type": "home-work",
+        "orig": "home",
+        "dest": "work",
         "area": "peripheral",
     },
     "hop": {
         "type": "home-other",
+        "orig": "home",
+        "dest": "other",
         "area": "peripheral",
     },
     "sop": {
         "type": "source-other-peripheral",
+        "orig": "home",
+        "dest": "source",
         "area": "peripheral",
     },
     "oop": {
         "type": "other-other",
+        "orig": "source",
+        "dest": "other",
         "source": ["sop"],
         "area": "all",
     },

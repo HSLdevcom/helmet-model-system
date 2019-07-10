@@ -161,15 +161,15 @@ class ZoneData:
             return self.values[data_type][k:u, :]
 
     def get_bounds(self, purpose):
-        if param.tour_purposes[purpose]["area"] == "metropolitan":
+        if purpose.area == "metropolitan":
             l = 0
             u_label = param.first_peripheral_zone
             u = self.zone_numbers.get_loc(u_label)
-        if param.tour_purposes[purpose]["area"] == "peripheral":
+        if purpose.area == "peripheral":
             l_label = param.first_peripheral_zone
             l = self.zone_numbers.get_loc(l_label)
             u = len(self.zone_numbers)
-        if param.tour_purposes[purpose]["area"] == "all":
+        if purpose.area == "all":
             l = 0
             u = len(self.zone_numbers)
         return l, u

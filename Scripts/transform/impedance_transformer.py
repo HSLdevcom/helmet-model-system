@@ -22,21 +22,21 @@ class ImpedanceTransformer:
             Mode (car/transit/bike) : dict
                 Type (time/cost/dist) : numpy 2d matrix
         """
-        if tour_purposes[purpose]["area"] == "metropolitan":
+        if purpose.area == "metropolitan":
             r_0 = 0
             r_n = self.assignment.get_mapping()[first_peripheral_zone]
-        if tour_purposes[purpose]["area"] == "peripheral":
+        if purpose.area == "peripheral":
             r_0 = self.assignment.get_mapping()[first_peripheral_zone]
             r_n = self.assignment.get_mapping()[first_external_zone]
-        if tour_purposes[purpose]["area"] == "all":
+        if purpose.area == "all":
             r_0 = 0
             r_n = self.assignment.get_mapping()[first_external_zone]
         c_n = self.assignment.get_mapping()[first_external_zone]
         day_imp = {}
-        for mode in impedance_share[purpose]:
+        for mode in impedance_share[purpose.name]:
             day_imp[mode] = {}
             if mode == "car":
-                if purpose == "hw":
+                if purpose.dest == "work":
                     ass_class = "car_work"
                 else:
                     ass_class = "car_leisure"
@@ -45,7 +45,7 @@ class ImpedanceTransformer:
             for idx, time_period in enumerate(impedance):
                 for mtx_type in impedance[time_period]:
                     if ass_class in impedance[time_period][mtx_type]:
-                        share = impedance_share[purpose][mode][time_period]
+                        share = impedance_share[purpose.name][mode][time_period]
                         imp = impedance[time_period][mtx_type][ass_class][r_0:r_n, 0:c_n]
                         if idx == 0:
                             day_imp[mode][mtx_type] = share[0] * imp

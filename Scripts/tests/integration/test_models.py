@@ -10,7 +10,8 @@ from demand.freight import FreightModel
 from demand.trips import DemandModel
 from demand.external import ExternalModel
 from transform.impedance_transformer import ImpedanceTransformer
-from parameters import emme_scenario, emme_mtx, tour_calculation, tour_purposes, external_modes
+from datatypes.purpose import TourPurpose
+import parameters
 
 class ModelTest(unittest.TestCase):
     
@@ -29,12 +30,22 @@ class ModelTest(unittest.TestCase):
         ass_model = MockAssignmentModel(costs)
         dtm = dt.DepartureTimeModel(ass_model)
         imptrans = ImpedanceTransformer(ass_model)
-        ass_classes = dict.fromkeys(emme_mtx["demand"].keys())
+        ass_classes = dict.fromkeys(parameters.emme_mtx["demand"].keys())
+        tour_purposes = []
+        purpose_dict = {}
+        for purpose_name in parameters.tour_calculation:
+            purpose = TourPurpose(purpose_name)
+            tour_purposes.append(purpose)
+            purpose_dict[purpose_name] = purpose
+        for purpose in tour_purposes:
+            if "source" in parameters.tour_purposes[purpose_name]:
+                for source in parameters.tour_purposes[purpose_name]["source"]:
+                    purpose.sources.append(purpose_dict[source])
 
         self.assertEqual(7, len(ass_classes))
 
         impedance = {}
-        for tp in emme_scenario:
+        for tp in parameters.emme_scenario:
             base_demand = {}
             basematrices.open_file("demand", tp)
             for ass_class in ass_classes:
@@ -54,34 +65,40 @@ class ModelTest(unittest.TestCase):
 
         dtm.add_demand("freight", "truck", trucks)
         dtm.add_demand("freight", "trailer_truck", trailer_trucks)
-        for purpose in tour_calculation:
+        for purpose in tour_purposes:
             purpose_impedance = imptrans.transform(purpose, impedance)
             demand = dm.calc_demand(purpose, purpose_impedance)
             self._validate_demand(demand)
-            if tour_purposes[purpose]["area"] == "peripheral":
+            if purpose.area == "peripheral":
                 pos = ass_model.get_mapping()[16001]
                 mtx_position = (pos, 0)
             else:
                 mtx_position = (0, 0)
             for mode in demand:
-                dtm.add_demand(purpose, mode, demand[mode], mtx_position)
+                dtm.add_demand(purpose.name, mode, demand[mode], mtx_position)
         pos = ass_model.get_mapping()[31001]
-        for mode in external_modes:
+        for mode in parameters.external_modes:
             if mode == "truck":
                 int_demand = trucks.sum(0) + trucks.sum(1)
             elif mode == "trailer_truck":
                 int_demand = trailer_trucks.sum(0) + trailer_trucks.sum(1)
             else:
-                int_demand = dm.get_sum(mode)
+                nr_zones = len(zdata_base.zone_numbers)
+                int_demand = numpy.zeros(nr_zones)
+                for purpose in tour_purposes:
+                    if purpose.dest != "source":
+                        l, u = zdata_base.get_bounds(purpose)
+                        int_demand[l:u] += purpose.generated_tours[mode]
+                        int_demand += purpose.attracted_tours[mode]
             ext_demand = em.calc_external(mode, int_demand)
             dtm.add_demand("external", mode, ext_demand, (pos, 0))
         impedance = {}
-        for tp in emme_scenario:
+        for tp in parameters.emme_scenario:
             dtm.add_vans(tp)
             ass_model.assign(tp, dtm.demand[tp])
             impedance[tp] = ass_model.get_impedance()
         dtm.init_demand()
-        self.assertEquals(len(emme_scenario), len(impedance))
+        self.assertEquals(len(parameters.emme_scenario), len(impedance))
         self._validate_impedances(impedance["aht"])
         self._validate_impedances(impedance["pt"])
         self._validate_impedances(impedance["iht"])
