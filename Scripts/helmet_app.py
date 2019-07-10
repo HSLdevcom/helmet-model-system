@@ -10,7 +10,7 @@ class HelmetApplication():
 
     def __init__(self, config):
         self.__config = config
-        self.logger = Log.get_instance().initialize(config)
+        self.logger = Log.get_instance()
         self.logger.info("Initializing the application..")
         # TODO clean up the model initialization and initialize other relevant classes
         # We could also perhaps wrap these under some class..?
@@ -60,12 +60,13 @@ class HelmetApplication():
     def initialize_EMME(self):
         #TODO figure out if we only need to do this once in the beginning or between simulations?
         from emme.emme_context import EmmeContext
-        empfile = Config.get_value(Config.EMME_PROJECT_PATH)
+        empfile = self.__config.get_value(Config.EMME_PROJECT_PATH)
         self.emme_context = EmmeContext(empfile)
 
 
 # Main entry point for the application
 if __name__ == "__main__":
     config = Config.read_from_file()
+    Log.get_instance().initialize(config)
     app = HelmetApplication(config)
     app.run()
