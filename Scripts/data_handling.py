@@ -84,7 +84,6 @@ class ZoneData:
         downtown.loc[:999] = 1
         capital_region = pandas.Series(0, self.zone_numbers)
         capital_region.loc[:5999] = 1
-        downtown_if_capital = capital_region[:, np.newaxis] * downtown.values
         shops_downtown = downtown * shops
         shops_elsewhere = (1-downtown) * shops
         # Create diagonal matrix with zone area
@@ -127,7 +126,6 @@ class ZoneData:
             "own_zone_area": own_zone_area,
             "own_zone_area_sqrt": own_zone_area_sqrt,
             "downtown": downtown,
-            "downtown_if_capital": downtown_if_capital,
             "share_detached_houses": share_detached_houses,
         }
 
@@ -144,10 +142,15 @@ class ZoneData:
 
     def get_data(self, data_type, purpose, generation=False, part=None):
         l, u = self.get_bounds(purpose)
-        k = self.zone_numbers.get_loc(2792)
+        k = self.zone_numbers.get_loc(param.first_surrounding_zone)
         if self.values[data_type].ndim == 1:
             if generation:
-                return self.values[data_type][l:u]
+                if part is None:
+                    return self.values[data_type][l:u]
+                elif part == 0:
+                    return self.values[data_type][l:k]
+                else:
+                    return self.values[data_type][k:u]
             else:
                 return self.values[data_type]
         if part is None:

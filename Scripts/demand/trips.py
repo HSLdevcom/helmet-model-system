@@ -87,38 +87,51 @@ class DemandModel:
         expsum = numpy.zeros_like(next(iter(impedance["car"].values())))
         for mode in parameters.mode_choice[purpose]:
             utility = numpy.zeros_like(expsum)
-            utility += parameters.mode_choice[purpose][mode]["constant"]
+            b = parameters.mode_choice[purpose][mode]["constant"]
+            self.add_constant(utility, b)
             b = parameters.mode_choice[purpose][mode]["generation"]
             utility = self.add_zone_util(purpose, utility.T, b, True).T
             b = parameters.mode_choice[purpose][mode]["attraction"]
-            utility = self.add_zone_util(purpose, utility, b, False)
+            self.add_zone_util(purpose, utility, b, False)
             b = parameters.mode_choice[purpose][mode]["impedance"]
-            utility = self.add_impedance(utility, impedance, b)
+            self.add_impedance(utility, impedance[mode], b)
             self.mode_exps[mode] = numpy.exp(utility)
             b = parameters.mode_choice[purpose][mode]["log_impedance"]
-            for i in b:
-                self.mode_exps[mode] *= numpy.power(impedance[mode][i], b[i])
+            self.add_log_impedance(self.mode_exps[mode], impedance[mode], b)
             expsum += self.mode_exps[mode]
         return expsum
     
     def calc_dest_util(self, purpose, mode, impedance):
         utility = numpy.zeros_like(next(iter(impedance.values())))
         b = parameters.destination_choice[purpose][mode]["attraction"]
-        utility = self.add_zone_util(purpose, utility, b)
+        self.add_zone_util(purpose, utility, b)
         b = parameters.destination_choice[purpose][mode]["impedance"]
-        utility = self.add_impedance(utility, impedance, b)
+        self.add_impedance(utility, impedance, b)
         self.dest_exps[mode] = numpy.exp(utility)
-        size = numpy.ones_like(utility)
+        size = numpy.zeros_like(utility)
         b = parameters.destination_choice[purpose][mode]["size"]
-        size = self.add_zone_util(purpose, size, b)
+        self.add_zone_util(purpose, size, b)
         impedance["size"] = size
         b = parameters.destination_choice[purpose][mode]["log"]
-        for i in b:
-            self.dest_exps[mode] *= numpy.power(impedance[i], b[i])
+        self.add_log_impedance(self.dest_exps[mode], impedance, b)
         return numpy.sum(self.dest_exps[mode], 1)
 
+    def add_constant(self, utility, b):
+        k_label = parameters.first_surrounding_zone
+        k = self.zone_data.zone_numbers.get_loc(k_label)
+        try:
+            utility += b
+        except ValueError:
+            if utility.ndim == 1:
+                utility[:k] += b[0]
+                utility[k:] += b[1]
+            else:
+                utility[:k, :] += b[0]
+                utility[k:, :] += b[1]
+    
     def add_impedance(self, utility, impedance, b):
-        k = self.zone_data.zone_numbers.get_loc(2792)
+        k_label = parameters.first_surrounding_zone
+        k = self.zone_data.zone_numbers.get_loc(k_label)
         for i in b:
             try:
                 utility += b[i] * impedance[i]
@@ -126,15 +139,33 @@ class DemandModel:
                 utility[:k, :] += b[i][0] * impedance[i][:k, :]
                 utility[k:, :] += b[i][1] * impedance[i][k:, :]
         return utility
-    
-    def add_zone_util(self, purpose, utility, b, generation=False):
-        k = self.zone_data.zone_numbers.get_loc(2792)
+
+    def add_log_impedance(self, exps, impedance, b):
+        k_label = parameters.first_surrounding_zone
+        k = self.zone_data.zone_numbers.get_loc(k_label)
         for i in b:
             try:
-                utility += b[i] * self.zone_data.get_data(i, purpose, generation)
+                exps *= numpy.power(impedance[i] + 1, b[i])
             except ValueError:
-                utility[:k, :] += b[i][0] * self.zone_data.get_data(i, purpose, generation, 0)
-                utility[k:, :] += b[i][1] * self.zone_data.get_data(i, purpose, generation, 1)
+                exps[:k, :] *= numpy.power(impedance[i][:k, :] + 1, b[i][0])
+                exps[k:, :] *= numpy.power(impedance[i][k:, :] + 1, b[i][1])
+        return exps
+    
+    def add_zone_util(self, purpose, utility, b, generation=False):
+        zdata = self.zone_data
+        k = zdata.zone_numbers.get_loc(parameters.first_surrounding_zone)
+        for i in b:
+            try:
+                utility += b[i] * zdata.get_data(i, purpose, generation)
+            except ValueError:
+                data_capital_region = zdata.get_data(i, purpose, generation, 0)
+                data_surrounding = zdata.get_data(i, purpose, generation, 1)
+                if utility.ndim == 1:
+                    utility[:k] += b[i][0] * data_capital_region
+                    utility[k:] += b[i][1] * data_surrounding
+                else:
+                    utility[:k, :] += b[i][0] * data_capital_region
+                    utility[k:, :] += b[i][1] * data_surrounding
         return utility
 
     def calc_origin_util(self, purpose, impedance):

@@ -686,55 +686,63 @@ destination_choice = {
     "hw": {
         "car": {
             "attraction": {
-                "own_zone_area": -0.2,
+                "parking_cost": -0.340,
             },
             "impedance": {
-                "time": -0.3,
-                "cost": -0.1,
+                "time": -0.246e-1,
+                "cost": (-0.288e-1, -0.103),
             },
             "log": {
-                "size": 0.2,
+                "size": 1,
             },
             "size": {
-                "workplaces": 0.3,
+                "downtown": (4.62, 5.33),
+                "workplaces_own": (0.341, 0.930),
+                "workplaces_other": 1,
             },
         },
         "transit": {
-            "attraction": {},
+            "attraction": {
+                "downtown": 0.512,
+            },
             "impedance": {
-                "time": -0.3,
+                "time": -0.111e-1,
+                "cost": (-0.288e-1, -0.103),
             },
             "log": {
-                "size": 0.2,
+                "size": 1,
             },
             "size": {
-                "workplaces": 0.3,
+                "downtown": (4.62, 5.33),
+                "workplaces_own": (0.341, 0.930),
+                "workplaces_other": 1,
             },
         },
         "bike": {
             "attraction": {},
-            "impedance": {
-                "time": -0.3,
-            },
+            "impedance": {},
             "log": {
-                "size": 0.2,
+                "dist": (-1.13, -1.36),
+                "size": 1,
             },
             "size": {
-                "workplaces": 0.3,
+                "downtown": (4.62, 5.33),
+                "workplaces_own": (0.341, 0.930),
+                "workplaces_other": 1,
             },
         },
         "walk": {
             "attraction": {
-                "own_zone_area_sqrt": (1, 1),
+                "own_zone_area_sqrt": (-2.07, -2.16),
             },
             "impedance": {},
             "log": {
-                "dist": 1,
+                "dist": -2.68,
                 "size": 1,
             },
             "size": {
-                "downtown": (1, 1),
-                "workplaces_own": (1, 1),
+                "downtown": (4.62, 5.33),
+                "workplaces_own": (0.341, 0.930),
                 "workplaces_other": 1,
             },
         },
@@ -1067,39 +1075,39 @@ mode_choice = {
         "car": {
             "constant": 0,
             "generation": {
-                "car_density": 0.3,
+                "car_density": (0.290e-2, 0.472e-2),
             },
             "attraction": {},
             "impedance": {},
             "log_impedance": {
-                "logsum": 3,
+                "logsum": 0.792,
             },
         },
         "transit": {
-            "constant": 0,
+            "constant": (3.26, 3.46),
             "generation": {},
             "attraction": {},
             "impedance": {},
             "log_impedance": {
-                "logsum": 5,
+                "logsum": 0.792,
             },
         },
         "bike": {
-            "constant": 0,
+            "constant": (3.79, 4.38),
             "generation": {},
             "attraction": {},
             "impedance": {},
             "log_impedance": {
-                "logsum": 2,
+                "logsum": 0.792,
             },
         }, 
         "walk": {
-            "constant": 0,
+            "constant": (6.16, 6.58),
             "generation": {},
             "attraction": {},
             "impedance": {},
             "log_impedance": {
-                "logsum": 2,
+                "logsum": 0.792,
             },
         },
     },
@@ -1473,6 +1481,7 @@ external_modes = [
     "truck",
     "trailer_truck",
 ]
+first_surrounding_zone = 2792
 first_peripheral_zone = 16001
 first_external_zone = 31001
 garbage_destination = 2792
