@@ -41,8 +41,10 @@ class DemandModel:
         return tours
 
     def calc_prob(self, purpose, impedance):
-        if purpose.dest == "source":
+        if purpose.name == "sop":
             prob = self.calc_origin_prob(purpose, impedance)
+        elif purpose.name == "so":
+            prob = self.calc_dest_mode_prob(purpose, impedance)
         else:
             prob = self.calc_mode_dest_prob(purpose, impedance)
         return prob
@@ -76,34 +78,31 @@ class DemandModel:
     def calc_mode_util(self, purpose, impedance):
         expsum = numpy.zeros_like(next(iter(impedance["car"].values())))
         for mode in parameters.mode_choice[purpose.name]:
+            b = parameters.mode_choice[purpose.name][mode]
             utility = numpy.zeros_like(expsum)
-            b = parameters.mode_choice[purpose.name][mode]["constant"]
-            self.add_constant(utility, b)
-            b = parameters.mode_choice[purpose.name][mode]["generation"]
-            utility = self.add_zone_util(purpose, utility.T, b, True).T
-            b = parameters.mode_choice[purpose.name][mode]["attraction"]
-            self.add_zone_util(purpose, utility, b, False)
-            b = parameters.mode_choice[purpose.name][mode]["impedance"]
-            self.add_impedance(utility, impedance[mode], b)
-            self.mode_exps[mode] = numpy.exp(utility)
-            b = parameters.mode_choice[purpose.name][mode]["log_impedance"]
-            self.add_log_impedance(self.mode_exps[mode], impedance[mode], b)
-            expsum += self.mode_exps[mode]
+            self.add_constant(utility, b["constant"])
+            utility = self.add_zone_util(purpose=purpose, 
+                                         utility=utility.T, 
+                                         b=b["generation"], 
+                                         generation=True).T
+            self.add_zone_util(purpose, utility, b["attraction"], False)
+            self.add_impedance(utility, impedance[mode], b["impedance"])
+            exps = numpy.exp(utility)
+            self.add_log_impedance(exps, impedance[mode], b["log"])
+            self.mode_exps[mode] = exps
+            expsum += exps
         return expsum
     
     def calc_dest_util(self, purpose, mode, impedance):
+        b = parameters.destination_choice[purpose.name][mode]
         utility = numpy.zeros_like(next(iter(impedance.values())))
-        b = parameters.destination_choice[purpose.name][mode]["attraction"]
-        self.add_zone_util(purpose, utility, b)
-        b = parameters.destination_choice[purpose.name][mode]["impedance"]
-        self.add_impedance(utility, impedance, b)
+        self.add_zone_util(purpose, utility, b["attraction"])
+        self.add_impedance(utility, impedance, b["impedance"])
         self.dest_exps[mode] = numpy.exp(utility)
         size = numpy.zeros_like(utility)
-        b = parameters.destination_choice[purpose.name][mode]["size"]
-        self.add_zone_util(purpose, size, b)
+        self.add_zone_util(purpose, size, b["size"])
         impedance["size"] = size
-        b = parameters.destination_choice[purpose.name][mode]["log"]
-        self.add_log_impedance(self.dest_exps[mode], impedance, b)
+        self.add_log_impedance(self.dest_exps[mode], impedance, b["log"])
         if mode != "logsum":
             threshold = parameters.distance_boundary[mode]
             self.dest_exps[mode][impedance["dist"] > threshold] = 0
@@ -162,27 +161,21 @@ class DemandModel:
         return utility
 
     def calc_origin_util(self, purpose, impedance):
+        b = parameters.destination_choice[purpose.name]
         utility = numpy.zeros_like(next(iter(impedance["car"].values())))
-        model = purpose.area
-        modes = parameters.origin_choice[model]["impedance"]
-        for mode in modes:
-            b = parameters.origin_choice[model]["impedance"][mode]
-            for i in b:
-                utility += b[i] * impedance[mode][i]
-        b = parameters.origin_choice[model]["attraction"]
-        for i in b:
-            utility += b[i] * self.zone_data.values[i]
+        for mode in b["impedance"]:
+            self.add_impedance(utility, impedance[mode], b["impedance"][mode])
+        self.add_zone_util(purpose, utility, b["attraction"])
         return utility
 
     def calc_origin_prob(self, purpose, impedance):
+        b = parameters.destination_choice[purpose.name]
         utility = self.calc_origin_util(purpose, impedance)
         exps = numpy.exp(utility)
         # Here, size means kokotekija in Finnish
         size = numpy.ones_like(exps)
-        b = parameters.origin_choice["logsum"]["attraction"]
-        size = self.add_zone_util(purpose, size, b)
-        size = numpy.power(size, parameters.origin_choice["logsum"]["log"]["attraction"])
-        exps = size * exps
+        size = self.add_zone_util(purpose, size, b["size"])
+        exps *= numpy.power(size, b["log"]["size"])
         expsums = numpy.sum(exps, axis=0)
         prob = {}
         # Mode is needed here to get through tests even

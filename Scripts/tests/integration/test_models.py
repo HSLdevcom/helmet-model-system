@@ -38,8 +38,8 @@ class ModelTest(unittest.TestCase):
             tour_purposes.append(purpose)
             purpose_dict[purpose_name] = purpose
         for purpose in tour_purposes:
-            if "source" in parameters.tour_purposes[purpose_name]:
-                for source in parameters.tour_purposes[purpose_name]["source"]:
+            if "source" in parameters.tour_purposes[purpose.name]:
+                for source in parameters.tour_purposes[purpose.name]["source"]:
                     purpose.sources.append(purpose_dict[source])
 
         self.assertEqual(7, len(ass_classes))
@@ -74,8 +74,9 @@ class ModelTest(unittest.TestCase):
                 mtx_position = (pos, 0)
             else:
                 mtx_position = (0, 0)
-            for mode in demand:
-                dtm.add_demand(purpose.name, mode, demand[mode], mtx_position)
+            if purpose.dest != "source":
+                for mode in demand:
+                    dtm.add_demand(purpose.name, mode, demand[mode], mtx_position)
         pos = ass_model.get_mapping()[31001]
         for mode in parameters.external_modes:
             if mode == "truck":
