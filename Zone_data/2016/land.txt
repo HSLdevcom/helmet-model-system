@@ -1,0 +1,12 @@
+# Land use 2016
+#
+# builtar: area of built environment
+# detach: detached houses as share of total number of houses
+#
+	builtar	detach
+5	5       0.1
+6	10	0.2
+7	10	0.3
+2792	5       0.4
+16001	15	0.5
+17000	10	10

@@ -47,51 +47,60 @@ class ZoneData:
         script_dir = os.path.dirname(os.path.realpath('__file__'))
         project_dir = os.path.join(script_dir, "..")
         data_dir = os.path.join(project_dir, "Zone_data", scenario)
-        path = os.path.join(data_dir, "population.csv")
+        path = os.path.join(data_dir, "population.txt")
         popdata = pandas.read_csv(filepath_or_buffer=path, 
-                                  delim_whitespace=True)
-        path = os.path.join(data_dir, "workplaces.csv")
+                                  delim_whitespace=True,
+                                  comment='#')
+        path = os.path.join(data_dir, "workplaces.txt")
         workdata = pandas.read_csv(filepath_or_buffer=path, 
-                                   delim_whitespace=True)
-        path = os.path.join(data_dir, "schools.csv")
+                                   delim_whitespace=True,
+                                   comment='#')
+        path = os.path.join(data_dir, "schools.txt")
         schooldata = pandas.read_csv(filepath_or_buffer=path, 
-                                     delim_whitespace=True)
-        path = os.path.join(data_dir, "area.csv")
-        areadata = pandas.read_csv(filepath_or_buffer=path, 
-                                   delim_whitespace=True)
-        path = os.path.join(data_dir, "external.csv")
+                                     delim_whitespace=True,
+                                     comment='#')
+        path = os.path.join(data_dir, "land.txt")
+        landdata = pandas.read_csv(filepath_or_buffer=path, 
+                                   delim_whitespace=True,
+                                   comment='#')
+        path = os.path.join(data_dir, "external.txt")
         self.externalgrowth = pandas.read_csv(filepath_or_buffer=path, 
-                                              delim_whitespace=True)
-        population = popdata["total"]
-        self.zone_numbers = population.index
-        population_density = ( popdata["total"]
-                             / areadata["area"])
-        car_density = popdata["car_density"]
-        workplaces = workdata["total"]
-        service = ( workdata["share_service"] 
-                  * workdata["total"])
-        shops = ( workdata["share_shops"] 
-                * workdata["total"])
-        logistics = ( workdata["share_logistics"] 
-                    * workdata["total"])
-        industry = ( workdata["share_industry"] 
-                   * workdata["total"])
-        parking_cost = workdata["parking_cost"]
-        comprehensive_schools = schooldata["comprehensive"]
-        zone_area = areadata["area"]
-        share_detached_houses = areadata["share_detached_houses"]
-        downtown = pandas.Series(0, self.zone_numbers)
-        downtown.loc[:999] = 1
-        capital_region = pandas.Series(0, self.zone_numbers)
-        capital_region.loc[:5999] = 1
-        shops_downtown = downtown * shops
-        shops_elsewhere = (1-downtown) * shops
+                                              delim_whitespace=True,
+                                              comment='#')
+        val = {}
+        pop = popdata["total"]
+        val["population"] = pop
+        self.zone_numbers = pop.index
+        self.nr_zones = len(self.zone_numbers)
+        val["population_density"] = pop/ landdata["builtar"]
+        val["car_density"] = popdata["cardens"]
+        wp = workdata["total"]
+        val["workplaces"] = wp
+        val["service"] = ( workdata["sh_serv"] 
+                         * workdata["total"])
+        val["shops"] = ( workdata["sh_shop"] 
+                       * workdata["total"])
+        val["logistics"] = ( workdata["sh_logi"] 
+                           * workdata["total"])
+        val["industry"] = ( workdata["sh_indu"] 
+                          * workdata["total"])
+        val["parking_cost"] = workdata["parcosw"]
+        val["comprehensive_schools"] = schooldata["compreh"]
+        val["secondary_schools"] = schooldata["secndry"]
+        val["tertiary_education"] = schooldata["tertiary"]
+        val["zone_area"] = landdata["builtar"]
+        val["share_detached_houses"] = landdata["detach"]
+        val["downtown"] = pandas.Series(0, self.zone_numbers)
+        val["downtown"].loc[:999] = 1
+        # capital_region = pandas.Series(0, self.zone_numbers)
+        # capital_region.loc[:5999] = 1
+        val["shops_downtown"] = val["downtown"] * val["shops"]
+        val["shops_elsewhere"] = (1-val["downtown"]) * val["shops"]
         # Create diagonal matrix with zone area
-        nr_zones = len(zone_area)
-        di = np.diag_indices(nr_zones)
-        own_zone_area = np.zeros((nr_zones, nr_zones))
-        own_zone_area[di] = zone_area
-        own_zone_area_sqrt = np.sqrt(own_zone_area)
+        di = np.diag_indices(self.nr_zones)
+        val["own_zone_area"] = np.zeros((self.nr_zones, self.nr_zones))
+        val["own_zone_area"][di] = val["zone_area"]
+        val["own_zone_area_sqrt"] = np.sqrt(val["own_zone_area"])
         # Create matrix where value is 1 if origin and destination is in
         # same municipality
         idx = self.zone_numbers
@@ -101,33 +110,11 @@ class ZoneData:
             l = municipalities[municipality][0]
             u = municipalities[municipality][1]
             home_municipality.loc[l:u, l:u] = 1
-        population_own = home_municipality.values * population.values
-        population_other = (1-home_municipality.values) * population.values
-        workplaces_own = home_municipality.values * workplaces.values
-        workplaces_other = (1-home_municipality.values) * workplaces.values
-        self.values = {
-            "population": population,
-            "population_own": population_own,
-            "population_other": population_other,
-            "population_density": population_density,
-            "car_density": car_density,
-            "workplaces": workplaces,
-            "workplaces_own": workplaces_own,
-            "workplaces_other": workplaces_other,
-            "service": service,
-            "shops": shops,
-            "shops_downtown": shops_downtown,
-            "shops_elsewhere": shops_elsewhere,
-            "logistics": logistics,
-            "industry": industry,
-            "parking_cost": parking_cost,
-            "comprehensive_schools": comprehensive_schools,
-            "zone_area": zone_area,
-            "own_zone_area": own_zone_area,
-            "own_zone_area_sqrt": own_zone_area_sqrt,
-            "downtown": downtown,
-            "share_detached_houses": share_detached_houses,
-        }
+        val["population_own"] = home_municipality.values * pop.values
+        val["population_other"] = (1-home_municipality.values) * pop.values
+        val["workplaces_own"] = home_municipality.values * wp.values
+        val["workplaces_other"] = (1-home_municipality.values) * wp.values
+        self.values = val
 
     def get_freight_data(self):
         freight_variables = (
