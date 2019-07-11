@@ -7,192 +7,173 @@ class DemandModel:
         self.zone_data = zone_data
         self.dest_exps = {}
         self.mode_exps = {}
-        self.generated_tours = {}
-        self.attracted_tours = {}
 
     def calc_demand(self, purpose, impedance):
         prob = self.calc_prob(purpose, impedance)
-        nr_zones = len(self.zone_data.values["population"])
-        if parameters.tour_purposes[purpose]["type"] == "other-other":
+        nr_zones = len(self.zone_data.zone_numbers)
+        if purpose.orig == "source":
             tours = numpy.zeros(nr_zones)
-            for source in parameters.tour_purposes[purpose]["source"]:
-                b = parameters.tour_generation[purpose][source]
-                for mode in self.attracted_tours[source]:
-                    source_tours = self.attracted_tours[source][mode]
+            for source in purpose.sources:
+                b = parameters.tour_generation[purpose.name][source.name]
+                for mode in source.attracted_tours:
+                    source_tours = source.attracted_tours[mode]
                     tours += b * source_tours
         else:
             tours = self.generate_tours(purpose)
         demand = {}
-        self.generated_tours[purpose] = {}
-        self.attracted_tours[purpose] = {}
-        for mode in parameters.mode_choice[purpose]:
+        purpose.generated_tours = {}
+        purpose.attracted_tours = {}
+        for mode in parameters.mode_choice[purpose.name]:
             demand[mode] = (prob[mode] * tours).T
-            self.attracted_tours[purpose][mode] = demand[mode].sum(0)
-            self.generated_tours[purpose][mode] = demand[mode].sum(1)
+            purpose.attracted_tours[mode] = demand[mode].sum(0)
+            purpose.generated_tours[mode] = demand[mode].sum(1)
         return demand
 
     def generate_tours(self, purpose):
-        l, u = self.get_bounds(purpose)
+        l, u = self.zone_data.get_bounds(purpose)
         nr_zones = u - l
-        b = parameters.tour_generation[purpose]
+        b = parameters.tour_generation[purpose.name]
         tours = numpy.zeros(nr_zones)
         for i in b:
             tours += b[i] * self.zone_data.values[i][l:u]
         return tours
 
     def calc_prob(self, purpose, impedance):
-        if parameters.tour_purposes[purpose]["type"] == "source-other-peripheral":
+        if purpose.name == "sop":
             prob = self.calc_origin_prob(purpose, impedance)
+        elif purpose.name == "so":
+            prob = self.calc_dest_mode_prob(purpose, impedance)
         else:
-            self.insert_compound(purpose, impedance, "own_zone_area")
-            if parameters.tour_purposes[purpose]["area"] == "hs15":
-                prob = self.calc_mode_dest_prob(purpose, impedance)
-            else:
-                prob = self.calc_dest_mode_prob(purpose, impedance)
+            prob = self.calc_mode_dest_prob(purpose, impedance)
         return prob
 
-    def insert_compound(self, purpose, impedance, compound_type):
-        choices = (parameters.mode_choice, parameters.destination_choice)
-        for choice in choices:
-            for mode in choice[purpose]:
-                if compound_type in choice[purpose][mode]["impedance"]:
-                    if compound_type not in impedance:
-                        impedance[compound_type] = {}
-                        zone_area = self.get_compound(compound_type, purpose)
-                    impedance[compound_type][mode] = zone_area
-
-    def get_compound(self, compound_type, purpose):
-        l, u = self.get_bounds(purpose)
-        return self.zone_data.values[compound_type][l:u, :]
-    
-    def get_sum(self, mode):
-        nr_zones = len(self.zone_data.zone_numbers)
-        trips = numpy.zeros(nr_zones)
-        for purpose in self.generated_tours:
-            if purpose != "sop":
-                l, u = self.get_bounds(purpose)
-                trips[l:u] += self.generated_tours[purpose][mode]
-                trips += self.attracted_tours[purpose][mode]
-        return trips
-
     def calc_mode_dest_prob(self, purpose, impedance):
-        dest_expsums = {"logsum": {}}
-        for mode in parameters.destination_choice[purpose]:
-            expsum = self.calc_dest_util(purpose, mode, impedance)
-            dest_expsums["logsum"][mode] = expsum
+        dest_expsums = {}
+        for mode in parameters.destination_choice[purpose.name]:
+            expsum = self.calc_dest_util(purpose, mode, impedance[mode])
+            dest_expsums[mode] = {}
+            dest_expsums[mode]["logsum"] = expsum
         mode_expsum = self.calc_mode_util(purpose, dest_expsums)
         prob = {}
-        for mode in parameters.mode_choice[purpose]:
+        for mode in parameters.mode_choice[purpose.name]:
             mode_prob = self.mode_exps[mode] / mode_expsum
-            dest_expsum = dest_expsums["logsum"][mode]
+            dest_expsum = dest_expsums[mode]["logsum"]
             dest_prob = self.dest_exps[mode].T / dest_expsum
             prob[mode] = mode_prob * dest_prob
         return prob
 
     def calc_dest_mode_prob(self, purpose, impedance):
         mode_expsum = self.calc_mode_util(purpose, impedance)
-        logsum = {"log": {"logsum": mode_expsum}}
+        logsum = {"logsum": mode_expsum}
         dest_expsum = self.calc_dest_util(purpose, "logsum", logsum)
         prob = {}
         dest_prob = self.dest_exps["logsum"].T / dest_expsum
-        for mode in parameters.mode_choice[purpose]:
+        for mode in parameters.mode_choice[purpose.name]:
             mode_prob = (self.mode_exps[mode] / mode_expsum).T
             prob[mode] = mode_prob * dest_prob
         return prob
 
-    def get_bounds(self, purpose):
-        if parameters.tour_purposes[purpose]["area"] == "hs15":
-            l = 0
-            u_label = parameters.first_peripheral_zone
-            u = self.zone_data.values["population"].index.get_loc(u_label)
-        if parameters.tour_purposes[purpose]["area"] == "peripheral":
-            l_label = parameters.first_peripheral_zone
-            l = self.zone_data.values["population"].index.get_loc(l_label)
-            u = len(self.zone_data.values["population"])
-        if parameters.tour_purposes[purpose]["area"] == "all":
-            l = 0
-            u = len(self.zone_data.values["population"])
-        return l, u
-
     def calc_mode_util(self, purpose, impedance):
-        expsum = numpy.zeros_like(next(iter(impedance.values()))["car"])
-        l, u = self.get_bounds(purpose)
-        for mode in parameters.mode_choice[purpose]:
+        expsum = numpy.zeros_like(next(iter(impedance["car"].values())))
+        for mode in parameters.mode_choice[purpose.name]:
+            b = purpose.mode_choice_param[mode]
             utility = numpy.zeros_like(expsum)
-            utility += parameters.mode_choice[purpose][mode]["constant"]
-            utility = utility.T
-            b = parameters.mode_choice[purpose][mode]["generation"]
-            for i in b:
-                utility += b[i] * self.zone_data.values[i][l:u]
-            utility = utility.T
-            b = parameters.mode_choice[purpose][mode]["attraction"]
-            for i in b:
-                utility += b[i] * self.zone_data.values[i].values
-            b = parameters.mode_choice[purpose][mode]["impedance"]
-            for i in b:
-                utility += b[i] * impedance[i][mode]
-            self.mode_exps[mode] = numpy.exp(utility)
-            b = parameters.mode_choice[purpose][mode]["log_impedance"]
-            for i in b:
-                self.mode_exps[mode] *= numpy.power(impedance[i][mode], b[i])
-            expsum += self.mode_exps[mode]
+            self.add_constant(utility, b["constant"])
+            utility = self.add_zone_util(purpose=purpose, 
+                                         utility=utility.T, 
+                                         b=b["generation"], 
+                                         generation=True).T
+            self.add_zone_util(purpose, utility, b["attraction"], False)
+            self.add_impedance(utility, impedance[mode], b["impedance"])
+            exps = numpy.exp(utility)
+            self.add_log_impedance(exps, impedance[mode], b["log"])
+            self.mode_exps[mode] = exps
+            expsum += exps
         return expsum
     
     def calc_dest_util(self, purpose, mode, impedance):
-        type_mtxs = next(iter(impedance.values()))
-        mode_mtxs = next(iter(type_mtxs.values()))
-        utility = numpy.zeros_like(mode_mtxs)
-        b = parameters.destination_choice[purpose][mode]["impedance"]
-        for i in b:
-            utility += b[i] * impedance[i][mode]
+        b = purpose.dest_choice_param[mode]
+        utility = numpy.zeros_like(next(iter(impedance.values())))
+        self.add_zone_util(purpose, utility, b["attraction"])
+        self.add_impedance(utility, impedance, b["impedance"])
         self.dest_exps[mode] = numpy.exp(utility)
-        nr_zones = len(self.zone_data.values["workplaces"])
-        attraction = numpy.ones(nr_zones)
-        b = parameters.destination_choice[purpose][mode]["attraction"]
-        for i in b:
-            attraction += b[i] * self.zone_data.values[i]
-        b = parameters.destination_choice[purpose][mode]["compound"]
-        for i in b:
-            attraction = attraction + b[i] * self.get_compound(i, purpose)
-        logs = {}
-        logs["attraction"] = attraction
-        if "log" in impedance:
-            for i in impedance["log"]:
-                logs[i] = impedance["log"][i]
-        b = parameters.destination_choice[purpose][mode]["log"]
-        for i in b:
-            self.dest_exps[mode] *= numpy.power(logs[i], b[i])
+        size = numpy.zeros_like(utility)
+        self.add_zone_util(purpose, size, b["size"])
+        impedance["size"] = size
+        self.add_log_impedance(self.dest_exps[mode], impedance, b["log"])
+        if mode != "logsum":
+            threshold = parameters.distance_boundary[mode]
+            self.dest_exps[mode][impedance["dist"] > threshold] = 0
         return numpy.sum(self.dest_exps[mode], 1)
 
-    def calc_origin_util(self, purpose, impedance):
-        utility = numpy.zeros_like(next(iter(impedance.values()))["car"])
-        if purpose == "oop":
-            # TODO ???
-            return utility + 1
-        model = parameters.tour_purposes[purpose]["area"]
-        modes = parameters.origin_choice[model]["impedance"]
-        for mode in modes:
-            b = parameters.origin_choice[model]["impedance"][mode]
-            for i in b:
-                utility += b[i] * impedance[i][mode]
-        b = parameters.origin_choice[model]["attraction"]
+    def add_constant(self, utility, b):
+        k_label = parameters.first_surrounding_zone
+        k = self.zone_data.zone_numbers.get_loc(k_label)
+        try:
+            utility += b
+        except ValueError:
+            if utility.ndim == 1:
+                utility[:k] += b[0]
+                utility[k:] += b[1]
+            else:
+                utility[:k, :] += b[0]
+                utility[k:, :] += b[1]
+    
+    def add_impedance(self, utility, impedance, b):
+        k_label = parameters.first_surrounding_zone
+        k = self.zone_data.zone_numbers.get_loc(k_label)
         for i in b:
-            utility += b[i] * self.zone_data.values[i]
+            try:
+                utility += b[i] * impedance[i]
+            except ValueError:
+                utility[:k, :] += b[i][0] * impedance[i][:k, :]
+                utility[k:, :] += b[i][1] * impedance[i][k:, :]
+        return utility
+
+    def add_log_impedance(self, exps, impedance, b):
+        k_label = parameters.first_surrounding_zone
+        k = self.zone_data.zone_numbers.get_loc(k_label)
+        for i in b:
+            try:
+                exps *= numpy.power(impedance[i] + 1, b[i])
+            except ValueError:
+                exps[:k, :] *= numpy.power(impedance[i][:k, :] + 1, b[i][0])
+                exps[k:, :] *= numpy.power(impedance[i][k:, :] + 1, b[i][1])
+        return exps
+    
+    def add_zone_util(self, purpose, utility, b, generation=False):
+        zdata = self.zone_data
+        k = zdata.zone_numbers.get_loc(parameters.first_surrounding_zone)
+        for i in b:
+            try:
+                utility += b[i] * zdata.get_data(i, purpose, generation)
+            except ValueError:
+                data_capital_region = zdata.get_data(i, purpose, generation, 0)
+                data_surrounding = zdata.get_data(i, purpose, generation, 1)
+                if utility.ndim == 1:
+                    utility[:k] += b[i][0] * data_capital_region
+                    utility[k:] += b[i][1] * data_surrounding
+                else:
+                    utility[:k, :] += b[i][0] * data_capital_region
+                    utility[k:, :] += b[i][1] * data_surrounding
+        return utility
+
+    def calc_origin_util(self, purpose, impedance):
+        b = purpose.dest_choice_param
+        utility = numpy.zeros_like(next(iter(impedance["car"].values())))
+        for mode in b["impedance"]:
+            self.add_impedance(utility, impedance[mode], b["impedance"][mode])
+        self.add_zone_util(purpose, utility, b["attraction"])
         return utility
 
     def calc_origin_prob(self, purpose, impedance):
+        b = purpose.dest_choice_param
         utility = self.calc_origin_util(purpose, impedance)
         exps = numpy.exp(utility)
         # Here, size means kokotekija in Finnish
         size = numpy.ones_like(exps)
-        b = parameters.origin_choice["logsum"]["attraction"]
-        for i in b:
-            size += b[i] * self.zone_data.values[i]
-        b = parameters.origin_choice["logsum"]["compound"]
-        for i in b:
-            size += b[i] * self.get_compound(i, purpose)
-        size = numpy.power(size, parameters.origin_choice["logsum"]["log"]["attraction"])
-        exps = size * exps
+        size = self.add_zone_util(purpose, size, b["size"])
+        exps *= numpy.power(size, b["log"]["size"])
         expsums = numpy.sum(exps, axis=0)
         prob = {}
         # Mode is needed here to get through tests even

@@ -1,6 +1,6 @@
 import os
 import omx
-import numpy
+import numpy as np
 import pandas
 import parameters as param
 
@@ -18,7 +18,7 @@ class MatrixData:
         self.mtx_file.close()
     
     def get_data(self, mode):
-        return numpy.array(self.mtx_file[mode])
+        return np.array(self.mtx_file[mode])
 
     def get_external(self, mode):
         path = os.path.join(self.path, "external_"+mode+".csv")
@@ -80,15 +80,18 @@ class ZoneData:
         comprehensive_schools = schooldata["comprehensive"]
         zone_area = areadata["area"]
         share_detached_houses = areadata["share_detached_houses"]
-        downtown = pandas.Series(0, population.index)
+        downtown = pandas.Series(0, self.zone_numbers)
         downtown.loc[:999] = 1
+        capital_region = pandas.Series(0, self.zone_numbers)
+        capital_region.loc[:5999] = 1
         shops_downtown = downtown * shops
         shops_elsewhere = (1-downtown) * shops
         # Create diagonal matrix with zone area
         nr_zones = len(zone_area)
-        di = numpy.diag_indices(nr_zones)
-        own_zone_area = numpy.zeros((nr_zones, nr_zones))
+        di = np.diag_indices(nr_zones)
+        own_zone_area = np.zeros((nr_zones, nr_zones))
         own_zone_area[di] = zone_area
+        own_zone_area_sqrt = np.sqrt(own_zone_area)
         # Create matrix where value is 1 if origin and destination is in
         # same municipality
         idx = self.zone_numbers
@@ -100,6 +103,8 @@ class ZoneData:
             home_municipality.loc[l:u, l:u] = 1
         population_own = home_municipality.values * population.values
         population_other = (1-home_municipality.values) * population.values
+        workplaces_own = home_municipality.values * workplaces.values
+        workplaces_other = (1-home_municipality.values) * workplaces.values
         self.values = {
             "population": population,
             "population_own": population_own,
@@ -107,6 +112,8 @@ class ZoneData:
             "population_density": population_density,
             "car_density": car_density,
             "workplaces": workplaces,
+            "workplaces_own": workplaces_own,
+            "workplaces_other": workplaces_other,
             "service": service,
             "shops": shops,
             "shops_downtown": shops_downtown,
@@ -117,6 +124,7 @@ class ZoneData:
             "comprehensive_schools": comprehensive_schools,
             "zone_area": zone_area,
             "own_zone_area": own_zone_area,
+            "own_zone_area_sqrt": own_zone_area_sqrt,
             "downtown": downtown,
             "share_detached_houses": share_detached_houses,
         }
@@ -131,3 +139,37 @@ class ZoneData:
         )
         data = {k: self.values[k] for k in freight_variables}
         return pandas.DataFrame(data)
+
+    def get_data(self, data_type, purpose, generation=False, part=None):
+        l, u = self.get_bounds(purpose)
+        k = self.zone_numbers.get_loc(param.first_surrounding_zone)
+        if self.values[data_type].ndim == 1:
+            if generation:
+                if part is None:
+                    return self.values[data_type][l:u]
+                elif part == 0:
+                    return self.values[data_type][l:k]
+                else:
+                    return self.values[data_type][k:u]
+            else:
+                return self.values[data_type]
+        if part is None:
+            return self.values[data_type][l:u, :]
+        elif part == 0:
+            return self.values[data_type][:k, :]
+        else:
+            return self.values[data_type][k:u, :]
+
+    def get_bounds(self, purpose):
+        if purpose.area == "metropolitan":
+            l = 0
+            u_label = param.first_peripheral_zone
+            u = self.zone_numbers.get_loc(u_label)
+        if purpose.area == "peripheral":
+            l_label = param.first_peripheral_zone
+            l = self.zone_numbers.get_loc(l_label)
+            u = len(self.zone_numbers)
+        if purpose.area == "all":
+            l = 0
+            u = len(self.zone_numbers)
+        return l, u
