@@ -24,7 +24,8 @@ class ExternalModel:
             Matrix of whole day trips from external to internal zones
         """
         base_mtx = self.base_demand.get_external(mode)
-        mtx = pandas.DataFrame(0, self.zone_numbers, self.growth[mode].index)
+        indices = numpy.append(self.zone_numbers, self.growth[mode].index)
+        mtx = pandas.DataFrame(0, indices, self.growth[mode].index)
         internal_trips = pandas.Series(internal_trips, self.zone_numbers)
         municipalities = parameters.municipality
         # Base matrix is aggregated to municipality level
@@ -40,5 +41,5 @@ class ExternalModel:
                             * zone_weights[:, numpy.newaxis]
                             * base_vector.values)
             else: # External-external trips
-                mtx.loc[target] = self.growth[mode] * base_vector
+                mtx.loc[int(target)] = self.growth[mode] * base_vector.values
         return mtx.values.T
