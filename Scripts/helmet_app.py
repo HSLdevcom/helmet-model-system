@@ -15,6 +15,7 @@ from emme.emme_context import EmmeContext
 import parameters
 import numpy
 
+
 class HelmetApplication():
 
     def __init__(self, config):
@@ -31,7 +32,7 @@ class HelmetApplication():
         self.em = ExternalModel(self.basematrices, self.zdata_forecast)
 
         if config.get_value(Config.USE_EMME):
-            self.logger.info("Initializing EMME..")
+            self.logger.info("Initializing Emme..")
             self.emme_context = EmmeContext(self._config.get_value(Config.EMME_PROJECT_PATH))
             self.ass_model = EmmeAssignmentModel(self.emme_context)
         else:
@@ -44,6 +45,7 @@ class HelmetApplication():
         self.ass_classes = dict.fromkeys(parameters.emme_mtx["demand"].keys())
         self.tour_purposes = create_purposes()
     
+
     def run(self):
         iterations = self._config.get_value(Config.ITERATION_COUNT)
         self.logger.info("Running simulation with {} iterations".format(self._config.get_value(Config.ITERATION_COUNT)))
@@ -83,10 +85,12 @@ class HelmetApplication():
 
         self.logger.info("All done, thank you!")
 
+
     def handle_error(self, msg, exception):
         self.logger.error(msg, exception)
         fatal = True
         return fatal
+
 
     def simulate(self, impedance):
         
@@ -140,18 +144,15 @@ class HelmetApplication():
         self.dtm.init_demand()
         return impedance
 
+
     def _validate_input(self):
         # TODO read the scenario from parameters / config and read input data & validate it
         return True
 
+
     def _validate_demand(self, demand):
         # TODO read the scenario from parameters / config and read input data & validate it
         return True
-
-    def initialize_EMME(self):
-        from emme.emme_context import EmmeContext
-        empfile = self._config.get_value(Config.EMME_PROJECT_PATH)
-        self.emme_context = EmmeContext(empfile)
 
 
 # Main entry point for the application
