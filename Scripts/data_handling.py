@@ -6,7 +6,7 @@ import parameters as param
 
 class MatrixData:
     def __init__(self, scenario):
-        script_dir = os.path.dirname(os.path.realpath('__file__'))
+        script_dir = os.path.dirname(os.path.realpath(__file__))
         project_dir = os.path.join(script_dir, "..")
         self.path = os.path.join(project_dir, "Matrices", scenario)
     
@@ -47,7 +47,7 @@ class ZoneData:
         if os.path.exists(scenario):
             data_dir = scenario
         else:
-            script_dir = os.path.dirname(os.path.realpath('__file__'))
+            script_dir = os.path.dirname(os.path.realpath(__file__))
             project_dir = os.path.join(script_dir, "..")
             data_dir = os.path.join(project_dir, "Zone_data", scenario)
         path = os.path.join(data_dir, "population.csv")
