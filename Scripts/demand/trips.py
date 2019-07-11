@@ -7,8 +7,6 @@ class DemandModel:
         self.zone_data = zone_data
         self.dest_exps = {}
         self.mode_exps = {}
-        self.generated_tours = {}
-        self.attracted_tours = {}
 
     def calc_demand(self, purpose, impedance):
         prob = self.calc_prob(purpose, impedance)
@@ -78,7 +76,7 @@ class DemandModel:
     def calc_mode_util(self, purpose, impedance):
         expsum = numpy.zeros_like(next(iter(impedance["car"].values())))
         for mode in parameters.mode_choice[purpose.name]:
-            b = parameters.mode_choice[purpose.name][mode]
+            b = purpose.mode_choice_param[mode]
             utility = numpy.zeros_like(expsum)
             self.add_constant(utility, b["constant"])
             utility = self.add_zone_util(purpose=purpose, 
@@ -94,7 +92,7 @@ class DemandModel:
         return expsum
     
     def calc_dest_util(self, purpose, mode, impedance):
-        b = parameters.destination_choice[purpose.name][mode]
+        b = purpose.dest_choice_param[mode]
         utility = numpy.zeros_like(next(iter(impedance.values())))
         self.add_zone_util(purpose, utility, b["attraction"])
         self.add_impedance(utility, impedance, b["impedance"])
@@ -161,7 +159,7 @@ class DemandModel:
         return utility
 
     def calc_origin_util(self, purpose, impedance):
-        b = parameters.destination_choice[purpose.name]
+        b = purpose.dest_choice_param
         utility = numpy.zeros_like(next(iter(impedance["car"].values())))
         for mode in b["impedance"]:
             self.add_impedance(utility, impedance[mode], b["impedance"][mode])
@@ -169,7 +167,7 @@ class DemandModel:
         return utility
 
     def calc_origin_prob(self, purpose, impedance):
-        b = parameters.destination_choice[purpose.name]
+        b = purpose.dest_choice_param
         utility = self.calc_origin_util(purpose, impedance)
         exps = numpy.exp(utility)
         # Here, size means kokotekija in Finnish

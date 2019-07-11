@@ -1623,83 +1623,77 @@ distance_boundary = {
 }
 ### DEMAND MODEL REFERENCES ###
 
-tour_calculation = (
-    "hw", 
-    "hc", 
-    "hu", 
-    "hs", 
-    "ho", 
-    "so",
-    "oo", 
-    "hwp", 
-    "hop", 
-    "sop", 
-    "oop",
-)
-tour_purposes = {
-    "hw": {
+tour_purposes = (
+    {
+        "name": "hw",
         "orig": "home",
         "dest": "work",
         "area": "metropolitan",
     },
-    "hc": {
+    {
+        "name": "hc",
         "orig": "home",
         "dest": "comprehensive_school",
         "area": "metropolitan",
     },
-    "hu": {
+    {
+        "name": "hu",
         "orig": "home",
         "dest": "tertiary_education",
         "area": "metropolitan",
     },
-    "hs": {
+    {
+        "name": "hs",
         "orig": "home",
         "dest": "shopping",
         "area": "metropolitan",
     },
-    "ho": {
+    {
+        "name": "ho",
         "orig": "home",
         "dest": "other",
         "area": "metropolitan",
     },
-     "so": {
+    {
+        "name": "so",
         "orig": "home",
         "dest": "source",
         "area": "peripheral",
     },
-    "oo": {
+    {
+        "name": "oo",
         "orig": "source",
         "dest": "other",
-        "source": ["so"],
+        "source": ("so",),
         "area": "all",
     },
-    "hwp": {
+    {
+        "name": "hwp",
         "orig": "home",
         "dest": "work",
         "area": "peripheral",
     },
-    "hop": {
+    {
+        "name": "hop",
         "orig": "home",
         "dest": "other",
         "area": "peripheral",
     },
-    "sop": {
+    {
+        "name": "sop",
         "orig": "home",
         "dest": "source",
         "area": "peripheral",
     },
-    "oop": {
+    {
+        "name": "oop",
         "orig": "source",
         "dest": "other",
-        "source": ["sop"],
+        "source": ("sop",),
         "area": "all",
     },
-}
-# tour_modes = [
-#     "car",
-#     "transit",
-#     "bike",
-# ]
+)
+
 external_modes = [
     "car",
     "transit",

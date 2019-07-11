@@ -10,7 +10,7 @@ from demand.freight import FreightModel
 from demand.trips import DemandModel
 from demand.external import ExternalModel
 from transform.impedance_transformer import ImpedanceTransformer
-from datatypes.purpose import TourPurpose
+from datatypes.purpose import create_purposes
 import parameters
 
 class ModelTest(unittest.TestCase):
@@ -31,16 +31,7 @@ class ModelTest(unittest.TestCase):
         dtm = dt.DepartureTimeModel(ass_model)
         imptrans = ImpedanceTransformer(ass_model)
         ass_classes = dict.fromkeys(parameters.emme_mtx["demand"].keys())
-        tour_purposes = []
-        purpose_dict = {}
-        for purpose_name in parameters.tour_calculation:
-            purpose = TourPurpose(purpose_name)
-            tour_purposes.append(purpose)
-            purpose_dict[purpose_name] = purpose
-        for purpose in tour_purposes:
-            if "source" in parameters.tour_purposes[purpose.name]:
-                for source in parameters.tour_purposes[purpose.name]["source"]:
-                    purpose.sources.append(purpose_dict[source])
+        tour_purposes = create_purposes()
 
         self.assertEqual(7, len(ass_classes))
 

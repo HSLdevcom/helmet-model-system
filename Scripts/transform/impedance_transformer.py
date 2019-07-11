@@ -10,8 +10,7 @@ class ImpedanceTransformer:
 
         Parameters
         ----------
-        purpose : str
-            Travel purpose (hw/hs/ho...)
+        purpose : TourPurpose
         impedance: dict
             Time period (aht/pt/iht) : dict
                 Type (time/cost/dist) : dict
