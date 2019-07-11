@@ -29,6 +29,7 @@
 *.gfsum
 *.old
 *.log
+*.log.*-*-*
 usemacro_*
 STRAT_*
 config
