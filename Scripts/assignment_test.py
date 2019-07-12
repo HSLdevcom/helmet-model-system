@@ -49,7 +49,7 @@ for purpose in demand:
 #     freight_file[mode] = demand["freight"][mode][:5,:5]
 travel_cost = dtm.assign()
 zdata_forecast = ZoneData("2030")
-ass_model.calc_transit_cost(zdata_forecast.transitcost)
+ass_model.calc_transit_cost(zdata_forecast.transit_zone)
 costs_files = MatrixData("2016")
 for time_period in travel_cost:
     for mtx_type in travel_cost[time_period]:

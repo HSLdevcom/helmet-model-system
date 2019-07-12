@@ -21,6 +21,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                     matrix_description=mtx[ass_class]["description"],
                     default_value=0,
                     overwrite=True)
+        self.dist_cost = param.dist_cost
         for time_period in param.emme_scenario:
             self._calc_road_cost(param.emme_scenario[time_period])
             self._calc_boarding_penalties(param.emme_scenario[time_period])
@@ -69,7 +70,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         mtxs["dist"]["walk"] += 1
         mtxs["dist"]["bike"] += 1
         for ass_cl in ("car_work", "car_leisure"):
-            mtxs["cost"][ass_cl] += param.dist_cost * mtxs["dist"][ass_cl]
+            mtxs["cost"][ass_cl] += self.dist_cost * mtxs["dist"][ass_cl]
         return mtxs
     
     def set_matrices(self, matrices):
@@ -122,7 +123,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         gcost = self.get_matrix("gen_cost", ass_class)
         tcost = self.get_matrix("cost", ass_class)
         tdist = self.get_matrix("dist", ass_class)
-        return gcost - vot_inv *(tcost + param.dist_cost*tdist)
+        return gcost - vot_inv *(tcost + self.dist_cost*tdist)
 
     def _calc_background_traffic(self, scen_id):
         """Calculate background traffic (buses)."""
@@ -221,7 +222,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "selections": {
                 "link": "all",
             },
-            "expression": str(param.dist_cost)+"*length",
+            "expression": str(self.dist_cost)+"*length",
             "result": "@rumpi",
             "aggregation": None,
         })
@@ -239,7 +240,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "inro.emme.network_calculation.network_calculator")
         netcalc(netw_specs, scenario)
 
-    def calc_transit_cost(self, zone_fares):
+    def calc_transit_cost(self, fares):
         emmebank = self.emme.modeller.emmebank
         scen_id = param.emme_scenario["aht"]
         self._calc_boarding_penalties(scen_id, 5)
@@ -268,7 +269,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         maxprice = 999
         price = numpy.full_like(dist, maxprice)
         mtx = next(iter(has_visited.values()))
-        for zone_combination in zone_fares:
+        for zone_combination in fares["fare"]:
             goes_outside = numpy.full_like(mtx, False)
             for transit_zone in has_visited:
                 # Check if the OD-flow has been at a node that is
@@ -276,19 +277,19 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                 if transit_zone not in zone_combination:
                     goes_outside |= has_visited[transit_zone]
             is_inside = ~goes_outside
-            if zone_combination in param.exclusive_tickets:
+            if fares["exclusive"][zone_combination] != "":
                 zn = self.get_zone_numbers()
                 exclusion = pandas.DataFrame(is_inside, zn, zn)
-                municipality = param.exclusive_tickets[zone_combination]
+                municipality = fares["exclusive"][zone_combination]
                 inclusion = param.municipality[municipality]
                 exclusion.loc[:inclusion[0]-1] = False
                 exclusion.loc[inclusion[1]+1:] = False
                 is_inside = exclusion.values
-            zone_price = zone_fares[zone_combination]
+            zone_price = fares["fare"][zone_combination]
             # If the OD-flow matches several combinations, pick the cheapest
             price[is_inside] = numpy.minimum(price[is_inside], zone_price)
         # Calculate distance-based cost from inv-distance
-        dist_price = param.transit_start_cost + param.transit_dist_cost*dist
+        dist_price = fares["start_fare"] + fares["dist_fare"]*dist
         price[price==maxprice] = dist_price[price==maxprice]
         # Reset boarding penalties
         self._calc_boarding_penalties(scen_id)
