@@ -1,6 +1,7 @@
 import unittest
 
-from data_handling import ZoneData, MatrixData
+from datahandling.zonedata import ZoneData
+from datahandling.matrixdata import MatrixData
 import pandas
 import os
 import parameters as params
