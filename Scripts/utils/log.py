@@ -2,6 +2,7 @@ import os
 import sys
 import logging
 import logging.handlers
+from pythonjsonlogger import jsonlogger
 from config import Config
 
 # Wrapper on top of standard Python logging interface so we can easily configure
@@ -25,7 +26,7 @@ class Log:
     def initialize(self, config, emme_context=None):
         # JSON logger for communicating with UI
         if config.get_value(Config.LOG_FORMAT) == 'JSON':
-            jsonFormat = logging.Formatter('{"level":"%(levelname)s", "msg":"%(message)s"}')
+            jsonFormat = jsonlogger.JsonFormatter()
             streamHandler = logging.StreamHandler(sys.stderr)
             streamHandler.flush = sys.stderr.flush
             streamHandler.setFormatter(jsonFormat)
@@ -45,14 +46,14 @@ class Log:
     def add_stream_handler(self, handler):
         self.__logger.addHandler(handler)
 
-    def debug(self, msg):
-        self.__logger.debug(msg)
+    def debug(self, msg, *args, **kwargs):
+        self.__logger.debug(msg, *args, **kwargs)
 
-    def info(self, msg):
-        self.__logger.info(msg)
+    def info(self, msg, *args, **kwargs):
+        self.__logger.info(msg, *args, **kwargs)
         
-    def warn(self, msg):
-        self.__logger.warn(msg)
+    def warn(self, msg, *args, **kwargs):
+        self.__logger.warn(msg, *args, **kwargs)
 
     def error(self, msg, exception=None):
         print_stacktrace = exception is not None 
