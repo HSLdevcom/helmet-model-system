@@ -55,6 +55,6 @@ class Log:
     def warn(self, msg, *args, **kwargs):
         self.__logger.warn(msg, *args, **kwargs)
 
-    def error(self, msg, exception=None):
-        print_stacktrace = exception is not None 
-        self.__logger.error(msg, exc_info=print_stacktrace)
+    def error(self, msg, exception=None, *args, **kwargs):
+        print_stacktrace = exception is not None
+        self.__logger.error(msg, exc_info=print_stacktrace, *args, **kwargs)
