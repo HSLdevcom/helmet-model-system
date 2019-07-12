@@ -5,7 +5,8 @@ from assignment.abstract_assignment import AssignmentModel
 from assignment.emme_assignment import EmmeAssignmentModel
 from assignment.mock_assignment import MockAssignmentModel
 import assignment.departure_time as dt
-from data_handling import ZoneData, MatrixData
+from datahandling.zonedata import ZoneData
+from datahandling.matrixdata import MatrixData
 from demand.freight import FreightModel
 from demand.trips import DemandModel
 from demand.external import ExternalModel
