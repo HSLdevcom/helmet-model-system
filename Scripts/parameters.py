@@ -12,9 +12,9 @@ vot_inv = {
     "business": 6,
     "leisure": 6,
 }
-# Distance cost [eur/km]
+# Default distance cost [eur/km]
 dist_cost = 0.12
-# Transit zone fare
+# Default transit zone fare
 transit_cost = {
     "AB": 59.7,
     "BC": 59.7,
@@ -44,6 +44,7 @@ transit_cost = {
     "PB": 252,
     "PC": 252,
 }
+# Tickets only sold to municipality citizens
 exclusive_tickets = {
     "JD": "Jarvenpaa",
 }

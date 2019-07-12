@@ -16,8 +16,9 @@ project_dir = os.path.join(script_dir, "..")
 for file_name in os.listdir(project_dir):
     if file_name.endswith(".emp"):
         empfile = os.path.join(project_dir, file_name)
+zdata_forecast = ZoneData("2030")
 emme_context = EmmeContext(empfile)
-ass_model = ass.EmmeAssignmentModel(emme_context)
+ass_model = ass.EmmeAssignmentModel(emme_context, zdata_forecast.car_dist_cost)
 dtm = dt.DepartureTimeModel(ass_model)
 nr_zones = len(ass_model.get_zone_numbers())
 car_matrix = numpy.arange(nr_zones**2).reshape(nr_zones, nr_zones)
@@ -48,7 +49,6 @@ for purpose in demand:
 # for mode in demand["freight"]:
 #     freight_file[mode] = demand["freight"][mode][:5,:5]
 travel_cost = dtm.assign()
-zdata_forecast = ZoneData("2030")
 ass_model.calc_transit_cost(zdata_forecast.transit_zone)
 costs_files = MatrixData("2016")
 for time_period in travel_cost:

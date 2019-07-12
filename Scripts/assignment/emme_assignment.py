@@ -10,7 +10,7 @@ from datatypes.journey_level import JourneyLevel
 from datatypes.path_analysis import PathAnalysis
 
 class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
-    def __init__(self, emme_context):
+    def __init__(self, emme_context, car_dist_cost=param.dist_cost):
         self.emme = emme_context
         for mtx_type in param.emme_mtx:
             mtx = param.emme_mtx[mtx_type]
@@ -21,7 +21,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                     matrix_description=mtx[ass_class]["description"],
                     default_value=0,
                     overwrite=True)
-        self.dist_cost = param.dist_cost
+        self.dist_cost = car_dist_cost
         for time_period in param.emme_scenario:
             self._calc_road_cost(param.emme_scenario[time_period])
             self._calc_boarding_penalties(param.emme_scenario[time_period])

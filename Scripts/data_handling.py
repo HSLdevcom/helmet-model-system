@@ -68,12 +68,19 @@ class ZoneData:
                                               delim_whitespace=True,
                                               comment='#')
         path = os.path.join(data_dir, "transit_cost.txt")
-        self.transit_zone = pandas.read_csv(filepath_or_buffer=path, 
-                                            delim_whitespace=True,
-                                            keep_default_na=False,
-                                            comment='#').to_dict()
-        self.transit_zone["dist_fare"] = self.transit_zone["fare"].pop("dist")
-        self.transit_zone["start_fare"] = self.transit_zone["fare"].pop("start")
+        transit_zone = pandas.read_csv(filepath_or_buffer=path, 
+                                       delim_whitespace=True,
+                                       keep_default_na=False,
+                                       comment='#').to_dict()
+        transit_zone["dist_fare"] = transit_zone["fare"].pop("dist")
+        transit_zone["start_fare"] = transit_zone["fare"].pop("start")
+        self.transit_zone = transit_zone
+        path = os.path.join(data_dir, "car_cost.txt")
+        car_cost = pandas.read_csv(filepath_or_buffer=path, 
+                                   delim_whitespace=True,
+                                   squeeze=True,
+                                   comment='#')
+        self.car_dist_cost = car_cost[0]
         val = {}
         pop = popdata["total"]
         val["population"] = pop

@@ -1,0 +1,3 @@
+# Car usage cost [eur/km] 2030
+dist_cost
+0.12
