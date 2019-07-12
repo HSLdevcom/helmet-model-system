@@ -5,7 +5,8 @@ import numpy
 import pythonlibs.omx
 import os
 from parameters import emme_scenario, demand_share
-from data_handling import MatrixData, ZoneData
+from datahandling.zonedata import ZoneData
+from datahandling.matrixdata import MatrixData
 from emme.emme_context import EmmeContext
 
 logging.basicConfig(format='%(asctime)s %(message)s',
