@@ -24,11 +24,11 @@ class HelmetApplication():
         self.logger.info("Initializing the application..")
         # TODO clean up the model initialization and initialize other relevant classes
         self.zdata_base = ZoneData("2016")
-        self.zdata_forecast = ZoneData(self._config.get_value(Config.DATA_PATH))
+        zdata_forecast = ZoneData(self._config.get_value(Config.DATA_PATH))
         self.basematrices = MatrixData("base")
-        self.dm = DemandModel(self.zdata_forecast)
-        self.fm = FreightModel(self.zdata_base, self.zdata_forecast, self.basematrices)
-        self.em = ExternalModel(self.basematrices, self.zdata_forecast)
+        self.dm = DemandModel(zdata_forecast)
+        self.fm = FreightModel(self.zdata_base, zdata_forecast, self.basematrices)
+        self.em = ExternalModel(self.basematrices, zdata_forecast)
         self.emme_context = EmmeContext(self._config.get_value(Config.EMME_PROJECT_PATH))
         # We could also perhaps wrap these under some class..?
         if config.get_value(Config.USE_EMME):
@@ -40,9 +40,9 @@ class HelmetApplication():
             costs = MatrixData("2016")
             self.ass_model = MockAssignmentModel(costs)
         self.dtm = dt.DepartureTimeModel(self.ass_model)
-        self.imptrans = ImpedanceTransformer(self.ass_model)
+        self.imptrans = ImpedanceTransformer()
         self.ass_classes = dict.fromkeys(parameters.emme_mtx["demand"].keys())
-        self.tour_purposes = create_purposes()
+        self.tour_purposes = create_purposes(zdata_forecast)
     
     def run(self):
         self.logger.info("Launching application..")
@@ -89,15 +89,11 @@ class HelmetApplication():
             purpose_impedance = self.imptrans.transform(purpose, impedance)
             demand = self.dm.calc_demand(purpose, purpose_impedance)
             self._validate_demand(demand)
-            if purpose.area == "peripheral":
-                pos = self.ass_model.get_mapping()[16001]
-                mtx_position = (pos, 0)
-            else:
-                mtx_position = (0, 0)
+            mtx_position = (purpose.bounds[0], 0)
             if purpose.dest != "source":
                 for mode in demand:
                     self.dtm.add_demand(purpose.name, mode, demand[mode], mtx_position)
-        pos = self.ass_model.get_mapping()[31001]
+        pos = self.ass_model.get_mapping()[parameters.first_external_zone]
         for mode in parameters.external_modes:
             if mode == "truck":
                 int_demand = self.trucks.sum(0) + self.trucks.sum(1)
@@ -108,7 +104,7 @@ class HelmetApplication():
                 int_demand = numpy.zeros(nr_zones)
                 for purpose in self.tour_purposes:
                     if purpose.dest != "source":
-                        l, u = self.zdata_base.get_bounds(purpose)
+                        l, u = purpose.bounds
                         int_demand[l:u] += purpose.generated_tours[mode]
                         int_demand += purpose.attracted_tours[mode]
             ext_demand = self.em.calc_external(mode, int_demand)

@@ -30,9 +30,9 @@ class ModelTest(unittest.TestCase):
         costs = MatrixData("2016")
         ass_model = MockAssignmentModel(costs)
         dtm = dt.DepartureTimeModel(ass_model)
-        imptrans = ImpedanceTransformer(ass_model)
+        imptrans = ImpedanceTransformer()
         ass_classes = dict.fromkeys(parameters.emme_mtx["demand"].keys())
-        tour_purposes = create_purposes()
+        tour_purposes = create_purposes(zdata_forecast)
 
         self.assertEqual(7, len(ass_classes))
 
@@ -61,15 +61,11 @@ class ModelTest(unittest.TestCase):
             purpose_impedance = imptrans.transform(purpose, impedance)
             demand = dm.calc_demand(purpose, purpose_impedance)
             self._validate_demand(demand)
-            if purpose.area == "peripheral":
-                pos = ass_model.get_mapping()[16001]
-                mtx_position = (pos, 0)
-            else:
-                mtx_position = (0, 0)
+            mtx_position = (purpose.bounds[0], 0)
             if purpose.dest != "source":
                 for mode in demand:
                     dtm.add_demand(purpose.name, mode, demand[mode], mtx_position)
-        pos = ass_model.get_mapping()[31001]
+        pos = ass_model.get_mapping()[parameters.first_external_zone]
         for mode in parameters.external_modes:
             if mode == "truck":
                 int_demand = trucks.sum(0) + trucks.sum(1)
@@ -80,7 +76,7 @@ class ModelTest(unittest.TestCase):
                 int_demand = numpy.zeros(nr_zones)
                 for purpose in tour_purposes:
                     if purpose.dest != "source":
-                        l, u = zdata_base.get_bounds(purpose)
+                        l, u = purpose.bounds
                         int_demand[l:u] += purpose.generated_tours[mode]
                         int_demand += purpose.attracted_tours[mode]
             ext_demand = em.calc_external(mode, int_demand)

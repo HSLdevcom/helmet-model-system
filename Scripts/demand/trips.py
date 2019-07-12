@@ -30,7 +30,7 @@ class DemandModel:
         return demand
 
     def generate_tours(self, purpose):
-        l, u = self.zone_data.get_bounds(purpose)
+        l, u = purpose.bounds
         nr_zones = u - l
         b = parameters.tour_generation[purpose.name]
         tours = numpy.zeros(nr_zones)
