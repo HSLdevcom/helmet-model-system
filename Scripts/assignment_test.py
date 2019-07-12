@@ -5,7 +5,7 @@ import numpy
 import pythonlibs.omx
 import os
 from parameters import emme_scenario, demand_share
-from data_handling import MatrixData
+from data_handling import MatrixData, ZoneData
 from emme.emme_context import EmmeContext
 
 logging.basicConfig(format='%(asctime)s %(message)s',
@@ -48,7 +48,8 @@ for purpose in demand:
 # for mode in demand["freight"]:
 #     freight_file[mode] = demand["freight"][mode][:5,:5]
 travel_cost = dtm.assign()
-ass_model.calc_transit_cost()
+zdata_forecast = ZoneData("2030")
+ass_model.calc_transit_cost(zdata_forecast.transitcost)
 costs_files = MatrixData("2016")
 for time_period in travel_cost:
     for mtx_type in travel_cost[time_period]:

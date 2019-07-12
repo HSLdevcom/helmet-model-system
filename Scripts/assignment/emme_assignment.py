@@ -239,7 +239,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "inro.emme.network_calculation.network_calculator")
         netcalc(netw_specs, scenario)
 
-    def calc_transit_cost(self):
+    def calc_transit_cost(self, zone_fares):
         emmebank = self.emme.modeller.emmebank
         scen_id = param.emme_scenario["aht"]
         self._calc_boarding_penalties(scen_id, 5)
@@ -268,7 +268,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         maxprice = 999
         price = numpy.full_like(dist, maxprice)
         mtx = next(iter(has_visited.values()))
-        for zone_combination in param.transit_cost:
+        for zone_combination in zone_fares:
             goes_outside = numpy.full_like(mtx, False)
             for transit_zone in has_visited:
                 # Check if the OD-flow has been at a node that is
@@ -284,7 +284,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                 exclusion.loc[:inclusion[0]-1] = False
                 exclusion.loc[inclusion[1]+1:] = False
                 is_inside = exclusion.values
-            zone_price = param.transit_cost[zone_combination]
+            zone_price = zone_fares[zone_combination]
             # If the OD-flow matches several combinations, pick the cheapest
             price[is_inside] = numpy.minimum(price[is_inside], zone_price)
         # Calculate distance-based cost from inv-distance
