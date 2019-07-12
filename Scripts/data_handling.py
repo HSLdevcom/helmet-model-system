@@ -1,6 +1,6 @@
 import os
 import omx
-import numpy as np
+import numpy
 import pandas
 import parameters as param
 
@@ -18,13 +18,10 @@ class MatrixData:
         self.mtx_file.close()
     
     def get_data(self, mode):
-        return np.array(self.mtx_file[mode])
+        return numpy.array(self.mtx_file[mode])
 
     def get_external(self, mode):
-        path = os.path.join(self.path, "external_"+mode+".csv")
-        extdata = pandas.read_csv(filepath_or_buffer=path, 
-                                  delim_whitespace=True)
-        return extdata
+        return read_file(self.path, "external_"+mode+".csv")
 
     def set_data(self, data, mode):
         self.mtx_file[mode] = data
@@ -47,39 +44,16 @@ class ZoneData:
         script_dir = os.path.dirname(os.path.realpath('__file__'))
         project_dir = os.path.join(script_dir, "..")
         data_dir = os.path.join(project_dir, "Zone_data", scenario)
-        path = os.path.join(data_dir, "population.txt")
-        popdata = pandas.read_csv(filepath_or_buffer=path, 
-                                  delim_whitespace=True,
-                                  comment='#')
-        path = os.path.join(data_dir, "workplaces.txt")
-        workdata = pandas.read_csv(filepath_or_buffer=path, 
-                                   delim_whitespace=True,
-                                   comment='#')
-        path = os.path.join(data_dir, "schools.txt")
-        schooldata = pandas.read_csv(filepath_or_buffer=path, 
-                                     delim_whitespace=True,
-                                     comment='#')
-        path = os.path.join(data_dir, "land.txt")
-        landdata = pandas.read_csv(filepath_or_buffer=path, 
-                                   delim_whitespace=True,
-                                   comment='#')
-        path = os.path.join(data_dir, "external.txt")
-        self.externalgrowth = pandas.read_csv(filepath_or_buffer=path, 
-                                              delim_whitespace=True,
-                                              comment='#')
-        path = os.path.join(data_dir, "transit_cost.txt")
-        transit_zone = pandas.read_csv(filepath_or_buffer=path, 
-                                       delim_whitespace=True,
-                                       keep_default_na=False,
-                                       comment='#').to_dict()
+        popdata = read_file(data_dir, "population.txt")
+        workdata = read_file(data_dir, "workplaces.txt")
+        schooldata = read_file(data_dir, "schools.txt")
+        landdata = read_file(data_dir, "land.txt")
+        self.externalgrowth = read_file(data_dir, "external.txt")
+        transit_zone = read_file(data_dir, "transit_cost.txt").to_dict()
         transit_zone["dist_fare"] = transit_zone["fare"].pop("dist")
         transit_zone["start_fare"] = transit_zone["fare"].pop("start")
         self.transit_zone = transit_zone
-        path = os.path.join(data_dir, "car_cost.txt")
-        car_cost = pandas.read_csv(filepath_or_buffer=path, 
-                                   delim_whitespace=True,
-                                   squeeze=True,
-                                   comment='#')
+        car_cost = read_file(data_dir, "car_cost.txt", True)
         self.car_dist_cost = car_cost[0]
         val = {}
         pop = popdata["total"]
@@ -90,14 +64,10 @@ class ZoneData:
         val["car_density"] = popdata["cardens"]
         wp = workdata["total"]
         val["workplaces"] = wp
-        val["service"] = ( workdata["sh_serv"] 
-                         * workdata["total"])
-        val["shops"] = ( workdata["sh_shop"] 
-                       * workdata["total"])
-        val["logistics"] = ( workdata["sh_logi"] 
-                           * workdata["total"])
-        val["industry"] = ( workdata["sh_indu"] 
-                          * workdata["total"])
+        val["service"] = workdata["sh_serv"] * wp
+        val["shops"] = workdata["sh_shop"] * wp
+        val["logistics"] = workdata["sh_logi"] * wp
+        val["industry"] = workdata["sh_indu"] * wp
         val["parking_cost"] = workdata["parcosw"]
         val["comprehensive_schools"] = schooldata["compreh"]
         val["secondary_schools"] = schooldata["secndry"]
@@ -111,10 +81,10 @@ class ZoneData:
         val["shops_downtown"] = val["downtown"] * val["shops"]
         val["shops_elsewhere"] = (1-val["downtown"]) * val["shops"]
         # Create diagonal matrix with zone area
-        di = np.diag_indices(self.nr_zones)
-        val["own_zone_area"] = np.zeros((self.nr_zones, self.nr_zones))
+        di = numpy.diag_indices(self.nr_zones)
+        val["own_zone_area"] = numpy.zeros((self.nr_zones, self.nr_zones))
         val["own_zone_area"][di] = val["zone_area"]
-        val["own_zone_area_sqrt"] = np.sqrt(val["own_zone_area"])
+        val["own_zone_area_sqrt"] = numpy.sqrt(val["own_zone_area"])
         # Create matrix where value is 1 if origin and destination is in
         # same municipality
         idx = self.zone_numbers
@@ -174,3 +144,11 @@ class ZoneData:
             l = 0
             u = len(self.zone_numbers)
         return l, u
+
+def read_file(data_dir, file_name, squeeze=False):
+    path = os.path.join(data_dir, file_name)
+    return pandas.read_csv(filepath_or_buffer=path, 
+                            delim_whitespace=True,
+                            keep_default_na=False,
+                            squeeze=squeeze,
+                            comment='#')
