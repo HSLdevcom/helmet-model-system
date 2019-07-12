@@ -26,7 +26,7 @@ class Log:
     def initialize(self, config, emme_context=None):
         # JSON logger for communicating with UI
         if config.get_value(Config.LOG_FORMAT) == 'JSON':
-            jsonFormat = jsonlogger.JsonFormatter()
+            jsonFormat = jsonlogger.JsonFormatter("(levelname) (message)")
             streamHandler = logging.StreamHandler(sys.stderr)
             streamHandler.flush = sys.stderr.flush
             streamHandler.setFormatter(jsonFormat)
