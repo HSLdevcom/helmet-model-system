@@ -12,6 +12,7 @@ before_install:
 install:
   - pip install pipenv
   - cd Scripts
+  - copy .env-win .env
   - pipenv --python 2.7 install --dev
 
 script:
