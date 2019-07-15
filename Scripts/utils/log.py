@@ -1,8 +1,8 @@
 import os
 import sys
+import json
 import logging
 import logging.handlers
-from pythonjsonlogger import jsonlogger
 from config import Config
 
 # Wrapper on top of standard Python logging interface so we can easily configure
@@ -26,7 +26,7 @@ class Log:
     def initialize(self, config, emme_context=None):
         # JSON logger for communicating with UI
         if config.get_value(Config.LOG_FORMAT) == 'JSON':
-            jsonFormat = jsonlogger.JsonFormatter("(levelname) (message)")
+            jsonFormat = logging.Formatter('%(json)s')
             streamHandler = logging.StreamHandler(sys.stderr)
             streamHandler.flush = sys.stderr.flush
             streamHandler.setFormatter(jsonFormat)
@@ -47,14 +47,24 @@ class Log:
         self.__logger.addHandler(handler)
 
     def debug(self, msg, *args, **kwargs):
-        self.__logger.debug(msg, *args, **kwargs)
+        json = self.json_entry(msg, "DEBUG", *args, **kwargs)
+        self.__logger.debug(msg, *args, extra=json)
 
     def info(self, msg, *args, **kwargs):
-        self.__logger.info(msg, *args, **kwargs)
+        json = self.json_entry(msg, "INFO", *args, **kwargs)
+        self.__logger.info(msg, *args, extra=json)
         
     def warn(self, msg, *args, **kwargs):
-        self.__logger.warn(msg, *args, **kwargs)
+        json = self.json_entry(msg, "WARN", *args, **kwargs)
+        self.__logger.warn(msg, *args, extra=json)
 
     def error(self, msg, exception=None, *args, **kwargs):
         print_stacktrace = exception is not None
-        self.__logger.error(msg, exc_info=print_stacktrace, *args, **kwargs)
+        json = self.json_entry(msg, "ERROR", *args, **kwargs)
+        self.__logger.error(msg, exc_info=print_stacktrace, *args, extra=json)
+
+    def json_entry(self, msg, level, *args, **kwargs):
+        entry = { "message": msg, "level": level }
+        if (kwargs.get("extra") is not None):
+            entry.update(kwargs.get("extra"))
+        return { "json": json.dumps(entry) }
