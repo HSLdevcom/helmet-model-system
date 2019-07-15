@@ -29,7 +29,8 @@ class ModelTest(unittest.TestCase):
         em = ExternalModel(basematrices, zdata_forecast)
         costs = MatrixData("2016")
         ass_model = MockAssignmentModel(costs)
-        dtm = dt.DepartureTimeModel(ass_model)
+        nr_zones = len(ass_model.get_zone_numbers())
+        dtm = dt.DepartureTimeModel(nr_zones)
         imptrans = ImpedanceTransformer()
         ass_classes = dict.fromkeys(parameters.emme_mtx["demand"].keys())
         tour_purposes = create_purposes(zdata_forecast)
@@ -83,7 +84,8 @@ class ModelTest(unittest.TestCase):
             dtm.add_demand("external", mode, ext_demand, (pos, 0))
         impedance = {}
         for tp in parameters.emme_scenario:
-            dtm.add_vans(tp)
+            n = ass_model.get_mapping()[parameters.first_external_zone]
+            dtm.add_vans(tp, n)
             ass_model.assign(tp, dtm.demand[tp])
             impedance[tp] = ass_model.get_impedance()
         dtm.init_demand()
