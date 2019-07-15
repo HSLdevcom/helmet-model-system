@@ -20,8 +20,18 @@ class HelmetApplication():
 
     def __init__(self, config):
         self._config = config
+
+        # status to be reported in UI
+        self._status = {
+            "state": "starting",
+            "current": 0,
+            "completed": 0,
+            "failed": 0,
+            "total": config.get_value(Config.ITERATION_COUNT)
+        }
+
         self.logger = Log.get_instance()
-        self.logger.info("Initializing the application..")
+        self.logger.info("Initializing the application..", extra=self._get_status())
 
         self.zdata_base = ZoneData("2016")
         self.zdata_forecast = ZoneData(self._config.get_value(Config.DATA_PATH))
@@ -48,10 +58,13 @@ class HelmetApplication():
 
     def run(self):
         iterations = self._config.get_value(Config.ITERATION_COUNT)
-        self.logger.info("Running simulation with {} iterations".format(self._config.get_value(Config.ITERATION_COUNT)))
+        self._status["state"] = "running"
+
+        self.logger.info("Running simulation with {} iterations".format(self._config.get_value(Config.ITERATION_COUNT)), extra=self._get_status())
 
         if not self._validate_input():
-            self.logger.error("Failed to validate input, simulation aborted.")
+            self._status['state'] = 'failed'
+            self.logger.error("Failed to validate input, simulation aborted.", extra=self._get_status())
             return
         
         self.trucks = self.fm.calc_freight_traffic("truck")
@@ -73,22 +86,23 @@ class HelmetApplication():
         
             impedance[tp] = self.ass_model.get_impedance()
 
-        status = { "total": iterations, "completed": 0, "failed": 0, "state": "running" }
         for round in range(1, iterations+1):
+            self._status["current"] = round
             try:
-                self.logger.info("Starting iteration {}".format(round), extra={"status": status})
+                self.logger.info("Starting iteration {}".format(round), extra=self._get_status())
                 impedance = self.simulate(impedance)
-                status["completed"] = round
+                self._status["completed"] = self._status["completed"] + 1
             except Exception as error:
-                status["failed"] = status["failed"] + 1
+                self._status["failed"] = self._status["failed"] + 1
                 is_fatal = self.handle_error("Exception at iteration {}".format(round), error)
                 if is_fatal:
-                    status["status"] = "aborted"
-                    self.logger.error("Fatal error occured, simulation aborted.", extra={"status": status})
+                    self._status["status"] = "aborted"
+                    self.logger.error("Fatal error occured, simulation aborted.", extra=self._get_status())
                     break
+            if round == iterations+1:
+                self._status['state'] = 'finished'
 
-        status["state"] = "stopped"
-        self.logger.info("All done, thank you!", extra={"status": status})
+        self.logger.info("All done, thank you!", extra=self._get_status())
 
 
     def handle_error(self, msg, exception):
@@ -158,6 +172,9 @@ class HelmetApplication():
     def _validate_demand(self, demand):
         # TODO read the scenario from parameters / config and read input data & validate it
         return True
+
+    def _get_status(self):
+        return { "status": self._status }
 
 
 # Main entry point for the application
