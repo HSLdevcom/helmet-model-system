@@ -11,7 +11,6 @@ from demand.freight import FreightModel
 from demand.trips import DemandModel
 from demand.external import ExternalModel
 from transform.impedance_transformer import ImpedanceTransformer
-from datatypes.purpose import create_purposes
 import parameters
 
 class ModelTest(unittest.TestCase):
@@ -33,7 +32,6 @@ class ModelTest(unittest.TestCase):
         dtm = dt.DepartureTimeModel(nr_zones)
         imptrans = ImpedanceTransformer()
         ass_classes = dict.fromkeys(parameters.emme_mtx["demand"].keys())
-        tour_purposes = create_purposes(zdata_forecast)
 
         self.assertEqual(7, len(ass_classes))
 
@@ -58,9 +56,9 @@ class ModelTest(unittest.TestCase):
 
         dtm.add_demand("freight", "truck", trucks)
         dtm.add_demand("freight", "trailer_truck", trailer_trucks)
-        for purpose in tour_purposes:
+        for purpose in dm.tour_purposes:
             purpose_impedance = imptrans.transform(purpose, impedance)
-            demand = dm.calc_demand(purpose, purpose_impedance)
+            demand = purpose.calc_demand(purpose_impedance)
             self._validate_demand(demand)
             mtx_position = (purpose.bounds[0], 0)
             if purpose.dest != "source":
@@ -75,7 +73,7 @@ class ModelTest(unittest.TestCase):
             else:
                 nr_zones = len(zdata_base.zone_numbers)
                 int_demand = numpy.zeros(nr_zones)
-                for purpose in tour_purposes:
+                for purpose in dm.tour_purposes:
                     if purpose.dest != "source":
                         l, u = purpose.bounds
                         int_demand[l:u] += purpose.generated_tours[mode]
