@@ -1,6 +1,7 @@
 import parameters as param
 import models.logit as logit
 import models.generation as generation
+import pandas
 
 class TourPurpose:
     def __init__(self, spec, zone_data):
@@ -22,9 +23,9 @@ class TourPurpose:
         self.bounds = (l, u)
         self.zone_data = zone_data
         if self.orig == "source":
-            self.generation = generation.NonHomeGeneration(zone_data, self)
+            self.gen_model = generation.NonHomeGeneration(zone_data, self)
         else:
-            self.generation = generation.GenerationModel(zone_data, self)
+            self.gen_model = generation.GenerationModel(zone_data, self)
         if self.name == "sop":
             self.model = logit.OriginModel(zone_data, self)
         elif self.name == "so":
@@ -33,8 +34,8 @@ class TourPurpose:
             self.model = logit.ModeDestModel(zone_data, self)
 
     def calc_demand(self, impedance):
+        tours = self.gen_model.generate_tours()
         prob = self.model.calc_prob(impedance)
-        tours = self.generation.generate_tours()
         demand = {}
         self.generated_tours = {}
         self.attracted_tours = {}
@@ -42,4 +43,22 @@ class TourPurpose:
             demand[mode] = (prob[mode] * tours).T
             self.attracted_tours[mode] = demand[mode].sum(0)
             self.generated_tours[mode] = demand[mode].sum(1)
+            self.aggregate_demand(demand[mode])
         return demand
+
+    def aggregate_demand(self, mtx):
+        dest = self.zone_data.zone_numbers
+        orig = self.zone_data.zone_numbers[self.bounds[0]:self.bounds[1]]
+        mtx = pandas.DataFrame(mtx, orig, dest)
+        idx = param.areas.keys()
+        aggr_mtx = pandas.DataFrame(0, idx, idx)
+        tmp_mtx = pandas.DataFrame(0, idx, dest)
+        for area in param.areas:
+            l = param.areas[area][0]
+            u = param.areas[area][1]
+            tmp_mtx.loc[area] = mtx.loc[l:u].sum(0).values
+        for area in param.areas:
+            l = param.areas[area][0]
+            u = param.areas[area][1]
+            aggr_mtx.loc[:, area] = tmp_mtx.loc[:, l:u].sum(1).values
+        return aggr_mtx

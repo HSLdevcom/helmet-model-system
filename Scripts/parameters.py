@@ -1713,7 +1713,7 @@ tour_purposes = (
         "name": "so",
         "orig": "home",
         "dest": "source",
-        "area": "peripheral",
+        "area": "metropolitan",
     },
     {
         "name": "oo",
@@ -1760,6 +1760,13 @@ first_peripheral_zone = 16001
 first_external_zone = 31001
 garbage_destination = 2792
 trailers_prohibited = [5, 6]
+areas = {
+    "downtown": (0, 999),
+    "Helsinki_other": (1000, 1999),
+    "capital_region_other": (2000, 5999),
+    "surrounding": (6000, 15999),
+    "peripheral": (16000, 30999),
+}
 municipality = {
     "Helsinki": (0, 1999),
     "Espoo": (2000, 3499),
@@ -1775,7 +1782,7 @@ municipality = {
     "Mantsala": (13000, 13999),
     "Hyvinkaa": (14000, 14999),
     "Pornainen": (15000, 15499),
-    "Siuntio": (15500, 15499),
+    "Siuntio": (15500, 15999),
     "Salo": (16000, 16499),
     "Somero": (16500, 16999),
     "Raasepori": (17000, 17499),
