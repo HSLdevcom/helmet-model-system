@@ -132,6 +132,11 @@ class DestModeModel(LogitModel):
             prob[mode] = mode_prob * dest_prob
         return prob
 
+class SecDestModel(LogitModel):
+    def calc_prob(self, mode, impedance):
+        expsum = self.calc_dest_util(mode, impedance)
+        prob = self.dest_exps[mode].T / expsum
+        return prob
 
 class OriginModel(LogitModel):
     def calc_prob(self, impedance):

@@ -153,7 +153,7 @@ assignment_class = {
     "hu": "car_leisure",
     "hs": "car_leisure",
     "ho": "car_leisure",
-    "hoo": "car_leisure",
+    "hoo": "car_work",
     "oo": "car_leisure",
     "hwp": "car_work",
     "hop": "car_leisure",
@@ -695,6 +695,23 @@ impedance_share = {
             "iht": (0, 0),
         },
     },
+    "hoo": {
+        "car": {
+            "aht": (0, 0),
+            "pt": (0, 0),
+            "iht": (0, 1),
+        },
+        "transit": {
+            "aht": (0, 0),
+            "pt": (0, 0),
+            "iht": (0, 1),
+        },
+        "bike": {
+            "aht": (0, 0),
+            "pt": (0, 0),
+            "iht": (0, 1),
+        },
+    },
     "so": {
         "car": {
             "aht": (0.01, 0.01),
@@ -1052,6 +1069,45 @@ destination_choice = {
             },
         },
         "walk": {
+            "attraction": {},
+            "impedance": {
+                "time": -0.3,
+            },
+            "log": {
+                "size": 0.2,
+            },
+            "size": {
+                "workplaces": 0.3,
+            },
+        },
+    },
+    "hoo": {
+        "car": {
+            "attraction": {},
+            "impedance": {
+                "time": -0.3,
+                "cost": -0.1,
+            },
+            "log": {
+                "size": 0.2,
+            },
+            "size": {
+                "workplaces": 0.3,
+            },
+        },
+        "transit": {
+            "attraction": {},
+            "impedance": {
+                "time": -0.3,
+            },
+            "log": {
+                "size": 0.2,
+            },
+            "size": {
+                "workplaces": 0.3,
+            },
+        },
+        "bike": {
             "attraction": {},
             "impedance": {
                 "time": -0.3,
@@ -1467,6 +1523,7 @@ mode_choice = {
             },
         },
     },
+    "hoo": None,
     "so": {
         "car": {
             "constant": 0,
@@ -1631,6 +1688,10 @@ tour_generation = {
     "ho": {
         "population": 0.5,
     },
+    "hoo": {
+        "hw": 0.5,
+        "ho": 0.3,
+    },
     "so": {
         "population": 0.5,
     },
@@ -1707,6 +1768,14 @@ tour_purposes = (
         "name": "ho",
         "orig": "home",
         "dest": "other",
+        "area": "metropolitan",
+    },
+    {
+        "name": "hoo",
+        "orig": "home",
+        "dest": "any",
+        "sec_dest": "any",
+        "source": ("hw", "ho",),
         "area": "metropolitan",
     },
     {

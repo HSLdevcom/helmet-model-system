@@ -58,12 +58,22 @@ class ModelTest(unittest.TestCase):
         dtm.add_demand("freight", "trailer_truck", trailer_trucks)
         for purpose in dm.tour_purposes:
             purpose_impedance = imptrans.transform(purpose, impedance)
-            demand = purpose.calc_demand(purpose_impedance)
-            self._validate_demand(demand)
-            mtx_position = (purpose.bounds[0], 0)
-            if purpose.dest != "source":
-                for mode in demand:
-                    dtm.add_demand(purpose.name, mode, demand[mode], mtx_position)
+            if purpose.name == "hoo":
+                l, u = purpose.bounds
+                nr_zones = u - l
+                purpose.generate_tours()
+                for mode in purpose.model.dest_choice_param:
+                    for i in xrange(0, nr_zones):
+                        demand = purpose.distribute_tours(mode, purpose_impedance[mode], i)
+                        mtx_pos = (i, 0, 0)
+                        dtm.add_demand(purpose.name, mode, demand, mtx_pos)
+            else:
+                demand = purpose.calc_demand(purpose_impedance)
+                self._validate_demand(demand)
+                mtx_pos = (purpose.bounds[0], 0)
+                if purpose.dest != "source":
+                    for mode in demand:
+                        dtm.add_demand(purpose.name, mode, demand[mode], mtx_pos)
         pos = ass_model.get_mapping()[parameters.first_external_zone]
         for mode in parameters.external_modes:
             if mode == "truck":
@@ -71,8 +81,7 @@ class ModelTest(unittest.TestCase):
             elif mode == "trailer_truck":
                 int_demand = trailer_trucks.sum(0) + trailer_trucks.sum(1)
             else:
-                nr_zones = len(zdata_base.zone_numbers)
-                int_demand = numpy.zeros(nr_zones)
+                int_demand = numpy.zeros(zdata_base.nr_zones)
                 for purpose in dm.tour_purposes:
                     if purpose.dest != "source":
                         l, u = purpose.bounds
