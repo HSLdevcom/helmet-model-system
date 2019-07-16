@@ -57,8 +57,8 @@ class HelmetApplication():
     
 
     def run(self):
+        self._status["state"] = "preparing"
         iterations = self._config.get_value(Config.ITERATION_COUNT)
-        self._status["state"] = "running"
 
         self.logger.info("Running simulation with {} iterations".format(self._config.get_value(Config.ITERATION_COUNT)), extra=self._get_status())
 
@@ -86,6 +86,7 @@ class HelmetApplication():
         
             impedance[tp] = self.ass_model.get_impedance()
 
+        self._status["state"] = "running"
         for round in range(1, iterations+1):
             self._status["current"] = round
             try:
@@ -96,13 +97,12 @@ class HelmetApplication():
                 self._status["failed"] = self._status["failed"] + 1
                 is_fatal = self.handle_error("Exception at iteration {}".format(round), error)
                 if is_fatal:
-                    self._status["status"] = "aborted"
                     self.logger.error("Fatal error occured, simulation aborted.", extra=self._get_status())
                     break
-            if round == iterations+1:
+            if round == iterations:
                 self._status['state'] = 'finished'
 
-        self.logger.info("All done, thank you!", extra=self._get_status())
+        self.logger.info("Simulation ended.", extra=self._get_status())
 
 
     def handle_error(self, msg, exception):
