@@ -23,15 +23,17 @@ class HelmetApplication():
 
         # status to be reported in UI
         self._status = {
+            "name": config.get_value(Config.SCENARIO_NAME, Config.DefaultScenario),
             "state": "starting",
             "current": 0,
             "completed": 0,
             "failed": 0,
-            "total": config.get_value(Config.ITERATION_COUNT)
+            "total": config.get_value(Config.ITERATION_COUNT),
+            "log": self.logger.get_filename()
         }
 
         self.logger = Log.get_instance()
-        self.logger.info("Initializing the application..", extra=self._get_status())
+        self.logger.info("Initializing matrices and models..", extra=self._get_status())
         self.zdata_base = ZoneData("2016")
         self.zdata_forecast = ZoneData(self._config.get_value(Config.DATA_PATH))
         self.basematrices = MatrixData("base")
@@ -59,10 +61,10 @@ class HelmetApplication():
         self._status["state"] = "preparing"
         iterations = self._config.get_value(Config.ITERATION_COUNT)
 
-        self.logger.info("Running simulation with {} iterations".format(self._config.get_value(Config.ITERATION_COUNT)), extra=self._get_status())
+        self.logger.info("Starting simulation with {} iterations..".format(iterations), extra=self._get_status())
 
         if not self._validate_input():
-            self._status['state'] = 'failed'
+            self._status['state'] = 'aborted'
             self.logger.error("Failed to validate input, simulation aborted.", extra=self._get_status())
             return
         

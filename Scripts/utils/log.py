@@ -33,10 +33,11 @@ class Log:
             streamHandler.setLevel(logging.DEBUG) # always debug to pass everything to UI
             self.__logger.addHandler(streamHandler)
         # Rotating file logger
-        filename = os.path.join(sys.path[0], 'helmet.log')
+        file = config.get_value(Config.SCENARIO_NAME) + ".log"
+        self._filename = os.path.join(sys.path[0], file)
         numeric_level = getattr(logging, config.get_value(Config.LOG_LEVEL), 20)
         fileFormat = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
-        fileHandler = logging.handlers.TimedRotatingFileHandler(filename, when='midnight', backupCount=7)
+        fileHandler = logging.handlers.TimedRotatingFileHandler(self._filename, when='midnight', backupCount=7)
         fileHandler.setFormatter(fileFormat)
         fileHandler.setLevel(numeric_level)
         self.__logger.addHandler(fileHandler)
@@ -68,3 +69,6 @@ class Log:
         if (kwargs.get("extra") is not None):
             entry.update(kwargs.get("extra"))
         return { "json": json.dumps(entry) }
+
+    def get_filename(self):
+        return self._filename

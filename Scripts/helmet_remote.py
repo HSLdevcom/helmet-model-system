@@ -10,6 +10,7 @@ log_level = line['log_level']
 emme_path = line['emme_path']
 data_path = line['data_path']
 iterations = line['iterations']
+scenario = line['scenario']
 
 # set configuration per incoming params
 config = Config()
@@ -19,6 +20,7 @@ config.set_value(Config.DATA_PATH, data_path)
 config.set_value(Config.EMME_PROJECT_PATH, emme_path)
 config.set_value(Config.ITERATION_COUNT, iterations)
 config.set_value(Config.USE_EMME, True)
+config.set_value(Config.SCENARIO_NAME, scenario)
 
 log = Log.get_instance().initialize(config)
 log.info('Running helmet_app.py via Helmet UI..')
@@ -28,6 +30,7 @@ log.debug('log_level=' + log_level)
 log.debug('emme_path=' + emme_path)
 log.debug('data_path=' + data_path)
 log.debug('iterations=' + str(iterations))
+log.debug('scenario_name=' + scenario)
 
 app = HelmetApplication(config)
 app.run()
