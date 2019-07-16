@@ -90,17 +90,23 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         emme_id = param.emme_mtx[type1][type2]["id"]
         return self.emme.modeller.emmebank.matrix(emme_id).get_numpy_data()
 
-    def get_zone_numbers(self):
+    @property
+    def zone_numbers(self):
         emmebank = self.emme.modeller.emmebank
         scen = emmebank.scenario(param.emme_scenario["aht"])
         return scen.zone_numbers
     
-    def get_mapping(self):
-        """Get dictionary of zone numbers and corresponding indices."""
+    @property
+    def mapping(self):
+        """Dictionary of zone numbers and corresponding indices."""
         mapping = {}
-        for idx, zone in enumerate(self.get_zone_numbers()):
+        for idx, zone in enumerate(self.zone_numbers):
             mapping[zone] = idx
         return mapping
+
+    @property
+    def nr_zones(self):
+        return len(self.zone_numbers)
     
     def _damp(self, travel_time):
         """Reduce the impact from first waiting time on total travel time."""
@@ -278,7 +284,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                     goes_outside |= has_visited[transit_zone]
             is_inside = ~goes_outside
             if fares["exclusive"][zone_combination] != "":
-                zn = self.get_zone_numbers()
+                zn = self.zone_numbers
                 exclusion = pandas.DataFrame(is_inside, zn, zn)
                 municipality = fares["exclusive"][zone_combination]
                 inclusion = param.municipality[municipality]
@@ -616,10 +622,6 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
 
     def _assign_transit(self, scen_id, count_zone_boardings=False):
         """Perform transit assignment for one scenario."""
-        bcost = dict.fromkeys(["global", 
-                               "at_nodes", 
-                               "on_lines", 
-                               "on_segments"])
         if count_zone_boardings:
             jlevel1 = JourneyLevel(False, True)
             jlevel2 = JourneyLevel(True, True)

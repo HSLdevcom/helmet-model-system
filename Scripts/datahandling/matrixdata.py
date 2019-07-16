@@ -32,8 +32,7 @@ class MatrixData:
         return zone_numbers
 
     def get_mapping(self):
-        mapping = self.mtx_file.mapping("zone_number")
-        return mapping
+        return self.mtx_file.mapping("zone_number")
 
     def set_mapping(self, zone_numbers):
         self.mtx_file.createMapping("zone_number", zone_numbers)

@@ -23,8 +23,8 @@ class ImpedanceSource:
     MATRIX_TYPE_FREIGHT_KEY = "freight"
 
     @abstractmethod
-    def get_mapping(self):
-        """Get dictionary of zone numbers and corresponding indices."""
+    def mapping(self):
+        """Dictionary of zone numbers and corresponding indices."""
         pass
 
     @abstractmethod
@@ -44,5 +44,9 @@ class ImpedanceSource:
         pass
 
     @abstractmethod
-    def get_zone_numbers(self):
+    def zone_numbers(self):
+        pass
+    
+    @abstractmethod
+    def calc_transit_cost(self):
         pass
