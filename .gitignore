@@ -1,4 +1,5 @@
 *vscode*
+**/*.code-workspace
 .idea/
 *.pyc
 *.doc
@@ -29,6 +30,7 @@
 *.gfsum
 *.old
 *.log
+*.log.*-*-*
 usemacro_*
 STRAT_*
 config
@@ -46,3 +48,4 @@ Logbook/project.mlbk-shm
 Logbook/project.mlbk-wal
 Scripts/.pytest_cache
 Scripts/tests/.pytest_cache
+Scripts/.env
