@@ -1,0 +1,18 @@
+language: sh # 'language: python' is not yet supported on Windows
+os: windows
+
+env:
+  global:
+    - PATH=/c/Python27:/c/Python27/Scripts:$PATH
+
+before_install:
+  - choco install python2
+  - python -m pip install --upgrade pip
+
+install:
+  - pip install pipenv
+  - cd Scripts
+  - pipenv --python 2.7 install --dev
+
+script:
+  - pipenv run pytest -s tests

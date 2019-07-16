@@ -1,16 +1,15 @@
-import test_assignment as ass
 import logging
 import numpy
-import omx
 import os
-from parameters import emme_scenario, demand_share, assignment_class, emme_mtx
+from parameters import emme_scenario, demand_share, assignment_class, emme_mtx, first_external_zone
 
 class DepartureTimeModel:
     def __init__(self, assignment_model):
         self.assignment = assignment_model
-        self._init_demand()
+        self.init_demand()
+        self.logger = logging.getLogger()
 
-    def _init_demand(self):
+    def init_demand(self):
         self.demand = dict.fromkeys(emme_scenario.keys())
         nr_zones = len(self.assignment.get_mapping())
         for time_period in self.demand:
@@ -20,10 +19,24 @@ class DepartureTimeModel:
                 zeros = numpy.zeros((nr_zones, nr_zones))
                 self.demand[time_period][ass_class] = zeros
 
-    def add_demand(self, purpose, mode, mtx, mtx_position=[0, 0]):
-        """Add demand matrix for whole day."""
-        for time_period in emme_scenario:
-            self.add_tp_demand(purpose, mode, time_period, mtx, mtx_position)
+    def add_demand(self, purpose, mode, demand, mtx_position=(0, 0)):
+        """Add demand matrix for whole day.
+        
+        Parameters
+        ----------
+        purpose : str
+            Travel purpose (hw/hs/ho...)
+        mode: str
+            Travel mode (car/transit/bike)
+        demand : numpy 2-d matrix or number
+            Travel demand matrix or number of travellers
+        mtx_position : tuple
+            Where to insert the demand
+        """
+        if mode != "walk":
+            for tp in emme_scenario:
+                self.add_tp_demand(purpose, mode, tp, demand, mtx_position)
+            self.logger.debug("Added demand for " + purpose + ", " + mode)
 
     def add_tp_demand(self, purpose, mode, time_period, mtx, mtx_position):
         """Slice demand, include transpose and add for one time period."""
@@ -44,7 +57,7 @@ class DepartureTimeModel:
     def add_vans(self, time_period):
         """Add vans as a share of private car trips for one time period."""
         # n is the first external zone.
-        n = self.assignment.get_mapping()[31001] # Parametrize!
+        n = self.assignment.get_mapping()[first_external_zone]
         car_demand = ( self.demand[time_period]["car_work"][0:n, 0:n]
                         + self.demand[time_period]["car_leisure"][0:n, 0:n])
         self.add_tp_demand("freight", "van", time_period, car_demand, [0, 0])
@@ -53,6 +66,7 @@ class DepartureTimeModel:
         travel_cost = {}
         for tp in emme_scenario:
             self.add_vans(tp)
-            travel_cost[tp] = self.assignment.assign(tp, self.demand[tp])
-        self._init_demand()
+            self.assignment.assign(tp, self.demand[tp])
+            travel_cost[tp] = self.assignment.get_impedance()
+        self.init_demand()
         return travel_cost

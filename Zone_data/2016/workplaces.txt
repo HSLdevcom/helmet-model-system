@@ -1,0 +1,17 @@
+# Workplaces 2016
+#
+# total: total number of workplaces in zone
+# sh_serv: service workplaces as share of total number of workplaces
+# sh_shop: retail workplaces as share of total number of workplaces
+# sh_logi: logistics workplaces as share of total number of workplaces
+# sh_indu: industry workplaces as share of total number of workplaces
+# parcosw: parking cost at workplace
+# parcose: parking cost during errand
+#
+	total	sh_serv	sh_shop	sh_logi	sh_indu	parcosw	parcose
+5	7	0.2	0.1	0.0	0.1	5	5
+6	4	0.2	0.2	0.1	0.0	3	4
+7	4	0.2	0.2	0.1	0.0	0	3
+2792	3	0.2	0.2	0.1	0.3	0	0
+16001	2	0.2	0.2	0.1	0.0	0	0
+17000	3	0.2	0.2	0.1	0.0	0	0
