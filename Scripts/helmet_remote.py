@@ -21,7 +21,7 @@ config.set_value(Config.ITERATION_COUNT, iterations)
 config.set_value(Config.USE_EMME, True)
 
 log = Log.get_instance().initialize(config)
-log.debug('starting helmet_app..')
+log.info('Running helmet_app.py via Helmet UI..')
 log.debug('sys.version_info=' + str(sys.version_info[0]))
 log.debug('sys.path=' + str(sys.path))
 log.debug('log_level=' + log_level)
