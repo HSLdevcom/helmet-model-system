@@ -32,7 +32,6 @@ class HelmetApplication():
 
         self.logger = Log.get_instance()
         self.logger.info("Initializing the application..", extra=self._get_status())
-        
         self.zdata_base = ZoneData("2016")
         self.zdata_forecast = ZoneData(self._config.get_value(Config.DATA_PATH))
         self.basematrices = MatrixData("base")
@@ -42,11 +41,11 @@ class HelmetApplication():
         self.em = ExternalModel(self.basematrices, self.zdata_forecast)
 
         if config.get_value(Config.USE_EMME):
-            self.logger.info("Configuration set to use EMME, initializing")
+            self.logger.info("Initializing Emme..")
             self.emme_context = EmmeContext(self._config.get_value(Config.EMME_PROJECT_PATH))
             self.ass_model = EmmeAssignmentModel(self.emme_context)
         else:
-            self.logger.info("Configuration NOT using EMME")
+            self.logger.info("Initializing MockAssignmentModel..")
             costs = MatrixData("2016")
             self.ass_model = MockAssignmentModel(costs)
         
@@ -66,23 +65,24 @@ class HelmetApplication():
             self._status['state'] = 'failed'
             self.logger.error("Failed to validate input, simulation aborted.", extra=self._get_status())
             return
-
+        
         self.trucks = self.fm.calc_freight_traffic("truck")
         self.trailer_trucks = self.fm.calc_freight_traffic("trailer_truck")
         impedance = {}
-
+        
         for tp in parameters.emme_scenario:
             base_demand = {}
             self.basematrices.open_file("demand", tp)
-
+        
             for ass_class in self.ass_classes:
                 base_demand[ass_class] = self.basematrices.get_data(ass_class)
+        
             self.basematrices.close()
             self.ass_model.assign(tp, base_demand)
-
+        
             if tp == "aht":
                 self.ass_model.calc_transit_cost()
-
+        
             impedance[tp] = self.ass_model.get_impedance()
 
         self._status["state"] = "running"
@@ -103,10 +103,12 @@ class HelmetApplication():
 
         self.logger.info("Simulation ended.", extra=self._get_status())
 
+
     def handle_error(self, msg, exception):
         self.logger.error(msg, exception)
         fatal = True
         return fatal
+
 
     def simulate(self, impedance):
         
@@ -124,15 +126,15 @@ class HelmetApplication():
                 mtx_position = (pos, 0)
             else:
                 mtx_position = (0, 0)
-            
+
             if purpose.dest != "source":
                 for mode in demand:
                     self.dtm.add_demand(purpose.name, mode, demand[mode], mtx_position)
         
         pos = self.ass_model.get_mapping()[31001]
+        
         for mode in parameters.external_modes:
-            
-            
+
             if mode == "truck":
                 int_demand = self.trucks.sum(0) + self.trucks.sum(1)
             elif mode == "trailer_truck":
@@ -140,7 +142,7 @@ class HelmetApplication():
             else:
                 nr_zones = len(self.zdata_base.zone_numbers)
                 int_demand = numpy.zeros(nr_zones)
-                
+            
                 for purpose in self.tour_purposes:
                     if purpose.dest != "source":
                         l, u = self.zdata_base.get_bounds(purpose)
@@ -149,7 +151,7 @@ class HelmetApplication():
             
             ext_demand = self.em.calc_external(mode, int_demand)
             self.dtm.add_demand("external", mode, ext_demand, (pos, 0))
-        
+
         impedance = {}
         
         for tp in parameters.emme_scenario:
@@ -160,19 +162,18 @@ class HelmetApplication():
         self.dtm.init_demand()
         return impedance
 
+
     def _validate_input(self):
         # TODO read the scenario from parameters / config and read input data & validate it
         return True
+
 
     def _validate_demand(self, demand):
         # TODO read the scenario from parameters / config and read input data & validate it
         return True
 
-    def initialize_EMME(self):
-        #TODO figure out if we only need to do this once in the beginning or between simulations?
-        from emme.emme_context import EmmeContext
-        empfile = self._config.get_value(Config.EMME_PROJECT_PATH)
-        self.emme_context = EmmeContext(empfile)
+    def _get_status(self):
+        return { "status": self._status }
 
 
 # Main entry point for the application
