@@ -43,7 +43,7 @@ class ModelTest(unittest.TestCase):
             basematrices.close()
             ass_model.assign(tp, base_demand)
             if tp == "aht":
-                ass_model.calc_transit_cost()
+                ass_model.calc_transit_cost(0)
             impedance[tp] = ass_model.get_impedance()
             print("Validating impedance")
             self.assertEqual(3, len(impedance[tp]))
