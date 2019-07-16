@@ -69,5 +69,5 @@ class MockAssignmentModel(AssignmentModel, ImpedanceSource):
     def nr_zones(self):
         return len(self.zone_numbers)
 
-    def calc_transit_cost(self):
+    def calc_transit_cost(self, fare):
         pass

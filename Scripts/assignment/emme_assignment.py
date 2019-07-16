@@ -252,7 +252,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         self._calc_boarding_penalties(scen_id, 5)
         scenario = emmebank.scenario(scen_id)
         has_visited = {}
-        mapping = self.get_mapping()
+        mapping = self.mapping
         network = scenario.get_network()
         transit_zones = set()
         for node in network.nodes():
