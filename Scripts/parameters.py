@@ -812,7 +812,7 @@ destination_choice = {
     "hw": {
         "car": {
             "attraction": {
-                "parking_cost": -0.340,
+                "parking_cost_work": -0.340,
             },
             "impedance": {
                 "time": -0.246e-1,
@@ -822,8 +822,8 @@ destination_choice = {
                 "size": 1,
             },
             "size": {
-                "downtown": (4.62, 5.33),
-                "workplaces_own": (0.341, 0.930),
+                "downtown": (numpy.exp(4.62), numpy.exp(5.33)),
+                "workplaces_own": (numpy.exp(0.341), numpy.exp(0.930)),
                 "workplaces_other": 1,
             },
         },
@@ -1189,7 +1189,7 @@ destination_choice = {
     "hwp": {
         "car": {
             "attraction": {
-                "parking_cost": -0.141,
+                "parking_cost_work": -0.141,
                 "share_detached_houses": 0.559e-2,
                 "own_zone_area": -0.216e-1,
             },
@@ -1264,8 +1264,7 @@ destination_choice = {
     },
     "sop": {
         "attraction": {
-            # TODO: replace with parking_fee_other (zone_data should also include parking_fee_work)
-            "parking_cost": 0.94 * -0.609e-1,
+            "parking_cost_errand": 0.94 * -0.609e-1,
             "population_density": -0.109e-3,
         },
         "impedance": {
@@ -1290,7 +1289,7 @@ destination_choice = {
     "oop": {
         "car": {
             "attraction": {
-                "parking_cost": -0.221,
+                "parking_cost_errand": -0.221,
             },
             "impedance": {
                 "time": -0.407e-1,
@@ -1338,6 +1337,9 @@ mode_choice = {
             "log": {
                 "logsum": 0.792,
             },
+            "individual_dummy": {
+                "car_users": (numpy.exp(3.18), numpy.exp(3.09)),
+            },
         },
         "transit": {
             "constant": (3.26, 3.46),
@@ -1347,6 +1349,7 @@ mode_choice = {
             "log": {
                 "logsum": 0.792,
             },
+            "individual_dummy": {},
         },
         "bike": {
             "constant": (3.79, 4.38),
@@ -1356,6 +1359,7 @@ mode_choice = {
             "log": {
                 "logsum": 0.792,
             },
+            "individual_dummy": {},
         }, 
         "walk": {
             "constant": (6.16, 6.58),
@@ -1365,6 +1369,7 @@ mode_choice = {
             "log": {
                 "logsum": 0.792,
             },
+            "individual_dummy": {},
         },
     },
     "hc": {
@@ -1378,6 +1383,7 @@ mode_choice = {
             "log": {
                 "logsum": 3,
             },
+            "individual_dummy": {},
         },
         "transit": {
             "constant": 0,
@@ -1387,6 +1393,7 @@ mode_choice = {
             "log": {
                 "logsum": 5,
             },
+            "individual_dummy": {},
         },
         "bike": {
             "constant": 0,
@@ -1396,6 +1403,7 @@ mode_choice = {
             "log": {
                 "logsum": 2,
             },
+            "individual_dummy": {},
         },  
         "walk": {
             "constant": 0,
@@ -1405,6 +1413,7 @@ mode_choice = {
             "log": {
                 "logsum": 2,
             },
+            "individual_dummy": {},
         },
     },
     "hu": {
@@ -1418,6 +1427,7 @@ mode_choice = {
             "log": {
                 "logsum": 3,
             },
+            "individual_dummy": {},
         },
         "transit": {
             "constant": 0,
@@ -1427,6 +1437,7 @@ mode_choice = {
             "log": {
                 "logsum": 5,
             },
+            "individual_dummy": {},
         },
         "bike": {
             "constant": 0,
@@ -1436,6 +1447,7 @@ mode_choice = {
             "log": {
                 "logsum": 2,
             },
+            "individual_dummy": {},
         },  
         "walk": {
             "constant": 0,
@@ -1445,6 +1457,7 @@ mode_choice = {
             "log": {
                 "logsum": 2,
             },
+            "individual_dummy": {},
         },
     },
     "hs": {
@@ -1456,6 +1469,7 @@ mode_choice = {
             "log": {
                 "logsum": 3,
             },
+            "individual_dummy": {},
         },
         "transit": {
             "constant": 0,
@@ -1465,6 +1479,7 @@ mode_choice = {
             "log": {
                 "logsum": 5,
             },
+            "individual_dummy": {},
         },
         "bike": {
             "constant": 0,
@@ -1474,6 +1489,7 @@ mode_choice = {
             "log": {
                 "logsum": 2,
             },
+            "individual_dummy": {},
         },  
         "walk": {
             "constant": 0,
@@ -1483,6 +1499,7 @@ mode_choice = {
             "log": {
                 "logsum": 2,
             },
+            "individual_dummy": {},
         },
     },
     "ho": {
@@ -1494,6 +1511,7 @@ mode_choice = {
             "log": {
                 "logsum": 3,
             },
+            "individual_dummy": {},
         },
         "transit": {
             "constant": 0,
@@ -1503,6 +1521,7 @@ mode_choice = {
             "log": {
                 "logsum": 5,
             },
+            "individual_dummy": {},
         },
         "bike": {
             "constant": 0,
@@ -1512,6 +1531,7 @@ mode_choice = {
             "log": {
                 "logsum": 2,
             },
+            "individual_dummy": {},
         },  
         "walk": {
             "constant": 0,
@@ -1521,6 +1541,7 @@ mode_choice = {
             "log": {
                 "logsum": 2,
             },
+            "individual_dummy": {},
         },
     },
     "hoo": None,
@@ -1529,13 +1550,14 @@ mode_choice = {
             "constant": 0,
             "generation": {},
             "attraction": {
-                "parking_cost": -1,
+                "parking_cost_errand": -1,
             },
             "impedance": {},
             "log": {
                 "time": -1,
                 "cost": -1,
             },
+            "individual_dummy": {},
         },
         "transit": {
             "constant": 1,
@@ -1548,6 +1570,7 @@ mode_choice = {
                 "cost": -1,
             },
             "log": {},
+            "individual_dummy": {},
         },
         "bike": {
             "constant": 1,
@@ -1557,6 +1580,7 @@ mode_choice = {
             "log": {
                 "dist": -1,
             },
+            "individual_dummy": {},
         },  
         "walk": {
             "constant": 1,
@@ -1568,6 +1592,7 @@ mode_choice = {
             "log": {
                 "dist": -1,
             },
+            "individual_dummy": {},
         },
     },
     "oo": {
@@ -1579,6 +1604,7 @@ mode_choice = {
             "log": {
                 "logsum": 3,
             },
+            "individual_dummy": {},
         },
         "transit": {
             "constant": 0,
@@ -1588,6 +1614,7 @@ mode_choice = {
             "log": {
                 "logsum": 5,
             },
+            "individual_dummy": {},
         },
         "bike": {
             "constant": 0,
@@ -1597,6 +1624,7 @@ mode_choice = {
             "log": {
                 "logsum": 2,
             },
+            "individual_dummy": {},
         },  
         "walk": {
             "constant": 0,
@@ -1606,6 +1634,7 @@ mode_choice = {
             "log": {
                 "logsum": 2,
             },
+            "individual_dummy": {},
         },
     },
     "hwp": {
@@ -1617,6 +1646,7 @@ mode_choice = {
             "log": {
                 "logsum": 1,
             },
+            "individual_dummy": {},
         },
         "transit": {
             "constant": -2.20,
@@ -1626,6 +1656,7 @@ mode_choice = {
             "log": {
                 "logsum": 1,
             },
+            "individual_dummy": {},
         },
     },
     "hop": {
@@ -1637,6 +1668,7 @@ mode_choice = {
             "log": {
                 "logsum": 1,
             },
+            "individual_dummy": {},
         },
         "transit": {
             "constant": -1.14,
@@ -1646,10 +1678,13 @@ mode_choice = {
             "log": {
                 "logsum": 1,
             },
+            "individual_dummy": {},
         },
     },
     "sop": {
-        "transit": {},
+        "transit": {
+            "individual_dummy": {},
+        },
     },
     "oop": {
         "car": {
@@ -1660,6 +1695,7 @@ mode_choice = {
             "log": {
                 "logsum": 0.786,
             },
+            "individual_dummy": {},
         },
         "transit": {
             "constant": -3.24,
@@ -1669,6 +1705,7 @@ mode_choice = {
             "log": {
                 "logsum": 0.786,
             },
+            "individual_dummy": {},
         },
     },
 }
