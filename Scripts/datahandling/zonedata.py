@@ -25,7 +25,7 @@ class ZoneData:
         self.zone_numbers = pop.index
         self.nr_zones = len(self.zone_numbers)
         val["population_density"] = pop/ landdata["builtar"]
-        val["car_use_share"] = popdata["caruse"]
+        val["car_users"] = popdata["caruse"]
         val["car_density"] = popdata["cardens"]
         wp = workdata["total"]
         val["workplaces"] = wp

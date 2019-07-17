@@ -43,14 +43,6 @@ class TourPurpose(Purpose):
     def calc_demand(self, impedance):
         tours = self.gen_model.generate_tours()
         prob = self.model.calc_prob(impedance)
-        car_share = self.zone_data.get_data("car_use_share", self, True)
-        for mod_mode in self.model.mode_choice_param:
-            if "car_users" in self.model.mode_choice_param[mod_mode]:
-                car_prob = self.model.calc_car_users_prob(mod_mode)
-                for mode in prob:
-                    no_car = (1 - car_share) * prob[mode]
-                    car = car_share * car_prob[mode]
-                    prob[mode] = no_car + car
         self.demand = {}
         self.aggregated_demand = {}
         for mode in self.model.mode_choice_param:
