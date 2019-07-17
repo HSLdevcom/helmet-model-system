@@ -33,7 +33,8 @@ class ZoneData:
         val["shops"] = workdata["sh_shop"] * wp
         val["logistics"] = workdata["sh_logi"] * wp
         val["industry"] = workdata["sh_indu"] * wp
-        val["parking_cost"] = workdata["parcosw"]
+        val["parking_cost_work"] = workdata["parcosw"]
+        val["parking_cost_errand"] = workdata["parcose"]
         val["comprehensive_schools"] = schooldata["compreh"]
         val["secondary_schools"] = schooldata["secndry"]
         val["tertiary_education"] = schooldata["tertiary"]

@@ -812,7 +812,7 @@ destination_choice = {
     "hw": {
         "car": {
             "attraction": {
-                "parking_cost": -0.340,
+                "parking_cost_work": -0.340,
             },
             "impedance": {
                 "time": -0.246e-1,
@@ -1189,7 +1189,7 @@ destination_choice = {
     "hwp": {
         "car": {
             "attraction": {
-                "parking_cost": -0.141,
+                "parking_cost_work": -0.141,
                 "share_detached_houses": 0.559e-2,
                 "own_zone_area": -0.216e-1,
             },
@@ -1264,8 +1264,7 @@ destination_choice = {
     },
     "sop": {
         "attraction": {
-            # TODO: replace with parking_fee_other (zone_data should also include parking_fee_work)
-            "parking_cost": 0.94 * -0.609e-1,
+            "parking_cost_errand": 0.94 * -0.609e-1,
             "population_density": -0.109e-3,
         },
         "impedance": {
@@ -1290,7 +1289,7 @@ destination_choice = {
     "oop": {
         "car": {
             "attraction": {
-                "parking_cost": -0.221,
+                "parking_cost_errand": -0.221,
             },
             "impedance": {
                 "time": -0.407e-1,
@@ -1551,7 +1550,7 @@ mode_choice = {
             "constant": 0,
             "generation": {},
             "attraction": {
-                "parking_cost": -1,
+                "parking_cost_errand": -1,
             },
             "impedance": {},
             "log": {
