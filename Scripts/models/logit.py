@@ -105,20 +105,31 @@ class LogitModel:
 
 class ModeDestModel(LogitModel):
     def calc_prob(self, impedance):
-        dest_expsums = {}
+        self.dest_expsums = {}
         for mode in self.dest_choice_param:
             expsum = self.calc_dest_util(mode, impedance[mode])
-            dest_expsums[mode] = {}
-            dest_expsums[mode]["logsum"] = expsum
-        mode_expsum = self.calc_mode_util(dest_expsums)
+            self.dest_expsums[mode] = {}
+            self.dest_expsums[mode]["logsum"] = expsum
+        mode_expsum = self.calc_mode_util(self.dest_expsums)
+        return self._calc_prob(mode_expsum)
+
+    def _calc_prob(self, mode_expsum):
         prob = {}
         for mode in self.mode_choice_param:
             mode_prob = self.mode_exps[mode] / mode_expsum
-            dest_expsum = dest_expsums[mode]["logsum"]
+            dest_expsum = self.dest_expsums[mode]["logsum"]
             dest_prob = self.dest_exps[mode].T / dest_expsum
             prob[mode] = mode_prob * dest_prob
         return prob
-
+    
+    def calc_car_users_prob(self, mod_mode):
+        b = self.mode_choice_param[mod_mode]["car_users"]
+        self.mode_exps[mod_mode] = b * self.mode_exps[mod_mode]
+        mode_expsum = numpy.zeros_like(self.mode_exps[mod_mode])
+        for mode in self.mode_choice_param:
+            mode_expsum += self.mode_exps[mode]
+        return self._calc_prob(mode_expsum)
+        
 
 class DestModeModel(LogitModel):
     def calc_prob(self, impedance):

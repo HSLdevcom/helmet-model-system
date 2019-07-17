@@ -1338,6 +1338,7 @@ mode_choice = {
             "log": {
                 "logsum": 0.792,
             },
+            "car_users": 1,
         },
         "transit": {
             "constant": (3.26, 3.46),
