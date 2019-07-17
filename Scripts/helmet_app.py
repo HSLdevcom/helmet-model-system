@@ -19,10 +19,15 @@ class HelmetApplication():
 
     def __init__(self, config):
         self._config = config
-
+        self.logger = Log.get_instance()
+        
+        if config.get_value(Config.SCENARIO_NAME) is not None:
+            name = config.get_value(Config.SCENARIO_NAME)
+        else:
+            name = Config.DefaultScenario
         # status to be reported in UI
         self._status = {
-            "name": config.get_value(Config.SCENARIO_NAME, Config.DefaultScenario),
+            "name": name,
             "state": "starting",
             "current": 0,
             "completed": 0,
@@ -30,8 +35,7 @@ class HelmetApplication():
             "total": config.get_value(Config.ITERATION_COUNT),
             "log": self.logger.get_filename()
         }
-
-        self.logger = Log.get_instance()
+        
         self.logger.info("Initializing matrices and models..", extra=self._get_status())
         self.zdata_base = ZoneData("2016")
         self.zdata_forecast = ZoneData(self._config.get_value(Config.DATA_PATH))
