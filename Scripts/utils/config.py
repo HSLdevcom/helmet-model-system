@@ -3,12 +3,15 @@ import json
 
 class Config():
     
+    SCENARIO_NAME = 'SCENARIO_NAME'
     ITERATION_COUNT = 'ITERATION_COUNT'
     USE_EMME = 'USE_EMME'
     LOG_LEVEL = 'LOG_LEVEL'
     LOG_FORMAT = 'LOG_FORMAT'
     DATA_PATH = 'DATA_PATH'
     EMME_PROJECT_PATH = 'EMME_PROJECT_PATH'
+
+    DefaultScenario = "helmet"
 
     def __init__(self):
         self.__config = {}
