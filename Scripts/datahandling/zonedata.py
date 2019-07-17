@@ -22,6 +22,11 @@ class ZoneData:
         val = {}
         pop = popdata["total"]
         val["population"] = pop
+        val["share_age_7-17"] = popdata["sh_7-17"]
+        val["share_age_18-29"] = popdata["sh_1829"]
+        val["share_age_30-49"] = popdata["sh_3049"]
+        val["share_age_50-64"] = popdata["sh_5064"]
+        val["share_age_65-99"] = popdata["sh_65-"]
         self.zone_numbers = pop.index
         self.nr_zones = len(self.zone_numbers)
         val["population_density"] = pop/ landdata["builtar"]

@@ -22,6 +22,7 @@ class ModelTest(unittest.TestCase):
         zdata_forecast = ZoneData("2030")
         basematrices = MatrixData("base")
         dm = DemandModel(zdata_forecast)
+        dm.create_population()
         fm = FreightModel(zdata_base, zdata_forecast, basematrices)
         trucks = fm.calc_freight_traffic("truck")
         trailer_trucks = fm.calc_freight_traffic("trailer_truck")
