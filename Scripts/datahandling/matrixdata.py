@@ -5,8 +5,8 @@ from zonedata import read_file
 
 class MatrixData:
     def __init__(self, scenario):
-        script_dir = os.path.dirname(os.path.realpath('__file__'))
-        project_dir = os.path.join(script_dir, "..")
+        script_dir = os.path.dirname(os.path.realpath(__file__))
+        project_dir = os.path.join(script_dir, "..", "..")
         self.path = os.path.join(project_dir, "Matrices", scenario)
     
     def open_file(self, mtx_type, time_period, m='r'):

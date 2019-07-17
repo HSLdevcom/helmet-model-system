@@ -5,8 +5,8 @@ import parameters as param
 
 class ZoneData:
     def __init__(self, scenario):
-        script_dir = os.path.dirname(os.path.realpath('__file__'))
-        project_dir = os.path.join(script_dir, "..")
+        script_dir = os.path.dirname(os.path.realpath(__file__))
+        project_dir = os.path.join(script_dir, "..", "..")
         data_dir = os.path.join(project_dir, "Zone_data", scenario)
         popdata = read_file(data_dir, "population.txt")
         workdata = read_file(data_dir, "workplaces.txt")
