@@ -33,7 +33,10 @@ class Log:
             streamHandler.setLevel(logging.DEBUG) # always debug to pass everything to UI
             self.__logger.addHandler(streamHandler)
         # Rotating file logger
-        file = config.get_value(Config.SCENARIO_NAME) + ".log"
+        if config.get_value(Config.SCENARIO_NAME) is not None:
+            file = config.get_value(Config.SCENARIO_NAME) + ".log"
+        else:
+            file = Config.DefaultScenario + '.log'
         self._filename = os.path.join(sys.path[0], file)
         numeric_level = getattr(logging, config.get_value(Config.LOG_LEVEL), 20)
         fileFormat = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
