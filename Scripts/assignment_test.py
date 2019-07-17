@@ -21,7 +21,7 @@ zdata_forecast = ZoneData("2030")
 emme_context = EmmeContext(empfile)
 ass_model = ass.EmmeAssignmentModel(emme_context, zdata_forecast.car_dist_cost)
 dtm = dt.DepartureTimeModel(ass_model)
-nr_zones = len(ass_model.get_zone_numbers())
+nr_zones = ass_model.nr_zones
 car_matrix = numpy.arange(nr_zones**2).reshape(nr_zones, nr_zones)
 demand = {
     "hw": {
@@ -49,12 +49,15 @@ for purpose in demand:
 # freight_file.createMapping("zone_number", [5, 6, 7, 2792, 16001])
 # for mode in demand["freight"]:
 #     freight_file[mode] = demand["freight"][mode][:5,:5]
-travel_cost = dtm.assign()
+travel_cost = {}
+for tp in emme_scenario:
+    ass_model.assign(tp, dtm.demand[tp])
+    travel_cost[tp] = ass_model.get_impedance()
 ass_model.calc_transit_cost(zdata_forecast.transit_zone)
 costs_files = MatrixData("2016")
 for time_period in travel_cost:
     for mtx_type in travel_cost[time_period]:
-        zone_numbers = ass_model.get_zone_numbers()
+        zone_numbers = ass_model.zone_numbers
         costs_files.open_file(mtx_type, time_period, 'w')
         costs_files.set_mapping(zone_numbers)
         for ass_class in travel_cost[time_period][mtx_type]:

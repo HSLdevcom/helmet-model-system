@@ -50,18 +50,24 @@ class MockAssignmentModel(AssignmentModel, ImpedanceSource):
         self.matrices.close()
         return matrices
     
-    def get_zone_numbers(self):
+    @property
+    def zone_numbers(self):
         self.matrices.open_file("time", "aht")
         zone_numbers = self.matrices.get_zone_numbers()
         self.matrices.close()
         return zone_numbers
     
-    def get_mapping(self):
-        """Get dictionary of zone numbers and corresponding indices."""
+    @property
+    def mapping(self):
+        """Dictionary of zone numbers and corresponding indices."""
         self.matrices.open_file("time", "aht")
         mapping = self.matrices.get_mapping()
         self.matrices.close()
         return mapping
 
-    def calc_transit_cost(self):
+    @property
+    def nr_zones(self):
+        return len(self.zone_numbers)
+
+    def calc_transit_cost(self, fare):
         pass

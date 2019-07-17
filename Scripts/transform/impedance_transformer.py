@@ -1,9 +1,6 @@
 from parameters import impedance_share, first_peripheral_zone, first_external_zone, tour_purposes
 
 class ImpedanceTransformer:
-    def __init__(self, assignment_model):
-        self.assignment = assignment_model
-
     def transform(self, purpose, impedance):
         """Perform transformation from time period dependent matrices 
         to aggregate impedance matrices for specific travel purpose.
@@ -21,16 +18,12 @@ class ImpedanceTransformer:
             Mode (car/transit/bike) : dict
                 Type (time/cost/dist) : numpy 2d matrix
         """
-        if purpose.area == "metropolitan":
+        if purpose.name == "hoo":
             r_0 = 0
-            r_n = self.assignment.get_mapping()[first_peripheral_zone]
-        if purpose.area == "peripheral":
-            r_0 = self.assignment.get_mapping()[first_peripheral_zone]
-            r_n = self.assignment.get_mapping()[first_external_zone]
-        if purpose.area == "all":
-            r_0 = 0
-            r_n = self.assignment.get_mapping()[first_external_zone]
-        c_n = self.assignment.get_mapping()[first_external_zone]
+            r_n = purpose.zone_data.nr_zones
+        else:
+            r_0, r_n = purpose.bounds
+        c_n = purpose.zone_data.nr_zones
         day_imp = {}
         for mode in impedance_share[purpose.name]:
             day_imp[mode] = {}

@@ -153,6 +153,7 @@ assignment_class = {
     "hu": "car_leisure",
     "hs": "car_leisure",
     "ho": "car_leisure",
+    "hoo": "car_work",
     "oo": "car_leisure",
     "hwp": "car_work",
     "hop": "car_leisure",
@@ -436,6 +437,59 @@ demand_share = {
             "iht": (0.05, 0.05),
         },
     },
+    "hoo": {
+        "car": {
+            "aht": (
+                (0.1, 0.01),
+                (0.01, 0.01),
+                (0.01, 0.01),
+            ),
+            "pt": (
+                (0.01, 0.01),
+                (0.1, 0.01),
+                (0.01, 0.01),
+            ),
+            "iht": (
+                (0.01, 0.01),
+                (0.01, 0.01),
+                (0.1, 0.01),
+            ),
+        },
+        "transit": {
+            "aht": (
+                (0.1, 0.01),
+                (0.01, 0.01),
+                (0.01, 0.01),
+            ),
+            "pt": (
+                (0.01, 0.01),
+                (0.1, 0.01),
+                (0.01, 0.01),
+            ),
+            "iht": (
+                (0.01, 0.01),
+                (0.01, 0.01),
+                (0.1, 0.01),
+            ),
+        },
+        "bike": {
+            "aht": (
+                (0.1, 0.01),
+                (0.01, 0.01),
+                (0.01, 0.01),
+            ),
+            "pt": (
+                (0.01, 0.01),
+                (0.1, 0.01),
+                (0.01, 0.01),
+            ),
+            "iht": (
+                (0.01, 0.01),
+                (0.01, 0.01),
+                (0.1, 0.01),
+            ),
+        },
+    },
     "oo": {
         "car": {
             "aht": (0.01, 0.01),
@@ -639,6 +693,23 @@ impedance_share = {
             "aht": (0, 0),
             "pt": (0.5, 0.5),
             "iht": (0, 0),
+        },
+    },
+    "hoo": {
+        "car": {
+            "aht": (0, 0),
+            "pt": (0, 0),
+            "iht": (0, 1),
+        },
+        "transit": {
+            "aht": (0, 0),
+            "pt": (0, 0),
+            "iht": (0, 1),
+        },
+        "bike": {
+            "aht": (0, 0),
+            "pt": (0, 0),
+            "iht": (0, 1),
         },
     },
     "so": {
@@ -998,6 +1069,45 @@ destination_choice = {
             },
         },
         "walk": {
+            "attraction": {},
+            "impedance": {
+                "time": -0.3,
+            },
+            "log": {
+                "size": 0.2,
+            },
+            "size": {
+                "workplaces": 0.3,
+            },
+        },
+    },
+    "hoo": {
+        "car": {
+            "attraction": {},
+            "impedance": {
+                "time": -0.3,
+                "cost": -0.1,
+            },
+            "log": {
+                "size": 0.2,
+            },
+            "size": {
+                "workplaces": 0.3,
+            },
+        },
+        "transit": {
+            "attraction": {},
+            "impedance": {
+                "time": -0.3,
+            },
+            "log": {
+                "size": 0.2,
+            },
+            "size": {
+                "workplaces": 0.3,
+            },
+        },
+        "bike": {
             "attraction": {},
             "impedance": {
                 "time": -0.3,
@@ -1413,6 +1523,7 @@ mode_choice = {
             },
         },
     },
+    "hoo": None,
     "so": {
         "car": {
             "constant": 0,
@@ -1577,6 +1688,10 @@ tour_generation = {
     "ho": {
         "population": 0.5,
     },
+    "hoo": {
+        "hw": 0.5,
+        "ho": 0.3,
+    },
     "so": {
         "population": 0.5,
     },
@@ -1656,10 +1771,18 @@ tour_purposes = (
         "area": "metropolitan",
     },
     {
+        "name": "hoo",
+        "orig": "home",
+        "dest": "any",
+        "sec_dest": "any",
+        "source": ("hw", "ho",),
+        "area": "metropolitan",
+    },
+    {
         "name": "so",
         "orig": "home",
         "dest": "source",
-        "area": "peripheral",
+        "area": "metropolitan",
     },
     {
         "name": "oo",
@@ -1706,6 +1829,13 @@ first_peripheral_zone = 16001
 first_external_zone = 31001
 garbage_destination = 2792
 trailers_prohibited = [5, 6]
+areas = {
+    "downtown": (0, 999),
+    "Helsinki_other": (1000, 1999),
+    "capital_region_other": (2000, 5999),
+    "surrounding": (6000, 15999),
+    "peripheral": (16000, 30999),
+}
 municipality = {
     "Helsinki": (0, 1999),
     "Espoo": (2000, 3499),
@@ -1721,7 +1851,7 @@ municipality = {
     "Mantsala": (13000, 13999),
     "Hyvinkaa": (14000, 14999),
     "Pornainen": (15000, 15499),
-    "Siuntio": (15500, 15499),
+    "Siuntio": (15500, 15999),
     "Salo": (16000, 16499),
     "Somero": (16500, 16999),
     "Raasepori": (17000, 17499),

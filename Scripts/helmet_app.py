@@ -11,7 +11,6 @@ from demand.freight import FreightModel
 from demand.trips import DemandModel
 from demand.external import ExternalModel
 from transform.impedance_transformer import ImpedanceTransformer
-from datatypes.purpose import create_purposes
 from emme.emme_context import EmmeContext
 import parameters
 import numpy
@@ -39,7 +38,7 @@ class HelmetApplication():
         self.dm = DemandModel(self.zdata_forecast)
         self.fm = FreightModel(self.zdata_base, self.zdata_forecast, self.basematrices)
         self.em = ExternalModel(self.basematrices, self.zdata_forecast)
-
+      
         if config.get_value(Config.USE_EMME):
             self.logger.info("Initializing Emme..")
             self.emme_context = EmmeContext(self._config.get_value(Config.EMME_PROJECT_PATH))
@@ -49,10 +48,9 @@ class HelmetApplication():
             costs = MatrixData("2016")
             self.ass_model = MockAssignmentModel(costs)
         
-        self.dtm = dt.DepartureTimeModel(self.ass_model)
-        self.imptrans = ImpedanceTransformer(self.ass_model)
+        self.dtm = dt.DepartureTimeModel(self.ass_model.nr_zones)
+        self.imptrans = ImpedanceTransformer()
         self.ass_classes = dict.fromkeys(parameters.emme_mtx["demand"].keys())
-        self.tour_purposes = create_purposes()
     
 
     def run(self):
@@ -81,7 +79,7 @@ class HelmetApplication():
             self.ass_model.assign(tp, base_demand)
         
             if tp == "aht":
-                self.ass_model.calc_transit_cost()
+                self.ass_model.calc_transit_cost(self.zdata_forecast.transit_zone)
         
             impedance[tp] = self.ass_model.get_impedance()
 
@@ -115,24 +113,28 @@ class HelmetApplication():
         self.dtm.add_demand("freight", "truck", self.trucks)
         self.dtm.add_demand("freight", "trailer_truck", self.trailer_trucks)
         
-        for purpose in self.tour_purposes:
+        for purpose in self.dm.tour_purposes:
             
             purpose_impedance = self.imptrans.transform(purpose, impedance)
-            demand = self.dm.calc_demand(purpose, purpose_impedance)
-            self._validate_demand(demand)
-            
-            if purpose.area == "peripheral":
-                pos = self.ass_model.get_mapping()[16001]
-                mtx_position = (pos, 0)
+            if purpose.name == "hoo":
+                l, u = purpose.bounds
+                nr_zones = u - l
+                purpose.generate_tours()
+                for mode in purpose.model.dest_choice_param:
+                    for i in xrange(0, nr_zones):
+                        demand = purpose.distribute_tours(mode, purpose_impedance[mode], i)
+                        mtx_pos = (i, 0, 0)
+                        self.dtm.add_demand(purpose.name, mode, demand, mtx_pos)
             else:
-                mtx_position = (0, 0)
+                demand = purpose.calc_demand(purpose_impedance)
+                self._validate_demand(demand)
+                mtx_pos = (purpose.bounds[0], 0)
+                if purpose.dest != "source":
+                    for mode in demand:
+                        self.dtm.add_demand(purpose.name, mode, demand[mode], mtx_pos)
+        
+        pos = self.ass_model.mapping[parameters.first_external_zone]
 
-            if purpose.dest != "source":
-                for mode in demand:
-                    self.dtm.add_demand(purpose.name, mode, demand[mode], mtx_position)
-        
-        pos = self.ass_model.get_mapping()[31001]
-        
         for mode in parameters.external_modes:
 
             if mode == "truck":
@@ -143,9 +145,9 @@ class HelmetApplication():
                 nr_zones = len(self.zdata_base.zone_numbers)
                 int_demand = numpy.zeros(nr_zones)
             
-                for purpose in self.tour_purposes:
+                for purpose in self.dm.tour_purposes:
                     if purpose.dest != "source":
-                        l, u = self.zdata_base.get_bounds(purpose)
+                        l, u = purpose.bounds
                         int_demand[l:u] += purpose.generated_tours[mode]
                         int_demand += purpose.attracted_tours[mode]
             
@@ -155,7 +157,8 @@ class HelmetApplication():
         impedance = {}
         
         for tp in parameters.emme_scenario:
-            self.dtm.add_vans(tp)
+            n = self.ass_model.mapping[parameters.first_external_zone]
+            self.dtm.add_vans(tp, n)
             self.ass_model.assign(tp, self.dtm.demand[tp])
             impedance[tp] = self.ass_model.get_impedance()
         

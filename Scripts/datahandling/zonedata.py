@@ -76,7 +76,7 @@ class ZoneData:
         return pandas.DataFrame(data)
 
     def get_data(self, data_type, purpose, generation=False, part=None):
-        l, u = self.get_bounds(purpose)
+        l, u = purpose.bounds
         k = self.zone_numbers.get_loc(param.first_surrounding_zone)
         if self.values[data_type].ndim == 1:
             if generation:
@@ -94,20 +94,6 @@ class ZoneData:
             return self.values[data_type][:k, :]
         else:
             return self.values[data_type][k:u, :]
-
-    def get_bounds(self, purpose):
-        if purpose.area == "metropolitan":
-            l = 0
-            u_label = param.first_peripheral_zone
-            u = self.zone_numbers.get_loc(u_label)
-        if purpose.area == "peripheral":
-            l_label = param.first_peripheral_zone
-            l = self.zone_numbers.get_loc(l_label)
-            u = len(self.zone_numbers)
-        if purpose.area == "all":
-            l = 0
-            u = len(self.zone_numbers)
-        return l, u
 
 def read_file(data_dir, file_name, squeeze=False):
     path = os.path.join(data_dir, file_name)
