@@ -3,25 +3,28 @@ import pandas
 import parameters
 from datatypes.purpose import TourPurpose, SecDestPurpose
 from datatypes.person import Person
+from datatypes.tour import Tour
 import random
 
 class DemandModel:
     def __init__(self, zone_data):
         self.zone_data = zone_data
         self.tour_purposes = []
-        purpose_dict = {}
+        self.purpose_dict = {}
         for purpose_spec in parameters.tour_purposes:
             if "sec_dest" in purpose_spec:
                 purpose = SecDestPurpose(purpose_spec, zone_data)
             else:
                 purpose = TourPurpose(purpose_spec, zone_data)
             self.tour_purposes.append(purpose)
-            purpose_dict[purpose_spec["name"]] = purpose
+            self.purpose_dict[purpose_spec["name"]] = purpose
         for purpose_spec in parameters.tour_purposes:
             if "source" in purpose_spec:
-                purpose = purpose_dict[purpose_spec["name"]]
+                purpose = self.purpose_dict[purpose_spec["name"]]
                 for source in purpose_spec["source"]:
-                    purpose.sources.append(purpose_dict[source])
+                    purpose.sources.append(self.purpose_dict[source])
+                    if "sec_dest" in purpose_spec:
+                        self.purpose_dict[source].sec_dest_purpose = purpose
 
     def create_population(self):
         self.population = []
@@ -32,7 +35,8 @@ class DemandModel:
             (50, 64),
             (65, 99),
         )
-        for idx, zone_pop in self.zone_data.values["population"].iteritems():
+        zones = self.zone_data.values["population"].loc[:15999]
+        for idx, zone_pop in zones.iteritems():
             weights = [1]
             for age_group in age_groups:
                 key = "share_age_" + str(age_group[0]) + "-" + str(age_group[1])
@@ -47,3 +51,17 @@ class DemandModel:
                     age = random.randint(age_group[0], age_group[1])
                     person = Person(idx, age)
                     self.population.append(person)
+        for person in self.population:
+            for purpose in self.tour_purposes:
+                if purpose.area == "metropolitan" and purpose.dest != "source" and not purpose.sources:
+                    prob = purpose.gen_model.param["population"]
+                    try:
+                        sec_dest_prob = purpose.sec_dest_purpose.gen_model.param[purpose.name]
+                        prob *= 1 + sec_dest_prob
+                    except AttributeError:
+                        sec_dest_prob = 0
+                    if random.random() < prob:
+                        tour = Tour(purpose, person.zone)
+                        if random.random() < sec_dest_prob:
+                            tour.has_sec_dest = True
+                        person.tours.append(tour)

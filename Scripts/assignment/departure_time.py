@@ -18,7 +18,7 @@ class DepartureTimeModel:
             for ass_class in ass_classes:
                 self.demand[time_period][ass_class] = zeros
 
-    def add_demand(self, purpose, mode, demand, mtx_pos=(0, 0)):
+    def add_demand(self, demand):
         """Add demand matrix for whole day.
         
         Parameters
@@ -32,22 +32,22 @@ class DepartureTimeModel:
         mtx_position : tuple
             Where to insert the demand
         """
-        if mode != "walk":
-            if mode == "car":
-                ass_class = assignment_class[purpose]
+        if demand.mode != "walk":
+            if demand.mode == "car":
+                ass_class = assignment_class[demand.purpose.name]
             else:
-                ass_class = mode
-            if len(mtx_pos) == 2:
+                ass_class = demand.mode
+            if len(demand.position) == 2:
                 for tp in emme_scenario:
-                    share = demand_share[purpose][mode][tp]
-                    self.add_2d_demand(share, ass_class, tp, demand, mtx_pos)
-            elif len(mtx_pos) == 3:
+                    share = demand_share[demand.purpose.name][demand.mode][tp]
+                    self.add_2d_demand(share, ass_class, tp, demand.matrix, demand.position)
+            elif len(demand.position) == 3:
                 for tp in emme_scenario:
-                    share = demand_share[purpose][mode][tp]
-                    self.add_3d_demand(share, ass_class, tp, demand, mtx_pos)
+                    share = demand_share[demand.purpose.name][demand.mode][tp]
+                    self.add_3d_demand(share, ass_class, tp, demand.matrix, demand.position)
             else:
                 raise IndexError("Tuple mtx_pos has wrong dimensions.")
-            self.logger.debug("Added demand for " + purpose + ", " + mode)
+            self.logger.debug("Added demand for " + demand.purpose.name + ", " + demand.mode)
 
     def add_2d_demand(self, demand_share, ass_class, time_period, mtx, mtx_pos):
         """Slice demand, include transpose and add for one time period."""

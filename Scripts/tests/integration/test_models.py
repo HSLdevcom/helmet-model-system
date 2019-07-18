@@ -54,8 +54,8 @@ class ModelTest(unittest.TestCase):
             
         print("Adding demand and assigning")
 
-        dtm.add_demand("freight", "truck", trucks)
-        dtm.add_demand("freight", "trailer_truck", trailer_trucks)
+        dtm.add_demand(trucks)
+        dtm.add_demand(trailer_trucks)
         for purpose in dm.tour_purposes:
             purpose_impedance = imptrans.transform(purpose, impedance)
             if purpose.name == "hoo":
@@ -65,21 +65,18 @@ class ModelTest(unittest.TestCase):
                 for mode in purpose.model.dest_choice_param:
                     for i in xrange(0, nr_zones):
                         demand = purpose.distribute_tours(mode, purpose_impedance[mode], i)
-                        mtx_pos = (i, 0, 0)
-                        dtm.add_demand(purpose.name, mode, demand, mtx_pos)
+                        dtm.add_demand(demand)
             else:
                 demand = purpose.calc_demand(purpose_impedance)
-                self._validate_demand(demand)
-                mtx_pos = (purpose.bounds[0], 0)
+                # self._validate_demand(demand)
                 if purpose.dest != "source":
                     for mode in demand:
-                        dtm.add_demand(purpose.name, mode, demand[mode], mtx_pos)
-        pos = ass_model.mapping[parameters.first_external_zone]
+                        dtm.add_demand(demand[mode])
         for mode in parameters.external_modes:
             if mode == "truck":
-                int_demand = trucks.sum(0) + trucks.sum(1)
+                int_demand = trucks.matrix.sum(0) + trucks.matrix.sum(1)
             elif mode == "trailer_truck":
-                int_demand = trailer_trucks.sum(0) + trailer_trucks.sum(1)
+                int_demand = trailer_trucks.matrix.sum(0) + trailer_trucks.matrix.sum(1)
             else:
                 int_demand = numpy.zeros(zdata_base.nr_zones)
                 for purpose in dm.tour_purposes:
@@ -88,7 +85,13 @@ class ModelTest(unittest.TestCase):
                         int_demand[l:u] += purpose.generated_tours[mode]
                         int_demand += purpose.attracted_tours[mode]
             ext_demand = em.calc_external(mode, int_demand)
-            dtm.add_demand("external", mode, ext_demand, (pos, 0))
+            dtm.add_demand(ext_demand)
+        purpose_impedance = imptrans.transform(dm.purpose_dict["hoo"], impedance)
+        for person in dm.population:
+            for tour in person.tours:
+                tour.choose_mode()
+                tour.choose_destination(purpose_impedance)
+                dtm.add_demand(tour)
         impedance = {}
         for tp in parameters.emme_scenario:
             n = ass_model.mapping[parameters.first_external_zone]

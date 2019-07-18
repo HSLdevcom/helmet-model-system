@@ -1,12 +1,22 @@
 import pandas
 import numpy
 import parameters
+from datatypes.demand import Demand
+from datatypes.purpose import Purpose
+
 
 class ExternalModel:
     def __init__(self, base_demand, zone_data):
         self.base_demand = base_demand
         self.zone_numbers = zone_data.zone_numbers
         self.growth = zone_data.externalgrowth
+        spec = {
+            "name": "external",
+            "orig": None,
+            "dest": None,
+            "area": "external",
+        }
+        self.purpose = Purpose(spec, zone_data)
 
     def calc_external(self, mode, internal_trips):
         """Calculate external traffic.
@@ -42,4 +52,4 @@ class ExternalModel:
                             * base_vector.values)
             else: # External-external trips
                 mtx.loc[int(target)] = self.growth[mode] * base_vector.values
-        return mtx.values.T
+        return Demand(self.purpose, mode, mtx.values.T)

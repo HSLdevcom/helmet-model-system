@@ -11,7 +11,7 @@ class LogitModel:
         self.mode_choice_param = parameters.mode_choice[purpose.name]
 
     def calc_mode_util(self, impedance):
-        expsum = numpy.zeros_like(next(iter(impedance["car"].values())))
+        expsum = numpy.zeros_like(next(iter(impedance["car"].values())), float)
         for mode in self.mode_choice_param:
             b = self.mode_choice_param[mode]
             utility = numpy.zeros_like(expsum)
@@ -29,7 +29,7 @@ class LogitModel:
     
     def calc_dest_util(self, mode, impedance):
         b = self.dest_choice_param[mode]
-        utility = numpy.zeros_like(next(iter(impedance.values())))
+        utility = numpy.zeros_like(next(iter(impedance.values())), float)
         self.add_zone_util(utility, b["attraction"])
         self.add_impedance(utility, impedance, b["impedance"])
         self.dest_exps[mode] = numpy.exp(utility)
@@ -40,7 +40,10 @@ class LogitModel:
         if mode != "logsum":
             threshold = parameters.distance_boundary[mode]
             self.dest_exps[mode][impedance["dist"] > threshold] = 0
-        return numpy.sum(self.dest_exps[mode], 1)
+        try:
+            return self.dest_exps[mode].sum(1)
+        except ValueError:
+            return self.dest_exps[mode].sum()
 
     def calc_origin_util(self, impedance):
         b = self.dest_choice_param
@@ -144,11 +147,13 @@ class ModeDestModel(LogitModel):
 
     def _calc_prob(self, mode_expsum):
         prob = {}
+        self.mode_prob = {}
+        self.dest_prob = {}
         for mode in self.mode_choice_param:
-            mode_prob = self.mode_exps[mode] / mode_expsum
+            self.mode_prob[mode] = self.mode_exps[mode] / mode_expsum
             dest_expsum = self.dest_expsums[mode]["logsum"]
-            dest_prob = self.dest_exps[mode].T / dest_expsum
-            prob[mode] = mode_prob * dest_prob
+            self.dest_prob[mode] = self.dest_exps[mode].T / dest_expsum
+            prob[mode] = self.mode_prob[mode] * self.dest_prob[mode]
         return prob
 
 

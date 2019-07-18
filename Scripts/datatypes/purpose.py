@@ -1,6 +1,7 @@
 import parameters as param
 import models.logit as logit
 import models.generation as generation
+from datatypes.demand import Demand
 import numpy
 import pandas
 
@@ -20,6 +21,9 @@ class Purpose:
         if self.area == "all":
             l = 0
             u = zone_data.nr_zones
+        if self.area == "external":
+            l = zone_data.nr_zones
+            u = None
         self.bounds = (l, u)
         self.zone_data = zone_data
         self.generated_tours = {}
@@ -39,18 +43,21 @@ class TourPurpose(Purpose):
             self.model = logit.DestModeModel(zone_data, self)
         else:
             self.model = logit.ModeDestModel(zone_data, self)
+        self.modes = self.model.mode_choice_param.keys()
 
     def calc_demand(self, impedance):
         tours = self.gen_model.generate_tours()
         prob = self.model.calc_prob(impedance)
+        demand = {}
         self.demand = {}
         self.aggregated_demand = {}
         for mode in self.model.mode_choice_param:
             self.demand[mode] = (prob[mode] * tours).T
+            demand[mode] = Demand(self, mode, self.demand[mode])
             self.attracted_tours[mode] = self.demand[mode].sum(0)
             self.generated_tours[mode] = self.demand[mode].sum(1)
             self.aggregated_demand[mode] = self.aggregate(self.demand[mode])
-        return self.demand
+        return demand
 
     def aggregate(self, mtx):
         dest = self.zone_data.zone_numbers
@@ -92,4 +99,14 @@ class SecDestPurpose(Purpose):
         prob = self.model.calc_prob(mode, dest_imp)
         demand = (prob * self.tours[mode][origin, :]).T
         self.attracted_tours[mode] += demand.sum(0)
-        return demand
+        return Demand(self, mode, demand, origin)
+
+    def calc_prob(self, mode, impedance, position):
+        orig = position[0]
+        dest = position[1]
+        dest_imp = {}
+        for mtx_type in impedance:
+            dest_imp[mtx_type] = ( impedance[mtx_type][dest, :]
+                                 + impedance[mtx_type][:, orig]
+                                 - impedance[mtx_type][orig, dest])
+        return self.model.calc_prob(mode, dest_imp)
