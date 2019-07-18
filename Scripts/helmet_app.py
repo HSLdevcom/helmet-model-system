@@ -70,6 +70,9 @@ class HelmetApplication():
             self.logger.error("Failed to validate input, simulation aborted.", extra=self._get_status())
             return
         
+        self.mode_share = []
+        self._status["results"] = self.mode_share
+
         self.trucks = self.fm.calc_freight_traffic("truck")
         self.trailer_trucks = self.fm.calc_freight_traffic("trailer_truck")
         impedance = {}
@@ -141,6 +144,9 @@ class HelmetApplication():
         
         pos = self.ass_model.mapping[parameters.first_external_zone]
 
+        trip_sum = {}
+        sum_all = 0
+
         for mode in parameters.external_modes:
 
             if mode == "truck":
@@ -159,6 +165,13 @@ class HelmetApplication():
             
             ext_demand = self.em.calc_external(mode, int_demand)
             self.dtm.add_demand("external", mode, ext_demand, (pos, 0))
+            trip_sum[mode] = int_demand.sum()
+            sum_all += trip_sum[mode]
+        
+        mode_share = {}
+        for mode in trip_sum:
+            mode_share[mode] = trip_sum[mode] / sum_all
+        self.mode_share.append(mode_share)
 
         impedance = {}
         
