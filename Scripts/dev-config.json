@@ -1,4 +1,5 @@
 {
+    "SCENARIO_NAME": "helmet",
     "ITERATION_COUNT": 15,
     "USE_EMME": false,
     "LOG_LEVEL": "INFO",

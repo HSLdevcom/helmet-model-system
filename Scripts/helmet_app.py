@@ -19,18 +19,24 @@ class HelmetApplication():
 
     def __init__(self, config):
         self._config = config
-
+        self.logger = Log.get_instance()
+        
+        if config.get_value(Config.SCENARIO_NAME) is not None:
+            name = config.get_value(Config.SCENARIO_NAME)
+        else:
+            name = Config.DefaultScenario
         # status to be reported in UI
         self._status = {
+            "name": name,
             "state": "starting",
             "current": 0,
             "completed": 0,
             "failed": 0,
-            "total": config.get_value(Config.ITERATION_COUNT)
+            "total": config.get_value(Config.ITERATION_COUNT),
+            "log": self.logger.get_filename()
         }
-
-        self.logger = Log.get_instance()
-        self.logger.info("Initializing the application..", extra=self._get_status())
+        
+        self.logger.info("Initializing matrices and models..", extra=self._get_status())
         self.zdata_base = ZoneData("2016")
         self.zdata_forecast = ZoneData(self._config.get_value(Config.DATA_PATH))
         self.basematrices = MatrixData("base")
@@ -57,13 +63,16 @@ class HelmetApplication():
         self._status["state"] = "preparing"
         iterations = self._config.get_value(Config.ITERATION_COUNT)
 
-        self.logger.info("Running simulation with {} iterations".format(self._config.get_value(Config.ITERATION_COUNT)), extra=self._get_status())
+        self.logger.info("Starting simulation with {} iterations..".format(iterations), extra=self._get_status())
 
         if not self._validate_input():
-            self._status['state'] = 'failed'
+            self._status['state'] = 'aborted'
             self.logger.error("Failed to validate input, simulation aborted.", extra=self._get_status())
             return
         
+        self.mode_share = []
+        self._status["results"] = self.mode_share
+
         self.trucks = self.fm.calc_freight_traffic("truck")
         self.trailer_trucks = self.fm.calc_freight_traffic("trailer_truck")
         impedance = {}
@@ -130,6 +139,8 @@ class HelmetApplication():
                     for mode in demand:
                         self.dtm.add_demand(demand[mode])
 
+        trip_sum = {}
+
         for mode in parameters.external_modes:
 
             if mode == "truck":
@@ -147,7 +158,14 @@ class HelmetApplication():
                         int_demand += purpose.attracted_tours[mode]
             
             ext_demand = self.em.calc_external(mode, int_demand)
+            trip_sum[mode] = int_demand.sum()
             self.dtm.add_demand(ext_demand)
+        
+        sum_all = sum(trip_sum)
+        mode_share = {}
+        for mode in trip_sum:
+            mode_share[mode] = trip_sum[mode] / sum_all
+        self.mode_share.append(mode_share)
 
         impedance = {}
         
