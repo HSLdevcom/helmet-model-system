@@ -833,7 +833,7 @@ destination_choice = {
             },
             "impedance": {
                 "time": -0.111e-1,
-                "cost": (-0.288e-1, -0.103),
+                "cost": ((-0.288e-1) / 60, -0.103 / 44),
             },
             "log": {
                 "size": 1,
@@ -1211,7 +1211,7 @@ destination_choice = {
             },
             "impedance": {
                 "time": -0.714e-2,
-                "cost": -0.141,
+                "cost": -0.141 / 44,
             },
             "log": {
                 "size": 0.909,
@@ -1247,7 +1247,7 @@ destination_choice = {
             "attraction": {},
             "impedance": {
                 "time": -0.611e-2,
-                "cost": -0.182,
+                "cost": -0.182/30,
             },
             "log": {
                 "size": 1,
@@ -1273,7 +1273,7 @@ destination_choice = {
                 "time": 0.94 * -0.264e-1,
             },
             "transit": {
-                "cost": 0.04 * -0.609e-1,
+                "cost": 0.04 * (-0.609e-1) / 30,
                 "time": 0.04 * -0.264e-1,
             },
         },
@@ -1311,7 +1311,7 @@ destination_choice = {
             },
             "impedance": {
                 "time": -0.828e-2,
-                "cost": -0.221,
+                "cost": -0.221 / 30,
             },
             "log": {
                 "size": 1,
@@ -1682,7 +1682,7 @@ mode_choice = {
         },
     },
     "sop": {
-        "transit": {
+        "all": {
             "individual_dummy": {},
         },
     },

@@ -8,6 +8,14 @@ class GenerationModel:
         self.param = parameters.tour_generation[purpose.name]
 
     def generate_tours(self):
+        """Generate vector of tour numbers
+        from zone data.
+        
+        Return
+        ------
+        numpy 1-d array
+            Vector of tour numbers per zone
+        """
         l, u = self.purpose.bounds
         nr_zones = u - l
         tours = numpy.zeros(nr_zones)
@@ -19,6 +27,14 @@ class GenerationModel:
 
 class NonHomeGeneration(GenerationModel):
     def generate_tours(self):
+        """Generate vector of tour numbers
+        from attracted source tours.
+        
+        Return
+        ------
+        numpy 1-d array
+            Vector of tour numbers per zone
+        """
         tours = numpy.zeros(self.zone_data.nr_zones)
         for source in self.purpose.sources:
             b = self.param[source.name]
@@ -29,6 +45,14 @@ class NonHomeGeneration(GenerationModel):
 
 class SecDestGeneration(GenerationModel):
     def generate_tours(self, mode):
+        """Generate matrix of tour numbers
+        from attracted source tours.
+        
+        Return
+        ------
+        numpy 2-d matrix
+            Matrix of tour numbers per origin-destination pair
+        """
         l, u = self.purpose.bounds
         nr_zones = u - l
         tours = numpy.zeros((nr_zones, self.zone_data.nr_zones))

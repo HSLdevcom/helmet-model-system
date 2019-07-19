@@ -22,9 +22,14 @@ class ZoneData:
         val = {}
         pop = popdata["total"]
         val["population"] = pop
+        val["share_age_7-17"] = popdata["sh_7-17"]
+        val["share_age_18-29"] = popdata["sh_1829"]
+        val["share_age_30-49"] = popdata["sh_3049"]
+        val["share_age_50-64"] = popdata["sh_5064"]
+        val["share_age_65-99"] = popdata["sh_65-"]
         self.zone_numbers = pop.index
         self.nr_zones = len(self.zone_numbers)
-        val["population_density"] = pop/ landdata["builtar"]
+        val["population_density"] = pop / landdata["builtar"]
         val["car_users"] = popdata["caruse"]
         val["car_density"] = popdata["cardens"]
         wp = workdata["total"]
@@ -41,9 +46,7 @@ class ZoneData:
         val["zone_area"] = landdata["builtar"]
         val["share_detached_houses"] = landdata["detach"]
         val["downtown"] = pandas.Series(0, self.zone_numbers)
-        val["downtown"].loc[:999] = 1
-        # capital_region = pandas.Series(0, self.zone_numbers)
-        # capital_region.loc[:5999] = 1
+        val["downtown"].loc[:param.areas["downtown"][1]] = 1
         val["shops_downtown"] = val["downtown"] * val["shops"]
         val["shops_elsewhere"] = (1-val["downtown"]) * val["shops"]
         # Create diagonal matrix with zone area
@@ -67,6 +70,13 @@ class ZoneData:
         self.values = val
 
     def get_freight_data(self):
+        """Get zone data for freight traffic calculation.
+        
+        Return
+        ------
+        pandas DataFrame
+            Zone data for freight traffic calculation
+        """
         freight_variables = (
             "population",
             "workplaces",
@@ -77,25 +87,43 @@ class ZoneData:
         data = {k: self.values[k] for k in freight_variables}
         return pandas.DataFrame(data)
 
-    def get_data(self, data_type, purpose, generation=False, part=None):
+    def get_data(self, key, purpose, generation=False, part=None):
+        """Get data of correct shape for zones included in purpose.
+        
+        Parameters
+        ----------
+        key : str
+            Key describing the data (e.g., "population")
+        purpose : Purpose
+            Purpose from which the zone bounds are taken
+        generation : bool, optional
+            If set to True, returns data only for zones in purpose,
+            otherwise returns data for all zones
+        part : int, optional
+            0 if capital region, 1 if surrounding area
+        
+        Return
+        ------
+        pandas Series or numpy 2-d matrix
+        """
         l, u = purpose.bounds
         k = self.zone_numbers.get_loc(param.first_surrounding_zone)
-        if self.values[data_type].ndim == 1:
+        if self.values[key].ndim == 1: # If not a compound (i.e., matrix)
             if generation:
-                if part is None:
-                    return self.values[data_type][l:u]
-                elif part == 0:
-                    return self.values[data_type][l:k]
-                else:
-                    return self.values[data_type][k:u]
-            else:
-                return self.values[data_type]
-        if part is None:
-            return self.values[data_type][l:u, :]
-        elif part == 0:
-            return self.values[data_type][:k, :]
-        else:
-            return self.values[data_type][k:u, :]
+                if part is None: # Return values for all purpose zones
+                    return self.values[key][l:u]
+                elif part == 0: # Return values for capital region
+                    return self.values[key][l:k]
+                else: # Return values for surrounding area
+                    return self.values[key][k:u]
+            else: # Return values for all zones
+                return self.values[key]
+        elif part is None: # Return matrix (purpose zones -> all zones)
+            return self.values[key][l:u, :]
+        elif part == 0: # Return matrix (capital region -> all zones)
+            return self.values[key][:k, :]
+        else: # Return matrix (surrounding area -> all zones)
+            return self.values[key][k:u, :]
 
 def read_file(data_dir, file_name, squeeze=False):
     path = os.path.join(data_dir, file_name)

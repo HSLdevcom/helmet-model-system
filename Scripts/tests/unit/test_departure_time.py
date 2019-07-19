@@ -12,6 +12,28 @@ class DepartureTimeTest(unittest.TestCase):
         dtm = DepartureTimeModel(8)
         mtx = numpy.arange(9)
         mtx.shape = (3, 3)
-        dtm.add_demand("hoo", "car", mtx, (1, 0, 0))
-        dtm.add_demand("hw", "bike", 3, (1, 2))
-        dtm.add_demand("hoo", "transit", 3, (1, 2, 0))
+        class Demand:
+            pass
+        class Purpose:
+            pass
+        dem = Demand()
+        pur = Purpose()
+        dem.purpose = pur
+
+        dem.purpose.name = "hoo"
+        dem.mode = "car"
+        dem.matrix = mtx
+        dem.position = (1, 0, 0)
+        dtm.add_demand(dem)
+
+        dem.purpose.name = "hw"
+        dem.mode = "bike"
+        dem.matrix = 3
+        dem.position = (1, 2)
+        dtm.add_demand(dem)
+
+        dem.purpose.name = "hoo"
+        dem.mode = "transit"
+        dem.matrix = 3
+        dem.position = (1, 2, 0)
+        dtm.add_demand(dem)

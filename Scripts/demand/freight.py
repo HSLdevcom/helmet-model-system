@@ -1,12 +1,21 @@
 import numpy
 import pandas
 import parameters
+from datatypes.demand import Demand
+from datatypes.purpose import Purpose
 
 class FreightModel:
     def __init__(self, zone_data_base, zone_data_forecast, base_demand):
         self.zdata_b = zone_data_base
         self.zdata_f = zone_data_forecast
         self.base_demand = base_demand
+        spec = {
+            "name": "freight",
+            "orig": None,
+            "dest": None,
+            "area": "all",
+        }
+        self.purpose = Purpose(spec, zone_data_base)
 
     def calc_freight_traffic(self, mode):
         """Calculate freight traffic matrix.
@@ -62,7 +71,7 @@ class FreightModel:
         if mode == "trailer_truck":
             demand[parameters.trailers_prohibited] = 0
             demand.loc[parameters.trailers_prohibited] = 0
-        return demand.values
+        return Demand(self.purpose, mode, demand.values)
 
     def _generate_trips(self, zone_data, mode):
         b = pandas.Series(parameters.tour_generation[mode])

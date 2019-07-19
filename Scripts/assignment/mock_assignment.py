@@ -43,6 +43,19 @@ class MockAssignmentModel(AssignmentModel, ImpedanceSource):
         return mtxs
     
     def get_matrices(self, mtx_type, time_period):
+        """Get all matrices of specified type.
+        
+        Parameters
+        ----------
+        mtx_type : str
+            Type (demand/time/transit/...)
+
+        Return
+        ------
+        dict
+            Subtype (car_work/truck/inv_time/...) : numpy 2-d matrix
+                Matrix of the specified type
+        """
         matrices = dict.fromkeys(param.emme_mtx[mtx_type].keys())
         self.matrices.open_file(mtx_type, time_period)
         for mode in matrices:
@@ -52,6 +65,7 @@ class MockAssignmentModel(AssignmentModel, ImpedanceSource):
     
     @property
     def zone_numbers(self):
+        """Numpy array of all zone numbers.""" 
         self.matrices.open_file("time", "aht")
         zone_numbers = self.matrices.get_zone_numbers()
         self.matrices.close()
@@ -59,7 +73,7 @@ class MockAssignmentModel(AssignmentModel, ImpedanceSource):
     
     @property
     def mapping(self):
-        """Dictionary of zone numbers and corresponding indices."""
+        """dict: Dictionary of zone numbers and corresponding indices."""
         self.matrices.open_file("time", "aht")
         mapping = self.matrices.get_mapping()
         self.matrices.close()
@@ -67,6 +81,7 @@ class MockAssignmentModel(AssignmentModel, ImpedanceSource):
 
     @property
     def nr_zones(self):
+        """int: Number of zones in assignment model."""
         return len(self.zone_numbers)
 
     def calc_transit_cost(self, fare):

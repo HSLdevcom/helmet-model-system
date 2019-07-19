@@ -119,8 +119,8 @@ class HelmetApplication():
 
     def simulate(self, impedance):
         
-        self.dtm.add_demand("freight", "truck", self.trucks)
-        self.dtm.add_demand("freight", "trailer_truck", self.trailer_trucks)
+        self.dtm.add_demand(self.trucks)
+        self.dtm.add_demand(self.trailer_trucks)
         
         for purpose in self.dm.tour_purposes:
             
@@ -132,27 +132,21 @@ class HelmetApplication():
                 for mode in purpose.model.dest_choice_param:
                     for i in xrange(0, nr_zones):
                         demand = purpose.distribute_tours(mode, purpose_impedance[mode], i)
-                        mtx_pos = (i, 0, 0)
-                        self.dtm.add_demand(purpose.name, mode, demand, mtx_pos)
+                        self.dtm.add_demand(demand)
             else:
                 demand = purpose.calc_demand(purpose_impedance)
-                self._validate_demand(demand)
-                mtx_pos = (purpose.bounds[0], 0)
                 if purpose.dest != "source":
                     for mode in demand:
-                        self.dtm.add_demand(purpose.name, mode, demand[mode], mtx_pos)
-        
-        pos = self.ass_model.mapping[parameters.first_external_zone]
+                        self.dtm.add_demand(demand[mode])
 
         trip_sum = {}
-        sum_all = 0
 
         for mode in parameters.external_modes:
 
             if mode == "truck":
-                int_demand = self.trucks.sum(0) + self.trucks.sum(1)
+                int_demand = self.trucks.matrix.sum(0) + self.trucks.matrix.sum(1)
             elif mode == "trailer_truck":
-                int_demand = self.trailer_trucks.sum(0) + self.trailer_trucks.sum(1)
+                int_demand = self.trailer_trucks.matrix.sum(0) + self.trailer_trucks.matrix.sum(1)
             else:
                 nr_zones = len(self.zdata_base.zone_numbers)
                 int_demand = numpy.zeros(nr_zones)
@@ -164,10 +158,10 @@ class HelmetApplication():
                         int_demand += purpose.attracted_tours[mode]
             
             ext_demand = self.em.calc_external(mode, int_demand)
-            self.dtm.add_demand("external", mode, ext_demand, (pos, 0))
             trip_sum[mode] = int_demand.sum()
-            sum_all += trip_sum[mode]
+            self.dtm.add_demand(ext_demand)
         
+        sum_all = sum(trip_sum.values())
         mode_share = {}
         for mode in trip_sum:
             mode_share[mode] = trip_sum[mode] / sum_all
