@@ -161,7 +161,7 @@ class HelmetApplication():
             trip_sum[mode] = int_demand.sum()
             self.dtm.add_demand(ext_demand)
         
-        sum_all = sum(trip_sum)
+        sum_all = sum(trip_sum.values())
         mode_share = {}
         for mode in trip_sum:
             mode_share[mode] = trip_sum[mode] / sum_all
