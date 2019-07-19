@@ -1682,7 +1682,7 @@ mode_choice = {
         },
     },
     "sop": {
-        "transit": {
+        "all": {
             "individual_dummy": {},
         },
     },

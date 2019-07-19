@@ -277,5 +277,5 @@ class OriginModel(LogitModel):
         prob = {}
         # Mode is needed here to get through tests even
         # though the origin model does not take modes into account.
-        prob["transit"] = (exps / expsums).T
+        prob["all"] = (exps / expsums).T
         return prob

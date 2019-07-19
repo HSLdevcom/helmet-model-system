@@ -11,6 +11,7 @@ from demand.freight import FreightModel
 from demand.trips import DemandModel
 from demand.external import ExternalModel
 from transform.impedance_transformer import ImpedanceTransformer
+from datatypes.demand import Demand
 import parameters
 
 class ModelTest(unittest.TestCase):
@@ -68,7 +69,8 @@ class ModelTest(unittest.TestCase):
                         dtm.add_demand(demand)
             else:
                 demand = purpose.calc_demand(purpose_impedance)
-                # self._validate_demand(demand)
+                for mode in demand:
+                    self._validate_demand(demand[mode])
                 if purpose.dest != "source":
                     for mode in demand:
                         dtm.add_demand(demand[mode])
@@ -122,9 +124,9 @@ class ModelTest(unittest.TestCase):
 
     def _validate_demand(self, demand):
         self.assertIsNotNone(demand)
-        self.assertIs(type(demand), dict)
-        self.assertIsNotNone(demand["transit"])
-        self.assertIs(type(demand["transit"]), numpy.ndarray)
-        self.assertEquals(demand["transit"].ndim, 2)
-        self.assertEquals(demand["transit"].shape[1], 6)
+        self.assertIsNotNone(demand)
+        self.assertIsInstance(demand, Demand)
+        self.assertIs(type(demand.matrix), numpy.ndarray)
+        self.assertEquals(demand.matrix.ndim, 2)
+        self.assertEquals(demand.matrix.shape[1], 6)
         
