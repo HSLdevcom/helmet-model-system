@@ -1,10 +1,21 @@
 import numpy
 
 class Tour:
-    def __init__(self, purpose, orig):
+    def __init__(self, purpose, origin):
+        """Tour definition for agent-based simulation.
+        
+        Parameters
+        ----------
+        purpose : Purpose
+            Travel purpose (hw/hs/ho/...)
+        origin : int
+            Origin zone number
+        """
         self._purpose = purpose
-        self.orig = orig
-        self.matrix = 1
+        self.orig = origin
+        self.dest = None
+        self.sec_dest = None
+        self.matrix = 1 # So far, one person per tour
         self.has_sec_dest = False
 
     @property 
@@ -16,17 +27,15 @@ class Tour:
     
     @property
     def position(self):
+        """tuple: (origin, destination, (secondary destination))
+        Position where to insert the demand
+        """
         zone_numbers = self._purpose.zone_data.zone_numbers
-        position = []
-        position.append(zone_numbers.get_loc(self.orig))
-        try:
+        position = [zone_numbers.get_loc(self.orig)]
+        if self.dest is not None:
             position.append(zone_numbers.get_loc(self.dest))
-        except AttributeError:
-            pass
-        try:
+        if self.sec_dest is not None:
             position.append(zone_numbers.get_loc(self.sec_dest))
-        except AttributeError:
-            pass
         return position
 
     def choose_mode(self):
@@ -43,7 +52,4 @@ class Tour:
             probs = self.purpose.calc_prob(self.mode, impedance[self.mode], self.position)
             self.sec_dest = numpy.random.choice(a=zone_numbers, p=probs)
         else:
-            try:
-                del self.sec_dest
-            except AttributeError:
-                pass
+            self.sec_dest = None

@@ -8,6 +8,13 @@ import random
 
 class DemandModel:
     def __init__(self, zone_data):
+        """Container for private tour purposes and models.
+
+        Parameters
+        ----------
+        zone_data : ZoneData
+            Data used for all demand calculations
+        """
         self.zone_data = zone_data
         self.tour_purposes = []
         self.purpose_dict = {}
@@ -27,6 +34,7 @@ class DemandModel:
                         self.purpose_dict[source].sec_dest_purpose = purpose
 
     def create_population(self):
+        """Create population for agent-based simulation."""
         self.population = []
         age_groups = (
             (7, 17),

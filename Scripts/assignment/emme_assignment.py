@@ -76,29 +76,56 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
     def set_matrices(self, matrices):
         emmebank = self.emme.modeller.emmebank
         for mtx in matrices:
-            id = param.emme_mtx["demand"][mtx]["id"]
-            emmebank.matrix(id).set_numpy_data(matrices[mtx])
+            idx = param.emme_mtx["demand"][mtx]["id"]
+            emmebank.matrix(idx).set_numpy_data(matrices[mtx])
     
     def get_matrices(self, mtx_type):
+        """Get all matrices of specified type.
+        
+        Parameters
+        ----------
+        mtx_type : str
+            Type (demand/time/transit/...)
+
+        Return
+        ------
+        dict
+            Subtype (car_work/truck/inv_time/...) : numpy 2-d matrix
+                Matrix of the specified type
+        """
         matrices = dict.fromkeys(param.emme_mtx[mtx_type].keys())
         for mtx in matrices:
             matrices[mtx] = self.get_matrix(mtx_type, mtx)
         return matrices
     
     def get_matrix(self, type1, type2):
-        """Get matrix with type pair (e.g., demand, car_work)."""
+        """Get matrix with type pair (e.g., demand, car_work).
+        
+        Parameters
+        ----------
+        type1 : str
+            Type (demand/time/transit/...)
+        type2 : str
+            Subtype (car_work/truck/inv_time/...)
+
+        Return
+        ------
+        numpy 2-d matrix
+            Matrix of the specified type
+        """
         emme_id = param.emme_mtx[type1][type2]["id"]
         return self.emme.modeller.emmebank.matrix(emme_id).get_numpy_data()
 
     @property
     def zone_numbers(self):
+        """Numpy array of all zone numbers.""" 
         emmebank = self.emme.modeller.emmebank
         scen = emmebank.scenario(param.emme_scenario["aht"])
         return scen.zone_numbers
     
     @property
     def mapping(self):
-        """Dictionary of zone numbers and corresponding indices."""
+        """dict: Dictionary of zone numbers and corresponding indices."""
         mapping = {}
         for idx, zone in enumerate(self.zone_numbers):
             mapping[zone] = idx
@@ -106,6 +133,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
 
     @property
     def nr_zones(self):
+        """int: Number of zones in assignment model."""
         return len(self.zone_numbers)
     
     def _damp(self, travel_time):
@@ -247,6 +275,14 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         netcalc(netw_specs, scenario)
 
     def calc_transit_cost(self, fares):
+        """Calculate transit zone cost matrix by performing 
+        multiple transit assignments.
+        
+        Parameters
+        ----------
+        fares : pandas Dataframe
+            Zone fare vector and fare excusiveness vector
+        """
         emmebank = self.emme.modeller.emmebank
         scen_id = param.emme_scenario["aht"]
         self._calc_boarding_penalties(scen_id, 5)
@@ -284,6 +320,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                     goes_outside |= has_visited[transit_zone]
             is_inside = ~goes_outside
             if fares["exclusive"][zone_combination] != "":
+                # Calculate fares that are exclusive for municipality citizens
                 zn = self.zone_numbers
                 exclusion = pandas.DataFrame(is_inside, zn, zn)
                 municipality = fares["exclusive"][zone_combination]
@@ -297,6 +334,8 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         # Calculate distance-based cost from inv-distance
         dist_price = fares["start_fare"] + fares["dist_fare"]*dist
         price[price==maxprice] = dist_price[price==maxprice]
+        idx = param.emme_mtx["cost"]["transit"]["id"]
+        emmebank.matrix(idx).set_numpy_data(price)
         # Reset boarding penalties
         self._calc_boarding_penalties(scen_id)
 

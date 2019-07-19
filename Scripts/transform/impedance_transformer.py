@@ -15,8 +15,8 @@ class ImpedanceTransformer:
         Return 
         ------
         dict 
-            Mode (car/transit/bike) : dict
-                Type (time/cost/dist) : numpy 2d matrix
+            Mode (car/transit/bike/walk) : dict
+                Type (time/cost/dist) : numpy 2-d matrix
         """
         if purpose.name == "hoo":
             r_0 = 0
