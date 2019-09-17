@@ -7,6 +7,8 @@ import os
 from parameters import emme_scenario, demand_share
 from datahandling.zonedata import ZoneData
 from datahandling.matrixdata import MatrixData
+from datatypes.demand import Demand
+from datatypes.purpose import Purpose
 from emme.emme_context import EmmeContext
 
 logging.basicConfig(format='%(asctime)s %(message)s',
@@ -20,8 +22,8 @@ for file_name in os.listdir(project_dir):
 zdata_forecast = ZoneData("2030")
 emme_context = EmmeContext(empfile)
 ass_model = ass.EmmeAssignmentModel(emme_context, zdata_forecast.car_dist_cost)
-dtm = dt.DepartureTimeModel(ass_model)
 nr_zones = ass_model.nr_zones
+dtm = dt.DepartureTimeModel(nr_zones)
 car_matrix = numpy.arange(nr_zones**2).reshape(nr_zones, nr_zones)
 demand = {
     "hw": {
@@ -42,13 +44,16 @@ demand = {
     },
 }
 for purpose in demand:
+    spec = {
+        "name": purpose,
+        "orig": None,
+        "dest": None,
+        "area": "all",
+    }
+    purp = Purpose(spec, zdata_forecast)
     for mode in demand[purpose]:
-        dtm.add_demand(purpose, mode, demand[purpose][mode])
-# filename = os.path.join(project_dir, "Matrices", "freight_vrk"+".omx")
-# freight_file = omx.openFile(filename, 'w')
-# freight_file.createMapping("zone_number", [5, 6, 7, 2792, 16001])
-# for mode in demand["freight"]:
-#     freight_file[mode] = demand["freight"][mode][:5,:5]
+        dem = Demand(purp, mode, demand[purpose][mode])
+        dtm.add_demand(dem)
 travel_cost = {}
 for tp in emme_scenario:
     ass_model.assign(tp, dtm.demand[tp])
