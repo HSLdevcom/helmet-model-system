@@ -14,42 +14,6 @@ vot_inv = {
 }
 # Default distance cost [eur/km]
 dist_cost = 0.12
-# Default transit zone fare
-transit_cost = {
-    "AB": 59.7,
-    "BC": 59.7,
-    "DJ": 59.7, # It is also possible to travel to Jarvenpaa
-    "ABC": 107.5,
-    "CD": 98,
-    "BCD": 115.8,
-    "ABCD": 156.4,
-    "DNJMP": 63, # Keski-Uudenmaan seutulippu
-    "NA": 120, # Nurmijarvi - Helsinki
-    "NB": 120,
-    "NC": 120,
-    "V": 85, # Vihti
-    "VA": 149, # Vihti - Helsinki
-    "VB": 149,
-    "VC": 149,
-    "J": 35, # Jarvenpaa
-    "JA": 130, # Jarvenpaa - Helsinki
-    "JB": 130,
-    "JC": 87, # Jarvenpaa - Tikkurila
-    "JD": 46, # Jarvenpaa - Kerava/Tuusula
-    "MA": 168, # Mantsala/Hyvinkaa - Helsinki
-    "MB": 168,
-    "MC": 142, # Mantsala/Hyvinkaa - Tikkurila
-    "MD": 121, # Mantsala/Hyvinkaa - Kerava
-    "PA": 252, # Pornainen - Helsinki
-    "PB": 252,
-    "PC": 252,
-}
-# Tickets only sold to municipality citizens
-exclusive_tickets = {
-    "JD": "Jarvenpaa",
-}
-transit_start_cost = 57.5
-transit_dist_cost = 5.34
 # Boarding penalties for different transit modes
 boarding_penalty = {
     "b": 3,  # Bus
