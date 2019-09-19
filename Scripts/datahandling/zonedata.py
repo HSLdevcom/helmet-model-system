@@ -19,6 +19,7 @@ class ZoneData:
         self.transit_zone = transit_zone
         car_cost = read_file(data_dir, "car_cost.txt", True)
         self.car_dist_cost = car_cost[0]
+        self.trailers_prohibited = read_file(data_dir, "truck_zones.txt", True)
         val = {}
         pop = popdata["total"]
         val["population"] = pop
