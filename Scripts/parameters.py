@@ -1864,8 +1864,6 @@ external_modes = [
 first_surrounding_zone = 2792
 first_peripheral_zone = 16001
 first_external_zone = 31001
-garbage_destination = 2792
-trailers_prohibited = [5, 6]
 areas = {
     "downtown": (0, 999),
     "Helsinki_other": (1000, 1999),

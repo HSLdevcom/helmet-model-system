@@ -19,7 +19,9 @@ class ZoneData:
         self.transit_zone = transit_zone
         car_cost = read_file(data_dir, "car_cost.txt", True)
         self.car_dist_cost = car_cost[0]
-        self.trailers_prohibited = read_file(data_dir, "truck_zones.txt", True)
+        truckdata = read_file(data_dir, "truck_zones.txt", True)
+        self.trailers_prohibited = map(int, truckdata[0].split(','))
+        self.garbage_destination = map(int, truckdata[1].split(','))
         val = {}
         pop = popdata["total"]
         val["population"] = pop
@@ -128,8 +130,13 @@ class ZoneData:
 
 def read_file(data_dir, file_name, squeeze=False):
     path = os.path.join(data_dir, file_name)
+    if squeeze:
+        header = None
+    else:
+        header = "infer"
     return pandas.read_csv(filepath_or_buffer=path, 
                             delim_whitespace=True,
                             keep_default_na=False,
                             squeeze=squeeze,
-                            comment='#')
+                            comment='#',
+                            header=header)
