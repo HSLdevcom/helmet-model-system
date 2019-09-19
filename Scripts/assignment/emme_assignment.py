@@ -281,7 +281,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         Parameters
         ----------
         fares : pandas Dataframe
-            Zone fare vector and fare excusiveness vector
+            Zone fare vector and fare exclusiveness vector
         """
         emmebank = self.emme.modeller.emmebank
         scen_id = param.emme_scenario["aht"]
@@ -302,7 +302,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             self._assign_transit(scen_id, True)
             nr_visits = self.get_matrix("transit", "board_cost")
             dist = self.get_matrix("dist", "transit")
-            # If the number of visits is less than 1, there seem to
+            # If the number of visits is less than 1, there seems to
             # be an easy way to avoid visiting this transit zone
             has_visited[transit_zone] = (nr_visits >= 1)
         for centroid in network.centroids():
