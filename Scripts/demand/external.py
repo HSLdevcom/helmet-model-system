@@ -30,7 +30,7 @@ class ExternalModel:
         
         Return
         ------
-        numpy 2-d matrix
+        Demand
             Matrix of whole day trips from external to internal zones
         """
         base_mtx = self.base_demand.get_external(mode)

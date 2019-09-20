@@ -27,7 +27,7 @@ class FreightModel:
 
         Return
         ------
-        numpy 2-d matrix
+        Demand
             Freight mode demand matrix for whole day
         """
         zone_data_base = self.zdata_b.get_freight_data()
