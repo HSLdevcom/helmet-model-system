@@ -96,8 +96,7 @@ class ModelTest(unittest.TestCase):
                 dtm.add_demand(tour)
         impedance = {}
         for tp in parameters.emme_scenario:
-            n = ass_model.mapping[parameters.first_external_zone]
-            dtm.add_vans(tp, n)
+            dtm.add_vans(tp, zdata_forecast.nr_zones)
             ass_model.assign(tp, dtm.demand[tp])
             impedance[tp] = ass_model.get_impedance()
         dtm.init_demand()
