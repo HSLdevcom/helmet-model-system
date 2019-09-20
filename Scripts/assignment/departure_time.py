@@ -48,7 +48,7 @@ class DepartureTimeModel:
                     share = demand_share[demand.purpose.name][demand.mode][tp]
                     self._add_3d_demand(share, ass_class, tp, demand.matrix, demand.position)
             else:
-                raise IndexError("Tuple mtx_pos has wrong dimensions.")
+                raise IndexError("Tuple position has wrong dimensions.")
             self.logger.debug("Added demand for " + demand.purpose.name + ", " + demand.mode)
 
     def _add_2d_demand(self, demand_share, ass_class, time_period, mtx, mtx_pos):

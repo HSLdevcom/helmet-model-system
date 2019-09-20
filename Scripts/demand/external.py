@@ -38,7 +38,8 @@ class ExternalModel:
         mtx = pandas.DataFrame(0, indices, self.growth[mode].index)
         internal_trips = pandas.Series(internal_trips, self.zone_numbers)
         municipalities = parameters.municipality
-        # Base matrix is aggregated to municipality level
+        # Base matrix is aggregated to municipality level,
+        # so we need to disaggregate it
         for target, base_vector in base_mtx.iterrows():
             if target in municipalities:
                 l = municipalities[target][0]
@@ -48,8 +49,8 @@ class ExternalModel:
                 # Disaggregate base matrix to zone level and 
                 # multiply by growth factors
                 mtx.loc[l:u] = ( self.growth[mode].values
-                            * zone_weights[:, numpy.newaxis]
-                            * base_vector.values)
+                               * zone_weights[:, numpy.newaxis]
+                               * base_vector.values)
             else: # External-external trips
                 mtx.loc[int(target)] = self.growth[mode] * base_vector.values
         return Demand(self.purpose, mode, mtx.values.T)
