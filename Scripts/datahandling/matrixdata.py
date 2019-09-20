@@ -20,7 +20,7 @@ class MatrixData:
         return numpy.array(self.mtx_file[mode])
 
     def get_external(self, mode):
-        return read_file(self.path, "external_"+mode+".csv")
+        return read_file(self.path, "external_"+mode+".txt")
 
     def set_data(self, data, mode):
         self.mtx_file[mode] = data
