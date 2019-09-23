@@ -43,9 +43,12 @@ class ModelTest(unittest.TestCase):
             for ass_class in ass_classes:
                 base_demand[ass_class] = basematrices.get_data(ass_class)
             basematrices.close()
+            basematrices.open_file("cost", "peripheral")
+            periph_cost = basematrices.get_data("transit")
+            basematrices.close()
             ass_model.assign(tp, base_demand)
             if tp == "aht":
-                ass_model.calc_transit_cost(zdata_forecast.transit_zone)
+                ass_model.calc_transit_cost(zdata_forecast.transit_zone, periph_cost)
             impedance[tp] = ass_model.get_impedance()
             print("Validating impedance")
             self.assertEqual(3, len(impedance[tp]))
