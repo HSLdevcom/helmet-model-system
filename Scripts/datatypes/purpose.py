@@ -31,9 +31,9 @@ class Purpose:
         self.sources = []
         if self.area == "metropolitan":
             l = 0
-            u = zone_data.zone_numbers.get_loc(param.first_peripheral_zone)
+            u = zone_data.first_peripheral_zone
         if self.area == "peripheral":
-            l = zone_data.zone_numbers.get_loc(param.first_peripheral_zone)
+            l = zone_data.first_peripheral_zone
             u = zone_data.nr_zones
         if self.area == "all":
             l = 0

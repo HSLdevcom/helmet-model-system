@@ -4,6 +4,9 @@ import pandas
 import parameters as param
 
 class ZoneData:
+    CAPITAL_REGION = 0
+    SURROUNDING_AREA = 1
+    
     def __init__(self, scenario):
         script_dir = os.path.dirname(os.path.realpath(__file__))
         project_dir = os.path.join(script_dir, "..", "..")
@@ -19,6 +22,9 @@ class ZoneData:
         self.transit_zone = transit_zone
         car_cost = read_file(data_dir, "car_cost.txt", True)
         self.car_dist_cost = car_cost[0]
+        truckdata = read_file(data_dir, "truck_zones.txt", True)
+        self.trailers_prohibited = map(int, truckdata[0].split(','))
+        self.garbage_destination = map(int, truckdata[1].split(','))
         val = {}
         pop = popdata["total"]
         val["population"] = pop
@@ -68,6 +74,10 @@ class ZoneData:
         val["workplaces_own"] = home_municipality.values * wp.values
         val["workplaces_other"] = (1-home_municipality.values) * wp.values
         self.values = val
+        surrounding = param.areas["surrounding"]
+        self.first_surrounding_zone, _ = idx.slice_locs(surrounding[0])
+        peripheral = param.areas["peripheral"]
+        self.first_peripheral_zone, _ = idx.slice_locs(peripheral[0])
 
     def get_freight_data(self):
         """Get zone data for freight traffic calculation.
@@ -107,28 +117,28 @@ class ZoneData:
         pandas Series or numpy 2-d matrix
         """
         l, u = purpose.bounds
-        k = self.zone_numbers.get_loc(param.first_surrounding_zone)
+        if part is not None: # Return values for partial area only
+            if part == self.CAPITAL_REGION:
+                u = self.first_surrounding_zone
+            else:
+                l = self.first_surrounding_zone
         if self.values[key].ndim == 1: # If not a compound (i.e., matrix)
-            if generation:
-                if part is None: # Return values for all purpose zones
-                    return self.values[key][l:u]
-                elif part == 0: # Return values for capital region
-                    return self.values[key][l:k]
-                else: # Return values for surrounding area
-                    return self.values[key][k:u]
+            if generation: # Return values for purpose zones 
+                return self.values[key][l:u]
             else: # Return values for all zones
                 return self.values[key]
-        elif part is None: # Return matrix (purpose zones -> all zones)
+        else: # Return matrix (purpose zones -> all zones)
             return self.values[key][l:u, :]
-        elif part == 0: # Return matrix (capital region -> all zones)
-            return self.values[key][:k, :]
-        else: # Return matrix (surrounding area -> all zones)
-            return self.values[key][k:u, :]
 
 def read_file(data_dir, file_name, squeeze=False):
     path = os.path.join(data_dir, file_name)
+    if squeeze:
+        header = None
+    else:
+        header = "infer"
     return pandas.read_csv(filepath_or_buffer=path, 
                             delim_whitespace=True,
                             keep_default_na=False,
                             squeeze=squeeze,
-                            comment='#')
+                            comment='#',
+                            header=header)

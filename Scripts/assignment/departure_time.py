@@ -1,7 +1,7 @@
 import logging
 import numpy
 import os
-from parameters import emme_scenario, demand_share, assignment_class, emme_mtx, first_external_zone
+from parameters import emme_scenario, demand_share, assignment_class, emme_mtx
 
 class DepartureTimeModel:
     def __init__(self, nr_zones):

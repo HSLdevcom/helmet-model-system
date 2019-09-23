@@ -14,42 +14,6 @@ vot_inv = {
 }
 # Default distance cost [eur/km]
 dist_cost = 0.12
-# Default transit zone fare
-transit_cost = {
-    "AB": 59.7,
-    "BC": 59.7,
-    "DJ": 59.7, # It is also possible to travel to Jarvenpaa
-    "ABC": 107.5,
-    "CD": 98,
-    "BCD": 115.8,
-    "ABCD": 156.4,
-    "DNJMP": 63, # Keski-Uudenmaan seutulippu
-    "NA": 120, # Nurmijarvi - Helsinki
-    "NB": 120,
-    "NC": 120,
-    "V": 85, # Vihti
-    "VA": 149, # Vihti - Helsinki
-    "VB": 149,
-    "VC": 149,
-    "J": 35, # Jarvenpaa
-    "JA": 130, # Jarvenpaa - Helsinki
-    "JB": 130,
-    "JC": 87, # Jarvenpaa - Tikkurila
-    "JD": 46, # Jarvenpaa - Kerava/Tuusula
-    "MA": 168, # Mantsala/Hyvinkaa - Helsinki
-    "MB": 168,
-    "MC": 142, # Mantsala/Hyvinkaa - Tikkurila
-    "MD": 121, # Mantsala/Hyvinkaa - Kerava
-    "PA": 252, # Pornainen - Helsinki
-    "PB": 252,
-    "PC": 252,
-}
-# Tickets only sold to municipality citizens
-exclusive_tickets = {
-    "JD": "Jarvenpaa",
-}
-transit_start_cost = 57.5
-transit_dist_cost = 5.34
 # Boarding penalties for different transit modes
 boarding_penalty = {
     "b": 3,  # Bus
@@ -1861,11 +1825,6 @@ external_modes = [
     "truck",
     "trailer_truck",
 ]
-first_surrounding_zone = 2792
-first_peripheral_zone = 16001
-first_external_zone = 31001
-garbage_destination = 2792
-trailers_prohibited = [5, 6]
 areas = {
     "downtown": (0, 999),
     "Helsinki_other": (1000, 1999),
@@ -1913,45 +1872,4 @@ municipality = {
     "Myrskyla": (29000, 29499),
     "Lapinjarvi": (29500, 29999),
     "Loviisa": (30000, 30999),
-}
-numpy_municipality = { # Avoid using
-    "Helsinki": (100, 2001),
-    "Espoo": (2001, 3500),
-    "Kauniainen": (3500, 4001),
-    "Vantaa": (4001, 6000),
-    "Kirkkonummi": (6000, 7001),
-    "Vihti": (7001, 8001),
-    "Nurmijarvi": (8001, 9001),
-    "Tuusula": (9001, 10001),
-    "Kerava": (10001, 11001),
-    "Jarvenpaa": (11001, 12000),
-    "Sipoo": (12000, 13001),
-    "Mantsala": (13001, 14001),
-    "Hyvinkaa": (14001, 15000),
-    "Pornainen": (15000, 15501),
-    "Siuntio": (15501, 16000),
-    "Salo": (16000, 16500),
-    "Somero": (16500, 17000),
-    "Raasepori": (17000, 17501),
-    "Hanko": (17501, 18001),
-    "Inkoo": (18001, 18501),
-    "Karkkila": (18501, 19001),
-    "Lohja": (19001, 20000),
-    "Hameenlinna": (20000, 21000),
-    "Janakkala": (21000, 21500),
-    "Hattula": (21500, 22001),
-    "Loppi": (22001, 22500),
-    "Tammela": (22500, 23001),
-    "Riihimaki": (23001, 24001),
-    "Hausjarvi": (24001, 24500),
-    "Karkola": (24500, 25000),
-    "Orimattila": (25000, 25500),
-    "Hollola": (25500, 26000),
-    "Lahti": (26000, 27000),
-    "Porvoo": (27000, 28000),
-    "Pukkila": (28000, 28501),
-    "Askola": (28501, 29000),
-    "Myrskyla": (29000, 29501),
-    "Lapinjarvi": (29501, 30000),
-    "Loviisa": (30000, ),
 }

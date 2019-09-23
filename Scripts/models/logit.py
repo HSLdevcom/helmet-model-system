@@ -56,11 +56,10 @@ class LogitModel:
         return utility
 
     def _add_constant(self, utility, b):
-        k_label = parameters.first_surrounding_zone
-        k = self.zone_data.zone_numbers.get_loc(k_label)
         try: # If only one parameter
             utility += b
         except ValueError: # Separate params for cap region and surrounding
+            k = self.zone_data.first_surrounding_zone
             if utility.ndim == 1: # 1-d array calculation
                 utility[:k] += b[0]
                 utility[k:] += b[1]
@@ -69,34 +68,32 @@ class LogitModel:
                 utility[k:, :] += b[1]
     
     def _add_impedance(self, utility, impedance, b):
-        k_label = parameters.first_surrounding_zone
-        k = self.zone_data.zone_numbers.get_loc(k_label)
         for i in b:
             try: # If only one parameter
                 utility += b[i] * impedance[i]
             except ValueError: # Separate params for cap region and surrounding
+                k = self.zone_data.first_surrounding_zone
                 utility[:k, :] += b[i][0] * impedance[i][:k, :]
                 utility[k:, :] += b[i][1] * impedance[i][k:, :]
         return utility
 
     def _add_log_impedance(self, exps, impedance, b):
-        k_label = parameters.first_surrounding_zone
-        k = self.zone_data.zone_numbers.get_loc(k_label)
         for i in b:
             try: # If only one parameter
                 exps *= numpy.power(impedance[i] + 1, b[i])
             except ValueError: # Separate params for cap region and surrounding
+                k = self.zone_data.first_surrounding_zone
                 exps[:k, :] *= numpy.power(impedance[i][:k, :] + 1, b[i][0])
                 exps[k:, :] *= numpy.power(impedance[i][k:, :] + 1, b[i][1])
         return exps
     
     def _add_zone_util(self, utility, b, generation=False):
         zdata = self.zone_data
-        k = zdata.zone_numbers.get_loc(parameters.first_surrounding_zone)
         for i in b:
             try: # If only one parameter
                 utility += b[i] * zdata.get_data(i, self.purpose, generation)
             except ValueError: # Separate params for cap region and surrounding
+                k = self.zone_data.first_surrounding_zone
                 data_capital_region = zdata.get_data(i, self.purpose, generation, 0)
                 data_surrounding = zdata.get_data(i, self.purpose, generation, 1)
                 if utility.ndim == 1: # 1-d array calculation
@@ -171,8 +168,7 @@ class ModeDestModel(LogitModel):
             Mode (car/transit/bike/walk) : dict
                 Choice probabilities : numpy 2-d matrix
         """
-        k_label = parameters.first_surrounding_zone
-        k = self.zone_data.zone_numbers.get_loc(k_label)
+        k = self.zone_data.first_surrounding_zone
         b = self.mode_choice_param[mod_mode]["individual_dummy"][dummy]
         try:
             self.mode_exps[mod_mode] = b * self.mode_exps[mod_mode]

@@ -66,11 +66,11 @@ class FreightModel:
             b = parameters.garbage_generation
             garbage = ( b["population"] * zone_data_forecast["population"] 
                       + b["workplaces"] * zone_data_forecast["workplaces"])
-            demand[parameters.garbage_destination] += garbage
-            demand.loc[parameters.garbage_destination] += garbage
+            demand[self.zdata_f.garbage_destination] += garbage
+            demand.loc[self.zdata_f.garbage_destination] += garbage
         if mode == "trailer_truck":
-            demand[parameters.trailers_prohibited] = 0
-            demand.loc[parameters.trailers_prohibited] = 0
+            demand[self.zdata_f.trailers_prohibited] = 0
+            demand.loc[self.zdata_f.trailers_prohibited] = 0
         return Demand(self.purpose, mode, demand.values)
 
     def _generate_trips(self, zone_data, mode):

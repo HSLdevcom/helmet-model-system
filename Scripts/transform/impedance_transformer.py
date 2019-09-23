@@ -1,4 +1,4 @@
-from parameters import impedance_share, first_peripheral_zone, first_external_zone, tour_purposes
+from parameters import impedance_share, tour_purposes
 
 class ImpedanceTransformer:
     def transform(self, purpose, impedance):

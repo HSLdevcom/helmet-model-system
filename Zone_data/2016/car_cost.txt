@@ -1,3 +1,2 @@
 # Car usage cost [eur/km] 2016
-dist_cost
 0.12

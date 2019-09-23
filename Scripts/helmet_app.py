@@ -170,8 +170,7 @@ class HelmetApplication():
         impedance = {}
         
         for tp in parameters.emme_scenario:
-            n = self.ass_model.mapping[parameters.first_external_zone]
-            self.dtm.add_vans(tp, n)
+            self.dtm.add_vans(tp, self.zdata_forecast.nr_zones)
             self.ass_model.assign(tp, self.dtm.demand[tp])
             impedance[tp] = self.ass_model.get_impedance()
         
