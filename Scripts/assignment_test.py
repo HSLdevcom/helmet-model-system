@@ -58,7 +58,6 @@ travel_cost = {}
 for tp in emme_scenario:
     ass_model.assign(tp, dtm.demand[tp])
     travel_cost[tp] = ass_model.get_impedance()
-ass_model.calc_transit_cost(zdata_forecast.transit_zone)
 costs_files = MatrixData("2016")
 for time_period in travel_cost:
     for mtx_type in travel_cost[time_period]:
