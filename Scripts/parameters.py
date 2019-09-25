@@ -118,6 +118,7 @@ assignment_class = {
     "hs": "car_leisure",
     "ho": "car_leisure",
     "hoo": "car_work",
+    "wo": "car_work",
     "oo": "car_leisure",
     "hwp": "car_work",
     "hop": "car_leisure",
@@ -454,6 +455,23 @@ demand_share = {
             ),
         },
     },
+    "wo": {
+        "car": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
+        "transit": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
+        "bike": {
+            "aht": (0.01, 0.01),
+            "pt": (0.05, 0.05),
+            "iht": (0.05, 0.05),
+        },
+    },
     "oo": {
         "car": {
             "aht": (0.01, 0.01),
@@ -698,25 +716,47 @@ impedance_share = {
             "iht": (0, 0),
         },
     },
-    "oo": {
+    "wo": {
         "car": {
-            "aht": (0.01, 0.01),
-            "pt": (0.05, 0.05),
-            "iht": (0.05, 0.05),
+            "aht": (0.060857, 0.131316),
+            "pt":  (0.781535, 0.785023),
+            "iht": (0.157608, 0.083661),
         },
         "transit": {
-            "aht": (0.01, 0.01),
-            "pt": (0.05, 0.05),
-            "iht": (0.05, 0.05),
+            "aht": (0.060857, 0.131316),
+            "pt":  (0.781535, 0.785023),
+            "iht": (0.157608, 0.083661),
         },
         "bike": {
             "aht": (0, 0),
-            "pt": (0.5, 0.5),
+            "pt":  (1, 1),
             "iht": (0, 0),
         },
         "walk": {
             "aht": (0, 0),
-            "pt": (0.5, 0.5),
+            "pt":  (1, 1),
+            "iht": (0, 0),
+        },
+    },
+    "oo": {
+        "car": {
+            "aht": (0.129495, 0.055808),
+            "pt":  (0.668475, 0.666841),
+            "iht": (0.202030, 0.277352),
+        },
+        "transit": {
+            "aht": (0.129495, 0.055808),
+            "pt":  (0.668475, 0.666841),
+            "iht": (0.202030, 0.277352),
+        },
+        "bike": {
+            "aht": (0, 0),
+            "pt":  (1, 1),
+            "iht": (0, 0),
+        },
+        "walk": {
+            "aht": (0, 0),
+            "pt":  (1, 1),
             "iht": (0, 0),
         },
     },
@@ -1096,6 +1136,57 @@ destination_choice = {
                 "population": 1,
                 "workplaces": 0.3,
                 "downtown": (1, 1),
+            },
+        },
+    },
+    "wo": {
+        "car": {
+            "attraction": {},
+            "impedance": {
+                "time": -0.3,
+                "cost": -0.1,
+            },
+            "log": {
+                "size": 0.2,
+            },
+            "size": {
+                "workplaces": 0.3,
+            },
+        },
+        "transit": {
+            "attraction": {},
+            "impedance": {
+                "time": -0.3,
+            },
+            "log": {
+                "size": 0.2,
+            },
+            "size": {
+                "workplaces": 0.3,
+            },
+        },
+        "bike": {
+            "attraction": {},
+            "impedance": {
+                "time": -0.3,
+            },
+            "log": {
+                "size": 0.2,
+            },
+            "size": {
+                "workplaces": 0.3,
+            },
+        },
+        "walk": {
+            "attraction": {},
+            "impedance": {
+                "time": -0.3,
+            },
+            "log": {
+                "size": 0.2,
+            },
+            "size": {
+                "workplaces": 0.3,
             },
         },
     },
@@ -1559,6 +1650,48 @@ mode_choice = {
             "individual_dummy": {},
         },
     },
+    "wo": {
+        "car": {
+            "constant": 0,
+            "generation": {},
+            "attraction": {},
+            "impedance": {},
+            "log": {
+                "logsum": 3,
+            },
+            "individual_dummy": {},
+        },
+        "transit": {
+            "constant": 0,
+            "generation": {},
+            "attraction": {},
+            "impedance": {},
+            "log": {
+                "logsum": 5,
+            },
+            "individual_dummy": {},
+        },
+        "bike": {
+            "constant": 0,
+            "generation": {},
+            "attraction": {},
+            "impedance": {},
+            "log": {
+                "logsum": 2,
+            },
+            "individual_dummy": {},
+        },  
+        "walk": {
+            "constant": 0,
+            "generation": {},
+            "attraction": {},
+            "impedance": {},
+            "log": {
+                "logsum": 2,
+            },
+            "individual_dummy": {},
+        },
+    },
     "oo": {
         "car": {
             "constant": 0,
@@ -1696,6 +1829,9 @@ tour_generation = {
     "so": {
         "population": 0.5,
     },
+    "wo": {
+        "so": 0.5,
+    },
     "oo": {
         "so": 0.5,
     },
@@ -1784,6 +1920,13 @@ tour_purposes = (
         "orig": "home",
         "dest": "source",
         "area": "metropolitan",
+    },
+    {
+        "name": "wo",
+        "orig": "source",
+        "dest": "other",
+        "source": ("so",),
+        "area": "all",
     },
     {
         "name": "oo",
