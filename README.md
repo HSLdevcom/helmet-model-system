@@ -86,7 +86,14 @@ We're using PyTest framework. Test are in [tests-folder](Scripts/tests) and can 
 pipenv run pytest tests
 ```
 
-Remember to give the folder as parameter, otherwise pytest will run all the tests with the dependencies also.
+Remember to give the folder as parameter, otherwise pytest will run all the tests with the dependencies also. Also, remember to run `Scripts/import-dev-dependencies.bat` to get the path to Python libraries in `Scripts/pythonlibs`.
+
+In case you wish to run tests on Visual Studio Code, do either of the following:
+
+1. Rename `Scripts/.env-win` as `Scripts/.env`, or
+2. Open workspace settings by pressing Ctrl + Shift + P and selecting "Preferences: Open Workspace Settings", and add the line `"python.envFile": "${workspaceFolder}/.env-win"`.
+
+Now Visual Studio Code should discover all tests.
 
 ## Running
 
