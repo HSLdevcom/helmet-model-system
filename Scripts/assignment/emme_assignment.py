@@ -274,7 +274,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "inro.emme.network_calculation.network_calculator")
         netcalc(netw_specs, scenario)
 
-    def calc_transit_cost(self, fares):
+    def calc_transit_cost(self, fares, peripheral_cost):
         """Calculate transit zone cost matrix by performing 
         multiple transit assignments.
         
@@ -334,6 +334,12 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         # Calculate distance-based cost from inv-distance
         dist_price = fares["start_fare"] + fares["dist_fare"]*dist
         price[price==maxprice] = dist_price[price==maxprice]
+        # Replace fare for peripheral zones with fixed matrix
+        bounds = param.areas["peripheral"]
+        zn = pandas.Index(self.zone_numbers)
+        l, u = zn.slice_locs(bounds[0], bounds[1])
+        price[l:u, :u] = peripheral_cost
+        price[:u, l:u] = peripheral_cost.T
         idx = param.emme_mtx["cost"]["transit"]["id"]
         emmebank.matrix(idx).set_numpy_data(price)
         # Reset boarding penalties
