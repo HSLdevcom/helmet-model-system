@@ -1,4 +1,3 @@
 # External growth 2030
 	car	transit	truck	trailer_truck
-31001	1	1	1	1
 31501   1	1	1	1
