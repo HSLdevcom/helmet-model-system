@@ -39,7 +39,7 @@ class Purpose:
             l = 0
             u = zone_data.nr_zones
         if self.area == "external":
-            l = zone_data.nr_zones
+            l = zone_data.first_external_zone
             u = None
         self.bounds = (l, u)
         self.zone_data = zone_data

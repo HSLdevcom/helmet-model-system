@@ -1835,6 +1835,7 @@ areas = {
     "capital_region_other": (2000, 5999),
     "surrounding": (6000, 15999),
     "peripheral": (16000, 30999),
+    "external": (31001, None),
 }
 municipality = {
     "Helsinki": (0, 1999),
