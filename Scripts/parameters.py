@@ -526,6 +526,10 @@ demand_share = {
     },
     "external": {
         "car": {
+            # This is a way of implementing road-specific parameters,
+            # but it will work only with a fixed number of external zones,
+            # so no testing is possible.
+            # "aht": ([[0.01], [0.01]], [[0.01], [0.01]]),
             "aht": (0.01, 0.01),
             "pt": (0.05, 0.05),
             "iht": (0.05, 0.05),
@@ -1831,6 +1835,7 @@ areas = {
     "capital_region_other": (2000, 5999),
     "surrounding": (6000, 15999),
     "peripheral": (16000, 30999),
+    "external": (31031, None),
 }
 municipality = {
     "Helsinki": (0, 1999),

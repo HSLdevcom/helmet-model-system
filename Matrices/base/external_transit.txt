@@ -1,0 +1,6 @@
+		31501
+Helsinki	5
+Espoo		2
+Salo		1
+Raasepori	3
+31501		1

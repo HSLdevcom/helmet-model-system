@@ -35,16 +35,12 @@ class HelmetApplication():
             "total": config.get_value(Config.ITERATION_COUNT),
             "log": self.logger.get_filename()
         }
-        
         self.logger.info("Initializing matrices and models..", extra=self._get_status())
         self.zdata_base = ZoneData("2016")
         self.zdata_forecast = ZoneData(self._config.get_value(Config.DATA_PATH))
         self.basematrices = MatrixData("base")
-
         self.dm = DemandModel(self.zdata_forecast)
         self.fm = FreightModel(self.zdata_base, self.zdata_forecast, self.basematrices)
-        self.em = ExternalModel(self.basematrices, self.zdata_forecast)
-      
         if config.get_value(Config.USE_EMME):
             self.logger.info("Initializing Emme..")
             self.emme_context = EmmeContext(self._config.get_value(Config.EMME_PROJECT_PATH))
@@ -53,7 +49,7 @@ class HelmetApplication():
             self.logger.info("Initializing MockAssignmentModel..")
             costs = MatrixData("2016")
             self.ass_model = MockAssignmentModel(costs)
-        
+        self.em = ExternalModel(self.basematrices, self.zdata_forecast, self.ass_model.zone_numbers)
         self.dtm = dt.DepartureTimeModel(self.ass_model.nr_zones)
         self.imptrans = ImpedanceTransformer()
         self.ass_classes = dict.fromkeys(parameters.emme_mtx["demand"].keys())

@@ -6,10 +6,14 @@ from datatypes.purpose import Purpose
 
 
 class ExternalModel:
-    def __init__(self, base_demand, zone_data):
+    def __init__(self, base_demand, zone_data, zone_numbers):
         self.base_demand = base_demand
-        self.zone_numbers = zone_data.zone_numbers
+        self.internal_zones = zone_data.zone_numbers
+        self.all_zone_numbers = zone_numbers
         self.growth = zone_data.externalgrowth
+        index = pandas.Index(self.all_zone_numbers)
+        external = parameters.areas["external"]
+        zone_data.first_external_zone, _ = index.slice_locs(external[0])
         spec = {
             "name": "external",
             "orig": None,
@@ -30,15 +34,15 @@ class ExternalModel:
         
         Return
         ------
-        numpy 2-d matrix
+        Demand
             Matrix of whole day trips from external to internal zones
         """
         base_mtx = self.base_demand.get_external(mode)
-        indices = numpy.append(self.zone_numbers, self.growth[mode].index)
-        mtx = pandas.DataFrame(0, indices, self.growth[mode].index)
-        internal_trips = pandas.Series(internal_trips, self.zone_numbers)
+        mtx = pandas.DataFrame(0, self.all_zone_numbers, self.growth.index)
+        internal_trips = pandas.Series(internal_trips, self.internal_zones)
         municipalities = parameters.municipality
-        # Base matrix is aggregated to municipality level
+        # Base matrix is aggregated to municipality level,
+        # so we need to disaggregate it
         for target, base_vector in base_mtx.iterrows():
             if target in municipalities:
                 l = municipalities[target][0]
@@ -48,8 +52,8 @@ class ExternalModel:
                 # Disaggregate base matrix to zone level and 
                 # multiply by growth factors
                 mtx.loc[l:u] = ( self.growth[mode].values
-                            * zone_weights[:, numpy.newaxis]
-                            * base_vector.values)
+                               * zone_weights[:, numpy.newaxis]
+                               * base_vector.values)
             else: # External-external trips
                 mtx.loc[int(target)] = self.growth[mode] * base_vector.values
         return Demand(self.purpose, mode, mtx.values.T)
