@@ -84,7 +84,10 @@ class HelmetApplication():
             self.ass_model.assign(tp, base_demand)
         
             if tp == "aht":
-                self.ass_model.calc_transit_cost(self.zdata_forecast.transit_zone)
+                self.basematrices.open_file("cost", "peripheral")
+                periph_cost = self.basematrices.get_data("transit")
+                self.basematrices.close()
+                self.ass_model.calc_transit_cost(self.zdata_forecast.transit_zone, periph_cost)
         
             impedance[tp] = self.ass_model.get_impedance()
 
