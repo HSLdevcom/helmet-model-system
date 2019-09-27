@@ -12,7 +12,6 @@ We have two execution environments:
 - local development environment
 
 In both cases we're using Python version 2.7 because our final deployment target (EMME) supports only 2.7.
-Also the final prodution version is always run on Windows because EMME only supports windows.
 
 ### Dependencies
 
@@ -97,18 +96,25 @@ Now Visual Studio Code should discover all tests.
 
 ## Running
 
-In deployed-mode (with EMME) run test applications from Scripts folder:
+In deployed-mode (with EMME) run application from command line or using Helmet UI (https://github.com/HSLdevcom/helmet-ui). Before running from command line, configurations in(Scripts/dev-config.json) need to be set.
+
+```
+cd Scripts
+python helmet.py
+```
+
+Emme assignment can be tested without further configuration:
 
 ```   
 cd Scripts
-python assignment_test.py
+python test_assignment.py
 ```   
 
 During development when using pipenv:
 
 ```   
 cd Scripts
-pipenv run python assignment_test.py
+pipenv run python test_assignment.py
 ```   
 
 ## Licenses
