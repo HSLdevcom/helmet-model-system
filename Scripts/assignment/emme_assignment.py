@@ -352,6 +352,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             # Reset boarding penalties
             self._calc_boarding_penalties(scen_id)
         else:
+            # Use fixed cost matrix
             emmebank.matrix(idx).set_numpy_data(default_cost)
 
     def _specify(self):
