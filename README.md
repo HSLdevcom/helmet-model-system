@@ -96,7 +96,7 @@ Now Visual Studio Code should discover all tests.
 
 ## Running
 
-In deployed-mode (with EMME) run application from command line or using Helmet UI (https://github.com/HSLdevcom/helmet-ui). Before running from command line, configurations in(Scripts/dev-config.json) need to be set.
+In deployed-mode (with EMME) run application from command line or using [Helmet UI](https://github.com/HSLdevcom/helmet-ui). Before running from command line, configurations in [dev-config.json](Scripts/dev-config.json) need to be set.
 
 ```
 cd Scripts
