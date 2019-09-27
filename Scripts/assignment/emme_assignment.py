@@ -274,7 +274,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "inro.emme.network_calculation.network_calculator")
         netcalc(netw_specs, scenario)
 
-    def calc_transit_cost(self, fares, peripheral_cost):
+    def calc_transit_cost(self, fares, peripheral_cost, default_cost=None):
         """Calculate transit zone cost matrix by performing 
         multiple transit assignments.
         
@@ -282,68 +282,77 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         ----------
         fares : pandas Dataframe
             Zone fare vector and fare exclusiveness vector
+        peripheral_cost : numpy 2-d matrix
+            Fixed cost matrix for peripheral zones
+        default_cost (optional) : numpy 2-d matrix
+            Fixed cost matrix to use instead of calculated cost
         """
         emmebank = self.emme.modeller.emmebank
-        scen_id = param.emme_scenario["aht"]
-        self._calc_boarding_penalties(scen_id, 5)
-        scenario = emmebank.scenario(scen_id)
-        has_visited = {}
-        mapping = self.mapping
-        network = scenario.get_network()
-        transit_zones = set()
-        for node in network.nodes():
-            transit_zones.add(node.label)
-        for transit_zone in transit_zones:
-            # Set tag to 1 for nodes in transit zone and 0 elsewhere
-            for node in network.nodes():
-                node.data1 = (node.label == transit_zone)
-            scenario.publish_network(network)
-            # Transit assignment with zone tag as weightless boarding cost
-            self._assign_transit(scen_id, True)
-            nr_visits = self.get_matrix("transit", "board_cost")
-            dist = self.get_matrix("dist", "transit")
-            # If the number of visits is less than 1, there seems to
-            # be an easy way to avoid visiting this transit zone
-            has_visited[transit_zone] = (nr_visits >= 1)
-        for centroid in network.centroids():
-            # Add transit zone of destination to visited
-            has_visited[centroid.label][:, mapping[centroid.number]] = True
-        maxprice = 999
-        price = numpy.full_like(dist, maxprice)
-        mtx = next(iter(has_visited.values()))
-        for zone_combination in fares["fare"]:
-            goes_outside = numpy.full_like(mtx, False)
-            for transit_zone in has_visited:
-                # Check if the OD-flow has been at a node that is
-                # outside of this zone combination 
-                if transit_zone not in zone_combination:
-                    goes_outside |= has_visited[transit_zone]
-            is_inside = ~goes_outside
-            if fares["exclusive"][zone_combination] != "":
-                # Calculate fares that are exclusive for municipality citizens
-                zn = self.zone_numbers
-                exclusion = pandas.DataFrame(is_inside, zn, zn)
-                municipality = fares["exclusive"][zone_combination]
-                inclusion = param.municipality[municipality]
-                exclusion.loc[:inclusion[0]-1] = False
-                exclusion.loc[inclusion[1]+1:] = False
-                is_inside = exclusion.values
-            zone_price = fares["fare"][zone_combination]
-            # If the OD-flow matches several combinations, pick the cheapest
-            price[is_inside] = numpy.minimum(price[is_inside], zone_price)
-        # Calculate distance-based cost from inv-distance
-        dist_price = fares["start_fare"] + fares["dist_fare"]*dist
-        price[price==maxprice] = dist_price[price==maxprice]
-        # Replace fare for peripheral zones with fixed matrix
-        bounds = param.areas["peripheral"]
-        zn = pandas.Index(self.zone_numbers)
-        l, u = zn.slice_locs(bounds[0], bounds[1])
-        price[l:u, :u] = peripheral_cost
-        price[:u, l:u] = peripheral_cost.T
         idx = param.emme_mtx["cost"]["transit"]["id"]
-        emmebank.matrix(idx).set_numpy_data(price)
-        # Reset boarding penalties
-        self._calc_boarding_penalties(scen_id)
+        if default_cost is None:
+            scen_id = param.emme_scenario["aht"]
+            # Move transfer penalty to boarding penalties,
+            # a side effect is that it then also affects first boarding
+            self._calc_boarding_penalties(scen_id, 5)
+            scenario = emmebank.scenario(scen_id)
+            has_visited = {}
+            mapping = self.mapping
+            network = scenario.get_network()
+            transit_zones = set()
+            for node in network.nodes():
+                transit_zones.add(node.label)
+            for transit_zone in transit_zones:
+                # Set tag to 1 for nodes in transit zone and 0 elsewhere
+                for node in network.nodes():
+                    node.data1 = (node.label == transit_zone)
+                scenario.publish_network(network)
+                # Transit assignment with zone tag as weightless boarding cost
+                self._assign_transit(scen_id, True)
+                nr_visits = self.get_matrix("transit", "board_cost")
+                # If the number of visits is less than 1, there seems to
+                # be an easy way to avoid visiting this transit zone
+                has_visited[transit_zone] = (nr_visits >= 1)
+            for centroid in network.centroids():
+                # Add transit zone of destination to visited
+                has_visited[centroid.label][:, mapping[centroid.number]] = True
+            maxprice = 999
+            cost = numpy.full_like(nr_visits, maxprice)
+            mtx = next(iter(has_visited.values()))
+            for zone_combination in fares["fare"]:
+                goes_outside = numpy.full_like(mtx, False)
+                for transit_zone in has_visited:
+                    # Check if the OD-flow has been at a node that is
+                    # outside of this zone combination 
+                    if transit_zone not in zone_combination:
+                        goes_outside |= has_visited[transit_zone]
+                is_inside = ~goes_outside
+                if fares["exclusive"][zone_combination] != "":
+                    # Calculate fares exclusive for municipality citizens
+                    zn = self.zone_numbers
+                    exclusion = pandas.DataFrame(is_inside, zn, zn)
+                    municipality = fares["exclusive"][zone_combination]
+                    inclusion = param.municipality[municipality]
+                    exclusion.loc[:inclusion[0]-1] = False
+                    exclusion.loc[inclusion[1]+1:] = False
+                    is_inside = exclusion.values
+                zone_price = fares["fare"][zone_combination]
+                # If OD-flow matches several combinations, pick cheapest
+                cost[is_inside] = numpy.minimum(cost[is_inside], zone_price)
+            # Calculate distance-based cost from inv-distance
+            dist = self.get_matrix("dist", "transit")
+            dist_cost = fares["start_fare"] + fares["dist_fare"]*dist
+            cost[cost==maxprice] = dist_cost[cost==maxprice]
+            # Replace fare for peripheral zones with fixed matrix
+            bounds = param.areas["peripheral"]
+            zn = pandas.Index(self.zone_numbers)
+            l, u = zn.slice_locs(bounds[0], bounds[1])
+            cost[l:u, :u] = peripheral_cost
+            cost[:u, l:u] = peripheral_cost.T
+            emmebank.matrix(idx).set_numpy_data(cost)
+            # Reset boarding penalties
+            self._calc_boarding_penalties(scen_id)
+        else:
+            emmebank.matrix(idx).set_numpy_data(default_cost)
 
     def _specify(self):
         # Car assignment specification
