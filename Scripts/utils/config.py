@@ -10,6 +10,7 @@ class Config():
     LOG_FORMAT = 'LOG_FORMAT'
     DATA_PATH = 'DATA_PATH'
     EMME_PROJECT_PATH = 'EMME_PROJECT_PATH'
+    USE_FIXED_TRANSIT_COST = 'USE_FIXED_TRANSIT_COST'
 
     DefaultScenario = "helmet"
 

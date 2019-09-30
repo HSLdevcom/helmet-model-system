@@ -74,6 +74,7 @@ class HelmetApplication():
         impedance = {}
         
         for tp in parameters.emme_scenario:
+            self.logger.info("Assigning period " + tp)
             base_demand = {}
             self.basematrices.open_file("demand", tp)
         
@@ -87,7 +88,17 @@ class HelmetApplication():
                 self.basematrices.open_file("cost", "peripheral")
                 periph_cost = self.basematrices.get_data("transit")
                 self.basematrices.close()
-                self.ass_model.calc_transit_cost(self.zdata_forecast.transit_zone, periph_cost)
+                if self._config.get_value(Config.USE_FIXED_TRANSIT_COST):
+                    self.logger.info("Using fixed transit cost matrix")
+                    self.basematrices.open_file("cost", tp)
+                    fixed_cost = self.basematrices.get_data("transit")
+                    self.basematrices.close()
+                else:
+                    self.logger.info("Calculating transit cost")
+                    fixed_cost = None
+                self.ass_model.calc_transit_cost(self.zdata_forecast.transit_zone,
+                                                 periph_cost,
+                                                 fixed_cost)
         
             impedance[tp] = self.ass_model.get_impedance()
 

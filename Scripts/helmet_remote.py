@@ -20,6 +20,7 @@ config.set_value(Config.DATA_PATH, data_path)
 config.set_value(Config.EMME_PROJECT_PATH, emme_path)
 config.set_value(Config.ITERATION_COUNT, iterations)
 config.set_value(Config.USE_EMME, True)
+config.set_value(Config.USE_FIXED_TRANSIT_COST, False)
 config.set_value(Config.SCENARIO_NAME, scenario)
 
 log = Log.get_instance().initialize(config)
