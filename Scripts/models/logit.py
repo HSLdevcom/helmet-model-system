@@ -1,5 +1,6 @@
 import numpy
 import parameters
+import datahandling.resultdata as result
 
 class LogitModel:
     def __init__(self, zone_data, purpose):
@@ -149,6 +150,12 @@ class ModeDestModel(LogitModel):
                 Choice probabilities : numpy 2-d matrix
         """
         mode_expsum = self._calc_utils(impedance)
+        logsum = numpy.log(mode_expsum)
+        result.print_data(logsum,
+                          "accessibility.txt",
+                          self.zone_data.zone_numbers,
+                          self.purpose.name,
+                          self.purpose.bounds)
         return self._calc_prob(mode_expsum)
     
     def calc_individual_prob(self, mod_mode, dummy):

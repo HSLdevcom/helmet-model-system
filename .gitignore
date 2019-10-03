@@ -48,3 +48,4 @@ Logbook/project.mlbk-wal
 Scripts/.pytest_cache
 Scripts/tests/.pytest_cache
 Scripts/.env
+Results/*
