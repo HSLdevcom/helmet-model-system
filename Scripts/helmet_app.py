@@ -1,6 +1,7 @@
 from utils.config import Config
 from utils.log import Log
 import os
+import datahandling.resultdata as result
 from assignment.abstract_assignment import AssignmentModel
 from assignment.emme_assignment import EmmeAssignmentModel
 from assignment.mock_assignment import MockAssignmentModel
@@ -36,6 +37,7 @@ class HelmetApplication():
             "log": self.logger.get_filename()
         }
         self.logger.info("Initializing matrices and models..", extra=self._get_status())
+        result.set_path(name)
         self.zdata_base = ZoneData("2016")
         self.zdata_forecast = ZoneData(self._config.get_value(Config.DATA_PATH))
         self.basematrices = MatrixData("base")
