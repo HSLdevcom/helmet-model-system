@@ -199,11 +199,11 @@ emme_mtx = {
     },
     "gen_cost": {
         "car_work": {
-            "id": "mf371",
+            "id": "mf372",
             "description": "car work travel generalized cost",
         },
         "car_leisure": {
-            "id": "mf372",
+            "id": "mf373",
             "description": "car leisure travel generalized cost",
         },
     },
