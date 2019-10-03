@@ -104,6 +104,12 @@ class LogitModel:
                     utility[k:, :] += b[i][1] * data_surrounding
         return utility
 
+    def _add_log_zone_util(self, exps, b):
+        zdata = self.zone_data
+        for i in b:
+            exps *= numpy.power(zdata.get_data(i, self.purpose), b[i])
+        return exps
+
 
 class ModeDestModel(LogitModel):
     def calc_prob(self, impedance):
@@ -226,6 +232,7 @@ class DestModeModel(LogitModel):
             prob[mode] = mode_prob * dest_prob
         return prob
 
+
 class SecDestModel(LogitModel):
     def calc_prob(self, mode, impedance):
         """Calculate matrix of choice probabilities.
@@ -245,6 +252,7 @@ class SecDestModel(LogitModel):
         expsum = self._calc_dest_util(mode, impedance)
         prob = self.dest_exps[mode].T / expsum
         return prob
+
 
 class OriginModel(LogitModel):
     def calc_prob(self, impedance):
@@ -275,3 +283,20 @@ class OriginModel(LogitModel):
         # though the origin model does not take modes into account.
         prob["all"] = (exps / expsums).T
         return prob
+
+
+class CarUseModel(LogitModel):
+    def calc_prob(self):
+        b = {
+            "constant": 0,
+            "log": {
+                "population_density": -1.5,
+            },
+            "individual_dummy": {
+                "share_age_18-29": -2.5,
+            },
+        }
+        utility = numpy.zeros(self.zone_data.nr_zones)
+        self._add_constant(utility, b["constant"])
+        exps = numpy.exp(utility)
+        self._add_log_zone_util(exps, b["log"])
