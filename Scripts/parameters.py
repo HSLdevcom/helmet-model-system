@@ -1004,7 +1004,7 @@ destination_choice = {
     "hs": {
         "car": {
             "attraction": {
-                "parking_cost_other": -0.131053326543,
+                "parking_cost_errand": -0.131053326543,
             },
             "impedance": {
                 "time": -0.960814824614e-1,
@@ -1048,7 +1048,7 @@ destination_choice = {
             "attraction": {},
             "impedance": {},
             "log": {
-                "dist": (-1.93990622922, -1.65381682081)
+                "dist": (-1.93990622922, -1.65381682081),
                 "size": 1.00000000000,
             },
             "size": {
