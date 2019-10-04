@@ -33,6 +33,13 @@ class ZoneData:
         val["share_age_30-49"] = popdata["sh_3049"]
         val["share_age_50-64"] = popdata["sh_5064"]
         val["share_age_65-99"] = popdata["sh_65-"]
+        val["share_age_18-29_f"] = 0.5 * val["share_age_18-29"]
+        val["share_age_18-29_m"] = 0.5 * val["share_age_18-29"]
+        val["share_age_30-49_f"] = 0.5 * val["share_age_30-49"]
+        val["share_age_30-49_m"] = 0.5 * val["share_age_30-49"]
+        val["share_age_50-64_f"] = 0.5 * val["share_age_50-64"]
+        val["share_age_50-64_m"] = 0.5 * val["share_age_50-64"]
+        val["share_age_65-99_m"] = 0.5 * val["share_age_65-99"]
         self.zone_numbers = pop.index
         self.nr_zones = len(self.zone_numbers)
         val["population_density"] = pop / landdata["builtar"]

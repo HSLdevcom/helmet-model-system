@@ -1870,6 +1870,24 @@ garbage_generation = {
     "population": 0.000125,
     "workplaces": 0.000025,
 }
+car_usage = {
+    "constant": 1.184,
+    "generation": {
+        "downtown": -0.906,
+    },
+    "log": {
+        "population_density": -0.275,
+    },
+    "individual_dummy": {
+        "share_age_18-29_f": 1.15,
+        "share_age_18-29_m": 1.44,
+        "share_age_30-49_f": 2.33,
+        "share_age_30-49_m": 2.60,
+        "share_age_50-64_f": 2.09,
+        "share_age_50-64_m": 3.26,
+        "share_age_65-99_m": 3.10,
+    },
+}
 vector_calibration_threshold = 5
 # Maximum possible distance to destination
 distance_boundary = {

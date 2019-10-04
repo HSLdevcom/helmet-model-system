@@ -1,6 +1,7 @@
 import numpy
 import parameters
 
+
 class LogitModel:
     def __init__(self, zone_data, purpose):
         self.purpose = purpose
@@ -104,10 +105,10 @@ class LogitModel:
                     utility[k:, :] += b[i][1] * data_surrounding
         return utility
 
-    def _add_log_zone_util(self, exps, b):
+    def _add_log_zone_util(self, exps, b, generation=False):
         zdata = self.zone_data
         for i in b:
-            exps *= numpy.power(zdata.get_data(i, self.purpose), b[i])
+            exps *= numpy.power(zdata.get_data(i, self.purpose, generation), b[i])
         return exps
 
 
@@ -286,17 +287,26 @@ class OriginModel(LogitModel):
 
 
 class CarUseModel(LogitModel):
+    def __init__(self, zone_data, purpose):
+        self.zone_data = zone_data
+        self.purpose = purpose
+    
     def calc_prob(self):
-        b = {
-            "constant": 0,
-            "log": {
-                "population_density": -1.5,
-            },
-            "individual_dummy": {
-                "share_age_18-29": -2.5,
-            },
-        }
-        utility = numpy.zeros(self.zone_data.nr_zones)
+        b = parameters.car_usage
+        utility = numpy.zeros(self.purpose.bounds[1])
         self._add_constant(utility, b["constant"])
+        self._add_zone_util(utility, b["generation"], True)
         exps = numpy.exp(utility)
-        self._add_log_zone_util(exps, b["log"])
+        self._add_log_zone_util(exps, b["log"], True)
+        prob = exps / (exps+1)
+        no_dummy_share = 1
+        dummy_prob = 0
+        for i in b["individual_dummy"]:
+            dummy_share = self.zone_data.get_data(i, self.purpose, True).values
+            no_dummy_share -= dummy_share
+            ind_exps = b["individual_dummy"][i] * exps
+            ind_prob = ind_exps / (ind_exps+1)
+            dummy_prob += dummy_share * ind_prob
+        no_dummy_prob = no_dummy_share * prob
+        prob = no_dummy_prob + dummy_prob
+        return prob
