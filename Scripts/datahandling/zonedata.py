@@ -41,7 +41,9 @@ class ZoneData:
         wp = workdata["total"]
         val["workplaces"] = wp
         val["service"] = workdata["sh_serv"] * wp
+        serv = val["service"]
         val["shops"] = workdata["sh_shop"] * wp
+        shop = val["shops"]
         val["logistics"] = workdata["sh_logi"] * wp
         val["industry"] = workdata["sh_indu"] * wp
         val["parking_cost_work"] = workdata["parcosw"]
@@ -73,6 +75,10 @@ class ZoneData:
         val["population_other"] = (1-home_municipality.values) * pop.values
         val["workplaces_own"] = home_municipality.values * wp.values
         val["workplaces_other"] = (1-home_municipality.values) * wp.values
+        val["service_own"] = home_municipality.values * serv.values
+        val["service_other"] = (1-home_municipality.values) * serv.values
+        val["shops_own"] = home_municipality.values * shop.values
+        val["shops_other"] = (1-home_municipality.values) * shop.values
         self.values = val
         surrounding = param.areas["surrounding"]
         self.first_surrounding_zone, _ = idx.slice_locs(surrounding[0])
