@@ -988,7 +988,7 @@ destination_choice = {
         },
         "walk": {
             "attraction": {
-                "own_zone_area": -2.28325100532,
+                "own_zone_area": -2.28325100532, # Fix
             },
             "impedance": {},
             "log": {
@@ -1084,52 +1084,79 @@ destination_choice = {
     },
     "ho": {
         "car": {
-            "attraction": {},
+            "attraction": {
+                "own_zone": 0.1,
+                "parking_cost_errand": -0.1,
+            },
             "impedance": {
                 "time": -0.3,
-                "cost": -0.1,
             },
             "log": {
+                "cost": -0.1,
                 "size": 0.2,
             },
             "size": {
-                "workplaces": 0.3,
+                "population_other": 1,
+                "population_own": 0.2,
+                "service_other": 0.3,
+                "service_own": 0.2,
+                "shops": 0.2,
+                "downtown": (0.2, 0.3),
             },
         },
         "transit": {
-            "attraction": {},
+            "attraction": {
+                "own_zone": 0.1,
+                "downtown": 0.1,
+            },
             "impedance": {
                 "time": -0.3,
             },
             "log": {
+                "cost": -0.1,
                 "size": 0.2,
             },
             "size": {
-                "workplaces": 0.3,
+                "population_other": 1,
+                "population_own": 0.2,
+                "service_other": 0.3,
+                "service_own": 0.2,
+                "shops": 0.2,
+                "downtown": (0.2, 0.3),
             },
         },
         "bike": {
             "attraction": {},
-            "impedance": {
-                "time": -0.3,
-            },
+            "impedance": {},
             "log": {
+                "dist": (-0.1, -0.1),
                 "size": 0.2,
             },
             "size": {
-                "workplaces": 0.3,
+                "population_other": 1,
+                "population_own": 0.2,
+                "service_other": 0.3,
+                "service_own": 0.2,
+                "shops": 0.2,
+                "downtown": (0.2, 0.3),
             },
         },
         "walk": {
-            "attraction": {},
-            "impedance": {
-                "time": -0.3,
+            "attraction": {
+                "own_zone_area_sqrt": (0.1, 0.1),
             },
+            "impedance": {},
             "log": {
+                "dist": -0.1,
                 "size": 0.2,
             },
             "size": {
-                "workplaces": 0.3,
+                "population_other": 1,
+                "population_own": 0.2,
+                "service_other": 0.3,
+                "service_own": 0.2,
+                "shops": 0.2,
+                "downtown": (0.2, 0.3),
             },
         },
     },

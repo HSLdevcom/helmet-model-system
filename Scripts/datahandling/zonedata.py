@@ -59,8 +59,9 @@ class ZoneData:
         val["shops_elsewhere"] = (1-val["downtown"]) * val["shops"]
         # Create diagonal matrix with zone area
         di = numpy.diag_indices(self.nr_zones)
-        val["own_zone_area"] = numpy.zeros((self.nr_zones, self.nr_zones))
-        val["own_zone_area"][di] = val["zone_area"]
+        val["own_zone"] = numpy.zeros((self.nr_zones, self.nr_zones))
+        val["own_zone"][di] = 1
+        val["own_zone_area"] = val["own_zone"] * val["zone_area"].values
         val["own_zone_area_sqrt"] = numpy.sqrt(val["own_zone_area"])
         # Create matrix where value is 1 if origin and destination is in
         # same municipality
