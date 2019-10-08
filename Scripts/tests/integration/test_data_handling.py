@@ -52,18 +52,18 @@ class ZoneDataTest(unittest.TestCase):
     FREIGHT_DATA_INDEXES = [5, 6, 7, 2792, 16001, 17000]
 
     def _get_freight_data_2016(self):
-        zdata = ZoneData("2016")
+        zdata = ZoneData("2016_test")
         df = zdata.get_freight_data()
         self.assertIsNotNone(df)
         #print(df)
         return df
 
     def test_csv_file_read(self):
-        zdata2016 = ZoneData("2016")
+        zdata2016 = ZoneData("2016_test")
         self.assertIsNotNone(zdata2016.values["population"])
         self.assertIsNotNone(zdata2016.values["workplaces"])
 
-        zdata2030 = ZoneData("2030")
+        zdata2030 = ZoneData("2030_test")
         self.assertIsNotNone(zdata2030.values["population"])
         self.assertIsNotNone(zdata2030.values["workplaces"])
 
