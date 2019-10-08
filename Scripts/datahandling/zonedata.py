@@ -43,7 +43,9 @@ class ZoneData:
         wp = workdata["total"]
         val["workplaces"] = wp
         val["service"] = workdata["sh_serv"] * wp
+        serv = val["service"]
         val["shops"] = workdata["sh_shop"] * wp
+        shop = val["shops"]
         val["logistics"] = workdata["sh_logi"] * wp
         val["industry"] = workdata["sh_indu"] * wp
         val["parking_cost_work"] = parkdata["parcosw"]
@@ -59,8 +61,9 @@ class ZoneData:
         val["shops_elsewhere"] = (1-val["downtown"]) * val["shops"]
         # Create diagonal matrix with zone area
         di = numpy.diag_indices(self.nr_zones)
-        val["own_zone_area"] = numpy.zeros((self.nr_zones, self.nr_zones))
-        val["own_zone_area"][di] = val["zone_area"]
+        val["own_zone"] = numpy.zeros((self.nr_zones, self.nr_zones))
+        val["own_zone"][di] = 1
+        val["own_zone_area"] = val["own_zone"] * val["zone_area"].values
         val["own_zone_area_sqrt"] = numpy.sqrt(val["own_zone_area"])
         # Create matrix where value is 1 if origin and destination is in
         # same municipality
@@ -75,6 +78,10 @@ class ZoneData:
         val["population_other"] = (1-home_municipality.values) * pop.values
         val["workplaces_own"] = home_municipality.values * wp.values
         val["workplaces_other"] = (1-home_municipality.values) * wp.values
+        val["service_own"] = home_municipality.values * serv.values
+        val["service_other"] = (1-home_municipality.values) * serv.values
+        val["shops_own"] = home_municipality.values * shop.values
+        val["shops_other"] = (1-home_municipality.values) * shop.values
         self.values = val
         surrounding = param.areas["surrounding"]
         self.first_surrounding_zone, _ = idx.slice_locs(surrounding[0])

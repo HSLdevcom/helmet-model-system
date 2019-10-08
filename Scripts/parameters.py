@@ -820,35 +820,35 @@ destination_choice = {
     "hw": {
         "car": {
             "attraction": {
-                "parking_cost_work": -0.340,
+                "parking_cost_work": -0.306967355090,
             },
             "impedance": {
-                "time": -0.246e-1,
-                "cost": (-0.288e-1, -0.103),
+                "time": -0.240311421071e-1,
+                "cost": (-0.411197516348e-1, -0.976929479166e-1),
             },
             "log": {
-                "size": 1,
+                "size": 1.00000000000, # L_S_M
             },
             "size": {
-                "downtown": (numpy.exp(4.62), numpy.exp(5.33)),
-                "workplaces_own": (numpy.exp(0.341), numpy.exp(0.930)),
+                "downtown": (numpy.exp(4.82525484469), numpy.exp(5.46413339352)),
+                "workplaces_own": (numpy.exp(0.326534462277), numpy.exp(0.914054873639)),
                 "workplaces_other": 1,
             },
         },
         "transit": {
             "attraction": {
-                "downtown": 0.512,
+                "downtown": 0.483086068108,
             },
             "impedance": {
-                "time": -0.111e-1,
-                "cost": ((-0.288e-1) / 60, -0.103 / 44),
+                "time": -0.111547282384e-1,
+                "cost": ((-0.411197516348e-1) / 60, -0.976929479166e-1 / 44),
             },
             "log": {
-                "size": 1,
+                "size": 1.00000000000, # L_S_M
             },
             "size": {
-                "downtown": (4.62, 5.33),
-                "workplaces_own": (0.341, 0.930),
+                "downtown": (numpy.exp(4.82525484469), numpy.exp(5.46413339352)),
+                "workplaces_own": (numpy.exp(0.326534462277), numpy.exp(0.914054873639)),
                 "workplaces_other": 1,
             },
         },
@@ -856,27 +856,27 @@ destination_choice = {
             "attraction": {},
             "impedance": {},
             "log": {
-                "dist": (-1.13, -1.36),
-                "size": 1,
+                "dist": (-1.11485765438, -1.35996965070),
+                "size": 1.00000000000, # L_S_M
             },
             "size": {
-                "downtown": (4.62, 5.33),
-                "workplaces_own": (0.341, 0.930),
+                "downtown": (numpy.exp(4.82525484469), numpy.exp(5.46413339352)),
+                "workplaces_own": (numpy.exp(0.326534462277), numpy.exp(0.914054873639)),
                 "workplaces_other": 1,
             },
         },
         "walk": {
             "attraction": {
-                "own_zone_area_sqrt": (-2.07, -2.16),
+                "own_zone_area_sqrt": (-2.14509122337, -2.07210556201),
             },
             "impedance": {},
             "log": {
-                "dist": -2.68,
-                "size": 1,
+                "dist": -2.66058468415,
+                "size": 1.00000000000, # L_S_M
             },
             "size": {
-                "downtown": (4.62, 5.33),
-                "workplaces_own": (0.341, 0.930),
+                "downtown": (numpy.exp(4.82525484469), numpy.exp(5.46413339352)),
+                "workplaces_own": (numpy.exp(0.326534462277), numpy.exp(0.914054873639)),
                 "workplaces_other": 1,
             },
         },
@@ -884,29 +884,33 @@ destination_choice = {
     "hc": {
         "car": {
             "attraction": {
-                "own_zone_area": -0.2,
+                "parking_cost_work": -2.31917697254,
             },
             "impedance": {
-                "time": -0.3,
-                "cost": -0.1,
+                "time": -0.418311339830e-1,
+                "cost": -2.31917697254,
             },
             "log": {
-                "size": 0.2,
+                "size": 1.00000000000,
             },
             "size": {
-                "workplaces": 0.3,
+                "comprehensive_schools": 1,
             },
         },
         "transit": {
-            "attraction": {},
+            "attraction": {
+                "own_zone_area_sqrt": -1.40415965463,
+                "downtown": 0.704345842211,
+            },
             "impedance": {
-                "time": -0.3,
+                "time": -0.245629127645e-1,
             },
             "log": {
-                "size": 0.2,
+                "cost": (-2.31917697254 / 60, -2.31917697254 / 44),
+                "size": 1.00000000000,
             },
             "size": {
-                "workplaces": 0.3,
+                "comprehensive_schools": 1,
             },
         },
         "bike": {
@@ -915,349 +919,489 @@ destination_choice = {
                 "time": -0.3,
             },
             "log": {
-                "size": 0.2,
+                "dist": -2.04456095712,
+                "size": 1.00000000000,
             },
             "size": {
-                "workplaces": 0.3,
+                "comprehensive_schools": 1,
             },
         },
         "walk": {
-            "attraction": {},
-            "impedance": {
-                "time": -0.3,
+            "attraction": {
+                "own_zone_area_sqrt": -3.87680793384,
             },
+            "impedance": {},
             "log": {
-                "size": 0.2,
+                "dist": -4.89065780132,
+                "size": 1.00000000000,
             },
             "size": {
-                "workplaces": 0.3,
+                "comprehensive_schools": 1,
             },
         },
     },
     "hu": {
         "car": {
             "attraction": {
-                "own_zone_area": -0.2,
+                "parking_cost_work": -0.354136146210,
             },
             "impedance": {
-                "time": -0.3,
-                "cost": -0.1,
+                "time": -0.312118189213e-1,
+                "cost": -0.216784178710,
             },
             "log": {
-                "size": 0.2,
+                "size": 1.00000000000, # L_S_M
             },
             "size": {
-                "workplaces": 0.3,
+                "secondary_schools": numpy.exp(-1.22533543313),
+                "tertiary_education": 1,
             },
         },
         "transit": {
-            "attraction": {},
+            "attraction": {
+                "downtown": 0.145833772041,
+            },
             "impedance": {
-                "time": -0.3,
+                "time": -0.136559859790e-1,
+                "cost": (-0.216784178710 / 60, -0.216784178710 / 44)
             },
             "log": {
-                "size": 0.2,
+                "size": 1.00000000000,
             },
             "size": {
-                "workplaces": 0.3,
+                "secondary_schools": numpy.exp(-1.22533543313),
+                "tertiary_education": 1,
             },
         },
         "bike": {
             "attraction": {},
             "impedance": {
-                "time": -0.3,
+                "dist": -1.71018514578,
             },
             "log": {
-                "size": 0.2,
+                "size": 1.00000000000,
             },
             "size": {
-                "workplaces": 0.3,
+                "secondary_schools": numpy.exp(-1.22533543313),
+                "tertiary_education": 1,
             },
         },
         "walk": {
-            "attraction": {},
-            "impedance": {
-                "time": -0.3,
+            "attraction": {
+                "own_zone_area_sqrt": -2.28325100532,
             },
+            "impedance": {},
             "log": {
-                "size": 0.2,
+                "dist": -3.32917729353,
+                "size": 1.00000000000,
             },
             "size": {
-                "workplaces": 0.3,
+                "secondary_schools": numpy.exp(-1.22533543313),
+                "tertiary_education": 1,
             },
         },
     },
     "hs": {
         "car": {
-            "attraction": {},
+            "attraction": {
+                "parking_cost_errand": -0.131053326543,
+            },
             "impedance": {
-                "time": -0.3,
-                "cost": -0.1,
+                "time": -0.960814824614e-1,
+                "cost": -0.112450201944,
             },
             "log": {
-                "size": 0.2,
+                "size": 1.00000000000, # L_S_M
             },
             "size": {
-                "workplaces": 0.3,
+                "population_other": 1,
+                "population_own": numpy.exp(1.58732389618),
+                "shops_other": numpy.exp(6.24804591506),
+                "shops_own": (numpy.exp(6.19259580740), numpy.exp(7.10231579547)),
+                "service_other": numpy.exp(3.77954709039),
+                "service_own": (numpy.exp(4.53224477260), numpy.exp(5.13038361124)),
+                "downtown": (numpy.exp(9.04364663102), numpy.exp(7.19898499824)),
             },
         },
         "transit": {
-            "attraction": {},
+            "attraction": {
+                "downtown": (0.135335656706, 2.62480475297),
+            },
             "impedance": {
-                "time": -0.3,
+                "time": -0.299237931923e-1,
+                "cost": -0.112450201944 / 30,
             },
             "log": {
-                "size": 0.2,
+                "size": 1.00000000000,
             },
             "size": {
-                "workplaces": 0.3,
+                "population_other": 1,
+                "population_own": numpy.exp(1.58732389618),
+                "shops_other": numpy.exp(6.24804591506),
+                "shops_own": (numpy.exp(6.19259580740), numpy.exp(7.10231579547)),
+                "service_other": numpy.exp(3.77954709039),
+                "service_own": (numpy.exp(4.53224477260), numpy.exp(5.13038361124)),
+                "downtown": (numpy.exp(9.04364663102), numpy.exp(7.19898499824)),
             },
         },
         "bike": {
             "attraction": {},
-            "impedance": {
-                "time": -0.3,
-            },
+            "impedance": {},
             "log": {
-                "size": 0.2,
+                "dist": (-1.93990622922, -1.65381682081),
+                "size": 1.00000000000,
             },
             "size": {
-                "workplaces": 0.3,
+                "population_other": 1,
+                "population_own": numpy.exp(1.58732389618),
+                "shops_other": numpy.exp(6.24804591506),
+                "shops_own": (numpy.exp(6.19259580740), numpy.exp(7.10231579547)),
+                "service_other": numpy.exp(3.77954709039),
+                "service_own": (numpy.exp(4.53224477260), numpy.exp(5.13038361124)),
+                "downtown": (numpy.exp(9.04364663102), numpy.exp(7.19898499824)),
             },
         },
         "walk": {
-            "attraction": {},
-            "impedance": {
-                "time": -0.3,
+            "attraction": {
+                "own_zone_area_sqrt": (-3.44256406401, -4.67197096996),
+                "population_density": 0.212083748622e-4,
             },
+            "impedance": {},
             "log": {
-                "size": 0.2,
+                "dist": -3.98943568695,
+                "size": 1.00000000000,
             },
             "size": {
-                "workplaces": 0.3,
+                "population_other": 1,
+                "population_own": numpy.exp(1.58732389618),
+                "shops_other": numpy.exp(6.24804591506),
+                "shops_own": (numpy.exp(6.19259580740), numpy.exp(7.10231579547)),
+                "service_other": numpy.exp(3.77954709039),
+                "service_own": (numpy.exp(4.53224477260), numpy.exp(5.13038361124)),
+                "downtown": (numpy.exp(9.04364663102), numpy.exp(7.19898499824)),
             },
         },
     },
     "ho": {
         "car": {
-            "attraction": {},
+            "attraction": {
+                "own_zone": -0.146221054,
+                "parking_cost_errand": -0.24573436,
+            },
             "impedance": {
-                "time": -0.3,
-                "cost": -0.1,
+                "time": -0.034134566,
             },
             "log": {
-                "size": 0.2,
+                "cost": -0.922540003,
+                "size": 1,
             },
             "size": {
-                "workplaces": 0.3,
+                "population_other": 1,
+                "population_own": numpy.exp(1.205650309),
+                "service_other": numpy.exp(2.384174142),
+                "service_own": numpy.exp(3.183207081),
+                "shops": numpy.exp(2.998477655),
+                "downtown": (numpy.exp(7.813868577), numpy.exp(4.709424332)),
             },
         },
         "transit": {
-            "attraction": {},
+            "attraction": {
+                "own_zone": -2.139067338,
+                "downtown": 0.569673156,
+            },
             "impedance": {
-                "time": -0.3,
+                "time": -0.018376845,
             },
             "log": {
-                "size": 0.2,
+                "cost": -0.922540003 / 30,
+                "size": 1,
             },
             "size": {
-                "workplaces": 0.3,
+                "population_other": 1,
+                "population_own": numpy.exp(1.205650309),
+                "service_other": numpy.exp(2.384174142),
+                "service_own": numpy.exp(3.183207081),
+                "shops": numpy.exp(2.998477655),
+                "downtown": (numpy.exp(7.813868577), numpy.exp(4.709424332)),
             },
         },
         "bike": {
             "attraction": {},
-            "impedance": {
-                "time": -0.3,
-            },
+            "impedance": {},
             "log": {
-                "size": 0.2,
+                "dist": (-1.840032015, -1.657687972),
+                "size": 1,
             },
             "size": {
-                "workplaces": 0.3,
+                "population_other": 1,
+                "population_own": numpy.exp(1.205650309),
+                "service_other": numpy.exp(2.384174142),
+                "service_own": numpy.exp(3.183207081),
+                "shops": numpy.exp(2.998477655),
+                "downtown": (numpy.exp(7.813868577), numpy.exp(4.709424332)),
             },
         },
         "walk": {
-            "attraction": {},
-            "impedance": {
-                "time": -0.3,
+            "attraction": {
+                "own_zone_area_sqrt": (-1.139032362, -1.012079317),
+                "population_density": -4.18771E-05,
             },
+            "impedance": {},
             "log": {
-                "size": 0.2,
+                "dist": -3.701172838,
+                "size": 1,
             },
             "size": {
-                "workplaces": 0.3,
+                "population_other": 1,
+                "population_own": numpy.exp(1.205650309),
+                "service_other": numpy.exp(2.384174142),
+                "service_own": numpy.exp(3.183207081),
+                "shops": numpy.exp(2.998477655),
+                "downtown": (numpy.exp(7.813868577), numpy.exp(4.709424332)),
             },
         },
     },
     "hoo": {
         "car": {
-            "attraction": {},
+            "attraction": {
+                "own_zone": 0.496255377,
+                # own zone origin? 1.511261249
+                "parking_cost_errand": -0.110043052,
+            },
             "impedance": {
-                "time": -0.3,
-                "cost": -0.1,
+                "time": -0.121821884,
+                "cost": -0.071273703,
             },
             "log": {
-                "size": 0.2,
+                "size": 0.635546074,
             },
             "size": {
-                "workplaces": 0.3,
+                "population": 1,
+                "service": numpy.exp(3.359535766),
+                "shops": numpy.exp(5.054869817),
+                "downtown": numpy.exp(5.497881457),
             },
         },
         "transit": {
-            "attraction": {},
+            "attraction": {
+                "own_zone": -0.582370838,
+                # own zone origin? 1.138959644
+            },
             "impedance": {
-                "time": -0.3,
+                "time": -0.054854548,
+                "cost": -0.071273703 / 30,
             },
             "log": {
-                "size": 0.2,
+                "size": 0.564060942,
             },
             "size": {
-                "workplaces": 0.3,
+                "population": 1,
+                "service": numpy.exp(3.171875158),
+                "shops": numpy.exp(5.513706147),
             },
         },
         "bike": {
-            "attraction": {},
+            "attraction": {
+                "own_zone": 0.698948786,
+                # own zone origin? 1.254997132
+            },
             "impedance": {
-                "time": -0.3,
+                "dist": -0.575044482,
             },
             "log": {
-                "size": 0.2,
+                "size": 0.698342216,
             },
             "size": {
-                "workplaces": 0.3,
+                "population": 1,
+                "service": numpy.exp(1.455295457),
+                "shops": numpy.exp(3.2502116),
             },
         },
     },
     "so": {
         "logsum": {
-            "attraction": {},
+            "attraction": {
+                "own_zone": 0.578607605,
+            },
             "impedance": {},
             "log": {
-                "logsum": 0.2,
-                "size": 0.2,
+                "logsum": 1.011586109,
+                "size": 0.814168308,
             },
             "size": {
                 "population": 1,
-                "workplaces": 0.3,
-                "downtown": (1, 1),
+                "workplaces": 2.572258993,
+                "downtown": (1, 5.674738917), # Fix
             },
         },
     },
     "wo": {
         "car": {
-            "attraction": {},
+            "attraction": {
+                "parking_cost_errand": -0.306197294,
+            },
             "impedance": {
-                "time": -0.3,
-                "cost": -0.1,
+                "time": -0.064566099,
             },
             "log": {
-                "size": 0.2,
+                "cost": -0.722944564,
+                "size": 1,
             },
             "size": {
-                "workplaces": 0.3,
+                "population": 1,
+                "workplaces": numpy.exp(0.407701749),
+                "service": numpy.exp(1.500860632),
+                "shops_downtown": numpy.exp(3.473356486),
+                "shops_elsewhere": numpy.exp(3.32217248),
+                "own_zone": numpy.exp(6.64854455),
             },
         },
         "transit": {
-            "attraction": {},
+            "attraction": {
+                "downtown": 0.287337989,
+                "own_zone": -2.001694496,
+            },
             "impedance": {
-                "time": -0.3,
+                "time": -0.023467029,
             },
             "log": {
-                "size": 0.2,
+                "cost": -0.722944564 / 30,
+                "size": 1,
             },
             "size": {
-                "workplaces": 0.3,
+                "population": 1,
+                "workplaces": numpy.exp(0.407701749),
+                "service": numpy.exp(1.500860632),
+                "shops_downtown": numpy.exp(3.473356486),
+                "shops_elsewhere": numpy.exp(3.32217248),
+                "own_zone": numpy.exp(6.64854455),
             },
         },
         "bike": {
             "attraction": {},
-            "impedance": {
-                "time": -0.3,
-            },
+            "impedance": {},
             "log": {
-                "size": 0.2,
+                "dist": (-2.050036721, -1.837765569),
+                "size": 1,
             },
             "size": {
-                "workplaces": 0.3,
+                "population": 1,
+                "workplaces": numpy.exp(0.407701749),
+                "service": numpy.exp(1.500860632),
+                "shops_downtown": numpy.exp(3.473356486),
+                "shops_elsewhere": numpy.exp(3.32217248),
+                "own_zone": numpy.exp(6.64854455),
             },
         },
         "walk": {
-            "attraction": {},
-            "impedance": {
-                "time": -0.3,
+            "attraction": {
+                "own_zone_area_sqrt": (-0.959191593, -1.704599482),
             },
+            "impedance": {},
             "log": {
-                "size": 0.2,
+                "dist": -3.346606131,
+                "size": 1,
             },
             "size": {
-                "workplaces": 0.3,
+                "population": 1,
+                "workplaces": numpy.exp(0.407701749),
+                "service": numpy.exp(1.500860632),
+                "shops_downtown": numpy.exp(3.473356486),
+                "shops_elsewhere": numpy.exp(3.32217248),
+                "own_zone": numpy.exp(6.64854455),
             },
         },
     },
     "oo": {
         "car": {
-            "attraction": {},
+            "attraction": {
+                "parking_cost_errand": -0.306197294,
+            },
             "impedance": {
-                "time": -0.3,
-                "cost": -0.1,
+                "time": -0.064566099,
             },
             "log": {
-                "size": 0.2,
+                "cost": -0.722944564,
+                "size": 1,
             },
             "size": {
-                "workplaces": 0.3,
+                "population": 1,
+                "workplaces": numpy.exp(0.407701749),
+                "service": numpy.exp(1.500860632),
+                "shops_downtown": numpy.exp(3.473356486),
+                "shops_elsewhere": numpy.exp(3.32217248),
+                "own_zone": numpy.exp(6.64854455),
             },
         },
         "transit": {
-            "attraction": {},
+            "attraction": {
+                "downtown": 0.287337989,
+                "own_zone": -2.001694496,
+            },
             "impedance": {
-                "time": -0.3,
+                "time": -0.023467029,
             },
             "log": {
-                "size": 0.2,
+                "cost": -0.722944564 / 30,
+                "size": 1,
             },
             "size": {
-                "workplaces": 0.3,
+                "population": 1,
+                "workplaces": numpy.exp(0.407701749),
+                "service": numpy.exp(1.500860632),
+                "shops_downtown": numpy.exp(3.473356486),
+                "shops_elsewhere": numpy.exp(3.32217248),
+                "own_zone": numpy.exp(6.64854455),
             },
         },
         "bike": {
             "attraction": {},
-            "impedance": {
-                "time": -0.3,
-            },
+            "impedance": {},
             "log": {
-                "size": 0.2,
+                "dist": (-2.050036721, -1.837765569),
+                "size": 1,
             },
             "size": {
-                "workplaces": 0.3,
+                "population": 1,
+                "workplaces": numpy.exp(0.407701749),
+                "service": numpy.exp(1.500860632),
+                "shops_downtown": numpy.exp(3.473356486),
+                "shops_elsewhere": numpy.exp(3.32217248),
+                "own_zone": numpy.exp(6.64854455),
             },
         },
         "walk": {
-            "attraction": {},
-            "impedance": {
-                "time": -0.3,
+            "attraction": {
+                "own_zone_area_sqrt": (-0.959191593, -1.704599482),
             },
+            "impedance": {},
             "log": {
-                "size": 0.2,
+                "dist": -3.346606131,
+                "size": 1,
             },
             "size": {
-                "workplaces": 0.3,
+                "population": 1,
+                "workplaces": numpy.exp(0.407701749),
+                "service": numpy.exp(1.500860632),
+                "shops_downtown": numpy.exp(3.473356486),
+                "shops_elsewhere": numpy.exp(3.32217248),
+                "own_zone": numpy.exp(6.64854455),
             },
         },
     },
     "hwp": {
         "car": {
             "attraction": {
-                "parking_cost_work": -0.141,
-                "share_detached_houses": 0.559e-2,
-                "own_zone_area": -0.216e-1,
+                "parking_cost_work": -0.167648454911,
+                "share_detached_houses": 0.579675740565e-2,
+                "own_zone_area": -0.194842606662e-1,
             },
             "impedance": {
-                "time": -0.245e-1,
-                "cost": -0.141,
+                "time": -0.188031062001e-1,
+                "cost": -0.167648454911,
             },
             "log": {
-                "size": 0.909,
+                "size": 0.906272269187, # LN_Size
             },
             "size": {
                 "workplaces": 1,
@@ -1265,15 +1409,15 @@ destination_choice = {
         },
         "transit": {
             "attraction": {
-                "downtown": 0.238,
-                "own_zone_area": -0.853e-1,
+                "downtown": 0.490942327168,
+                "own_zone_area": -0.112492660238,
             },
             "impedance": {
-                "time": -0.714e-2,
-                "cost": -0.141 / 44,
+                "time": -0.808893404926e-2,
+                "cost": -0.167648454911 / 44,
             },
             "log": {
-                "size": 0.909,
+                "size": 0.906272269187, # LN_Size
             },
             "size": {
                 "workplaces": 1,
@@ -1283,40 +1427,40 @@ destination_choice = {
     "hop": {
         "car": {
             "attraction": {
-                "car_density": 0.198e-2,
-                "own_zone_area": -0.186e-1,
+                "car_density": 1000 * 0.187305245180e-2,
+                "own_zone_area": -0.138197654412e-1,
             },
             "impedance": {
-                "time": -0.302e-1,
-                "cost": -0.182,
+                "time": -0.288481815905e-1,
+                "cost": -0.188691214282,
             },
             "log": {
-                "size": 1,
+                "size": 1, # L_S_M
             },
             "size": {
-                "workplaces": 1.16,
-                "service": 110,
-                "shops": 211,
-                "comprehensive_schools": 14.1,
-                "population_own": 28.8,
+                "workplaces": numpy.exp(1.07808303849),
+                "service": numpy.exp(4.57535345257),
+                "shops": numpy.exp(5.35085890989),
+                "comprehensive_schools": numpy.exp(2.40450824304),
+                "population_own": numpy.exp(3.28776000706),
                 "population_other": 1,
             },
         },
         "transit": {
             "attraction": {},
             "impedance": {
-                "time": -0.611e-2,
-                "cost": -0.182/30,
+                "time": -0.552308836126e-2,
+                "cost": -0.188691214282 / 30,
             },
             "log": {
-                "size": 1,
+                "size": 1, # L_S_M
             },
             "size": {
-                "workplaces": 1.16,
-                "service": 110,
-                "shops": 211,
-                "comprehensive_schools": 14.1,
-                "population_own": 28.8,
+                "workplaces": numpy.exp(1.07808303849),
+                "service": numpy.exp(4.57535345257),
+                "shops": numpy.exp(5.35085890989),
+                "comprehensive_schools": numpy.exp(2.40450824304),
+                "population_own": numpy.exp(3.28776000706),
                 "population_other": 1,
             },
         },
@@ -1348,38 +1492,38 @@ destination_choice = {
     "oop": {
         "car": {
             "attraction": {
-                "parking_cost_errand": -0.221,
+                "parking_cost_errand": -0.227398812175,
             },
             "impedance": {
-                "time": -0.407e-1,
-                "cost": -0.221,
+                "time": -0.427365675012e-1,
+                "cost": -0.227398812175,
             },
             "log": {
-                "size": 1,
+                "size": 1, # L_S_M
             },
             "size": {
                 "population": 1,
-                "workplaces": 3.37,
-                "shops_downtown": 43.3,
-                "shops_elsewhere": 9.11,
+                "workplaces": numpy.exp(1.26651176555),
+                "shops_downtown": numpy.exp(4.08944842667),
+                "shops_elsewhere": numpy.exp(2.62226008068),
             },
         },
         "transit": {
             "attraction": {
-                "downtown": 2.79,
+                "downtown": 2.84600723332,
             },
             "impedance": {
-                "time": -0.828e-2,
-                "cost": -0.221 / 30,
+                "time": -0.819579857062e-2,
+                "cost": -0.227398812175 / 30,
             },
             "log": {
-                "size": 1,
+                "size": 1, # L_S_M
             },
             "size": {
                 "population": 1,
-                "workplaces": 3.37,
-                "shops_downtown": 43.3,
-                "shops_elsewhere": 9.11,
+                "workplaces": numpy.exp(1.26651176555),
+                "shops_downtown": numpy.exp(4.08944842667),
+                "shops_elsewhere": numpy.exp(2.62226008068),
             },
         },
     },
@@ -1389,44 +1533,44 @@ mode_choice = {
         "car": {
             "constant": 0,
             "generation": {
-                "car_density": (0.290e-2, 0.472e-2),
+                "car_density": (0.844179295926 * 1000 * 0.286886466040e-2, 0.844179295926 * 1000 * 0.412205399149e-2),
             },
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 0.792,
+                "logsum": 0.844179295926,
             },
             "individual_dummy": {
-                "car_users": (numpy.exp(3.18), numpy.exp(3.09)),
+                "car_users": (0.844179295926 * 2.99432056907, 0.844179295926 * 2.90130969119),
             },
         },
         "transit": {
-            "constant": (3.26, 3.46),
+            "constant": (0.844179295926 * 3.15335645065, 0.844179295926 * 3.09257722177),
             "generation": {},
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 0.792,
+                "logsum": 0.844179295926,
             },
             "individual_dummy": {},
         },
         "bike": {
-            "constant": (3.79, 4.38),
+            "constant": (0.844179295926 * 3.65997812160, 0.844179295926 * 4.10083690370),
             "generation": {},
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 0.792,
+                "logsum": 0.844179295926,
             },
             "individual_dummy": {},
         }, 
         "walk": {
-            "constant": (6.16, 6.58),
+            "constant": (0.844179295926 * 6.06426484277, 0.844179295926 * 6.31407702335),
             "generation": {},
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 0.792,
+                "logsum": 0.844179295926,
             },
             "individual_dummy": {},
         },
@@ -1435,42 +1579,42 @@ mode_choice = {
         "car": {
             "constant": 0,
             "generation": {
-                "car_density": 0.3,
+                "car_density": 0.272803753976 * 1000 * 0.201094997058e-01,
             },
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 3,
+                "logsum": 0.272803753976, # Dcoeff
             },
             "individual_dummy": {},
         },
         "transit": {
-            "constant": 0,
+            "constant": 0.272803753976 * 13.2817160786,
             "generation": {},
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 5,
+                "logsum": 0.272803753976, # Dcoeff
             },
             "individual_dummy": {},
         },
         "bike": {
-            "constant": 0,
+            "constant": 0.272803753976 * 11.3490028510,
             "generation": {},
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 2,
+                "logsum": 0.272803753976, # Dcoeff
             },
             "individual_dummy": {},
         },  
         "walk": {
-            "constant": 0,
+            "constant": 0.272803753976 * 17.7784859496,
             "generation": {},
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 2,
+                "logsum": 0.272803753976, # Dcoeff
             },
             "individual_dummy": {},
         },
@@ -1479,42 +1623,42 @@ mode_choice = {
         "car": {
             "constant": 0,
             "generation": {
-                "car_density": 0.3,
+                "car_density": 1000 * 0.504851816443e-2,
             },
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 3,
+                "logsum": 1.00000000000, # Dcoeff
             },
             "individual_dummy": {},
         },
         "transit": {
-            "constant": 0,
+            "constant": 3.10747422821,
             "generation": {},
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 5,
+                "logsum": 1.00000000000,
             },
             "individual_dummy": {},
         },
         "bike": {
-            "constant": 0,
+            "constant": 3.23689689401,
             "generation": {},
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 2,
+                "logsum": 1.00000000000,
             },
             "individual_dummy": {},
         },  
         "walk": {
-            "constant": 0,
+            "constant": 6.15888890793,
             "generation": {},
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 2,
+                "logsum": 1.00000000000,
             },
             "individual_dummy": {},
         },
@@ -1522,41 +1666,45 @@ mode_choice = {
     "hs": {
         "car": {
             "constant": 0,
-            "generation": {},
+            "generation": {
+                "car_density": (0.539979474415 * 1000 * 0.952522128478e-2, 0.539979474415 * 1000 * 0.156268961848e-1),
+            },
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 3,
+                "logsum": 0.539979474415, # Dcoeff
             },
-            "individual_dummy": {},
+            "individual_dummy": {
+                "car_users": (0.539979474415 * 4.35523030487, 0.539979474415 * 3.46844128674),
+            },
         },
         "transit": {
-            "constant": 0,
+            "constant": (0.539979474415 * 5.13091589060, 0.539979474415 * 4.98462338486),
             "generation": {},
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 5,
+                "logsum": 0.539979474415,
             },
             "individual_dummy": {},
         },
         "bike": {
-            "constant": 0,
+            "constant": (0.539979474415 * 3.98060152237, 0.539979474415 * 7.26646802781),
             "generation": {},
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 2,
+                "logsum": 0.539979474415,
             },
             "individual_dummy": {},
         },  
         "walk": {
-            "constant": 0,
+            "constant": (0.539979474415 * 10.8293044790, 0.539979474415 * 12.6937820419),
             "generation": {},
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 2,
+                "logsum": 0.539979474415,
             },
             "individual_dummy": {},
         },
@@ -1564,41 +1712,45 @@ mode_choice = {
     "ho": {
         "car": {
             "constant": 0,
-            "generation": {},
+            "generation": {
+                "car_density": (0.151688898 * 1000 * 0.029028726, 0.151688898 * 1000 * 0.010179897),
+            },
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 3,
+                "logsum": 0.151688898,
             },
-            "individual_dummy": {},
+            "individual_dummy": {
+                "car_users": (0.151688898 * 4.597793819, 0.151688898 * 3.107665106),
+            },
         },
         "transit": {
-            "constant": 0,
+            "constant": (0.151688898 * 8.71611785, 0.151688898 * -9.326014274),
             "generation": {},
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 5,
+                "logsum": 0.151688898,
             },
             "individual_dummy": {},
         },
         "bike": {
-            "constant": 0,
+            "constant": (0.151688898 * 5.077652282, 0.151688898 * -1.017242495),
             "generation": {},
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 2,
+                "logsum": 0.151688898,
             },
             "individual_dummy": {},
         },  
         "walk": {
-            "constant": 0,
+            "constant": (0.151688898 * 20.72419038, 0.151688898 * 12.53617415),
             "generation": {},
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 2,
+                "logsum": 0.151688898,
             },
             "individual_dummy": {},
         },
@@ -1609,47 +1761,47 @@ mode_choice = {
             "constant": 0,
             "generation": {},
             "attraction": {
-                "parking_cost_errand": -1,
+                "parking_cost_work": -0.35058138,
             },
-            "impedance": {},
-            "log": {
-                "time": -1,
-                "cost": -1,
+            "impedance": {
+                "time": -0.021901628,
+                "cost": -0.10378753,
             },
+            "log": {},
             "individual_dummy": {},
         },
         "transit": {
-            "constant": 1,
+            "constant": 0.437744247,
             "generation": {},
             "attraction": {
-                "downtown": 1,
+                "downtown": 0.502605142,
             },
             "impedance": {
-                "time": -1,
-                "cost": -1,
+                "time": -0.015704891,
+                "cost": -0.10378753 / 30,
             },
             "log": {},
             "individual_dummy": {},
         },
         "bike": {
-            "constant": 1,
+            "constant": 0.911203717,
             "generation": {},
             "attraction": {},
             "impedance": {},
             "log": {
-                "dist": -1,
+                "dist": -1.292779721,
             },
             "individual_dummy": {},
         },  
         "walk": {
-            "constant": 1,
+            "constant": 3.309720696,
             "generation": {},
             "attraction": {
-                "own_zone_area_sqrt": 1,
+                "own_zone_area_sqrt": -2.154849688,
             },
             "impedance": {},
             "log": {
-                "dist": -1,
+                "dist": -2.70272318,
             },
             "individual_dummy": {},
         },
@@ -1657,41 +1809,45 @@ mode_choice = {
     "wo": {
         "car": {
             "constant": 0,
-            "generation": {},
+            "generation": {
+                "car_density": (0.799256902 * 1000 * 0.002492582, 0.799256902 * 1000 * 0.001638454),
+            },
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 3,
+                "logsum": 0.799256902,
             },
-            "individual_dummy": {},
+            "individual_dummy": {
+                "car_users": (0.799256902 * 2.273164428, 0.799256902 * 2.72725345),
+            },
         },
         "transit": {
-            "constant": 0,
+            "constant": 0.799256902 * 2.739088214,
             "generation": {},
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 5,
+                "logsum": 0.799256902,
             },
             "individual_dummy": {},
         },
         "bike": {
-            "constant": 0,
+            "constant": (0.799256902 * 0.854636531, 0.799256902 * 1.245322555),
             "generation": {},
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 2,
+                "logsum": 0.799256902,
             },
             "individual_dummy": {},
         },  
         "walk": {
-            "constant": 0,
+            "constant": 0.799256902 * 6.416635051,
             "generation": {},
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 2,
+                "logsum": 0.799256902,
             },
             "individual_dummy": {},
         },
@@ -1699,41 +1855,45 @@ mode_choice = {
     "oo": {
         "car": {
             "constant": 0,
-            "generation": {},
+            "generation": {
+                "car_density": (0.799256902 * 1000 * 0.002492582, 0.799256902 * 1000 * 0.001638454),
+            },
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 3,
+                "logsum": 0.799256902,
             },
-            "individual_dummy": {},
+            "individual_dummy": {
+                "car_users": (0.799256902 * 2.273164428, 0.799256902 * 2.72725345),
+            },
         },
         "transit": {
-            "constant": 0,
+            "constant": 0.799256902 * 2.739088214,
             "generation": {},
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 5,
+                "logsum": 0.799256902,
             },
             "individual_dummy": {},
         },
         "bike": {
-            "constant": 0,
+            "constant": (0.799256902 * 0.854636531, 0.799256902 * 1.245322555),
             "generation": {},
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 2,
+                "logsum": 0.799256902,
             },
             "individual_dummy": {},
         },  
         "walk": {
-            "constant": 0,
+            "constant": 0.799256902 * 6.416635051,
             "generation": {},
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 2,
+                "logsum": 0.799256902,
             },
             "individual_dummy": {},
         },
@@ -1745,17 +1905,17 @@ mode_choice = {
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 1,
+                "logsum": 1.00000000000, # Dcoeff
             },
             "individual_dummy": {},
         },
         "transit": {
-            "constant": -2.20,
+            "constant": -1.79569982464, # T_const
             "generation": {},
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 1,
+                "logsum": 1.00000000000, # Dcoeff
             },
             "individual_dummy": {},
         },
@@ -1767,17 +1927,17 @@ mode_choice = {
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 1,
+                "logsum": 1.00000000000,
             },
             "individual_dummy": {},
         },
         "transit": {
-            "constant": -1.14,
+            "constant": -1.26883605707,
             "generation": {},
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 1,
+                "logsum": 1.00000000000,
             },
             "individual_dummy": {},
         },
@@ -1794,17 +1954,17 @@ mode_choice = {
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 0.786,
+                "logsum": 0.715272183645,
             },
             "individual_dummy": {},
         },
         "transit": {
-            "constant": -3.24,
+            "constant": 0.715272183645 * -3.44371464477,
             "generation": {},
             "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 0.786,
+                "logsum": 0.715272183645,
             },
             "individual_dummy": {},
         },
@@ -1917,7 +2077,7 @@ tour_purposes = (
         "dest": "any",
         "sec_dest": "any",
         "source": ("hw", "ho",),
-        "area": "metropolitan",
+        "area": "all",
     },
     {
         "name": "so",
