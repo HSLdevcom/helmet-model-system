@@ -63,7 +63,7 @@ class ModelTest(unittest.TestCase):
         for purpose in dm.tour_purposes:
             purpose_impedance = imptrans.transform(purpose, impedance)
             if purpose.name == "hoo":
-                l, u = purpose.bounds
+                l, u = next(iter(purpose.sources)).bounds
                 nr_zones = u - l
                 purpose.generate_tours()
                 for mode in purpose.model.dest_choice_param:
@@ -86,17 +86,20 @@ class ModelTest(unittest.TestCase):
                 int_demand = numpy.zeros(zdata_base.nr_zones)
                 for purpose in dm.tour_purposes:
                     if purpose.dest != "source":
-                        l, u = purpose.bounds
+                        if purpose.name == "hoo":
+                            l, u = next(iter(purpose.sources)).bounds
+                        else:
+                            l, u = purpose.bounds
                         int_demand[l:u] += purpose.generated_tours[mode]
                         int_demand += purpose.attracted_tours[mode]
             ext_demand = em.calc_external(mode, int_demand)
             dtm.add_demand(ext_demand)
         purpose_impedance = imptrans.transform(dm.purpose_dict["hoo"], impedance)
-        for person in dm.population:
-            for tour in person.tours:
-                tour.choose_mode()
-                tour.choose_destination(purpose_impedance)
-                dtm.add_demand(tour)
+        # for person in dm.population:
+        #     for tour in person.tours:
+        #         tour.choose_mode()
+        #         tour.choose_destination(purpose_impedance)
+        #         dtm.add_demand(tour)
         impedance = {}
         for tp in parameters.emme_scenario:
             dtm.add_vans(tp, zdata_forecast.nr_zones)

@@ -1177,9 +1177,9 @@ destination_choice = {
             },
             "size": {
                 "population": 1,
-                "service": 3.359535766,
-                "shops": 5.054869817,
-                "downtown": 5.497881457,
+                "service": numpy.exp(3.359535766),
+                "shops": numpy.exp(5.054869817),
+                "downtown": numpy.exp(5.497881457),
             },
         },
         "transit": {
@@ -1196,8 +1196,8 @@ destination_choice = {
             },
             "size": {
                 "population": 1,
-                "service": 3.171875158,
-                "shops": 5.513706147,
+                "service": numpy.exp(3.171875158),
+                "shops": numpy.exp(5.513706147),
             },
         },
         "bike": {
@@ -1213,8 +1213,8 @@ destination_choice = {
             },
             "size": {
                 "population": 1,
-                "service": 1.455295457,
-                "shops": 3.2502116,
+                "service": numpy.exp(1.455295457),
+                "shops": numpy.exp(3.2502116),
             },
         },
     },
@@ -2077,7 +2077,7 @@ tour_purposes = (
         "dest": "any",
         "sec_dest": "any",
         "source": ("hw", "ho",),
-        "area": "metropolitan",
+        "area": "all",
     },
     {
         "name": "so",
