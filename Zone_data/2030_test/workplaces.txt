@@ -1,0 +1,15 @@
+# Workplaces 2030					
+#					
+# total: total number of workplaces in zone					
+# sh_serv: service workplaces as share of total number of workplaces					
+# sh_shop: retail workplaces as share of total number of workplaces					
+# sh_logi: logistics workplaces as share of total number of workplaces					
+# sh_indu: industry workplaces as share of total number of workplaces					
+#					
+	total	sh_serv	sh_shop	sh_logi	sh_indu
+5	7	0.2	0.1	0	0.1
+6	4	0.2	0.2	0.1	0
+7	6	0.2	0.2	0.1	0
+2792	3	0.2	0.2	0.1	0.3
+16001	2	0.2	0.2	0.1	0
+17000	3	0.2	0.2	0.1	0

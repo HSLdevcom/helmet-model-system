@@ -1,0 +1,16 @@
+# Population 2030						
+#						
+# total: total number of residents in zone						
+# sh_7-17: share of population aged 7-17						
+# sh_1829: share of population aged 18-29						
+# sh_3049: share of population aged 30-49						
+# sh_5064: share of population aged 50-64						
+# sh_65-: share of population aged over 65						
+#						
+	total	sh_7-17	sh_1829	sh_3049	sh_5064	sh_65-
+5	15	0.1	0.2	0.2	0.2	0.2
+6	10	0.1	0.2	0.2	0.2	0.2
+7	8	0.1	0.2	0.2	0.2	0.2
+2792	0	0	0	0	0	0
+16001	5	0.1	0.2	0.2	0.2	0.2
+17000	3	0.1	0.2	0.2	0.2	0.2

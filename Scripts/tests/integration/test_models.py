@@ -20,8 +20,8 @@ class ModelTest(unittest.TestCase):
     def test_models(self):
         print("Testing assignment..")
         result.set_path("test")
-        zdata_base = ZoneData("2016")
-        zdata_forecast = ZoneData("2030")
+        zdata_base = ZoneData("2016_test")
+        zdata_forecast = ZoneData("2030_test")
         basematrices = MatrixData("base")
         dm = DemandModel(zdata_forecast)
         dm.create_population()
