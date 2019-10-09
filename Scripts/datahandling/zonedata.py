@@ -15,6 +15,8 @@ class ZoneData:
         workdata = read_file(data_dir, "workplaces.txt")
         schooldata = read_file(data_dir, "schools.txt")
         landdata = read_file(data_dir, "land.txt")
+        cardata = read_file(data_dir, "cars.txt")
+        parkdata = read_file(data_dir, "park_cost.txt")
         self.externalgrowth = read_file(data_dir, "external.txt")
         transit_zone = read_file(data_dir, "transit_cost.txt").to_dict()
         transit_zone["dist_fare"] = transit_zone["fare"].pop("dist")
@@ -36,8 +38,8 @@ class ZoneData:
         self.zone_numbers = pop.index
         self.nr_zones = len(self.zone_numbers)
         val["population_density"] = pop / landdata["builtar"]
-        val["car_users"] = popdata["caruse"]
-        val["car_density"] = popdata["cardens"]
+        val["car_users"] = cardata["caruse"]
+        val["car_density"] = cardata["cardens"]
         wp = workdata["total"]
         val["workplaces"] = wp
         val["service"] = workdata["sh_serv"] * wp
@@ -46,8 +48,8 @@ class ZoneData:
         shop = val["shops"]
         val["logistics"] = workdata["sh_logi"] * wp
         val["industry"] = workdata["sh_indu"] * wp
-        val["parking_cost_work"] = workdata["parcosw"]
-        val["parking_cost_errand"] = workdata["parcose"]
+        val["parking_cost_work"] = parkdata["parcosw"]
+        val["parking_cost_errand"] = parkdata["parcose"]
         val["comprehensive_schools"] = schooldata["compreh"]
         val["secondary_schools"] = schooldata["secndry"]
         val["tertiary_education"] = schooldata["tertiary"]

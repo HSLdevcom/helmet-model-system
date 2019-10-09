@@ -3,6 +3,7 @@ import unittest
 import logging
 import os
 import numpy
+import datahandling.resultdata as result
 from assignment.mock_assignment import MockAssignmentModel
 import assignment.departure_time as dt
 from datahandling.zonedata import ZoneData
@@ -18,7 +19,6 @@ class ModelTest(unittest.TestCase):
     
     def test_models(self):
         print("Testing assignment..")
-
         zdata_base = ZoneData("2016_test")
         zdata_forecast = ZoneData("2030_test")
         basematrices = MatrixData("base_test")
@@ -105,6 +105,23 @@ class ModelTest(unittest.TestCase):
             dtm.add_vans(tp, zdata_forecast.nr_zones)
             ass_model.assign(tp, dtm.demand[tp])
             impedance[tp] = ass_model.get_impedance()
+            if tp == "aht":
+                car_time = numpy.ma.average(impedance[tp]["time"]["car_work"],
+                                            axis=1,
+                                            weights=dtm.demand[tp]["car_work"])
+                transit_time = numpy.ma.average(impedance[tp]["time"]["transit"],
+                                                axis=1,
+                                                weights=dtm.demand[tp]["transit"])
+                time_ratio = transit_time / car_time
+                result.print_data(time_ratio, "impedance_ratio.txt", ass_model.zone_numbers, "time")
+                car_cost = numpy.ma.average(impedance[tp]["cost"]["car_work"],
+                                            axis=1,
+                                            weights=dtm.demand[tp]["car_work"])
+                transit_cost = numpy.ma.average(impedance[tp]["cost"]["transit"],
+                                                axis=1,
+                                                weights=dtm.demand[tp]["transit"])
+                cost_ratio = transit_cost / 44 / car_cost
+                result.print_data(cost_ratio, "impedance_ratio.txt", ass_model.zone_numbers, "cost")
         dtm.init_demand()
         self.assertEquals(len(parameters.emme_scenario), len(impedance))
         self._validate_impedances(impedance["aht"])

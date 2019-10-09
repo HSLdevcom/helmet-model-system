@@ -52,3 +52,4 @@ Matrices/2030/*
 Scripts/.pytest_cache
 Scripts/tests/.pytest_cache
 Scripts/.env
+Results/*
