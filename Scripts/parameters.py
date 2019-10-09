@@ -883,19 +883,25 @@ destination_choice = {
     },
     "hc": {
         "car": {
-            "attraction": {
-                "parking_cost_work": -2.31917697254,
-            },
+            "attraction": {},
             "impedance": {
                 "time": -0.418311339830e-1,
-                "cost": -2.31917697254,
             },
             "log": {
+                "transform": -2.31917697254,
                 "size": 1.00000000000,
             },
             "size": {
                 "comprehensive_schools": 1,
             },
+            "transform": {
+                "attraction":{
+                    "parking_cost_errand": 1,
+                },
+                "impedance": {
+                    "cost": 1,
+                },
+            }
         },
         "transit": {
             "attraction": {
@@ -906,11 +912,17 @@ destination_choice = {
                 "time": -0.245629127645e-1,
             },
             "log": {
-                "cost": (-2.31917697254 / 60, -2.31917697254 / 44),
+                "transform": -2.31917697254,
                 "size": 1.00000000000,
             },
             "size": {
                 "comprehensive_schools": 1,
+            },
+            "transform": {
+                "attraction": {},
+                "impedance": {
+                    "cost": (1/60, 1/44),
+                },
             },
         },
         "bike": {
@@ -1113,7 +1125,7 @@ destination_choice = {
                 "time": -0.018376845,
             },
             "log": {
-                "cost": -0.922540003 / 30,
+                "transform": -0.922540003,
                 "size": 1,
             },
             "size": {
@@ -1123,6 +1135,12 @@ destination_choice = {
                 "service_own": numpy.exp(3.183207081),
                 "shops": numpy.exp(2.998477655),
                 "downtown": (numpy.exp(7.813868577), numpy.exp(4.709424332)),
+            },
+            "transform": {
+                "attraction": {},
+                "impedance": {
+                    "cost": 1/30,
+                },
             },
         },
         "bike": {
@@ -1265,7 +1283,7 @@ destination_choice = {
                 "time": -0.023467029,
             },
             "log": {
-                "cost": -0.722944564 / 30,
+                "transform": -0.722944564,
                 "size": 1,
             },
             "size": {
@@ -1275,6 +1293,12 @@ destination_choice = {
                 "shops_downtown": numpy.exp(3.473356486),
                 "shops_elsewhere": numpy.exp(3.32217248),
                 "own_zone": numpy.exp(6.64854455),
+            },
+            "transform": {
+                "attraction": {},
+                "impedance": {
+                    "cost": 1/30,
+                },
             },
         },
         "bike": {
@@ -1342,7 +1366,7 @@ destination_choice = {
                 "time": -0.023467029,
             },
             "log": {
-                "cost": -0.722944564 / 30,
+                "transform": -0.722944564,
                 "size": 1,
             },
             "size": {
@@ -1352,6 +1376,12 @@ destination_choice = {
                 "shops_downtown": numpy.exp(3.473356486),
                 "shops_elsewhere": numpy.exp(3.32217248),
                 "own_zone": numpy.exp(6.64854455),
+            },
+            "transform": {
+                "attraction": {},
+                "impedance": {
+                    "cost": 1/30,
+                },
             },
         },
         "bike": {
