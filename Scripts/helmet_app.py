@@ -143,7 +143,10 @@ class HelmetApplication():
                 int_demand = numpy.zeros(nr_zones)
                 for purpose in self.dm.tour_purposes:
                     if purpose.dest != "source":
-                        l, u = purpose.bounds
+                        if purpose.name == "hoo":
+                            l, u = next(iter(purpose.sources)).bounds
+                        else:
+                            l, u = purpose.bounds
                         int_demand[l:u] += purpose.generated_tours[mode]
                         int_demand += purpose.attracted_tours[mode]
             ext_demand = self.em.calc_external(mode, int_demand)
