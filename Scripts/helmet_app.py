@@ -136,7 +136,7 @@ class HelmetApplication():
             
             purpose_impedance = self.imptrans.transform(purpose, impedance)
             if purpose.name == "hoo":
-                l, u = purpose.bounds
+                l, u = next(iter(purpose.sources)).bounds
                 nr_zones = u - l
                 purpose.generate_tours()
                 for mode in purpose.model.dest_choice_param:
