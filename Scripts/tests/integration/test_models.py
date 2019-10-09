@@ -19,16 +19,15 @@ class ModelTest(unittest.TestCase):
     
     def test_models(self):
         print("Testing assignment..")
-        result.set_path("test")
         zdata_base = ZoneData("2016_test")
         zdata_forecast = ZoneData("2030_test")
-        basematrices = MatrixData("base")
+        basematrices = MatrixData("base_test")
         dm = DemandModel(zdata_forecast)
         dm.create_population()
         fm = FreightModel(zdata_base, zdata_forecast, basematrices)
         trucks = fm.calc_freight_traffic("truck")
         trailer_trucks = fm.calc_freight_traffic("trailer_truck")
-        costs = MatrixData("2016")
+        costs = MatrixData("2016_test")
         ass_model = MockAssignmentModel(costs)
         em = ExternalModel(basematrices, zdata_forecast, ass_model.zone_numbers)
         dtm = dt.DepartureTimeModel(ass_model.nr_zones)

@@ -39,6 +39,11 @@ class LogitModel:
         size = numpy.zeros_like(utility)
         self._add_zone_util(size, b["size"])
         impedance["size"] = size
+        if "transform" in b:
+            transimp = numpy.zeros_like(utility)
+            self._add_zone_util(transimp, b["transform"]["attraction"])
+            self._add_impedance(transimp, impedance, b["transform"]["impedance"])
+            impedance["transform"] = transimp
         self._add_log_impedance(self.dest_exps[mode], impedance, b["log"])
         if mode != "logsum":
             threshold = parameters.distance_boundary[mode]
