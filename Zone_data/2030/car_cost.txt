@@ -1,2 +1,0 @@
-# Car usage cost [eur/km] 2030
-0.12
