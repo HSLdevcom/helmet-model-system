@@ -108,7 +108,7 @@ class LogitModel:
     def _add_log_zone_util(self, exps, b, generation=False):
         zdata = self.zone_data
         for i in b:
-            exps *= numpy.power(zdata.get_data(i, self.purpose, generation), b[i])
+            exps *= numpy.power(zdata.get_data(i, self.purpose, generation) + 1, b[i])
         return exps
 
 
@@ -304,7 +304,7 @@ class CarUseModel(LogitModel):
         for i in b["individual_dummy"]:
             dummy_share = self.zone_data.get_data(i, self.purpose, True).values
             no_dummy_share -= dummy_share
-            ind_exps = b["individual_dummy"][i] * exps
+            ind_exps = numpy.exp(b["individual_dummy"][i]) * exps
             ind_prob = ind_exps / (ind_exps+1)
             dummy_prob += dummy_share * ind_prob
         no_dummy_prob = no_dummy_share * prob

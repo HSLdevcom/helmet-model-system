@@ -45,6 +45,7 @@ class ZoneData:
         val["population_density"] = pop / landdata["builtar"]
         val["car_users"] = popdata["caruse"]
         val["car_density"] = popdata["cardens"]
+        val["cars_per_1000"] = 1000 * val["car_density"]
         wp = workdata["total"]
         val["workplaces"] = wp
         val["service"] = workdata["sh_serv"] * wp
