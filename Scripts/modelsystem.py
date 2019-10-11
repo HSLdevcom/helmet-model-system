@@ -38,20 +38,17 @@ class ModelSystem:
         for tp in parameters.emme_scenario:
             self.logger.info("Assigning period " + tp)
             base_demand = {}
-            self.basematrices.open_file("demand", tp)
-            for ass_class in self.ass_classes:
-                base_demand[ass_class] = self.basematrices.get_data(ass_class)
-            self.basematrices.close()
+            with self.basematrices.open("demand", tp) as mtx:
+                for ass_class in self.ass_classes:
+                    base_demand[ass_class] = mtx.get_data(ass_class)
             self.ass_model.assign(tp, base_demand, is_first_iteration=True)
             if tp == "aht":
-                self.basematrices.open_file("cost", "peripheral")
-                peripheral_cost = self.basematrices.get_data("transit")
-                self.basematrices.close()
+                with self.basematrices.open("cost", "peripheral") as mtx:
+                    peripheral_cost = mtx.get_data("transit")
                 if use_fixed_transit_cost:
                     self.logger.info("Using fixed transit cost matrix")
-                    self.basematrices.open_file("cost", tp)
-                    fixed_cost = self.basematrices.get_data("transit")
-                    self.basematrices.close()
+                    with self.basematrices.open("cost", tp) as mtx:
+                        fixed_cost = mtx.get_data("transit")
                 else:
                     self.logger.info("Calculating transit cost")
                     fixed_cost = None
