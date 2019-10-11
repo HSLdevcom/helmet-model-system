@@ -39,7 +39,7 @@ class HelmetApplication():
         else:
             self.logger.info("Initializing MockAssignmentModel..")
             ass_model = MockAssignmentModel(MatrixData("2016"))
-        self.model = modelsystem.ModelSystem(self._config.get_value(Config.DATA_PATH), "2016", ass_model)
+        self.model = modelsystem.ModelSystem(self._config.get_value(Config.DATA_PATH), "2016", "base", ass_model)
         self._status["results"] = self.model.mode_share
 
     def run(self):
