@@ -13,10 +13,10 @@ import numpy
 
 
 class ModelSystem:
-    def __init__(self, zone_data_path, ass_model):
+    def __init__(self, zone_data_path, base_zone_data_path, ass_model):
         self.logger = Log.get_instance()
         self.ass_model = ass_model
-        self.zdata_base = ZoneData("2016")
+        self.zdata_base = ZoneData(base_zone_data_path)
         self.zdata_forecast = ZoneData(zone_data_path)
         self.basematrices = MatrixData("base")
         self.dm = DemandModel(self.zdata_forecast)
