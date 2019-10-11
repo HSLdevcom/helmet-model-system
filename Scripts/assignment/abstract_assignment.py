@@ -4,7 +4,7 @@ class AssignmentModel:
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def assign(self):
+    def assign(self, time_period, matrices, is_last_iteration=False, is_first_iteration=False):
         """Assign cars, bikes and transit for one time period.
         
         Parameters

@@ -6,8 +6,8 @@ from datahandling.matrixdata import MatrixData
 from demand.freight import FreightModel
 from demand.trips import DemandModel
 from demand.external import ExternalModel
+from datatypes.purpose import SecDestPurpose
 from transform.impedance_transformer import ImpedanceTransformer
-from emme.emme_context import EmmeContext
 import parameters
 import numpy
 
@@ -20,8 +20,12 @@ class ModelSystem:
         self.zdata_forecast = ZoneData(zone_data_path)
         self.basematrices = MatrixData("base")
         self.dm = DemandModel(self.zdata_forecast)
-        self.fm = FreightModel(self.zdata_base, self.zdata_forecast, self.basematrices)
-        self.em = ExternalModel(self.basematrices, self.zdata_forecast, self.ass_model.zone_numbers)
+        self.fm = FreightModel(self.zdata_base,
+                               self.zdata_forecast,
+                               self.basematrices)
+        self.em = ExternalModel(self.basematrices,
+                                self.zdata_forecast,
+                                self.ass_model.zone_numbers)
         self.dtm = dt.DepartureTimeModel(self.ass_model.nr_zones)
         self.imptrans = ImpedanceTransformer()
         self.ass_classes = dict.fromkeys(parameters.emme_mtx["demand"].keys())
@@ -38,10 +42,10 @@ class ModelSystem:
             for ass_class in self.ass_classes:
                 base_demand[ass_class] = self.basematrices.get_data(ass_class)
             self.basematrices.close()
-            self.ass_model.assign(tp, base_demand)
+            self.ass_model.assign(tp, base_demand, is_first_iteration=True)
             if tp == "aht":
                 self.basematrices.open_file("cost", "peripheral")
-                periph_cost = self.basematrices.get_data("transit")
+                peripheral_cost = self.basematrices.get_data("transit")
                 self.basematrices.close()
                 if use_fixed_transit_cost:
                     self.logger.info("Using fixed transit cost matrix")
@@ -52,23 +56,27 @@ class ModelSystem:
                     self.logger.info("Calculating transit cost")
                     fixed_cost = None
                 self.ass_model.calc_transit_cost(self.zdata_forecast.transit_zone,
-                                                 periph_cost,
+                                                 peripheral_cost,
                                                  fixed_cost)
             impedance[tp] = self.ass_model.get_impedance()
         return impedance
 
-    def run(self, impedance):
+    def run(self, impedance, is_last_iteration=False):
         self.dtm.add_demand(self.trucks)
         self.dtm.add_demand(self.trailer_trucks)
         for purpose in self.dm.tour_purposes:
             purpose_impedance = self.imptrans.transform(purpose, impedance)
-            if purpose.name == "hoo":
+            if isinstance(purpose, SecDestPurpose):
                 l, u = next(iter(purpose.sources)).bounds
-                nr_zones = u - l
                 purpose.generate_tours()
-                for mode in purpose.model.dest_choice_param:
-                    for i in xrange(0, nr_zones):
-                        demand = purpose.distribute_tours(mode, purpose_impedance[mode], i)
+                if is_last_iteration:
+                    for mode in purpose.model.dest_choice_param:
+                        for i in xrange(0, u - l):
+                            demand = purpose.distribute_tours(mode, purpose_impedance[mode], i)
+                            self.dtm.add_demand(demand)
+                else:
+                    for i in xrange(0, u - l):
+                        demand = purpose.distribute_tours("car", purpose_impedance["car"], i)
                         self.dtm.add_demand(demand)
             else:
                 demand = purpose.calc_demand(purpose_impedance)
@@ -86,7 +94,7 @@ class ModelSystem:
                 int_demand = numpy.zeros(nr_zones)
                 for purpose in self.dm.tour_purposes:
                     if purpose.dest != "source":
-                        if purpose.name == "hoo":
+                        if isinstance(purpose, SecDestPurpose):
                             l, u = next(iter(purpose.sources)).bounds
                         else:
                             l, u = purpose.bounds
@@ -103,7 +111,7 @@ class ModelSystem:
         impedance = {}
         for tp in parameters.emme_scenario:
             self.dtm.add_vans(tp, self.zdata_forecast.nr_zones)
-            self.ass_model.assign(tp, self.dtm.demand[tp])
+            self.ass_model.assign(tp, self.dtm.demand[tp], is_last_iteration)
             impedance[tp] = self.ass_model.get_impedance()
             if tp == "aht":
                 car_time = numpy.ma.average(impedance[tp]["time"]["car_work"],
@@ -113,7 +121,10 @@ class ModelSystem:
                                                 axis=1,
                                                 weights=self.dtm.demand[tp]["transit"])
                 time_ratio = transit_time / car_time
-                result.print_data(time_ratio, "impedance_ratio.txt", self.ass_model.zone_numbers, "time")
+                result.print_data(time_ratio,
+                                  "impedance_ratio.txt",
+                                  self.ass_model.zone_numbers,
+                                  "time")
                 car_cost = numpy.ma.average(impedance[tp]["cost"]["car_work"],
                                             axis=1,
                                             weights=self.dtm.demand[tp]["car_work"])
@@ -121,6 +132,9 @@ class ModelSystem:
                                                 axis=1,
                                                 weights=self.dtm.demand[tp]["transit"])
                 cost_ratio = transit_cost / 44 / car_cost
-                result.print_data(cost_ratio, "impedance_ratio.txt", self.ass_model.zone_numbers, "cost")
+                result.print_data(cost_ratio,
+                                  "impedance_ratio.txt",
+                                  self.ass_model.zone_numbers,
+                                  "cost")
         self.dtm.init_demand()
         return impedance

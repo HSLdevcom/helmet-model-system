@@ -6,13 +6,7 @@ from assignment.abstract_assignment import AssignmentModel
 from assignment.emme_assignment import EmmeAssignmentModel
 from assignment.mock_assignment import MockAssignmentModel
 import modelsystem
-import assignment.departure_time as dt
-from datahandling.zonedata import ZoneData
 from datahandling.matrixdata import MatrixData
-from demand.freight import FreightModel
-from demand.trips import DemandModel
-from demand.external import ExternalModel
-from transform.impedance_transformer import ImpedanceTransformer
 from emme.emme_context import EmmeContext
 import parameters
 import numpy
@@ -44,8 +38,7 @@ class HelmetApplication():
             ass_model = EmmeAssignmentModel(emme_context)
         else:
             self.logger.info("Initializing MockAssignmentModel..")
-            costs = MatrixData("2016")
-            ass_model = MockAssignmentModel(costs)
+            ass_model = MockAssignmentModel(MatrixData("2016"))
         self.model = modelsystem.ModelSystem(self._config.get_value(Config.DATA_PATH), ass_model)
         self._status["results"] = self.model.mode_share
 

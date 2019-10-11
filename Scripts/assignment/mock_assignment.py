@@ -10,7 +10,7 @@ class MockAssignmentModel(AssignmentModel, ImpedanceSource):
         self.logger = logging.getLogger()
         self.logger.info("Reading matrices from " + str(self.matrices.path))
     
-    def assign(self, time_period, matrices):
+    def assign(self, time_period, matrices, is_last_iteration=False, is_first_iteration=False):
         """Assign cars, bikes and transit for one time period.
         
         Parameters

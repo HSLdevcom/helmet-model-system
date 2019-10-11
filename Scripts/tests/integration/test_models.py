@@ -6,13 +6,8 @@ import numpy
 import modelsystem
 import datahandling.resultdata as result
 from assignment.mock_assignment import MockAssignmentModel
-import assignment.departure_time as dt
-from datahandling.zonedata import ZoneData
 from datahandling.matrixdata import MatrixData
 from demand.freight import FreightModel
-from demand.trips import DemandModel
-from demand.external import ExternalModel
-from transform.impedance_transformer import ImpedanceTransformer
 from datatypes.demand import Demand
 import parameters
 
@@ -20,6 +15,7 @@ class ModelTest(unittest.TestCase):
     
     def test_models(self):
         print("Testing assignment..")
+        result.set_path("test")
         ass_model = MockAssignmentModel(MatrixData("2016_test"))
         model = modelsystem.ModelSystem("2030_test", ass_model)
         # model.dm.create_population()
