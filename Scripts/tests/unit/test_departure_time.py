@@ -37,3 +37,9 @@ class DepartureTimeTest(unittest.TestCase):
         dem.matrix = 3
         dem.position = (1, 2, 0)
         dtm.add_demand(dem)
+
+        self.assertIsNotNone(dtm.demand)
+        self.assertIs(type(dtm.demand["iht"]["car_leisure"]), numpy.ndarray)
+        self.assertEquals(dtm.demand["pt"]["car_work"].ndim, 2)
+        self.assertEquals(dtm.demand["aht"]["bike"].shape[1], 8)
+        self.assertNotEquals(dtm.demand["iht"]["car_leisure"][0, 1], 0)
