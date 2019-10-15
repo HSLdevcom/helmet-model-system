@@ -2162,8 +2162,8 @@ external_modes = [
 ]
 areas = {
     "downtown": (0, 999),
-    "Helsinki_other": (1000, 1999),
-    "capital_region_other": (2000, 5999),
+    "helsinki_other": (1000, 1999),
+    "capregio_other": (2000, 5999),
     "surrounding": (6000, 15999),
     "peripheral": (16000, 30999),
     "external": (31031, None),

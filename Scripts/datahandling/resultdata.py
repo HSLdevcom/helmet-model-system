@@ -23,5 +23,9 @@ def print_data(data, filename, zone_numbers, colname, bounds=None):
     else:
         _buffer[filename][colname] = 0.0
         _buffer[filename][colname][bounds[0]:bounds[1]] = data
-    _buffer[filename].to_csv(path_or_buf=filepath, sep='\t', float_format="%1.3f")
+    _buffer[filename].to_csv(filepath, sep='\t', float_format="%1.3f")
     # numpy.savetxt(filepath, data, fmt="%1.3f")
+
+def print_matrix(data, filename):
+    filepath = os.path.join(_path, filename)
+    data.to_csv(filepath, sep='\t', float_format="%8.1f")

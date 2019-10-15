@@ -2,6 +2,7 @@ import parameters as param
 import models.logit as logit
 import models.generation as generation
 from datatypes.demand import Demand
+import datahandling.resultdata as result
 import numpy
 import pandas
 
@@ -104,6 +105,8 @@ class TourPurpose(Purpose):
             self.attracted_tours[mode] = self.demand[mode].sum(0)
             self.generated_tours[mode] = self.demand[mode].sum(1)
             self.aggregated_demand[mode] = self._aggregate(self.demand[mode])
+            result.print_matrix(self.aggregated_demand[mode],
+                                "demand_" + self.name + "_" + mode + ".txt")
         return demand
 
     def _aggregate(self, mtx):
