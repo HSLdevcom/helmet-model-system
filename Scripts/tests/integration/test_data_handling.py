@@ -31,21 +31,19 @@ class MatrixDataTest(unittest.TestCase):
         
         for key in params.emme_scenario.keys():
             print("Opening matrix for time period", key)
-            matrix_data.open_file(matrix_type, time_period=key)
-            self.assertIsNotNone(matrix_data.mtx_file)
-            # Validate that has some zone numbers and mapping
-            self.assertTrue(len(matrix_data.get_zone_numbers()) > 0)
-            self.assertTrue(len(matrix_data.get_zone_numbers()), len(matrix_data.get_mapping()))
-
-            modes_for_this_type = params.emme_mtx[matrix_type].keys()
-            for mode in modes_for_this_type:
-                # Validata that there is some data for each mode
-                print("validating data for matrix mode", mode)
-                data = matrix_data.get_data(mode)
-                assert type(data) is numpy.ndarray
-                self.assertTrue(len(data) > 0)          
-            
-            matrix_data.close()
+            with matrix_data.open(matrix_type, time_period=key) as mtx:
+                self.assertIsNotNone(mtx._file)
+                # Validate that has some zone numbers and mapping
+                self.assertTrue(len(mtx.get_zone_numbers()) > 0)
+                self.assertEquals(len(mtx.get_zone_numbers()), len(mtx.get_mapping()))
+                modes_for_this_type = params.emme_mtx[matrix_type].keys()
+                for mode in modes_for_this_type:
+                    # Validata that there is some data for each mode
+                    print("validating data for matrix mode", mode)
+                    data = mtx.get_data(mode)
+                    assert type(data) is numpy.ndarray
+                    self.assertTrue(len(data) > 0)
+                    assert (data >= 0).all()
 
 
 class ZoneDataTest(unittest.TestCase):
