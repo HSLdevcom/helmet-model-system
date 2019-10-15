@@ -42,11 +42,13 @@ class DepartureTimeModel:
             if len(demand.position) == 2:
                 for tp in emme_scenario:
                     share = demand_share[demand.purpose.name][demand.mode][tp]
-                    self._add_2d_demand(share, ass_class, tp, demand.matrix, demand.position)
+                    self._add_2d_demand(
+                        share, ass_class, tp, demand.matrix, demand.position)
             elif len(demand.position) == 3:
                 for tp in emme_scenario:
                     share = demand_share[demand.purpose.name][demand.mode][tp]
-                    self._add_3d_demand(share, ass_class, tp, demand.matrix, demand.position)
+                    self._add_3d_demand(
+                        share, ass_class, tp, demand.matrix, demand.position)
             else:
                 raise IndexError("Tuple position has wrong dimensions.")
             self.logger.debug("Added demand for " + demand.purpose.name + ", " + demand.mode)

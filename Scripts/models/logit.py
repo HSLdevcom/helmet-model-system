@@ -19,10 +19,9 @@ class LogitModel:
             b = self.mode_choice_param[mode]
             utility = numpy.zeros_like(expsum)
             self._add_constant(utility, b["constant"])
-            utility = self._add_zone_util(utility=utility.T, 
-                                          b=b["generation"], 
-                                          generation=True).T
-            self._add_zone_util(utility, b["attraction"], False)
+            utility = self._add_zone_util(
+                utility.T, b["generation"], generation=True).T
+            self._add_zone_util(utility, b["attraction"])
             self._add_impedance(utility, impedance[mode], b["impedance"])
             exps = numpy.exp(utility)
             self._add_log_impedance(exps, impedance[mode], b["log"])
@@ -40,9 +39,10 @@ class LogitModel:
         self._add_zone_util(size, b["size"])
         impedance["size"] = size
         if "transform" in b:
+            b_transf = b["transform"]
             transimp = numpy.zeros_like(utility)
-            self._add_zone_util(transimp, b["transform"]["attraction"])
-            self._add_impedance(transimp, impedance, b["transform"]["impedance"])
+            self._add_zone_util(transimp, b_transf["attraction"])
+            self._add_impedance(transimp, impedance, b_transf["impedance"])
             impedance["transform"] = transimp
         self._add_log_impedance(self.dest_exps[mode], impedance, b["log"])
         if mode != "logsum":
@@ -100,8 +100,10 @@ class LogitModel:
                 utility += b[i] * zdata.get_data(i, self.purpose, generation)
             except ValueError: # Separate params for cap region and surrounding
                 k = self.zone_data.first_surrounding_zone
-                data_capital_region = zdata.get_data(i, self.purpose, generation, 0)
-                data_surrounding = zdata.get_data(i, self.purpose, generation, 1)
+                data_capital_region = zdata.get_data(
+                    i, self.purpose, generation, zdata.CAPITAL_REGION)
+                data_surrounding = zdata.get_data(
+                    i, self.purpose, generation, zdata.SURROUNDING_AREA)
                 if utility.ndim == 1: # 1-d array calculation
                     utility[:k] += b[i][0] * data_capital_region
                     utility[k:] += b[i][1] * data_surrounding
@@ -131,7 +133,8 @@ class ModeDestModel(LogitModel):
         prob = self.calc_basic_prob(impedance)
         for mod_mode in self.mode_choice_param:
             for i in self.mode_choice_param[mod_mode]["individual_dummy"]:
-                dummy_share = self.zone_data.get_data(i, self.purpose, True).values
+                dummy_share = self.zone_data.get_data(
+                    i, self.purpose, generation=True).values
                 ind_prob = self.calc_individual_prob(mod_mode, i)
                 for mode in prob:
                     no_dummy = (1 - dummy_share) * prob[mode]
@@ -156,11 +159,9 @@ class ModeDestModel(LogitModel):
         """
         mode_expsum = self._calc_utils(impedance)
         logsum = numpy.log(mode_expsum)
-        result.print_data(logsum,
-                          "accessibility.txt",
-                          self.zone_data.zone_numbers,
-                          self.purpose.name,
-                          self.purpose.bounds)
+        result.print_data(
+            logsum, "accessibility.txt", self.zone_data.zone_numbers,
+            self.purpose.name, self.purpose.bounds)
         return self._calc_prob(mode_expsum)
     
     def calc_individual_prob(self, mod_mode, dummy):

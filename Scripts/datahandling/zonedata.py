@@ -145,9 +145,6 @@ def read_file(data_dir, file_name, squeeze=False):
         header = None
     else:
         header = "infer"
-    return pandas.read_csv(filepath_or_buffer=path, 
-                            delim_whitespace=True,
-                            keep_default_na=False,
-                            squeeze=squeeze,
-                            comment='#',
-                            header=header)
+    return pandas.read_csv(
+        path, delim_whitespace=True, keep_default_na=False, squeeze=squeeze,
+        comment='#', header=header)
