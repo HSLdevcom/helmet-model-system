@@ -5,7 +5,7 @@ import numpy
 import unittest
 import parameters
 from datahandling.zonedata import ZoneData
-from models.logit import ModeDestModel
+from models.logit import ModeDestModel, DestModeModel
 import datahandling.resultdata as result
 
 
@@ -43,18 +43,22 @@ class LogitModelTest(unittest.TestCase):
             model = ModeDestModel(zd, pur)
             prob = model.calc_prob(impedance)
             for mode in ("car", "transit", "bike", "walk"):
-                self.assertIs(type(prob[mode]), numpy.ndarray)
-                self.assertEquals(prob[mode].ndim, 2)
-                self.assertEquals(prob[mode].shape[1], 4)
-                self.assertNotEquals(prob[mode][0, 1], 0)
-                assert numpy.isfinite(prob[mode]).all()
+                self._validate(prob[mode])
+        pur.name = "so"
+        model = DestModeModel(zd, pur)
+        prob = model.calc_prob(impedance)
+        for mode in ("car", "transit", "bike", "walk"):
+            self._validate(prob[mode])
         for i in ("hwp", "hop", "oop"):
             pur.name = i
             model = ModeDestModel(zd, pur)
             prob = model.calc_prob(impedance)
             for mode in ("car", "transit"):
-                self.assertIs(type(prob[mode]), numpy.ndarray)
-                self.assertEquals(prob[mode].ndim, 2)
-                self.assertEquals(prob[mode].shape[1], 4)
-                self.assertNotEquals(prob[mode][0, 1], 0)
-                assert numpy.isfinite(prob[mode]).all()
+                self._validate(prob[mode])
+    
+    def _validate(self, prob):
+        self.assertIs(type(prob), numpy.ndarray)
+        self.assertEquals(prob.ndim, 2)
+        self.assertEquals(prob.shape[1], 4)
+        self.assertNotEquals(prob[0, 1], 0)
+        assert numpy.isfinite(prob).all()

@@ -42,7 +42,8 @@ class MatrixDataTest(unittest.TestCase):
                     print("validating data for matrix mode", mode)
                     data = mtx.get_data(mode)
                     assert type(data) is numpy.ndarray
-                    self.assertTrue(len(data) > 0)          
+                    self.assertTrue(len(data) > 0)
+                    assert (data >= 0).all()
 
 
 class ZoneDataTest(unittest.TestCase):
