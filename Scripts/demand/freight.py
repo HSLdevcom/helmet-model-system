@@ -34,10 +34,10 @@ class FreightModel:
         zone_data_forecast = self.zdata_f.get_freight_data()
         production_base = self._generate_trips(zone_data_base, mode)
         production_forecast = self._generate_trips(zone_data_forecast, mode)
-        with self.base_demand.open("freight", "vrk") as m:
+        with self.base_demand.open("freight", "vrk") as mtx:
             # Remove zero values
-            base_mtx = m.get_data(mode).clip(0.000001, None)
-            zone_numbers = m.get_zone_numbers()
+            base_mtx = mtx.get_data(mode).clip(0.000001, None)
+            zone_numbers = mtx.zone_numbers
         production = self.calibrate(base_mtx.sum(1), 
                                     production_base, 
                                     production_forecast)

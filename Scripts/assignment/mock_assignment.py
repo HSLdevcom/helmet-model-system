@@ -65,14 +65,14 @@ class MockAssignmentModel(AssignmentModel, ImpedanceSource):
     def zone_numbers(self):
         """Numpy array of all zone numbers.""" 
         with self.matrices.open("time", "aht") as mtx:
-            zone_numbers = mtx.get_zone_numbers()
+            zone_numbers = mtx.zone_numbers
         return zone_numbers
     
     @property
     def mapping(self):
         """dict: Dictionary of zone numbers and corresponding indices."""
         with self.matrices.open("time", "aht") as mtx:
-            mapping = mtx.get_mapping()
+            mapping = mtx.mapping
         return mapping
 
     @property
