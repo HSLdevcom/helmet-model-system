@@ -21,7 +21,7 @@ class GenerationModel:
         tours = numpy.zeros(nr_zones)
         b = self.param
         for i in b:
-            tours += b[i] * self.zone_data.values[i][l:u]
+            tours += b[i] * self.zone_data[i][l:u]
         return tours
 
 

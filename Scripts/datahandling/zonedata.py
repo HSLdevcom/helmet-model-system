@@ -82,11 +82,14 @@ class ZoneData:
         val["service_other"] = (1-home_municipality.values) * serv.values
         val["shops_own"] = home_municipality.values * shop.values
         val["shops_other"] = (1-home_municipality.values) * shop.values
-        self.values = val
+        self._values = val
         surrounding = param.areas["surrounding"]
         self.first_surrounding_zone, _ = idx.slice_locs(surrounding[0])
         peripheral = param.areas["peripheral"]
         self.first_peripheral_zone, _ = idx.slice_locs(peripheral[0])
+
+    def __getitem__(self, key):
+        return self._values[key]
 
     def get_freight_data(self):
         """Get zone data for freight traffic calculation.
@@ -103,7 +106,7 @@ class ZoneData:
             "logistics",
             "industry",
         )
-        data = {k: self.values[k] for k in freight_variables}
+        data = {k: self._values[k] for k in freight_variables}
         return pandas.DataFrame(data)
 
     def get_data(self, key, purpose, generation=False, part=None):
@@ -131,13 +134,13 @@ class ZoneData:
                 u = self.first_surrounding_zone
             else:
                 l = self.first_surrounding_zone
-        if self.values[key].ndim == 1: # If not a compound (i.e., matrix)
+        if self._values[key].ndim == 1: # If not a compound (i.e., matrix)
             if generation: # Return values for purpose zones 
-                return self.values[key][l:u]
+                return self._values[key][l:u]
             else: # Return values for all zones
-                return self.values[key]
+                return self._values[key]
         else: # Return matrix (purpose zones -> all zones)
-            return self.values[key][l:u, :]
+            return self._values[key][l:u, :]
 
 def read_file(data_dir, file_name, squeeze=False):
     path = os.path.join(data_dir, file_name)
