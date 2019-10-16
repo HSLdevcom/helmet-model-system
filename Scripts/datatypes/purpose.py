@@ -47,6 +47,9 @@ class Purpose:
         self.generated_tours = {}
         self.attracted_tours = {}
 
+    @property
+    def zone_numbers(self):
+        return self.zone_data.zone_numbers[self.bounds[0]:self.bounds[1]]
 
 class TourPurpose(Purpose):
     def __init__(self, specification, zone_data):
@@ -99,14 +102,21 @@ class TourPurpose(Purpose):
         demand = {}
         self.demand = {}
         self.aggregated_demand = {}
+        demand_sums = {}
         for mode in self.model.mode_choice_param:
             self.demand[mode] = (prob[mode] * tours).T
             demand[mode] = Demand(self, mode, self.demand[mode])
             self.attracted_tours[mode] = self.demand[mode].sum(0)
             self.generated_tours[mode] = self.demand[mode].sum(1)
+            demand_sums[mode] = self.generated_tours[mode].sum()
             self.aggregated_demand[mode] = self._aggregate(self.demand[mode])
             result.print_matrix(self.aggregated_demand[mode],
                                 "demand_" + self.name + "_" + mode + ".txt")
+        demand_all = sum(demand_sums.values())
+        mode_shares = {mode: demand_sums[mode] / demand_all for mode in demand_sums}
+        result.print_data(
+            pandas.Series(mode_shares), "mode_share.txt",
+            demand_sums.keys(), self.name)
         return demand
 
     def _aggregate(self, mtx):

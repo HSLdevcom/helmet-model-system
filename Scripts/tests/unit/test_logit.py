@@ -15,7 +15,6 @@ class LogitModelTest(unittest.TestCase):
         class Purpose:
             pass
         pur = Purpose()
-        pur.bounds = (0, 4)
         zd = ZoneData("2016_test")
         mtx = numpy.arange(24)
         mtx.shape = (4, 6)
@@ -38,7 +37,9 @@ class LogitModelTest(unittest.TestCase):
                 "dist": mtx,
             },
         }
-        for i in ("hw", "hc", "hu", "hs", "ho", "wo", "oo"):
+        pur.bounds = (0, 4)
+        pur.zone_numbers = (5, 6, 7, 2792)
+        for i in ("hw", "hc", "hu", "hs", "ho"):
             pur.name = i
             model = ModeDestModel(zd, pur)
             prob = model.calc_prob(impedance)
@@ -49,12 +50,24 @@ class LogitModelTest(unittest.TestCase):
         prob = model.calc_prob(impedance)
         for mode in ("car", "transit", "bike", "walk"):
             self._validate(prob[mode])
-        for i in ("hwp", "hop", "oop"):
+        for i in ("wo", "oo"):
+            pur.name = i
+            model = ModeDestModel(zd, pur)
+            prob = model.calc_prob(impedance)
+            for mode in ("car", "transit", "bike", "walk"):
+                self._validate(prob[mode])
+        pur.name = "oop"
+        model = ModeDestModel(zd, pur)
+        prob = model.calc_prob(impedance)
+        for mode in ("car", "transit"):
+            self._validate(prob[mode])
+        for i in ("hwp", "hop"):
             pur.name = i
             model = ModeDestModel(zd, pur)
             prob = model.calc_prob(impedance)
             for mode in ("car", "transit"):
                 self._validate(prob[mode])
+        
     
     def _validate(self, prob):
         self.assertIs(type(prob), numpy.ndarray)

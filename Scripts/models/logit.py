@@ -1,4 +1,5 @@
 import numpy
+import pandas
 import parameters
 import datahandling.resultdata as result
 
@@ -160,8 +161,9 @@ class ModeDestModel(LogitModel):
         mode_expsum = self._calc_utils(impedance)
         logsum = numpy.log(mode_expsum)
         result.print_data(
-            logsum, "accessibility.txt", self.zone_data.zone_numbers,
-            self.purpose.name, self.purpose.bounds)
+            pandas.Series(logsum, self.purpose.zone_numbers),
+            "accessibility.txt", self.zone_data.zone_numbers,
+            self.purpose.name)
         return self._calc_prob(mode_expsum)
     
     def calc_individual_prob(self, mod_mode, dummy):
