@@ -36,7 +36,7 @@ class FreightModel:
         production_forecast = self._generate_trips(zone_data_forecast, mode)
         with self.base_demand.open("freight", "vrk") as mtx:
             # Remove zero values
-            base_mtx = mtx.get_data(mode).clip(0.000001, None)
+            base_mtx = mtx[mode].clip(0.000001, None)
             zone_numbers = mtx.zone_numbers
         production = self.calibrate(base_mtx.sum(1), 
                                     production_base, 

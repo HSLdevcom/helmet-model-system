@@ -49,7 +49,7 @@ class EmmeAssignmentTest():
                     mtx.mapping = zone_numbers
                     for ass_class in travel_cost[time_period][mtx_type]:
                         cost_data = travel_cost[time_period][mtx_type][ass_class]
-                        mtx.set_data(cost_data, ass_class)
+                        mtx[ass_class] = cost_data
 
     def test_transit_cost(self):
         zdata = ZoneData("2030_test")

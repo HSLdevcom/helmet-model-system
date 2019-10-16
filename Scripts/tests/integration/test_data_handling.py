@@ -39,7 +39,7 @@ class MatrixDataTest(unittest.TestCase):
                 for mode in modes_for_this_type:
                     # Validata that there is some data for each mode
                     print("validating data for matrix mode", mode)
-                    data = mtx.get_data(mode)
+                    data = mtx[mode]
                     assert type(data) is numpy.ndarray
                     self.assertTrue(len(data) > 0)
                     assert (data >= 0).all()

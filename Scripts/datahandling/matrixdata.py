@@ -31,10 +31,10 @@ class MatrixFile:
     def close(self):
         self._file.close()
     
-    def get_data(self, mode):
+    def __getitem__(self, mode):
         return numpy.array(self._file[mode])
 
-    def set_data(self, data, mode):
+    def __setitem__(self, mode, data):
         self._file[mode] = data
 
     @property

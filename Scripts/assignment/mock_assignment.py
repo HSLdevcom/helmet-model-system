@@ -23,7 +23,7 @@ class MockAssignmentModel(AssignmentModel, ImpedanceSource):
         self.time_period = time_period
         with self.matrices.open("demand", time_period, 'w') as mtx:
             for ass_class in matrices:
-                mtx.set_data(matrices[ass_class], ass_class)
+                mtx[ass_class] = matrices[ass_class]
         self.logger.info("Saved demand matrices for " + str(time_period))
     
     def get_impedance(self):
@@ -58,7 +58,7 @@ class MockAssignmentModel(AssignmentModel, ImpedanceSource):
         matrices = dict.fromkeys(param.emme_mtx[mtx_type].keys())
         with self.matrices.open(mtx_type, time_period) as mtx:
             for mode in matrices:
-                matrices[mode] = mtx.get_data(mode)
+                matrices[mode] = mtx[mode]
         return matrices
     
     @property
