@@ -2019,25 +2019,28 @@ tour_generation = {
         "ho": 0.3,
     },
     "so": {
-        "population": 0.5,
+        "population": 0.235790898,
     },
     "wo": {
-        "so": 0.5,
+        # Some so trips continue with wo trips
+        "so": 0.126835899 / 0.235790898,
     },
     "oo": {
-        "so": 0.5,
+        # Some so trips continue with oo trips
+        "so": 0.108954999 / 0.235790898,
     },
     "hwp": {
-        "population": 0.5,
+        "population": 0.458156386,
     },
     "hop": {
-        "population": 0.5,
+        "population": 1.04618981,
     },
     "sop": {
-        "population": 0.5,
+        "population": 0.099207064,
     },
     "oop": {
-        "sop": 0.5,
+        # Every sop trip continues with oop trip
+        "sop": 1,
     },
     "truck": {
         "population": 0.01,
