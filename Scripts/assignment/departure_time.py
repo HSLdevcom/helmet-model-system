@@ -1,7 +1,7 @@
 import logging
 import numpy
 import os
-from parameters import emme_scenario, demand_share, assignment_class, emme_mtx
+from parameters import emme_scenario, demand_share, assignment_class, departure_time_class
 
 class DepartureTimeModel:
     def __init__(self, nr_zones):
@@ -19,11 +19,11 @@ class DepartureTimeModel:
     def init_demand(self):
         """Initialize demand for all time periods."""
         self.demand = dict.fromkeys(emme_scenario.keys())
-        zeros = numpy.zeros((self.nr_zones, self.nr_zones))
         for time_period in self.demand:
-            ass_classes = dict.fromkeys(emme_mtx["demand"].keys())
+            ass_classes = dict.fromkeys(departure_time_class)
             self.demand[time_period] = ass_classes
             for ass_class in ass_classes:
+                zeros = numpy.zeros((self.nr_zones, self.nr_zones))
                 self.demand[time_period][ass_class] = zeros
 
     def add_demand(self, demand):
@@ -35,8 +35,10 @@ class DepartureTimeModel:
             Travel demand matrix or number of travellers
         """
         if demand.mode != "walk":
-            if demand.mode == "car":
-                ass_class = assignment_class[demand.purpose.name]
+            if demand.mode in ("car", "transit", "bike"):
+                ass_class = ( demand.mode 
+                            + '_'
+                            + assignment_class[demand.purpose.name])
             else:
                 ass_class = demand.mode
             if len(demand.position) == 2:

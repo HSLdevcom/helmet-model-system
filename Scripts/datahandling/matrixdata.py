@@ -24,7 +24,7 @@ class MatrixData:
         return read_file(self.path, "external_"+mode+".txt")
 
 
-class MatrixFile:
+class MatrixFile(object):
     def __init__(self, omx_file):
         self._file = omx_file
     

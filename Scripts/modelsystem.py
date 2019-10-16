@@ -116,7 +116,7 @@ class ModelSystem:
                                             weights=self.dtm.demand[tp]["car_work"])
                 transit_time = numpy.ma.average(impedance[tp]["time"]["transit"],
                                                 axis=1,
-                                                weights=self.dtm.demand[tp]["transit"])
+                                                weights=self.dtm.demand[tp]["transit_work"])
                 time_ratio = transit_time / car_time
                 result.print_data(time_ratio,
                                   "impedance_ratio.txt",
@@ -127,7 +127,7 @@ class ModelSystem:
                                             weights=self.dtm.demand[tp]["car_work"])
                 transit_cost = numpy.ma.average(impedance[tp]["cost"]["transit"],
                                                 axis=1,
-                                                weights=self.dtm.demand[tp]["transit"])
+                                                weights=self.dtm.demand[tp]["transit_work"])
                 cost_ratio = transit_cost / 44 / car_cost
                 result.print_data(cost_ratio,
                                   "impedance_ratio.txt",

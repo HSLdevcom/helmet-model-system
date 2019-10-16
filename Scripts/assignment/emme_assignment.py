@@ -82,9 +82,20 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
     
     def set_matrices(self, matrices):
         emmebank = self.emme.modeller.emmebank
+        tmp_mtx = None
         for mtx in matrices:
-            idx = param.emme_mtx["demand"][mtx]["id"]
-            emmebank.matrix(idx).set_numpy_data(matrices[mtx])
+            mtx_label = mtx.split('_')[0]
+            if mtx_label == "transit" or mtx_label == "bike":
+                idx = param.emme_mtx["demand"][mtx_label]["id"]
+                try:
+                    tmp_mtx += matrices[mtx]
+                    emmebank.matrix(idx).set_numpy_data(tmp_mtx)
+                    tmp_mtx = None
+                except TypeError:
+                    tmp_mtx = matrices[mtx]
+            else:
+                idx = param.emme_mtx["demand"][mtx]["id"]
+                emmebank.matrix(idx).set_numpy_data(matrices[mtx])
     
     def get_matrices(self, mtx_type):
         """Get all matrices of specified type.
