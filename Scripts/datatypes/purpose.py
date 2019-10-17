@@ -102,23 +102,33 @@ class TourPurpose(Purpose):
         demand = {}
         self.demand = {}
         self.aggregated_demand = {}
-        demand_sums = {}
+        self.demand_sums = {}
         for mode in self.model.mode_choice_param:
             self.demand[mode] = (prob[mode] * tours).T
             demand[mode] = Demand(self, mode, self.demand[mode])
             self.attracted_tours[mode] = self.demand[mode].sum(0)
             self.generated_tours[mode] = self.demand[mode].sum(1)
-            demand_sums[mode] = self.generated_tours[mode].sum()
+            self.demand_sums[mode] = self.generated_tours[mode].sum()
             self.aggregated_demand[mode] = self._aggregate(self.demand[mode])
-            result.print_matrix(self.aggregated_demand[mode],
-                                "demand_" + self.name + "_" + mode + ".txt")
-        demand_all = sum(demand_sums.values())
-        mode_shares = {mode: demand_sums[mode] / demand_all for mode in demand_sums}
-        result.print_data(
-            pandas.Series(mode_shares), "mode_share.txt",
-            demand_sums.keys(), self.name)
+            self.trip_lengths = self._count_trip_lenghts(
+                self.demand[mode], impedance["car"]["dist"])
+        self.print_data()
         return demand
 
+    def print_data(self):
+        for mode in self.model.mode_choice_param:
+            result.print_matrix(self.aggregated_demand[mode],
+                                "demand_" + self.name + "_" + mode + ".txt")
+            result.print_data(
+                self.trip_lengths, "trip_lenghts.txt",
+                self.trip_lengths.index, self.name + "_" + mode[0])
+        demsums = self.demand_sums
+        demand_all = sum(demsums.values())
+        mode_shares = {mode: demsums[mode] / demand_all for mode in demsums}
+        result.print_data(
+            pandas.Series(mode_shares), "mode_share.txt",
+            demsums.keys(), self.name)
+    
     def _aggregate(self, mtx):
         """Aggregate matrix to larger areas."""
         dest = self.zone_data.zone_numbers
@@ -136,6 +146,16 @@ class TourPurpose(Purpose):
             u = param.areas[area][1]
             aggr_mtx.loc[:, area] = tmp_mtx.loc[:, l:u].sum(1).values
         return aggr_mtx
+
+    def _count_trip_lenghts(self, trips, dist):
+        intervals = ("0-1", "1-3", "3-5", "5-10", "10-20", "20-inf")
+        trip_lengths = pandas.Series(index=intervals)
+        for tl in trip_lengths.index:
+            bounds = tl.split("-")
+            l = float(bounds[0])
+            u = float(bounds[1])
+            trip_lengths[tl] = trips[(dist>=l) & (dist<u)].sum()
+        return trip_lengths
 
 
 class SecDestPurpose(Purpose):
