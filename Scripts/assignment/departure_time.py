@@ -1,7 +1,7 @@
 import logging
 import numpy
 import os
-from parameters import emme_scenario, demand_share, assignment_class, departure_time_class
+from parameters import emme_scenario, demand_share, assignment_class, transport_classes
 
 class DepartureTimeModel:
     def __init__(self, nr_zones):
@@ -20,7 +20,7 @@ class DepartureTimeModel:
         """Initialize demand for all time periods."""
         self.demand = dict.fromkeys(emme_scenario.keys())
         for time_period in self.demand:
-            ass_classes = dict.fromkeys(departure_time_class)
+            ass_classes = dict.fromkeys(transport_classes)
             self.demand[time_period] = ass_classes
             for ass_class in ass_classes:
                 zeros = numpy.zeros((self.nr_zones, self.nr_zones))

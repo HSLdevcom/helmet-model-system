@@ -23,4 +23,4 @@ def print_data(data, filename, zone_numbers, colname):
 
 def print_matrix(data, filename):
     filepath = os.path.join(_path, filename)
-    data.to_csv(filepath, sep='\t', float_format="%8.1f")
+    data.to_csv(filepath, sep='\t', float_format="%8.3f")
