@@ -111,7 +111,7 @@ emme_scenario = {
     "iht": 23,
 }
 bike_scenario = 19
-departure_time_class = (
+transport_classes = (
     "car_work",
     "car_leisure",
     "transit_work",
