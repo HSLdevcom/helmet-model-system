@@ -2000,44 +2000,52 @@ mode_choice = {
 }
 tour_generation = {
     "hw": {
-        "population": 0.5,
+        "population": 0.842381389,
     },
     "hc": {
-        "population": 0.5,
+        "population": 0.234592703,
     },
     "hu": {
-        "population": 0.5,
+        "population": 0.112142998,
     },
     "hs": {
-        "population": 0.5,
+        "population": 0.673872063,
     },
     "ho": {
-        "population": 0.5,
+        "population": 0.916925908,
     },
     "hoo": {
-        "hw": 0.5,
-        "ho": 0.3,
+        "hw": 0.172863550 / 0.842381389,
+        "hc": 0.024415337 / 0.234592703,
+        "hu": 0.022225799 / 0.112142998,
+        "hs": 0.081158959 / 0.673872063,
+        "ho": 0.078710513 / 0.916925908,
+        "wo": 0.006012753 / 0.126835899,
+        "oo": 0.007727243 / 0.108954999,
     },
     "so": {
-        "population": 0.5,
+        "population": 0.235790898,
     },
     "wo": {
-        "so": 0.5,
+        # Some so trips continue with wo trips
+        "so": 0.126835899 / 0.235790898,
     },
     "oo": {
-        "so": 0.5,
+        # Some so trips continue with oo trips
+        "so": 0.108954999 / 0.235790898,
     },
     "hwp": {
-        "population": 0.5,
+        "population": 0.458156386,
     },
     "hop": {
-        "population": 0.5,
+        "population": 1.04618981,
     },
     "sop": {
-        "population": 0.5,
+        "population": 0.099207064,
     },
     "oop": {
-        "sop": 0.5,
+        # Every sop trip continues with oop trip
+        "sop": 1,
     },
     "truck": {
         "population": 0.01,
