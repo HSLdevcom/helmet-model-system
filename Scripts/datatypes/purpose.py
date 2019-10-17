@@ -109,7 +109,6 @@ class TourPurpose(Purpose):
             self.attracted_tours[mode] = self.demand[mode].sum(0)
             self.generated_tours[mode] = self.demand[mode].sum(1)
             self.demand_sums[mode] = self.generated_tours[mode].sum()
-            self.aggregated_demand[mode] = self._aggregate(self.demand[mode])
             self.trip_lengths = self._count_trip_lenghts(
                 self.demand[mode], impedance["car"]["dist"])
         self.print_data()
@@ -117,8 +116,15 @@ class TourPurpose(Purpose):
 
     def print_data(self):
         for mode in self.model.mode_choice_param:
-            result.print_matrix(self.aggregated_demand[mode],
+            aggregated_demand = self._aggregate(self.demand[mode])
+            result.print_matrix(aggregated_demand,
                                 "demand_" + self.name + "_" + mode + ".txt")
+            own_zone = self.zone_data.get_data("own_zone", self)
+            own_zone_demand = own_zone * self.demand[mode]
+            own_zone_aggregated = self._aggregate(own_zone_demand)
+            result.print_data(
+                numpy.diag(own_zone_aggregated), "own_zone_demand.txt",
+                own_zone_aggregated.index, self.name + "_" + mode[0])
             result.print_data(
                 self.trip_lengths, "trip_lenghts.txt",
                 self.trip_lengths.index, self.name + "_" + mode[0])
@@ -132,7 +138,7 @@ class TourPurpose(Purpose):
     def _aggregate(self, mtx):
         """Aggregate matrix to larger areas."""
         dest = self.zone_data.zone_numbers
-        orig = self.zone_data.zone_numbers[self.bounds[0]:self.bounds[1]]
+        orig = self.zone_numbers
         mtx = pandas.DataFrame(mtx, orig, dest)
         idx = param.areas.keys()
         aggr_mtx = pandas.DataFrame(0, idx, idx)
