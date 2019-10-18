@@ -23,7 +23,7 @@ class MockAssignmentModel(AssignmentModel, ImpedanceSource):
         self.time_period = time_period
         with self.matrices.open("demand", time_period, 'w') as mtx:
             for ass_class in matrices:
-                mtx.set_data(matrices[ass_class], ass_class)
+                mtx[ass_class] = matrices[ass_class]
         self.logger.info("Saved demand matrices for " + str(time_period))
     
     def get_impedance(self):
@@ -58,21 +58,21 @@ class MockAssignmentModel(AssignmentModel, ImpedanceSource):
         matrices = dict.fromkeys(param.emme_mtx[mtx_type].keys())
         with self.matrices.open(mtx_type, time_period) as mtx:
             for mode in matrices:
-                matrices[mode] = mtx.get_data(mode)
+                matrices[mode] = mtx[mode]
         return matrices
     
     @property
     def zone_numbers(self):
         """Numpy array of all zone numbers.""" 
         with self.matrices.open("time", "aht") as mtx:
-            zone_numbers = mtx.get_zone_numbers()
+            zone_numbers = mtx.zone_numbers
         return zone_numbers
     
     @property
     def mapping(self):
         """dict: Dictionary of zone numbers and corresponding indices."""
         with self.matrices.open("time", "aht") as mtx:
-            mapping = mtx.get_mapping()
+            mapping = mtx.mapping
         return mapping
 
     @property

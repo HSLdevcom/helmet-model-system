@@ -24,27 +24,30 @@ class MatrixData:
         return read_file(self.path, "external_"+mode+".txt")
 
 
-class MatrixFile:
+class MatrixFile(object):
     def __init__(self, omx_file):
         self._file = omx_file
     
     def close(self):
         self._file.close()
     
-    def get_data(self, mode):
+    def __getitem__(self, mode):
         return numpy.array(self._file[mode])
 
-    def set_data(self, data, mode):
+    def __setitem__(self, mode, data):
         self._file[mode] = data
 
-    def get_zone_numbers(self):
+    @property
+    def zone_numbers(self):
         # zone_numbers = mtx_file.mapentries("zone_number")
-        zone_numbers = self._file.mapping("zone_number").keys()
+        zone_numbers = self.mapping.keys()
         zone_numbers.sort()
         return zone_numbers
 
-    def get_mapping(self):
+    @property
+    def mapping(self):
         return self._file.mapping("zone_number")
 
-    def set_mapping(self, zone_numbers):
+    @mapping.setter
+    def mapping(self, zone_numbers):
         self._file.createMapping("zone_number", zone_numbers)

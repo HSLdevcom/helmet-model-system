@@ -76,17 +76,26 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         mtxs["time"]["bike"] = self._cap(mtxs["time"]["bike"])
         mtxs["time"]["car_work"] = self._gcost_to_time("car_work")
         mtxs["time"]["car_leisure"] = self._gcost_to_time("car_leisure")
-        mtxs["dist"]["walk"] += 1
-        mtxs["dist"]["bike"] += 1
         for ass_cl in ("car_work", "car_leisure"):
             mtxs["cost"][ass_cl] += self.dist_cost * mtxs["dist"][ass_cl]
         return mtxs
     
     def set_matrices(self, matrices):
         emmebank = self.emme.modeller.emmebank
+        tmp_mtx = None
         for mtx in matrices:
-            idx = param.emme_mtx["demand"][mtx]["id"]
-            emmebank.matrix(idx).set_numpy_data(matrices[mtx])
+            mtx_label = mtx.split('_')[0]
+            if mtx_label == "transit" or mtx_label == "bike":
+                idx = param.emme_mtx["demand"][mtx_label]["id"]
+                try:
+                    tmp_mtx += matrices[mtx]
+                    emmebank.matrix(idx).set_numpy_data(tmp_mtx)
+                    tmp_mtx = None
+                except TypeError:
+                    tmp_mtx = matrices[mtx]
+            else:
+                idx = param.emme_mtx["demand"][mtx]["id"]
+                emmebank.matrix(idx).set_numpy_data(matrices[mtx])
     
     def get_matrices(self, mtx_type):
         """Get all matrices of specified type.

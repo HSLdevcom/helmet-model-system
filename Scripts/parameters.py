@@ -111,19 +111,30 @@ emme_scenario = {
     "iht": 23,
 }
 bike_scenario = 19
+transport_classes = (
+    "car_work",
+    "car_leisure",
+    "transit_work",
+    "transit_leisure",
+    "bike_work",
+    "bike_leisure",
+    "trailer_truck",
+    "truck",
+    "van",
+)
 assignment_class = {
-    "hw": "car_work",
-    "hc": "car_leisure",
-    "hu": "car_leisure",
-    "hs": "car_leisure",
-    "ho": "car_leisure",
-    "hoo": "car_work",
-    "wo": "car_work",
-    "oo": "car_leisure",
-    "hwp": "car_work",
-    "hop": "car_leisure",
-    "oop": "car_leisure",
-    "external": "car_leisure",
+    "hw": "work",
+    "hc": "leisure",
+    "hu": "leisure",
+    "hs": "leisure",
+    "ho": "leisure",
+    "hoo": "work",
+    "wo": "work",
+    "oo": "leisure",
+    "hwp": "work",
+    "hop": "leisure",
+    "oop": "leisure",
+    "external": "leisure",
 }
 car_mode = 'c'
 assignment_mode = {
@@ -2170,8 +2181,8 @@ external_modes = [
 ]
 areas = {
     "downtown": (0, 999),
-    "Helsinki_other": (1000, 1999),
-    "capital_region_other": (2000, 5999),
+    "helsinki_other": (1000, 1999),
+    "capregio_other": (2000, 5999),
     "surrounding": (6000, 15999),
     "peripheral": (16000, 30999),
     "external": (31031, None),

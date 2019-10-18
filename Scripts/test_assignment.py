@@ -46,10 +46,10 @@ class EmmeAssignmentTest():
             for mtx_type in travel_cost[time_period]:
                 zone_numbers = self.ass_model.zone_numbers
                 with costs_files.open(mtx_type, time_period, 'w') as mtx:
-                    mtx.set_mapping(zone_numbers)
+                    mtx.mapping = zone_numbers
                     for ass_class in travel_cost[time_period][mtx_type]:
                         cost_data = travel_cost[time_period][mtx_type][ass_class]
-                        mtx.set_data(cost_data, ass_class)
+                        mtx[ass_class] = cost_data
 
     def test_transit_cost(self):
         zdata = ZoneData("2030_test")
