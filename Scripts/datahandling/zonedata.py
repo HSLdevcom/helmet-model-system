@@ -11,20 +11,23 @@ class ZoneData:
         script_dir = os.path.dirname(os.path.realpath(__file__))
         project_dir = os.path.join(script_dir, "..", "..")
         data_dir = os.path.join(project_dir, "Zone_data", scenario)
-        popdata = read_file(data_dir, "population.txt")
-        workdata = read_file(data_dir, "workplaces.txt")
-        schooldata = read_file(data_dir, "schools.txt")
-        landdata = read_file(data_dir, "land.txt")
-        cardata = read_file(data_dir, "cars.txt")
-        parkdata = read_file(data_dir, "park_cost.txt")
-        self.externalgrowth = read_file(data_dir, "external.txt")
-        transit_zone = read_file(data_dir, "transit_cost.txt").to_dict()
+        data_dir = os.path.abspath(data_dir)
+        if not os.path.exists(data_dir):
+            raise NameError("Directory " + data_dir + " does not exist.")
+        popdata = read_file(data_dir, ".pop")
+        workdata = read_file(data_dir, ".wrk")
+        schooldata = read_file(data_dir, ".edu")
+        landdata = read_file(data_dir, ".lnd")
+        cardata = read_file(data_dir, ".car")
+        parkdata = read_file(data_dir, ".prk")
+        self.externalgrowth = read_file(data_dir, ".ext")
+        transit_zone = read_file(data_dir, ".tco").to_dict()
         transit_zone["dist_fare"] = transit_zone["fare"].pop("dist")
         transit_zone["start_fare"] = transit_zone["fare"].pop("start")
         self.transit_zone = transit_zone
-        car_cost = read_file(data_dir, "car_cost.txt", True)
+        car_cost = read_file(data_dir, ".cco", True)
         self.car_dist_cost = car_cost[0]
-        truckdata = read_file(data_dir, "truck_zones.txt", True)
+        truckdata = read_file(data_dir, ".trk", True)
         self.trailers_prohibited = map(int, truckdata[0].split(','))
         self.garbage_destination = map(int, truckdata[1].split(','))
         val = {}
@@ -142,8 +145,17 @@ class ZoneData:
         else: # Return matrix (purpose zones -> all zones)
             return self._values[key][l:u, :]
 
-def read_file(data_dir, file_name, squeeze=False):
-    path = os.path.join(data_dir, file_name)
+def read_file(data_dir, file_end, squeeze=False):
+    file_found = False
+    for file_name in os.listdir(data_dir):
+        if file_name.endswith(file_end):
+            if file_found:
+                raise NameError("Multiple " + file_end + " files found in folder " + data_dir)
+            else:
+                path = os.path.join(data_dir, file_name)
+                file_found = True
+    if not file_found:
+        raise NameError("No " + file_end + " file found in folder " + data_dir)
     if squeeze:
         header = None
     else:
