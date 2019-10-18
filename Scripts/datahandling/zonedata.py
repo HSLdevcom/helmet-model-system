@@ -7,29 +7,32 @@ class ZoneData:
     CAPITAL_REGION = 0
     SURROUNDING_AREA = 1
     
-    def __init__(self, scenario):
+    def __init__(self, scenario, zone_numbers):
+        zone_numbers = numpy.array(zone_numbers)
+        first_external = numpy.where(zone_numbers > param.areas["peripheral"][1])[0][0]
+        self.zone_numbers = zone_numbers[:first_external]
         script_dir = os.path.dirname(os.path.realpath(__file__))
         project_dir = os.path.join(script_dir, "..", "..")
         data_dir = os.path.join(project_dir, "Zone_data", scenario)
         data_dir = os.path.abspath(data_dir)
         if not os.path.exists(data_dir):
             raise NameError("Directory " + data_dir + " does not exist.")
-        popdata = read_file(data_dir, ".pop")
-        workdata = read_file(data_dir, ".wrk")
-        schooldata = read_file(data_dir, ".edu")
-        landdata = read_file(data_dir, ".lnd")
-        cardata = read_file(data_dir, ".car")
-        parkdata = read_file(data_dir, ".prk")
+        popdata = read_file(data_dir, ".pop", self.zone_numbers)
+        workdata = read_file(data_dir, ".wrk", self.zone_numbers)
+        schooldata = read_file(data_dir, ".edu", self.zone_numbers)
+        landdata = read_file(data_dir, ".lnd", self.zone_numbers)
+        cardata = read_file(data_dir, ".car", self.zone_numbers)
+        parkdata = read_file(data_dir, ".prk", self.zone_numbers)
         self.externalgrowth = read_file(data_dir, ".ext")
         transit_zone = read_file(data_dir, ".tco").to_dict()
         transit_zone["dist_fare"] = transit_zone["fare"].pop("dist")
         transit_zone["start_fare"] = transit_zone["fare"].pop("start")
         self.transit_zone = transit_zone
-        car_cost = read_file(data_dir, ".cco", True)
+        car_cost = read_file(data_dir, ".cco", squeeze=True)
         self.car_dist_cost = car_cost[0]
-        truckdata = read_file(data_dir, ".trk", True)
-        self.trailers_prohibited = map(int, truckdata[0].split(','))
-        self.garbage_destination = map(int, truckdata[1].split(','))
+        truckdata = read_file(data_dir, ".trk", squeeze=True)
+        self.trailers_prohibited = map(int, truckdata.loc[0, :])
+        self.garbage_destination = map(int, truckdata.loc[1, :].dropna())
         val = {}
         pop = popdata["total"]
         val["population"] = pop
@@ -38,7 +41,6 @@ class ZoneData:
         val["share_age_30-49"] = popdata["sh_3049"]
         val["share_age_50-64"] = popdata["sh_5064"]
         val["share_age_65-99"] = popdata["sh_65-"]
-        self.zone_numbers = pop.index
         self.nr_zones = len(self.zone_numbers)
         val["population_density"] = pop / landdata["builtar"]
         val["car_users"] = cardata["caruse"]
@@ -87,9 +89,9 @@ class ZoneData:
         val["shops_other"] = (1-home_municipality.values) * shop.values
         self._values = val
         surrounding = param.areas["surrounding"]
-        self.first_surrounding_zone, _ = idx.slice_locs(surrounding[0])
+        self.first_surrounding_zone = numpy.where(idx >= surrounding[0])[0][0]
         peripheral = param.areas["peripheral"]
-        self.first_peripheral_zone, _ = idx.slice_locs(peripheral[0])
+        self.first_peripheral_zone = numpy.where(idx >= peripheral[0])[0][0]
 
     def __getitem__(self, key):
         return self._values[key]
@@ -145,7 +147,7 @@ class ZoneData:
         else: # Return matrix (purpose zones -> all zones)
             return self._values[key][l:u, :]
 
-def read_file(data_dir, file_end, squeeze=False):
+def read_file(data_dir, file_end, zone_numbers=None, squeeze=False):
     file_found = False
     for file_name in os.listdir(data_dir):
         if file_name.endswith(file_end):
@@ -160,6 +162,17 @@ def read_file(data_dir, file_end, squeeze=False):
         header = None
     else:
         header = "infer"
-    return pandas.read_csv(
-        path, delim_whitespace=True, keep_default_na=False, squeeze=squeeze,
-        comment='#', header=header)
+    data = pandas.read_csv(
+        path, delim_whitespace=True, squeeze=squeeze, keep_default_na=False,
+        na_values="", comment='#', header=header)
+    if data.index.is_numeric() and data.index.hasnans:
+        raise IndexError("Row with only spaces or tabs in file " + path)
+    # TODO Also check if str index contains nan
+    if zone_numbers is not None:
+        for zone in data.index:
+            if zone not in zone_numbers:
+                raise IndexError("Zone number " + str(zone) + " from file " + path + " not found in network")
+        for zone in zone_numbers:
+            if zone not in data.index:
+                raise IndexError("Zone number " + str(zone) + " not found in file " + path)
+    return data
