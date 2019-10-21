@@ -54,10 +54,10 @@ class ZoneData:
         self["car_density"] = cardata["cardens"]
         wp = workdata["total"]
         self["workplaces"] = wp
-        self["service"] = workdata["sh_serv"] * wp
-        serv = self["service"]
-        self["shops"] = workdata["sh_shop"] * wp
-        shop = self["shops"]
+        serv = workdata["sh_serv"] * wp
+        self["service"] = serv
+        shop = workdata["sh_shop"] * wp
+        self["shops"] = shop
         self["logistics"] = workdata["sh_logi"] * wp
         self["industry"] = workdata["sh_indu"] * wp
         self["parking_cost_work"] = parkdata["parcosw"]
@@ -99,15 +99,15 @@ class ZoneData:
 
     def __setitem__(self, key, data):
         try:
-            if numpy.isinf(data).any():
+            if not numpy.isfinite(data).all():
                 for (i, val) in data.iteritems():
-                    if numpy.isposinf(val):
-                        errtext = "{} for zone {} is infinite"
+                    if not numpy.isfinite(val):
+                        errtext = "{} for zone {} is not a finite number"
                         raise ValueError(errtext.format(key, i).capitalize())
         except TypeError:
             for (i, val) in data.iteritems():
                 try:
-                    numpy.isposinf(val)
+                    numpy.isfinite(val)
                 except TypeError:
                     errtext = "{} for zone {} is not a number"
                     raise TypeError(errtext.format(key, i).capitalize())
@@ -212,5 +212,4 @@ def read_file(data_dir, file_end, zone_numbers=None, squeeze=False):
                 if i not in data.index:
                     errtext = "Zone number {} not found in file {}"
                     raise IndexError(errtext.format(i, path))
-    
     return data
