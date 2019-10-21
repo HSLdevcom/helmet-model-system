@@ -16,8 +16,8 @@ class ModelSystem:
     def __init__(self, zone_data_path, base_zone_data_path, base_matrices, ass_model):
         self.logger = Log.get_instance()
         self.ass_model = ass_model
-        self.zdata_base = ZoneData(base_zone_data_path)
-        self.zdata_forecast = ZoneData(zone_data_path)
+        self.zdata_base = ZoneData(base_zone_data_path, ass_model.zone_numbers)
+        self.zdata_forecast = ZoneData(zone_data_path, ass_model.zone_numbers)
         self.basematrices = MatrixData(base_matrices)
         self.dm = DemandModel(self.zdata_forecast)
         self.fm = FreightModel(self.zdata_base,

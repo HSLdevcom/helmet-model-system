@@ -8,9 +8,17 @@ class ZoneData:
     SURROUNDING_AREA = 1
     
     def __init__(self, scenario, zone_numbers):
+        self._values = {}
         zone_numbers = numpy.array(zone_numbers)
-        first_external = numpy.where(zone_numbers > param.areas["peripheral"][1])[0][0]
-        self.zone_numbers = zone_numbers[:first_external]
+        surrounding = param.areas["surrounding"]
+        peripheral = param.areas["peripheral"]
+        first_external = numpy.where(zone_numbers > peripheral[1])[0][0]
+        idx = zone_numbers[:first_external]
+        self.zone_numbers = idx
+        first_surrounding = numpy.where(idx >= surrounding[0])[0][0]
+        self.first_surrounding_zone = first_surrounding
+        first_peripheral = numpy.where(idx >= peripheral[0])[0][0]
+        self.first_peripheral_zone = first_peripheral
         script_dir = os.path.dirname(os.path.realpath(__file__))
         project_dir = os.path.join(script_dir, "..", "..")
         data_dir = os.path.join(project_dir, "Zone_data", scenario)
@@ -33,68 +41,82 @@ class ZoneData:
         truckdata = read_file(data_dir, ".trk", squeeze=True)
         self.trailers_prohibited = map(int, truckdata.loc[0, :])
         self.garbage_destination = map(int, truckdata.loc[1, :].dropna())
-        val = {}
         pop = popdata["total"]
-        val["population"] = pop
-        val["share_age_7-17"] = popdata["sh_7-17"]
-        val["share_age_18-29"] = popdata["sh_1829"]
-        val["share_age_30-49"] = popdata["sh_3049"]
-        val["share_age_50-64"] = popdata["sh_5064"]
-        val["share_age_65-99"] = popdata["sh_65-"]
+        self["population"] = pop
+        self["share_age_7-17"] = popdata["sh_7-17"][:first_peripheral]
+        self["share_age_18-29"] = popdata["sh_1829"][:first_peripheral]
+        self["share_age_30-49"] = popdata["sh_3049"][:first_peripheral]
+        self["share_age_50-64"] = popdata["sh_5064"][:first_peripheral]
+        self["share_age_65-99"] = popdata["sh_65-"][:first_peripheral]
         self.nr_zones = len(self.zone_numbers)
-        val["population_density"] = pop / landdata["builtar"]
-        val["car_users"] = cardata["caruse"]
-        val["car_density"] = cardata["cardens"]
+        self["population_density"] = pop / landdata["builtar"]
+        self["car_users"] = cardata["caruse"]
+        self["car_density"] = cardata["cardens"]
         wp = workdata["total"]
-        val["workplaces"] = wp
-        val["service"] = workdata["sh_serv"] * wp
-        serv = val["service"]
-        val["shops"] = workdata["sh_shop"] * wp
-        shop = val["shops"]
-        val["logistics"] = workdata["sh_logi"] * wp
-        val["industry"] = workdata["sh_indu"] * wp
-        val["parking_cost_work"] = parkdata["parcosw"]
-        val["parking_cost_errand"] = parkdata["parcose"]
-        val["comprehensive_schools"] = schooldata["compreh"]
-        val["secondary_schools"] = schooldata["secndry"]
-        val["tertiary_education"] = schooldata["tertiary"]
-        val["zone_area"] = landdata["builtar"]
-        val["share_detached_houses"] = landdata["detach"]
-        val["downtown"] = pandas.Series(0, self.zone_numbers)
-        val["downtown"].loc[:param.areas["downtown"][1]] = 1
-        val["shops_downtown"] = val["downtown"] * val["shops"]
-        val["shops_elsewhere"] = (1-val["downtown"]) * val["shops"]
+        self["workplaces"] = wp
+        self["service"] = workdata["sh_serv"] * wp
+        serv = self["service"]
+        self["shops"] = workdata["sh_shop"] * wp
+        shop = self["shops"]
+        self["logistics"] = workdata["sh_logi"] * wp
+        self["industry"] = workdata["sh_indu"] * wp
+        self["parking_cost_work"] = parkdata["parcosw"]
+        self["parking_cost_errand"] = parkdata["parcose"]
+        self["comprehensive_schools"] = schooldata["compreh"]
+        self["secondary_schools"] = schooldata["secndry"]
+        self["tertiary_education"] = schooldata["tertiary"]
+        self["zone_area"] = landdata["builtar"]
+        self["share_detached_houses"] = landdata["detach"]
+        self["downtown"] = pandas.Series(0, self.zone_numbers)
+        self["downtown"].loc[:param.areas["downtown"][1]] = 1
+        self["shops_downtown"] = self["downtown"] * self["shops"]
+        self["shops_elsewhere"] = (1-self["downtown"]) * self["shops"]
         # Create diagonal matrix with zone area
         di = numpy.diag_indices(self.nr_zones)
-        val["own_zone"] = numpy.zeros((self.nr_zones, self.nr_zones))
-        val["own_zone"][di] = 1
-        val["own_zone_area"] = val["own_zone"] * val["zone_area"].values
-        val["own_zone_area_sqrt"] = numpy.sqrt(val["own_zone_area"])
+        self["own_zone"] = numpy.zeros((self.nr_zones, self.nr_zones))
+        self["own_zone"][di] = 1
+        self["own_zone_area"] = self["own_zone"] * self["zone_area"].values
+        self["own_zone_area_sqrt"] = numpy.sqrt(self["own_zone_area"])
         # Create matrix where value is 1 if origin and destination is in
         # same municipality
-        idx = self.zone_numbers
         home_municipality = pandas.DataFrame(0, idx, idx)
         municipalities = param.municipality
         for municipality in municipalities:
             l = municipalities[municipality][0]
             u = municipalities[municipality][1]
             home_municipality.loc[l:u, l:u] = 1
-        val["population_own"] = home_municipality.values * pop.values
-        val["population_other"] = (1-home_municipality.values) * pop.values
-        val["workplaces_own"] = home_municipality.values * wp.values
-        val["workplaces_other"] = (1-home_municipality.values) * wp.values
-        val["service_own"] = home_municipality.values * serv.values
-        val["service_other"] = (1-home_municipality.values) * serv.values
-        val["shops_own"] = home_municipality.values * shop.values
-        val["shops_other"] = (1-home_municipality.values) * shop.values
-        self._values = val
-        surrounding = param.areas["surrounding"]
-        self.first_surrounding_zone = numpy.where(idx >= surrounding[0])[0][0]
-        peripheral = param.areas["peripheral"]
-        self.first_peripheral_zone = numpy.where(idx >= peripheral[0])[0][0]
+        self["population_own"] = home_municipality.values * pop.values
+        self["population_other"] = (1-home_municipality.values) * pop.values
+        self["workplaces_own"] = home_municipality.values * wp.values
+        self["workplaces_other"] = (1-home_municipality.values) * wp.values
+        self["service_own"] = home_municipality.values * serv.values
+        self["service_other"] = (1-home_municipality.values) * serv.values
+        self["shops_own"] = home_municipality.values * shop.values
+        self["shops_other"] = (1-home_municipality.values) * shop.values
 
     def __getitem__(self, key):
         return self._values[key]
+
+    def __setitem__(self, key, data):
+        try:
+            if numpy.isinf(data).any():
+                for (i, val) in data.iteritems():
+                    if numpy.isposinf(val):
+                        errtext = "{} for zone {} is infinite"
+                        raise ValueError(errtext.format(key, i).capitalize())
+        except TypeError:
+            for (i, val) in data.iteritems():
+                try:
+                    numpy.isposinf(val)
+                except TypeError:
+                    errtext = "{} for zone {} is not a number"
+                    raise TypeError(errtext.format(key, i).capitalize())
+        if (data < 0).all():
+            for (i, val) in data.iteritems():
+                if val < 0:
+                    errtext = "{} ({}) for zone {} is negative"
+                    raise ValueError(errtext.format(key, val, i).capitalize())
+        self._values[key] = data
 
     def get_freight_data(self):
         """Get zone data for freight traffic calculation.
@@ -152,12 +174,14 @@ def read_file(data_dir, file_end, zone_numbers=None, squeeze=False):
     for file_name in os.listdir(data_dir):
         if file_name.endswith(file_end):
             if file_found:
-                raise NameError("Multiple " + file_end + " files found in folder " + data_dir)
+                errtext = "Multiple {} files found in folder {}"
+                raise NameError(errtext.format(file_end, data_dir))
             else:
                 path = os.path.join(data_dir, file_name)
                 file_found = True
     if not file_found:
-        raise NameError("No " + file_end + " file found in folder " + data_dir)
+        errtext = "No {} file found in folder {}"
+        raise NameError(errtext.format(file_end, data_dir))
     if squeeze:
         header = None
     else:
@@ -165,14 +189,28 @@ def read_file(data_dir, file_end, zone_numbers=None, squeeze=False):
     data = pandas.read_csv(
         path, delim_whitespace=True, squeeze=squeeze, keep_default_na=False,
         na_values="", comment='#', header=header)
-    if data.index.is_numeric() and data.index.hasnans:
-        raise IndexError("Row with only spaces or tabs in file " + path)
-    # TODO Also check if str index contains nan
+    if data.index.is_numeric():
+        if data.index.hasnans:
+            errtext = "Row with only spaces or tabs in file {}"
+            raise IndexError(errtext.format(path))
+    else:
+        for i in data.index:
+            try:
+                if numpy.isnan(i):
+                    errtext = "Row with only spaces or tabs in file {}"
+                    raise IndexError(errtext.format(path))
+            except TypeError:
+                # Text indices are ok and should not raise an exception
+                pass
     if zone_numbers is not None:
-        for zone in data.index:
-            if zone not in zone_numbers:
-                raise IndexError("Zone number " + str(zone) + " from file " + path + " not found in network")
-        for zone in zone_numbers:
-            if zone not in data.index:
-                raise IndexError("Zone number " + str(zone) + " not found in file " + path)
+        if (data.index != zone_numbers).any():
+            for i in data.index:
+                if i not in zone_numbers:
+                    errtext = "Zone number {} from file {} not found in network"
+                    raise IndexError(errtext.format(i, path))
+            for i in zone_numbers:
+                if i not in data.index:
+                    errtext = "Zone number {} not found in file {}"
+                    raise IndexError(errtext.format(i, path))
+    
     return data
