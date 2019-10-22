@@ -24,7 +24,7 @@ class ZoneData:
         external_zones = zone_numbers[first_external:]
         script_dir = os.path.dirname(os.path.realpath(__file__))
         project_dir = os.path.join(script_dir, "..", "..")
-        data_dir = os.path.join(project_dir, "Zone_data", scenario)
+        data_dir = os.path.join(project_dir, "Scenario_input_data", scenario)
         data_dir = os.path.abspath(data_dir)
         if not os.path.exists(data_dir):
             raise NameError("Directory " + data_dir + " does not exist.")
