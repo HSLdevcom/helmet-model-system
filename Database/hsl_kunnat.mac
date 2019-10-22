@@ -1,0 +1,47 @@
+~# *** hsl_kunnat_2018.mac
+~# TE 12.4.2019
+~#
+~# lasketaan attribuutti @hsl, joka kertoo, onko pysäkkisolmu HSL-alueella (0=ei, 1=on)
+~#
+~# HSL-alueen kunnat ovat:
+~#   49	Espoo
+~#   91 Helsinki
+~#   92 Vantaa
+~#  235 Kauniainen
+~#  245 Kerava
+~#  257 Kirkkonummi
+~# seka 1.1.2012 alkaen
+~#  753 Sipoo
+~# seka 1.1.2018 alkaen
+~#  755 Siuntio
+~#  858 Tuusula
+~#
+ 2.41
+~# nollataan ensin kaikki
+ 1
+ y
+ @hsl
+ n
+ 0
+
+ all
+ 4
+~# sitten hsl-kuntiin arvo 1
+ 1
+ y
+ @hsl
+ n
+ 1
+ 
+ ui3=49
+ ui3=91,92
+ ui3=235
+ ui3=245
+ ui3=257
+ ui3=753
+ ui3=755
+ ui3=858
+ 
+ 4
+ q
+~/ Makro hsl_kunnat_2018.mac ajettu

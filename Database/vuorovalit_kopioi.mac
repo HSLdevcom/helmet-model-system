@@ -1,0 +1,52 @@
+~# 
+~# Kopioi vuorovälin attribuutista toiseen.
+~# Toki tällä voi periaatteessa kopioida muitakin attribuutteja.
+~# 
+~# WSP/ARa 10.1.2017
+~# 
+~# ~<vuorovalit_kopioi.mac p1 p2 p3
+~# parametrit: p1 = skenaario, jossa (vuoroväli) kopioidaan attribuutista toiseen
+~#             p2 = attribuutti, josta (vuoroväli) kopioidaan
+~#                   (yleensä @hwaht / @hwpt / @hwiht)
+~#             p3 = attribuutti, johon (vuoroväli) kopioidaan (yleensä hdwy)
+~#
+~# esim. aht: ~<vuorovalit_kopioi.mac 21 @hwaht hdwy
+~#        pt: ~<vuorovalit_kopioi.mac 22 @hwpt  hdwy
+~#       iht: ~<vuorovalit_kopioi.mac 23 @hwiht hdwy
+~#
+~#
+s=%1%
+~#
+~#
+~# *** Nollataan aluksi attribuutti, johon kopioidaan
+~# Huomaan, että Vuorovälin (hdwy) alustus nollaksi alustaa sen kuitenkin arvoon 0.01
+~# 
+~#
+2.41
+1
+y
+%3%
+~?q=1
+n
+0
+
+all
+2
+~?q=2
+2
+~# *** Kopioidaan attribuutti
+~# (Network calculations and mode changes)
+~#
+1
+y
+%3%
+~?q=1
+n
+%2%
+
+all
+2
+~?q=2
+2
+q
+

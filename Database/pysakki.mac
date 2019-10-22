@@ -1,0 +1,262 @@
+~###############################################################################
+~#                                pysakki.mac                                  #
+~#                                                                             #
+~#  Makro laskee bussi-, ratikka- ja pikaratikkalinjojen pysähtymistiedot      #
+~#  solmujen ui2- ja ui3-datan perusteella.                                    #
+~#                                                                             #
+~#  25.8.2016 KSV & HSL (Mervi ja Petri)                                       #
+~#     muokattu 22.9.2016 HSL/MeV                                              #
+~#     muokattu 7.10.2016 WSP/ARa                                              #
+~#              - Vallu (d) molemmat suunnat                                   #
+~#     muokattu 9.12.2016 WSP/ARa                                              #
+~#              - Pika (e) molemmat suunnat                                    #
+~#              - lisatty alkuun @hsl:n nollaus                                #
+~#     muokattu 9.1.2017 HSL/MeV                                               #
+~#              - nollataan pysähtymistiedot vain busseilla ja ratikoilla      #
+~#                (btpgde), ei junilla (rj) ja metrolla (m)                    #
+~#     muokattu 10.1.2017 WSP/ARa                                              #
+~#              - yhdistetty HSL:n ja WSP:n aiemmat muokkaukset samaan makroon #
+~#     muokattu 16.2.2018 HSL/JW                                               #
+~#              - lisatty pikavuoropysakki u2=7                                #
+~#     muokattu 3.7.2018 HSL/MeV                                               #
+~#              - lisätty HSL-kuntiin Tuusula ja Siuntio                       #
+~#     muokattu 16.4.2019 HSL/TE                                               #
+~#              - maaritellaan HSL-kunnat ennen taman makron ajoa              #
+~#                                                                             #
+~###############################################################################
+~#
+~# ui2-kentässä tulee olla tieto, millaisten linjojen pysäkki on kyseessä
+~# ui2=0, ei pysäkki (samoin ui2=20 ja muutkin joita ei ole alla lueteltu)
+~# ui2=1, ratikka- ja pikaratikkapysäkki
+~# ui2=2, bussipysäkki paikallisliikenne
+~# ui2=3, bussipysäkki paikallis- ja runkoliikenne
+~# ui2=4, bussipysäkki paikallis- ja pikavuoroliikenne
+~# ui2=5, bussipysäkki paikallis, runko- ja pikavuoroliikenne
+~# ui2=7, bussipysäkki pikavuoro- ja valluliikenne
+~# ui2=11, bussiterminaali (kaikki linjat)
+~#
+~# ui3-kentässä tulee olla tieto kunnasta
+~# HSL-alueen kunnat 2016 ovat:
+~#   49	Espoo		
+~#   91 Helsinki	 
+~#   92 Vantaa		
+~#  235 Kauniainen	
+~#  245 Kerava		
+~#  257 Kirkkonummi 
+~#  753 Sipoo	
+~#  755 Siuntio
+~#  858 Tuusula
+~#
+~# Vallu-linjojen (d) ja pikavuorojen (e) linjatunnuksessa on oltava
+~#  täsmälleen 6 merkkiä, joista viimeinen kuvaa suuntaa (1 tai 2). 
+~#  - Kokonaan HSL-alueen ulkopuolella kulkevilla linjoilla suunnalla ei
+~#    ole niin väliä, koska linja pysähtyy joka tapauksessa kaikilla
+~#    pysäkeillä (pikavuoro kaikilla pikavuoropysäkeillä). Linjatunnukset
+~#    kuudennen (6.) merkin pitää kuitenkin olla 1 tai 2, jotta makro toimii.  
+~#
+~# Attribuutti @hsl kertoo, onko pysäkki (solmu) HSL-alueella (0=ei, 1=on). 
+~# varmista @hsl-attribuutin olemassa olo (solmuattribuutti)
+~# kopioidaan ennen makron ajoa tarkasteltavaa vuotta (ts. sen HSL-kuntia)
+~# kuvaava versio makrosta hsl_kunnat_*.mac makroksi hsl_kunnat.mac
+~#
+2.41
+~# *** poistetaan kaikki pysäkit bussi-, ratikka- ja pikaratikkalinjoilla 
+1
+y
+noali
+1
+ 
+mod=btpgde
+
+mod=btpgde
+
+4
+1
+y
+noboa
+1
+ 
+mod=btpgde
+
+mod=btpgde
+
+4
+~# *** lisätään ratikkapysäkit (t ja p) *** 
+~#poistumiset
+1
+y
+noalin
+1-(uj2.eq.1)
+ 
+mode=tp
+ 
+mode=tp
+ 
+4
+~#nousut
+1
+y
+noboa
+1-(ui2.eq.1)
+ 
+mode=tp
+ 
+mode=tp
+ 
+4
+~# *** lisätään HSL-bussit (b) ***
+~#poistumiset
+1
+y
+noalin
+1-((uj2.eq.2)+(uj2.eq.3)+(uj2.eq.4)+(uj2.eq.5)+(uj2.eq.11))
+ 
+mode=b
+ 
+mode=b
+
+4
+~#nousut
+1
+y
+noboa
+1-((ui2.eq.2)+(ui2.eq.3)+(ui2.eq.4)+(ui2.eq.5)+(ui2.eq.11))
+ 
+mode=b
+ 
+mode=b
+
+4
+~# *** lisätään runkolinjat (g) *** 
+~#poistumiset
+1
+y
+noalin
+1-((uj2.eq.3)+(uj2.eq.5)+(uj2.eq.11))
+ 
+mode=g
+ 
+mode=g
+ 
+4
+~#nousut
+1
+y
+noboa
+1-((ui2.eq.3)+(ui2.eq.5)+(ui2.eq.11))
+ 
+mode=g
+ 
+mode=g
+
+4
+~# *** lisataan pikavuorot (e) ykkössuunta ***
+~# ykkössuunta = Helsingistä poispäin
+~#poistumiset (pikavuoropysäkeilla HSL-alueen ulkopuolella)
+1
+y
+noalin
+1-((@hsl.eq.0).and.((uj2.eq.4)+(uj2.eq.5)+(uj2.eq.7)+(uj2.eq.11)))
+ 
+mode=e
+and line=_____1
+ 
+mode=e
+ 
+4
+~#nousut (kaikilla pikavuoropysäkeillä)
+1
+y
+noboa
+1-((ui2.eq.4)+(ui2.eq.5)+(uj2.eq.7)+(ui2.eq.11))
+ 
+mode=e
+and line=_____1
+ 
+mode=e
+
+4
+~# *** lisataan pikavuorot (e) kakkossuunta ***
+~# kakkossuunta = Helsinkiin päin
+~#poistumiset (kaikilla pikavuoropysäkeillä)
+1
+y
+noalin
+1-((uj2.eq.4)+(uj2.eq.5)+(uj2.eq.7)+(uj2.eq.11))
+ 
+mode=e
+and line=_____2
+ 
+mode=e
+ 
+4
+~#nousut (pikavuoropysäkeilla HSL-alueen ulkopuolella)
+1
+y
+noboa
+1-((@hsl.eq.0).and.((ui2.eq.4)+(ui2.eq.5)+(uj2.eq.7)+(ui2.eq.11)))
+ 
+mode=e
+and line=_____2
+ 
+mode=e
+
+4
+~# *** lisataan vallut (d) ykkössuunta ***
+~# ykkösuunta = Helsingistä poispäin
+~#poistumiset (kaikilla bussipysäkeillä HSL-alueen ulkopuolella)
+1
+y
+noalin
+1-((@hsl.eq.0).and.((uj2.eq.2)+(uj2.eq.3)+
+(uj2.eq.4)+(uj2.eq.5)+(uj2.eq.7)+(uj2.eq.11)))
+ 
+mode=d
+and line=_____1
+ 
+mode=d
+ 
+4
+~#nousut (kaikilla bussipysäkeillä)
+1
+y
+noboa
+1-((ui2.eq.2)+(ui2.eq.3)+(ui2.eq.4)+(ui2.eq.5)+(uj2.eq.7)+(ui2.eq.11))
+ 
+mode=d
+and line=_____1
+ 
+mode=d
+
+4
+~# *** lisätään vallut (d) kakkossuunta ***
+~# kakkossuunta = Helsinkiin päin
+~#poistumiset (kaikilla bussipysäkeillä)
+1
+y
+noalin
+1-((uj2.eq.2)+(uj2.eq.3)+(uj2.eq.4)+(uj2.eq.5)+(uj2.eq.7)+(uj2.eq.11))
+ 
+mode=d
+and line=_____2
+ 
+mode=d
+ 
+4
+~#nousut (kaikilla bussipysäkeillä HSL-alueen ulkopuolella)
+1
+y
+noboa
+1-((@hsl.eq.0).and.((ui2.eq.2)+(ui2.eq.3)+
+(ui2.eq.4)+(ui2.eq.5)+(uj2.eq.7)+(ui2.eq.11)))
+ 
+mode=d
+and line=_____2
+ 
+mode=d
+
+4
+~#end
+6
+~/  Bussi-, ratikka- ja pikaratikkalinjojen pysäkit
+~/  on korjattu ui2- ja ui3-tietojen mukaisiksi.

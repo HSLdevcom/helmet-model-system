@@ -1,0 +1,78 @@
+~# *** tarkista_verkko.mac
+~#
+~# tehdaan muodostettuihin liikennejarjestelmakuvauksiin joitakin tarkistuksia
+~# parametri p1 = tulostustiedoston nimi
+~# TE 5.10.2017
+~#
+~# Muutoksia
+~#    Lisattu pyoraverkon (s=19) yhteenvedon tulostus (TE 22.1.2019)
+~#
+~t1=%1%
+~?t1=
+~t1=tarkista_verkko.txt
+~#
+ reports=%t1%
+~! ECHO * >> %t1%
+~! ECHO ****** SKENAARION %s% TARKISTUS ALKAA ****** >> %t1%
+~! ECHO * >> %t1%
+~! ECHO *** Yhteenveto linkkityypeista (x01-x14 vai x21-x42) ja viivytysfunktioista *** >> %t1%
+ 2.14
+ 3
+~?q=2
+ 2
+ q
+~#
+~! ECHO * >> %t1%
+~! ECHO *** Linkilta puuttuu pituus, jos alla on riveja, joilla length=0 *** >> %t1%
+ 2.14
+ 2
+ n
+ len=0
+
+~?q=2
+ 2
+ q
+~#
+~# ** pyoraverkkoa ei tarkisteta enempaa
+~x=%s%
+~?x=19
+~$LOPPU
+~#
+~! ECHO * >> %t1%
+~! ECHO *** Linkilta puuttuu kapasiteetti, jos alla on riveja, joilla ul1=0 *** >> %t1%
+ 2.14
+ 2
+ n
+ mod=c
+ and ul1=0
+
+~?q=2
+ 2
+ q
+~#
+~! ECHO * >> %t1%
+~! ECHO *** Linkilta puuttuu vapaa nopeus, jos alla on riveja, joilla ul2=0 *** >> %t1%
+ 2.14
+ 2
+ n
+ mod=c
+ and ul2=0
+
+~?q=2
+ 2
+ q
+~#
+~! ECHO * >> %t1%
+~! ECHO *** Linjalta puuttuu vuorovali, jos alla on riveja, joilla hdwy=0.01 *** >> %t1%
+ 2.24
+ 1
+ hdwy=0,1
+
+~?q=2
+ 2
+ q
+~#
+~:LOPPU
+~! ECHO ****** SKENAARION %s% TARKISTUS PAATTYY ****** >> %t1%
+ reports=
+~#
