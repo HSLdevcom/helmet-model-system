@@ -47,7 +47,7 @@ class MatrixDataTest(unittest.TestCase):
 
 class ZoneDataTest(unittest.TestCase):
     FREIGHT_DATA_INDEXES = [5, 6, 7, 2792, 16001, 17000]
-    ZONE_INDEXES = numpy.array([5, 6, 7, 2792, 16001, 17000, 31000, 31031])
+    ZONE_INDEXES = numpy.array([5, 6, 7, 2792, 16001, 17000, 31000, 31501])
 
     def _get_freight_data_2016(self):
         zdata = ZoneData("2016_test", self.ZONE_INDEXES)

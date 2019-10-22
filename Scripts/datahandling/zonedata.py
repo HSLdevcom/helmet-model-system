@@ -12,13 +12,16 @@ class ZoneData:
         zone_numbers = numpy.array(zone_numbers)
         surrounding = param.areas["surrounding"]
         peripheral = param.areas["peripheral"]
-        first_external = numpy.where(zone_numbers > peripheral[1])[0][0]
-        idx = zone_numbers[:first_external]
+        external = param.areas["external"]
+        first_extra = numpy.where(zone_numbers > peripheral[1])[0][0]
+        idx = zone_numbers[:first_extra]
         self.zone_numbers = idx
         first_surrounding = numpy.where(idx >= surrounding[0])[0][0]
         self.first_surrounding_zone = first_surrounding
         first_peripheral = numpy.where(idx >= peripheral[0])[0][0]
         self.first_peripheral_zone = first_peripheral
+        first_external = numpy.where(zone_numbers >= external[0])[0][0]
+        external_zones = zone_numbers[first_external:]
         script_dir = os.path.dirname(os.path.realpath(__file__))
         project_dir = os.path.join(script_dir, "..", "..")
         data_dir = os.path.join(project_dir, "Zone_data", scenario)
@@ -31,7 +34,7 @@ class ZoneData:
         landdata = read_file(data_dir, ".lnd", self.zone_numbers)
         cardata = read_file(data_dir, ".car", self.zone_numbers)
         parkdata = read_file(data_dir, ".prk", self.zone_numbers)
-        self.externalgrowth = read_file(data_dir, ".ext")
+        self.externalgrowth = read_file(data_dir, ".ext", external_zones)
         transit_zone = read_file(data_dir, ".tco").to_dict()
         transit_zone["dist_fare"] = transit_zone["fare"].pop("dist")
         transit_zone["start_fare"] = transit_zone["fare"].pop("start")
@@ -107,10 +110,12 @@ class ZoneData:
         except TypeError:
             for (i, val) in data.iteritems():
                 try:
-                    numpy.isfinite(val)
-                except TypeError:
+                    float(val)
+                except ValueError:
                     errtext = "{} for zone {} is not a number"
                     raise TypeError(errtext.format(key, i).capitalize())
+            errtext = "{} could not be read"
+            raise TypeError(errtext.format(key).capitalize())
         if (data < 0).all():
             for (i, val) in data.iteritems():
                 if val < 0:
@@ -205,7 +210,7 @@ def read_file(data_dir, file_end, zone_numbers=None, squeeze=False):
     if zone_numbers is not None:
         if (data.index != zone_numbers).any():
             for i in data.index:
-                if i not in zone_numbers:
+                if int(i) not in zone_numbers:
                     errtext = "Zone number {} from file {} not found in network"
                     raise IndexError(errtext.format(i, path))
             for i in zone_numbers:

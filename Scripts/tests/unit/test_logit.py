@@ -15,7 +15,7 @@ class LogitModelTest(unittest.TestCase):
         class Purpose:
             pass
         pur = Purpose()
-        zi = numpy.array([5, 6, 7, 2792, 16001, 17000, 31000, 31031])
+        zi = numpy.array([5, 6, 7, 2792, 16001, 17000, 31000, 31501])
         zd = ZoneData("2016_test", zi)
         mtx = numpy.arange(24)
         mtx.shape = (4, 6)
