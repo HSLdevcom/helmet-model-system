@@ -21,7 +21,7 @@ class GenerationModel:
         tours = numpy.zeros(nr_zones)
         b = self.param
         for i in b:
-            tours += b[i] * self.zone_data.values[i][l:u]
+            tours += b[i] * self.zone_data[i][l:u]
         return tours
 
 
@@ -53,9 +53,7 @@ class SecDestGeneration(GenerationModel):
         numpy 2-d matrix
             Matrix of tour numbers per origin-destination pair
         """
-        l, u = self.purpose.bounds
-        nr_zones = u - l
-        tours = numpy.zeros((nr_zones, self.zone_data.nr_zones))
+        tours = numpy.zeros_like(next(iter(self.purpose.sources)).demand[mode])
         b = self.param
         for source in self.purpose.sources:
             tours += b[source.name] * source.demand[mode]

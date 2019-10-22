@@ -41,19 +41,18 @@ class EmmeAssignmentTest():
         for tp in emme_scenario:
             self.ass_model.assign(tp, demand)
             travel_cost[tp] = self.ass_model.get_impedance()
-        costs_files = MatrixData("2016")
+        costs_files = MatrixData("2016_test")
         for time_period in travel_cost:
             for mtx_type in travel_cost[time_period]:
                 zone_numbers = self.ass_model.zone_numbers
-                costs_files.open_file(mtx_type, time_period, 'w')
-                costs_files.set_mapping(zone_numbers)
-                for ass_class in travel_cost[time_period][mtx_type]:
-                    cost_data = travel_cost[time_period][mtx_type][ass_class]
-                    costs_files.set_data(cost_data, ass_class)
-                costs_files.close()
+                with costs_files.open(mtx_type, time_period, 'w') as mtx:
+                    mtx.mapping = zone_numbers
+                    for ass_class in travel_cost[time_period][mtx_type]:
+                        cost_data = travel_cost[time_period][mtx_type][ass_class]
+                        mtx[ass_class] = cost_data
 
     def test_transit_cost(self):
-        zdata = ZoneData("2030")
+        zdata = ZoneData("2030_test")
         peripheral_cost = numpy.ones((2, 6))
         self.ass_model.calc_transit_cost(zdata.transit_zone, peripheral_cost)
 

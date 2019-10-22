@@ -13,13 +13,13 @@ import numpy
 class MatrixDataTest(unittest.TestCase):
     
     def test_constructor(self):
-        m = MatrixData("2016")
+        m = MatrixData("2016_test")
         # Verify that the base folder exists
         self.assertTrue(os.path.isdir(m.path))
-        self.assertTrue(m.path.endswith("2016"))
+        self.assertTrue(m.path.endswith("2016_test"))
 
     def test_matrix_operations(self):
-        m = MatrixData("2016")
+        m = MatrixData("2016_test")
         # TODO add matrices for gen_cost, transit, bike? 
         # TODO now MockAssignmentModel writes the demand-matrices in it's tests, think about this.. 
         MATRIX_TYPES = ["time", "dist", "cost"]
@@ -28,51 +28,48 @@ class MatrixDataTest(unittest.TestCase):
             self._validate_matrix_operations(m, matrix_type)
 
     def _validate_matrix_operations(self, matrix_data, matrix_type):
-        
         for key in params.emme_scenario.keys():
             print("Opening matrix for time period", key)
-            matrix_data.open_file(matrix_type, time_period=key)
-            self.assertIsNotNone(matrix_data.mtx_file)
-            # Validate that has some zone numbers and mapping
-            self.assertTrue(len(matrix_data.get_zone_numbers()) > 0)
-            self.assertTrue(len(matrix_data.get_zone_numbers()), len(matrix_data.get_mapping()))
-
-            modes_for_this_type = params.emme_mtx[matrix_type].keys()
-            for mode in modes_for_this_type:
-                # Validata that there is some data for each mode
-                print("validating data for matrix mode", mode)
-                data = matrix_data.get_data(mode)
-                assert type(data) is numpy.ndarray
-                self.assertTrue(len(data) > 0)          
-            
-            matrix_data.close()
+            with matrix_data.open(matrix_type, time_period=key) as mtx:
+                self.assertIsNotNone(mtx._file)
+                # Validate that has some zone numbers and mapping
+                self.assertTrue(len(mtx.zone_numbers) > 0)
+                self.assertEquals(len(mtx.zone_numbers), len(mtx.mapping))
+                modes_for_this_type = params.emme_mtx[matrix_type].keys()
+                for mode in modes_for_this_type:
+                    # Validata that there is some data for each mode
+                    print("validating data for matrix mode", mode)
+                    data = mtx[mode]
+                    assert type(data) is numpy.ndarray
+                    self.assertTrue(len(data) > 0)
+                    assert (data >= 0).all()
 
 
 class ZoneDataTest(unittest.TestCase):
     FREIGHT_DATA_INDEXES = [5, 6, 7, 2792, 16001, 17000]
+    ZONE_INDEXES = numpy.array([5, 6, 7, 2792, 16001, 17000, 31000, 31501])
 
     def _get_freight_data_2016(self):
-        zdata = ZoneData("2016")
+        zdata = ZoneData("2016_test", self.ZONE_INDEXES)
         df = zdata.get_freight_data()
         self.assertIsNotNone(df)
         #print(df)
         return df
 
     def test_csv_file_read(self):
-        zdata2016 = ZoneData("2016")
-        self.assertIsNotNone(zdata2016.values["population"])
-        self.assertIsNotNone(zdata2016.values["workplaces"])
+        zdata2016 = ZoneData("2016_test", self.ZONE_INDEXES)
+        self.assertIsNotNone(zdata2016["population"])
+        self.assertIsNotNone(zdata2016["workplaces"])
 
-        zdata2030 = ZoneData("2030")
-        self.assertIsNotNone(zdata2030.values["population"])
-        self.assertIsNotNone(zdata2030.values["workplaces"])
+        zdata2030 = ZoneData("2030_test", self.ZONE_INDEXES)
+        self.assertIsNotNone(zdata2030["population"])
+        self.assertIsNotNone(zdata2030["workplaces"])
 
-        self.assertEquals(len(zdata2016.values["population"]), len(zdata2030.values["population"]))
-        self.assertEquals(len(zdata2016.values["workplaces"]), len(zdata2030.values["workplaces"]))
+        self.assertEquals(len(zdata2016["population"]), len(zdata2030["population"]))
+        self.assertEquals(len(zdata2016["workplaces"]), len(zdata2030["workplaces"]))
         #Assert that data content is a bit different so we know we're not reading the same file all over again
-        self.assertFalse(zdata2016.values["population"].equals(zdata2030.values["population"]))
-        self.assertFalse(zdata2016.values["workplaces"].equals(zdata2030.values["workplaces"]))
-
+        self.assertFalse(zdata2016["population"].equals(zdata2030["population"]))
+        self.assertFalse(zdata2016["workplaces"].equals(zdata2030["workplaces"]))
 
     def test_all_cols_have_values_2016(self):
         df = self._get_freight_data_2016()

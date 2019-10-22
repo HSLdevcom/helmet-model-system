@@ -28,7 +28,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             self._calc_background_traffic(param.emme_scenario[time_period])
         self._specify()
     
-    def assign(self, time_period, matrices):
+    def assign(self, time_period, matrices, is_last_iteration=False, is_first_iteration=False):
         """Assign cars, bikes and transit for one time period.
         
         Parameters
@@ -41,14 +41,23 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         self.emme.logger.info("Assignment starts...")
         self.set_matrices(matrices)
         scen_id = param.emme_scenario[time_period]
-        self._assign_cars(scen_id, param.stopping_criteria_coarse)
         self._calc_extra_wait_time(scen_id)
-        self._assign_transit(scen_id)
-        self._assign_pedestrians(scen_id)
-        self._assign_bikes(param.bike_scenario, 
-                           param.emme_mtx["time"]["bike"]["id"], 
-                           "all", 
+        if is_first_iteration and time_period == "aht":
+            self._assign_pedestrians(scen_id)
+            self._assign_bikes(param.bike_scenario,
+                            param.emme_mtx["time"]["bike"]["id"],
+                            "all",
+                            "@fvol_"+time_period)
+        if is_last_iteration:
+            self._assign_cars(scen_id, param.stopping_criteria_fine)
+            self._assign_congested_transit(id)
+            self._assign_bikes(param.bike_scenario,
+                           param.emme_mtx["time"]["bike"]["id"],
+                           "all",
                            "@fvol_"+time_period)
+        else:
+            self._assign_cars(scen_id, param.stopping_criteria_coarse)
+            self._assign_transit(scen_id)
         
     def get_impedance(self):
         """Get travel impedance matrices for one time period from assignment.
@@ -73,9 +82,20 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
     
     def set_matrices(self, matrices):
         emmebank = self.emme.modeller.emmebank
+        tmp_mtx = None
         for mtx in matrices:
-            idx = param.emme_mtx["demand"][mtx]["id"]
-            emmebank.matrix(idx).set_numpy_data(matrices[mtx])
+            mtx_label = mtx.split('_')[0]
+            if mtx_label == "transit" or mtx_label == "bike":
+                idx = param.emme_mtx["demand"][mtx_label]["id"]
+                try:
+                    tmp_mtx += matrices[mtx]
+                    emmebank.matrix(idx).set_numpy_data(tmp_mtx)
+                    tmp_mtx = None
+                except TypeError:
+                    tmp_mtx = matrices[mtx]
+            else:
+                idx = param.emme_mtx["demand"][mtx]["id"]
+                emmebank.matrix(idx).set_numpy_data(matrices[mtx])
     
     def get_matrices(self, mtx_type):
         """Get all matrices of specified type.
@@ -324,7 +344,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                     if transit_zone not in zone_combination:
                         goes_outside |= has_visited[transit_zone]
                 is_inside = ~goes_outside
-                if fares["exclusive"][zone_combination] != "":
+                if not numpy.isnan(fares["exclusive"][zone_combination]):
                     # Calculate fares exclusive for municipality citizens
                     zn = self.zone_numbers
                     exclusion = pandas.DataFrame(is_inside, zn, zn)

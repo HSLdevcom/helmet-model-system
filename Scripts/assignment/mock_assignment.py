@@ -10,7 +10,7 @@ class MockAssignmentModel(AssignmentModel, ImpedanceSource):
         self.logger = logging.getLogger()
         self.logger.info("Reading matrices from " + str(self.matrices.path))
     
-    def assign(self, time_period, matrices):
+    def assign(self, time_period, matrices, is_last_iteration=False, is_first_iteration=False):
         """Assign cars, bikes and transit for one time period.
         
         Parameters
@@ -21,10 +21,9 @@ class MockAssignmentModel(AssignmentModel, ImpedanceSource):
             Assignment class (car_work/transit/...): numpy 2-d matrix
         """
         self.time_period = time_period
-        self.matrices.open_file("demand", time_period, 'w')
-        for ass_class in matrices:
-            self.matrices.set_data(matrices[ass_class], ass_class)
-        self.matrices.close()
+        with self.matrices.open("demand", time_period, 'w') as mtx:
+            for ass_class in matrices:
+                mtx[ass_class] = matrices[ass_class]
         self.logger.info("Saved demand matrices for " + str(time_period))
     
     def get_impedance(self):
@@ -57,26 +56,23 @@ class MockAssignmentModel(AssignmentModel, ImpedanceSource):
                 Matrix of the specified type
         """
         matrices = dict.fromkeys(param.emme_mtx[mtx_type].keys())
-        self.matrices.open_file(mtx_type, time_period)
-        for mode in matrices:
-            matrices[mode] = self.matrices.get_data(mode)
-        self.matrices.close()
+        with self.matrices.open(mtx_type, time_period) as mtx:
+            for mode in matrices:
+                matrices[mode] = mtx[mode]
         return matrices
     
     @property
     def zone_numbers(self):
         """Numpy array of all zone numbers.""" 
-        self.matrices.open_file("time", "aht")
-        zone_numbers = self.matrices.get_zone_numbers()
-        self.matrices.close()
+        with self.matrices.open("time", "aht") as mtx:
+            zone_numbers = mtx.zone_numbers
         return zone_numbers
     
     @property
     def mapping(self):
         """dict: Dictionary of zone numbers and corresponding indices."""
-        self.matrices.open_file("time", "aht")
-        mapping = self.matrices.get_mapping()
-        self.matrices.close()
+        with self.matrices.open("time", "aht") as mtx:
+            mapping = mtx.mapping
         return mapping
 
     @property
@@ -84,5 +80,5 @@ class MockAssignmentModel(AssignmentModel, ImpedanceSource):
         """int: Number of zones in assignment model."""
         return len(self.zone_numbers)
 
-    def calc_transit_cost(self, fare, peripheral_cost):
+    def calc_transit_cost(self, fare, peripheral_cost, default_cost=None):
         pass

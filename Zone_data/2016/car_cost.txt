@@ -1,2 +1,0 @@
-# Car usage cost [eur/km] 2016
-0.12

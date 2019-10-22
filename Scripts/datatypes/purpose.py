@@ -2,6 +2,7 @@ import parameters as param
 import models.logit as logit
 import models.generation as generation
 from datatypes.demand import Demand
+import datahandling.resultdata as result
 import numpy
 import pandas
 
@@ -46,6 +47,9 @@ class Purpose:
         self.generated_tours = {}
         self.attracted_tours = {}
 
+    @property
+    def zone_numbers(self):
+        return self.zone_data.zone_numbers[self.bounds[0]:self.bounds[1]]
 
 class TourPurpose(Purpose):
     def __init__(self, specification, zone_data):
@@ -98,18 +102,43 @@ class TourPurpose(Purpose):
         demand = {}
         self.demand = {}
         self.aggregated_demand = {}
+        self.demand_sums = {}
         for mode in self.model.mode_choice_param:
             self.demand[mode] = (prob[mode] * tours).T
             demand[mode] = Demand(self, mode, self.demand[mode])
             self.attracted_tours[mode] = self.demand[mode].sum(0)
             self.generated_tours[mode] = self.demand[mode].sum(1)
-            self.aggregated_demand[mode] = self._aggregate(self.demand[mode])
+            self.demand_sums[mode] = self.generated_tours[mode].sum()
+            self.trip_lengths = self._count_trip_lenghts(
+                self.demand[mode], impedance["car"]["dist"])
+        self.print_data()
         return demand
 
+    def print_data(self):
+        for mode in self.model.mode_choice_param:
+            aggregated_demand = self._aggregate(self.demand[mode])
+            result.print_matrix(aggregated_demand,
+                                "aggregated_demand", self.name + "_" + mode)
+            own_zone = self.zone_data.get_data("own_zone", self)
+            own_zone_demand = own_zone * self.demand[mode]
+            own_zone_aggregated = self._aggregate(own_zone_demand)
+            result.print_data(
+                numpy.diag(own_zone_aggregated), "own_zone_demand.txt",
+                own_zone_aggregated.index, self.name + "_" + mode[0])
+            result.print_data(
+                self.trip_lengths, "trip_lenghts.txt",
+                self.trip_lengths.index, self.name + "_" + mode[0])
+        demsums = self.demand_sums
+        demand_all = sum(demsums.values())
+        mode_shares = {mode: demsums[mode] / demand_all for mode in demsums}
+        result.print_data(
+            pandas.Series(mode_shares), "mode_share.txt",
+            demsums.keys(), self.name)
+    
     def _aggregate(self, mtx):
         """Aggregate matrix to larger areas."""
         dest = self.zone_data.zone_numbers
-        orig = self.zone_data.zone_numbers[self.bounds[0]:self.bounds[1]]
+        orig = self.zone_numbers
         mtx = pandas.DataFrame(mtx, orig, dest)
         idx = param.areas.keys()
         aggr_mtx = pandas.DataFrame(0, idx, idx)
@@ -123,6 +152,16 @@ class TourPurpose(Purpose):
             u = param.areas[area][1]
             aggr_mtx.loc[:, area] = tmp_mtx.loc[:, l:u].sum(1).values
         return aggr_mtx
+
+    def _count_trip_lenghts(self, trips, dist):
+        intervals = ("0-1", "1-3", "3-5", "5-10", "10-20", "20-inf")
+        trip_lengths = pandas.Series(index=intervals)
+        for tl in trip_lengths.index:
+            bounds = tl.split("-")
+            l = float(bounds[0])
+            u = float(bounds[1])
+            trip_lengths[tl] = trips[(dist>=l) & (dist<u)].sum()
+        return trip_lengths
 
 
 class SecDestPurpose(Purpose):
