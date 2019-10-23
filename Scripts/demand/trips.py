@@ -41,7 +41,7 @@ class DemandModel:
             "area": "metropolitan",
         }
         cm = logit.CarUseModel(zone_data, Purpose(spec, zone_data))
-        zone_data.car_use = cm.calc_prob()
+        zone_data["car_users"] = cm.calc_prob()
 
     def create_population(self):
         """Create population for agent-based simulation."""

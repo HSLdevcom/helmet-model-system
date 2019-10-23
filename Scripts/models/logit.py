@@ -322,11 +322,12 @@ class CarUseModel(LogitModel):
         no_dummy_share = 1
         dummy_prob = 0
         for i in b["individual_dummy"]:
-            dummy_share = self.zone_data.get_data(i, self.purpose, True).values
+            dummy_share = self.zone_data.get_data(
+                i, self.purpose, generation=True).values
             no_dummy_share -= dummy_share
             ind_exps = numpy.exp(b["individual_dummy"][i]) * exps
             ind_prob = ind_exps / (ind_exps+1)
             dummy_prob += dummy_share * ind_prob
         no_dummy_prob = no_dummy_share * prob
         prob = no_dummy_prob + dummy_prob
-        return prob
+        return pandas.Series(prob, self.purpose.zone_numbers)

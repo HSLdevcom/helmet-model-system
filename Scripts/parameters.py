@@ -1856,9 +1856,7 @@ mode_choice = {
             "log": {
                 "logsum": 0.799256902,
             },
-            "individual_dummy": {
-                "car_users": (0.799256902 * 2.273164428, 0.799256902 * 2.72725345),
-            },
+            "individual_dummy": {},
         },
         "transit": {
             "constant": 0.799256902 * 2.739088214,
@@ -1902,9 +1900,7 @@ mode_choice = {
             "log": {
                 "logsum": 0.799256902,
             },
-            "individual_dummy": {
-                "car_users": (0.799256902 * 2.273164428, 0.799256902 * 2.72725345),
-            },
+            "individual_dummy": {},
         },
         "transit": {
             "constant": 0.799256902 * 2.739088214,
