@@ -24,7 +24,7 @@ def print_data(data, filename, zone_numbers, colname):
     if filename not in _buffer:
         _buffer[filename] = pandas.DataFrame(index=zone_numbers)
     _buffer[filename][colname] = data
-    _buffer[filename].to_csv(filepath, sep='\t', float_format="%1.3f")
+    _buffer[filename].to_csv(filepath, sep='\t', float_format="%1.5f")
 
 def print_matrix(data, filename, sheetname):
     if _use_txt:
