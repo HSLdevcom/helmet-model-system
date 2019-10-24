@@ -52,7 +52,8 @@ class EmmeAssignmentTest():
                         mtx[ass_class] = cost_data
 
     def test_transit_cost(self):
-        zdata = ZoneData("2030_test")
+        ZONE_INDEXES = numpy.array([5, 6, 7, 2792, 16001, 17000, 31000, 31501])
+        zdata = ZoneData("2030_test", ZONE_INDEXES)
         peripheral_cost = numpy.ones((2, 6))
         self.ass_model.calc_transit_cost(zdata.transit_zone, peripheral_cost)
 

@@ -347,7 +347,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                     if transit_zone not in zone_combination:
                         goes_outside |= has_visited[transit_zone]
                 is_inside = ~goes_outside
-                if not numpy.isnan(fares["exclusive"][zone_combination]):
+                if zone_combination in fares["exclusive"]:
                     # Calculate fares exclusive for municipality citizens
                     zn = self.zone_numbers
                     exclusion = pandas.DataFrame(is_inside, zn, zn)
