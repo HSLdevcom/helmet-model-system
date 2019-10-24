@@ -81,10 +81,10 @@ class ZoneData:
         self["tertiary_education"] = schooldata["tertiary"]
         self["zone_area"] = landdata["builtar"]
         self["share_detached_houses"] = landdata["detach"]
-        self["downtown"] = pandas.Series(0, self.zone_numbers)
-        self["downtown"].loc[:param.areas["downtown"][1]] = 1
-        self["shops_downtown"] = self["downtown"] * self["shops"]
-        self["shops_elsewhere"] = (1-self["downtown"]) * self["shops"]
+        self["cbd"] = pandas.Series(0, self.zone_numbers)
+        self["cbd"].loc[:param.areas["helsinki_cbd"][1]] = 1
+        self["shops_cbd"] = self["cbd"] * self["shops"]
+        self["shops_elsewhere"] = (1-self["cbd"]) * self["shops"]
         # Create diagonal matrix with zone area
         di = numpy.diag_indices(self.nr_zones)
         self["own_zone"] = numpy.zeros((self.nr_zones, self.nr_zones))

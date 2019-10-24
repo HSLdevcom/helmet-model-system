@@ -841,14 +841,14 @@ destination_choice = {
                 "size": 1.00000000000, # L_S_M
             },
             "size": {
-                "downtown": (numpy.exp(4.82525484469), numpy.exp(5.46413339352)),
+                "cbd": (numpy.exp(4.82525484469), numpy.exp(5.46413339352)),
                 "workplaces_own": (numpy.exp(0.326534462277), numpy.exp(0.914054873639)),
                 "workplaces_other": 1,
             },
         },
         "transit": {
             "attraction": {
-                "downtown": 0.483086068108,
+                "cbd": 0.483086068108,
             },
             "impedance": {
                 "time": -0.111547282384e-1,
@@ -858,7 +858,7 @@ destination_choice = {
                 "size": 1.00000000000, # L_S_M
             },
             "size": {
-                "downtown": (numpy.exp(4.82525484469), numpy.exp(5.46413339352)),
+                "cbd": (numpy.exp(4.82525484469), numpy.exp(5.46413339352)),
                 "workplaces_own": (numpy.exp(0.326534462277), numpy.exp(0.914054873639)),
                 "workplaces_other": 1,
             },
@@ -871,7 +871,7 @@ destination_choice = {
                 "size": 1.00000000000, # L_S_M
             },
             "size": {
-                "downtown": (numpy.exp(4.82525484469), numpy.exp(5.46413339352)),
+                "cbd": (numpy.exp(4.82525484469), numpy.exp(5.46413339352)),
                 "workplaces_own": (numpy.exp(0.326534462277), numpy.exp(0.914054873639)),
                 "workplaces_other": 1,
             },
@@ -886,7 +886,7 @@ destination_choice = {
                 "size": 1.00000000000, # L_S_M
             },
             "size": {
-                "downtown": (numpy.exp(4.82525484469), numpy.exp(5.46413339352)),
+                "cbd": (numpy.exp(4.82525484469), numpy.exp(5.46413339352)),
                 "workplaces_own": (numpy.exp(0.326534462277), numpy.exp(0.914054873639)),
                 "workplaces_other": 1,
             },
@@ -917,7 +917,7 @@ destination_choice = {
         "transit": {
             "attraction": {
                 "own_zone_area_sqrt": -1.40415965463,
-                "downtown": 0.704345842211,
+                "cbd": 0.704345842211,
             },
             "impedance": {
                 "time": -0.245629127645e-1,
@@ -980,7 +980,7 @@ destination_choice = {
         },
         "transit": {
             "attraction": {
-                "downtown": 0.145833772041,
+                "cbd": 0.145833772041,
             },
             "impedance": {
                 "time": -0.136559859790e-1,
@@ -1041,12 +1041,12 @@ destination_choice = {
                 "shops_own": (numpy.exp(6.19259580740), numpy.exp(7.10231579547)),
                 "service_other": numpy.exp(3.77954709039),
                 "service_own": (numpy.exp(4.53224477260), numpy.exp(5.13038361124)),
-                "downtown": (numpy.exp(9.04364663102), numpy.exp(7.19898499824)),
+                "cbd": (numpy.exp(9.04364663102), numpy.exp(7.19898499824)),
             },
         },
         "transit": {
             "attraction": {
-                "downtown": (0.135335656706, 2.62480475297),
+                "cbd": (0.135335656706, 2.62480475297),
             },
             "impedance": {
                 "time": -0.299237931923e-1,
@@ -1062,7 +1062,7 @@ destination_choice = {
                 "shops_own": (numpy.exp(6.19259580740), numpy.exp(7.10231579547)),
                 "service_other": numpy.exp(3.77954709039),
                 "service_own": (numpy.exp(4.53224477260), numpy.exp(5.13038361124)),
-                "downtown": (numpy.exp(9.04364663102), numpy.exp(7.19898499824)),
+                "cbd": (numpy.exp(9.04364663102), numpy.exp(7.19898499824)),
             },
         },
         "bike": {
@@ -1079,7 +1079,7 @@ destination_choice = {
                 "shops_own": (numpy.exp(6.19259580740), numpy.exp(7.10231579547)),
                 "service_other": numpy.exp(3.77954709039),
                 "service_own": (numpy.exp(4.53224477260), numpy.exp(5.13038361124)),
-                "downtown": (numpy.exp(9.04364663102), numpy.exp(7.19898499824)),
+                "cbd": (numpy.exp(9.04364663102), numpy.exp(7.19898499824)),
             },
         },
         "walk": {
@@ -1099,7 +1099,7 @@ destination_choice = {
                 "shops_own": (numpy.exp(6.19259580740), numpy.exp(7.10231579547)),
                 "service_other": numpy.exp(3.77954709039),
                 "service_own": (numpy.exp(4.53224477260), numpy.exp(5.13038361124)),
-                "downtown": (numpy.exp(9.04364663102), numpy.exp(7.19898499824)),
+                "cbd": (numpy.exp(9.04364663102), numpy.exp(7.19898499824)),
             },
         },
     },
@@ -1122,13 +1122,13 @@ destination_choice = {
                 "service_other": numpy.exp(2.384174142),
                 "service_own": numpy.exp(3.183207081),
                 "shops": numpy.exp(2.998477655),
-                "downtown": (numpy.exp(7.813868577), numpy.exp(4.709424332)),
+                "cbd": (numpy.exp(7.813868577), numpy.exp(4.709424332)),
             },
         },
         "transit": {
             "attraction": {
                 "own_zone": -2.139067338,
-                "downtown": 0.569673156,
+                "cbd": 0.569673156,
             },
             "impedance": {
                 "time": -0.018376845,
@@ -1143,7 +1143,7 @@ destination_choice = {
                 "service_other": numpy.exp(2.384174142),
                 "service_own": numpy.exp(3.183207081),
                 "shops": numpy.exp(2.998477655),
-                "downtown": (numpy.exp(7.813868577), numpy.exp(4.709424332)),
+                "cbd": (numpy.exp(7.813868577), numpy.exp(4.709424332)),
             },
             "transform": {
                 "attraction": {},
@@ -1165,7 +1165,7 @@ destination_choice = {
                 "service_other": numpy.exp(2.384174142),
                 "service_own": numpy.exp(3.183207081),
                 "shops": numpy.exp(2.998477655),
-                "downtown": (numpy.exp(7.813868577), numpy.exp(4.709424332)),
+                "cbd": (numpy.exp(7.813868577), numpy.exp(4.709424332)),
             },
         },
         "walk": {
@@ -1184,7 +1184,7 @@ destination_choice = {
                 "service_other": numpy.exp(2.384174142),
                 "service_own": numpy.exp(3.183207081),
                 "shops": numpy.exp(2.998477655),
-                "downtown": (numpy.exp(7.813868577), numpy.exp(4.709424332)),
+                "cbd": (numpy.exp(7.813868577), numpy.exp(4.709424332)),
             },
         },
     },
@@ -1206,7 +1206,7 @@ destination_choice = {
                 "population": 1,
                 "service": numpy.exp(3.359535766),
                 "shops": numpy.exp(5.054869817),
-                "downtown": numpy.exp(5.497881457),
+                "cbd": numpy.exp(5.497881457),
             },
         },
         "transit": {
@@ -1258,7 +1258,7 @@ destination_choice = {
             "size": {
                 "population": 1,
                 "workplaces": 2.572258993,
-                "downtown": (1, 5.674738917), # Fix
+                "cbd": (1, 5.674738917), # Fix
             },
         },
     },
@@ -1278,14 +1278,14 @@ destination_choice = {
                 "population": 1,
                 "workplaces": numpy.exp(0.407701749),
                 "service": numpy.exp(1.500860632),
-                "shops_downtown": numpy.exp(3.473356486),
+                "shops_cbd": numpy.exp(3.473356486),
                 "shops_elsewhere": numpy.exp(3.32217248),
                 "own_zone": numpy.exp(6.64854455),
             },
         },
         "transit": {
             "attraction": {
-                "downtown": 0.287337989,
+                "cbd": 0.287337989,
                 "own_zone": -2.001694496,
             },
             "impedance": {
@@ -1299,7 +1299,7 @@ destination_choice = {
                 "population": 1,
                 "workplaces": numpy.exp(0.407701749),
                 "service": numpy.exp(1.500860632),
-                "shops_downtown": numpy.exp(3.473356486),
+                "shops_cbd": numpy.exp(3.473356486),
                 "shops_elsewhere": numpy.exp(3.32217248),
                 "own_zone": numpy.exp(6.64854455),
             },
@@ -1321,7 +1321,7 @@ destination_choice = {
                 "population": 1,
                 "workplaces": numpy.exp(0.407701749),
                 "service": numpy.exp(1.500860632),
-                "shops_downtown": numpy.exp(3.473356486),
+                "shops_cbd": numpy.exp(3.473356486),
                 "shops_elsewhere": numpy.exp(3.32217248),
                 "own_zone": numpy.exp(6.64854455),
             },
@@ -1339,7 +1339,7 @@ destination_choice = {
                 "population": 1,
                 "workplaces": numpy.exp(0.407701749),
                 "service": numpy.exp(1.500860632),
-                "shops_downtown": numpy.exp(3.473356486),
+                "shops_cbd": numpy.exp(3.473356486),
                 "shops_elsewhere": numpy.exp(3.32217248),
                 "own_zone": numpy.exp(6.64854455),
             },
@@ -1361,14 +1361,14 @@ destination_choice = {
                 "population": 1,
                 "workplaces": numpy.exp(0.407701749),
                 "service": numpy.exp(1.500860632),
-                "shops_downtown": numpy.exp(3.473356486),
+                "shops_cbd": numpy.exp(3.473356486),
                 "shops_elsewhere": numpy.exp(3.32217248),
                 "own_zone": numpy.exp(6.64854455),
             },
         },
         "transit": {
             "attraction": {
-                "downtown": 0.287337989,
+                "cbd": 0.287337989,
                 "own_zone": -2.001694496,
             },
             "impedance": {
@@ -1382,7 +1382,7 @@ destination_choice = {
                 "population": 1,
                 "workplaces": numpy.exp(0.407701749),
                 "service": numpy.exp(1.500860632),
-                "shops_downtown": numpy.exp(3.473356486),
+                "shops_cbd": numpy.exp(3.473356486),
                 "shops_elsewhere": numpy.exp(3.32217248),
                 "own_zone": numpy.exp(6.64854455),
             },
@@ -1404,7 +1404,7 @@ destination_choice = {
                 "population": 1,
                 "workplaces": numpy.exp(0.407701749),
                 "service": numpy.exp(1.500860632),
-                "shops_downtown": numpy.exp(3.473356486),
+                "shops_cbd": numpy.exp(3.473356486),
                 "shops_elsewhere": numpy.exp(3.32217248),
                 "own_zone": numpy.exp(6.64854455),
             },
@@ -1422,7 +1422,7 @@ destination_choice = {
                 "population": 1,
                 "workplaces": numpy.exp(0.407701749),
                 "service": numpy.exp(1.500860632),
-                "shops_downtown": numpy.exp(3.473356486),
+                "shops_cbd": numpy.exp(3.473356486),
                 "shops_elsewhere": numpy.exp(3.32217248),
                 "own_zone": numpy.exp(6.64854455),
             },
@@ -1448,7 +1448,7 @@ destination_choice = {
         },
         "transit": {
             "attraction": {
-                "downtown": 0.490942327168,
+                "cbd": 0.490942327168,
                 "own_zone_area": -0.112492660238,
             },
             "impedance": {
@@ -1543,13 +1543,13 @@ destination_choice = {
             "size": {
                 "population": 1,
                 "workplaces": numpy.exp(1.26651176555),
-                "shops_downtown": numpy.exp(4.08944842667),
+                "shops_cbd": numpy.exp(4.08944842667),
                 "shops_elsewhere": numpy.exp(2.62226008068),
             },
         },
         "transit": {
             "attraction": {
-                "downtown": 2.84600723332,
+                "cbd": 2.84600723332,
             },
             "impedance": {
                 "time": -0.819579857062e-2,
@@ -1561,7 +1561,7 @@ destination_choice = {
             "size": {
                 "population": 1,
                 "workplaces": numpy.exp(1.26651176555),
-                "shops_downtown": numpy.exp(4.08944842667),
+                "shops_cbd": numpy.exp(4.08944842667),
                 "shops_elsewhere": numpy.exp(2.62226008068),
             },
         },
@@ -1813,7 +1813,7 @@ mode_choice = {
             "constant": 0.437744247,
             "generation": {},
             "attraction": {
-                "downtown": 0.502605142,
+                "cbd": 0.502605142,
             },
             "impedance": {
                 "time": -0.015704891,
@@ -2193,9 +2193,9 @@ external_modes = [
     "trailer_truck",
 ]
 areas = {
-    "downtown": (0, 999),
+    "helsinki_cbd": (0, 999),
     "helsinki_other": (1000, 1999),
-    "capregio_other": (2000, 5999),
+    "espoo-vant-kau": (2000, 5999),
     "surrounding": (6000, 15999),
     "peripheral": (16000, 30999),
     "external": (31031, None),
