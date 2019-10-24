@@ -35,26 +35,25 @@ class ModelSystem:
         self.trucks = self.fm.calc_freight_traffic("truck")
         self.trailer_trucks = self.fm.calc_freight_traffic("trailer_truck")
         impedance = {}
+        with self.basematrices.open("cost", "peripheral") as mtx:
+            peripheral_cost = mtx["transit"]
+            if use_fixed_transit_cost:
+                self.logger.info("Using fixed transit cost matrix")
+                with self.basematrices.open("cost", "aht") as mtx:
+                    fixed_cost = mtx["transit"]
+            else:
+                self.logger.info("Calculating transit cost")
+                fixed_cost = None
+            self.ass_model.calc_transit_cost(
+                self.zdata_forecast.transit_zone, peripheral_cost,
+                fixed_cost)
         for tp in parameters.emme_scenario:
             self.logger.info("Assigning period " + tp)
             base_demand = {}
             with self.basematrices.open("demand", tp) as mtx:
                 for ass_class in self.ass_classes:
                     base_demand[ass_class] = mtx[ass_class]
-            self.ass_model.assign(tp, base_demand, is_first_iteration=True)
-            if tp == "aht":
-                with self.basematrices.open("cost", "peripheral") as mtx:
-                    peripheral_cost = mtx["transit"]
-                if use_fixed_transit_cost:
-                    self.logger.info("Using fixed transit cost matrix")
-                    with self.basematrices.open("cost", tp) as mtx:
-                        fixed_cost = mtx["transit"]
-                else:
-                    self.logger.info("Calculating transit cost")
-                    fixed_cost = None
-                self.ass_model.calc_transit_cost(
-                    self.zdata_forecast.transit_zone, peripheral_cost,
-                    fixed_cost)
+            self.ass_model.assign(tp, base_demand)
             impedance[tp] = self.ass_model.get_impedance()
         return impedance
 

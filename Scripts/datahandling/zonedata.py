@@ -35,7 +35,10 @@ class ZoneData:
         cardata = read_file(data_dir, ".car", self.zone_numbers)
         parkdata = read_file(data_dir, ".prk", self.zone_numbers)
         self.externalgrowth = read_file(data_dir, ".ext", external_zones)
-        transit_zone = read_file(data_dir, ".tco").to_dict()
+        transit_zone = {}
+        transit = read_file(data_dir, ".tco")
+        transit_zone["fare"] = transit["fare"].to_dict()
+        transit_zone["exclusive"] = transit["exclusive"].dropna().to_dict()
         transit_zone["dist_fare"] = transit_zone["fare"].pop("dist")
         transit_zone["start_fare"] = transit_zone["fare"].pop("start")
         self.transit_zone = transit_zone
