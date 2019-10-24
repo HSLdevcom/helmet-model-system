@@ -27,8 +27,9 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             self._calc_boarding_penalties(param.emme_scenario[time_period])
             self._calc_background_traffic(param.emme_scenario[time_period])
         self._specify()
+        self._has_assigned_bike_and_walk = False
     
-    def assign(self, time_period, matrices, is_last_iteration=False, is_first_iteration=False):
+    def assign(self, time_period, matrices, is_last_iteration=False):
         """Assign cars, bikes and transit for one time period.
         
         Parameters
@@ -41,15 +42,16 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         self.emme.logger.info("Assignment starts...")
         self.set_matrices(matrices)
         scen_id = param.emme_scenario[time_period]
-        self._calc_extra_wait_time(scen_id)
-        if is_first_iteration and time_period == "aht":
+        if not self._has_assigned_bike_and_walk:
             self._assign_pedestrians(scen_id)
             self._assign_bikes(param.bike_scenario,
                             param.emme_mtx["time"]["bike"]["id"],
                             "all",
                             "@fvol_"+time_period)
+            self._has_assigned_bike_and_walk = True
         if is_last_iteration:
             self._assign_cars(scen_id, param.stopping_criteria_fine)
+            self._calc_extra_wait_time(scen_id)
             self._assign_congested_transit(id)
             self._assign_bikes(param.bike_scenario,
                            param.emme_mtx["time"]["bike"]["id"],
@@ -57,6 +59,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                            "@fvol_"+time_period)
         else:
             self._assign_cars(scen_id, param.stopping_criteria_coarse)
+            self._calc_extra_wait_time(scen_id)
             self._assign_transit(scen_id)
         
     def get_impedance(self):
