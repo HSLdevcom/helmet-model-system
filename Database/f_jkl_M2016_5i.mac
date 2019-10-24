@@ -1,0 +1,63 @@
+~# Tekee joukkoliikennefunktioiden valinnan
+~# 27.6.2008 mkn
+~#
+~# Bussien nopeudet (b,g,d,e) riippuvat henkilöautojen nopeudesta, jos bussikaistaa ei ole (ttf=1).
+~# Ha-sijoittelun on oltava tehtynä. Jos taas bussikaista on, bussien nopeus riippuu vain linkin 
+~# ominaisuuksista (ttf=2). Funktiota ttf=2 käytetään myös bussilinkeillä (bussikadut, -rampit 
+~# ja -terminaalit), joilla ei ha-liikennettä eikä siten ha-nopeuksiakaan.
+~# Ratikoiden (t,p) nopeudet aikajaksoittain on koodattu ul1:een (ttf=3,4,5).
+~# Metron (m) ja junien (r,j) matka-ajat saadaan us1:sta funktiolla ttf=6.
+~#
+~# muutettu kulkutavat ja linkkityypit uusien M2016-verkkojen mukaisiksi (TE 11.10.2016)
+~#
+2.41
+~# ** bussit, ei bussikaistaa
+1
+y
+ttf
+1
+ 
+mode=b
+mode=gde
+ 
+all
+4
+~# ** bussit, on bussikaista
+1
+y
+ttf
+2
+ 
+mode=b
+mode=gde
+
+type=201,299
+or type=301,399
+or type=501,599
+or type=601,699 
+
+4
+~# ** junat ja metro
+1
+y
+ttf
+6
+ 
+mode=r
+mode=j
+mode=m
+ 
+all
+4
+~# ** ratikat iht
+1
+y
+ttf
+5
+ 
+mode=tp
+ 
+all
+4
+q
+~#

@@ -1,0 +1,56 @@
+~# TE 22.1.2019
+~# 
+~# ~<pyoratieluokat_lue.mac p1 p2
+~# parametrit: p1 = skenaario, johon pyoratieluokka ajetaan sisään
+~#             p2 = sen tiedoston nimi, jossa attribuutit ovat
+~#
+~#
+ s=%1%
+~#
+~#
+~# attribuutin oletusarvot
+~#
+ 2.41
+ 1
+ y
+ @pyoratieluokka
+ n
+ -1
+
+ not mod=f
+ 
+ 2
+~?q=2
+ 2
+~#
+ 1
+ y
+ @pyoratieluokka
+ n
+ 0
+
+ mod=f
+ 
+ 2
+~?q=2
+ 2
+ q
+~# Luetaan sisään pyoratieluokka extra-attribuuttiin
+~# (Input attribute using batch entry)
+ off=11
+~! del  d241.in
+ on=11
+~#
+ 2.41
+ 3
+ @pyoratieluokka
+ n
+ all
+ 1,2,3
+~?e
+ %2%
+ n
+ y
+~#
+ q
+~/ *** ajettu pyoratieluokat_lue.mac %1% %2%

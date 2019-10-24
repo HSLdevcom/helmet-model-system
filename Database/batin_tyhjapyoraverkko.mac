@@ -9,7 +9,7 @@ reports=
 ~#
 ~# ** luetaan kulkutavat
 ~! del  d201.in
-~! copy d201_testi_pyora.in  d201.in 
+~! copy d201_testi.in  d201.in 
  on=11
  2.01
  1

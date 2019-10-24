@@ -1,0 +1,78 @@
+~# *** lvari_M2016.mac
+~#
+~# joukkoliikenneverkon varikoodi (mukana ennustetilanteen pikaratikka)
+~# muutettu kulkutavat M2016
+~# TE 4.4.2017
+~#
+ 2.41
+~#* alustus
+ 1
+ y
+ @lvari
+ n
+ 0
+
+ *
+ 4
+~#* kavelyt
+ 1
+ y
+ @lvari
+ n
+ 6
+
+ mode=as
+
+ 4
+~#* bussit
+ 1
+ y
+ @lvari
+ n
+ 1
+
+ mode=bgde
+
+ 4
+~#* ratikka
+ 1
+ y
+ @lvari
+ n
+ 3
+
+ mode=t
+
+ 4
+~#* metro
+ 1
+ y
+ @lvari
+ n
+ 2
+
+ mode=m
+
+ 4
+~#* junat
+ 1
+ y
+ @lvari
+ n
+ 4
+
+ mode=rj
+
+ 4
+~#* pikaratikka
+ 1
+ y
+ @lvari
+ n
+ 8
+
+ mode=p
+
+ 4
+ q
+~/ *** lvari_M2016.mac ***

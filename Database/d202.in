@@ -1,6 +1,23 @@
-c Emme Module:    2.02(v5158)  Date: 12-02-24 15:48   User: E065/HSL/HRT....te
-c Project:        pieni testipankki                                           
-c Scenario    1:  pieni testiskenaario                                        
+c WSP/ARa 29.6.2016
+c Verkkopaivitys 2016, ajoneuvotyypit
+c Ajoneuvotyypeissa ei kaytannossa ole muutosta aiempaan verrattuna,
+c mutta kulkutavan kirjaimet on paivitetty uuden kulkutapalistan mukaiseksi. 
+c
+c HSL/MeV 21.11.2017 
+c lisatty Suomenlinnan lautta
+c
+c HSL/JWest 21.11.2018
+c Kapasiteetit päivitetty
+c
 t vehicles init
-a   1 'bussi     ' b     10    30    50   0.00   0.00   0.00   0.00   0.00
+a   1 'ValluVakio' d      1    49    78   0.00   0.00   0.00   0.00   0.00
+a   2 'ValluPika ' e      1    49    78   0.00   0.00   0.00   0.00   0.00
+a   3 'HSL-bussi ' b      1    49    78   0.00   0.00   0.00   0.00   0.00
+a   4 'Metro     ' m      1   260   708   0.00   0.00   0.00   0.00   0.00
+a   5 'HSL-juna  ' r      1   520   840   0.00   0.00   0.00   0.00   0.00
+a   6 'Muu Juna  ' j      1   500   500   0.00   0.00   0.00   0.00   0.00
+a   7 'Ratikka   ' t      1    84   151   0.00   0.00   0.00   0.00   0.00
+a   8 'HSL-runkob' g      1    49    78   0.00   0.00   0.00   0.00   0.00
+a   9 'Lautta    ' w      1   350   350   0.00   0.00   0.00   0.00   0.00
+a  10 'Pikaratikk' p      1   110   198   0.00   0.00   0.00   0.00   0.00
 
