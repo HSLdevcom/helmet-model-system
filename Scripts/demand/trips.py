@@ -1,10 +1,12 @@
 import numpy
 import pandas
 import parameters
-from datatypes.purpose import TourPurpose, SecDestPurpose
+from datatypes.purpose import Purpose, TourPurpose, SecDestPurpose
+import models.logit as logit
 from datatypes.person import Person
 from datatypes.tour import Tour
 import random
+
 
 class DemandModel:
     def __init__(self, zone_data):
@@ -32,6 +34,14 @@ class DemandModel:
                     purpose.sources.append(self.purpose_dict[source])
                     if "sec_dest" in purpose_spec:
                         self.purpose_dict[source].sec_dest_purpose = purpose
+        spec = {
+            "name": "car_use",
+            "orig": None,
+            "dest": None,
+            "area": "metropolitan",
+        }
+        cm = logit.CarUseModel(zone_data, Purpose(spec, zone_data))
+        zone_data["car_users"] = cm.calc_prob()
 
     def create_population(self):
         """Create population for agent-based simulation."""

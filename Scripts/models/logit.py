@@ -3,6 +3,7 @@ import pandas
 import parameters
 import datahandling.resultdata as result
 
+
 class LogitModel:
     def __init__(self, zone_data, purpose):
         self.purpose = purpose
@@ -112,6 +113,12 @@ class LogitModel:
                     utility[:k, :] += b[i][0] * data_capital_region
                     utility[k:, :] += b[i][1] * data_surrounding
         return utility
+
+    def _add_log_zone_util(self, exps, b, generation=False):
+        zdata = self.zone_data
+        for i in b:
+            exps *= numpy.power(zdata.get_data(i, self.purpose, generation) + 1, b[i])
+        return exps
 
 
 class ModeDestModel(LogitModel):
@@ -246,6 +253,7 @@ class DestModeModel(LogitModel):
             prob[mode] = mode_prob * dest_prob
         return prob
 
+
 class SecDestModel(LogitModel):
     def calc_prob(self, mode, impedance):
         """Calculate matrix of choice probabilities.
@@ -265,6 +273,7 @@ class SecDestModel(LogitModel):
         expsum = self._calc_dest_util(mode, impedance)
         prob = self.dest_exps[mode].T / expsum
         return prob
+
 
 class OriginModel(LogitModel):
     def calc_prob(self, impedance):
@@ -295,3 +304,30 @@ class OriginModel(LogitModel):
         # though the origin model does not take modes into account.
         prob["all"] = (exps / expsums).T
         return prob
+
+
+class CarUseModel(LogitModel):
+    def __init__(self, zone_data, purpose):
+        self.zone_data = zone_data
+        self.purpose = purpose
+    
+    def calc_prob(self):
+        b = parameters.car_usage
+        utility = numpy.zeros(self.purpose.bounds[1])
+        self._add_constant(utility, b["constant"])
+        self._add_zone_util(utility, b["generation"], True)
+        exps = numpy.exp(utility)
+        self._add_log_zone_util(exps, b["log"], True)
+        prob = exps / (exps+1)
+        no_dummy_share = 1
+        dummy_prob = 0
+        for i in b["individual_dummy"]:
+            dummy_share = self.zone_data.get_data(
+                i, self.purpose, generation=True).values
+            no_dummy_share -= dummy_share
+            ind_exps = numpy.exp(b["individual_dummy"][i]) * exps
+            ind_prob = ind_exps / (ind_exps+1)
+            dummy_prob += dummy_share * ind_prob
+        no_dummy_prob = no_dummy_share * prob
+        prob = no_dummy_prob + dummy_prob
+        return pandas.Series(prob, self.purpose.zone_numbers)

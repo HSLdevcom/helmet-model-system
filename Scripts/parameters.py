@@ -1856,9 +1856,7 @@ mode_choice = {
             "log": {
                 "logsum": 0.799256902,
             },
-            "individual_dummy": {
-                "car_users": (0.799256902 * 2.273164428, 0.799256902 * 2.72725345),
-            },
+            "individual_dummy": {},
         },
         "transit": {
             "constant": 0.799256902 * 2.739088214,
@@ -1902,9 +1900,7 @@ mode_choice = {
             "log": {
                 "logsum": 0.799256902,
             },
-            "individual_dummy": {
-                "car_users": (0.799256902 * 2.273164428, 0.799256902 * 2.72725345),
-            },
+            "individual_dummy": {},
         },
         "transit": {
             "constant": 0.799256902 * 2.739088214,
@@ -2076,6 +2072,23 @@ tour_generation = {
 garbage_generation = {
     "population": 0.000125,
     "workplaces": 0.000025,
+}
+car_usage = {
+    "constant": -11.2296,
+    "generation": {},
+    "log": {
+        "cars_per_1000": 2.0804,
+        "population_density": -0.1471,
+    },
+    "individual_dummy": {
+        "share_age_7-17": -9999,
+        "share_age_18-29_m": 0.2969,
+        "share_age_30-49_f": 1.1019,
+        "share_age_30-49_m": 1.4157,
+        "share_age_50-64_f": 0.8173,
+        "share_age_50-64_m": 1.9978,
+        "share_age_65-99_m": 1.8737,
+    },
 }
 vector_calibration_threshold = 5
 # Maximum possible distance to destination
