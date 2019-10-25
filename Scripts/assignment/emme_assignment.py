@@ -45,7 +45,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         if not self._has_assigned_bike_and_walk:
             self._assign_pedestrians(scen_id)
             self._assign_bikes(param.bike_scenario,
-                            param.emme_mtx["time"]["bike"]["id"],
+                            param.emme_mtx["dist"]["bike"]["id"],
                             "all",
                             "@fvol_"+time_period)
             self._has_assigned_bike_and_walk = True
@@ -54,7 +54,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             self._calc_extra_wait_time(scen_id)
             self._assign_congested_transit(id)
             self._assign_bikes(param.bike_scenario,
-                           param.emme_mtx["time"]["bike"]["id"],
+                           param.emme_mtx["dist"]["bike"]["id"],
                            "all",
                            "@fvol_"+time_period)
         else:
