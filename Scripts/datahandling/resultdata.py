@@ -45,3 +45,14 @@ def print_matrix(data, filename, sheetname):
             for j in xrange(0, data.shape[1]):
                 ws.cell(row=i+2, column=j+2).value = data.iloc[i, j]
         _buffer[filename].save(xlsxfilepath)
+    listfilepath = os.path.join(_path, filename + ".txt")
+    filename = filename  + "_list"
+    if filename not in _buffer:
+        _buffer[filename] = []
+    for j in data.columns:
+        for i in data[j].index:
+            val = i + "\t" + j + "\t" + sheetname + "\t" + str(data[i][j]) + "\n"
+            _buffer[filename].append(val)
+    with open(listfilepath, 'w') as f:
+        for row in _buffer[filename]:
+            f.write(row)
