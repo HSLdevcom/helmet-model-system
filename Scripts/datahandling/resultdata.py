@@ -49,9 +49,11 @@ def print_matrix(data, filename, sheetname):
     filename = filename  + "_list"
     if filename not in _buffer:
         _buffer[filename] = []
+    rowtext = "{}\t{}\t{}\t{}\n"
+    sheetname = sheetname.replace("_", "\t")
     for j in data.columns:
         for i in data[j].index:
-            val = i + "\t" + j + "\t" + sheetname + "\t" + str(data[i][j]) + "\n"
+            val = rowtext.format(i, j, sheetname, str(data[i][j]))
             _buffer[filename].append(val)
     with open(listfilepath, 'w') as f:
         for row in _buffer[filename]:
