@@ -144,10 +144,9 @@ class TourPurpose(Purpose):
         areas = (
             "helsinki_cbd",
             "helsinki_other",
-            "espoo-vant-kau",
+            "espoo_vant_kau",
             "surrounding",
             "peripheral",
-            "external",
         )
         aggr_mtx = pandas.DataFrame(0, areas, areas)
         tmp_mtx = pandas.DataFrame(0, areas, dest)

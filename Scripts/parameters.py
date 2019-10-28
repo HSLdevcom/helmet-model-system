@@ -2195,7 +2195,7 @@ external_modes = [
 areas = {
     "helsinki_cbd": (0, 999),
     "helsinki_other": (1000, 1999),
-    "espoo-vant-kau": (2000, 5999),
+    "espoo_vant_kau": (2000, 5999),
     "surrounding": (6000, 15999),
     "peripheral": (16000, 30999),
     "external": (31031, None),
