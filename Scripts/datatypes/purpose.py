@@ -141,14 +141,20 @@ class TourPurpose(Purpose):
         dest = self.zone_data.zone_numbers
         orig = self.zone_numbers
         mtx = pandas.DataFrame(mtx, orig, dest)
-        idx = param.areas.keys()
-        aggr_mtx = pandas.DataFrame(0, idx, idx)
-        tmp_mtx = pandas.DataFrame(0, idx, dest)
-        for area in param.areas:
+        areas = (
+            "helsinki_cbd",
+            "helsinki_other",
+            "espoo_vant_kau",
+            "surrounding",
+            "peripheral",
+        )
+        aggr_mtx = pandas.DataFrame(0, areas, areas)
+        tmp_mtx = pandas.DataFrame(0, areas, dest)
+        for area in areas:
             l = param.areas[area][0]
             u = param.areas[area][1]
             tmp_mtx.loc[area] = mtx.loc[l:u].sum(0).values
-        for area in param.areas:
+        for area in areas:
             l = param.areas[area][0]
             u = param.areas[area][1]
             aggr_mtx.loc[:, area] = tmp_mtx.loc[:, l:u].sum(1).values
