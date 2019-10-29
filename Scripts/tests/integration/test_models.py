@@ -32,11 +32,6 @@ class ModelTest(unittest.TestCase):
         impedance = model.run(impedance)
         # for mode in demand:
         #     self._validate_demand(demand[mode])
-        # for person in dm.population:
-        #     for tour in person.tours:
-        #         tour.choose_mode()
-        #         tour.choose_destination(purpose_impedance)
-        #         dtm.add_demand(tour)
         self.assertEquals(len(parameters.emme_scenario), len(impedance))
         self._validate_impedances(impedance["aht"])
         self._validate_impedances(impedance["pt"])
@@ -44,6 +39,13 @@ class ModelTest(unittest.TestCase):
         
         print("Assignment test done")
     
+    def test_agent_model(self):
+        result.set_path("test")
+        ass_model = MockAssignmentModel(MatrixData("2016_test"))
+        model = modelsystem.ModelSystem("2030_test", "2016_test", "base_test", ass_model, is_agent_model=True)
+        impedance = model.assign_base_demand()
+        impedance = model.run(impedance)
+
     def _validate_impedances(self, impedances):
         self.assertIsNotNone(impedances)
         self.assertIs(type(impedances), dict)

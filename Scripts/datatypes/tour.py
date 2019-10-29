@@ -31,11 +31,11 @@ class Tour:
         Position where to insert the demand
         """
         zone_numbers = self._purpose.zone_data.zone_numbers
-        position = [zone_numbers.get_loc(self.orig)]
+        position = numpy.where(zone_numbers == self.orig)[0].tolist()
         if self.dest is not None:
-            position.append(zone_numbers.get_loc(self.dest))
+            position.append(numpy.where(zone_numbers == self.dest)[0][0])
         if self.sec_dest is not None:
-            position.append(zone_numbers.get_loc(self.sec_dest))
+            position.append(numpy.where(zone_numbers == self.sec_dest)[0][0])
         return position
 
     def choose_mode(self):
@@ -51,5 +51,7 @@ class Tour:
         if self.has_sec_dest and self.mode != "walk":
             probs = self.purpose.calc_prob(self.mode, impedance[self.mode], self.position)
             self.sec_dest = numpy.random.choice(a=zone_numbers, p=probs)
+            sec_dest = numpy.where(zone_numbers == self.sec_dest)[0][0]
+            self.purpose.attracted_tours[self.mode][sec_dest] += 1
         else:
             self.sec_dest = None

@@ -31,10 +31,10 @@ class LogitModel:
             expsum += exps
         return expsum
     
-    def _calc_dest_util(self, mode, impedance):
+    def _calc_dest_util(self, mode, impedance, orig=None, dest=None):
         b = self.dest_choice_param[mode]
         utility = numpy.zeros_like(next(iter(impedance.values())), float)
-        self._add_zone_util(utility, b["attraction"])
+        self._add_zone_util(utility, b["attraction"], orig=orig, dest=dest)
         self._add_impedance(utility, impedance, b["impedance"])
         self.dest_exps[mode] = numpy.exp(utility)
         size = numpy.zeros_like(utility)
@@ -95,7 +95,7 @@ class LogitModel:
                 exps[k:, :] *= numpy.power(impedance[i][k:, :] + 1, b[i][1])
         return exps
     
-    def _add_zone_util(self, utility, b, generation=False):
+    def _add_zone_util(self, utility, b, generation=False, orig=None, dest=None):
         zdata = self.zone_data
         for i in b:
             try: # If only one parameter
@@ -107,11 +107,23 @@ class LogitModel:
                 data_surrounding = zdata.get_data(
                     i, self.purpose, generation, zdata.SURROUNDING_AREA)
                 if utility.ndim == 1: # 1-d array calculation
-                    utility[:k] += b[i][0] * data_capital_region
-                    utility[k:] += b[i][1] * data_surrounding
+                    if dest is None:
+                        utility[:k] += b[i][0] * data_capital_region
+                        utility[k:] += b[i][1] * data_surrounding
+                    else:
+                        utility += b[i][0] * zdata.get_data(
+                            i, self.purpose, generation)[:, orig]
+                        utility += b[i][1] * zdata.get_data(
+                            i, self.purpose, generation)[dest, :]
                 else: # 2-d matrix calculation
-                    utility[:k, :] += b[i][0] * data_capital_region
-                    utility[k:, :] += b[i][1] * data_surrounding
+                    if orig is None:
+                        utility[:k, :] += b[i][0] * data_capital_region
+                        utility[k:, :] += b[i][1] * data_surrounding
+                    else:
+                        utility += b[i][0] * zdata.get_data(
+                            i, self.purpose, generation)[:, orig]
+                        utility += b[i][1] * zdata.get_data(
+                            i, self.purpose, generation)
         return utility
 
     def _add_log_zone_util(self, exps, b, generation=False):
@@ -255,7 +267,7 @@ class DestModeModel(LogitModel):
 
 
 class SecDestModel(LogitModel):
-    def calc_prob(self, mode, impedance):
+    def calc_prob(self, mode, impedance, origin=None, destination=None):
         """Calculate matrix of choice probabilities.
         
         Parameters
@@ -264,13 +276,17 @@ class SecDestModel(LogitModel):
             Mode (car/transit/bike)
         impedance : dict
             Type (time/cost/dist) : numpy 2d matrix
+        origin: int
+            Origin
+        destination:
+            Destination
         
         Return
         ------
         numpy 2-d matrix
                 Choice probabilities
         """
-        expsum = self._calc_dest_util(mode, impedance)
+        expsum = self._calc_dest_util(mode, impedance, origin, destination)
         prob = self.dest_exps[mode].T / expsum
         return prob
 
@@ -304,6 +320,16 @@ class OriginModel(LogitModel):
         # though the origin model does not take modes into account.
         prob["all"] = (exps / expsums).T
         return prob
+
+
+class GenerationModel(LogitModel):
+    def __init__(self, zone_data, purpose):
+        self.zone_data = zone_data
+        self.purpose = purpose
+        self.param = parameters.tour_generation[purpose.name]
+    
+    def generate_tours(self):
+        pass
 
 
 class CarUseModel(LogitModel):

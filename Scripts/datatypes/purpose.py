@@ -193,6 +193,11 @@ class SecDestPurpose(Purpose):
         self.gen_model = generation.SecDestGeneration(zone_data, self)
         self.model = logit.SecDestModel(zone_data, self)
 
+    def init_sums(self):
+        for mode in self.model.dest_choice_param:
+            self.generated_tours[mode] = numpy.zeros_like(next(iter(self.sources)).zone_numbers)
+            self.attracted_tours[mode] = numpy.zeros_like(self.zone_numbers)
+
     def generate_tours(self):
         """Generate the source tours without secondary destinations."""
         self.tours = {}
@@ -225,7 +230,7 @@ class SecDestPurpose(Purpose):
             dest_imp[mtx_type] = ( impedance[mtx_type]
                                  + impedance[mtx_type][:, origin]
                                  - impedance[mtx_type][origin, :][:, numpy.newaxis])
-        prob = self.model.calc_prob(mode, dest_imp)
+        prob = self.model.calc_prob(mode, dest_imp, origin)
         demand = (prob * self.tours[mode][origin, :]).T
         self.attracted_tours[mode] += demand.sum(0)
         return Demand(self, mode, demand, origin)
@@ -259,4 +264,4 @@ class SecDestPurpose(Purpose):
             dest_imp[mtx_type] = ( impedance[mtx_type][dest, :]
                                  + impedance[mtx_type][:, orig]
                                  - impedance[mtx_type][orig, dest])
-        return self.model.calc_prob(mode, dest_imp)
+        return self.model.calc_prob(mode, dest_imp, orig, dest)

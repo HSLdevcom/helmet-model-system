@@ -1191,8 +1191,7 @@ destination_choice = {
     "hoo": {
         "car": {
             "attraction": {
-                "own_zone": 0.496255377,
-                # own zone origin? 1.511261249
+                "own_zone": (1.511261249, 0.496255377),
                 "parking_cost_errand": -0.110043052,
             },
             "impedance": {
@@ -1211,8 +1210,7 @@ destination_choice = {
         },
         "transit": {
             "attraction": {
-                "own_zone": -0.582370838,
-                # own zone origin? 1.138959644
+                "own_zone": (1.138959644, -0.582370838),
             },
             "impedance": {
                 "time": -0.054854548,
@@ -1229,8 +1227,7 @@ destination_choice = {
         },
         "bike": {
             "attraction": {
-                "own_zone": 0.698948786,
-                # own zone origin? 1.254997132
+                "own_zone": (1.254997132, 0.698948786),
             },
             "impedance": {
                 "dist": -0.575044482,
@@ -2002,6 +1999,23 @@ mode_choice = {
                 "logsum": 0.715272183645,
             },
             "individual_dummy": {},
+        },
+    },
+}
+tour_patterns = {
+    0: {},
+    1: {
+        "hw": {
+            "individual_dummy": {
+                "share_age_18-29": 3.5,
+            },
+        },
+    },
+    2: {
+        "hw-ho": {
+            "individual_dummy": {
+                "share_age_18-29": 3.5,
+            },
         },
     },
 }
