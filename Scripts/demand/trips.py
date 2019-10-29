@@ -53,12 +53,12 @@ class DemandModel:
             (50, 64),
             (65, 99),
         )
-        zones = self.zone_data.values["population"].loc[:15999]
+        zones = self.zone_data["population"].loc[:15999]
         for idx, zone_pop in zones.iteritems():
             weights = [1]
             for age_group in age_groups:
                 key = "share_age_" + str(age_group[0]) + "-" + str(age_group[1])
-                share = self.zone_data.values[key][idx]
+                share = self.zone_data[key][idx]
                 weights.append(share)
                 weights[0] -= share
             for _ in xrange(0, zone_pop):

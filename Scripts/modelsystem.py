@@ -13,13 +13,16 @@ import numpy
 
 
 class ModelSystem:
-    def __init__(self, zone_data_path, base_zone_data_path, base_matrices, ass_model):
+    def __init__(self, zone_data_path, base_zone_data_path, base_matrices, ass_model, is_agent_model=False):
         self.logger = Log.get_instance()
         self.ass_model = ass_model
         self.zdata_base = ZoneData(base_zone_data_path, ass_model.zone_numbers)
         self.zdata_forecast = ZoneData(zone_data_path, ass_model.zone_numbers)
         self.basematrices = MatrixData(base_matrices)
         self.dm = DemandModel(self.zdata_forecast)
+        self.is_agent_model = is_agent_model
+        if is_agent_model:
+            self.dm.create_population()
         self.fm = FreightModel(self.zdata_base,
                                self.zdata_forecast,
                                self.basematrices)
@@ -60,25 +63,39 @@ class ModelSystem:
     def run(self, impedance, is_last_iteration=False):
         self.dtm.add_demand(self.trucks)
         self.dtm.add_demand(self.trailer_trucks)
-        for purpose in self.dm.tour_purposes:
-            purpose_impedance = self.imptrans.transform(purpose, impedance)
-            if isinstance(purpose, SecDestPurpose):
-                l, u = next(iter(purpose.sources)).bounds
-                purpose.generate_tours()
-                if is_last_iteration:
-                    for mode in purpose.model.dest_choice_param:
+        if self.is_agent_model:
+            for purpose in self.dm.tour_purposes:
+                if isinstance(purpose, SecDestPurpose):
+                    purpose.init_sums()
+                else:
+                    purpose_impedance = self.imptrans.transform(purpose, impedance)
+                    purpose.calc_demand(purpose_impedance)
+            purpose_impedance = self.imptrans.transform(self.dm.purpose_dict["hoo"], impedance)
+            for person in self.dm.population:
+                for tour in person.tours:
+                    tour.choose_mode()
+                    tour.choose_destination(purpose_impedance)
+                    self.dtm.add_demand(tour)
+        else:
+            for purpose in self.dm.tour_purposes:
+                purpose_impedance = self.imptrans.transform(purpose, impedance)
+                if isinstance(purpose, SecDestPurpose):
+                    l, u = next(iter(purpose.sources)).bounds
+                    purpose.generate_tours()
+                    if is_last_iteration:
+                        for mode in purpose.model.dest_choice_param:
+                            for i in xrange(0, u - l):
+                                demand = purpose.distribute_tours(mode, purpose_impedance[mode], i)
+                                self.dtm.add_demand(demand)
+                    else:
                         for i in xrange(0, u - l):
-                            demand = purpose.distribute_tours(mode, purpose_impedance[mode], i)
+                            demand = purpose.distribute_tours("car", purpose_impedance["car"], i)
                             self.dtm.add_demand(demand)
                 else:
-                    for i in xrange(0, u - l):
-                        demand = purpose.distribute_tours("car", purpose_impedance["car"], i)
-                        self.dtm.add_demand(demand)
-            else:
-                demand = purpose.calc_demand(purpose_impedance)
-                if purpose.dest != "source":
-                    for mode in demand:
-                        self.dtm.add_demand(demand[mode])
+                    demand = purpose.calc_demand(purpose_impedance)
+                    if purpose.dest != "source":
+                        for mode in demand:
+                            self.dtm.add_demand(demand[mode])
         trip_sum = {}
         for mode in parameters.external_modes:
             if mode == "truck":
