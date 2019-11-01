@@ -75,7 +75,6 @@ class DemandModel:
                     prob = purpose.gen_model.param["population"]
                     try:
                         sec_dest_prob = purpose.sec_dest_purpose.gen_model.param[purpose.name]
-                        prob *= 1 + sec_dest_prob
                     except AttributeError:
                         sec_dest_prob = 0
                     if random.random() < prob:
