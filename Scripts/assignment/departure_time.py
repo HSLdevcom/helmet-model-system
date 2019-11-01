@@ -48,9 +48,7 @@ class DepartureTimeModel:
                         share, ass_class, tp, demand.matrix, demand.position)
             elif len(demand.position) == 3:
                 for tp in emme_scenario:
-                    share = demand_share[demand.purpose.name][demand.mode][tp]
-                    self._add_3d_demand(
-                        share, ass_class, tp, demand.matrix, demand.position)
+                    self._add_3d_demand(demand, ass_class, tp)
             else:
                 raise IndexError("Tuple position has wrong dimensions.")
             self.logger.debug("Added demand for " + demand.purpose.name + ", " + demand.mode)
@@ -59,10 +57,10 @@ class DepartureTimeModel:
         """Slice demand, include transpose and add for one time period."""
         r_0 = mtx_pos[0]
         c_0 = mtx_pos[1]
-        try:
+        try: # Addition of matrix
             r_n = r_0 + mtx.shape[0]
             c_n = c_0 + mtx.shape[1]
-        except AttributeError:
+        except AttributeError: # Addition of agent
             r_n = r_0 + 1
             c_n = c_0 + 1
             mtx = numpy.asarray([mtx])
@@ -70,20 +68,24 @@ class DepartureTimeModel:
         large_mtx[r_0:r_n, c_0:c_n] += demand_share[0] * mtx
         large_mtx[c_0:c_n, r_0:r_n] += demand_share[1] * mtx.T
 
-    def _add_3d_demand(self, share, ass_class, time_period, mtx, mtx_pos):
+    def _add_3d_demand(self, demand, ass_class, time_period):
         """Add three-way demand."""
-        o = mtx_pos[0]
-        d1 = mtx_pos[1]
-        d2 = mtx_pos[2]
-        try:
-            rowsum = mtx.sum(1)[numpy.newaxis, :]
+        mtx = demand.matrix
+        tp = time_period
+        o = demand.position[0]
+        d1 = demand.position[1]
+        d2 = demand.position[2]
+        try: # Addition of matrix
             colsum = mtx.sum(0)[:, numpy.newaxis]
-        except AttributeError:
-            rowsum = mtx
-            colsum = mtx
-        self._add_2d_demand(share[0], ass_class, time_period, rowsum, (o, d1))
-        self._add_2d_demand(share[1], ass_class, time_period, mtx, (d1, d2))
-        self._add_2d_demand(share[2], ass_class, time_period, colsum, (d2, o))
+            share = demand_share[demand.purpose.name][demand.mode][tp]
+            self._add_2d_demand(share[0], ass_class, tp, mtx, (d1, d2))
+            self._add_2d_demand(share[1], ass_class, tp, colsum, (d2, o))
+        except AttributeError: # Addition of agent
+            share = demand_share[demand.purpose.name][demand.mode][tp]
+            self._add_2d_demand(share, ass_class, tp, mtx, (o, d1))
+            share = demand_share[demand.purpose.sec_dest_purpose.name][demand.mode][tp]
+            self._add_2d_demand(share[0], ass_class, tp, mtx, (d1, d2))
+            self._add_2d_demand(share[1], ass_class, tp, mtx, (d2, o))
     
     def add_vans(self, time_period, nr_zones):
         """Add vans as a share of private car trips for one time period.
