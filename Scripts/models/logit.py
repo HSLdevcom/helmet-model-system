@@ -323,13 +323,23 @@ class OriginModel(LogitModel):
 
 
 class GenerationModel(LogitModel):
-    def __init__(self, zone_data, purpose):
+    def __init__(self, zone_data):
         self.zone_data = zone_data
-        self.purpose = purpose
-        self.param = parameters.tour_generation[purpose.name]
+        self.param = parameters.tour_patterns
     
-    def generate_tours(self):
-        pass
+    def generate_tours(self, age, is_car_user):
+        tour_number_util = {}
+        tour_pattern_util = {}
+        for tour_number in self.param:
+            tour_number_util[tour_number] = 0
+            tour_pattern_util[tour_number] = {}
+            for tour_pattern in self.param[tour_number]:
+                tour_pattern_util[tour_number][tour_pattern] = 0
+                if age in self.param[tour_number][tour_pattern]:
+                    tour_pattern_util[tour_number][tour_pattern] += self.param[tour_number][tour_pattern][age]
+                if is_car_user and "car_users" in self.param[tour_number][tour_pattern]:
+                    tour_pattern_util[tour_number][tour_pattern] += self.param[tour_number][tour_pattern]["car_users"]
+        
 
 
 class CarUseModel(LogitModel):

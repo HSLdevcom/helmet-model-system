@@ -53,7 +53,8 @@ class DemandModel:
             (50, 64),
             (65, 99),
         )
-        zones = self.zone_data["population"].loc[:15999]
+        zones = self.zone_data.zone_numbers[:self.zone_data.first_peripheral_zone]
+        generation_model = logit.GenerationModel(self.zone_data)
         for idx, zone_pop in zones.iteritems():
             weights = [1]
             for age_group in age_groups:
@@ -65,9 +66,10 @@ class DemandModel:
                 a = numpy.arange(-1, len(age_groups))
                 group = numpy.random.choice(a=a, p=weights)
                 if group != -1:
+                    # Group -1 is under-7-year-olds and they have weights[0]
                     age_group = age_groups[group]
                     age = random.randint(age_group[0], age_group[1])
-                    person = Person(idx, age)
+                    person = Person(idx, age, generation_model)
                     self.population.append(person)
         for person in self.population:
             for purpose in self.tour_purposes:
