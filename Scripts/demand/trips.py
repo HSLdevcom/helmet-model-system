@@ -71,19 +71,11 @@ class DemandModel:
                     age = random.randint(age_group[0], age_group[1])
                     age_str = "age_" + str(age_group[0]) + "-" + str(age_group[1])
                     person = Person(idx, age, age_str, generation_model)
-                    person.add_tours(self.purpose_dict)
                     self.population.append(person)
         for person in self.population:
             for purpose in self.tour_purposes:
                 if purpose.area == "metropolitan" and purpose.dest != "source" and not purpose.sources:
                     prob = purpose.gen_model.param["population"]
-                    try:
-                        sec_dest_prob = purpose.sec_dest_purpose.gen_model.param[purpose.name]
-                        prob *= 1 + sec_dest_prob
-                    except AttributeError:
-                        sec_dest_prob = 0
                     if random.random() < prob:
                         tour = Tour(purpose, person.zone)
-                        if random.random() < sec_dest_prob:
-                            tour.has_sec_dest = True
                         person.tours.append(tour)

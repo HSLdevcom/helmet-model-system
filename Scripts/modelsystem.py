@@ -76,6 +76,7 @@ class ModelSystem:
                             self.dtm.add_demand(demand[mode])
             purpose_impedance = self.imptrans.transform(self.dm.purpose_dict["hoo"], impedance)
             for person in self.dm.population:
+                person.add_tours(self.dm.purpose_dict)
                 for tour in person.tours:
                     tour.choose_mode()
                     tour.choose_destination(purpose_impedance)

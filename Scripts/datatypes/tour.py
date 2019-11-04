@@ -1,4 +1,6 @@
 import numpy
+import random
+
 
 class Tour:
     def __init__(self, purpose, origin):
@@ -16,7 +18,14 @@ class Tour:
         self.dest = None
         self.sec_dest = None
         self.matrix = 1 # So far, one person per tour
-        self.has_sec_dest = False
+        try:
+            sec_dest_prob = purpose.sec_dest_purpose.gen_model.param[purpose.name]
+        except AttributeError:
+            sec_dest_prob = 0
+        if random.random() < sec_dest_prob:
+            self.has_sec_dest = True
+        else:
+            self.has_sec_dest = False
 
     @property 
     def purpose(self):

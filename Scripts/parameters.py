@@ -2008,6 +2008,7 @@ tour_patterns = {
             "constant": 1,
             "zone": {
                 "share_detached_houses": 1.5,
+                "hw_w": 0.5,
             },
             "individual_dummy": {
                 "age_18-29": 3.5,

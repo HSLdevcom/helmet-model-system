@@ -220,11 +220,12 @@ class ModeDestModel(LogitModel):
             expsum = self._calc_dest_util(mode, impedance[mode])
             self.dest_expsums[mode] = {}
             self.dest_expsums[mode]["logsum"] = expsum
-            logsum = numpy.log(expsum)
+            logsum = pandas.Series(numpy.log(expsum), self.purpose.zone_numbers)
+            label = self.purpose.name + "_" + mode[0]
+            self.zone_data._values[label] = logsum
             result.print_data(
-                pandas.Series(logsum, self.purpose.zone_numbers),
-                "accessibility.txt", self.zone_data.zone_numbers,
-                self.purpose.name + "_" + mode[0])
+                logsum, "accessibility.txt",
+                self.zone_data.zone_numbers, label)
         return self._calc_mode_util(self.dest_expsums)
 
     def _calc_prob(self, mode_expsum):
