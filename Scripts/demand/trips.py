@@ -55,21 +55,23 @@ class DemandModel:
         )
         zones = self.zone_data.zone_numbers[:self.zone_data.first_peripheral_zone]
         generation_model = logit.GenerationModel(self.zone_data)
-        for idx, zone_pop in zones.iteritems():
+        for idx in zones:
             weights = [1]
             for age_group in age_groups:
                 key = "share_age_" + str(age_group[0]) + "-" + str(age_group[1])
                 share = self.zone_data[key][idx]
                 weights.append(share)
                 weights[0] -= share
-            for _ in xrange(0, zone_pop):
+            for _ in xrange(0, self.zone_data["population"][idx]):
                 a = numpy.arange(-1, len(age_groups))
                 group = numpy.random.choice(a=a, p=weights)
                 if group != -1:
                     # Group -1 is under-7-year-olds and they have weights[0]
                     age_group = age_groups[group]
                     age = random.randint(age_group[0], age_group[1])
-                    person = Person(idx, age, generation_model)
+                    age_str = "age_" + str(age_group[0]) + "-" + str(age_group[1])
+                    person = Person(idx, age, age_str, generation_model)
+                    person.add_tours(self.purpose_dict)
                     self.population.append(person)
         for person in self.population:
             for purpose in self.tour_purposes:

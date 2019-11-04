@@ -327,20 +327,37 @@ class GenerationModel(LogitModel):
         self.zone_data = zone_data
         self.param = parameters.tour_patterns
     
-    def generate_tours(self, age, is_car_user):
-        tour_number_util = {}
-        tour_pattern_util = {}
-        for tour_number in self.param:
-            tour_number_util[tour_number] = 0
-            tour_pattern_util[tour_number] = {}
-            for tour_pattern in self.param[tour_number]:
-                tour_pattern_util[tour_number][tour_pattern] = 0
-                if age in self.param[tour_number][tour_pattern]:
-                    tour_pattern_util[tour_number][tour_pattern] += self.param[tour_number][tour_pattern][age]
-                if is_car_user and "car_users" in self.param[tour_number][tour_pattern]:
-                    tour_pattern_util[tour_number][tour_pattern] += self.param[tour_number][tour_pattern]["car_users"]
-        
-
+    def calc_prob(self, zone, age_group, is_car_user):
+        prob = {}
+        num_exps = {}
+        num_expsum = 0
+        for tnum in self.param:
+            pattern_exps = {}
+            pattern_expsum = 0
+            for tpattern in self.param[tnum]:
+                param = self.param[tnum][tpattern]
+                util = 0
+                util += param["constant"]
+                for i in param["zone"]:
+                    util += param["zone"][i] * self.zone_data[i][zone]
+                dummies = param["individual_dummy"]
+                if age_group in dummies:
+                    util += dummies[age_group]
+                if is_car_user and "car_users" in dummies:
+                    util += dummies["car_users"]
+                pattern_exps[tpattern] = numpy.exp(util)
+                pattern_expsum += pattern_exps[tpattern]
+            for tpattern in self.param[tnum]:
+                prob[tpattern] = pattern_exps[tpattern] / pattern_expsum
+            util = 0
+            num_exps[tnum] = numpy.exp(util)
+            num_exps[tnum] *= pattern_expsum
+            num_expsum += num_exps[tnum]
+        for tnum in self.param:
+            p = num_exps[tnum] / num_expsum
+            for tpattern in self.param[tnum]:
+                prob[tpattern] *= p
+        return prob
 
 class CarUseModel(LogitModel):
     def __init__(self, zone_data, purpose):

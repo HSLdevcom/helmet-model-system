@@ -69,7 +69,11 @@ class ModelSystem:
                     purpose.init_sums()
                 else:
                     purpose_impedance = self.imptrans.transform(purpose, impedance)
-                    purpose.calc_demand(purpose_impedance)
+                    demand = purpose.calc_demand(purpose_impedance)
+                    if purpose.area == "peripheral" and purpose.dest != "source":
+                        # TODO Add peripheral non-home-based trips
+                        for mode in demand:
+                            self.dtm.add_demand(demand[mode])
             purpose_impedance = self.imptrans.transform(self.dm.purpose_dict["hoo"], impedance)
             for person in self.dm.population:
                 for tour in person.tours:

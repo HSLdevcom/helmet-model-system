@@ -2003,18 +2003,37 @@ mode_choice = {
     },
 }
 tour_patterns = {
-    0: {},
+    0: {
+        "-": {
+            "constant": 1,
+            "zone": {
+                "share_detached_houses": 1.5,
+            },
+            "individual_dummy": {
+                "age_18-29": 3.5,
+            },
+        },
+    },
     1: {
         "hw": {
+            "constant": 1,
+            "zone": {
+                "share_detached_houses": 1.5,
+            },
             "individual_dummy": {
-                "share_age_18-29": 3.5,
+                "age_18-29": 3.5,
+                "car_users": 2.5,
             },
         },
     },
     2: {
         "hw-ho": {
+            "constant": 1,
+            "zone": {
+                "share_detached_houses": 1.5,
+            },
             "individual_dummy": {
-                "share_age_18-29": 3.5,
+                "age_18-29": 3.5,
             },
         },
     },
