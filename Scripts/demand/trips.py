@@ -72,10 +72,3 @@ class DemandModel:
                     age_str = "age_" + str(age_group[0]) + "-" + str(age_group[1])
                     person = Person(idx, age, age_str, generation_model)
                     self.population.append(person)
-        for person in self.population:
-            for purpose in self.tour_purposes:
-                if purpose.area == "metropolitan" and purpose.dest != "source" and not purpose.sources:
-                    prob = purpose.gen_model.param["population"]
-                    if random.random() < prob:
-                        tour = Tour(purpose, person.zone)
-                        person.tours.append(tour)
