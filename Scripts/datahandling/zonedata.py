@@ -127,7 +127,7 @@ class ZoneData:
                     raise TypeError(errtext.format(key, i).capitalize())
             errtext = "{} could not be read"
             raise TypeError(errtext.format(key).capitalize())
-        if (data < 0).all():
+        if (data < 0).any():
             for (i, val) in data.iteritems():
                 if val < 0:
                     errtext = "{} ({}) for zone {} is negative"
