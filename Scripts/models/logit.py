@@ -218,6 +218,21 @@ class ModeDestModel(LogitModel):
         return self._calc_prob(mode_expsum)
     
     def calc_individual_mode_prob(self, is_car_user, zone):
+        """Calculate choice probabilities for individual agent
+        with individual dummy variable included.
+        
+        Parameters
+        ----------
+        is_car_user : bool
+            Whether the agent is car user or not
+        zone : int
+            Zone number where the agent lives
+        
+        Return
+        ------
+        list
+            Choice probabilities for purpose modes
+        """
         zone_idx = self.zone_data.zone_index(zone)
         mode_exps = {}
         mode_expsum = 0
