@@ -7,6 +7,7 @@ import datahandling.resultdata as result
 class LogitModel:
     def __init__(self, zone_data, purpose):
         self.purpose = purpose
+        self.bounds = purpose.bounds
         self.zone_data = zone_data
         self.dest_exps = {}
         self.mode_exps = {}
@@ -99,37 +100,38 @@ class LogitModel:
         zdata = self.zone_data
         for i in b:
             try: # If only one parameter
-                utility += b[i] * zdata.get_data(i, self.purpose, generation)
+                utility += b[i] * zdata.get_data(i, self.bounds, generation)
             except ValueError: # Separate params for cap region and surrounding
                 k = self.zone_data.first_surrounding_zone
                 data_capital_region = zdata.get_data(
-                    i, self.purpose, generation, zdata.CAPITAL_REGION)
+                    i, self.bounds, generation, zdata.CAPITAL_REGION)
                 data_surrounding = zdata.get_data(
-                    i, self.purpose, generation, zdata.SURROUNDING_AREA)
+                    i, self.bounds, generation, zdata.SURROUNDING_AREA)
                 if utility.ndim == 1: # 1-d array calculation
                     if dest is None:
                         utility[:k] += b[i][0] * data_capital_region
                         utility[k:] += b[i][1] * data_surrounding
                     else:
                         utility += b[i][0] * zdata.get_data(
-                            i, self.purpose, generation)[:, orig]
+                            i, self.bounds, generation)[:, orig]
                         utility += b[i][1] * zdata.get_data(
-                            i, self.purpose, generation)[dest, :]
+                            i, self.bounds, generation)[dest, :]
                 else: # 2-d matrix calculation
                     if orig is None:
                         utility[:k, :] += b[i][0] * data_capital_region
                         utility[k:, :] += b[i][1] * data_surrounding
                     else:
                         utility += b[i][0] * zdata.get_data(
-                            i, self.purpose, generation)[:, orig]
+                            i, self.bounds, generation)[:, orig]
                         utility += b[i][1] * zdata.get_data(
-                            i, self.purpose, generation)
+                            i, self.bounds, generation)
         return utility
 
     def _add_log_zone_util(self, exps, b, generation=False):
         zdata = self.zone_data
         for i in b:
-            exps *= numpy.power(zdata.get_data(i, self.purpose, generation) + 1, b[i])
+            exps *= numpy.power(
+                zdata.get_data(i, self.bounds, generation) + 1, b[i])
         return exps
 
 
@@ -154,7 +156,7 @@ class ModeDestModel(LogitModel):
         for mod_mode in self.mode_choice_param:
             for i in self.mode_choice_param[mod_mode]["individual_dummy"]:
                 dummy_share = self.zone_data.get_data(
-                    i, self.purpose, generation=True).values
+                    i, self.bounds, generation=True).values
                 ind_prob = self.calc_individual_prob(mod_mode, i)
                 for mode in prob:
                     no_dummy = (1 - dummy_share) * prob[mode]
@@ -361,27 +363,51 @@ class GenerationModel(LogitModel):
         return prob
 
 class CarUseModel(LogitModel):
-    def __init__(self, zone_data, purpose):
+    def __init__(self, zone_data, bounds):
         self.zone_data = zone_data
-        self.purpose = purpose
+        self.bounds = bounds
     
-    def calc_prob(self):
+    def calc_basic_prob(self):
         b = parameters.car_usage
-        utility = numpy.zeros(self.purpose.bounds[1])
+        utility = numpy.zeros(self.bounds[1])
         self._add_constant(utility, b["constant"])
         self._add_zone_util(utility, b["generation"], True)
-        exps = numpy.exp(utility)
-        self._add_log_zone_util(exps, b["log"], True)
-        prob = exps / (exps+1)
+        self.exps = numpy.exp(utility)
+        self._add_log_zone_util(self.exps, b["log"], True)
+        prob = self.exps / (self.exps+1)
+        return prob
+
+    def calc_prob(self):
+        prob = self.calc_basic_prob()
         no_dummy_share = 1
         dummy_prob = 0
+        b = parameters.car_usage
         for i in b["individual_dummy"]:
-            dummy_share = self.zone_data.get_data(
-                i, self.purpose, generation=True).values
+            try:
+                dummy_share = self.zone_data.get_data(
+                    "share_"+i, self.bounds, generation=True).values
+            except TypeError:
+                dummy_share = numpy.ones_like(prob)
+                for j in i:
+                    dummy_share *= self.zone_data.get_data(
+                        "share_"+j, self.bounds, generation=True).values
             no_dummy_share -= dummy_share
-            ind_exps = numpy.exp(b["individual_dummy"][i]) * exps
+            ind_exps = numpy.exp(b["individual_dummy"][i]) * self.exps
             ind_prob = ind_exps / (ind_exps+1)
             dummy_prob += dummy_share * ind_prob
         no_dummy_prob = no_dummy_share * prob
         prob = no_dummy_prob + dummy_prob
-        return pandas.Series(prob, self.purpose.zone_numbers)
+        return pandas.Series(
+            prob, self.zone_data.zone_numbers[self.bounds[0]:self.bounds[1]])
+    
+    def calc_individual_prob(self, age_group, gender, zone):
+        zone_idx = numpy.where(self.zone_data.zone_numbers == zone)[0][0]
+        exp = self.exps[zone_idx]
+        b = parameters.car_usage
+        if age_group in b["individual_dummy"]:
+            exp = numpy.exp(b["individual_dummy"][age_group]) * exp
+        if (age_group, gender) in b["individual_dummy"]:
+            exp = numpy.exp(b["individual_dummy"][(age_group, gender)]) * exp
+        prob = exp / (exp+1)
+        return prob
+

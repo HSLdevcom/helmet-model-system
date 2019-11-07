@@ -120,7 +120,7 @@ class TourPurpose(Purpose):
             aggregated_demand = self._aggregate(self.demand[mode])
             result.print_matrix(aggregated_demand,
                                 "aggregated_demand", self.name + "_" + mode)
-            own_zone = self.zone_data.get_data("own_zone", self)
+            own_zone = self.zone_data.get_data("own_zone", self.bounds)
             own_zone_demand = own_zone * self.demand[mode]
             own_zone_aggregated = self._aggregate(own_zone_demand)
             result.print_data(

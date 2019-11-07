@@ -54,13 +54,8 @@ class ZoneData:
         self["share_age_30-49"] = popdata["sh_3049"][:first_peripheral]
         self["share_age_50-64"] = popdata["sh_5064"][:first_peripheral]
         self["share_age_65-99"] = popdata["sh_65-"][:first_peripheral]
-        self["share_age_18-29_f"] = 0.5 * self["share_age_18-29"]
-        self["share_age_18-29_m"] = 0.5 * self["share_age_18-29"]
-        self["share_age_30-49_f"] = 0.5 * self["share_age_30-49"]
-        self["share_age_30-49_m"] = 0.5 * self["share_age_30-49"]
-        self["share_age_50-64_f"] = 0.5 * self["share_age_50-64"]
-        self["share_age_50-64_m"] = 0.5 * self["share_age_50-64"]
-        self["share_age_65-99_m"] = 0.5 * self["share_age_65-99"]
+        self["share_female"] = pandas.Series(0.5, zone_numbers)
+        self["share_male"] = pandas.Series(0.5, zone_numbers)
         self.nr_zones = len(self.zone_numbers)
         self["population_density"] = pop / landdata["builtar"]
         self["car_users"] = cardata["caruse"]
@@ -152,15 +147,15 @@ class ZoneData:
         data = {k: self._values[k] for k in freight_variables}
         return pandas.DataFrame(data)
 
-    def get_data(self, key, purpose, generation=False, part=None):
+    def get_data(self, key, bounds, generation=False, part=None):
         """Get data of correct shape for zones included in purpose.
         
         Parameters
         ----------
         key : str
             Key describing the data (e.g., "population")
-        purpose : Purpose
-            Purpose from which the zone bounds are taken
+        bounds : tuple
+            Two integers that describe the lower and upper bounds of purpose
         generation : bool, optional
             If set to True, returns data only for zones in purpose,
             otherwise returns data for all zones
@@ -171,7 +166,7 @@ class ZoneData:
         ------
         pandas Series or numpy 2-d matrix
         """
-        l, u = purpose.bounds
+        l, u = bounds
         if part is not None: # Return values for partial area only
             if part == self.CAPITAL_REGION:
                 u = self.first_surrounding_zone

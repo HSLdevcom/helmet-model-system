@@ -34,17 +34,13 @@ class DemandModel:
                     purpose.sources.append(self.purpose_dict[source])
                     if "sec_dest" in purpose_spec:
                         self.purpose_dict[source].sec_dest_purpose = purpose
-        spec = {
-            "name": "car_use",
-            "orig": None,
-            "dest": None,
-            "area": "metropolitan",
-        }
-        cm = logit.CarUseModel(zone_data, Purpose(spec, zone_data))
-        zone_data["car_users"] = cm.calc_prob()
+        bounds = (0, zone_data.first_peripheral_zone)
+        self.cm = logit.CarUseModel(zone_data, bounds)
+        zone_data["car_users"] = self.cm.calc_prob()
 
     def create_population(self):
         """Create population for agent-based simulation."""
+        self.cm.calc_basic_prob()
         self.population = []
         age_groups = (
             (7, 17),
@@ -68,7 +64,5 @@ class DemandModel:
                 if group != -1:
                     # Group -1 is under-7-year-olds and they have weights[0]
                     age_group = age_groups[group]
-                    age = random.randint(age_group[0], age_group[1])
-                    age_str = "age_" + str(age_group[0]) + "-" + str(age_group[1])
-                    person = Person(idx, age, age_str, generation_model)
+                    person = Person(idx, age_group, generation_model, self.cm)
                     self.population.append(person)

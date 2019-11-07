@@ -2115,13 +2115,13 @@ car_usage = {
         "population_density": -0.1471,
     },
     "individual_dummy": {
-        "share_age_7-17": -9999,
-        "share_age_18-29_m": 0.2969,
-        "share_age_30-49_f": 1.1019,
-        "share_age_30-49_m": 1.4157,
-        "share_age_50-64_f": 0.8173,
-        "share_age_50-64_m": 1.9978,
-        "share_age_65-99_m": 1.8737,
+        "age_7-17": -9999,
+        ("age_18-29", "male"): 0.2969,
+        ("age_30-49", "female"): 1.1019,
+        ("age_30-49", "male"): 1.4157,
+        ("age_50-64", "female"): 0.8173,
+        ("age_50-64", "male"): 1.9978,
+        ("age_65-99", "male"): 1.8737,
     },
 }
 vector_calibration_threshold = 5
