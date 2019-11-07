@@ -81,7 +81,7 @@ class ModelSystem:
             for person in self.dm.population:
                 person.add_tours(self.dm.purpose_dict)
                 for tour in person.tours:
-                    tour.choose_mode()
+                    tour.choose_mode(person.is_car_user)
                     tour.choose_destination(purpose_impedance)
                     self.dtm.add_demand(tour)
         else:

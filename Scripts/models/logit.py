@@ -1,5 +1,6 @@
 import numpy
 import pandas
+import math
 import parameters
 import datahandling.resultdata as result
 
@@ -207,15 +208,36 @@ class ModeDestModel(LogitModel):
         k = self.zone_data.first_surrounding_zone
         b = self.mode_choice_param[mod_mode]["individual_dummy"][dummy]
         try:
-            self.mode_exps[mod_mode] = b * self.mode_exps[mod_mode]
+            self.mode_exps[mod_mode] *= numpy.exp(b)
         except ValueError:
-            self.mode_exps[mod_mode][:k] = b[0] * self.mode_exps[mod_mode][:k]
-            self.mode_exps[mod_mode][k:] = b[1] * self.mode_exps[mod_mode][k:]
+            self.mode_exps[mod_mode][:k] *= numpy.exp(b[0])
+            self.mode_exps[mod_mode][k:] *= numpy.exp(b[1])
         mode_expsum = numpy.zeros_like(self.mode_exps[mod_mode])
         for mode in self.mode_choice_param:
             mode_expsum += self.mode_exps[mode]
         return self._calc_prob(mode_expsum)
     
+    def calc_individual_mode_prob(self, is_car_user, zone):
+        zone_idx = self.zone_data.zone_index(zone)
+        mode_exps = {}
+        mode_expsum = 0
+        for mode in self.mode_choice_param:
+            mode_exps[mode] = self.mode_exps[mode][zone_idx]
+            b = self.mode_choice_param[mode]["individual_dummy"]
+            if is_car_user and "car_users" in b:
+                try:
+                    mode_exps[mode] *= math.exp(b["car_users"])
+                except TypeError:
+                    if zone_idx < self.zone_data.first_surrounding_zone:
+                        mode_exps[mode] *= math.exp(b["car_users"][0])
+                    else:
+                        mode_exps[mode] *= math.exp(b["car_users"][1])
+            mode_expsum += mode_exps[mode]
+        probs = []
+        for mode in self.purpose.modes:
+            probs.append(mode_exps[mode] / mode_expsum)
+        return probs
+
     def _calc_utils(self, impedance):
         self.dest_expsums = {}
         for mode in self.dest_choice_param:
@@ -401,8 +423,7 @@ class CarUseModel(LogitModel):
             prob, self.zone_data.zone_numbers[self.bounds[0]:self.bounds[1]])
     
     def calc_individual_prob(self, age_group, gender, zone):
-        zone_idx = numpy.where(self.zone_data.zone_numbers == zone)[0][0]
-        exp = self.exps[zone_idx]
+        exp = self.exps[self.zone_data.zone_index(zone)]
         b = parameters.car_usage
         if age_group in b["individual_dummy"]:
             exp = numpy.exp(b["individual_dummy"][age_group]) * exp

@@ -47,10 +47,9 @@ class Tour:
             position.append(zone_data.zone_index(self.sec_dest))
         return position
 
-    def choose_mode(self):
-        probs = []
-        for mode in self._purpose.modes:
-            probs.append(self._purpose.model.mode_prob[mode][self.position[0]])
+    def choose_mode(self, is_car_user):
+        model = self._purpose.model
+        probs = model.calc_individual_mode_prob(is_car_user, self.orig)
         self.mode = numpy.random.choice(a=self._purpose.modes, p=probs)
         self.purpose.generated_tours[self.mode][self.position[0]] += 1
 
