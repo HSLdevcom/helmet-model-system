@@ -69,10 +69,14 @@ class ModelSystem:
                     purpose.init_sums()
                 else:
                     purpose_impedance = self.imptrans.transform(purpose, impedance)
-                    demand = purpose.calc_demand(purpose_impedance)
-                    if (purpose.area == "peripheral" and purpose.dest != "source") or purpose.name == "oop":
-                        for mode in demand:
-                            self.dtm.add_demand(demand[mode])
+                    if purpose.area == "peripheral" or purpose.orig == "source" or purpose.dest == "source":
+                        demand = purpose.calc_demand(purpose_impedance)
+                        if purpose.dest != "source":
+                            for mode in demand:
+                                self.dtm.add_demand(demand[mode])
+                    else:
+                        purpose.init_sums()
+                        purpose.model.calc_basic_prob(purpose_impedance)
             purpose_impedance = self.imptrans.transform(self.dm.purpose_dict["hoo"], impedance)
             for person in self.dm.population:
                 person.add_tours(self.dm.purpose_dict)

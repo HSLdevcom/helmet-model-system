@@ -82,6 +82,11 @@ class TourPurpose(Purpose):
             self.model = logit.ModeDestModel(zone_data, self)
         self.modes = self.model.mode_choice_param.keys()
 
+    def init_sums(self):
+        for mode in self.modes:
+            self.generated_tours[mode] = numpy.zeros_like(self.zone_numbers)
+            self.attracted_tours[mode] = numpy.zeros_like(self.zone_data.zone_numbers)
+
     def calc_demand(self, impedance):
         """Main method for purpose specific demand calculation.
         

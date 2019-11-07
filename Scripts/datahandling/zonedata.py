@@ -129,6 +129,14 @@ class ZoneData:
                     raise ValueError(errtext.format(key, val, i).capitalize())
         self._values[key] = data
 
+    def zone_index(self, zone_number):
+        match = numpy.where(self.zone_numbers == zone_number)
+        if len(match) == 1 and len(match[0]) == 1:
+            return match[0][0]
+        else:
+            errtext = "Found several matching zone numbers {}"
+            raise IndexError(errtext.format(zone_number))
+
     def get_freight_data(self):
         """Get zone data for freight traffic calculation.
         
