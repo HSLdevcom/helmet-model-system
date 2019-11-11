@@ -1599,7 +1599,7 @@ mode_choice = {
                 "logsum": 0.844179295926,
             },
             "individual_dummy": {},
-        }, 
+        },
         "walk": {
             "constant": (0.844179295926 * 6.06426484277, 0.844179295926 * 6.31407702335),
             "generation": {},
@@ -1643,7 +1643,7 @@ mode_choice = {
                 "logsum": 0.272803753976, # Dcoeff
             },
             "individual_dummy": {},
-        },  
+        },
         "walk": {
             "constant": 0.272803753976 * 17.7784859496,
             "generation": {},
@@ -1687,7 +1687,7 @@ mode_choice = {
                 "logsum": 1.00000000000,
             },
             "individual_dummy": {},
-        },  
+        }, 
         "walk": {
             "constant": 6.15888890793,
             "generation": {},
@@ -1733,7 +1733,7 @@ mode_choice = {
                 "logsum": 0.539979474415,
             },
             "individual_dummy": {},
-        },  
+        }, 
         "walk": {
             "constant": (0.539979474415 * 10.8293044790, 0.539979474415 * 12.6937820419),
             "generation": {},
@@ -1779,7 +1779,7 @@ mode_choice = {
                 "logsum": 0.151688898,
             },
             "individual_dummy": {},
-        },  
+        }, 
         "walk": {
             "constant": (0.151688898 * 20.72419038, 0.151688898 * 12.53617415),
             "generation": {},
@@ -1828,7 +1828,7 @@ mode_choice = {
                 "dist": -1.292779721,
             },
             "individual_dummy": {},
-        },  
+        }, 
         "walk": {
             "constant": 3.309720696,
             "generation": {},
@@ -1874,7 +1874,7 @@ mode_choice = {
                 "logsum": 0.799256902,
             },
             "individual_dummy": {},
-        },  
+        }, 
         "walk": {
             "constant": 0.799256902 * 6.416635051,
             "generation": {},
@@ -1918,7 +1918,7 @@ mode_choice = {
                 "logsum": 0.799256902,
             },
             "individual_dummy": {},
-        },  
+        }, 
         "walk": {
             "constant": 0.799256902 * 6.416635051,
             "generation": {},
@@ -2005,52 +2005,579 @@ mode_choice = {
 # Scale parameter used in upper level of tour pattern model
 tour_number_scale = 0.622253957
 tour_patterns = {
+# utility function 1
     0: {
-        "-": {
-            "constant": 1,
-            "zone": {
-                "share_detached_houses": 1.5,
-                "hw_w": 0.5,
-            },
+        "- ", : {
+            "constant": 0
+          , 
             "individual_dummy": {
-                "age_18-29": 3.5,
+                "age_50_64 ": -0.305509545,
+                "age_65_ ": 0.597976527,
             },
-        },
+        },# funktio 1  valmis
+# utility function 2
     },
     1: {
-        "hw": {
-            "constant": 1,
-            "zone": {
-                "share_detached_houses": 1.5,
-            },
+        "hw ", : {
+            "constant": 0
+          , 
             "individual_dummy": {
-                "age_18-29": 3.5,
-                "car_users": 2.5,
+                "age_18-29 ": 2.306249018,
+                "age_30_49 ": 2.977241136,
+                "age_50_64 ": 2.018825449,
+                "age_65_ ": -1.185980639,
             },
-        },
-        "hc": {
-            "constant": 1,
             "zone": {
-                "share_detached_houses": 1.5,
+                "share_detached_houses ": -0.00591,
             },
+        },# funktio 2  valmis
+# utility function 3
+        "hs ", : {
+            "constant": 3.308625072
+           , # 
+            "zone": {
+                "share_detached_houses ": -0.00591,
+            },
+        },# funktio 3  valmis
+# utility function 4
+        "hu ", : {
+            "constant": 0
+          , 
             "individual_dummy": {
-                "age_7-17": 3.5,
-                "car_users": 2.5,
+                "age_30_49 ": -1.586979829,
+                "age_50_64 ": -3.739206239,
+                "age_65_ ": -3.636471246,
             },
-        },
+            "zone": {
+                "share_detached_houses ": -0.00591,
+                "hu_t ": 0.148402259,
+            },
+        },# funktio 4  valmis
+# utility function 5
+        "hc ", : {
+            "constant": 0
+           , 
+            "individual_dummy": {
+                "age_18-29 ": 0.632156675,
+                "age_30_49 ": 1.106558979,
+                "age_50_64 ": 0.636516485,
+                "age_65_ ": 1.250192981,
+            },
+            "zone": {
+                "share_detached_houses ": -0.00591,
+            },
+        },# funktio 5  valmis
+# utility function 6
+        "ho ", : {
+            "constant": 0.811674639
+           , 
+            "individual_dummy": {
+                "age_65_ ": 0.394182783,
+            },
+            "zone": {
+                "share_detached_houses ": -0.00591,
+            },
+        },# funktio 6  valmis
+# utility function 7
     },
     2: {
-        "hw-ho": {
-            "constant": 1,
-            "zone": {
-                "share_detached_houses": 1.5,
-            },
+        "hw-hw ", : {
+            "constant": -6.702389265
+           , 
             "individual_dummy": {
-                "age_18-29": 3.5,
+                "age_18-29 ": 2.306249018,
+                "age_30_49 ": 2.977241136,
+                "age_50_64 ": 2.018825449,
+                "age_65_ ": -1.185980639,
+                "car_users ": 0.647176487,
             },
-        },
+            "zone": {
+                "ho_w ": 0.249875934,
+            },
+        },# funktio 7  valmis
+# utility function 8
+        "hw-hu ", : {
+            "constant": -8.418852173
+           , 
+            "individual_dummy": {
+                "age_18-29 ": 2.306249018,
+                "age_30_49 ": -1.586979829,
+                "age_30_49 ": 2.977241136,
+                "age_50_64 ": -3.739206239,
+                "age_50_64 ": 2.018825449,
+                "age_65_ ": -3.636471246,
+                "age_65_ ": -1.185980639,
+                "car_users ": 0.647176487,
+            },
+            "zone": {
+                "hu_t ": 0.176002681,
+                "ho_w ": 0.249875934,
+            },
+        },# funktio 8  valmis
+# utility function 9
+        "hw-hc ", : {
+            "constant": -5.468303413
+           , 
+            "individual_dummy": {
+                "age_18-29 ": 0.632156675,
+                "age_18-29 ": 2.306249018,
+                "age_30_49 ": 1.106558979,
+                "age_30_49 ": 2.977241136,
+                "age_50_64 ": 0.636516485,
+                "age_50_64 ": 2.018825449,
+                "age_65_ ": 1.250192981,
+                "age_65_ ": -1.185980639,
+                "car_users ": 0.647176487,
+            },
+            "zone": {
+                "ho_w ": 0.249875934,
+            },
+        },# funktio 9  valmis
+# utility function 10
+        "hw-ho ", : {
+            "constant": -3.969665707
+           , 
+            "individual_dummy": {
+                "age_18-29 ": 2.306249018,
+                "age_30_49 ": 2.977241136,
+                "age_50_64 ": 2.018825449,
+                "age_65_ ": 0.394182783,
+                "age_65_ ": -1.185980639,
+                "car_users ": 0.647176487,
+            },
+            "zone": {
+                "ho_w ": 0.249875934,
+            },
+        },# funktio 10  valmis
+# utility function 11
+        "hs-hs ", : {
+            "constant": -2.189925729
+            , # 
+            "zone": {
+                "ho_w ": 0.249875934,
+            },
+        },# funktio 11  valmis
+# utility function 12
+        "hs-hc ", : {
+            "constant": -0.932031836
+           , 
+            "individual_dummy": {
+                "age_18-29 ": 0.632156675,
+                "age_30_49 ": 1.106558979,
+                "age_50_64 ": 0.636516485,
+                "age_65_ ": 1.250192981,
+            },
+            "zone": {
+                "ho_w ": 0.249875934,
+            },
+        },# funktio 12  valmis
+# utility function 13
+        "hs-ho ", : {
+            "constant": 1.040646615
+           , 
+            "individual_dummy": {
+                "age_65_ ": 0.394182783,
+            },
+            "zone": {
+                "ho_w ": 0.249875934,
+            },
+        },# funktio 13  valmis
+# utility function 14
+        "hu-hc ", : {
+            "constant": -5.264912587
+           , 
+            "individual_dummy": {
+                "age_18-29 ": 0.632156675,
+                "age_30_49 ": 1.106558979,
+                "age_30_49 ": -1.586979829,
+                "age_50_64 ": 0.636516485,
+                "age_50_64 ": -3.739206239,
+                "age_65_ ": 1.250192981,
+                "age_65_ ": -3.636471246,
+                "car_users ": 0.647176487,
+            },
+            "zone": {
+                "hu_t ": 0.176002681,
+                "ho_w ": 0.249875934,
+            },
+        },# funktio 14  valmis
+# utility function 15
+        "hu-ho ", : {
+            "constant": -4.133565561
+           , 
+            "individual_dummy": {
+                "age_30_49 ": -1.586979829,
+                "age_50_64 ": -3.739206239,
+                "age_65_ ": 0.394182783,
+                "age_65_ ": -3.636471246,
+                "car_users ": 0.647176487,
+            },
+            "zone": {
+                "hu_t ": 0.176002681,
+                "ho_w ": 0.249875934,
+            },
+        },# funktio 15  valmis
+# utility function 16
+        "hc-hc ", : {
+            "constant": -4.347727916
+           , 
+            "individual_dummy": {
+                "age_18-29 ": 0.632156675,
+                "age_30_49 ": 1.106558979,
+                "age_50_64 ": 0.636516485,
+                "age_65_ ": 1.250192981,
+                "car_users ": 0.647176487,
+            },
+            "zone": {
+                "ho_w ": 0.249875934,
+            },
+        },# funktio 16  valmis
+# utility function 17
+        "hc-ho ", : {
+            "constant": -3.615413138
+           , 
+            "individual_dummy": {
+                "age_18-29 ": 0.632156675,
+                "age_30_49 ": 1.106558979,
+                "age_50_64 ": 0.636516485,
+                "age_65_ ": 1.250192981,
+                "age_65_ ": 0.394182783,
+                "car_users ": 0.647176487,
+            },
+            "zone": {
+                "ho_w ": 0.249875934,
+            },
+        },# funktio 17  valmis
+# utility function 18
+        "ho-ho ", : {
+            "constant": -2.954069138
+           , 
+            "individual_dummy": {
+                "age_65_ ": 0.394182783,
+                "car_users ": 0.647176487,
+            },
+            "zone": {
+                "ho_w ": 0.249875934,
+            },
+        },# funktio 18  valmis
+# utility function 19
     },
-}
+    3: {
+        "hw-hw-ho ", : {
+            "constant": -7.640316015
+           , 
+            "individual_dummy": {
+                "age_18-29 ": 2.306249018,
+                "age_30_49 ": 2.977241136,
+                "age_50_64 ": 2.018825449,
+                "age_65_ ": 0.394182783,
+                "age_65_ ": -1.185980639,
+                "car_users ": 1.492056593,
+            },
+        },# funktio 19  valmis
+# utility function 20
+        "hw-hc-hc ", : {
+            "constant": -6.996908123
+           , 
+            "individual_dummy": {
+                "age_18-29 ": 0.632156675,
+                "age_18-29 ": 2.306249018,
+                "age_30_49 ": 1.106558979,
+                "age_30_49 ": 2.977241136,
+                "age_50_64 ": 0.636516485,
+                "age_50_64 ": 2.018825449,
+                "age_65_ ": 1.250192981,
+                "age_65_ ": -1.185980639,
+                "car_users ": 1.492056593,
+            },
+        },# funktio 20  valmis
+# utility function 21
+        "hw-hc-ho ", : {
+            "constant": -6.28085759
+           , 
+            "individual_dummy": {
+                "age_18-29 ": 0.632156675,
+                "age_18-29 ": 2.306249018,
+                "age_30_49 ": 1.106558979,
+                "age_30_49 ": 2.977241136,
+                "age_50_64 ": 0.636516485,
+                "age_50_64 ": 2.018825449,
+                "age_65_ ": 1.250192981,
+                "age_65_ ": 0.394182783,
+                "age_65_ ": -1.185980639,
+                "car_users ": 1.492056593,
+            },
+        },# funktio 21  valmis
+# utility function 22
+        "hw-ho-ho ", : {
+            "constant": -5.143814369
+           , 
+            "individual_dummy": {
+                "age_18-29 ": 2.306249018,
+                "age_30_49 ": 2.977241136,
+                "age_50_64 ": 2.018825449,
+                "age_65_ ": 0.394182783,
+                "age_65_ ": -1.185980639,
+                "car_users ": 1.492056593,
+            },
+        },# funktio 22  valmis
+# utility function 23
+        "hs-hc-ho ", : {
+            "constant": -1.110080901
+           , 
+            "individual_dummy": {
+                "age_18-29 ": 0.632156675,
+                "age_30_49 ": 1.106558979,
+                "age_50_64 ": 0.636516485,
+                "age_65_ ": 1.250192981,
+                "age_65_ ": 0.394182783,
+            },
+            "zone": {
+                "ho_w ": 0.0258,
+            },
+        },# funktio 23  valmis
+# utility function 24
+        "hs-ho-ho ", : {
+            "constant": 0
+           , 
+            "individual_dummy": {
+                "age_65_ ": 0.394182783,
+            },
+            "zone": {
+                "ho_w ": 0.0258,
+            },
+        },# funktio 24  valmis
+# utility function 25
+        "hu-hc-ho ", : {
+            "constant": -11.75180816
+           , 
+            "individual_dummy": {
+                "age_18-29 ": 0.632156675,
+                "age_30_49 ": 1.106558979,
+                "age_30_49 ": -1.586979829,
+                "age_50_64 ": 0.636516485,
+                "age_50_64 ": -3.739206239,
+                "age_65_ ": 1.250192981,
+                "age_65_ ": 0.394182783,
+                "age_65_ ": -3.636471246,
+                "car_users ": 1.492056593,
+            },
+            "zone": {
+                "hu_t ": 0.829445548,
+                "ho_w ": 0.0258,
+            },
+        },# funktio 25  valmis
+# utility function 26
+        "hu-ho-ho ", : {
+            "constant": -11.34272983
+           , 
+            "individual_dummy": {
+                "age_30_49 ": -1.586979829,
+                "age_50_64 ": -3.739206239,
+                "age_65_ ": 0.394182783,
+                "age_65_ ": -3.636471246,
+                "car_users ": 1.492056593,
+            },
+            "zone": {
+                "hu_t ": 0.829445548,
+                "ho_w ": 0.0258,
+            },
+        },# funktio 26  valmis
+# utility function 27
+        "hc-hc-hc ", : {
+            "constant": -5.575050535
+           , 
+            "individual_dummy": {
+                "age_18-29 ": 0.632156675,
+                "age_30_49 ": 1.106558979,
+                "age_50_64 ": 0.636516485,
+                "age_65_ ": 1.250192981,
+                "car_users ": 1.492056593,
+            },
+            "zone": {
+                "ho_w ": 0.0258,
+            },
+        },# funktio 27  valmis
+# utility function 28
+        "hc-hc-ho ", : {
+            "constant": -4.709369964
+           , 
+            "individual_dummy": {
+                "age_18-29 ": 0.632156675,
+                "age_30_49 ": 1.106558979,
+                "age_50_64 ": 0.636516485,
+                "age_65_ ": 1.250192981,
+                "age_65_ ": 0.394182783,
+                "car_users ": 1.492056593,
+            },
+            "zone": {
+                "ho_w ": 0.0258,
+            },
+        },# funktio 28  valmis
+# utility function 29
+        "hc-ho-ho ", : {
+            "constant": -4.115616267
+           , 
+            "individual_dummy": {
+                "age_18-29 ": 0.632156675,
+                "age_30_49 ": 1.106558979,
+                "age_50_64 ": 0.636516485,
+                "age_65_ ": 1.250192981,
+                "age_65_ ": 0.394182783,
+                "car_users ": 1.492056593,
+            },
+            "zone": {
+                "ho_w ": 0.0258,
+            },
+        },# funktio 29  valmis
+# utility function 30
+        "ho-ho-ho ", : {
+            "constant": -4.110394781
+           , 
+            "individual_dummy": {
+                "age_65_ ": 0.394182783,
+                "car_users ": 1.492056593,
+            },
+            "zone": {
+                "ho_w ": 0.0258,
+            },
+        },# funktio 30  valmis
+# utility function 31
+    },
+    4: {
+        "hw-hc-hc-ho ", : {
+            "constant": -8.782904966
+           , 
+            "individual_dummy": {
+                "age_18-29 ": 0.632156675,
+                "age_18-29 ": 2.306249018,
+                "age_30_49 ": 1.106558979,
+                "age_30_49 ": 2.977241136,
+                "age_50_64 ": 0.636516485,
+                "age_50_64 ": 2.018825449,
+                "age_65_ ": 1.250192981,
+                "age_65_ ": 0.394182783,
+                "age_65_ ": -1.185980639,
+                "car_users ": 1.544612164,
+            },
+            "zone": {
+                "share_detached_houses ": -0.00805,
+            },
+        },# funktio 31  valmis
+# utility function 32
+        "hw-hc-ho-ho ", : {
+            "constant": -7.819600775
+           , 
+            "individual_dummy": {
+                "age_18-29 ": 0.632156675,
+                "age_18-29 ": 2.306249018,
+                "age_30_49 ": 1.106558979,
+                "age_30_49 ": 2.977241136,
+                "age_50_64 ": 0.636516485,
+                "age_50_64 ": 2.018825449,
+                "age_65_ ": 1.250192981,
+                "age_65_ ": 0.394182783,
+                "age_65_ ": -1.185980639,
+                "car_users ": 1.544612164,
+            },
+            "zone": {
+                "share_detached_houses ": -0.00805,
+            },
+        },# funktio 32  valmis
+# utility function 33
+        "hw-ho-ho-ho ", : {
+            "constant": -6.323991971
+           , 
+            "individual_dummy": {
+                "age_18-29 ": 2.306249018,
+                "age_30_49 ": 2.977241136,
+                "age_50_64 ": 2.018825449,
+                "age_65_ ": 0.394182783,
+                "age_65_ ": -1.185980639,
+                "car_users ": 1.544612164,
+            },
+            "zone": {
+                "share_detached_houses ": -0.00805,
+            },
+        },# funktio 33  valmis
+# utility function 34
+        "hc-hc-hc-hc ", : {
+            "constant": -6.56383811
+           , 
+            "individual_dummy": {
+                "age_18-29 ": 0.632156675,
+                "age_30_49 ": 1.106558979,
+                "age_50_64 ": 0.636516485,
+                "age_65_ ": 1.250192981,
+                "car_users ": 1.544612164,
+            },
+            "zone": {
+                "share_detached_houses ": -0.00805,
+            },
+        },# funktio 34  valmis
+# utility function 35
+        "hc-hc-hc-ho ", : {
+            "constant": -6.280534875
+           , 
+            "individual_dummy": {
+                "age_18-29 ": 0.632156675,
+                "age_30_49 ": 1.106558979,
+                "age_50_64 ": 0.636516485,
+                "age_65_ ": 1.250192981,
+                "age_65_ ": 0.394182783,
+                "car_users ": 1.544612164,
+            },
+            "zone": {
+                "share_detached_houses ": -0.00805,
+            },
+        },# funktio 35  valmis
+# utility function 36
+        "hc-hc-ho-ho ", : {
+            "constant": -5.728407971
+           , 
+            "individual_dummy": {
+                "age_18-29 ": 0.632156675,
+                "age_30_49 ": 1.106558979,
+                "age_50_64 ": 0.636516485,
+                "age_65_ ": 1.250192981,
+                "age_65_ ": 0.394182783,
+                "car_users ": 1.544612164,
+            },
+            "zone": {
+                "share_detached_houses ": -0.00805,
+            },
+        },# funktio 36  valmis
+# utility function 37
+        "hc-ho-ho-ho ", : {
+            "constant": -5.1676642
+           , 
+            "individual_dummy": {
+                "age_18-29 ": 0.632156675,
+                "age_30_49 ": 1.106558979,
+                "age_50_64 ": 0.636516485,
+                "age_65_ ": 1.250192981,
+                "age_65_ ": 0.394182783,
+                "car_users ": 1.544612164,
+            },
+            "zone": {
+                "share_detached_houses ": -0.00805,
+            },
+        },# funktio 37  valmis
+# utility function 38
+        "ho-ho-ho-ho ", : {
+            "constant": -4.892323651
+           , 
+            "individual_dummy": {
+                "age_65_ ": 0.394182783,
+                "car_users ": 1.544612164,
+            },
+            "zone": {
+                "share_detached_houses ": -0.00805,
+            },
+        },# funktio 38  valmis
+    },# 4+ matkaa valmis
+},# koko kaava valmis
+
 tour_conditions = {
     "hw": (False, "age_7-17"),
     "hc": (True, "age_7-17"),
