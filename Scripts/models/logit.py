@@ -408,7 +408,8 @@ class GenerationModel(LogitModel):
                 prob[tpattern] = pattern_exps[tpattern] / pattern_expsum
             util = 0
             num_exps[tnum] = numpy.exp(util)
-            num_exps[tnum] *= pattern_expsum
+            logsum_parameter = parameters.tour_number_scale
+            num_exps[tnum] *= numpy.power(pattern_expsum, logsum_parameter)
             num_expsum += num_exps[tnum]
         for tnum in self.param:
             p = num_exps[tnum] / num_expsum

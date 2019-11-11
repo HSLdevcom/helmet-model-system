@@ -2002,6 +2002,8 @@ mode_choice = {
         },
     },
 }
+# Scale parameter used in upper level of tour pattern model
+tour_number_scale = 0.622253957
 tour_patterns = {
     0: {
         "-": {
