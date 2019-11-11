@@ -2538,7 +2538,7 @@ tour_patterns = {
             },
         },
     },
-},
+}
 
 tour_conditions = {
     "hw": (False, "age_7-17"),
