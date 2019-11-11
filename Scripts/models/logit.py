@@ -366,6 +366,7 @@ class GenerationModel(LogitModel):
     def __init__(self, zone_data):
         self.zone_data = zone_data
         self.param = parameters.tour_patterns
+        self.conditions = parameters.tour_conditions
     
     def calc_prob(self, zone, age_group, is_car_user):
         prob = {}
@@ -375,17 +376,33 @@ class GenerationModel(LogitModel):
             pattern_exps = {}
             pattern_expsum = 0
             for tpattern in self.param[tnum]:
-                param = self.param[tnum][tpattern]
-                util = 0
-                util += param["constant"]
-                for i in param["zone"]:
-                    util += param["zone"][i] * self.zone_data[i][zone]
-                dummies = param["individual_dummy"]
-                if age_group in dummies:
-                    util += dummies[age_group]
-                if is_car_user and "car_users" in dummies:
-                    util += dummies["car_users"]
-                pattern_exps[tpattern] = numpy.exp(util)
+                if tpattern in self.conditions:
+                    if self.conditions[tpattern][0]:
+                        if age_group == self.conditions[tpattern][1]:
+                            is_allowed = True
+                        else:
+                            is_allowed = False
+                    else:
+                        if age_group == self.conditions[tpattern][1]:
+                            is_allowed = False
+                        else:
+                            is_allowed = True
+                else:
+                    is_allowed = True
+                if is_allowed:
+                    param = self.param[tnum][tpattern]
+                    util = 0
+                    util += param["constant"]
+                    for i in param["zone"]:
+                        util += param["zone"][i] * self.zone_data[i][zone]
+                    dummies = param["individual_dummy"]
+                    if age_group in dummies:
+                        util += dummies[age_group]
+                    if is_car_user and "car_users" in dummies:
+                        util += dummies["car_users"]
+                    pattern_exps[tpattern] = numpy.exp(util)
+                else:
+                    pattern_exps[tpattern] = 0
                 pattern_expsum += pattern_exps[tpattern]
             for tpattern in self.param[tnum]:
                 prob[tpattern] = pattern_exps[tpattern] / pattern_expsum

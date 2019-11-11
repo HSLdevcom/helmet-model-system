@@ -2026,6 +2026,16 @@ tour_patterns = {
                 "car_users": 2.5,
             },
         },
+        "hc": {
+            "constant": 1,
+            "zone": {
+                "share_detached_houses": 1.5,
+            },
+            "individual_dummy": {
+                "age_7-17": 3.5,
+                "car_users": 2.5,
+            },
+        },
     },
     2: {
         "hw-ho": {
@@ -2038,6 +2048,10 @@ tour_patterns = {
             },
         },
     },
+}
+tour_conditions = {
+    "hw": (False, "age_7-17"),
+    "hc": (True, "age_7-17"),
 }
 tour_generation = {
     "hw": {
