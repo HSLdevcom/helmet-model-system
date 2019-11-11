@@ -26,7 +26,7 @@ class Person:
 
     def add_tours(self, purposes):
         self.tours = []
-        prob = self.generation_model.calc_prob(self.zone, self.age_group, self.is_car_user)
+        prob = self.generation_model.calc_prob(self.age_group, self.is_car_user, self.zone)
         pattern = numpy.random.choice(a=prob.keys(), p=prob.values())
         tour_list = pattern.split('-')
         if tour_list[0] == "":

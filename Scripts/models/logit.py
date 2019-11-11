@@ -368,9 +368,13 @@ class GenerationModel(LogitModel):
         self.param = parameters.tour_patterns
         self.conditions = parameters.tour_conditions
     
-    def calc_prob(self, zone, age_group, is_car_user):
+    def calc_prob(self, age_group, is_car_user, zones):
         prob = {}
         num_exps = {}
+        try:
+            zone = slice(zones[0], zones[1])
+        except IndexError:
+            zone = zones
         num_expsum = 0
         for tnum in self.param:
             pattern_exps = {}
@@ -455,8 +459,11 @@ class CarUseModel(LogitModel):
         return pandas.Series(
             prob, self.zone_data.zone_numbers[self.bounds[0]:self.bounds[1]])
     
-    def calc_individual_prob(self, age_group, gender, zone):
-        exp = self.exps[self.zone_data.zone_index(zone)]
+    def calc_individual_prob(self, age_group, gender, zone=None):
+        if zone is None:
+            exp = self.exps
+        else:
+            exp = self.exps[self.zone_data.zone_index(zone)]
         b = parameters.car_usage
         if age_group in b["individual_dummy"]:
             exp = numpy.exp(b["individual_dummy"][age_group]) * exp

@@ -23,6 +23,8 @@ class ModelSystem:
         self.is_agent_model = is_agent_model
         if is_agent_model:
             self.dm.create_population()
+        else:
+            self.dm.create_population_segments()
         self.fm = FreightModel(self.zdata_base,
                                self.zdata_forecast,
                                self.basematrices)
