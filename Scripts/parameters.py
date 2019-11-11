@@ -2007,7 +2007,7 @@ tour_number_scale = 0.622253957
 tour_patterns = {
 # utility function 1
     0: {
-        "-", : {
+        "-" : {
             "constant":   0.000000000,
             "individual_dummy": {
                 "age_50_64": -0.305509545,
@@ -2017,7 +2017,7 @@ tour_patterns = {
 # utility function 2
     },
     1: {
-        "hw", : {
+        "hw" : {
             "constant":   0.000000000,
             "individual_dummy": {
                 "age_18-29":  2.306249018,
@@ -2030,14 +2030,14 @@ tour_patterns = {
             },
         },
 # utility function 3
-        "hs", : {
+        "hs" : {
             "constant":   3.308625072,
             "zone": {
                 "share_detached_houses": -0.005910000,
             },
         },
 # utility function 4
-        "hu", : {
+        "hu" : {
             "constant":   0.000000000,
             "individual_dummy": {
                 "age_30_49": -1.586979829,
@@ -2050,7 +2050,7 @@ tour_patterns = {
             },
         },
 # utility function 5
-        "hc", : {
+        "hc" : {
             "constant":   0.000000000,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2063,7 +2063,7 @@ tour_patterns = {
             },
         },
 # utility function 6
-        "ho", : {
+        "ho" : {
             "constant":   0.811674639,
             "individual_dummy": {
                 "age_65_":  0.394182783,
@@ -2075,7 +2075,7 @@ tour_patterns = {
 # utility function 7
     },
     2: {
-        "hw-hw", : {
+        "hw-hw" : {
             "constant":  -6.702389265,
             "individual_dummy": {
                 "age_18-29":  2.306249018,
@@ -2089,7 +2089,7 @@ tour_patterns = {
             },
         },
 # utility function 8
-        "hw-hu", : {
+        "hw-hu" : {
             "constant":  -8.418852173,
             "individual_dummy": {
                 "age_18-29":  2.306249018,
@@ -2107,7 +2107,7 @@ tour_patterns = {
             },
         },
 # utility function 9
-        "hw-hc", : {
+        "hw-hc" : {
             "constant":  -5.468303413,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2125,7 +2125,7 @@ tour_patterns = {
             },
         },
 # utility function 10
-        "hw-ho", : {
+        "hw-ho" : {
             "constant":  -3.969665707,
             "individual_dummy": {
                 "age_18-29":  2.306249018,
@@ -2140,14 +2140,14 @@ tour_patterns = {
             },
         },
 # utility function 11
-        "hs-hs", : {
+        "hs-hs" : {
             "constant":  -2.189925729,
             "zone": {
                 "ho_w":  0.249875934,
             },
         },
 # utility function 12
-        "hs-hc", : {
+        "hs-hc" : {
             "constant":  -0.932031836,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2160,7 +2160,7 @@ tour_patterns = {
             },
         },
 # utility function 13
-        "hs-ho", : {
+        "hs-ho" : {
             "constant":   1.040646615,
             "individual_dummy": {
                 "age_65_":  0.394182783,
@@ -2170,7 +2170,7 @@ tour_patterns = {
             },
         },
 # utility function 14
-        "hu-hc", : {
+        "hu-hc" : {
             "constant":  -5.264912587,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2188,7 +2188,7 @@ tour_patterns = {
             },
         },
 # utility function 15
-        "hu-ho", : {
+        "hu-ho" : {
             "constant":  -4.133565561,
             "individual_dummy": {
                 "age_30_49": -1.586979829,
@@ -2203,7 +2203,7 @@ tour_patterns = {
             },
         },
 # utility function 16
-        "hc-hc", : {
+        "hc-hc" : {
             "constant":  -4.347727916,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2217,7 +2217,7 @@ tour_patterns = {
             },
         },
 # utility function 17
-        "hc-ho", : {
+        "hc-ho" : {
             "constant":  -3.615413138,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2232,7 +2232,7 @@ tour_patterns = {
             },
         },
 # utility function 18
-        "ho-ho", : {
+        "ho-ho" : {
             "constant":  -2.954069138,
             "individual_dummy": {
                 "age_65_":  0.394182783,
@@ -2245,7 +2245,7 @@ tour_patterns = {
 # utility function 19
     },
     3: {
-        "hw-hw-ho", : {
+        "hw-hw-ho" : {
             "constant":  -7.640316015,
             "individual_dummy": {
                 "age_18-29":  2.306249018,
@@ -2257,7 +2257,7 @@ tour_patterns = {
             },
         },
 # utility function 20
-        "hw-hc-hc", : {
+        "hw-hc-hc" : {
             "constant":  -6.996908123,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2272,7 +2272,7 @@ tour_patterns = {
             },
         },
 # utility function 21
-        "hw-hc-ho", : {
+        "hw-hc-ho" : {
             "constant":  -6.280857590,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2288,7 +2288,7 @@ tour_patterns = {
             },
         },
 # utility function 22
-        "hw-ho-ho", : {
+        "hw-ho-ho" : {
             "constant":  -5.143814369,
             "individual_dummy": {
                 "age_18-29":  2.306249018,
@@ -2300,7 +2300,7 @@ tour_patterns = {
             },
         },
 # utility function 23
-        "hs-hc-ho", : {
+        "hs-hc-ho" : {
             "constant":  -1.110080901,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2314,7 +2314,7 @@ tour_patterns = {
             },
         },
 # utility function 24
-        "hs-ho-ho", : {
+        "hs-ho-ho" : {
             "constant":   0.000000000,
             "individual_dummy": {
                 "age_65_":  0.394182783,
@@ -2324,7 +2324,7 @@ tour_patterns = {
             },
         },
 # utility function 25
-        "hu-hc-ho", : {
+        "hu-hc-ho" : {
             "constant": -11.751808160,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2343,7 +2343,7 @@ tour_patterns = {
             },
         },
 # utility function 26
-        "hu-ho-ho", : {
+        "hu-ho-ho" : {
             "constant": -11.342729830,
             "individual_dummy": {
                 "age_30_49": -1.586979829,
@@ -2358,7 +2358,7 @@ tour_patterns = {
             },
         },
 # utility function 27
-        "hc-hc-hc", : {
+        "hc-hc-hc" : {
             "constant":  -5.575050535,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2372,7 +2372,7 @@ tour_patterns = {
             },
         },
 # utility function 28
-        "hc-hc-ho", : {
+        "hc-hc-ho" : {
             "constant":  -4.709369964,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2387,7 +2387,7 @@ tour_patterns = {
             },
         },
 # utility function 29
-        "hc-ho-ho", : {
+        "hc-ho-ho" : {
             "constant":  -4.115616267,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2402,7 +2402,7 @@ tour_patterns = {
             },
         },
 # utility function 30
-        "ho-ho-ho", : {
+        "ho-ho-ho" : {
             "constant":  -4.110394781,
             "individual_dummy": {
                 "age_65_":  0.394182783,
@@ -2415,7 +2415,7 @@ tour_patterns = {
 # utility function 31
     },
     4: {
-        "hw-hc-hc-ho", : {
+        "hw-hc-hc-ho" : {
             "constant":  -8.782904966,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2434,7 +2434,7 @@ tour_patterns = {
             },
         },
 # utility function 32
-        "hw-hc-ho-ho", : {
+        "hw-hc-ho-ho" : {
             "constant":  -7.819600775,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2453,7 +2453,7 @@ tour_patterns = {
             },
         },
 # utility function 33
-        "hw-ho-ho-ho", : {
+        "hw-ho-ho-ho" : {
             "constant":  -6.323991971,
             "individual_dummy": {
                 "age_18-29":  2.306249018,
@@ -2468,7 +2468,7 @@ tour_patterns = {
             },
         },
 # utility function 34
-        "hc-hc-hc-hc", : {
+        "hc-hc-hc-hc" : {
             "constant":  -6.563838110,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2482,7 +2482,7 @@ tour_patterns = {
             },
         },
 # utility function 35
-        "hc-hc-hc-ho", : {
+        "hc-hc-hc-ho" : {
             "constant":  -6.280534875,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2497,7 +2497,7 @@ tour_patterns = {
             },
         },
 # utility function 36
-        "hc-hc-ho-ho", : {
+        "hc-hc-ho-ho" : {
             "constant":  -5.728407971,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2512,7 +2512,7 @@ tour_patterns = {
             },
         },
 # utility function 37
-        "hc-ho-ho-ho", : {
+        "hc-ho-ho-ho" : {
             "constant":  -5.167664200,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2527,7 +2527,7 @@ tour_patterns = {
             },
         },
 # utility function 38
-        "ho-ho-ho-ho", : {
+        "ho-ho-ho-ho" : {
             "constant":  -4.892323651,
             "individual_dummy": {
                 "age_65_":  0.394182783,
