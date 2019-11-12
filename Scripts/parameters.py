@@ -2013,6 +2013,7 @@ tour_patterns = {
                 "age_50_64": -0.305509545,
                 "age_65_":  0.597976527,
             },
+            "zone": {},
         },
 # utility function 2
     },
@@ -2032,6 +2033,7 @@ tour_patterns = {
 # utility function 3
         "hs" : {
             "constant":   3.308625072,
+            "individual_dummy": {},
             "zone": {
                 "share_detached_houses": -0.005910000,
             },
@@ -2142,6 +2144,7 @@ tour_patterns = {
 # utility function 11
         "hs-hs" : {
             "constant":  -2.189925729,
+            "individual_dummy": {},
             "zone": {
                 "ho_w":  0.249875934,
             },
@@ -2255,6 +2258,7 @@ tour_patterns = {
                 "age_65_": -1.185980639,
                 "car_users":  1.492056593,
             },
+            "zone": {},
         },
 # utility function 20
         "hw-hc-hc" : {
@@ -2270,6 +2274,7 @@ tour_patterns = {
                 "age_65_": -1.185980639,
                 "car_users":  1.492056593,
             },
+            "zone": {},
         },
 # utility function 21
         "hw-hc-ho" : {
@@ -2286,6 +2291,7 @@ tour_patterns = {
                 "age_65_": -1.185980639,
                 "car_users":  1.492056593,
             },
+            "zone": {},
         },
 # utility function 22
         "hw-ho-ho" : {
@@ -2298,6 +2304,7 @@ tour_patterns = {
                 "age_65_": -1.185980639,
                 "car_users":  1.492056593,
             },
+            "zone": {},
         },
 # utility function 23
         "hs-hc-ho" : {
