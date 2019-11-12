@@ -146,12 +146,13 @@ class ModeDestModel(LogitModel):
         impedance : dict
             Mode (car/transit/bike/walk) : dict
                 Type (time/cost/dist) : numpy 2-d matrix
+                    Impedances
         
         Return
         ------
         dict
-            Mode (car/transit/bike/walk) : dict
-                Choice probabilities : numpy 2-d matrix
+            Mode (car/transit/bike/walk) : numpy 2-d matrix
+                Choice probabilities
         """
         prob = self.calc_basic_prob(impedance)
         for mod_mode in self.mode_choice_param:
@@ -173,12 +174,13 @@ class ModeDestModel(LogitModel):
         impedance : dict
             Mode (car/transit/bike/walk) : dict
                 Type (time/cost/dist) : numpy 2-d matrix
+                    Impedances
         
         Return
         ------
         dict
-            Mode (car/transit/bike/walk) : dict
-                Choice probabilities : numpy 2-d matrix
+            Mode (car/transit/bike/walk) : numpy 2-d matrix
+                Choice probabilities
         """
         mode_expsum = self._calc_utils(impedance)
         logsum = numpy.log(mode_expsum)
@@ -202,8 +204,8 @@ class ModeDestModel(LogitModel):
         Return
         ------
         dict
-            Mode (car/transit/bike/walk) : dict
-                Choice probabilities : numpy 2-d matrix
+            Mode (car/transit/bike/walk) : numpy 2-d matrix
+                Choice probabilities
         """
         k = self.zone_data.first_surrounding_zone
         b = self.mode_choice_param[mod_mode]["individual_dummy"][dummy]
@@ -288,12 +290,13 @@ class DestModeModel(LogitModel):
         impedance : dict
             Mode (car/transit/bike/walk) : dict
                 Type (time/cost/dist) : numpy 2-d matrix
+                    Impedances
         
         Return
         ------
         dict
-            Mode (car/transit/bike/walk) : dict
-                Choice probabilities : numpy 2-d matrix
+            Mode (car/transit/bike/walk) : numpy 2-d matrix
+                Choice probabilities
         """
         mode_expsum = self._calc_mode_util(impedance)
         logsum = {"logsum": mode_expsum}
@@ -316,6 +319,7 @@ class SecDestModel(LogitModel):
             Mode (car/transit/bike)
         impedance : dict
             Type (time/cost/dist) : numpy 2d matrix
+                Impedances
         origin: int
             Origin
         destination:
@@ -340,17 +344,18 @@ class OriginModel(LogitModel):
         impedance : dict
             Mode (car/transit/bike/walk) : dict
                 Type (time/cost/dist) : numpy 2-d matrix
+                    Impedances
         
         Return
         ------
         dict
-            Mode (transit) : dict
-                Choice probabilities : numpy 2-d matrix
+            Mode (transit) : numpy 2-d matrix
+                Choice probabilities
         """
         b = self.dest_choice_param
         utility = self._calc_origin_util(impedance)
         exps = numpy.exp(utility)
-        # Here, size means kokotekija in Finnish
+        # Size = kokotekija
         size = numpy.ones_like(exps)
         size = self._add_zone_util(size, b["size"])
         exps *= numpy.power(size, b["log"]["size"])
@@ -362,39 +367,58 @@ class OriginModel(LogitModel):
         return prob
 
 
-class GenerationModel(LogitModel):
+class GenerationModel():
     def __init__(self, zone_data):
         self.zone_data = zone_data
         self.param = parameters.tour_patterns
         self.conditions = parameters.tour_conditions
     
     def calc_prob(self, age_group, is_car_user, zones):
-        prob = {}
-        num_exps = {}
+        """Calculate choice probabilities for each tour pattern.
+        
+        Parameters
+        ----------
+        age_group : str
+            Age group (age_7-17/age_18-29/...)
+        is_car_user : bool
+            True if is car user
+        zones : int or slice
+            Zone number (for agent model) or zone data slice
+
+        Return
+        ------
+        dict
+            Tour pattern (-/hw/hw-ho/...) : float or numpy 1-d array
+                Choice probability
+        """
         try:
             zone = slice(zones[0], zones[1])
         except IndexError:
             zone = zones
-        num_expsum = 0
-        for tnum in self.param:
+        prob = {}
+        nr_tours_exps = {}
+        nr_tours_expsum = 0
+        for nr_tours in self.param:
             pattern_exps = {}
             pattern_expsum = 0
-            for tpattern in self.param[tnum]:
-                if tpattern in self.conditions:
-                    if self.conditions[tpattern][0]:
-                        if age_group == self.conditions[tpattern][1]:
+            for tour_pattern in self.param[nr_tours]:
+                if tour_pattern in self.conditions:
+                    if self.conditions[tour_pattern][0]:
+                        # If this tour pattern is exclusively for one age group
+                        if age_group == self.conditions[tour_pattern][1]:
                             is_allowed = True
                         else:
                             is_allowed = False
                     else:
-                        if age_group == self.conditions[tpattern][1]:
+                        # If one age group is excluded from this tour pattern
+                        if age_group == self.conditions[tour_pattern][1]:
                             is_allowed = False
                         else:
                             is_allowed = True
                 else:
                     is_allowed = True
                 if is_allowed:
-                    param = self.param[tnum][tpattern]
+                    param = self.param[nr_tours][tour_pattern]
                     util = 0
                     util += param["constant"]
                     for i in param["zone"]:
@@ -404,21 +428,21 @@ class GenerationModel(LogitModel):
                         util += dummies[age_group]
                     if is_car_user and "car_users" in dummies:
                         util += dummies["car_users"]
-                    pattern_exps[tpattern] = numpy.exp(util)
+                    pattern_exps[tour_pattern] = numpy.exp(util)
                 else:
-                    pattern_exps[tpattern] = 0
-                pattern_expsum += pattern_exps[tpattern]
-            for tpattern in self.param[tnum]:
-                prob[tpattern] = pattern_exps[tpattern] / pattern_expsum
+                    pattern_exps[tour_pattern] = 0
+                pattern_expsum += pattern_exps[tour_pattern]
+            for tour_pattern in self.param[nr_tours]:
+                prob[tour_pattern] = pattern_exps[tour_pattern] / pattern_expsum
             util = 0
-            num_exps[tnum] = numpy.exp(util)
-            logsum_parameter = parameters.tour_number_scale
-            num_exps[tnum] *= numpy.power(pattern_expsum, logsum_parameter)
-            num_expsum += num_exps[tnum]
-        for tnum in self.param:
-            p = num_exps[tnum] / num_expsum
-            for tpattern in self.param[tnum]:
-                prob[tpattern] *= p
+            nr_tours_exps[nr_tours] = numpy.exp(util)
+            scale_param = parameters.tour_number_scale
+            nr_tours_exps[nr_tours] *= numpy.power(pattern_expsum, scale_param)
+            nr_tours_expsum += nr_tours_exps[nr_tours]
+        for nr_tours in self.param:
+            p = nr_tours_exps[nr_tours] / nr_tours_expsum
+            for tour_pattern in self.param[nr_tours]:
+                prob[tour_pattern] *= p
         return prob
 
 class CarUseModel(LogitModel):
