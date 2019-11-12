@@ -70,7 +70,9 @@ class TourPurpose(Purpose):
             Data used for all demand calculations
         """
         Purpose.__init__(self, specification, zone_data)
-        if self.orig == "source":
+        if self.area == "metropolitan":
+            self.gen_model = generation.Tours(zone_data, self)
+        elif self.orig == "source":
             self.gen_model = generation.NonHomeGeneration(zone_data, self)
         else:
             self.gen_model = generation.GenerationModel(zone_data, self)
@@ -87,15 +89,21 @@ class TourPurpose(Purpose):
             self.generated_tours[mode] = numpy.zeros_like(self.zone_numbers)
             self.attracted_tours[mode] = numpy.zeros_like(self.zone_data.zone_numbers)
 
-    def calc_demand(self, impedance):
-        """Main method for purpose specific demand calculation.
+    def calc_prob(self, impedance):
+        """Calculate mode and destination probabilities.
         
         Parameters
         ----------
         impedance : dict
             Mode (car/transit/bike/walk) : dict
                 Type (time/cost/dist) : numpy 2d matrix
-        
+        """
+        self.prob = self.model.calc_prob(impedance)
+        self.dist = impedance["car"]["dist"]
+
+    def calc_demand(self):
+        """Calculate purpose specific demand matrices.
+              
         Return
         ------
         dict
@@ -103,20 +111,19 @@ class TourPurpose(Purpose):
                 Demand matrix for whole day : Demand
         """
         tours = self.gen_model.generate_tours()
-        prob = self.model.calc_prob(impedance)
         demand = {}
         self.demand = {}
         self.aggregated_demand = {}
         self.demand_sums = {}
         self.trip_lengths = {}
         for mode in self.model.mode_choice_param:
-            self.demand[mode] = (prob[mode] * tours).T
+            self.demand[mode] = (self.prob[mode] * tours).T
             demand[mode] = Demand(self, mode, self.demand[mode])
             self.attracted_tours[mode] = self.demand[mode].sum(0)
             self.generated_tours[mode] = self.demand[mode].sum(1)
             self.demand_sums[mode] = self.generated_tours[mode].sum()
             self.trip_lengths[mode] = self._count_trip_lengths(
-                self.demand[mode], impedance["car"]["dist"])
+                self.demand[mode], self.dist)
         self.print_data()
         return demand
 

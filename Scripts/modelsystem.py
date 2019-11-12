@@ -72,7 +72,8 @@ class ModelSystem:
                 else:
                     purpose_impedance = self.imptrans.transform(purpose, impedance)
                     if purpose.area == "peripheral" or purpose.orig == "source" or purpose.dest == "source":
-                        demand = purpose.calc_demand(purpose_impedance)
+                        purpose.calc_prob(purpose_impedance)
+                        demand = purpose.calc_demand()
                         if purpose.dest != "source":
                             for mode in demand:
                                 self.dtm.add_demand(demand[mode])
@@ -88,9 +89,14 @@ class ModelSystem:
                     self.dtm.add_demand(tour)
         else:
             for purpose in self.dm.tour_purposes:
-                purpose_impedance = self.imptrans.transform(purpose, impedance)
+                if not isinstance(purpose, SecDestPurpose):
+                    purpose_impedance = self.imptrans.transform(purpose, impedance)
+                    purpose.calc_prob(purpose_impedance)
+            self.dm.generate_tours()
+            for purpose in self.dm.tour_purposes:
                 if isinstance(purpose, SecDestPurpose):
                     l, u = next(iter(purpose.sources)).bounds
+                    purpose_impedance = self.imptrans.transform(purpose, impedance)
                     purpose.generate_tours()
                     if is_last_iteration:
                         for mode in purpose.model.dest_choice_param:
@@ -102,7 +108,7 @@ class ModelSystem:
                             demand = purpose.distribute_tours("car", purpose_impedance["car"], i)
                             self.dtm.add_demand(demand)
                 else:
-                    demand = purpose.calc_demand(purpose_impedance)
+                    demand = purpose.calc_demand()
                     if purpose.dest != "source":
                         for mode in demand:
                             self.dtm.add_demand(demand[mode])

@@ -25,6 +25,16 @@ class GenerationModel:
         return tours
 
 
+class Tours(GenerationModel):
+    def __init__(self, zone_data, purpose):
+        self.zone_data = zone_data
+        self.purpose = purpose
+        self.tours = 0
+    
+    def generate_tours(self):
+        return self.tours
+
+
 class NonHomeGeneration(GenerationModel):
     def generate_tours(self):
         """Generate vector of tour numbers

@@ -36,6 +36,7 @@ class DemandModel:
                         self.purpose_dict[source].sec_dest_purpose = purpose
         bounds = (0, zone_data.first_peripheral_zone)
         self.cm = logit.CarUseModel(zone_data, bounds)
+        self.gm = logit.GenerationModel(self.zone_data)
         zone_data["car_users"] = self.cm.calc_prob()
         self.age_groups = (
             (7, 17),
@@ -62,12 +63,25 @@ class DemandModel:
             self.segments[age]["car_users"] = car_share * age_share * pop
             self.segments[age]["no_car"] = (1-car_share) * age_share * pop
 
+    def generate_tours(self):
+        bounds = (0, self.zone_data.first_peripheral_zone)
+        for age_group in self.segments:
+            prob_c = self.gm.calc_prob(age_group, is_car_user=True, zones=bounds)
+            prob_n = self.gm.calc_prob(age_group, is_car_user=False, zones=bounds)
+            for pattern in prob_c:
+                nr_tours = ( prob_c[pattern] * self.segments[age_group]["car_users"]
+                           + prob_n[pattern] * self.segments[age_group]["no_car"])
+                tour_list = pattern.split('-')
+                if tour_list[0] == "":
+                    tour_list = []
+                for purpose in tour_list:
+                    self.purpose_dict[purpose].gen_model.tours += nr_tours.values
+
     def create_population(self):
         """Create population for agent-based simulation."""
         self.cm.calc_basic_prob()
         self.population = []
         zones = self.zone_data.zone_numbers[:self.zone_data.first_peripheral_zone]
-        generation_model = logit.GenerationModel(self.zone_data)
         for idx in zones:
             weights = [1]
             for age_group in self.age_groups:
@@ -81,5 +95,5 @@ class DemandModel:
                 if group != -1:
                     # Group -1 is under-7-year-olds and they have weights[0]
                     age_group = self.age_groups[group]
-                    person = Person(idx, age_group, generation_model, self.cm)
+                    person = Person(idx, age_group, self.gm, self.cm)
                     self.population.append(person)
