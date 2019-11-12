@@ -440,9 +440,9 @@ class GenerationModel():
             nr_tours_exps[nr_tours] *= numpy.power(pattern_expsum, scale_param)
             nr_tours_expsum += nr_tours_exps[nr_tours]
         for nr_tours in self.param:
-            p = nr_tours_exps[nr_tours] / nr_tours_expsum
+            nr_tours_prob = nr_tours_exps[nr_tours] / nr_tours_expsum
             for tour_pattern in self.param[nr_tours]:
-                prob[tour_pattern] *= p
+                prob[tour_pattern] *= nr_tours_prob
         return prob
 
 class CarUseModel(LogitModel):
