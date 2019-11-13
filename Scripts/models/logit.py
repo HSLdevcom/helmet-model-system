@@ -429,7 +429,13 @@ class GenerationModel():
                     pattern_exps[tour_pattern] = 0
                 pattern_expsum += pattern_exps[tour_pattern]
             for tour_pattern in self.param[nr_tours]:
-                prob[tour_pattern] = pattern_exps[tour_pattern] / pattern_expsum
+                try:
+                    prob[tour_pattern] = ( pattern_exps[tour_pattern]
+                                         / pattern_expsum)
+                except ZeroDivisionError:
+                    # Specifically, no 4-tour patterns are allowed for
+                    # 7-17-year-olds, so sum will be zero in this case
+                    prob[tour_pattern] = 0
             util = 0
             nr_tours_exps[nr_tours] = numpy.exp(util)
             scale_param = parameters.tour_number_scale
