@@ -67,20 +67,21 @@ class DemandModel:
     def generate_tours(self):
         bounds = slice(0, self.zone_data.first_peripheral_zone)
         data = pandas.DataFrame()
-        for age_group in self.segments:
-            prob_c = self.gm.calc_prob(age_group, is_car_user=True, zones=bounds)
-            prob_n = self.gm.calc_prob(age_group, is_car_user=False, zones=bounds)
-            col = pandas.Series()
+        for age_group in self.age_groups:
+            age = "age_" + str(age_group[0]) + "-" + str(age_group[1])
+            prob_c = self.gm.calc_prob(age, is_car_user=True, zones=bounds)
+            prob_n = self.gm.calc_prob(age, is_car_user=False, zones=bounds)
+            nr_tours_sums = pandas.Series()
             for pattern in prob_c:
-                nr_tours = ( prob_c[pattern] * self.segments[age_group]["car_users"]
-                           + prob_n[pattern] * self.segments[age_group]["no_car"])
+                nr_tours = ( prob_c[pattern] * self.segments[age]["car_users"]
+                           + prob_n[pattern] * self.segments[age]["no_car"])
                 tour_list = pattern.split('-')
                 if tour_list[0] == "":
                     tour_list = []
                 for purpose in tour_list:
                     self.purpose_dict[purpose].gen_model.tours += nr_tours.values
-                col[pattern] = nr_tours.sum()
-            data[age_group] = col.sort_index()
+                nr_tours_sums[pattern] = nr_tours.sum()
+            data[age] = nr_tours_sums.sort_index()
         result.print_matrix(data, "generation", "tour_patterns")
 
     def create_population(self):
