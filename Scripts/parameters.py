@@ -2004,6 +2004,7 @@ mode_choice = {
 }
 # Scale parameter used in upper level of tour pattern model
 tour_number_scale = 0.622253957
+
 tour_patterns = {
 # utility function 1
     0: {
@@ -2031,7 +2032,7 @@ tour_patterns = {
             },
         },
 # utility function 3
-        "hs" : {
+        "hc" : {
             "constant":   3.308625072,
             "individual_dummy": {},
             "zone": {
@@ -2052,7 +2053,7 @@ tour_patterns = {
             },
         },
 # utility function 5
-        "hc" : {
+        "hs" : {
             "constant":   0.000000000,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2109,7 +2110,7 @@ tour_patterns = {
             },
         },
 # utility function 9
-        "hw-hc" : {
+        "hw-hs" : {
             "constant":  -5.468303413,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2142,7 +2143,7 @@ tour_patterns = {
             },
         },
 # utility function 11
-        "hs-hs" : {
+        "hc-hc" : {
             "constant":  -2.189925729,
             "individual_dummy": {},
             "zone": {
@@ -2150,7 +2151,7 @@ tour_patterns = {
             },
         },
 # utility function 12
-        "hs-hc" : {
+        "hc-hs" : {
             "constant":  -0.932031836,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2163,7 +2164,7 @@ tour_patterns = {
             },
         },
 # utility function 13
-        "hs-ho" : {
+        "hc-ho" : {
             "constant":   1.040646615,
             "individual_dummy": {
                 "age_65_":  0.394182783,
@@ -2173,7 +2174,7 @@ tour_patterns = {
             },
         },
 # utility function 14
-        "hu-hc" : {
+        "hu-hs" : {
             "constant":  -5.264912587,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2206,7 +2207,7 @@ tour_patterns = {
             },
         },
 # utility function 16
-        "hc-hc" : {
+        "hs-hs" : {
             "constant":  -4.347727916,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2220,7 +2221,7 @@ tour_patterns = {
             },
         },
 # utility function 17
-        "hc-ho" : {
+        "hs-ho" : {
             "constant":  -3.615413138,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2261,7 +2262,7 @@ tour_patterns = {
             "zone": {},
         },
 # utility function 20
-        "hw-hc-hc" : {
+        "hw-hs-hs" : {
             "constant":  -6.996908123,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2277,7 +2278,7 @@ tour_patterns = {
             "zone": {},
         },
 # utility function 21
-        "hw-hc-ho" : {
+        "hw-hs-ho" : {
             "constant":  -6.280857590,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2307,7 +2308,7 @@ tour_patterns = {
             "zone": {},
         },
 # utility function 23
-        "hs-hc-ho" : {
+        "hc-hs-ho" : {
             "constant":  -1.110080901,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2321,7 +2322,7 @@ tour_patterns = {
             },
         },
 # utility function 24
-        "hs-ho-ho" : {
+        "hc-ho-ho" : {
             "constant":   0.000000000,
             "individual_dummy": {
                 "age_65_":  0.394182783,
@@ -2331,7 +2332,7 @@ tour_patterns = {
             },
         },
 # utility function 25
-        "hu-hc-ho" : {
+        "hu-hs-ho" : {
             "constant": -11.751808160,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2365,7 +2366,7 @@ tour_patterns = {
             },
         },
 # utility function 27
-        "hc-hc-hc" : {
+        "hs-hs-hs" : {
             "constant":  -5.575050535,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2379,7 +2380,7 @@ tour_patterns = {
             },
         },
 # utility function 28
-        "hc-hc-ho" : {
+        "hs-hs-ho" : {
             "constant":  -4.709369964,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2394,7 +2395,7 @@ tour_patterns = {
             },
         },
 # utility function 29
-        "hc-ho-ho" : {
+        "hs-ho-ho" : {
             "constant":  -4.115616267,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2422,7 +2423,7 @@ tour_patterns = {
 # utility function 31
     },
     4: {
-        "hw-hc-hc-ho" : {
+        "hw-hs-hs-ho" : {
             "constant":  -8.782904966,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2441,7 +2442,7 @@ tour_patterns = {
             },
         },
 # utility function 32
-        "hw-hc-ho-ho" : {
+        "hw-hs-ho-ho" : {
             "constant":  -7.819600775,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2475,7 +2476,7 @@ tour_patterns = {
             },
         },
 # utility function 34
-        "hc-hc-hc-hc" : {
+        "hs-hs-hs-hs" : {
             "constant":  -6.563838110,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2489,7 +2490,7 @@ tour_patterns = {
             },
         },
 # utility function 35
-        "hc-hc-hc-ho" : {
+        "hs-hs-hs-ho" : {
             "constant":  -6.280534875,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2504,7 +2505,7 @@ tour_patterns = {
             },
         },
 # utility function 36
-        "hc-hc-ho-ho" : {
+        "hs-hs-ho-ho" : {
             "constant":  -5.728407971,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
@@ -2519,7 +2520,7 @@ tour_patterns = {
             },
         },
 # utility function 37
-        "hc-ho-ho-ho" : {
+        "hs-ho-ho-ho" : {
             "constant":  -5.167664200,
             "individual_dummy": {
                 "age_18-29":  0.632156675,
