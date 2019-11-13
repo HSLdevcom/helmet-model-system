@@ -6,6 +6,7 @@ import models.logit as logit
 from datatypes.person import Person
 from datatypes.tour import Tour
 import random
+import datahandling.resultdata as result
 
 
 class DemandModel:
@@ -65,9 +66,11 @@ class DemandModel:
 
     def generate_tours(self):
         bounds = slice(0, self.zone_data.first_peripheral_zone)
+        data = pandas.DataFrame()
         for age_group in self.segments:
             prob_c = self.gm.calc_prob(age_group, is_car_user=True, zones=bounds)
             prob_n = self.gm.calc_prob(age_group, is_car_user=False, zones=bounds)
+            col = pandas.Series()
             for pattern in prob_c:
                 nr_tours = ( prob_c[pattern] * self.segments[age_group]["car_users"]
                            + prob_n[pattern] * self.segments[age_group]["no_car"])
@@ -76,6 +79,9 @@ class DemandModel:
                     tour_list = []
                 for purpose in tour_list:
                     self.purpose_dict[purpose].gen_model.tours += nr_tours.values
+                col[pattern] = nr_tours.sum()
+            data[age_group] = col.sort_index()
+        result.print_matrix(data, "generation", "tour_patterns")
 
     def create_population(self):
         """Create population for agent-based simulation."""
