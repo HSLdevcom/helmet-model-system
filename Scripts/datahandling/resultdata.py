@@ -19,6 +19,10 @@ def set_path(scenario):
     global _path 
     _path = data_dir
 
+def flush():
+    global _buffer
+    _buffer = {}
+
 def print_data(data, filename, zone_numbers, colname):
     filepath = os.path.join(_path, filename)
     if filename not in _buffer:

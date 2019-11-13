@@ -167,4 +167,5 @@ class ModelSystem:
                                   self.ass_model.zone_numbers,
                                   "cost")
         self.dtm.init_demand()
+        result.flush()
         return impedance
