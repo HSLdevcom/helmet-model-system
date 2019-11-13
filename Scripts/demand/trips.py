@@ -34,7 +34,7 @@ class DemandModel:
                     purpose.sources.append(self.purpose_dict[source])
                     if "sec_dest" in purpose_spec:
                         self.purpose_dict[source].sec_dest_purpose = purpose
-        bounds = (0, zone_data.first_peripheral_zone)
+        bounds = slice(0, zone_data.first_peripheral_zone)
         self.cm = logit.CarUseModel(zone_data, bounds)
         self.gm = logit.GenerationModel(self.zone_data)
         zone_data["car_users"] = self.cm.calc_prob()
@@ -64,7 +64,7 @@ class DemandModel:
             self.segments[age]["no_car"] = (1-car_share) * age_share * pop
 
     def generate_tours(self):
-        bounds = (0, self.zone_data.first_peripheral_zone)
+        bounds = slice(0, self.zone_data.first_peripheral_zone)
         for age_group in self.segments:
             prob_c = self.gm.calc_prob(age_group, is_car_user=True, zones=bounds)
             prob_n = self.gm.calc_prob(age_group, is_car_user=False, zones=bounds)

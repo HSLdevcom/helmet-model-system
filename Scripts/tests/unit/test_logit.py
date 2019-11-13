@@ -38,7 +38,7 @@ class LogitModelTest(unittest.TestCase):
                 "dist": mtx,
             },
         }
-        pur.bounds = (0, 4)
+        pur.bounds = slice(0, 4)
         pur.zone_numbers = (5, 6, 7, 2792)
         for i in ("hw", "hc", "hu", "hs", "ho"):
             pur.name = i

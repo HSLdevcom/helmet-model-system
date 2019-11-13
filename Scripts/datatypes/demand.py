@@ -24,6 +24,6 @@ class Demand:
         Position where to insert the demand
         """
         if self.origin is None:
-            return (self.purpose.bounds[0], 0)
+            return (self.purpose.bounds.start, 0)
         else:
             return (self.origin, 0, 0)

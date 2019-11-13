@@ -19,11 +19,10 @@ class ImpedanceTransformer:
                 Type (time/cost/dist) : numpy 2-d matrix
         """
         if purpose.name == "hoo":
-            r_0 = 0
-            r_n = purpose.zone_data.nr_zones
+            rows = slice(0, purpose.zone_data.nr_zones)
         else:
-            r_0, r_n = purpose.bounds
-        c_n = purpose.zone_data.nr_zones
+            rows = purpose.bounds
+        cols = slice(0, purpose.zone_data.nr_zones)
         day_imp = {}
         for mode in impedance_share[purpose.name]:
             day_imp[mode] = {}
@@ -38,11 +37,11 @@ class ImpedanceTransformer:
                 for mtx_type in impedance[time_period]:
                     if ass_class in impedance[time_period][mtx_type]:
                         share = impedance_share[purpose.name][mode][time_period]
-                        imp = impedance[time_period][mtx_type][ass_class][r_0:r_n, 0:c_n]
+                        imp = impedance[time_period][mtx_type][ass_class][rows, cols]
                         if idx == 0:
                             day_imp[mode][mtx_type] = share[0] * imp
                         else:
                             day_imp[mode][mtx_type] += share[0] * imp
-                        imp = impedance[time_period][mtx_type][ass_class][0:c_n, r_0:r_n]
+                        imp = impedance[time_period][mtx_type][ass_class][cols, rows]
                         day_imp[mode][mtx_type] += share[1] * imp.T
         return day_imp

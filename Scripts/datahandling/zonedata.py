@@ -174,7 +174,8 @@ class ZoneData:
         ------
         pandas Series or numpy 2-d matrix
         """
-        l, u = bounds
+        l = bounds.start
+        u = bounds.stop
         if part is not None: # Return values for partial area only
             if part == self.CAPITAL_REGION:
                 u = self.first_surrounding_zone

@@ -391,10 +391,6 @@ class GenerationModel():
             Tour pattern (-/hw/hw-ho/...) : float or numpy 1-d array
                 Choice probability
         """
-        try:
-            zone = slice(zones[0], zones[1])
-        except IndexError:
-            zone = zones
         prob = {}
         nr_tours_exps = {}
         nr_tours_expsum = 0
@@ -422,7 +418,7 @@ class GenerationModel():
                     util = 0
                     util += param["constant"]
                     for i in param["zone"]:
-                        util += param["zone"][i] * self.zone_data[i][zone]
+                        util += param["zone"][i] * self.zone_data[i][zones]
                     dummies = param["individual_dummy"]
                     if age_group in dummies:
                         util += dummies[age_group]
@@ -452,7 +448,7 @@ class CarUseModel(LogitModel):
     
     def calc_basic_prob(self):
         b = parameters.car_usage
-        utility = numpy.zeros(self.bounds[1])
+        utility = numpy.zeros(self.bounds.stop)
         self._add_constant(utility, b["constant"])
         self._add_zone_util(utility, b["generation"], True)
         self.exps = numpy.exp(utility)
@@ -481,7 +477,7 @@ class CarUseModel(LogitModel):
         no_dummy_prob = no_dummy_share * prob
         prob = no_dummy_prob + dummy_prob
         return pandas.Series(
-            prob, self.zone_data.zone_numbers[self.bounds[0]:self.bounds[1]])
+            prob, self.zone_data.zone_numbers[self.bounds])
     
     def calc_individual_prob(self, age_group, gender, zone=None):
         if zone is None:

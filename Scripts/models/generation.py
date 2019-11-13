@@ -16,12 +16,11 @@ class GenerationModel:
         numpy 1-d array
             Vector of tour numbers per zone
         """
-        l, u = self.purpose.bounds
-        nr_zones = u - l
+        nr_zones = self.purpose.bounds.stop - self.purpose.bounds.start
         tours = numpy.zeros(nr_zones)
         b = self.param
         for i in b:
-            tours += b[i] * self.zone_data[i][l:u]
+            tours += b[i] * self.zone_data[i][self.purpose.bounds]
         return tours
 
 

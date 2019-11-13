@@ -95,16 +95,17 @@ class ModelSystem:
             self.dm.generate_tours()
             for purpose in self.dm.tour_purposes:
                 if isinstance(purpose, SecDestPurpose):
-                    l, u = next(iter(purpose.sources)).bounds
+                    bounds = next(iter(purpose.sources)).bounds
+                    size = bounds.stop - bounds.start
                     purpose_impedance = self.imptrans.transform(purpose, impedance)
                     purpose.generate_tours()
                     if is_last_iteration:
                         for mode in purpose.model.dest_choice_param:
-                            for i in xrange(0, u - l):
+                            for i in xrange(0, size):
                                 demand = purpose.distribute_tours(mode, purpose_impedance[mode], i)
                                 self.dtm.add_demand(demand)
                     else:
-                        for i in xrange(0, u - l):
+                        for i in xrange(0, size):
                             demand = purpose.distribute_tours("car", purpose_impedance["car"], i)
                             self.dtm.add_demand(demand)
                 else:
@@ -124,10 +125,10 @@ class ModelSystem:
                 for purpose in self.dm.tour_purposes:
                     if purpose.dest != "source":
                         if isinstance(purpose, SecDestPurpose):
-                            l, u = next(iter(purpose.sources)).bounds
+                            bounds = next(iter(purpose.sources)).bounds
                         else:
-                            l, u = purpose.bounds
-                        int_demand[l:u] += purpose.generated_tours[mode]
+                            bounds = purpose.bounds
+                        int_demand[bounds] += purpose.generated_tours[mode]
                         int_demand += purpose.attracted_tours[mode]
             ext_demand = self.em.calc_external(mode, int_demand)
             trip_sum[mode] = int_demand.sum()

@@ -42,14 +42,14 @@ class Purpose:
         if self.area == "external":
             l = zone_data.first_external_zone
             u = None
-        self.bounds = (l, u)
+        self.bounds = slice(l, u)
         self.zone_data = zone_data
         self.generated_tours = {}
         self.attracted_tours = {}
 
     @property
     def zone_numbers(self):
-        return self.zone_data.zone_numbers[self.bounds[0]:self.bounds[1]]
+        return self.zone_data.zone_numbers[self.bounds]
 
 class TourPurpose(Purpose):
     def __init__(self, specification, zone_data):
@@ -229,7 +229,7 @@ class SecDestPurpose(Purpose):
         impedance : dict
             Type (time/cost/dist) : numpy 2d matrix
         origin : int
-            The zone from which these tours origin
+            The zone index from which these tours origin
 
         Return
         ------
@@ -242,6 +242,8 @@ class SecDestPurpose(Purpose):
             dest_imp[mtx_type] = ( impedance[mtx_type]
                                  + impedance[mtx_type][:, origin]
                                  - impedance[mtx_type][origin, :][:, numpy.newaxis])
+        # TODO Make origin distinction between impedance matrix and lookup
+        # In peripheral area these would not be the same
         prob = self.model.calc_prob(mode, dest_imp, origin)
         demand = (prob * self.tours[mode][origin, :]).T
         self.attracted_tours[mode] += demand.sum(0)
