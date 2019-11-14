@@ -178,10 +178,10 @@ class ZoneData:
             else:
                 l = self.first_surrounding_zone
         if self._values[key].ndim == 1: # If not a compound (i.e., matrix)
-            if generation: # Return values for purpose zones 
-                return self._values[key][l:u]
+            if generation: # Return values for purpose zones
+                return self._values[key][l:u].values
             else: # Return values for all zones
-                return self._values[key]
+                return self._values[key].values
         else: # Return matrix (purpose zones -> all zones)
             return self._values[key][l:u, :]
 
