@@ -158,7 +158,7 @@ class ModeDestModel(LogitModel):
         for mod_mode in self.mode_choice_param:
             for i in self.mode_choice_param[mod_mode]["individual_dummy"]:
                 dummy_share = self.zone_data.get_data(
-                    i, self.purpose, generation=True)
+                    i, self.bounds, generation=True)
                 ind_prob = self.calc_individual_prob(mod_mode, i)
                 for mode in prob:
                     no_dummy = (1 - dummy_share) * prob[mode]
