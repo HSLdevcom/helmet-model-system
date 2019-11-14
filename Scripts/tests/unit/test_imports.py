@@ -5,7 +5,8 @@
 import unittest
 import numpy
 import pandas
-import omx
+import openmatrix as omx
+
 
 class ImportTest(unittest.TestCase):
     def test_imports(self):

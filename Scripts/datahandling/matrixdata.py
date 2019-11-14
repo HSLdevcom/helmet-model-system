@@ -1,5 +1,5 @@
 import os
-import omx
+import openmatrix as omx
 import numpy
 from zonedata import read_file
 from contextlib import contextmanager
@@ -15,7 +15,7 @@ class MatrixData:
     def open(self, mtx_type, time_period, m='r'):
         try:
             file_name = os.path.join(self.path, mtx_type+'_'+time_period+".omx")
-            mtxfile = MatrixFile(omx.openFile(file_name, m))
+            mtxfile = MatrixFile(omx.open_file(file_name, m))
             yield mtxfile
         finally:
             mtxfile.close()
@@ -39,10 +39,7 @@ class MatrixFile(object):
 
     @property
     def zone_numbers(self):
-        # zone_numbers = mtx_file.mapentries("zone_number")
-        zone_numbers = self.mapping.keys()
-        zone_numbers.sort()
-        return zone_numbers
+        return self._file.mapentries("zone_number")
 
     @property
     def mapping(self):
@@ -50,4 +47,4 @@ class MatrixFile(object):
 
     @mapping.setter
     def mapping(self, zone_numbers):
-        self._file.createMapping("zone_number", zone_numbers)
+        self._file.create_mapping("zone_number", zone_numbers)

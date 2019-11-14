@@ -83,6 +83,6 @@ class ZoneDataTest(unittest.TestCase):
     def test_industry_series_and_indexes_2016(self):
         df = self._get_freight_data_2016()
         industry = df["industry"] # Let's pick a column and validate it
-        expected_industry = pandas.Series([0.7, 0.0, 0.0, 0.9, 0.0, 0.0], index = self.FREIGHT_DATA_INDEXES)
+        expected_industry = pandas.Series([0.7, 0.0, 0.0, 0.9, 0.0, 0.0], index = self.FREIGHT_DATA_INDEXES, name="industry")
         pandas.util.testing.assert_series_equal(industry, expected_industry)
         

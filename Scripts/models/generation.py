@@ -22,7 +22,7 @@ class GenerationModel:
         b = self.param
         for i in b:
             tours += b[i] * self.zone_data[i][l:u]
-        return tours
+        return tours.values
 
 
 class NonHomeGeneration(GenerationModel):
