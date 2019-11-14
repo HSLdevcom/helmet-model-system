@@ -158,7 +158,7 @@ class ModeDestModel(LogitModel):
         for mod_mode in self.mode_choice_param:
             for i in self.mode_choice_param[mod_mode]["individual_dummy"]:
                 dummy_share = self.zone_data.get_data(
-                    i, self.bounds, generation=True).values
+                    i, self.purpose, generation=True)
                 ind_prob = self.calc_individual_prob(mod_mode, i)
                 for mode in prob:
                     no_dummy = (1 - dummy_share) * prob[mode]
@@ -470,12 +470,12 @@ class CarUseModel(LogitModel):
         for i in b["individual_dummy"]:
             try:
                 dummy_share = self.zone_data.get_data(
-                    "share_"+i, self.bounds, generation=True).values
+                    "share_"+i, self.bounds, generation=True)
             except TypeError:
                 dummy_share = numpy.ones_like(prob)
                 for j in i:
                     dummy_share *= self.zone_data.get_data(
-                        "share_"+j, self.bounds, generation=True).values
+                        "share_"+j, self.bounds, generation=True)
             no_dummy_share -= dummy_share
             ind_exps = numpy.exp(b["individual_dummy"][i]) * self.exps
             ind_prob = ind_exps / (ind_exps+1)

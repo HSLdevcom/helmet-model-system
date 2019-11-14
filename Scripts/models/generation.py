@@ -21,7 +21,7 @@ class GenerationModel:
         b = self.param
         for i in b:
             tours += b[i] * self.zone_data[i][self.purpose.bounds]
-        return tours
+        return tours.values
 
 
 class Tours(GenerationModel):

@@ -15,9 +15,7 @@ In both cases we're using Python version 2.7 because our final deployment target
 
 ### Dependencies
 
-We have several external dependencies in our codebase, f.ex NumPy and OMX, etc. Reason for including them to this repository is because the version of the OMX-library used by EMME is highly custom and cannot be found from normal PyPi repositories.
-
-Importing the dependencies depend on the environment (local-development or production). In production-mode they come via EMME and in development we use PipEnv.
+We have several external dependencies in our codebase, f.ex NumPy and OMX, etc. Importing the dependencies depend on the environment (local-development or production). In production-mode they come via EMME and in development we use PipEnv.
 
 
 *Deployed production env: EMME*
@@ -29,13 +27,7 @@ At the moment user is not expected to install any software, other than the provi
 
 *Local development env: Pipenv*
 
-In the development setup we're using two approaches to import the libraries:
-
-- part of the libraries are included as static depencies and are located in [./Scripts/pythonlibs/ folder](./Scripts/pythonlibs/). This is because they don't install very nicely from PyPi-public repositories.
-  - When developing locally you need to import the libraries to PYTHONPATH.
-    - This can happen either by using the script [import-dev-dependencies.bat](./Scripts/import-dev-dependencies.bat)
-	- OR by using pipenv, which then loads the PYTHONPATH via the [.env file](./Scripts/.env)
-- Other more compatible libraries are installed via *pipenv*. Pipenv isolates our environment from the other global python modules and makes sure we don't break anything else with our setup.   
+In the development setup we're using *pipenv* to import the libraries. Pipenv isolates our environment from the other global python modules and makes sure we don't break anything else with our setup.   
 
 Intro to pipenv can be found from these links:
 - https://docs.python-guide.org/dev/virtualenvs/
@@ -116,11 +108,3 @@ During development when using pipenv:
 cd Scripts
 pipenv run python test_assignment.py
 ```   
-
-## Licenses
-
-The dependencies included in this repository are licensed under their own terms:
-
-- Numpy: https://www.numpy.org/license.html
-- PyTables: https://github.com/PyTables/PyTables/blob/master/LICENSE.txt
-- OpenMatrix: https://github.com/osPlanning/omx-python/blob/master/LICENSE.TXT
