@@ -13,7 +13,7 @@ class Tour:
         origin : int
             Origin zone number
         """
-        self._purpose = purpose
+        self.purpose = purpose
         self.orig = origin
         self.dest = None
         self.sec_dest = None
@@ -26,20 +26,13 @@ class Tour:
             self.has_sec_dest = True
         else:
             self.has_sec_dest = False
-
-    @property 
-    def purpose(self):
-        if self.has_sec_dest and self.mode != "walk":
-            return self._purpose.sec_dest_purpose
-        else:
-            return self._purpose
     
     @property
     def position(self):
         """tuple: (origin, destination, (secondary destination))
         Position where to insert the demand
         """
-        zone_data = self._purpose.zone_data
+        zone_data = self.purpose.zone_data
         position = [zone_data.zone_index(self.orig)]
         if self.dest is not None:
             position.append(zone_data.zone_index(self.dest))
@@ -48,20 +41,20 @@ class Tour:
         return position
 
     def choose_mode(self, is_car_user):
-        model = self._purpose.model
+        model = self.purpose.model
         probs = model.calc_individual_mode_prob(is_car_user, self.orig)
-        self.mode = numpy.random.choice(a=self._purpose.modes, p=probs)
+        self.mode = numpy.random.choice(a=self.purpose.modes, p=probs)
         self.purpose.generated_tours[self.mode][self.position[0]] += 1
 
     def choose_destination(self, impedance):
-        zone_numbers = self._purpose.zone_data.zone_numbers
-        probs = self._purpose.model.dest_prob[self.mode][:, self.position[0]]
+        zone_numbers = self.purpose.zone_data.zone_numbers
+        probs = self.purpose.model.dest_prob[self.mode][:, self.position[0]]
         self.dest = numpy.random.choice(a=zone_numbers, p=probs)
         self.purpose.attracted_tours[self.mode][self.position[1]] += 1
         if self.has_sec_dest and self.mode != "walk":
-            probs = self.purpose.calc_prob(
+            probs = self.purpose.sec_dest_purpose.calc_prob(
                 self.mode, impedance[self.mode], self.position)
             self.sec_dest = numpy.random.choice(a=zone_numbers, p=probs)
-            self.purpose.attracted_tours[self.mode][self.position[2]] += 1
+            self.purpose.sec_dest_purpose.attracted_tours[self.mode][self.position[2]] += 1
         else:
             self.sec_dest = None

@@ -32,7 +32,9 @@ class DepartureTimeTest(unittest.TestCase):
         dem.position = (1, 2)
         dtm.add_demand(dem)
 
-        dem.purpose.name = "hoo"
+        dem.purpose.name = "ho"
+        dem.purpose.sec_dest_purpose = Purpose()
+        dem.purpose.sec_dest_purpose.name = "hoo"
         dem.mode = "transit"
         dem.matrix = 3
         dem.position = (1, 2, 0)
