@@ -1639,7 +1639,7 @@ mode_choice = {
                 "logsum": 0.844179295926,
             },
             "individual_dummy": {},
-        }, 
+        },
         "walk": {
             "constant": (0.844179295926 * 6.06426484277, 0.844179295926 * 6.31407702335),
             "generation": {},
@@ -1683,7 +1683,7 @@ mode_choice = {
                 "logsum": 0.272803753976, # Dcoeff
             },
             "individual_dummy": {},
-        },  
+        },
         "walk": {
             "constant": 0.272803753976 * 17.7784859496,
             "generation": {},
@@ -1727,7 +1727,7 @@ mode_choice = {
                 "logsum": 1.00000000000,
             },
             "individual_dummy": {},
-        },  
+        }, 
         "walk": {
             "constant": 6.15888890793,
             "generation": {},
@@ -1773,7 +1773,7 @@ mode_choice = {
                 "logsum": 0.539979474415,
             },
             "individual_dummy": {},
-        },  
+        }, 
         "walk": {
             "constant": (0.539979474415 * 10.8293044790, 0.539979474415 * 12.6937820419),
             "generation": {},
@@ -1819,7 +1819,7 @@ mode_choice = {
                 "logsum": 0.151688898,
             },
             "individual_dummy": {},
-        },  
+        }, 
         "walk": {
             "constant": (0.151688898 * 20.72419038, 0.151688898 * 12.53617415),
             "generation": {},
@@ -1868,7 +1868,7 @@ mode_choice = {
                 "dist": -1.292779721,
             },
             "individual_dummy": {},
-        },  
+        }, 
         "walk": {
             "constant": 3.309720696,
             "generation": {},
@@ -1914,7 +1914,7 @@ mode_choice = {
                 "logsum": 0.799256902,
             },
             "individual_dummy": {},
-        },  
+        }, 
         "walk": {
             "constant": 0.799256902 * 6.416635051,
             "generation": {},
@@ -1958,7 +1958,7 @@ mode_choice = {
                 "logsum": 0.799256902,
             },
             "individual_dummy": {},
-        },  
+        }, 
         "walk": {
             "constant": 0.799256902 * 6.416635051,
             "generation": {},
@@ -2042,22 +2042,538 @@ mode_choice = {
         },
     },
 }
+# Scale parameter used in upper level of tour pattern model
+tour_number_scale = 0.622253957
+
 tour_patterns = {
-    0: {},
-    1: {
-        "hw": {
+# utility function 1
+    0: {
+        "-" : {
+            "constant":   0.000000000,
             "individual_dummy": {
-                "share_age_18-29": 3.5,
+                "age_50-64": -0.305509545 ,
+                "age_65-99":  0.597976527
+            },
+            "zone": {},
+        },
+# utility function 2
+    },
+    1: {
+        "hw" : {
+            "constant":   0.000000000,
+            "individual_dummy": {
+                "age_18-29":  2.306249018 ,
+                "age_30-49":  2.977241136 ,
+                "age_50-64":  2.018825449 ,
+                "age_65-99": -1.185980639
+            },
+            "zone": {
+                "share_detached_houses": -0.005910000
             },
         },
+# utility function 3
+        "hc" : {
+            "constant":   3.308625072,
+            "individual_dummy": {},
+            "zone": {
+                "share_detached_houses": -0.005910000
+            },
+        },
+# utility function 4
+        "hu" : {
+            "constant":   0.000000000,
+            "individual_dummy": {
+                "age_30-49": -1.586979829 ,
+                "age_50-64": -3.739206239 ,
+                "age_65-99": -3.636471246
+            },
+            "zone": {
+                "share_detached_houses": -0.005910000 ,
+                "hu_t":  0.148402259
+            },
+        },
+# utility function 5
+        "hs" : {
+            "constant":   0.000000000,
+            "individual_dummy": {
+                "age_18-29":  0.632156675 ,
+                "age_30-49":  1.106558979 ,
+                "age_50-64":  0.636516485 ,
+                "age_65-99":  1.250192981
+            },
+            "zone": {
+                "share_detached_houses": -0.005910000
+            },
+        },
+# utility function 6
+        "ho" : {
+            "constant":   0.811674639,
+            "individual_dummy": {
+                "age_65-99":  0.394182783
+            },
+            "zone": {
+                "share_detached_houses": -0.005910000
+            },
+        },
+# utility function 7
     },
     2: {
-        "hw-ho": {
+        "hw-hw" : {
+            "constant":  -6.702389265,
             "individual_dummy": {
-                "share_age_18-29": 3.5,
+                "age_18-29":  2.306249018 ,
+                "age_30-49":  2.977241136 ,
+                "age_50-64":  2.018825449 ,
+                "age_65-99": -1.185980639 ,
+                "car_users":  0.647176487
+            },
+            "zone": {
+                "ho_w":  0.249875934
             },
         },
+# utility function 8
+        "hw-hu" : {
+            "constant":  -8.418852173,
+            "individual_dummy": {
+                "age_18-29":  2.306249018 ,
+                "age_30-49": -1.586979829 +  2.977241136 ,
+                "age_50-64": -3.739206239 +  2.018825449 ,
+                "age_65-99": -3.636471246  -1.185980639 ,
+                "car_users":  0.647176487
+            },
+            "zone": {
+                "hu_t":  0.176002681 ,
+                "ho_w":  0.249875934
+            },
+        },
+# utility function 9
+        "hw-hs" : {
+            "constant":  -5.468303413,
+            "individual_dummy": {
+                "age_18-29":  0.632156675 +  2.306249018 ,
+                "age_30-49":  1.106558979 +  2.977241136 ,
+                "age_50-64":  0.636516485 +  2.018825449 ,
+                "age_65-99":  1.250192981  -1.185980639 ,
+                "car_users":  0.647176487
+            },
+            "zone": {
+                "ho_w":  0.249875934
+            },
+        },
+# utility function 10
+        "hw-ho" : {
+            "constant":  -3.969665707,
+            "individual_dummy": {
+                "age_18-29":  2.306249018 ,
+                "age_30-49":  2.977241136 ,
+                "age_50-64":  2.018825449 ,
+                "age_65-99":  0.394182783  -1.185980639 ,
+                "car_users":  0.647176487
+            },
+            "zone": {
+                "ho_w":  0.249875934
+            },
+        },
+# utility function 11
+        "hc-hc" : {
+            "constant":  -2.189925729,
+            "individual_dummy": {},
+            "zone": {
+                "ho_w":  0.249875934
+            },
+        },
+# utility function 12
+        "hc-hs" : {
+            "constant":  -0.932031836,
+            "individual_dummy": {
+                "age_18-29":  0.632156675 ,
+                "age_30-49":  1.106558979 ,
+                "age_50-64":  0.636516485 ,
+                "age_65-99":  1.250192981
+            },
+            "zone": {
+                "ho_w":  0.249875934
+            },
+        },
+# utility function 13
+        "hc-ho" : {
+            "constant":   1.040646615,
+            "individual_dummy": {
+                "age_65-99":  0.394182783
+            },
+            "zone": {
+                "ho_w":  0.249875934
+            },
+        },
+# utility function 14
+        "hu-hs" : {
+            "constant":  -5.264912587,
+            "individual_dummy": {
+                "age_18-29":  0.632156675 ,
+                "age_30-49":  1.106558979  -1.586979829 ,
+                "age_50-64":  0.636516485  -3.739206239 ,
+                "age_65-99":  1.250192981  -3.636471246 ,
+                "car_users":  0.647176487
+            },
+            "zone": {
+                "hu_t":  0.176002681 ,
+                "ho_w":  0.249875934
+            },
+        },
+# utility function 15
+        "hu-ho" : {
+            "constant":  -4.133565561,
+            "individual_dummy": {
+                "age_30-49": -1.586979829 ,
+                "age_50-64": -3.739206239 ,
+                "age_65-99":  0.394182783  -3.636471246 ,
+                "car_users":  0.647176487
+            },
+            "zone": {
+                "hu_t":  0.176002681 ,
+                "ho_w":  0.249875934
+            },
+        },
+# utility function 16
+        "hs-hs" : {
+            "constant":  -4.347727916,
+            "individual_dummy": {
+                "age_18-29":  0.632156675 ,
+                "age_30-49":  1.106558979 ,
+                "age_50-64":  0.636516485 ,
+                "age_65-99":  1.250192981 ,
+                "car_users":  0.647176487
+            },
+            "zone": {
+                "ho_w":  0.249875934
+            },
+        },
+# utility function 17
+        "hs-ho" : {
+            "constant":  -3.615413138,
+            "individual_dummy": {
+                "age_18-29":  0.632156675 ,
+                "age_30-49":  1.106558979 ,
+                "age_50-64":  0.636516485 ,
+                "age_65-99":  1.250192981 +  0.394182783 ,
+                "car_users":  0.647176487
+            },
+            "zone": {
+                "ho_w":  0.249875934
+            },
+        },
+# utility function 18
+        "ho-ho" : {
+            "constant":  -2.954069138,
+            "individual_dummy": {
+                "age_65-99":  0.394182783 ,
+                "car_users":  0.647176487
+            },
+            "zone": {
+                "ho_w":  0.249875934
+            },
+        },
+# utility function 19
     },
+    3: {
+        "hw-hw-ho" : {
+            "constant":  -7.640316015,
+            "individual_dummy": {
+                "age_18-29":  2.306249018 ,
+                "age_30-49":  2.977241136 ,
+                "age_50-64":  2.018825449 ,
+                "age_65-99":  0.394182783  -1.185980639 ,
+                "car_users":  1.492056593
+            },
+            "zone": {},
+        },
+# utility function 20
+        "hw-hs-hs" : {
+            "constant":  -6.996908123,
+            "individual_dummy": {
+                "age_18-29":  0.632156675 +  2.306249018 ,
+                "age_30-49":  1.106558979 +  2.977241136 ,
+                "age_50-64":  0.636516485 +  2.018825449 ,
+                "age_65-99":  1.250192981  -1.185980639 ,
+                "car_users":  1.492056593
+            },
+            "zone": {},
+        },
+# utility function 21
+        "hw-hs-ho" : {
+            "constant":  -6.280857590,
+            "individual_dummy": {
+                "age_18-29":  0.632156675 +  2.306249018 ,
+                "age_30-49":  1.106558979 +  2.977241136 ,
+                "age_50-64":  0.636516485 +  2.018825449 ,
+                "age_65-99":  1.250192981 +  0.394182783  -1.185980639 ,
+                "car_users":  1.492056593
+            },
+            "zone": {},
+        },
+# utility function 22
+        "hw-ho-ho" : {
+            "constant":  -5.143814369,
+            "individual_dummy": {
+                "age_18-29":  2.306249018 ,
+                "age_30-49":  2.977241136 ,
+                "age_50-64":  2.018825449 ,
+                "age_65-99":  0.394182783  -1.185980639 ,
+                "car_users":  1.492056593
+            },
+            "zone": {},
+        },
+# utility function 23
+        "hc-hs-ho" : {
+            "constant":  -1.110080901,
+            "individual_dummy": {
+                "age_18-29":  0.632156675 ,
+                "age_30-49":  1.106558979 ,
+                "age_50-64":  0.636516485 ,
+                "age_65-99":  1.250192981 +  0.394182783
+            },
+            "zone": {
+                "ho_w":  0.025800000
+            },
+        },
+# utility function 24
+        "hc-ho-ho" : {
+            "constant":   0.000000000,
+            "individual_dummy": {
+                "age_65-99":  0.394182783
+            },
+            "zone": {
+                "ho_w":  0.025800000
+            },
+        },
+# utility function 25
+        "hu-hs-ho" : {
+            "constant": -11.751808160,
+            "individual_dummy": {
+                "age_18-29":  0.632156675 ,
+                "age_30-49":  1.106558979  -1.586979829 ,
+                "age_50-64":  0.636516485  -3.739206239 ,
+                "age_65-99":  1.250192981 +  0.394182783  -3.636471246 ,
+                "car_users":  1.492056593
+            },
+            "zone": {
+                "hu_t":  0.829445548 ,
+                "ho_w":  0.025800000
+            },
+        },
+# utility function 26
+        "hu-ho-ho" : {
+            "constant": -11.342729830,
+            "individual_dummy": {
+                "age_30-49": -1.586979829 ,
+                "age_50-64": -3.739206239 ,
+                "age_65-99":  0.394182783  -3.636471246 ,
+                "car_users":  1.492056593
+            },
+            "zone": {
+                "hu_t":  0.829445548 ,
+                "ho_w":  0.025800000
+            },
+        },
+# utility function 27
+        "hs-hs-hs" : {
+            "constant":  -5.575050535,
+            "individual_dummy": {
+                "age_18-29":  0.632156675 ,
+                "age_30-49":  1.106558979 ,
+                "age_50-64":  0.636516485 ,
+                "age_65-99":  1.250192981 ,
+                "car_users":  1.492056593
+            },
+            "zone": {
+                "ho_w":  0.025800000
+            },
+        },
+# utility function 28
+        "hs-hs-ho" : {
+            "constant":  -4.709369964,
+            "individual_dummy": {
+                "age_18-29":  0.632156675 ,
+                "age_30-49":  1.106558979 ,
+                "age_50-64":  0.636516485 ,
+                "age_65-99":  1.250192981 +  0.394182783 ,
+                "car_users":  1.492056593
+            },
+            "zone": {
+                "ho_w":  0.025800000
+            },
+        },
+# utility function 29
+        "hs-ho-ho" : {
+            "constant":  -4.115616267,
+            "individual_dummy": {
+                "age_18-29":  0.632156675 ,
+                "age_30-49":  1.106558979 ,
+                "age_50-64":  0.636516485 ,
+                "age_65-99":  1.250192981 +  0.394182783 ,
+                "car_users":  1.492056593
+            },
+            "zone": {
+                "ho_w":  0.025800000
+            },
+        },
+# utility function 30
+        "ho-ho-ho" : {
+            "constant":  -4.110394781,
+            "individual_dummy": {
+                "age_65-99":  0.394182783 ,
+                "car_users":  1.492056593
+            },
+            "zone": {
+                "ho_w":  0.025800000
+            },
+        },
+# utility function 31
+    },
+    4: {
+        "hw-hs-hs-ho" : {
+            "constant":  -8.782904966,
+            "individual_dummy": {
+                "age_18-29":  0.632156675 +  2.306249018 ,
+                "age_30-49":  1.106558979 +  2.977241136 ,
+                "age_50-64":  0.636516485 +  2.018825449 ,
+                "age_65-99":  1.250192981 +  0.394182783  -1.185980639 ,
+                "car_users":  1.544612164
+            },
+            "zone": {
+                "share_detached_houses": -0.008050000
+            },
+        },
+# utility function 32
+        "hw-hs-ho-ho" : {
+            "constant":  -7.819600775,
+            "individual_dummy": {
+                "age_18-29":  0.632156675 +  2.306249018 ,
+                "age_30-49":  1.106558979 +  2.977241136 ,
+                "age_50-64":  0.636516485 +  2.018825449 ,
+                "age_65-99":  1.250192981 +  0.394182783  -1.185980639 ,
+                "car_users":  1.544612164
+            },
+            "zone": {
+                "share_detached_houses": -0.008050000
+            },
+        },
+# utility function 33
+        "hw-ho-ho-ho" : {
+            "constant":  -6.323991971,
+            "individual_dummy": {
+                "age_18-29":  2.306249018 ,
+                "age_30-49":  2.977241136 ,
+                "age_50-64":  2.018825449 ,
+                "age_65-99":  0.394182783  -1.185980639 ,
+                "car_users":  1.544612164
+            },
+            "zone": {
+                "share_detached_houses": -0.008050000
+            },
+        },
+# utility function 34
+        "hs-hs-hs-hs" : {
+            "constant":  -6.563838110,
+            "individual_dummy": {
+                "age_18-29":  0.632156675 ,
+                "age_30-49":  1.106558979 ,
+                "age_50-64":  0.636516485 ,
+                "age_65-99":  1.250192981 ,
+                "car_users":  1.544612164
+            },
+            "zone": {
+                "share_detached_houses": -0.008050000
+            },
+        },
+# utility function 35
+        "hs-hs-hs-ho" : {
+            "constant":  -6.280534875,
+            "individual_dummy": {
+                "age_18-29":  0.632156675 ,
+                "age_30-49":  1.106558979 ,
+                "age_50-64":  0.636516485 ,
+                "age_65-99":  1.250192981 +  0.394182783 ,
+                "car_users":  1.544612164
+            },
+            "zone": {
+                "share_detached_houses": -0.008050000
+            },
+        },
+# utility function 36
+        "hs-hs-ho-ho" : {
+            "constant":  -5.728407971,
+            "individual_dummy": {
+                "age_18-29":  0.632156675 ,
+                "age_30-49":  1.106558979 ,
+                "age_50-64":  0.636516485 ,
+                "age_65-99":  1.250192981 +  0.394182783 ,
+                "car_users":  1.544612164
+            },
+            "zone": {
+                "share_detached_houses": -0.008050000
+            },
+        },
+# utility function 37
+        "hs-ho-ho-ho" : {
+            "constant":  -5.167664200,
+            "individual_dummy": {
+                "age_18-29":  0.632156675 ,
+                "age_30-49":  1.106558979 ,
+                "age_50-64":  0.636516485 ,
+                "age_65-99":  1.250192981 +  0.394182783 ,
+                "car_users":  1.544612164
+            },
+            "zone": {
+                "share_detached_houses": -0.008050000
+            },
+        },
+# utility function 38
+        "ho-ho-ho-ho" : {
+            "constant":  -4.892323651,
+            "individual_dummy": {
+                "age_65-99":  0.394182783 ,
+                "car_users":  1.544612164
+            },
+            "zone": {
+                "share_detached_houses": -0.008050000             },
+        },
+    },
+}
+
+tour_conditions = {
+    "hw": (False, "age_7-17"),
+    "hc": (True, "age_7-17"),
+    "hu": (False, "age_7-17"),
+    "hw-hw": (False, "age_7-17"),
+    "hw-hu": (False, "age_7-17"),
+    "hw-hs": (False, "age_7-17"),
+    "hw-ho": (False, "age_7-17"),
+    "hc-hc": (True, "age_7-17"),
+    "hc-hs": (True, "age_7-17"),
+    "hc-ho": (True, "age_7-17"),
+    "hu-hs": (False, "age_7-17"),
+    "hu-ho": (False, "age_7-17"),
+    "hw-hw-ho": (False, "age_7-17"),
+    "hw-hs-hs": (False, "age_7-17"),
+    "hw-hs-ho": (False, "age_7-17"),
+    "hw-ho-ho": (False, "age_7-17"),
+    "hc-hs-ho": (True, "age_7-17"),
+    "hc-ho-ho": (True, "age_7-17"),
+    "hu-hs-ho": (False, "age_7-17"),
+    "hu-ho-ho": (False, "age_7-17"),
+    "hs-hs-hs": (False, "age_7-17"),
+    "hs-hs-ho": (False, "age_7-17"),
+    "hs-ho-ho": (False, "age_7-17"),
+    "ho-ho-ho": (False, "age_7-17"),
+    "hw-hs-hs-ho": (False, "age_7-17"),
+    "hw-hs-ho-ho": (False, "age_7-17"),
+    "hw-ho-ho-ho": (False, "age_7-17"),
+    "hs-hs-hs-hs": (False, "age_7-17"),
+    "hs-hs-hs-ho": (False, "age_7-17"),
+    "hs-hs-ho-ho": (False, "age_7-17"),
+    "hs-ho-ho-ho": (False, "age_7-17"),
+    "ho-ho-ho-ho": (False, "age_7-17"),
 }
 tour_generation = {
     "hw": {
@@ -2135,13 +2651,13 @@ car_usage = {
         "population_density": -0.1471,
     },
     "individual_dummy": {
-        "share_age_7-17": -9999,
-        "share_age_18-29_m": 0.2969,
-        "share_age_30-49_f": 1.1019,
-        "share_age_30-49_m": 1.4157,
-        "share_age_50-64_f": 0.8173,
-        "share_age_50-64_m": 1.9978,
-        "share_age_65-99_m": 1.8737,
+        "age_7-17": -9999,
+        ("age_18-29", "male"): 0.2969,
+        ("age_30-49", "female"): 1.1019,
+        ("age_30-49", "male"): 1.4157,
+        ("age_50-64", "female"): 0.8173,
+        ("age_50-64", "male"): 1.9978,
+        ("age_65-99", "male"): 1.8737,
     },
 }
 vector_calibration_threshold = 5

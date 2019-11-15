@@ -19,6 +19,10 @@ def set_path(scenario):
     global _path 
     _path = data_dir
 
+def flush():
+    global _buffer
+    _buffer = {}
+
 def print_data(data, filename, zone_numbers, colname):
     filepath = os.path.join(_path, filename)
     if filename not in _buffer:
@@ -52,8 +56,8 @@ def print_matrix(data, filename, sheetname):
     rowtext = "{}\t{}\t{}\t{}\n"
     sheetname = sheetname.replace("_", "\t")
     for j in data.columns:
-        for i in data[j].index:
-            val = rowtext.format(i, j, sheetname, str(data[i][j]))
+        for i in data.index:
+            val = rowtext.format(i, j, sheetname, str(data[j][i]))
             _buffer[filename].append(val)
     with open(listfilepath, 'w') as f:
         for row in _buffer[filename]:

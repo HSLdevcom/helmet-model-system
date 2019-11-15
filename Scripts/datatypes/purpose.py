@@ -42,14 +42,14 @@ class Purpose:
         if self.area == "external":
             l = zone_data.first_external_zone
             u = None
-        self.bounds = (l, u)
+        self.bounds = slice(l, u)
         self.zone_data = zone_data
         self.generated_tours = {}
         self.attracted_tours = {}
 
     @property
     def zone_numbers(self):
-        return self.zone_data.zone_numbers[self.bounds[0]:self.bounds[1]]
+        return self.zone_data.zone_numbers[self.bounds]
 
 class TourPurpose(Purpose):
     def __init__(self, specification, zone_data):
@@ -70,7 +70,9 @@ class TourPurpose(Purpose):
             Data used for all demand calculations
         """
         Purpose.__init__(self, specification, zone_data)
-        if self.orig == "source":
+        if self.area == "metropolitan":
+            self.gen_model = generation.Tours(zone_data, self)
+        elif self.orig == "source":
             self.gen_model = generation.NonHomeGeneration(zone_data, self)
         else:
             self.gen_model = generation.GenerationModel(zone_data, self)
@@ -82,15 +84,26 @@ class TourPurpose(Purpose):
             self.model = logit.ModeDestModel(zone_data, self)
         self.modes = self.model.mode_choice_param.keys()
 
-    def calc_demand(self, impedance):
-        """Main method for purpose specific demand calculation.
+    def init_sums(self):
+        for mode in self.modes:
+            self.generated_tours[mode] = numpy.zeros_like(self.zone_numbers)
+            self.attracted_tours[mode] = numpy.zeros_like(self.zone_data.zone_numbers)
+
+    def calc_prob(self, impedance):
+        """Calculate mode and destination probabilities.
         
         Parameters
         ----------
         impedance : dict
             Mode (car/transit/bike/walk) : dict
                 Type (time/cost/dist) : numpy 2d matrix
-        
+        """
+        self.prob = self.model.calc_prob(impedance)
+        self.dist = impedance["car"]["dist"]
+
+    def calc_demand(self):
+        """Calculate purpose specific demand matrices.
+              
         Return
         ------
         dict
@@ -98,20 +111,19 @@ class TourPurpose(Purpose):
                 Demand matrix for whole day : Demand
         """
         tours = self.gen_model.generate_tours()
-        prob = self.model.calc_prob(impedance)
         demand = {}
         self.demand = {}
         self.aggregated_demand = {}
         self.demand_sums = {}
         self.trip_lengths = {}
         for mode in self.model.mode_choice_param:
-            self.demand[mode] = (prob[mode] * tours).T
+            self.demand[mode] = (self.prob[mode] * tours).T
             demand[mode] = Demand(self, mode, self.demand[mode])
             self.attracted_tours[mode] = self.demand[mode].sum(0)
             self.generated_tours[mode] = self.demand[mode].sum(1)
             self.demand_sums[mode] = self.generated_tours[mode].sum()
             self.trip_lengths[mode] = self._count_trip_lengths(
-                self.demand[mode], impedance["car"]["dist"])
+                self.demand[mode], self.dist)
         self.print_data()
         return demand
 
@@ -120,7 +132,7 @@ class TourPurpose(Purpose):
             aggregated_demand = self._aggregate(self.demand[mode])
             result.print_matrix(aggregated_demand,
                                 "aggregated_demand", self.name + "_" + mode)
-            own_zone = self.zone_data.get_data("own_zone", self)
+            own_zone = self.zone_data.get_data("own_zone", self.bounds)
             own_zone_demand = own_zone * self.demand[mode]
             own_zone_aggregated = self._aggregate(own_zone_demand)
             result.print_data(
@@ -217,7 +229,7 @@ class SecDestPurpose(Purpose):
         impedance : dict
             Type (time/cost/dist) : numpy 2d matrix
         origin : int
-            The zone from which these tours origin
+            The zone index from which these tours origin
 
         Return
         ------
@@ -230,6 +242,8 @@ class SecDestPurpose(Purpose):
             dest_imp[mtx_type] = ( impedance[mtx_type]
                                  + impedance[mtx_type][:, origin]
                                  - impedance[mtx_type][origin, :][:, numpy.newaxis])
+        # TODO Make origin distinction between impedance matrix and lookup
+        # In peripheral area these would not be the same
         prob = self.model.calc_prob(mode, dest_imp, origin)
         demand = (prob * self.tours[mode][origin, :]).T
         self.attracted_tours[mode] += demand.sum(0)

@@ -45,8 +45,8 @@ Database/STRAT_s22
 Database/STRAT_s23
 Logbook/project.mlbk-shm
 Logbook/project.mlbk-wal
-Zone_data/2016/*
-Zone_data/2030/*
+Scenario_input_data/2016/*
+Scenario_input_data/2030/*
 Matrices/2016/*
 Matrices/2030/*
 Matrices/base/*

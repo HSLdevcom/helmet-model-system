@@ -6,6 +6,7 @@ import models.logit as logit
 from datatypes.person import Person
 from datatypes.tour import Tour
 import random
+import datahandling.resultdata as result
 
 
 class DemandModel:
@@ -34,51 +35,72 @@ class DemandModel:
                     purpose.sources.append(self.purpose_dict[source])
                     if "sec_dest" in purpose_spec:
                         self.purpose_dict[source].sec_dest_purpose = purpose
-        spec = {
-            "name": "car_use",
-            "orig": None,
-            "dest": None,
-            "area": "metropolitan",
-        }
-        cm = logit.CarUseModel(zone_data, Purpose(spec, zone_data))
-        zone_data["car_users"] = cm.calc_prob()
-
-    def create_population(self):
-        """Create population for agent-based simulation."""
-        self.population = []
-        age_groups = (
+        bounds = slice(0, zone_data.first_peripheral_zone)
+        self.cm = logit.CarUseModel(zone_data, bounds)
+        self.gm = logit.GenerationModel(self.zone_data)
+        zone_data["car_users"] = self.cm.calc_prob()
+        self.age_groups = (
             (7, 17),
             (18, 29),
             (30, 49),
             (50, 64),
             (65, 99),
         )
-        zones = self.zone_data["population"].loc[:15999]
-        for idx, zone_pop in zones.iteritems():
+
+    def create_population_segments(self):
+        self.segments = {}
+        first_peripheral_zone = self.zone_data.first_peripheral_zone
+        pop = self.zone_data["population"][:first_peripheral_zone]
+        for age_group in self.age_groups:
+            age = "age_" + str(age_group[0]) + "-" + str(age_group[1])
+            self.segments[age] = {}
+            key = "share_" + age
+            age_share = self.zone_data[key][:first_peripheral_zone]
+            car_use_f = self.cm.calc_individual_prob(
+                age, Person.FEMALE)
+            car_use_m = self.cm.calc_individual_prob(
+                age, Person.MALE)
+            car_share = 0.5*car_use_f + 0.5*car_use_m
+            self.segments[age]["car_users"] = car_share * age_share * pop
+            self.segments[age]["no_car"] = (1-car_share) * age_share * pop
+
+    def generate_tours(self):
+        bounds = slice(0, self.zone_data.first_peripheral_zone)
+        data = pandas.DataFrame()
+        for age_group in self.age_groups:
+            age = "age_" + str(age_group[0]) + "-" + str(age_group[1])
+            prob_c = self.gm.calc_prob(age, is_car_user=True, zones=bounds)
+            prob_n = self.gm.calc_prob(age, is_car_user=False, zones=bounds)
+            nr_tours_sums = pandas.Series()
+            for pattern in prob_c:
+                nr_tours = ( prob_c[pattern] * self.segments[age]["car_users"]
+                           + prob_n[pattern] * self.segments[age]["no_car"])
+                tour_list = pattern.split('-')
+                if tour_list[0] == "":
+                    tour_list = []
+                for purpose in tour_list:
+                    self.purpose_dict[purpose].gen_model.tours += nr_tours.values
+                nr_tours_sums[pattern] = nr_tours.sum()
+            data[age] = nr_tours_sums.sort_index()
+        result.print_matrix(data, "generation", "tour_patterns")
+
+    def create_population(self):
+        """Create population for agent-based simulation."""
+        self.cm.calc_basic_prob()
+        self.population = []
+        zones = self.zone_data.zone_numbers[:self.zone_data.first_peripheral_zone]
+        for idx in zones:
             weights = [1]
-            for age_group in age_groups:
+            for age_group in self.age_groups:
                 key = "share_age_" + str(age_group[0]) + "-" + str(age_group[1])
                 share = self.zone_data[key][idx]
                 weights.append(share)
                 weights[0] -= share
-            for _ in xrange(0, zone_pop):
-                a = numpy.arange(-1, len(age_groups))
+            for _ in xrange(0, self.zone_data["population"][idx]):
+                a = numpy.arange(-1, len(self.age_groups))
                 group = numpy.random.choice(a=a, p=weights)
                 if group != -1:
-                    age_group = age_groups[group]
-                    age = random.randint(age_group[0], age_group[1])
-                    person = Person(idx, age)
+                    # Group -1 is under-7-year-olds and they have weights[0]
+                    age_group = self.age_groups[group]
+                    person = Person(idx, age_group, self.gm, self.cm)
                     self.population.append(person)
-        for person in self.population:
-            for purpose in self.tour_purposes:
-                if purpose.area == "metropolitan" and purpose.dest != "source" and not purpose.sources:
-                    prob = purpose.gen_model.param["population"]
-                    try:
-                        sec_dest_prob = purpose.sec_dest_purpose.gen_model.param[purpose.name]
-                    except AttributeError:
-                        sec_dest_prob = 0
-                    if random.random() < prob:
-                        tour = Tour(purpose, person.zone)
-                        if random.random() < sec_dest_prob:
-                            tour.has_sec_dest = True
-                        person.tours.append(tour)
