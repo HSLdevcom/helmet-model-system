@@ -578,45 +578,49 @@ demand_share = {
     },
     "freight": {
         "trailer_truck": {
-            "aht": (0.1, 0),
-            "pt": (0.1, 0),
-            "iht": (0.1, 0),
+            "aht": (0.066, 0),
+            "pt": (0.07, 0),
+            "iht": (0.066, 0),
         },
         "truck": {
-            "aht": (0.1, 0),
-            "pt": (0.1, 0),
-            "iht": (0.1, 0),
+            "aht": (0.066, 0),
+            "pt": (0.07, 0),
+            "iht": (0.066, 0),
         },
         "van": {
-            "aht": (0.1, 0),
-            "pt": (0.1, 0),
-            "iht": (0.1, 0),
+            # As shares of car traffic
+            # On top of this, the trucks sum is added
+            "aht": (0.054, 0),
+            "pt": (0.07, 0),
+            "iht": (0.044, 0),
         },
     },
     "external": {
+        # External matrices are untransposed,
+        # and describe trips, not tours
         "car": {
-            # This is a way of implementing road-specific parameters,
+            # TODO This is a way of implementing road-specific parameters,
             # but it will work only with a fixed number of external zones,
             # so no testing is possible.
             # "aht": ([[0.01], [0.01]], [[0.01], [0.01]]),
-            "aht": (0.01, 0.01),
+            "aht": (0.042, 0.028),
             "pt": (0.05, 0.05),
-            "iht": (0.05, 0.05),
+            "iht": (0.045, 0.055),
         },
         "transit": {
-            "aht": (0.01, 0.01),
+            "aht": (0.101, 0.034),
             "pt": (0.05, 0.05),
-            "iht": (0.05, 0.05),
+            "iht": (0.064, 0.119),
         },
         "trailer_truck": {
-            "aht": (0.1, 0),
-            "pt": (0.1, 0),
-            "iht": (0.1, 0),
+            "aht": (0.033, 0.033),
+            "pt": (0.035, 0.035),
+            "iht": (0.033, 0.033),
         },
         "truck": {
-            "aht": (0.1, 0),
-            "pt": (0.1, 0),
-            "iht": (0.1, 0),
+            "aht": (0.033, 0.033),
+            "pt": (0.035, 0.035),
+            "iht": (0.033, 0.033),
         },
     },
 }
