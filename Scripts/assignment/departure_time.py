@@ -98,7 +98,9 @@ class DepartureTimeModel:
             Number of zones in model area (metropolitan + peripheral)
         """
         n = nr_zones
-        car_demand = ( self.demand[time_period]["car_work"][0:n, 0:n]
-                     + self.demand[time_period]["car_leisure"][0:n, 0:n])
+        mtx = self.demand[time_period]
+        car_demand = ( mtx["car_work"][0:n, 0:n]
+                     + mtx["car_leisure"][0:n, 0:n])
         share = demand_share["freight"]["van"][time_period]
         self._add_2d_demand(share, "van", time_period, car_demand, (0, 0))
+        mtx["van"][0:n, 0:n] += mtx["truck"][0:n, 0:n]
