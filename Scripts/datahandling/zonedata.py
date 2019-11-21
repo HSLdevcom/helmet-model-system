@@ -21,6 +21,7 @@ class ZoneData:
         first_peripheral = numpy.where(idx >= peripheral[0])[0][0]
         self.first_peripheral_zone = first_peripheral
         first_external = numpy.where(zone_numbers >= external[0])[0][0]
+        self.first_external_zone = first_external
         external_zones = zone_numbers[first_external:]
         script_dir = os.path.dirname(os.path.realpath(__file__))
         project_dir = os.path.join(script_dir, "..", "..")
