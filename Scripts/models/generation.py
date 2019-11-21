@@ -16,8 +16,7 @@ class GenerationModel:
         numpy 1-d array
             Vector of tour numbers per zone
         """
-        nr_zones = self.purpose.bounds.stop - self.purpose.bounds.start
-        tours = numpy.zeros(nr_zones)
+        tours = 0
         b = self.param
         for i in b:
             tours += b[i] * self.zone_data[i][self.purpose.bounds]
@@ -44,7 +43,7 @@ class NonHomeGeneration(GenerationModel):
         numpy 1-d array
             Vector of tour numbers per zone
         """
-        tours = numpy.zeros(self.zone_data.nr_zones)
+        tours = 0
         for source in self.purpose.sources:
             b = self.param[source.name]
             for mode in source.attracted_tours:
@@ -62,7 +61,7 @@ class SecDestGeneration(GenerationModel):
         numpy 2-d matrix
             Matrix of tour numbers per origin-destination pair
         """
-        tours = numpy.zeros_like(next(iter(self.purpose.sources)).demand[mode])
+        tours = 0
         b = self.param
         for source in self.purpose.sources:
             tours += b[source.name] * source.demand[mode]
