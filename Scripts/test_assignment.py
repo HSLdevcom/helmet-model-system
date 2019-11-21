@@ -5,7 +5,6 @@ import unittest
 import assignment.emme_assignment as ass
 import numpy
 from datahandling.zonedata import ZoneData
-import omx
 import os
 import logging
 from parameters import emme_scenario, demand_share
