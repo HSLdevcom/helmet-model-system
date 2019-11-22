@@ -62,7 +62,9 @@ class SecDestGeneration(GenerationModel):
             Matrix of tour numbers per origin-destination pair
         """
         tours = 0
+        bounds = self.purpose.bounds
+        metropolitan = next(iter(self.purpose.sources)).bounds
         b = self.param
         for source in self.purpose.sources:
-            tours += b[source.name] * source.demand[mode]
+            tours += b[source.name] * source.demand[mode][metropolitan, bounds]
         return tours
