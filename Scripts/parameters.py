@@ -2706,14 +2706,6 @@ tour_purposes = (
         "area": "metropolitan",
     },
     {
-        "name": "hoo",
-        "orig": "home",
-        "dest": "any",
-        "sec_dest": "any",
-        "source": ("hw", "ho",),
-        "area": "all",
-    },
-    {
         "name": "so",
         "orig": "home",
         "dest": "source",
@@ -2731,6 +2723,14 @@ tour_purposes = (
         "orig": "source",
         "dest": "other",
         "source": ("so",),
+        "area": "all",
+    },
+    {
+        "name": "hoo",
+        "orig": "home",
+        "dest": "any",
+        "sec_dest": "any",
+        "source": ("hw", "hc", "hu", "hs", "ho", "wo", "oo",),
         "area": "all",
     },
     {

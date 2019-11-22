@@ -13,12 +13,13 @@ import numpy
 
 
 class ModelSystem:
-    def __init__(self, zone_data_path, base_zone_data_path, base_matrices, ass_model, is_agent_model=False):
+    def __init__(self, zone_data_path, base_zone_data_path, base_matrices, ass_model, name, is_agent_model=False):
         self.logger = Log.get_instance()
         self.ass_model = ass_model
         self.zdata_base = ZoneData(base_zone_data_path, ass_model.zone_numbers)
         self.zdata_forecast = ZoneData(zone_data_path, ass_model.zone_numbers)
         self.basematrices = MatrixData(base_matrices)
+        self.resultmatrices = MatrixData(name)
         self.dm = DemandModel(self.zdata_forecast)
         self.is_agent_model = is_agent_model
         if is_agent_model:
@@ -144,28 +145,38 @@ class ModelSystem:
             self.ass_model.assign(tp, self.dtm.demand[tp], is_last_iteration)
             impedance[tp] = self.ass_model.get_impedance()
             if tp == "aht":
-                car_time = numpy.ma.average(impedance[tp]["time"]["car_work"],
-                                            axis=1,
-                                            weights=self.dtm.demand[tp]["car_work"])
-                transit_time = numpy.ma.average(impedance[tp]["time"]["transit"],
-                                                axis=1,
-                                                weights=self.dtm.demand[tp]["transit_work"])
+                car_time = numpy.ma.average(
+                    impedance[tp]["time"]["car_work"], axis=1,
+                    weights=self.dtm.demand[tp]["car_work"])
+                transit_time = numpy.ma.average(
+                    impedance[tp]["time"]["transit"], axis=1,
+                    weights=self.dtm.demand[tp]["transit_work"])
                 time_ratio = transit_time / car_time
-                result.print_data(time_ratio,
-                                  "impedance_ratio.txt",
-                                  self.ass_model.zone_numbers,
-                                  "time")
-                car_cost = numpy.ma.average(impedance[tp]["cost"]["car_work"],
-                                            axis=1,
-                                            weights=self.dtm.demand[tp]["car_work"])
-                transit_cost = numpy.ma.average(impedance[tp]["cost"]["transit"],
-                                                axis=1,
-                                                weights=self.dtm.demand[tp]["transit_work"])
+                result.print_data(
+                    time_ratio, "impedance_ratio.txt",
+                    self.ass_model.zone_numbers, "time")
+                car_cost = numpy.ma.average(
+                    impedance[tp]["cost"]["car_work"], axis=1,
+                    weights=self.dtm.demand[tp]["car_work"])
+                transit_cost = numpy.ma.average(
+                    impedance[tp]["cost"]["transit"], axis=1,
+                    weights=self.dtm.demand[tp]["transit_work"])
                 cost_ratio = transit_cost / 44 / car_cost
-                result.print_data(cost_ratio,
-                                  "impedance_ratio.txt",
-                                  self.ass_model.zone_numbers,
-                                  "cost")
+                result.print_data(
+                    cost_ratio, "impedance_ratio.txt",
+                    self.ass_model.zone_numbers, "cost")
+            if is_last_iteration:
+                with self.resultmatrices.open("demand", tp, 'w') as mtx:
+                    mtx.mapping = self.ass_model.zone_numbers
+                    for ass_class in self.dtm.demand[tp]:
+                        mtx[ass_class] = self.dtm.demand[tp][ass_class]
+                    self.logger.info("Saved demand matrices for " + str(tp))
+                for mtx_type in impedance[tp]:
+                    with self.resultmatrices.open(mtx_type, tp, 'w') as mtx:
+                        mtx.mapping = self.ass_model.zone_numbers
+                        for ass_class in impedance[tp][mtx_type]:
+                            cost_data = impedance[tp][mtx_type][ass_class]
+                            mtx[ass_class] = cost_data
         self.dtm.init_demand()
         result.flush()
         return impedance

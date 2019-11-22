@@ -11,9 +11,6 @@ class ExternalModel:
         self.internal_zones = zone_data.zone_numbers
         self.all_zone_numbers = zone_numbers
         self.growth = zone_data.externalgrowth
-        index = pandas.Index(self.all_zone_numbers)
-        external = parameters.areas["external"]
-        zone_data.first_external_zone, _ = index.slice_locs(external[0])
         spec = {
             "name": "external",
             "orig": None,

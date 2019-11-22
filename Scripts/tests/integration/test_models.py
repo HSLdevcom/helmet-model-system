@@ -17,7 +17,7 @@ class ModelTest(unittest.TestCase):
         print("Testing assignment..")
         result.set_path("test")
         ass_model = MockAssignmentModel(MatrixData("2016_test"))
-        model = modelsystem.ModelSystem("2030_test", "2016_test", "base_test", ass_model)
+        model = modelsystem.ModelSystem("2030_test", "2016_test", "base_test", ass_model, "test")
         # model.dm.create_population()
         # self.assertEqual(7, len(ass_classes))
         impedance = model.assign_base_demand()
@@ -42,7 +42,7 @@ class ModelTest(unittest.TestCase):
     def test_agent_model(self):
         result.set_path("test")
         ass_model = MockAssignmentModel(MatrixData("2016_test"))
-        model = modelsystem.ModelSystem("2030_test", "2016_test", "base_test", ass_model, is_agent_model=True)
+        model = modelsystem.ModelSystem("2030_test", "2016_test", "base_test", ass_model, "test", is_agent_model=True)
         impedance = model.assign_base_demand()
         impedance = model.run(impedance)
 

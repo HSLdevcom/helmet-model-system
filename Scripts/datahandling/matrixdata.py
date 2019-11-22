@@ -10,6 +10,8 @@ class MatrixData:
         script_dir = os.path.dirname(os.path.realpath(__file__))
         project_dir = os.path.join(script_dir, "..", "..")
         self.path = os.path.join(project_dir, "Matrices", scenario)
+        if not os.path.exists(self.path):
+            os.makedirs(self.path)
     
     @contextmanager
     def open(self, mtx_type, time_period, m='r'):
