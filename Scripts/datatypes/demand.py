@@ -1,3 +1,5 @@
+import parameters
+
 class Demand:
     def __init__(self, purpose, mode, matrix, origin=None):
         """Demand matrix for whole day
@@ -15,7 +17,10 @@ class Demand:
         """
         self.purpose = purpose
         self.mode = mode
-        self.matrix = matrix
+        if mode == "car" and purpose.name in parameters.car_driver_share:
+            self.matrix = parameters.car_driver_share[purpose.name] * matrix
+        else:
+            self.matrix = matrix
         self.origin = origin
 
     @property

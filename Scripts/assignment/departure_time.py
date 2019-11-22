@@ -34,7 +34,7 @@ class DepartureTimeModel:
         demand : Demand or Tour
             Travel demand matrix or number of travellers
         """
-        if demand.mode != "walk":
+        if demand.mode not in ("walk", "car_passenger"):
             if demand.mode in ("car", "transit", "bike"):
                 ass_class = ( demand.mode 
                             + '_'

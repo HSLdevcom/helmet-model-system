@@ -86,6 +86,8 @@ class ModelSystem:
                 for tour in person.tours:
                     tour.choose_mode(person.is_car_user)
                     tour.choose_destination(purpose_impedance)
+                    if tour.mode == "car":
+                        tour.choose_driver()
                     self.dtm.add_demand(tour)
         else:
             for purpose in self.dm.tour_purposes:
