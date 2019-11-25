@@ -56,7 +56,10 @@ class HelmetApplication():
             self._status["current"] = round
             try:
                 self.logger.info("Starting iteration {}".format(round), extra=self._get_status())
-                impedance = self.model.run(impedance)
+                if round == iterations:
+                    impedance = self.model.run(impedance, is_last_iteration=True)
+                else:
+                    impedance = self.model.run(impedance)
                 self._status["completed"] = self._status["completed"] + 1
             except Exception as error:
                 self._status["failed"] = self._status["failed"] + 1
