@@ -114,7 +114,7 @@ class LogitModel:
                         utility[k:] += b[i][1] * data_surrounding
                     else:
                         utility += b[i][0] * zdata.get_data(
-                            i, self.bounds, generation)[:, orig]
+                            i, self.bounds, generation)[orig, :]
                         utility += b[i][1] * zdata.get_data(
                             i, self.bounds, generation)[dest, :]
                 else: # 2-d matrix calculation
@@ -123,7 +123,7 @@ class LogitModel:
                         utility[k:, :] += b[i][1] * data_surrounding
                     else:
                         utility += b[i][0] * zdata.get_data(
-                            i, self.bounds, generation)[:, orig]
+                            i, self.bounds, generation)[orig, :]
                         utility += b[i][1] * zdata.get_data(
                             i, self.bounds, generation)
         return utility

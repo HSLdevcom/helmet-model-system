@@ -207,16 +207,15 @@ class SecDestPurpose(Purpose):
 
     def init_sums(self):
         for mode in self.model.dest_choice_param:
-            self.generated_tours[mode] = numpy.zeros_like(next(iter(self.sources)).zone_numbers)
-            self.attracted_tours[mode] = numpy.zeros_like(self.zone_numbers)
+            self.generated_tours[mode] = 0
+            self.attracted_tours[mode] = numpy.zeros_like(self.zone_data.zone_numbers, float)
 
     def generate_tours(self):
         """Generate the source tours without secondary destinations."""
         self.tours = {}
+        self.init_sums()
         for mode in self.model.dest_choice_param:
             self.tours[mode] = self.gen_model.generate_tours(mode)
-            self.attracted_tours[mode] = self.tours[mode].sum(0)
-            self.generated_tours[mode] = self.tours[mode].sum(1)
 
     def distribute_tours(self, mode, impedance, origin):
         """Decide the secondary destination for all tours (generated 
@@ -239,9 +238,9 @@ class SecDestPurpose(Purpose):
         """
         dest_imp = {}
         for mtx_type in impedance:
-            dest_imp[mtx_type] = ( impedance[mtx_type]
+            dest_imp[mtx_type] = ( impedance[mtx_type][self.bounds, :]
                                  + impedance[mtx_type][:, origin]
-                                 - impedance[mtx_type][origin, :][:, numpy.newaxis])
+                                 - impedance[mtx_type][origin, self.bounds][:, numpy.newaxis])
         # TODO Make origin distinction between impedance matrix and lookup
         # In peripheral area these would not be the same
         prob = self.model.calc_prob(mode, dest_imp, origin)
