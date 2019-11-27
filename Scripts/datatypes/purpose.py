@@ -70,7 +70,7 @@ class TourPurpose(Purpose):
             Data used for all demand calculations
         """
         Purpose.__init__(self, specification, zone_data)
-        if self.area == "metropolitan":
+        if self.area == "metropolitan" and self.dest != "source":
             self.gen_model = generation.Tours(zone_data, self)
         elif self.orig == "source":
             self.gen_model = generation.NonHomeGeneration(zone_data, self)
