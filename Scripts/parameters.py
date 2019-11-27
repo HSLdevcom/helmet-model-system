@@ -2747,7 +2747,7 @@ tour_purposes = (
         "dest": "any",
         "sec_dest": "any",
         "source": ("hw", "hc", "hu", "hs", "ho", "wo", "oo",),
-        "area": "all",
+        "area": "metropolitan",
     },
     {
         "name": "hwp",
