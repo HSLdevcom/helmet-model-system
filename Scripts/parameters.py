@@ -2643,6 +2643,22 @@ tour_generation = {
         "shops": 0.005,
     }
 }
+
+# Driver share of car tours
+# Inverse of car occupancy
+car_driver_share = {
+    "hw": 0.928309883,
+    "hc": 0,
+    "hu": 0.805783638,
+    "hs": 0.803581362,
+    "ho": 0.669375456,
+    "hoo": 0.79867104,
+    "wo": 0.809134377,
+    "oo": 0.691710941,
+    "hwp": 0.923397539,
+    "hop": 0.699605826,
+    "oop": 0.784781268,
+}
 garbage_generation = {
     "population": 0.000125,
     "workplaces": 0.000025,
