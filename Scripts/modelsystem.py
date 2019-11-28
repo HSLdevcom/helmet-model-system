@@ -92,7 +92,9 @@ class ModelSystem:
                     self.dtm.add_demand(tour)
         else:
             for purpose in self.dm.tour_purposes:
-                if not isinstance(purpose, SecDestPurpose):
+                if isinstance(purpose, SecDestPurpose):
+                    purpose.gen_model.init_tours()
+                else:
                     purpose_impedance = self.imptrans.transform(purpose, impedance)
                     purpose.calc_prob(purpose_impedance)
             self.dm.generate_tours()

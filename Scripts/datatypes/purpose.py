@@ -83,6 +83,7 @@ class TourPurpose(Purpose):
         else:
             self.model = logit.ModeDestModel(zone_data, self)
         self.modes = self.model.mode_choice_param.keys()
+        self.sec_dest_purpose = None
 
     def init_sums(self):
         for mode in self.modes:
@@ -112,28 +113,31 @@ class TourPurpose(Purpose):
         """
         tours = self.gen_model.generate_tours()
         demand = {}
-        self.demand = {}
         self.aggregated_demand = {}
         self.demand_sums = {}
         self.trip_lengths = {}
         for mode in self.model.mode_choice_param:
-            self.demand[mode] = (self.prob[mode] * tours).T
-            demand[mode] = Demand(self, mode, self.demand[mode])
-            self.attracted_tours[mode] = self.demand[mode].sum(0)
-            self.generated_tours[mode] = self.demand[mode].sum(1)
+            mtx = (self.prob[mode] * tours).T
+            try:
+                self.sec_dest_purpose.gen_model.add_tours(mtx, mode, self)
+            except AttributeError:
+                pass
+            demand[mode] = Demand(self, mode, mtx)
+            self.attracted_tours[mode] = mtx.sum(0)
+            self.generated_tours[mode] = mtx.sum(1)
             self.demand_sums[mode] = self.generated_tours[mode].sum()
             self.trip_lengths[mode] = self._count_trip_lengths(
-                self.demand[mode], self.dist)
-        self.print_data()
+                mtx, self.dist)
+        self.print_data(demand)
         return demand
 
-    def print_data(self):
-        for mode in self.model.mode_choice_param:
-            aggregated_demand = self._aggregate(self.demand[mode])
+    def print_data(self, demand):
+        for mode in demand:
+            aggregated_demand = self._aggregate(demand[mode].matrix)
             result.print_matrix(aggregated_demand,
                                 "aggregated_demand", self.name + "_" + mode)
             own_zone = self.zone_data.get_data("own_zone", self.bounds)
-            own_zone_demand = own_zone * self.demand[mode]
+            own_zone_demand = own_zone * demand[mode].matrix
             own_zone_aggregated = self._aggregate(own_zone_demand)
             result.print_data(
                 numpy.diag(own_zone_aggregated), "own_zone_demand.txt",
@@ -204,6 +208,7 @@ class SecDestPurpose(Purpose):
         Purpose.__init__(self, specification, zone_data)
         self.gen_model = generation.SecDestGeneration(zone_data, self)
         self.model = logit.SecDestModel(zone_data, self)
+        self.modes = self.model.dest_choice_param.keys()
 
     def init_sums(self):
         for mode in self.model.dest_choice_param:
