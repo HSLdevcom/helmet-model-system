@@ -65,6 +65,8 @@ class DemandModel:
             self.segments[age]["no_car"] = (1-car_share) * age_share * pop
 
     def generate_tours(self):
+        for purpose in self.tour_purposes:
+            purpose.gen_model.tours = 0
         bounds = slice(0, self.zone_data.first_peripheral_zone)
         data = pandas.DataFrame()
         for age_group in self.age_groups:
