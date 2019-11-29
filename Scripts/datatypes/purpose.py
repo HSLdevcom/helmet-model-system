@@ -117,7 +117,7 @@ class TourPurpose(Purpose):
         self.demand_sums = {}
         self.trip_lengths = {}
         for mode in self.model.mode_choice_param:
-            mtx = (self.prob[mode] * tours).T
+            mtx = (self.prob.pop(mode) * tours).T
             try:
                 self.sec_dest_purpose.gen_model.add_tours(mtx, mode, self)
             except AttributeError:
