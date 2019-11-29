@@ -84,7 +84,7 @@ class DemandModel:
                     self.purpose_dict[purpose].gen_model.tours += nr_tours.values
                 nr_tours_sums[pattern] = nr_tours.sum()
             data[age] = nr_tours_sums.sort_index()
-        result.print_matrix(data, "generation", "tour_patterns")
+        result.print_matrix(data, "generation", "tour_combinations")
 
     def create_population(self):
         """Create population for agent-based simulation."""

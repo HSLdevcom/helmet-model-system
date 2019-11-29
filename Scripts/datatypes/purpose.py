@@ -71,11 +71,11 @@ class TourPurpose(Purpose):
         """
         Purpose.__init__(self, specification, zone_data)
         if self.area == "metropolitan" and self.dest != "source":
-            self.gen_model = generation.Tours(zone_data, self)
+            self.gen_model = generation.Tours(self)
         elif self.orig == "source":
-            self.gen_model = generation.NonHomeGeneration(zone_data, self)
+            self.gen_model = generation.NonHomeGeneration(self)
         else:
-            self.gen_model = generation.GenerationModel(zone_data, self)
+            self.gen_model = generation.GenerationModel(self)
         if self.name == "sop":
             self.model = logit.OriginModel(zone_data, self)
         elif self.name == "so":
@@ -202,7 +202,7 @@ class SecDestPurpose(Purpose):
             Data used for all demand calculations
         """
         Purpose.__init__(self, specification, zone_data)
-        self.gen_model = generation.SecDestGeneration(zone_data, self)
+        self.gen_model = generation.SecDestGeneration(self)
         self.model = logit.SecDestModel(zone_data, self)
 
     def init_sums(self):

@@ -1,9 +1,12 @@
 import numpy
+import pandas
 import parameters
+import datahandling.resultdata as result
+
 
 class GenerationModel:
-    def __init__(self, zone_data, purpose):
-        self.zone_data = zone_data
+    def __init__(self, purpose):
+        self.zone_data = purpose.zone_data
         self.purpose = purpose
         self.param = parameters.tour_generation[purpose.name]
 
@@ -20,16 +23,21 @@ class GenerationModel:
         b = self.param
         for i in b:
             tours += b[i] * self.zone_data[i][self.purpose.bounds]
+        result.print_data(
+            tours, "tours.txt", self.zone_data.zone_numbers, self.purpose.name)
         return tours.values
 
 
 class Tours(GenerationModel):
-    def __init__(self, zone_data, purpose):
-        self.zone_data = zone_data
+    def __init__(self, purpose):
+        self.zone_data = purpose.zone_data
         self.purpose = purpose
         self.tours = 0
     
     def generate_tours(self):
+        result.print_data(
+            pandas.Series(self.tours, self.purpose.zone_numbers),
+            "tours.txt", self.zone_data.zone_numbers, self.purpose.name)
         return self.tours
 
 
@@ -48,6 +56,9 @@ class NonHomeGeneration(GenerationModel):
             b = self.param[source.name]
             for mode in source.attracted_tours:
                 tours += b * source.attracted_tours[mode]
+        result.print_data(
+            pandas.Series(tours, self.purpose.zone_numbers),
+            "tours.txt", self.zone_data.zone_numbers, self.purpose.name)
         return tours
 
 
