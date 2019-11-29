@@ -128,7 +128,9 @@ class TourPurpose(Purpose):
         return demand
 
     def print_data(self):
+        attracted_tours = 0
         for mode in self.model.mode_choice_param:
+            attracted_tours += self.attracted_tours[mode]
             aggregated_demand = self._aggregate(self.demand[mode])
             result.print_matrix(aggregated_demand,
                                 "aggregated_demand", self.name + "_" + mode)
@@ -141,6 +143,9 @@ class TourPurpose(Purpose):
             result.print_data(
                 self.trip_lengths[mode], "trip_lengths.txt",
                 self.trip_lengths[mode].index, self.name + "_" + mode[0])
+        result.print_data(
+            attracted_tours, "attraction.txt",
+            self.zone_data.zone_numbers, self.name)
         demsums = self.demand_sums
         demand_all = sum(demsums.values())
         mode_shares = {mode: demsums[mode] / demand_all for mode in demsums}
