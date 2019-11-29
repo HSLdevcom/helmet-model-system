@@ -55,6 +55,11 @@ class ZoneData:
         self["share_age_30-49"] = popdata["sh_3049"][:first_peripheral]
         self["share_age_50-64"] = popdata["sh_5064"][:first_peripheral]
         self["share_age_65-99"] = popdata["sh_65-"][:first_peripheral]
+        self["share_age_7-99"] = ( self["share_age_7-17"]        
+            + self["share_age_18-29"] + self["share_age_30-49"]
+            + self["share_age_50-64"] + self["share_age_65-99"])
+        self["share_age_18-99"] = ( self["share_age_7-99"]
+                                   -self["share_age_7-17"])
         self["share_female"] = pandas.Series(0.5, zone_numbers)
         self["share_male"] = pandas.Series(0.5, zone_numbers)
         self.nr_zones = len(self.zone_numbers)
