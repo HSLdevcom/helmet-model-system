@@ -26,11 +26,11 @@ class GenerationModel:
             Whether population segment consists of car users or not
         """
         b = self.param
-        for i in b:
-            try:
+        try:
+            for i in b:
                 self.tours += b[i] * self.zone_data[i][self.purpose.bounds]
-            except TypeError:
-                self.tours += b[i][age][is_car_user] * segment
+        except KeyError:
+            self.tours += b[age][is_car_user] * segment
 
     def get_tours(self):
         """Get vector of tour numbers
