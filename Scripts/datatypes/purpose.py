@@ -70,9 +70,7 @@ class TourPurpose(Purpose):
             Data used for all demand calculations
         """
         Purpose.__init__(self, specification, zone_data)
-        if self.area == "metropolitan" and self.dest != "source":
-            self.gen_model = generation.Tours(self)
-        elif self.orig == "source":
+        if self.orig == "source":
             self.gen_model = generation.NonHomeGeneration(self)
         else:
             self.gen_model = generation.GenerationModel(self)
@@ -110,7 +108,7 @@ class TourPurpose(Purpose):
             Mode (car/transit/bike) : dict
                 Demand matrix for whole day : Demand
         """
-        tours = self.gen_model.generate_tours()
+        tours = self.gen_model.get_tours()
         demand = {}
         self.demand = {}
         self.aggregated_demand = {}
@@ -219,7 +217,7 @@ class SecDestPurpose(Purpose):
         """Generate the source tours without secondary destinations."""
         self.tours = {}
         for mode in self.model.dest_choice_param:
-            self.tours[mode] = self.gen_model.generate_tours(mode)
+            self.tours[mode] = self.gen_model.get_tours(mode)
             self.attracted_tours[mode] = self.tours[mode].sum(0)
             self.generated_tours[mode] = self.tours[mode].sum(1)
 
