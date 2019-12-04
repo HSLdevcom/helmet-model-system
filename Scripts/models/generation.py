@@ -13,7 +13,7 @@ class GenerationModel:
     def init_tours(self):
         self.tours = pandas.Series(0, self.purpose.zone_numbers)
 
-    def add_tours(self, segment=None, age=None, is_car_user=None):
+    def add_tours(self):
         """Add generated tours to vector.
         
         Parameters
@@ -26,11 +26,8 @@ class GenerationModel:
             Whether population segment consists of car users or not
         """
         b = self.param
-        try:
-            for i in b:
-                self.tours += b[i] * self.zone_data[i][self.purpose.bounds]
-        except KeyError:
-            self.tours += b[age][is_car_user] * segment
+        for i in b:
+            self.tours += b[i] * self.zone_data[i][self.purpose.bounds]
 
     def get_tours(self):
         """Get vector of tour numbers
@@ -47,7 +44,7 @@ class GenerationModel:
 
 
 class NonHomeGeneration(GenerationModel):
-    def add_tours(self, segment, age, is_car_user):
+    def add_tours(self):
         pass
     
     def get_tours(self):

@@ -67,7 +67,7 @@ class DemandModel:
     def generate_tours(self):
         for purpose in self.tour_purposes:
             purpose.gen_model.init_tours()
-            if purpose.area == "peripheral":
+            if purpose.area == "peripheral" or purpose.dest == "source":
                 purpose.gen_model.add_tours()
         bounds = slice(0, self.zone_data.first_peripheral_zone)
         data = pandas.DataFrame()
@@ -86,10 +86,6 @@ class DemandModel:
                 for purpose in tour_list:
                     self.purpose_dict[purpose].gen_model.tours += nr_tours
                 nr_tours_sums[combination] = nr_tours.sum()
-            for purpose in self.tour_purposes:
-                if purpose.dest == "source" and purpose.area == "metropolitan":
-                    purpose.gen_model.add_tours(segment["car_users"], age, "car_users")
-                    purpose.gen_model.add_tours(segment["no_car"], age, "no_car")
             data[age] = nr_tours_sums.sort_index()
         result.print_matrix(data, "generation", "tour_combinations")
 

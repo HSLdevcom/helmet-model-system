@@ -2611,26 +2611,7 @@ tour_generation = {
         "oo": 0.007727243 / 0.067638093,
     },
     "so": {
-        "age_7-17": {
-            "car_users": 0,
-            "no_car": 0.099337,
-        },
-        "age_18-29": {
-            "car_users": 0.079434,
-            "no_car": 0.074901,
-        },
-        "age_30-49": {
-            "car_users": 0.051977,
-            "no_car": 0.038302,
-        },
-        "age_50-64": {
-            "car_users": 0.060209,
-            "no_car": 0.039072,
-        },
-        "age_65-99": {
-            "car_users": 0.072075,
-            "no_car": 0.077359,
-        },
+        "population": 0.133325428,
     },
     "wo": {
         # Some so trips continue with wo trips
@@ -2638,7 +2619,7 @@ tour_generation = {
     },
     "oo": {
         # Some so trips continue with oo trips
-        "so": 1,
+        "so": 0.067638093 / 0.133325428,
     },
     "hwp": {
         "population": 0.237579403,
