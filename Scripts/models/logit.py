@@ -359,11 +359,11 @@ class OriginModel(LogitModel):
         size = numpy.ones_like(exps)
         size = self._add_zone_util(size, b["size"])
         exps *= numpy.power(size, b["log"]["size"])
-        expsums = numpy.sum(exps, axis=0)
+        expsums = numpy.sum(exps, axis=1)
         prob = {}
         # Mode is needed here to get through tests even
         # though the origin model does not take modes into account.
-        prob["all"] = (exps / expsums).T
+        prob["all"] = exps.T / expsums
         return prob
 
 
