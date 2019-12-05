@@ -72,8 +72,10 @@ class ModelSystem:
                     purpose.init_sums()
                 else:
                     purpose_impedance = self.imptrans.transform(purpose, impedance)
-                    if purpose.area == "peripheral" or purpose.orig == "source" or purpose.dest == "source":
+                    if purpose.area == "peripheral" or purpose.name == "oop":
                         purpose.calc_prob(purpose_impedance)
+                        purpose.gen_model.init_tours()
+                        purpose.gen_model.add_tours()
                         demand = purpose.calc_demand()
                         if purpose.dest != "source":
                             for mode in demand:

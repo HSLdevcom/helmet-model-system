@@ -1,14 +1,36 @@
 import numpy
+import pandas
 import parameters
+import datahandling.resultdata as result
+
 
 class GenerationModel:
-    def __init__(self, zone_data, purpose):
-        self.zone_data = zone_data
+    def __init__(self, purpose):
+        self.zone_data = purpose.zone_data
         self.purpose = purpose
         self.param = parameters.tour_generation[purpose.name]
 
-    def generate_tours(self):
-        """Generate vector of tour numbers
+    def init_tours(self):
+        self.tours = pandas.Series(0, self.purpose.zone_numbers)
+
+    def add_tours(self):
+        """Add generated tours to vector.
+        
+        Parameters
+        ----------
+        segment : numpy 1-d array, optional
+            Population segment for which tours are added
+        age : string, optional
+            Age group of population segment
+        is_car_user : string, optional
+            Whether population segment consists of car users or not
+        """
+        b = self.param
+        for i in b:
+            self.tours += b[i] * self.zone_data[i][self.purpose.bounds]
+
+    def get_tours(self):
+        """Get vector of tour numbers
         from zone data.
         
         Return
@@ -16,25 +38,16 @@ class GenerationModel:
         numpy 1-d array
             Vector of tour numbers per zone
         """
-        tours = 0
-        b = self.param
-        for i in b:
-            tours += b[i] * self.zone_data[i][self.purpose.bounds]
-        return tours.values
-
-
-class Tours(GenerationModel):
-    def __init__(self, zone_data, purpose):
-        self.zone_data = zone_data
-        self.purpose = purpose
-        self.tours = 0
-    
-    def generate_tours(self):
-        return self.tours
+        result.print_data(
+            self.tours, "tours.txt", self.zone_data.zone_numbers, self.purpose.name)
+        return self.tours.values
 
 
 class NonHomeGeneration(GenerationModel):
-    def generate_tours(self):
+    def add_tours(self):
+        pass
+    
+    def get_tours(self):
         """Generate vector of tour numbers
         from attracted source tours.
         
@@ -48,6 +61,9 @@ class NonHomeGeneration(GenerationModel):
             b = self.param[source.name]
             for mode in source.attracted_tours:
                 tours += b * source.attracted_tours[mode]
+        result.print_data(
+            pandas.Series(tours, self.purpose.zone_numbers),
+            "tours.txt", self.zone_data.zone_numbers, self.purpose.name)
         return tours
 
 
@@ -64,7 +80,7 @@ class SecDestGeneration(GenerationModel):
             b = self.param
             self.tours[mode] += b[purpose.name] * demand[metropolitan, bounds]
     
-    def generate_tours(self, mode):
+    def get_tours(self, mode):
         """Generate matrix of tour numbers
         from attracted source tours.
         

@@ -70,12 +70,10 @@ class TourPurpose(Purpose):
             Data used for all demand calculations
         """
         Purpose.__init__(self, specification, zone_data)
-        if self.area == "metropolitan" and self.dest != "source":
-            self.gen_model = generation.Tours(zone_data, self)
-        elif self.orig == "source":
-            self.gen_model = generation.NonHomeGeneration(zone_data, self)
+        if self.orig == "source":
+            self.gen_model = generation.NonHomeGeneration(self)
         else:
-            self.gen_model = generation.GenerationModel(zone_data, self)
+            self.gen_model = generation.GenerationModel(self)
         if self.name == "sop":
             self.model = logit.OriginModel(zone_data, self)
         elif self.name == "so":
@@ -111,7 +109,7 @@ class TourPurpose(Purpose):
             Mode (car/transit/bike) : dict
                 Demand matrix for whole day : Demand
         """
-        tours = self.gen_model.generate_tours()
+        tours = self.gen_model.get_tours()
         demand = {}
         self.aggregated_demand = {}
         self.demand_sums = {}
@@ -132,7 +130,9 @@ class TourPurpose(Purpose):
         return demand
 
     def print_data(self, demand):
+        attracted_tours = 0
         for mode in demand:
+            attracted_tours += self.attracted_tours[mode]
             aggregated_demand = self._aggregate(demand[mode].matrix)
             result.print_matrix(aggregated_demand,
                                 "aggregated_demand", self.name + "_" + mode)
@@ -145,6 +145,9 @@ class TourPurpose(Purpose):
             result.print_data(
                 self.trip_lengths[mode], "trip_lengths.txt",
                 self.trip_lengths[mode].index, self.name + "_" + mode[0])
+        result.print_data(
+            attracted_tours, "attraction.txt",
+            self.zone_data.zone_numbers, self.name)
         demsums = self.demand_sums
         demand_all = sum(demsums.values())
         mode_shares = {mode: demsums[mode] / demand_all for mode in demsums}
@@ -206,7 +209,7 @@ class SecDestPurpose(Purpose):
             Data used for all demand calculations
         """
         Purpose.__init__(self, specification, zone_data)
-        self.gen_model = generation.SecDestGeneration(zone_data, self)
+        self.gen_model = generation.SecDestGeneration(self)
         self.model = logit.SecDestModel(zone_data, self)
         self.modes = self.model.dest_choice_param.keys()
 
@@ -220,7 +223,7 @@ class SecDestPurpose(Purpose):
         self.tours = {}
         self.init_sums()
         for mode in self.model.dest_choice_param:
-            self.tours[mode] = self.gen_model.generate_tours(mode)
+            self.tours[mode] = self.gen_model.get_tours(mode)
 
     def distribute_tours(self, mode, impedance, origin):
         """Decide the secondary destination for all tours (generated 

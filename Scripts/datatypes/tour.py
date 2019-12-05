@@ -30,7 +30,10 @@ class Tour:
         Position where to insert the demand
         """
         zone_data = self.purpose.zone_data
-        position = [zone_data.zone_index(self.orig)]
+        try:
+            position = [zone_data.zone_index(self.orig)]
+        except IndexError:
+            position = [zone_data.zone_index(self.orig.dest)]
         if self.dest is not None:
             position.append(zone_data.zone_index(self.dest))
         if self.sec_dest is not None:
@@ -39,7 +42,7 @@ class Tour:
 
     def choose_mode(self, is_car_user):
         model = self.purpose.model
-        probs = model.calc_individual_mode_prob(is_car_user, self.orig)
+        probs = model.calc_individual_mode_prob(is_car_user, self.position[0])
         self.mode = numpy.random.choice(a=self.purpose.modes, p=probs)
         self.purpose.generated_tours[self.mode][self.position[0]] += 1
 
