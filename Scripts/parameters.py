@@ -2614,12 +2614,13 @@ tour_generation = {
         "population": 0.133325428,
     },
     "wo": {
-        # Some so trips continue with wo trips
-        "so": 0.065687335 / 0.133325428,
+        "hw": 0.154948467,
     },
     "oo": {
-        # Some so trips continue with oo trips
-        "so": 0.067638093 / 0.133325428,
+        "hc": 0.056962844,
+        "hu": 0.1024485,
+        "hs": 0.114918825,
+        "ho": 0.030784426,
     },
     "hwp": {
         "population": 0.237579403,
@@ -2737,14 +2738,14 @@ tour_purposes = (
         "name": "wo",
         "orig": "source",
         "dest": "other",
-        "source": ("so",),
+        "source": ("hw",),
         "area": "all",
     },
     {
         "name": "oo",
         "orig": "source",
         "dest": "other",
-        "source": ("so",),
+        "source": ("hc", "hu", "hs", "ho",),
         "area": "all",
     },
     {
