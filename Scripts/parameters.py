@@ -1286,23 +1286,6 @@ destination_choice = {
             },
         },
     },
-    "so": {
-        "logsum": {
-            "attraction": {
-                "own_zone": 0.578607605,
-            },
-            "impedance": {},
-            "log": {
-                "logsum": 1.011586109,
-                "size": 0.814168308,
-            },
-            "size": {
-                "population": 1,
-                "workplaces": 2.572258993,
-                "cbd": (1, 5.674738917), # Fix
-            },
-        },
-    },
     "wo": {
         "car": {
             "attraction": {
@@ -1836,56 +1819,6 @@ mode_choice = {
         },
     },
     "hoo": None,
-    "so": {
-        "car": {
-            "constant": 0,
-            "generation": {},
-            "attraction": {
-                "parking_cost_work": -0.35058138,
-            },
-            "impedance": {
-                "time": -0.021901628,
-                "cost": -0.10378753,
-            },
-            "log": {},
-            "individual_dummy": {},
-        },
-        "transit": {
-            "constant": 0.437744247,
-            "generation": {},
-            "attraction": {
-                "cbd": 0.502605142,
-            },
-            "impedance": {
-                "time": -0.015704891,
-                "cost": -0.10378753 / 30,
-            },
-            "log": {},
-            "individual_dummy": {},
-        },
-        "bike": {
-            "constant": 0.911203717,
-            "generation": {},
-            "attraction": {},
-            "impedance": {},
-            "log": {
-                "dist": -1.292779721,
-            },
-            "individual_dummy": {},
-        }, 
-        "walk": {
-            "constant": 3.309720696,
-            "generation": {},
-            "attraction": {
-                "own_zone_area_sqrt": -2.154849688,
-            },
-            "impedance": {},
-            "log": {
-                "dist": -2.70272318,
-            },
-            "individual_dummy": {},
-        },
-    },
     "wo": {
        "car": {
             "constant": 0,
@@ -2610,9 +2543,6 @@ tour_generation = {
         "wo": 0.006012753 / 0.065687335,
         "oo": 0.007727243 / 0.067638093,
     },
-    "so": {
-        "population": 0.133325428,
-    },
     "wo": {
         "hw": 0.154948467,
     },
@@ -2726,12 +2656,6 @@ tour_purposes = (
         "name": "ho",
         "orig": "home",
         "dest": "other",
-        "area": "metropolitan",
-    },
-    {
-        "name": "so",
-        "orig": "home",
-        "dest": "source",
         "area": "metropolitan",
     },
     {

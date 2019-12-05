@@ -46,11 +46,6 @@ class LogitModelTest(unittest.TestCase):
             prob = model.calc_prob(impedance)
             for mode in ("car", "transit", "bike", "walk"):
                 self._validate(prob[mode])
-        pur.name = "so"
-        model = DestModeModel(zd, pur)
-        prob = model.calc_prob(impedance)
-        for mode in ("car", "transit", "bike", "walk"):
-            self._validate(prob[mode])
         for i in ("wo", "oo"):
             pur.name = i
             model = ModeDestModel(zd, pur)
