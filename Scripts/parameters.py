@@ -2048,8 +2048,14 @@ mode_choice = {
 }
 # Scale parameter used in upper level of tour pattern model
 tour_number_scale = 0.622253957
-
-tour_patterns = {
+# Calibration of tour numbers
+tour_number_increase = {
+    1: 1,
+    2: 1.002732179,
+    3: 1.05446538,
+    4: 1.2455917 + 0.1043963,
+}
+tour_combinations = {
 # utility function 1
     0: {
         "-" : {

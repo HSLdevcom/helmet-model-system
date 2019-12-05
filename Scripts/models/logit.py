@@ -370,11 +370,12 @@ class OriginModel(LogitModel):
 class GenerationModel():
     def __init__(self, zone_data):
         self.zone_data = zone_data
-        self.param = parameters.tour_patterns
+        self.param = parameters.tour_combinations
         self.conditions = parameters.tour_conditions
+        self.increases = parameters.tour_number_increase
     
     def calc_prob(self, age_group, is_car_user, zones):
-        """Calculate choice probabilities for each tour pattern.
+        """Calculate choice probabilities for each tour combination.
         
         Parameters
         ----------
@@ -388,33 +389,33 @@ class GenerationModel():
         Return
         ------
         dict
-            Tour pattern (-/hw/hw-ho/...) : float or numpy 1-d array
+            Tour combination (-/hw/hw-ho/...) : float or numpy 1-d array
                 Choice probability
         """
         prob = {}
         nr_tours_exps = {}
         nr_tours_expsum = 0
         for nr_tours in self.param:
-            pattern_exps = {}
-            pattern_expsum = 0
-            for tour_pattern in self.param[nr_tours]:
-                if tour_pattern in self.conditions:
-                    if self.conditions[tour_pattern][0]:
+            combination_exps = {}
+            combination_expsum = 0
+            for tour_combination in self.param[nr_tours]:
+                if tour_combination in self.conditions:
+                    if self.conditions[tour_combination][0]:
                         # If this tour pattern is exclusively for one age group
-                        if age_group == self.conditions[tour_pattern][1]:
+                        if age_group == self.conditions[tour_combination][1]:
                             is_allowed = True
                         else:
                             is_allowed = False
                     else:
                         # If one age group is excluded from this tour pattern
-                        if age_group == self.conditions[tour_pattern][1]:
+                        if age_group == self.conditions[tour_combination][1]:
                             is_allowed = False
                         else:
                             is_allowed = True
                 else:
                     is_allowed = True
                 if is_allowed:
-                    param = self.param[nr_tours][tour_pattern]
+                    param = self.param[nr_tours][tour_combination]
                     util = 0
                     util += param["constant"]
                     for i in param["zone"]:
@@ -424,27 +425,32 @@ class GenerationModel():
                         util += dummies[age_group]
                     if is_car_user and "car_users" in dummies:
                         util += dummies["car_users"]
-                    pattern_exps[tour_pattern] = numpy.exp(util)
+                    combination_exps[tour_combination] = numpy.exp(util)
                 else:
-                    pattern_exps[tour_pattern] = 0
-                pattern_expsum += pattern_exps[tour_pattern]
-            for tour_pattern in self.param[nr_tours]:
+                    combination_exps[tour_combination] = 0
+                combination_expsum += combination_exps[tour_combination]
+            for tour_combination in self.param[nr_tours]:
                 try:
-                    prob[tour_pattern] = ( pattern_exps[tour_pattern]
-                                         / pattern_expsum)
+                    prob[tour_combination] = ( combination_exps[tour_combination]
+                                             / combination_expsum)
                 except ZeroDivisionError:
                     # Specifically, no 4-tour patterns are allowed for
                     # 7-17-year-olds, so sum will be zero in this case
-                    prob[tour_pattern] = 0
+                    prob[tour_combination] = 0
             util = 0
             nr_tours_exps[nr_tours] = numpy.exp(util)
             scale_param = parameters.tour_number_scale
-            nr_tours_exps[nr_tours] *= numpy.power(pattern_expsum, scale_param)
+            nr_tours_exps[nr_tours] *= numpy.power(combination_expsum, scale_param)
             nr_tours_expsum += nr_tours_exps[nr_tours]
+        prob["-"] = 1
         for nr_tours in self.param:
-            nr_tours_prob = nr_tours_exps[nr_tours] / nr_tours_expsum
-            for tour_pattern in self.param[nr_tours]:
-                prob[tour_pattern] *= nr_tours_prob
+            if nr_tours != 0:
+                nr_tours_prob = nr_tours_exps[nr_tours] / nr_tours_expsum
+                # Tour number probability is calibrated
+                nr_tours_prob *= self.increases[nr_tours]
+                prob["-"] -= nr_tours_prob
+                for tour_combination in self.param[nr_tours]:
+                    prob[tour_combination] *= nr_tours_prob
         return prob
 
 class CarUseModel(LogitModel):
