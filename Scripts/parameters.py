@@ -596,14 +596,23 @@ demand_share = {
         },
     },
     "external": {
-        # External matrices are untransposed,
+        # External matrices are untransposed (ext->int),
         # and describe trips, not tours
         "car": {
-            # TODO This is a way of implementing road-specific parameters,
-            # but it will work only with a fixed number of external zones,
-            # so no testing is possible.
-            # "aht": ([[0.01], [0.01]], [[0.01], [0.01]]),
-            "aht": (0.042, 0.028),
+            "aht": (
+                [
+                    [0.042], [0.049], [0.042], [0.055], [0.042], [0.058],
+                    [0.042], [0.042], [0.042], [0.042], [0.042], [0.061],
+                    [0.030], [0.042], [0.042], [0.041], [0.038], [0.040],
+                    [0], [0], [0], [0.043], [0.0], [0.0], [0.0], [0.250],
+                ], 
+                [
+                    [0.028], [0.024], [0.028], [0.018], [0.028], [0.045],
+                    [0.028], [0.028], [0.028], [0.028], [0.028], [0.031],
+                    [0.039], [0.028], [0.028], [0.034], [0.028], [0.046],
+                    [0], [0], [0], [0.042], [0.0], [0.0], [0.083], [0.0],
+                ],
+            ),
             "pt": (0.05, 0.05),
             "iht": (0.045, 0.055),
         },
@@ -623,6 +632,11 @@ demand_share = {
             "iht": (0.033, 0.033),
         },
     },
+}
+backup_demand_share = {
+    "aht": (0.042, 0.028),
+    "pt": (0.05, 0.05),
+    "iht": (0.045, 0.055),
 }
 
 impedance_share = {

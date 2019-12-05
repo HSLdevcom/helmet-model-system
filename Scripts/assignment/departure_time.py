@@ -1,7 +1,7 @@
 import logging
 import numpy
 import os
-from parameters import emme_scenario, demand_share, assignment_class, transport_classes
+from parameters import emme_scenario, demand_share, backup_demand_share, assignment_class, transport_classes
 
 class DepartureTimeModel:
     def __init__(self, nr_zones):
@@ -65,8 +65,14 @@ class DepartureTimeModel:
             c_n = c_0 + 1
             mtx = numpy.asarray([mtx])
         large_mtx = self.demand[time_period][ass_class]
-        large_mtx[r_0:r_n, c_0:c_n] += demand_share[0] * mtx
-        large_mtx[c_0:c_n, r_0:r_n] += demand_share[1] * mtx.T
+        try:
+            large_mtx[r_0:r_n, c_0:c_n] += demand_share[0] * mtx
+            large_mtx[c_0:c_n, r_0:r_n] += demand_share[1] * mtx.T
+        except ValueError:
+            share = backup_demand_share[time_period]
+            large_mtx[r_0:r_n, c_0:c_n] += share[0] * mtx
+            large_mtx[c_0:c_n, r_0:r_n] += share[1] * mtx.T
+            self.logger.warn("Zone numbers not matching. Resorted to backup demand shares.")
 
     def _add_3d_demand(self, demand, ass_class, time_period):
         """Add three-way demand."""
