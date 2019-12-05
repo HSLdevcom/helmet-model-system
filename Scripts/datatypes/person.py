@@ -26,11 +26,22 @@ class Person:
 
     def add_tours(self, purposes):
         self.tours = []
-        prob = self.generation_model.calc_prob(self.age_group, self.is_car_user, self.zone)
-        pattern = numpy.random.choice(a=prob.keys(), p=prob.values())
-        tour_list = pattern.split('-')
+        prob = self.generation_model.calc_prob(
+            self.age_group, self.is_car_user, self.zone)
+        tour_combination = numpy.random.choice(a=prob.keys(), p=prob.values())
+        tour_list = tour_combination.split('-')
         if tour_list[0] == "":
             tour_list = []
         for key in tour_list:
             tour = Tour(purposes[key], self.zone)
             self.tours.append(tour)
+            if key == "hw":
+                non_home_prob = purposes["wo"].gen_model.param[key]
+                if random.random() < non_home_prob:
+                    non_home_tour = Tour(purposes["wo"], tour)
+                    self.tours.append(non_home_tour)
+            else:
+                non_home_prob = purposes["oo"].gen_model.param[key]
+                if random.random() < non_home_prob:
+                    non_home_tour = Tour(purposes["oo"], tour)
+                    self.tours.append(non_home_tour)

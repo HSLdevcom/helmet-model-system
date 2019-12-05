@@ -228,24 +228,23 @@ class ModeDestModel(LogitModel):
         is_car_user : bool
             Whether the agent is car user or not
         zone : int
-            Zone number where the agent lives
+            Index of zone where the agent lives
         
         Return
         ------
         list
             Choice probabilities for purpose modes
         """
-        zone_idx = self.zone_data.zone_index(zone)
         mode_exps = {}
         mode_expsum = 0
         for mode in self.mode_choice_param:
-            mode_exps[mode] = self.mode_exps[mode][zone_idx]
+            mode_exps[mode] = self.mode_exps[mode][zone]
             b = self.mode_choice_param[mode]["individual_dummy"]
             if is_car_user and "car_users" in b:
                 try:
                     mode_exps[mode] *= math.exp(b["car_users"])
                 except TypeError:
-                    if zone_idx < self.zone_data.first_surrounding_zone:
+                    if zone < self.zone_data.first_surrounding_zone:
                         mode_exps[mode] *= math.exp(b["car_users"][0])
                     else:
                         mode_exps[mode] *= math.exp(b["car_users"][1])
