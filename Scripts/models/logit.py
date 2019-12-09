@@ -487,8 +487,10 @@ class CarUseModel(LogitModel):
             dummy_prob += dummy_share * ind_prob
         no_dummy_prob = no_dummy_share * prob
         prob = no_dummy_prob + dummy_prob
-        return pandas.Series(
+        prob = pandas.Series(
             prob, self.zone_data.zone_numbers[self.bounds])
+        self.print_results(prob)
+        return prob
     
     def calc_individual_prob(self, age_group, gender, zone=None):
         if zone is None:
@@ -503,3 +505,37 @@ class CarUseModel(LogitModel):
         prob = exp / (exp+1)
         return prob
 
+    def print_results(self, prob):
+        """ Print results, mainly for calibration purposes"""
+        population = self.zone_data["population"]
+        population_7_99 = ( population[:self.zone_data.first_peripheral_zone]
+                          * self.zone_data["share_age_7-99"])
+        car_users = prob * population_7_99
+                
+        # Print car user share by zone
+        result.print_data(prob, "car_use.txt",
+                          self.zone_data.zone_numbers[self.bounds], "car_use")
+        
+        # print car use share by municipality
+        prob_municipality = []
+        for municipality in parameters.municipality:
+            i = slice(parameters.municipality[municipality][0],
+                      parameters.municipality[municipality][1])
+            # comparison data has car user shares of population
+            # over 6 years old (from HEHA)
+            prob_municipality.append( car_users.loc[i].sum() 
+                                    / population_7_99.loc[i].sum())
+        result.print_data(prob_municipality, "car_use_per_municipality.txt",
+                          parameters.municipality.keys(), "car_use")
+                          
+        # print car use share by area (to get Helsinki CBD vs. Helsinki other)
+        prob_area = []
+        for area in parameters.areas:
+            i = slice(parameters.areas[area][0],
+                      parameters.areas[area][1])
+            # comparison data has car user shares of population
+            # over 6 years old (from HEHA)
+            prob_area.append( car_users.loc[i].sum()
+                            / population_7_99.loc[i].sum())
+        result.print_data(prob_area, "car_use_per_area.txt",
+                          parameters.areas.keys(), "car_use")
