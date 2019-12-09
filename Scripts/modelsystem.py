@@ -168,14 +168,15 @@ class ModelSystem:
                     cost_ratio, "impedance_ratio.txt",
                     self.ass_model.zone_numbers, "cost")
             if is_last_iteration:
+                zone_numbers = self.ass_model.zone_numbers
                 with self.resultmatrices.open("demand", tp, 'w') as mtx:
-                    mtx.mapping = self.ass_model.zone_numbers
+                    mtx.mapping = zone_numbers
                     for ass_class in self.dtm.demand[tp]:
                         mtx[ass_class] = self.dtm.demand[tp][ass_class]
                     self.logger.info("Saved demand matrices for " + str(tp))
                 for mtx_type in impedance[tp]:
                     with self.resultmatrices.open(mtx_type, tp, 'w') as mtx:
-                        mtx.mapping = self.ass_model.zone_numbers
+                        mtx.mapping = zone_numbers
                         for ass_class in impedance[tp][mtx_type]:
                             cost_data = impedance[tp][mtx_type][ass_class]
                             mtx[ass_class] = cost_data
