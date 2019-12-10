@@ -9,6 +9,7 @@ except ImportError:
 
 _path = ".."
 _buffer = {}
+_iteration_buffer = {}
 
 def set_path(scenario):
     script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -29,6 +30,13 @@ def print_data(data, filename, zone_numbers, colname):
         _buffer[filename] = pandas.DataFrame(index=zone_numbers)
     _buffer[filename][colname] = data
     _buffer[filename].to_csv(filepath, sep='\t', float_format="%1.5f")
+    
+def print_iteration_data(data, filename, zone_numbers, colname):
+    filepath = os.path.join(_path, filename)
+    if filename not in _iteration_buffer:
+        _iteration_buffer[filename] = pandas.DataFrame(index=zone_numbers)
+    _iteration_buffer[filename][colname] = data
+    _iteration_buffer[filename].to_csv(filepath, sep='\t', float_format="%1.5f")    
 
 def print_matrix(data, filename, sheetname):
     if _use_txt:

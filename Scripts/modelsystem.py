@@ -3,6 +3,7 @@ import datahandling.resultdata as result
 import assignment.departure_time as dt
 from datahandling.zonedata import ZoneData
 from datahandling.matrixdata import MatrixData
+import datahandling.resultdata as result
 from demand.freight import FreightModel
 from demand.trips import DemandModel
 from demand.external import ExternalModel
@@ -36,6 +37,7 @@ class ModelSystem:
         self.imptrans = ImpedanceTransformer()
         self.ass_classes = dict.fromkeys(parameters.emme_mtx["demand"].keys())
         self.mode_share = []
+        self.iteration_counter = 0
 
     def assign_base_demand(self, use_fixed_transit_cost=False):
         self.trucks = self.fm.calc_freight_traffic("truck")
@@ -64,6 +66,7 @@ class ModelSystem:
         return impedance
 
     def run(self, impedance, is_last_iteration=False):
+        self.iteration_counter += 1
         self.dtm.add_demand(self.trucks)
         self.dtm.add_demand(self.trailer_trucks)
         if self.is_agent_model:
@@ -118,7 +121,6 @@ class ModelSystem:
                     if purpose.dest != "source":
                         for mode in demand:
                             self.dtm.add_demand(demand[mode])
-        trip_sum = {}
         for mode in parameters.external_modes:
             if mode == "truck":
                 int_demand = self.trucks.matrix.sum(0) + self.trucks.matrix.sum(1)
@@ -136,12 +138,20 @@ class ModelSystem:
                         int_demand[bounds] += purpose.generated_tours[mode]
                         int_demand += purpose.attracted_tours[mode]
             ext_demand = self.em.calc_external(mode, int_demand)
-            trip_sum[mode] = int_demand.sum()
             self.dtm.add_demand(ext_demand)
-        sum_all = sum(trip_sum.values())
+        tour_sum = {}
+        for mode in ["car", "transit", "bike", "walk"]:
+            tour_sum[mode] = 0
+        for purpose in self.dm.tour_purposes:
+            if (purpose.dest != "source") and not isinstance(purpose, SecDestPurpose):
+                for mode in purpose.demand_sums:
+                    tour_sum[mode] += purpose.demand_sums[mode]
+        sum_all = sum(tour_sum.values())
+        result.print_iteration_data(tour_sum.values(), "tour_sum.txt", tour_sum.keys(),
+            "iteration_" + str(self.iteration_counter))
         mode_share = {}
-        for mode in trip_sum:
-            mode_share[mode] = trip_sum[mode] / sum_all
+        for mode in tour_sum:
+            mode_share[mode] = tour_sum[mode] / sum_all
         self.mode_share.append(mode_share)
         impedance = {}
         for tp in parameters.emme_scenario:
@@ -181,6 +191,24 @@ class ModelSystem:
                         for ass_class in impedance[tp][mtx_type]:
                             cost_data = impedance[tp][mtx_type][ass_class]
                             mtx[ass_class] = cost_data
+        # print impedance for convergence check
+        # (OBS! these o-d pairs only work for the test network;
+        #  the real o-d pairs are currently hard coded in another branch
+        #  for calibration, and should be implemented differently later)
+        car_times = {}
+        car_times["aht_od_1"] = impedance["aht"]["time"]["car_work"][
+            self.zdata_base.zone_index(5),self.zdata_base.zone_index(7)]
+        car_times["aht_od_2"] = impedance["aht"]["time"]["car_work"][
+            self.zdata_base.zone_index(7),self.zdata_base.zone_index(5)]
+        car_times["iht_od_3"] = impedance["iht"]["time"]["car_work"][
+            self.zdata_base.zone_index(6),self.zdata_base.zone_index(7)]
+        car_times["iht_od_4"] = impedance["iht"]["time"]["car_work"][
+            self.zdata_base.zone_index(7),self.zdata_base.zone_index(6)]
+        result.print_iteration_data(car_times.values(),
+                                    "impedance_convergence.txt",
+                                    car_times.keys(),
+                                    "iteration_" + str(self.iteration_counter))
+
         self.dtm.init_demand()
         result.flush()
         return impedance
