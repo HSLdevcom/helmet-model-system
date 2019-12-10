@@ -2553,13 +2553,13 @@ tour_generation = {
         "ho": 0.030784426,
     },
     "hwp": {
-        "population": 0.0619 * 0.237579403,
+        "population": (1-0.0619) * 0.237579403,
     },
     "hop": {
-        "population": 0.0619 * 0.561035077,
+        "population": (1-0.0619) * 0.561035077,
     },
     "sop": {
-        "population": 0.0619 * 0.050959288,
+        "population": (1-0.0619) * 0.050959288,
     },
     "oop": {
         # Every sop trip continues with oop trip
