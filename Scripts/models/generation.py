@@ -68,6 +68,18 @@ class NonHomeGeneration(GenerationModel):
 
 
 class SecDestGeneration(GenerationModel):
+    def init_tours(self):
+        self.tours = dict.fromkeys(self.purpose.modes)
+        for mode in self.tours:
+            self.tours[mode] = 0
+    
+    def add_tours(self, demand, mode, purpose):
+        if mode in self.purpose.modes:
+            bounds = self.purpose.bounds
+            metropolitan = next(iter(self.purpose.sources)).bounds
+            b = self.param
+            self.tours[mode] += b[purpose.name] * demand[metropolitan, bounds]
+    
     def get_tours(self, mode):
         """Generate matrix of tour numbers
         from attracted source tours.
@@ -77,10 +89,4 @@ class SecDestGeneration(GenerationModel):
         numpy 2-d matrix
             Matrix of tour numbers per origin-destination pair
         """
-        tours = 0
-        bounds = self.purpose.bounds
-        metropolitan = next(iter(self.purpose.sources)).bounds
-        b = self.param
-        for source in self.purpose.sources:
-            tours += b[source.name] * source.demand[mode][metropolitan, bounds]
-        return tours
+        return self.tours[mode]

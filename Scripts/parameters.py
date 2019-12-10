@@ -768,20 +768,23 @@ impedance_share = {
         },
     },
     "hoo": {
+        # Only un-transposed afternoon matrices are used.
+        # However, the secondary destination choice is done "backwards",
+        # from destination 1 to origin.
         "car": {
             "aht": (0, 0),
             "pt":  (0, 0),
-            "iht": (0, 1),
+            "iht": (1, 0),
         },
         "transit": {
             "aht": (0, 0),
             "pt":  (0, 0),
-            "iht": (0, 1),
+            "iht": (1, 0),
         },
         "bike": {
             "aht": (0, 0),
             "pt":  (0, 0),
-            "iht": (0, 1),
+            "iht": (1, 0),
         },
     },
     "so": {
@@ -2656,6 +2659,9 @@ distance_boundary = {
     "bike": 60,
     "walk": 15,
 }
+# O-D pairs with demand below threshold are neglected in sec dest calculation
+secondary_destination_threshold = 0.1
+
 ### DEMAND MODEL REFERENCES ###
 
 tour_purposes = (
@@ -2709,7 +2715,7 @@ tour_purposes = (
         "dest": "any",
         "sec_dest": "any",
         "source": ("hw", "hc", "hu", "hs", "ho", "wo", "oo",),
-        "area": "all",
+        "area": "metropolitan",
     },
     {
         "name": "hwp",

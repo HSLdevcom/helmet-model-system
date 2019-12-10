@@ -52,7 +52,7 @@ class Purpose:
         return self.zone_data.zone_numbers[self.bounds]
 
 class TourPurpose(Purpose):
-    def __init__(self, specification, zone_data):
+    def __init__(self, specification, zone_data, is_agent_model):
         """Standard two-way tour purpose.
 
         Parameters
@@ -75,12 +75,13 @@ class TourPurpose(Purpose):
         else:
             self.gen_model = generation.GenerationModel(self)
         if self.name == "sop":
-            self.model = logit.OriginModel(zone_data, self)
+            self.model = logit.OriginModel(zone_data, self, is_agent_model)
         elif self.name == "so":
-            self.model = logit.DestModeModel(zone_data, self)
+            self.model = logit.DestModeModel(zone_data, self, is_agent_model)
         else:
-            self.model = logit.ModeDestModel(zone_data, self)
+            self.model = logit.ModeDestModel(zone_data, self, is_agent_model)
         self.modes = self.model.mode_choice_param.keys()
+        self.sec_dest_purpose = None
 
     def init_sums(self):
         for mode in self.modes:
@@ -110,30 +111,33 @@ class TourPurpose(Purpose):
         """
         tours = self.gen_model.get_tours()
         demand = {}
-        self.demand = {}
         self.aggregated_demand = {}
         self.demand_sums = {}
         self.trip_lengths = {}
         for mode in self.model.mode_choice_param:
-            self.demand[mode] = (self.prob[mode] * tours).T
-            demand[mode] = Demand(self, mode, self.demand[mode])
-            self.attracted_tours[mode] = self.demand[mode].sum(0)
-            self.generated_tours[mode] = self.demand[mode].sum(1)
+            mtx = (self.prob.pop(mode) * tours).T
+            try:
+                self.sec_dest_purpose.gen_model.add_tours(mtx, mode, self)
+            except AttributeError:
+                pass
+            demand[mode] = Demand(self, mode, mtx)
+            self.attracted_tours[mode] = mtx.sum(0)
+            self.generated_tours[mode] = mtx.sum(1)
             self.demand_sums[mode] = self.generated_tours[mode].sum()
             self.trip_lengths[mode] = self._count_trip_lengths(
-                self.demand[mode], self.dist)
-        self.print_data()
+                mtx, self.dist)
+        self.print_data(demand)
         return demand
 
-    def print_data(self):
+    def print_data(self, demand):
         attracted_tours = 0
-        for mode in self.model.mode_choice_param:
+        for mode in demand:
             attracted_tours += self.attracted_tours[mode]
-            aggregated_demand = self._aggregate(self.demand[mode])
+            aggregated_demand = self._aggregate(demand[mode].matrix)
             result.print_matrix(aggregated_demand,
                                 "aggregated_demand", self.name + "_" + mode)
             own_zone = self.zone_data.get_data("own_zone", self.bounds)
-            own_zone_demand = own_zone * self.demand[mode]
+            own_zone_demand = own_zone * demand[mode].matrix
             own_zone_aggregated = self._aggregate(own_zone_demand)
             result.print_data(
                 numpy.diag(own_zone_aggregated), "own_zone_demand.txt",
@@ -187,7 +191,7 @@ class TourPurpose(Purpose):
 
 
 class SecDestPurpose(Purpose):
-    def __init__(self, specification, zone_data):
+    def __init__(self, specification, zone_data, is_agent_model):
         """Purpose for secondary destination of tour.
 
         Parameters
@@ -206,23 +210,23 @@ class SecDestPurpose(Purpose):
         """
         Purpose.__init__(self, specification, zone_data)
         self.gen_model = generation.SecDestGeneration(self)
-        self.model = logit.SecDestModel(zone_data, self)
+        self.model = logit.SecDestModel(zone_data, self, is_agent_model)
+        self.modes = self.model.dest_choice_param.keys()
 
     def init_sums(self):
         for mode in self.model.dest_choice_param:
-            self.generated_tours[mode] = numpy.zeros_like(next(iter(self.sources)).zone_numbers)
-            self.attracted_tours[mode] = numpy.zeros_like(self.zone_numbers)
+            self.generated_tours[mode] = 0
+            self.attracted_tours[mode] = numpy.zeros_like(self.zone_data.zone_numbers, float)
 
     def generate_tours(self):
         """Generate the source tours without secondary destinations."""
         self.tours = {}
+        self.init_sums()
         for mode in self.model.dest_choice_param:
             self.tours[mode] = self.gen_model.get_tours(mode)
-            self.attracted_tours[mode] = self.tours[mode].sum(0)
-            self.generated_tours[mode] = self.tours[mode].sum(1)
 
     def distribute_tours(self, mode, impedance, origin):
-        """Decide the secondary destination for all tours (generated 
+        """Decide the secondary destinations for all tours (generated 
         earlier) starting from one specific zone.
         
         Parameters
@@ -240,16 +244,36 @@ class SecDestPurpose(Purpose):
             Matrix of destination -> secondary_destination pairs
             The origin zone for all of these tours
         """
+        generation = self.tours[mode][origin, :]
+        # All o-d pairs below threshold are neglected,
+        # total demand is increased for other pairs.
+        dests = generation > param.secondary_destination_threshold
+        if not dests.any():
+            # If no o-d pairs have demand above threshold,
+            # the sole destination with largest demand is picked
+            dests = generation.argmax()
+            generation_sum = generation.sum()
+            generation.fill(0)
+            generation[dests] = generation_sum
+        else:
+            generation[dests] *= generation.sum() / generation[dests].sum()
+            generation[~dests] = 0
         dest_imp = {}
         for mtx_type in impedance:
-            dest_imp[mtx_type] = ( impedance[mtx_type]
-                                 + impedance[mtx_type][:, origin]
-                                 - impedance[mtx_type][origin, :][:, numpy.newaxis])
+            try:
+                dest_imp[mtx_type] = ( impedance[mtx_type][dests, :]
+                                     + impedance[mtx_type][:, origin]
+                                     - impedance[mtx_type][dests, origin][:, numpy.newaxis])
+            except IndexError:
+                dest_imp[mtx_type] = ( impedance[mtx_type][dests, :]
+                                     + impedance[mtx_type][:, origin]
+                                     - impedance[mtx_type][dests, origin])
         # TODO Make origin distinction between impedance matrix and lookup
         # In peripheral area these would not be the same
-        prob = self.model.calc_prob(mode, dest_imp, origin)
-        demand = (prob * self.tours[mode][origin, :]).T
-        self.attracted_tours[mode] += demand.sum(0)
+        prob = self.model.calc_prob(mode, dest_imp, origin, dests)
+        demand = numpy.zeros_like(impedance["time"])
+        demand[dests, :] = (prob * generation[dests]).T
+        self.attracted_tours[mode][self.bounds] += demand.sum(0)
         return Demand(self, mode, demand, origin)
 
     def calc_prob(self, mode, impedance, position):
@@ -280,5 +304,5 @@ class SecDestPurpose(Purpose):
         for mtx_type in impedance:
             dest_imp[mtx_type] = ( impedance[mtx_type][dest, :]
                                  + impedance[mtx_type][:, orig]
-                                 - impedance[mtx_type][orig, dest])
+                                 - impedance[mtx_type][dest, orig])
         return self.model.calc_prob(mode, dest_imp, orig, dest)

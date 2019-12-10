@@ -20,11 +20,12 @@ class ModelSystem:
         self.zdata_forecast = ZoneData(zone_data_path, ass_model.zone_numbers)
         self.basematrices = MatrixData(base_matrices)
         self.resultmatrices = MatrixData(name)
-        self.dm = DemandModel(self.zdata_forecast)
         self.is_agent_model = is_agent_model
         if is_agent_model:
+            self.dm = DemandModel(self.zdata_forecast, is_agent_model)
             self.dm.create_population()
         else:
+            self.dm = DemandModel(self.zdata_forecast)
             self.dm.create_population_segments()
         self.fm = FreightModel(self.zdata_base,
                                self.zdata_forecast,
@@ -94,7 +95,9 @@ class ModelSystem:
                     self.dtm.add_demand(tour)
         else:
             for purpose in self.dm.tour_purposes:
-                if not isinstance(purpose, SecDestPurpose):
+                if isinstance(purpose, SecDestPurpose):
+                    purpose.gen_model.init_tours()
+                else:
                     purpose_impedance = self.imptrans.transform(purpose, impedance)
                     purpose.calc_prob(purpose_impedance)
             self.dm.generate_tours()

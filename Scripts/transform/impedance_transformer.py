@@ -19,7 +19,10 @@ class ImpedanceTransformer:
                 Type (time/cost/dist) : numpy 2-d matrix
         """
         rows = purpose.bounds
-        cols = slice(0, purpose.zone_data.nr_zones)
+        if purpose.name == "hoo":
+            cols = purpose.bounds
+        else:
+            cols = slice(0, purpose.zone_data.nr_zones)
         day_imp = {}
         for mode in impedance_share[purpose.name]:
             day_imp[mode] = {}
