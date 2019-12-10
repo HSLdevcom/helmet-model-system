@@ -2629,7 +2629,7 @@ distance_boundary = {
     "walk": 15,
 }
 # O-D pairs with demand below threshold are neglected in sec dest calculation
-secondary_destination_threshold = 0.5
+secondary_destination_threshold = 0.1
 
 ### DEMAND MODEL REFERENCES ###
 
