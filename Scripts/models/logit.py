@@ -144,12 +144,8 @@ class LogitModel:
                 utility += b[i] * data
             except ValueError: # Separate params for orig and dest
                 u = self.zone_data.first_peripheral_zone
-                if utility.ndim == 1: # 1-d array calculation
-                    utility += b[i][0] * data[orig, :u]
-                    utility += b[i][1] * data[dest, :u]
-                else: # 2-d matrix calculation
-                    utility += b[i][0] * data[orig, :u]
-                    utility += b[i][1] * data[:, :u]
+                utility += b[i][0] * data[orig, :u]
+                utility += b[i][1] * data[dest, :u]
         return utility
 
     def _add_log_zone_util(self, exps, b, generation=False):

@@ -226,7 +226,7 @@ class SecDestPurpose(Purpose):
             self.tours[mode] = self.gen_model.get_tours(mode)
 
     def distribute_tours(self, mode, impedance, origin):
-        """Decide the secondary destination for all tours (generated 
+        """Decide the secondary destinations for all tours (generated 
         earlier) starting from one specific zone.
         
         Parameters
@@ -244,15 +244,35 @@ class SecDestPurpose(Purpose):
             Matrix of destination -> secondary_destination pairs
             The origin zone for all of these tours
         """
+        generation = self.tours[mode][origin, :]
+        # All o-d pairs below threshold are neglected,
+        # total demand is increased for other pairs.
+        dests = generation > param.secondary_destination_threshold
+        if not dests.any():
+            # If no o-d pairs have demand above threshold,
+            # the sole destination with largest demand is picked
+            dests = generation.argmax()
+            generation_sum = generation.sum()
+            generation.fill(0)
+            generation[dests] = generation_sum
+        else:
+            generation[dests] *= generation.sum() / generation[dests].sum()
+            generation[~dests] = 0
         dest_imp = {}
         for mtx_type in impedance:
-            dest_imp[mtx_type] = ( impedance[mtx_type]
-                                 + impedance[mtx_type][:, origin]
-                                 - impedance[mtx_type][origin, :][:, numpy.newaxis])
+            try:
+                dest_imp[mtx_type] = ( impedance[mtx_type][dests, :]
+                                     + impedance[mtx_type][:, origin]
+                                     - impedance[mtx_type][dests, origin][:, numpy.newaxis])
+            except IndexError:
+                dest_imp[mtx_type] = ( impedance[mtx_type][dests, :]
+                                     + impedance[mtx_type][:, origin]
+                                     - impedance[mtx_type][dests, origin])
         # TODO Make origin distinction between impedance matrix and lookup
         # In peripheral area these would not be the same
-        prob = self.model.calc_prob(mode, dest_imp, origin)
-        demand = (prob * self.tours[mode][origin, :]).T
+        prob = self.model.calc_prob(mode, dest_imp, origin, dests)
+        demand = numpy.zeros_like(impedance["time"])
+        demand[dests, :] = (prob * generation[dests]).T
         self.attracted_tours[mode][self.bounds] += demand.sum(0)
         return Demand(self, mode, demand, origin)
 
@@ -284,5 +304,5 @@ class SecDestPurpose(Purpose):
         for mtx_type in impedance:
             dest_imp[mtx_type] = ( impedance[mtx_type][dest, :]
                                  + impedance[mtx_type][:, orig]
-                                 - impedance[mtx_type][orig, dest])
+                                 - impedance[mtx_type][dest, orig])
         return self.model.calc_prob(mode, dest_imp, orig, dest)
