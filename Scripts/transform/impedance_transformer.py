@@ -18,11 +18,11 @@ class ImpedanceTransformer:
             Mode (car/transit/bike/walk) : dict
                 Type (time/cost/dist) : numpy 2-d matrix
         """
+        rows = purpose.bounds
         if purpose.name == "hoo":
-            rows = slice(0, purpose.zone_data.nr_zones)
+            cols = purpose.bounds
         else:
-            rows = purpose.bounds
-        cols = slice(0, purpose.zone_data.nr_zones)
+            cols = slice(0, purpose.zone_data.nr_zones)
         day_imp = {}
         for mode in impedance_share[purpose.name]:
             day_imp[mode] = {}

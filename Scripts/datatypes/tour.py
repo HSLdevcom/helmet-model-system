@@ -61,7 +61,7 @@ class Tour:
         if self.mode != "walk" and is_in_area and random.random() < self.sec_dest_prob:
             probs = self.purpose.sec_dest_purpose.calc_prob(
                 self.mode, impedance[self.mode], self.position)
-            self.sec_dest = numpy.random.choice(a=zone_numbers, p=probs)
+            self.sec_dest = numpy.random.choice(a=self.purpose.zone_numbers, p=probs)
             self.purpose.sec_dest_purpose.attracted_tours[self.mode][self.position[2]] += 1
         else:
             self.sec_dest = None

@@ -246,14 +246,14 @@ class SecDestPurpose(Purpose):
         """
         dest_imp = {}
         for mtx_type in impedance:
-            dest_imp[mtx_type] = ( impedance[mtx_type][self.bounds, :]
+            dest_imp[mtx_type] = ( impedance[mtx_type]
                                  + impedance[mtx_type][:, origin]
-                                 - impedance[mtx_type][origin, self.bounds][:, numpy.newaxis])
+                                 - impedance[mtx_type][origin, :][:, numpy.newaxis])
         # TODO Make origin distinction between impedance matrix and lookup
         # In peripheral area these would not be the same
         prob = self.model.calc_prob(mode, dest_imp, origin)
         demand = (prob * self.tours[mode][origin, :]).T
-        self.attracted_tours[mode] += demand.sum(0)
+        self.attracted_tours[mode][self.bounds] += demand.sum(0)
         return Demand(self, mode, demand, origin)
 
     def calc_prob(self, mode, impedance, position):
