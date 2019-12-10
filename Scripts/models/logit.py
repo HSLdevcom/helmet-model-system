@@ -6,7 +6,7 @@ import datahandling.resultdata as result
 
 
 class LogitModel:
-    def __init__(self, zone_data, purpose):
+    def __init__(self, zone_data, purpose, is_agent_model):
         self.purpose = purpose
         self.bounds = purpose.bounds
         self.zone_data = zone_data
@@ -14,11 +14,13 @@ class LogitModel:
         self.mode_exps = {}
         self.dest_choice_param = parameters.destination_choice[purpose.name]
         self.mode_choice_param = parameters.mode_choice[purpose.name]
+        if is_agent_model:
+            self.dtype = float
+        else:
+            self.dtype = None
 
     def _calc_mode_util(self, impedance):
-        # Impedances from omx are float32, here we use float64 to make
-        # numpy random choice for agents work. Memory issue?
-        expsum = numpy.zeros_like(next(iter(impedance["car"].values())), float)
+        expsum = numpy.zeros_like(next(iter(impedance["car"].values())), self.dtype)
         for mode in self.mode_choice_param:
             b = self.mode_choice_param[mode]
             utility = numpy.zeros_like(expsum)
@@ -35,7 +37,7 @@ class LogitModel:
     
     def _calc_dest_util(self, mode, impedance):
         b = self.dest_choice_param[mode]
-        utility = numpy.zeros_like(next(iter(impedance.values())), float)
+        utility = numpy.zeros_like(next(iter(impedance.values())), self.dtype)
         self._add_zone_util(utility, b["attraction"])
         self._add_impedance(utility, impedance, b["impedance"])
         self.dest_exps[mode] = numpy.exp(utility)
@@ -59,7 +61,7 @@ class LogitModel:
     
     def _calc_sec_dest_util(self, mode, impedance, orig, dest):
         b = self.dest_choice_param[mode]
-        utility = numpy.zeros_like(next(iter(impedance.values())), float)
+        utility = numpy.zeros_like(next(iter(impedance.values())), self.dtype)
         self._add_sec_zone_util(utility, b["attraction"], orig, dest)
         self._add_impedance(utility, impedance, b["impedance"])
         self.dest_exps[mode] = numpy.exp(utility)

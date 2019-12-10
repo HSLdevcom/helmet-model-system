@@ -20,11 +20,12 @@ class ModelSystem:
         self.zdata_forecast = ZoneData(zone_data_path, ass_model.zone_numbers)
         self.basematrices = MatrixData(base_matrices)
         self.resultmatrices = MatrixData(name)
-        self.dm = DemandModel(self.zdata_forecast)
         self.is_agent_model = is_agent_model
         if is_agent_model:
+            self.dm = DemandModel(self.zdata_forecast, is_agent_model)
             self.dm.create_population()
         else:
+            self.dm = DemandModel(self.zdata_forecast)
             self.dm.create_population_segments()
         self.fm = FreightModel(self.zdata_base,
                                self.zdata_forecast,

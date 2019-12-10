@@ -10,7 +10,7 @@ import datahandling.resultdata as result
 
 
 class DemandModel:
-    def __init__(self, zone_data):
+    def __init__(self, zone_data, is_agent_model=False):
         """Container for private tour purposes and models.
 
         Parameters
@@ -23,9 +23,9 @@ class DemandModel:
         self.purpose_dict = {}
         for purpose_spec in parameters.tour_purposes:
             if "sec_dest" in purpose_spec:
-                purpose = SecDestPurpose(purpose_spec, zone_data)
+                purpose = SecDestPurpose(purpose_spec, zone_data, is_agent_model)
             else:
-                purpose = TourPurpose(purpose_spec, zone_data)
+                purpose = TourPurpose(purpose_spec, zone_data, is_agent_model)
             self.tour_purposes.append(purpose)
             self.purpose_dict[purpose_spec["name"]] = purpose
         for purpose_spec in parameters.tour_purposes:

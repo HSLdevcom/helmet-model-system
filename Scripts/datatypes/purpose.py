@@ -52,7 +52,7 @@ class Purpose:
         return self.zone_data.zone_numbers[self.bounds]
 
 class TourPurpose(Purpose):
-    def __init__(self, specification, zone_data):
+    def __init__(self, specification, zone_data, is_agent_model):
         """Standard two-way tour purpose.
 
         Parameters
@@ -75,11 +75,11 @@ class TourPurpose(Purpose):
         else:
             self.gen_model = generation.GenerationModel(self)
         if self.name == "sop":
-            self.model = logit.OriginModel(zone_data, self)
+            self.model = logit.OriginModel(zone_data, self, is_agent_model)
         elif self.name == "so":
-            self.model = logit.DestModeModel(zone_data, self)
+            self.model = logit.DestModeModel(zone_data, self, is_agent_model)
         else:
-            self.model = logit.ModeDestModel(zone_data, self)
+            self.model = logit.ModeDestModel(zone_data, self, is_agent_model)
         self.modes = self.model.mode_choice_param.keys()
         self.sec_dest_purpose = None
 
@@ -191,7 +191,7 @@ class TourPurpose(Purpose):
 
 
 class SecDestPurpose(Purpose):
-    def __init__(self, specification, zone_data):
+    def __init__(self, specification, zone_data, is_agent_model):
         """Purpose for secondary destination of tour.
 
         Parameters
@@ -210,7 +210,7 @@ class SecDestPurpose(Purpose):
         """
         Purpose.__init__(self, specification, zone_data)
         self.gen_model = generation.SecDestGeneration(self)
-        self.model = logit.SecDestModel(zone_data, self)
+        self.model = logit.SecDestModel(zone_data, self, is_agent_model)
         self.modes = self.model.dest_choice_param.keys()
 
     def init_sums(self):
