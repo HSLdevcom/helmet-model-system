@@ -23,6 +23,7 @@ class DepartureTimeTest(unittest.TestCase):
         dem.purpose.name = "hoo"
         dem.mode = "car"
         dem.matrix = mtx
+        dem.orig = 1
         dem.position = (1, 0, 0)
         dtm.add_demand(dem)
 

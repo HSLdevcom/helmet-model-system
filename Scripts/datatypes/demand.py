@@ -21,14 +21,14 @@ class Demand:
             self.matrix = parameters.car_driver_share[purpose.name] * matrix
         else:
             self.matrix = matrix
-        self.origin = origin
+        self.orig = origin
 
     @property
     def position(self):
         """tuple: (origin, destination, (secondary destination))
         Position where to insert the demand
         """
-        if self.origin is None:
+        if self.orig is None:
             return (self.purpose.bounds.start, 0)
         else:
-            return (self.origin, 0, 0)
+            return (self.orig, 0, 0)
