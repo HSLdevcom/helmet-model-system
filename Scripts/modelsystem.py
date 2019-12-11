@@ -191,6 +191,7 @@ class ModelSystem:
 
     def _distribute_sec_dests(self, size, purpose, mode, impedance):
         threads = []
+        demand = []
         nr_threads = parameters.performance_settings["number_of_processors"]
         if nr_threads == "max":
             nr_threads = multiprocessing.cpu_count()
@@ -201,15 +202,21 @@ class ModelSystem:
             dests = [i * split, (i+1) * split]
             if i == nr_threads - 1:
                 dests[1] = size
+            dtm = dt.DepartureTimeModel(self.ass_model.nr_zones)
+            demand.append(dtm)
             thread = threading.Thread(
                 target=self._distribute_tours,
-                args=(purpose, mode, impedance, dests))
+                args=(dtm, purpose, mode, impedance, dests))
             threads.append(thread)
             thread.start()
         for thread in threads:
             thread.join()
+        for dtm in demand:
+            for tp in dtm.demand:
+                for ass_class in dtm.demand[tp]:
+                    self.dtm.demand[tp][ass_class] += dtm.demand[tp][ass_class]
 
-    def _distribute_tours(self, purpose, mode, impedance, dests):
+    def _distribute_tours(self, container, purpose, mode, impedance, dests):
         for i in xrange(dests[0], dests[1]):
             demand = purpose.distribute_tours(mode, impedance[mode], i)
-            self.dtm.add_demand(demand)
+            container.add_demand(demand)

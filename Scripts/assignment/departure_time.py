@@ -2,7 +2,6 @@ import logging
 import numpy
 import os
 import parameters as param
-import threading
 
 
 class DepartureTimeModel:
@@ -17,7 +16,6 @@ class DepartureTimeModel:
         self.nr_zones = nr_zones
         self.init_demand()
         self.logger = logging.getLogger()
-        self._lock = threading.Lock()
 
     def init_demand(self):
         """Initialize demand for all time periods."""
@@ -37,32 +35,31 @@ class DepartureTimeModel:
         demand : Demand or Tour
             Travel demand matrix or number of travellers
         """
-        with self._lock:
-            if demand.mode not in ("walk", "car_passenger"):
-                if demand.mode in ("car", "transit", "bike"):
-                    ass_class = ( demand.mode 
-                                + '_'
-                                + param.assignment_class[demand.purpose.name])
-                else:
-                    ass_class = demand.mode
-                if len(demand.position) == 2:
-                    share = param.demand_share[demand.purpose.name][demand.mode]
-                    for time_period in param.emme_scenario:
-                        self._add_2d_demand(
-                            share[time_period], ass_class, time_period,
-                            demand.matrix, demand.position)
-                    debugtext = "Added demand for {}, {}"
-                    self.logger.debug(
-                        debugtext.format(demand.purpose.name, demand.mode))
-                elif len(demand.position) == 3:
-                    for time_period in param.emme_scenario:
-                        self._add_3d_demand(demand, ass_class, time_period)
-                    debugtext = "Added demand for {}, {}, {}"
-                    self.logger.debug(
-                        debugtext.format(
-                            demand.purpose.name, demand.mode, demand.orig))
-                else:
-                    raise IndexError("Tuple position has wrong dimensions.")
+        if demand.mode not in ("walk", "car_passenger"):
+            if demand.mode in ("car", "transit", "bike"):
+                ass_class = ( demand.mode 
+                            + '_'
+                            + param.assignment_class[demand.purpose.name])
+            else:
+                ass_class = demand.mode
+            if len(demand.position) == 2:
+                share = param.demand_share[demand.purpose.name][demand.mode]
+                for time_period in param.emme_scenario:
+                    self._add_2d_demand(
+                        share[time_period], ass_class, time_period,
+                        demand.matrix, demand.position)
+                debugtext = "Added demand for {}, {}"
+                self.logger.debug(
+                    debugtext.format(demand.purpose.name, demand.mode))
+            elif len(demand.position) == 3:
+                for time_period in param.emme_scenario:
+                    self._add_3d_demand(demand, ass_class, time_period)
+                debugtext = "Added demand for {}, {}, {}"
+                self.logger.debug(
+                    debugtext.format(
+                        demand.purpose.name, demand.mode, demand.orig))
+            else:
+                raise IndexError("Tuple position has wrong dimensions.")
 
     def _add_2d_demand(self, demand_share, ass_class, time_period, mtx, mtx_pos):
         """Slice demand, include transpose and add for one time period."""
