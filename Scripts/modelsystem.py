@@ -115,10 +115,15 @@ class ModelSystem:
                                 self.dtm.add_demand(demand)
                     else:
                         threads = []
-                        for i in xrange(0, size):
+                        nr_threads = 2
+                        split = size//nr_threads
+                        for i in xrange(0, nr_threads):
+                            dests = [i*split, (i+1)*split]
+                            if i == nr_threads - 1:
+                                dests[1] = size
                             thread = threading.Thread(
                                 target=self.distribute_tours,
-                                args=(purpose, "car", purpose_impedance, i))
+                                args=(purpose, "car", purpose_impedance, dests))
                             threads.append(thread)
                             thread.start()
                         for thread in threads:
@@ -196,6 +201,7 @@ class ModelSystem:
         result.flush()
         return impedance
 
-    def distribute_tours(self, purpose, mode, impedance, i):
-        demand = purpose.distribute_tours(mode, impedance[mode], i)
-        self.dtm.add_demand(demand)
+    def distribute_tours(self, purpose, mode, impedance, dests):
+        for i in xrange(dests[0], dests[1]):
+            demand = purpose.distribute_tours(mode, impedance[mode], i)
+            self.dtm.add_demand(demand)
