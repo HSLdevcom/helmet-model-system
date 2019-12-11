@@ -81,6 +81,7 @@ class TourPurpose(Purpose):
         else:
             self.model = logit.ModeDestModel(zone_data, self)
         self.modes = self.model.mode_choice_param.keys()
+        self.demand_sums = {}
 
     def init_sums(self):
         for mode in self.modes:
@@ -112,7 +113,6 @@ class TourPurpose(Purpose):
         demand = {}
         self.demand = {}
         self.aggregated_demand = {}
-        self.demand_sums = {}
         self.trip_lengths = {}
         for mode in self.model.mode_choice_param:
             self.demand[mode] = (self.prob[mode] * tours).T
