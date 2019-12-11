@@ -11,6 +11,7 @@ from transform.impedance_transformer import ImpedanceTransformer
 import parameters
 import numpy
 import threading
+import multiprocessing
 
 
 class ModelSystem:
@@ -110,9 +111,11 @@ class ModelSystem:
                     purpose.generate_tours()
                     if is_last_iteration:
                         for mode in purpose.model.dest_choice_param:
-                            self.distribute_sec_dests(size, purpose, mode, purpose_impedance)
+                            self._distribute_sec_dests(
+                                size, purpose, mode, purpose_impedance)
                     else:
-                        self.distribute_sec_dests(size, purpose, "car", purpose_impedance)
+                        self._distribute_sec_dests(
+                            size, purpose, "car", purpose_impedance)
                 else:
                     demand = purpose.calc_demand()
                     if purpose.dest != "source":
@@ -186,23 +189,27 @@ class ModelSystem:
         result.flush()
         return impedance
 
-    def distribute_sec_dests(self, size, purpose, mode, impedance):
+    def _distribute_sec_dests(self, size, purpose, mode, impedance):
         threads = []
-        nr_threads = 2
-        split = size//nr_threads
+        nr_threads = parameters.performance_settings["number_of_processors"]
+        if nr_threads == "max":
+            nr_threads = multiprocessing.cpu_count()
+        elif nr_threads <= 0:
+            nr_threads = 1
+        split = size // nr_threads
         for i in xrange(0, nr_threads):
-            dests = [i*split, (i+1)*split]
+            dests = [i * split, (i+1) * split]
             if i == nr_threads - 1:
                 dests[1] = size
             thread = threading.Thread(
-                target=self.distribute_tours,
+                target=self._distribute_tours,
                 args=(purpose, mode, impedance, dests))
             threads.append(thread)
             thread.start()
         for thread in threads:
             thread.join()
 
-    def distribute_tours(self, purpose, mode, impedance, dests):
+    def _distribute_tours(self, purpose, mode, impedance, dests):
         for i in xrange(dests[0], dests[1]):
             demand = purpose.distribute_tours(mode, impedance[mode], i)
             self.dtm.add_demand(demand)
