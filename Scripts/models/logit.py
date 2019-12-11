@@ -6,7 +6,7 @@ import datahandling.resultdata as result
 
 
 class LogitModel:
-    def __init__(self, zone_data, purpose):
+    def __init__(self, zone_data, purpose, is_agent_model):
         self.purpose = purpose
         self.bounds = purpose.bounds
         self.zone_data = zone_data
@@ -14,11 +14,13 @@ class LogitModel:
         self.mode_exps = {}
         self.dest_choice_param = parameters.destination_choice[purpose.name]
         self.mode_choice_param = parameters.mode_choice[purpose.name]
+        if is_agent_model:
+            self.dtype = float
+        else:
+            self.dtype = None
 
     def _calc_mode_util(self, impedance):
-        # Impedances from omx are float32, here we use float64 to make
-        # numpy random choice for agents work. Memory issue?
-        expsum = numpy.zeros_like(next(iter(impedance["car"].values())), float)
+        expsum = numpy.zeros_like(next(iter(impedance["car"].values())), self.dtype)
         for mode in self.mode_choice_param:
             b = self.mode_choice_param[mode]
             utility = numpy.zeros_like(expsum)
@@ -33,10 +35,10 @@ class LogitModel:
             expsum += exps
         return expsum
     
-    def _calc_dest_util(self, mode, impedance, orig=None, dest=None):
+    def _calc_dest_util(self, mode, impedance):
         b = self.dest_choice_param[mode]
-        utility = numpy.zeros_like(next(iter(impedance.values())), float)
-        self._add_zone_util(utility, b["attraction"], orig=orig, dest=dest)
+        utility = numpy.zeros_like(next(iter(impedance.values())), self.dtype)
+        self._add_zone_util(utility, b["attraction"])
         self._add_impedance(utility, impedance, b["impedance"])
         self.dest_exps[mode] = numpy.exp(utility)
         size = numpy.zeros_like(utility)
@@ -48,6 +50,24 @@ class LogitModel:
             self._add_zone_util(transimp, b_transf["attraction"])
             self._add_impedance(transimp, impedance, b_transf["impedance"])
             impedance["transform"] = transimp
+        self._add_log_impedance(self.dest_exps[mode], impedance, b["log"])
+        if mode != "logsum":
+            threshold = parameters.distance_boundary[mode]
+            self.dest_exps[mode][impedance["dist"] > threshold] = 0
+        try:
+            return self.dest_exps[mode].sum(1)
+        except ValueError:
+            return self.dest_exps[mode].sum()
+    
+    def _calc_sec_dest_util(self, mode, impedance, orig, dest):
+        b = self.dest_choice_param[mode]
+        utility = numpy.zeros_like(next(iter(impedance.values())), self.dtype)
+        self._add_sec_zone_util(utility, b["attraction"], orig, dest)
+        self._add_impedance(utility, impedance, b["impedance"])
+        self.dest_exps[mode] = numpy.exp(utility)
+        size = numpy.zeros_like(utility)
+        self._add_sec_zone_util(size, b["size"])
+        impedance["size"] = size
         self._add_log_impedance(self.dest_exps[mode], impedance, b["log"])
         if mode != "logsum":
             threshold = parameters.distance_boundary[mode]
@@ -97,7 +117,7 @@ class LogitModel:
                 exps[k:, :] *= numpy.power(impedance[i][k:, :] + 1, b[i][1])
         return exps
     
-    def _add_zone_util(self, utility, b, generation=False, orig=None, dest=None):
+    def _add_zone_util(self, utility, b, generation=False):
         zdata = self.zone_data
         for i in b:
             try: # If only one parameter
@@ -109,23 +129,23 @@ class LogitModel:
                 data_surrounding = zdata.get_data(
                     i, self.bounds, generation, zdata.SURROUNDING_AREA)
                 if utility.ndim == 1: # 1-d array calculation
-                    if dest is None:
-                        utility[:k] += b[i][0] * data_capital_region
-                        utility[k:] += b[i][1] * data_surrounding
-                    else:
-                        utility += b[i][0] * zdata.get_data(
-                            i, self.bounds, generation)[:, orig]
-                        utility += b[i][1] * zdata.get_data(
-                            i, self.bounds, generation)[dest, :]
+                    utility[:k] += b[i][0] * data_capital_region
+                    utility[k:] += b[i][1] * data_surrounding
                 else: # 2-d matrix calculation
-                    if orig is None:
-                        utility[:k, :] += b[i][0] * data_capital_region
-                        utility[k:, :] += b[i][1] * data_surrounding
-                    else:
-                        utility += b[i][0] * zdata.get_data(
-                            i, self.bounds, generation)[:, orig]
-                        utility += b[i][1] * zdata.get_data(
-                            i, self.bounds, generation)
+                    utility[:k, :] += b[i][0] * data_capital_region
+                    utility[k:, :] += b[i][1] * data_surrounding
+        return utility
+    
+    def _add_sec_zone_util(self, utility, b, orig=None, dest=None):
+        zdata = self.zone_data
+        for i in b:
+            data = zdata.get_data(i, self.bounds, generation=True)
+            try: # If only one parameter
+                utility += b[i] * data
+            except ValueError: # Separate params for orig and dest
+                u = self.zone_data.first_peripheral_zone
+                utility += b[i][0] * data[orig, :u]
+                utility += b[i][1] * data[dest, :u]
         return utility
 
     def _add_log_zone_util(self, exps, b, generation=False):
@@ -329,7 +349,7 @@ class SecDestModel(LogitModel):
         numpy 2-d matrix
                 Choice probabilities
         """
-        expsum = self._calc_dest_util(mode, impedance, origin, destination)
+        expsum = self._calc_sec_dest_util(mode, impedance, origin, destination)
         prob = self.dest_exps[mode].T / expsum
         return prob
 

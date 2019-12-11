@@ -596,16 +596,42 @@ demand_share = {
         },
     },
     "external": {
-        # External matrices are untransposed,
+        # External matrices are untransposed (ext->int),
         # and describe trips, not tours
         "car": {
-            # TODO This is a way of implementing road-specific parameters,
-            # but it will work only with a fixed number of external zones,
-            # so no testing is possible.
-            # "aht": ([[0.01], [0.01]], [[0.01], [0.01]]),
-            "aht": (0.042, 0.028),
+            "aht": (
+                [
+                    [0.042], [0.042], [0.049], [0.042], [0.055], [0.042],
+                    [0.042], [0.058], [0.042], [0.042], [0.042], [0.042],
+                    [0.042], [0.061], [0.030], [0.042], [0.042], [0.041],
+                    [0.038], [0.040], [0.000], [0.000], [0.000], [0.043],
+                    [0.000], [0.000], [0.000], [0.250],
+                ], 
+                [
+                    0.028, 0.028, 0.024, 0.028, 0.018, 0.028,
+                    0.028, 0.045, 0.028, 0.028, 0.028, 0.028,
+                    0.028, 0.031, 0.039, 0.028, 0.028, 0.034,
+                    0.028, 0.046, 0.000, 0.000, 0.000, 0.042,
+                    0.000, 0.000, 0.083, 0.000,
+                ],
+            ),
             "pt": (0.05, 0.05),
-            "iht": (0.045, 0.055),
+            "iht": (
+                [
+                    [0.045], [0.045], [0.044], [0.045], [0.048], [0.045],
+                    [0.045], [0.056], [0.045], [0.045], [0.045], [0.045],
+                    [0.045], [0.051], [0.070], [0.045], [0.045], [0.039],
+                    [0.056], [0.069], [0.000], [0.000], [0.000], [0.071],
+                    [0.000], [0.000], [0.125], [0.000],
+                ],
+                [
+                    0.055, 0.055, 0.069, 0.055, 0.066, 0.055,
+                    0.055, 0.052, 0.055, 0.055, 0.055, 0.055,
+                    0.055, 0.065, 0.049, 0.055, 0.055, 0.064,
+                    0.076, 0.057, 0.000, 0.000, 0.000, 0.066,
+                    0.188, 0.273, 0.083, 0.250,
+                ],
+            ),
         },
         "transit": {
             "aht": (0.101, 0.034),
@@ -623,6 +649,11 @@ demand_share = {
             "iht": (0.033, 0.033),
         },
     },
+}
+backup_demand_share = {
+    "aht": (0.042, 0.028),
+    "pt": (0.05, 0.05),
+    "iht": (0.045, 0.055),
 }
 
 impedance_share = {
@@ -737,20 +768,23 @@ impedance_share = {
         },
     },
     "hoo": {
+        # Only un-transposed afternoon matrices are used.
+        # However, the secondary destination choice is done "backwards",
+        # from destination 1 to origin.
         "car": {
             "aht": (0, 0),
             "pt":  (0, 0),
-            "iht": (0, 1),
+            "iht": (1, 0),
         },
         "transit": {
             "aht": (0, 0),
             "pt":  (0, 0),
-            "iht": (0, 1),
+            "iht": (1, 0),
         },
         "bike": {
             "aht": (0, 0),
             "pt":  (0, 0),
-            "iht": (0, 1),
+            "iht": (1, 0),
         },
     },
     "so": {
@@ -2553,13 +2587,13 @@ tour_generation = {
         "ho": 0.030784426,
     },
     "hwp": {
-        "population": 0.237579403,
+        "population": (1-0.0619) * 0.237579403,
     },
     "hop": {
-        "population": 0.561035077,
+        "population": (1-0.0619) * 0.561035077,
     },
     "sop": {
-        "population": 0.050959288,
+        "population": (1-0.0619) * 0.050959288,
     },
     "oop": {
         # Every sop trip continues with oop trip
@@ -2625,6 +2659,9 @@ distance_boundary = {
     "bike": 60,
     "walk": 15,
 }
+# O-D pairs with demand below threshold are neglected in sec dest calculation
+secondary_destination_threshold = 0.1
+
 ### DEMAND MODEL REFERENCES ###
 
 tour_purposes = (
@@ -2678,7 +2715,7 @@ tour_purposes = (
         "dest": "any",
         "sec_dest": "any",
         "source": ("hw", "hc", "hu", "hs", "ho", "wo", "oo",),
-        "area": "all",
+        "area": "metropolitan",
     },
     {
         "name": "hwp",

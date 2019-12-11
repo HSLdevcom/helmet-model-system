@@ -21,11 +21,12 @@ class ModelSystem:
         self.zdata_forecast = ZoneData(zone_data_path, ass_model.zone_numbers)
         self.basematrices = MatrixData(base_matrices)
         self.resultmatrices = MatrixData(name)
-        self.dm = DemandModel(self.zdata_forecast)
         self.is_agent_model = is_agent_model
         if is_agent_model:
+            self.dm = DemandModel(self.zdata_forecast, is_agent_model)
             self.dm.create_population()
         else:
+            self.dm = DemandModel(self.zdata_forecast)
             self.dm.create_population_segments()
         self.fm = FreightModel(self.zdata_base,
                                self.zdata_forecast,
@@ -97,7 +98,9 @@ class ModelSystem:
                     self.dtm.add_demand(tour)
         else:
             for purpose in self.dm.tour_purposes:
-                if not isinstance(purpose, SecDestPurpose):
+                if isinstance(purpose, SecDestPurpose):
+                    purpose.gen_model.init_tours()
+                else:
                     purpose_impedance = self.imptrans.transform(purpose, impedance)
                     purpose.calc_prob(purpose_impedance)
             self.dm.generate_tours()
@@ -180,14 +183,15 @@ class ModelSystem:
                     cost_ratio, "impedance_ratio.txt",
                     self.ass_model.zone_numbers, "cost")
             if is_last_iteration:
+                zone_numbers = self.ass_model.zone_numbers
                 with self.resultmatrices.open("demand", tp, 'w') as mtx:
-                    mtx.mapping = self.ass_model.zone_numbers
+                    mtx.mapping = zone_numbers
                     for ass_class in self.dtm.demand[tp]:
                         mtx[ass_class] = self.dtm.demand[tp][ass_class]
                     self.logger.info("Saved demand matrices for " + str(tp))
                 for mtx_type in impedance[tp]:
                     with self.resultmatrices.open(mtx_type, tp, 'w') as mtx:
-                        mtx.mapping = self.ass_model.zone_numbers
+                        mtx.mapping = zone_numbers
                         for ass_class in impedance[tp][mtx_type]:
                             cost_data = impedance[tp][mtx_type][ass_class]
                             mtx[ass_class] = cost_data
