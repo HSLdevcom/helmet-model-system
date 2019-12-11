@@ -10,6 +10,7 @@ from datatypes.purpose import SecDestPurpose
 from transform.impedance_transformer import ImpedanceTransformer
 import parameters
 import numpy
+import threading
 
 
 class ModelSystem:
@@ -113,9 +114,15 @@ class ModelSystem:
                                 demand = purpose.distribute_tours(mode, purpose_impedance[mode], i)
                                 self.dtm.add_demand(demand)
                     else:
+                        threads = []
                         for i in xrange(0, size):
-                            demand = purpose.distribute_tours("car", purpose_impedance["car"], i)
-                            self.dtm.add_demand(demand)
+                            thread = threading.Thread(
+                                target=self.distribute_tours,
+                                args=(purpose, "car", purpose_impedance, i))
+                            threads.append(thread)
+                            thread.start()
+                        for thread in threads:
+                            thread.join()
                 else:
                     demand = purpose.calc_demand()
                     if purpose.dest != "source":
@@ -188,3 +195,7 @@ class ModelSystem:
         self.dtm.init_demand()
         result.flush()
         return impedance
+
+    def distribute_tours(self, purpose, mode, impedance, i):
+        demand = purpose.distribute_tours(mode, impedance[mode], i)
+        self.dtm.add_demand(demand)
