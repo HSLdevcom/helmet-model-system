@@ -51,18 +51,20 @@ class Tour:
         probs = self.purpose.model.dest_prob[self.mode][:, self.position[0]]
         self.dest = numpy.random.choice(a=zone_numbers, p=probs)
         self.purpose.attracted_tours[self.mode][self.position[1]] += 1
+        sec_dest_purpose = self.purpose.sec_dest_purpose
         try:
-            if self.position[1] < self.purpose.sec_dest_purpose.bounds.stop:
+            if self.position[1] < sec_dest_purpose.bounds.stop:
                 is_in_area = True
             else:
                 is_in_area = False
         except AttributeError:
             is_in_area = False
         if self.mode != "walk" and is_in_area and random.random() < self.sec_dest_prob:
-            probs = self.purpose.sec_dest_purpose.calc_prob(
+            probs = sec_dest_purpose.calc_prob(
                 self.mode, impedance[self.mode], self.position)
-            self.sec_dest = numpy.random.choice(a=self.purpose.zone_numbers, p=probs)
-            self.purpose.sec_dest_purpose.attracted_tours[self.mode][self.position[2]] += 1
+            self.sec_dest = numpy.random.choice(
+                a=sec_dest_purpose.zone_numbers, p=probs)
+            sec_dest_purpose.attracted_tours[self.mode][self.position[2]] += 1
         else:
             self.sec_dest = None
     

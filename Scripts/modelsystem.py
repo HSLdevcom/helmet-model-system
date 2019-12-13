@@ -10,6 +10,8 @@ from datatypes.purpose import SecDestPurpose
 from transform.impedance_transformer import ImpedanceTransformer
 import parameters
 import numpy
+import threading
+import multiprocessing
 
 
 class ModelSystem:
@@ -103,19 +105,15 @@ class ModelSystem:
             self.dm.generate_tours()
             for purpose in self.dm.tour_purposes:
                 if isinstance(purpose, SecDestPurpose):
-                    bounds = next(iter(purpose.sources)).bounds
-                    size = bounds.stop - bounds.start
                     purpose_impedance = self.imptrans.transform(purpose, impedance)
                     purpose.generate_tours()
                     if is_last_iteration:
                         for mode in purpose.model.dest_choice_param:
-                            for i in xrange(0, size):
-                                demand = purpose.distribute_tours(mode, purpose_impedance[mode], i)
-                                self.dtm.add_demand(demand)
+                            self._distribute_sec_dests(
+                                purpose, mode, purpose_impedance)
                     else:
-                        for i in xrange(0, size):
-                            demand = purpose.distribute_tours("car", purpose_impedance["car"], i)
-                            self.dtm.add_demand(demand)
+                        self._distribute_sec_dests(
+                            purpose, "car", purpose_impedance)
                 else:
                     demand = purpose.calc_demand()
                     if purpose.dest != "source":
@@ -188,3 +186,41 @@ class ModelSystem:
         self.dtm.init_demand()
         result.flush()
         return impedance
+
+    def _distribute_sec_dests(self, purpose, mode, impedance):
+        threads = []
+        demand = []
+        nr_threads = parameters.performance_settings["number_of_processors"]
+        if nr_threads == "max":
+            nr_threads = multiprocessing.cpu_count()
+        elif nr_threads <= 0:
+            nr_threads = 1
+        bounds = next(iter(purpose.sources)).bounds
+        split = (bounds.stop-bounds.start) // nr_threads
+        for i in xrange(0, nr_threads):
+            # Take a chunk of destinations, for which this thread
+            # will calculate secondary destinations
+            start = bounds.start + i*split
+            if i+1 < nr_threads:
+                dests = xrange(start, start + split)
+            else:
+                dests = xrange(start, bounds.stop)
+            # Results will be saved in a temp dtm, to avoid memory clashes
+            dtm = dt.DepartureTimeModel(self.ass_model.nr_zones)
+            demand.append(dtm)
+            thread = threading.Thread(
+                target=self._distribute_tours,
+                args=(dtm, purpose, mode, impedance, dests))
+            threads.append(thread)
+            thread.start()
+        for thread in threads:
+            thread.join()
+        for dtm in demand:
+            for tp in dtm.demand:
+                for ass_class in dtm.demand[tp]:
+                    self.dtm.demand[tp][ass_class] += dtm.demand[tp][ass_class]
+
+    def _distribute_tours(self, container, purpose, mode, impedance, dests):
+        for i in dests:
+            demand = purpose.distribute_tours(mode, impedance[mode], i)
+            container.add_demand(demand)

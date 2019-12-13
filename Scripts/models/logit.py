@@ -64,18 +64,15 @@ class LogitModel:
         utility = numpy.zeros_like(next(iter(impedance.values())), self.dtype)
         self._add_sec_zone_util(utility, b["attraction"], orig, dest)
         self._add_impedance(utility, impedance, b["impedance"])
-        self.dest_exps[mode] = numpy.exp(utility)
+        dest_exps = numpy.exp(utility)
         size = numpy.zeros_like(utility)
         self._add_sec_zone_util(size, b["size"])
         impedance["size"] = size
-        self._add_log_impedance(self.dest_exps[mode], impedance, b["log"])
+        self._add_log_impedance(dest_exps, impedance, b["log"])
         if mode != "logsum":
             threshold = parameters.distance_boundary[mode]
-            self.dest_exps[mode][impedance["dist"] > threshold] = 0
-        try:
-            return self.dest_exps[mode].sum(1)
-        except ValueError:
-            return self.dest_exps[mode].sum()
+            dest_exps[impedance["dist"] > threshold] = 0
+        return dest_exps
 
     def _calc_origin_util(self, impedance):
         b = self.dest_choice_param
@@ -349,8 +346,12 @@ class SecDestModel(LogitModel):
         numpy 2-d matrix
                 Choice probabilities
         """
-        expsum = self._calc_sec_dest_util(mode, impedance, origin, destination)
-        prob = self.dest_exps[mode].T / expsum
+        dest_exps = self._calc_sec_dest_util(mode, impedance, origin, destination)
+        try:
+            expsum = dest_exps.sum(1)
+        except ValueError:
+            expsum = dest_exps.sum()
+        prob = dest_exps.T / expsum
         return prob
 
 
