@@ -8,6 +8,7 @@ from abstract_assignment import AssignmentModel, ImpedanceSource
 from datatypes.car import Car, PrivateCar
 from datatypes.journey_level import JourneyLevel
 from datatypes.path_analysis import PathAnalysis
+import datahandling.resultdata as result
 
 class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
     def __init__(self, emme_context, car_dist_cost=param.dist_cost):
@@ -61,6 +62,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             self._assign_cars(scen_id, param.stopping_criteria_coarse)
             self._calc_extra_wait_time(scen_id)
             self._assign_transit(scen_id)
+            self._print_vehicle_kms()
         
     def get_impedance(self):
         """Get travel impedance matrices for one time period from assignment.
@@ -290,6 +292,63 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "aggregation": None,
         })
         self.emme.network_calc(netw_specs, scenario)
+
+    def _print_vehicle_kms(self):
+        emmebank = self.emme.modeller.emmebank
+        kms = dict.fromkeys(["@pa", "@ka", "@yhd"])
+        vdfs = [1, 2, 3, 4, 5]
+        transit_modes = ["bde", "g", "m", "rj", "tp"]
+        # TODO Mode-specific weights
+        weights = {
+            "aht": 1 / 0.47,
+            "pt": 1 / 0.09,
+            "iht": 1 / 0.38,
+        }
+        for ass_class in kms:
+            kms[ass_class] = dict.fromkeys(vdfs)
+            for vdf in kms[ass_class]:
+                kms[ass_class][vdf] = 0
+        transit_kms = dict.fromkeys(transit_modes)
+        transit_times = dict.fromkeys(transit_modes)
+        for mode in transit_modes:
+            transit_kms[mode] = 0
+            transit_times[mode] = 0
+        for tp in param.emme_scenario:
+            scen_id = param.emme_scenario[tp]
+            scenario = emmebank.scenario(scen_id)
+            network = scenario.get_network()
+            for link in network.links():
+                if vdf <= 5:
+                    vdf = link.volume_delay_func
+                else:
+                    # Links with bus lane
+                    vdf = link.volume_delay_func - 5
+                if vdf in vdfs:
+                    for ass_class in kms:
+                        kms[ass_class][vdf] += ( weights[tp] 
+                                               * link[ass_class] 
+                                               * link.length)
+            for line in network.transit_lines():
+                for modes in transit_modes:
+                    if line.mode.id in modes:
+                        mode = modes
+                for segment in line.segments():
+                    transit_kms[mode] += ( weights[tp]
+                                         * line["@vm1"]
+                                         * segment.link.length)
+                    transit_times[mode] += ( weights[tp]
+                                        * line["@vm1"]
+                                        * segment.transit_time)
+        for ass_class in kms:
+            result.print_data(
+                kms[ass_class].values(), "vehicle_kms.txt",
+                kms[ass_class].keys(), ass_class)
+        result.print_data(
+            transit_kms.values(), "transit_kms.txt",
+            transit_kms.keys(), "km")
+        result.print_data(
+            transit_times.values(), "transit_kms.txt",
+            transit_times.keys(), "time")
 
     def calc_transit_cost(self, fares, peripheral_cost, default_cost=None):
         """Calculate transit zone cost matrix by performing 
