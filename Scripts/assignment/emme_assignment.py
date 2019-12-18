@@ -184,8 +184,6 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         """Calculate background traffic (buses)."""
         emmebank = self.emme.modeller.emmebank
         scen = emmebank.scenario(scen_id)
-        netcalc = self.emme.modeller.tool(
-            "inro.emme.network_calculation.network_calculator")
         # Reset @vm1 to zero
         netw_spec = {
             "type": "NETWORK_CALCULATION",
@@ -196,7 +194,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "result": "@vm1",
             "aggregation": None,
         }
-        netcalc(netw_spec, scen)
+        self.emme.network_calc(netw_spec, scen)
         # Calculate number of line departures per hour
         netw_spec = {
             "type": "NETWORK_CALCULATION",
@@ -207,7 +205,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "result": "@vm1",
             "aggregation": None,
         }
-        netcalc(netw_spec, scen)
+        self.emme.network_calc(netw_spec, scen)
         # Reset @vm to zero
         netw_spec = {
             "type": "NETWORK_CALCULATION",
@@ -218,7 +216,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "result": "@vm",
             "aggregation": None,
         }
-        netcalc(netw_spec, scen)
+        self.emme.network_calc(netw_spec, scen)
         # Calculate number of link departures per hour
         netw_spec = {
             "type": "NETWORK_CALCULATION",
@@ -230,7 +228,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "result": "@vm",
             "aggregation": "+",
         }
-        netcalc(netw_spec, scen)
+        self.emme.network_calc(netw_spec, scen)
         # Reset ul3 to zero
         netw_spec = {
             "type": "NETWORK_CALCULATION",
@@ -241,7 +239,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "result": param.background_traffic,
             "aggregation": None,
         }
-        netcalc(netw_spec, scen)
+        self.emme.network_calc(netw_spec, scen)
         # Set ul3 to @vm for links without bus lane
         netw_spec = {
             "type": "NETWORK_CALCULATION",
@@ -252,7 +250,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "result": param.background_traffic,
             "aggregation": None,
         }
-        netcalc(netw_spec, scen)
+        self.emme.network_calc(netw_spec, scen)
 
     def _calc_road_cost(self, scen_id):
         """Calculate road charges and driving costs for one scenario."""
@@ -291,9 +289,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "result": "@rumsi",
             "aggregation": None,
         })
-        netcalc = self.emme.modeller.tool(
-            "inro.emme.network_calculation.network_calculator")
-        netcalc(netw_specs, scenario)
+        self.emme.network_calc(netw_specs, scenario)
 
     def calc_transit_cost(self, fares, peripheral_cost, default_cost=None):
         """Calculate transit zone cost matrix by performing 
@@ -541,14 +537,10 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         emmebank = self.emme.modeller.emmebank
         scenario = emmebank.scenario(scen_id)
         function_file = os.path.join(self.emme.path, param.func_car) # TODO refactor paths out from here
-        process = self.emme.modeller.tool(
-            "inro.emme.data.function.function_transaction")
-        process(function_file)
+        self.emme.process_functions(function_file)
         self.emme.logger.info("Car assignment started...")
         self.car_spec["stopping_criteria"] = stopping_criteria
-        car_assignment = self.emme.modeller.tool(
-            "inro.emme.traffic_assignment.sola_traffic_assignment")
-        car_assignment(self.car_spec, scenario)
+        self.emme.car_assignment(self.car_spec, scenario)
         self.emme.logger.info("Car assignment performed for scenario " 
                         + str(scen_id))
     
@@ -557,11 +549,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         emmebank = self.emme.modeller.emmebank
         scen = emmebank.scenario(scen_id)
         function_file = os.path.join(self.emme.path, param.func_bike)  # TODO refactor paths out from here
-        process = self.emme.modeller.tool(
-            "inro.emme.data.function.function_transaction")
-        process(function_file)
-        netcalc = self.emme.modeller.tool(
-            "inro.emme.network_calculation.network_calculator")
+        self.emme.process_functions(function_file)
         spec = self.bike_spec
         spec["classes"][0]["results"]["link_volumes"] = link_vol
         spec["classes"][0]["analysis"]["results"]["od_values"] = length_mat_id
@@ -575,7 +563,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "result": spec["path_analysis"]["link_component"],
             "aggregation": None,
         }
-        netcalc(netw_spec, scen)
+        self.emme.network_calc(netw_spec, scen)
         # Define for which links to calculate length and save in ul3
         netw_spec = {
             "type": "NETWORK_CALCULATION",
@@ -586,18 +574,9 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "result": spec["path_analysis"]["link_component"],
             "aggregation": None,
         }
-        netcalc(netw_spec, scen)
+        self.emme.network_calc(netw_spec, scen)
         self.emme.logger.info("Bike assignment started")
-        bike_assignment = self.emme.modeller.tool(
-            "inro.emme.traffic_assignment.standard_traffic_assignment")
-        bike_assignment(specification=spec,  
-                        scenario=scen)
-        # stoch_bike_assignment = self.emme.modeller.tool(
-            # "inro.emme.traffic_assignment.stochastic_traffic_assignment")
-        # stoch_bike_assignment(traffic_assignment_spec=spec, 
-                        # dist_par=param.bike_dist, 
-                        # replications=10, 
-                        # scenario=scen)
+        self.emme.bike_assignment(specification=spec, scenario=scen)
         self.emme.logger.info("Bike assignment performed for scenario "
                         + str(scen_id))
     
@@ -606,9 +585,8 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         emmebank = self.emme.modeller.emmebank
         scen = emmebank.scenario(scen_id)
         self.emme.logger.info("Pedestrian assignment started")
-        pedestrian_assignment = self.emme.modeller.tool(
-            "inro.emme.transit_assignment.standard_transit_assignment")
-        pedestrian_assignment(specification=self.walk_spec, scenario=scen)
+        self.emme.pedestrian_assignment(
+            specification=self.walk_spec, scenario=scen)
         self.emme.logger.info("Pedestrian assignment performed for scenario "
                               + str(scen_id))
 
@@ -630,9 +608,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                 "result": "ut3",
                 "aggregation": None,
             })
-        netcalc = self.emme.modeller.tool(
-            "inro.emme.network_calculation.network_calculator")
-        netcalc(netw_specs, scenario)
+        self.emme.network_calc(netw_specs, scenario)
         
     def _calc_extra_wait_time(self, scen_id):
         """Calculate extra waiting time for one scenario."""
@@ -718,15 +694,11 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         emmebank = self.emme.modeller.emmebank
         scenario = emmebank.scenario(scen_id)
         self.emme.logger.info("Transit assignment started")
-        transit_assignment = self.emme.modeller.tool(
-            "inro.emme.transit_assignment.extended_transit_assignment")
-        transit_assignment(self.transit_spec, scenario)
-        matrix_results = self.emme.modeller.tool(
-            "inro.emme.transit_assignment.extended.matrix_results")
+        self.emme.transit_assignment(self.transit_spec, scenario)
         if count_zone_boardings:
-            matrix_results(bcost_spec, scenario)
+            self.emme.matrix_results(bcost_spec, scenario)
         else:
-            matrix_results(self.transit_result_spec, scenario)
+            self.emme.matrix_results(self.transit_result_spec, scenario)
         self.emme.logger.info("Transit assignment performed for scenario " 
                         + str(scen_id))
 
@@ -735,16 +707,12 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         emmebank = self.emme.modeller.emmebank
         scenario = emmebank.scenario(scen_id)
         self.emme.logger.info("Congested transit assignment started")
-        congested_assignment = self.emme.modeller.tool(
-            "inro.emme.transit_assignment.congested_transit_assignment")
-        congested_assignment(transit_assignment_spec=self.transit_spec, 
-                             congestion_function=param.trass_func,
-                             stopping_criteria=param.trass_stop, 
-                             log_worksheets=False, 
-                             scenario=scenario)
-        matrix_results = self.emme.modeller.tool(
-            "inro.emme.transit_assignment.extended.matrix_results")
-        matrix_results(self.transit_result_spec, scenario)
+        self.emme.congested_assignment(
+            transit_assignment_spec=self.transit_spec,
+            congestion_function=param.trass_func,
+            stopping_criteria=param.trass_stop,
+            log_worksheets=False, scenario=scenario)
+        self.emme.matrix_results(self.transit_result_spec, scenario)
         self.emme.logger.info("Transit assignment performed for scenario " 
                         + str(scen_id))
         
