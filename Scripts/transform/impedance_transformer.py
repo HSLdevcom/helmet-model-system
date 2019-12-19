@@ -1,6 +1,50 @@
 from parameters import impedance_share, tour_purposes
 
 class ImpedanceTransformer:
+    def __init__(self):
+        self.iteration_counter = 0
+        self.averaged_impedance = dict.fromkeys(
+            ["aht", "pt", "iht"])
+        for time_period in self.averaged_impedance:
+            self.averaged_impedance[time_period] = dict.fromkeys(
+                ["time", "cost", "dist"])
+            for mtx_type in self.averaged_impedance[time_period]:
+                self.averaged_impedance[time_period][mtx_type] = dict.fromkeys(
+                    ["car_work", "car_leisure"])
+
+    def average_car_impedance(self, impedance):
+        """Perform averaging of car impedance matrices.
+
+        Parameters
+        ----------
+        impedance: dict
+            Time period (aht/pt/iht) : dict
+                Type (time/cost/dist) : dict
+                    Assignment class (car_work/transit/...) : numpy 2d matrix
+        Return 
+        ------
+        dict
+            Time period (aht/pt/iht) : dict
+                Type (time/cost/dist) : dict
+                    Assignment class (car_work/transit/...) : numpy 2d matrix
+        """
+        self.iteration_counter += 1
+        n = self.iteration_counter
+        for time_period in impedance:
+            for mtx_type in impedance[time_period]:
+                average_imp = self.averaged_impedance[time_period][mtx_type]
+                for ass_class in average_imp:
+                    imp = impedance[time_period][mtx_type][ass_class]
+                    if n == 1:
+                        average_imp[ass_class] = imp
+                    else:
+                        old_average = average_imp[ass_class]
+                        # Method of successive averages
+                        new_average = ((n-1)*old_average + imp) / n
+                        average_imp[ass_class] = new_average
+                        impedance[time_period][mtx_type][ass_class] = new_average
+        return impedance
+    
     def transform(self, purpose, impedance):
         """Perform transformation from time period dependent matrices 
         to aggregate impedance matrices for specific travel purpose.
