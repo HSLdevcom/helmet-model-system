@@ -78,7 +78,7 @@ class SecDestGeneration(GenerationModel):
             bounds = self.purpose.bounds
             metropolitan = next(iter(self.purpose.sources)).bounds
             b = self.param
-            self.tours[mode] += b[purpose.name] * demand[metropolitan, bounds]
+            self.tours[mode] += b[purpose.name][mode] * demand[metropolitan, bounds]
     
     def get_tours(self, mode):
         """Generate matrix of tour numbers
