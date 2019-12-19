@@ -177,6 +177,50 @@ link_volumes = {
     "truck": "@ka",
     "van": "@pa",
 }
+# Factors for 24-h expansion of volumes
+# TODO Update
+volume_factors = {
+    "car": {
+        "aht": 1 / 0.47,
+        "pt": 1 / 0.09,
+        "iht": 1 / 0.38,
+    },
+    "car_work": {
+        "aht": 1 / 0.47,
+        "pt": 1 / 0.09,
+        "iht": 1 / 0.38,
+    },
+    "car_leisure": {
+        "aht": 1 / 0.47,
+        "pt": 1 / 0.09,
+        "iht": 1 / 0.38,
+    },
+    "transit": {
+        "aht": 1 / 0.47,
+        "pt": 1 / 0.09,
+        "iht": 1 / 0.38,
+    },
+    "bike": {
+        "aht": 1 / 0.47,
+        "pt": 1 / 0.09,
+        "iht": 1 / 0.38,
+    },
+    "trailer_truck": {
+        "aht": 1 / 0.47,
+        "pt": 1 / 0.09,
+        "iht": 1 / 0.38,
+    },
+    "truck": {
+        "aht": 1 / 0.47,
+        "pt": 1 / 0.09,
+        "iht": 1 / 0.38,
+    },
+    "van": {
+        "aht": 1 / 0.47,
+        "pt": 1 / 0.09,
+        "iht": 1 / 0.38,
+    },
+}
 # Emme matrix IDs
 emme_mtx = {
     "demand": {

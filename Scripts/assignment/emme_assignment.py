@@ -62,7 +62,6 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             self._assign_cars(scen_id, param.stopping_criteria_coarse)
             self._calc_extra_wait_time(scen_id)
             self._assign_transit(scen_id)
-            self._print_vehicle_kms()
         
     def get_impedance(self):
         """Get travel impedance matrices for one time period from assignment.
@@ -293,17 +292,12 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         })
         self.emme.network_calc(netw_specs, scenario)
 
-    def _print_vehicle_kms(self):
+    def print_vehicle_kms(self):
         emmebank = self.emme.modeller.emmebank
-        kms = dict.fromkeys(["@pa", "@ka", "@yhd"])
+        freight_classes = ["van", "truck", "trailer_truck"]
         vdfs = [1, 2, 3, 4, 5]
         transit_modes = ["bde", "g", "m", "rj", "tp"]
-        # TODO Mode-specific weights
-        weights = {
-            "aht": 1 / 0.47,
-            "pt": 1 / 0.09,
-            "iht": 1 / 0.38,
-        }
+        kms = dict.fromkeys(freight_classes + ["car"])
         for ass_class in kms:
             kms[ass_class] = dict.fromkeys(vdfs)
             for vdf in kms[ass_class]:
@@ -324,19 +318,24 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                     # Links with bus lane
                     vdf = link.volume_delay_func - 5
                 if vdf in vdfs:
-                    for ass_class in kms:
-                        kms[ass_class][vdf] += ( weights[tp] 
-                                               * link[ass_class] 
+                    car_vol = link.auto_volume
+                    for ass_class in freight_classes:
+                        kms[ass_class][vdf] += ( param.volume_factors[ass_class][tp]
+                                               * link[param.link_volumes[ass_class]]
                                                * link.length)
+                        car_vol -= link[param.link_volumes[ass_class]]
+                    kms["car"][vdf] += ( param.volume_factors["car"][tp] 
+                                      * car_vol 
+                                      * link.length)
             for line in network.transit_lines():
                 for modes in transit_modes:
                     if line.mode.id in modes:
                         mode = modes
                 for segment in line.segments():
-                    transit_kms[mode] += ( weights[tp]
+                    transit_kms[mode] += ( param.volume_factors["transit"][tp]
                                          * line["@vm1"]
                                          * segment.link.length)
-                    transit_times[mode] += ( weights[tp]
+                    transit_times[mode] += ( param.volume_factors["transit"][tp]
                                         * line["@vm1"]
                                         * segment.transit_time)
         for ass_class in kms:
