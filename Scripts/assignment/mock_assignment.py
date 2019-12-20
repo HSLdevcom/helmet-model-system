@@ -82,3 +82,6 @@ class MockAssignmentModel(AssignmentModel, ImpedanceSource):
 
     def calc_transit_cost(self, fare, peripheral_cost, default_cost=None):
         pass
+
+    def print_vehicle_kms(self):
+        pass

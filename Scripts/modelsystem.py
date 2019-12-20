@@ -185,6 +185,8 @@ class ModelSystem:
                             cost_data = impedance[tp][mtx_type][ass_class]
                             mtx[ass_class] = cost_data
         self.imptrans.average_car_impedance(impedance)
+        if is_last_iteration:
+            self.ass_model.print_vehicle_kms()
         self.dtm.init_demand()
         result.flush()
         return impedance
