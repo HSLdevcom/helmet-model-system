@@ -177,6 +177,50 @@ link_volumes = {
     "truck": "@ka",
     "van": "@pa",
 }
+# Factors for 24-h expansion of volumes
+# TODO Update
+volume_factors = {
+    "car": {
+        "aht": 1 / 0.47,
+        "pt": 1 / 0.09,
+        "iht": 1 / 0.38,
+    },
+    "car_work": {
+        "aht": 1 / 0.47,
+        "pt": 1 / 0.09,
+        "iht": 1 / 0.38,
+    },
+    "car_leisure": {
+        "aht": 1 / 0.47,
+        "pt": 1 / 0.09,
+        "iht": 1 / 0.38,
+    },
+    "transit": {
+        "aht": 1 / 0.47,
+        "pt": 1 / 0.09,
+        "iht": 1 / 0.38,
+    },
+    "bike": {
+        "aht": 1 / 0.47,
+        "pt": 1 / 0.09,
+        "iht": 1 / 0.38,
+    },
+    "trailer_truck": {
+        "aht": 1 / 0.47,
+        "pt": 1 / 0.09,
+        "iht": 1 / 0.38,
+    },
+    "truck": {
+        "aht": 1 / 0.47,
+        "pt": 1 / 0.09,
+        "iht": 1 / 0.38,
+    },
+    "van": {
+        "aht": 1 / 0.47,
+        "pt": 1 / 0.09,
+        "iht": 1 / 0.38,
+    },
+}
 # Emme matrix IDs
 emme_mtx = {
     "demand": {
@@ -188,136 +232,136 @@ emme_mtx = {
             "id": "mf2",
             "description": "car leisure demand",
         },
-        "trailer_truck": {
-            "id": "mf71",
-            "description": "trailer truck demand",
-        },
-        "truck":  {
-            "id":"mf72",
-            "description": "truck demand",
-        },
-        "van":  {
-            "id":"mf73",
-            "description": "van demand",
-        },
         "transit":  {
             "id":"mf4",
             "description": "transit demand",
         },
         "bike":  {
-            "id":"mf7",
+            "id":"mf5",
             "description": "bicyclist demand",
         },
-    },
-    "gen_cost": {
-        "car_work": {
-            "id": "mf372",
-            "description": "car work travel generalized cost",
+        "trailer_truck": {
+            "id": "mf7",
+            "description": "trailer truck demand",
         },
-        "car_leisure": {
-            "id": "mf373",
-            "description": "car leisure travel generalized cost",
+        "truck":  {
+            "id":"mf8",
+            "description": "truck demand",
+        },
+        "van":  {
+            "id":"mf9",
+            "description": "van demand",
         },
     },
     "time": {
         "car_work": {
-            "id": "mf380",
+            "id": "mf11",
             "description": "car work travel time",
         },
         "car_leisure": {
-            "id": "mf382",
+            "id": "mf12",
             "description": "car leisure travel time",
         },
         "transit": {
-            "id": "mf20",
+            "id": "mf14",
             "description": "transit travel time",
         },
         "bike": {
-            "id": "mf386",
+            "id": "mf15",
             "description": "bike travel time",
         },
         "walk": {
-            "id": "mf376",
+            "id": "mf16",
             "description": "walk travel time",
         },
     },
     "dist": {
         "car_work": {
-            "id": "mf381",
+            "id": "mf21",
             "description": "car work travel distance",
         },
         "car_leisure": {
-            "id": "mf383",
+            "id": "mf22",
             "description": "car leisure travel distance",
         },
         "transit": {
-            "id": "mf27",
+            "id": "mf24",
             "description": "transit in-vehicle distance",
         },
         "bike": {
-            "id": "mf387",
+            "id": "mf25",
             "description": "bike travel distance",
         },
         "walk": {
-            "id": "mf377",
+            "id": "mf26",
             "description": "walk travel distance",
         },
     },
     "cost": {
         "car_work": {
-            "id": "mf370",
+            "id": "mf31",
             "description": "car work travel cost",
         },
         "car_leisure": {
-            "id": "mf371",
+            "id": "mf32",
             "description": "car leisure travel cost",
         },
         "transit": {
-            "id": "mf31",
+            "id": "mf34",
             "description": "transit travel cost",
+        },
+    },
+    "gen_cost": {
+        "car_work": {
+            "id": "mf41",
+            "description": "car work travel generalized cost",
+        },
+        "car_leisure": {
+            "id": "mf42",
+            "description": "car leisure travel generalized cost",
         },
     },
     "transit": {
         "inv_time": {
-            "id": "mf21",
+            "id": "mf51",
             "description": "transit in-vehicle time",
         },
         "aux_time": {
-            "id": "mf22",
+            "id": "mf52",
             "description": "transit auxilliary time",
         },
         "tw_time": {
-            "id": "mf23",
+            "id": "mf53",
             "description": "transit total waiting time",
         },
         "fw_time": {
-            "id": "mf24",
+            "id": "mf54",
             "description": "transit first waiting time",
         },
         "board_time": {
-            "id": "mf25",
+            "id": "mf55",
             "description": "transit boarding time",
         },
         "board_cost": {
-            "id": "mf28",
+            "id": "mf58",
             "description": "transit boarding cost",
         },
         "num_board": {
-            "id": "mf26",
+            "id": "mf56",
             "description": "transit trip number of boardings",
         },
     },
     "bike": {
         "separate_dist": {
-            "id": "mf100",
+            "id": "mf61",
             "description": "separate bike way distance",
         },
         "streetside_dist": {
-            "id": "mf101",
+            "id": "mf62",
             "description": "street-side bike way distance",
         },
         "mixed_dist": {
-            "id": "mf102",
+            "id": "mf63",
             "description": "bike distance in mixed traffic",
         },
     },

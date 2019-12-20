@@ -50,3 +50,7 @@ class ImpedanceSource:
     @abstractmethod
     def calc_transit_cost(self):
         pass
+
+    @abstractmethod
+    def print_vehicle_kms(self):
+        pass
