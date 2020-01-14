@@ -1119,9 +1119,9 @@ destination_choice = {
         "bike": {
             "attraction": {},
             "impedance": {
-                "dist": -1.71018514578,
             },
             "log": {
+                "dist": -1.71018514578,
                 "size": 1.00000000000,
             },
             "size": {
