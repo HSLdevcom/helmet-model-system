@@ -173,7 +173,8 @@ class TourPurpose(Purpose):
         return aggr_mtx
 
     def _count_trip_lengths(self, trips, dist):
-        intervals = ("0-1", "1-3", "3-5", "5-10", "10-20", "20-inf")
+        intervals = ("0-1", "1-3", "3-5", "5-10", "10-20", "20-30",
+                     "30-40", "40-inf")
         trip_lengths = pandas.Series(index=intervals)
         for tl in trip_lengths.index:
             bounds = tl.split("-")
