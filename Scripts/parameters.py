@@ -1054,7 +1054,7 @@ destination_choice = {
             "transform": {
                 "attraction": {},
                 "impedance": {
-                    "cost": (1/60, 1/44),
+                    "cost": (1.0 / 60.0, 1.0 / 44.0),
                 },
             },
         },
@@ -1270,7 +1270,7 @@ destination_choice = {
             "transform": {
                 "attraction": {},
                 "impedance": {
-                    "cost": 1/30,
+                    "cost": 1.0 / 30.0,
                 },
             },
         },
@@ -1408,7 +1408,7 @@ destination_choice = {
             "transform": {
                 "attraction": {},
                 "impedance": {
-                    "cost": 1/30,
+                    "cost": 1.0 / 30.0,
                 },
             },
         },
@@ -1491,7 +1491,7 @@ destination_choice = {
             "transform": {
                 "attraction": {},
                 "impedance": {
-                    "cost": 1/30,
+                    "cost": 1.0 / 30.0,
                 },
             },
         },
