@@ -111,9 +111,8 @@ class TourPurpose(Purpose):
         """
         tours = self.gen_model.get_tours()
         demand = {}
-        self.aggregated_demand = {}
-        self.demand_sums = {}
-        self.trip_lengths = {}
+        demsums = {}
+        attracted_tours = 0
         for mode in self.model.mode_choice_param:
             mtx = (self.prob.pop(mode) * tours).T
             try:
@@ -123,37 +122,31 @@ class TourPurpose(Purpose):
             demand[mode] = Demand(self, mode, mtx)
             self.attracted_tours[mode] = mtx.sum(0)
             self.generated_tours[mode] = mtx.sum(1)
-            self.demand_sums[mode] = self.generated_tours[mode].sum()
-            self.trip_lengths[mode] = self._count_trip_lengths(
-                mtx, self.dist)
-        self.print_data(demand)
-        return demand
-
-    def print_data(self, demand):
-        attracted_tours = 0
-        for mode in demand:
             attracted_tours += self.attracted_tours[mode]
-            aggregated_demand = self._aggregate(demand[mode].matrix)
+            trip_lengths = self._count_trip_lengths(
+                mtx, self.dist)
+            result.print_data(
+                trip_lengths, "trip_lengths.txt",
+                trip_lengths.index, self.name + "_" + mode[0])
+            aggregated_demand = self._aggregate(mtx)
             result.print_matrix(aggregated_demand,
                                 "aggregated_demand", self.name + "_" + mode)
             own_zone = self.zone_data.get_data("own_zone", self.bounds)
-            own_zone_demand = own_zone * demand[mode].matrix
+            own_zone_demand = own_zone * mtx
             own_zone_aggregated = self._aggregate(own_zone_demand)
             result.print_data(
                 numpy.diag(own_zone_aggregated), "own_zone_demand.txt",
                 own_zone_aggregated.index, self.name + "_" + mode[0])
-            result.print_data(
-                self.trip_lengths[mode], "trip_lengths.txt",
-                self.trip_lengths[mode].index, self.name + "_" + mode[0])
+            demsums[mode] = self.generated_tours[mode].sum()
         result.print_data(
             attracted_tours, "attraction.txt",
             self.zone_data.zone_numbers, self.name)
-        demsums = self.demand_sums
         demand_all = sum(demsums.values())
         mode_shares = {mode: demsums[mode] / demand_all for mode in demsums}
         result.print_data(
             pandas.Series(mode_shares), "mode_share.txt",
             demsums.keys(), self.name)
+        return demand
     
     def _aggregate(self, mtx):
         """Aggregate matrix to larger areas."""
