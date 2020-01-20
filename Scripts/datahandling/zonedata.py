@@ -84,6 +84,8 @@ class ZoneData:
         self["share_detached_houses"] = landdata["detach"]
         self["cbd"] = pandas.Series(0, self.zone_numbers)
         self["cbd"].loc[:param.areas["helsinki_cbd"][1]] = 1
+        self["helsinki"] = pandas.Series(0, self.zone_numbers)
+        self["helsinki"].loc[:param.municipality["Helsinki"][1]] = 1
         self["shops_cbd"] = self["cbd"] * self["shops"]
         self["shops_elsewhere"] = (1-self["cbd"]) * self["shops"]
         # Create diagonal matrix with zone area

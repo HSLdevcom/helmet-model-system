@@ -2734,7 +2734,7 @@ car_density = {
     "constant": 0.0,
     "generation": {
         "share_detached_houses": 2.413e-3,
-        "cbd": -2.290e-2,
+        "helsinki": -2.290e-2,
     },
     "log": {
         "time": 2.024e-1,
