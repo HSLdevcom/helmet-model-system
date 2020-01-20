@@ -2732,7 +2732,7 @@ car_usage = {
 }
 car_density = {
     "constant": 0.0,
-    "attraction": {
+    "generation": {
         "share_detached_houses": 2.413e-3,
         "cbd": -2.290e-2,
     },
