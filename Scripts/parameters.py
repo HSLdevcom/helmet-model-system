@@ -2730,6 +2730,17 @@ car_usage = {
         ("age_65-99", "male"): 1.8737,
     },
 }
+car_density = {
+    "constant": 0.0,
+    "attraction": {
+        "share_detached_houses": 2.413e-3,
+        "cbd": -2.290e-2,
+    },
+    "log": {
+        "time": 2.024e-1,
+        "cost": -1.040e-1,
+    },
+}
 vector_calibration_threshold = 5
 # Maximum possible distance to destination
 distance_boundary = {
