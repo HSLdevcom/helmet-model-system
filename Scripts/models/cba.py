@@ -3,34 +3,28 @@ import sys
 import os
 import openmatrix as omx
 import numpy
+import pandas
 import re
 import parameters as param
 
 
-def read_scen (scenario):
+def read_scen (scenario, time_period):
     """Read travel cost and demand data for scenario from files"""
     script_dir = os.path.dirname(os.path.realpath(__file__))
     project_dir = os.path.join(script_dir, "..", "..")
     path = os.path.join(project_dir, "Matrices", scenario)
-    file_name = os.path.join(path, "demand_aht.omx")
-    demand_file = omx.open_file(file_name)
-    file_name = os.path.join(path, "time_aht.omx")
-    time_file = omx.open_file(file_name)
-    file_name = os.path.join(path, "cost_aht.omx")
-    cost_file = omx.open_file(file_name)
-    file_name = os.path.join(path, "dist_aht.omx")
-    dist_file = omx.open_file(file_name)
+    files = dict.fromkeys(["demand", "time", "cost", "dist"])
+    for mtx_type in files:
+        file_name = mtx_type + '_' + time_period + ".omx"
+        file_path = os.path.join(path, file_name)
+        files[mtx_type] = omx.open_file(file_path)
     matrices = {}
     for ass_class in param.transport_classes:
         matrices[ass_class] = {}
-        matrices[ass_class]["demand"] = numpy.array(demand_file[ass_class])
-        matrices[ass_class]["time"] = numpy.array(time_file[ass_class])
-        matrices[ass_class]["cost"] = numpy.array(cost_file[ass_class])
-        matrices[ass_class]["dist"] = numpy.array(dist_file[ass_class])
-    demand_file.close()
-    time_file.close()
-    cost_file.close()
-    dist_file.close()
+        for mtx_type in files:
+            matrices[ass_class][mtx_type] = numpy.array(files[mtx_type][ass_class])
+    for mtx_type in files:
+        files[mtx_type].close()
     print "Files read"
     return matrices    
 
@@ -89,73 +83,41 @@ def mileages (scenario):
     data_dir = os.path.join(project_dir, "Results", scenario)
     data_dir = os.path.abspath(data_dir)
     filename = os.path.join(data_dir, "vehicle_kms.txt")
-    ha_file = open(filename, 'r')
-    ka_file = open(filename, 'r')
-    pa_file = open(filename, 'r')
-    yhd_file = open(filename, 'r')
+    data = pandas.read_csv(filename, delim_whitespace=True)
     filename = os.path.join(data_dir, "transit_kms.txt")
-    jl_file = open(filename, 'r')
-    miles = {'ha': mileage(ha_file),
-             'ka': mileage(ka_file),
-             'pa': mileage(pa_file),
-             'yhd': mileage(yhd_file),
-             'jl': pt_mileage(jl_file),
+    transit_data = pandas.read_csv(filename, delim_whitespace=True)
+    miles = {
+        'ha': data["car"],
+        'ka': data["truck"],
+        'pa': data["van"],
+        'yhd': data["trailer_truck"],
+        'jl': {
+            "hr": {
+                'bus': transit_data["time"]["bde"], 
+                'trunk': transit_data["time"]["g"],
+                'metro': transit_data["time"]["m"],
+                'train': transit_data["time"]["rj"],
+                'tram': transit_data["time"]["tp"],
+            },
+            "km": {
+                'bus': transit_data["km"]["bde"], 
+                'trunk': transit_data["km"]["g"],
+                'metro': transit_data["km"]["m"],
+                'train': transit_data["km"]["rj"],
+                'tram': transit_data["km"]["tp"],
+            },
+        },
     }
     return miles
-
-def mileage (file):
-    s = file.readline()
-    sp = s.split()
-    while sp == [] or sp[0] != 'origin':
-        # Read lines until the header ends
-        s = file.readline()
-        sp = s.split()
-    s = file.readline()
-    s = file.readline()
-    s = file.readline()
-    sp = s.split()
-    mil = {'vdf1': float(sp[1]), 
-           'vdf2': float(sp[2]),
-           'vdf3': float(sp[3]),
-           'vdf4': float(sp[4]),
-           'vdf5': float(sp[5]),
-    }
-    return mil
-
-def pt_mileage (file):
-    s = file.readline()
-    sp = s.split()
-    while sp == [] or sp[0] != 'origin':
-        # Read lines until the header ends
-        s = file.readline()
-        sp = s.split()
-    s = file.readline()
-    s = file.readline()
-    s = file.readline()
-    sp = s.split()
-    mil = {}
-    mil['hr'] = {'bus': float(sp[1]), 
-                 'trunk': float(sp[2]),
-                 'metro': float(sp[3]),
-                 'train': float(sp[4]),
-                 'tram': float(sp[5]),
-    }
-    mil['km'] = {'bus': float(sp[6]), 
-                 'trunk': float(sp[7]),
-                 'metro': float(sp[8]),
-                 'train': float(sp[9]),
-                 'tram': float(sp[10]),
-    }
-    return mil
 
 def mile_gains (miles0, miles1):
     """Calculate mile gains"""
     miles = {}
-    miles['vdf1'] = miles1['vdf1'] - miles0['vdf1']
-    miles['vdf2'] = miles1['vdf2'] - miles0['vdf2']
-    miles['vdf3'] = miles1['vdf3'] - miles0['vdf3']
-    miles['vdf4'] = miles1['vdf4'] - miles0['vdf4']
-    miles['vdf5'] = miles1['vdf5'] - miles0['vdf5']
+    miles['vdf1'] = miles1[1] - miles0[1]
+    miles['vdf2'] = miles1[2] - miles0[2]
+    miles['vdf3'] = miles1[3] - miles0[3]
+    miles['vdf4'] = miles1[4] - miles0[4]
+    miles['vdf5'] = miles1[5] - miles0[5]
     return miles
 
 def pt_miles (miles0, miles1):
@@ -363,15 +325,15 @@ def main (args):
     revenues = {}
     gains = {}
     for tp in ["aht"]:
-        ve1 = read_scen(args[2])
-        ve0 = read_scen(args[1])
-        revenues['jl_aht'] = calc_revenue(ve0["transit"], ve1["transit"])
-        revenues['ha_aht'] = calc_revenue(ve0["car"], ve1["car"])
+        ve1 = read_scen(args[2], tp)
+        ve0 = read_scen(args[1], tp)
+        revenues["jl_" + tp] = calc_revenue(ve0["transit"], ve1["transit"])
+        revenues["ha_" + tp] = calc_revenue(ve0["car"], ve1["car"])
         print "Revenues aht calculated"
-        gains['ha_aht'] = calc_gains(ve0["car"], ve1["car"])
-        gains['ka_aht'] = calc_gains(ve0["truck"], ve1["truck"])
-        gains['jl_aht'] = calc_gains(ve0["transit"], ve1["transit"])
-        print "Gains aht calculated"
+        gains["ha_" + tp] = calc_gains(ve0["car"], ve1["car"])
+        gains["ka_" + tp] = calc_gains(ve0["truck"], ve1["truck"])
+        gains["jl_" + tp] = calc_gains(ve0["transit"], ve1["transit"])
+        print "Gains " + tp + " calculated"
     wb = load_workbook(args[3])
     year = int(args[4])
     if year == 1:
@@ -384,3 +346,4 @@ def main (args):
 
 
 main(sys.argv)
+main([0, "test", "test"])
