@@ -150,26 +150,7 @@ class ModelSystem:
             self.ass_model.assign(tp, self.dtm.demand[tp], is_last_iteration)
             impedance[tp] = self.ass_model.get_impedance()
             if tp == "aht":
-                car_time = numpy.ma.average(
-                    impedance[tp]["time"]["car_work"], axis=1,
-                    weights=self.dtm.demand[tp]["car_work"])
-                transit_time = numpy.ma.average(
-                    impedance[tp]["time"]["transit"], axis=1,
-                    weights=self.dtm.demand[tp]["transit_work"])
-                time_ratio = transit_time / car_time
-                result.print_data(
-                    time_ratio, "impedance_ratio.txt",
-                    self.ass_model.zone_numbers, "time")
-                car_cost = numpy.ma.average(
-                    impedance[tp]["cost"]["car_work"], axis=1,
-                    weights=self.dtm.demand[tp]["car_work"])
-                transit_cost = numpy.ma.average(
-                    impedance[tp]["cost"]["transit"], axis=1,
-                    weights=self.dtm.demand[tp]["transit_work"])
-                cost_ratio = transit_cost / 44 / car_cost
-                result.print_data(
-                    cost_ratio, "impedance_ratio.txt",
-                    self.ass_model.zone_numbers, "cost")
+                self._calc_ratios(impedance, tp)
             if is_last_iteration:
                 zone_numbers = self.ass_model.zone_numbers
                 with self.resultmatrices.open("demand", tp, 'w') as mtx:
@@ -226,3 +207,34 @@ class ModelSystem:
         for i in dests:
             demand = purpose.distribute_tours(mode, impedance[mode], i)
             container.add_demand(demand)
+
+    def _calc_ratios(self, impedance, tp):
+        """Calculate time and cost ratios.
+        
+        Parameters
+        ----------
+        impedance : dict
+            Impedance matrices.
+        tp : str
+            TIme period (usually aht in this function).
+        """ 
+        car_time = numpy.ma.average(
+            impedance[tp]["time"]["car_work"], axis=1,
+            weights=self.dtm.demand[tp]["car_work"])
+        transit_time = numpy.ma.average(
+            impedance[tp]["time"]["transit"], axis=1,
+            weights=self.dtm.demand[tp]["transit_work"])
+        time_ratio = transit_time / car_time
+        result.print_data(
+            time_ratio, "impedance_ratio.txt",
+            self.ass_model.zone_numbers, "time")
+        car_cost = numpy.ma.average(
+            impedance[tp]["cost"]["car_work"], axis=1,
+            weights=self.dtm.demand[tp]["car_work"])
+        transit_cost = numpy.ma.average(
+            impedance[tp]["cost"]["transit"], axis=1,
+            weights=self.dtm.demand[tp]["transit_work"])
+        cost_ratio = transit_cost / 44 / car_cost
+        result.print_data(
+            cost_ratio, "impedance_ratio.txt",
+            self.ass_model.zone_numbers, "cost")
