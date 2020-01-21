@@ -150,7 +150,7 @@ class ModelSystem:
             self.ass_model.assign(tp, self.dtm.demand[tp], is_last_iteration)
             impedance[tp] = self.ass_model.get_impedance()
             if tp == "aht":
-                self._calc_ratios(impedance, tp)
+                self._update_ratios(impedance, tp)
             if is_last_iteration:
                 zone_numbers = self.ass_model.zone_numbers
                 with self.resultmatrices.open("demand", tp, 'w') as mtx:
@@ -208,7 +208,7 @@ class ModelSystem:
             demand = purpose.distribute_tours(mode, impedance[mode], i)
             container.add_demand(demand)
 
-    def _calc_ratios(self, impedance, tp):
+    def _update_ratios(self, impedance, tp):
         """Calculate time and cost ratios.
         
         Parameters
@@ -228,6 +228,7 @@ class ModelSystem:
         result.print_data(
             time_ratio, "impedance_ratio.txt",
             self.ass_model.zone_numbers, "time")
+        self.zdata_forecast["time_ratio"] = time_ratio
         car_cost = numpy.ma.average(
             impedance[tp]["cost"]["car_work"], axis=1,
             weights=self.dtm.demand[tp]["car_work"])
@@ -238,3 +239,4 @@ class ModelSystem:
         result.print_data(
             cost_ratio, "impedance_ratio.txt",
             self.ass_model.zone_numbers, "cost")
+        self.zdata_forecast["cost_ratio"] = cost_ratio
