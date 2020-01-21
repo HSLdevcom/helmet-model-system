@@ -59,6 +59,8 @@ class CarDensityModel(LinearModel):
         self._add_constant(prediction, b["constant"])
         self._add_zone_terms(prediction, b["generation"], True)
         self._add_log_zone_terms(prediction, b["log"], True)
+        prediction = pandas.Series(
+            prediction, self.zone_data.zone_numbers[self.bounds])
         self.print_results(prediction)
         return prediction
 

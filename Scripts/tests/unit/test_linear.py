@@ -1,4 +1,5 @@
 import numpy
+import pandas
 import unittest
 import parameters
 from datahandling.zonedata import ZoneData
@@ -45,8 +46,9 @@ class LinearModelTest(unittest.TestCase):
         
     
     def _validate(self, prediction):
-        self.assertIs(type(prediction), numpy.ndarray)
-        self.assertEquals(prediction.ndim, 2)
-        self.assertEquals(prediction.shape[1], 4)
-        self.assertNotEquals(prediction[0, 1], 0)
+        self.assertIs(type(prediction), pandas.core.series.Series)
+        self.assertEquals(prediction.ndim, 1)
+        self.assertEquals(prediction.shape[0], 4)
+        self.assertEquals(prediction.size, 4)
+        self.assertNotEquals(prediction.iloc[0], 0)
         assert numpy.isfinite(prediction).all()
