@@ -19,10 +19,25 @@ def read_scen (scenario, time_period):
         file_path = os.path.join(path, file_name)
         files[mtx_type] = omx.open_file(file_path)
     matrices = {}
-    for ass_class in param.transport_classes:
-        matrices[ass_class] = {}
+    for transport_class in param.transport_classes:
+        matrices[transport_class] = {}
         for mtx_type in files:
-            matrices[ass_class][mtx_type] = numpy.array(files[mtx_type][ass_class])
+            if mtx_type != "demand":
+                mtx_label = transport_class.split('_')[0]
+                if mtx_label == "transit" or mtx_label == "bike":
+                    ass_class = mtx_label
+                elif transport_class in ("truck", "trailer_truck", "van"):
+                    # TODO Calculate and output impendance matrices for
+                    # these modes in end assignment
+                    ass_class = "car_work"
+                else:
+                    ass_class = transport_class
+            else:
+                ass_class = transport_class
+            if mtx_label == "bike" and mtx_type == "cost":
+                matrices[transport_class][mtx_type] = 0
+            else:
+                matrices[transport_class][mtx_type] = numpy.array(files[mtx_type][ass_class])
     for mtx_type in files:
         files[mtx_type].close()
     print "Files read"
@@ -156,50 +171,50 @@ def write_results_1 (wb, miles, revenues, gains):
     ws = wb.get_sheet_by_name('Kayttajahyodyt')
     ws['J9'] = gains['ha_aht']['time']['existing']
     ws['J10'] = gains['ha_aht']['time']['additional']
-    ws['K9'] = gains['ha_pai']['time']['existing']
-    ws['K10'] = gains['ha_pai']['time']['additional']
+    ws['K9'] = gains['ha_pt']['time']['existing']
+    ws['K10'] = gains['ha_pt']['time']['additional']
     ws['L9'] = gains['ha_iht']['time']['existing']
     ws['L10'] = gains['ha_iht']['time']['additional']
     ws['J22'] = gains['ha_aht']['dist']['existing']
     ws['J23'] = gains['ha_aht']['dist']['additional']
-    ws['K22'] = gains['ha_pai']['dist']['existing']
-    ws['K23'] = gains['ha_pai']['dist']['additional']
+    ws['K22'] = gains['ha_pt']['dist']['existing']
+    ws['K23'] = gains['ha_pt']['dist']['additional']
     ws['L22'] = gains['ha_iht']['dist']['existing']
     ws['L23'] = gains['ha_iht']['dist']['additional']
     ws['J37'] = gains['ha_aht']['cost']['existing']
     ws['J38'] = gains['ha_aht']['cost']['additional']
-    ws['K37'] = gains['ha_pai']['cost']['existing']
-    ws['K38'] = gains['ha_pai']['cost']['additional']
+    ws['K37'] = gains['ha_pt']['cost']['existing']
+    ws['K38'] = gains['ha_pt']['cost']['additional']
     ws['L37'] = gains['ha_iht']['cost']['existing']
     ws['L38'] = gains['ha_iht']['cost']['additional']
     ws['P9'] = gains['ka_aht']['time']['existing']
     ws['P10'] = gains['ka_aht']['time']['additional']
-    ws['Q9'] = gains['ka_pai']['time']['existing']
-    ws['Q10'] = gains['ka_pai']['time']['additional']
+    ws['Q9'] = gains['ka_pt']['time']['existing']
+    ws['Q10'] = gains['ka_pt']['time']['additional']
     ws['R9'] = gains['ka_iht']['time']['existing']
     ws['R10'] = gains['ka_iht']['time']['additional']
     ws['P22'] = gains['ka_aht']['dist']['existing']
     ws['P23'] = gains['ka_aht']['dist']['additional']
-    ws['Q22'] = gains['ka_pai']['dist']['existing']
-    ws['Q23'] = gains['ka_pai']['dist']['additional']
+    ws['Q22'] = gains['ka_pt']['dist']['existing']
+    ws['Q23'] = gains['ka_pt']['dist']['additional']
     ws['R22'] = gains['ka_iht']['dist']['existing']
     ws['R23'] = gains['ka_iht']['dist']['additional']
     ws['P37'] = gains['ka_aht']['cost']['existing']
     ws['P38'] = gains['ka_aht']['cost']['additional']
-    ws['Q37'] = gains['ka_pai']['cost']['existing']
-    ws['Q38'] = gains['ka_pai']['cost']['additional']
+    ws['Q37'] = gains['ka_pt']['cost']['existing']
+    ws['Q38'] = gains['ka_pt']['cost']['additional']
     ws['R37'] = gains['ka_iht']['cost']['existing']
     ws['R38'] = gains['ka_iht']['cost']['additional']
     ws['V9'] = gains['jl_aht']['time']['existing']
     ws['V10'] = gains['jl_aht']['time']['additional']
-    ws['W9'] = gains['jl_pai']['time']['existing']
-    ws['W10'] = gains['jl_pai']['time']['additional']
+    ws['W9'] = gains['jl_pt']['time']['existing']
+    ws['W10'] = gains['jl_pt']['time']['additional']
     ws['X9'] = gains['jl_iht']['time']['existing']
     ws['X10'] = gains['jl_iht']['time']['additional']
     ws['V37'] = gains['jl_aht']['cost']['existing']
     ws['V38'] = gains['jl_aht']['cost']['additional']
-    ws['W37'] = gains['jl_pai']['cost']['existing']
-    ws['W38'] = gains['jl_pai']['cost']['additional']
+    ws['W37'] = gains['jl_pt']['cost']['existing']
+    ws['W38'] = gains['jl_pt']['cost']['additional']
     ws['X37'] = gains['jl_iht']['cost']['existing']
     ws['X38'] = gains['jl_iht']['cost']['additional']
     ws = wb.get_sheet_by_name('Tuottajahyodyt')
@@ -214,11 +229,11 @@ def write_results_1 (wb, miles, revenues, gains):
     ws['T11'] = miles['pt_hr']['metro']
     ws['T12'] = miles['pt_hr']['train']
     ws['B43'] = revenues['jl_aht']
-    ws['C43'] = revenues['jl_pai']
+    ws['C43'] = revenues['jl_pt']
     ws['D43'] = revenues['jl_iht']
     ws = wb.get_sheet_by_name('Julkistaloudelliset')
     ws['F8'] = revenues['ha_aht']
-    ws['G8'] = revenues['ha_pai']
+    ws['G8'] = revenues['ha_pt']
     ws['H8'] = revenues['ha_iht']
 
 def write_results_2 (wb, miles, revenues, gains):
@@ -247,50 +262,50 @@ def write_results_2 (wb, miles, revenues, gains):
     ws = wb.get_sheet_by_name('Kayttajahyodyt')
     ws['J14'] = gains['ha_aht']['time']['existing']
     ws['J15'] = gains['ha_aht']['time']['additional']
-    ws['K14'] = gains['ha_pai']['time']['existing']
-    ws['K15'] = gains['ha_pai']['time']['additional']
+    ws['K14'] = gains['ha_pt']['time']['existing']
+    ws['K15'] = gains['ha_pt']['time']['additional']
     ws['L14'] = gains['ha_iht']['time']['existing']
     ws['L15'] = gains['ha_iht']['time']['additional']
     ws['J27'] = gains['ha_aht']['dist']['existing']
     ws['J28'] = gains['ha_aht']['dist']['additional']
-    ws['K27'] = gains['ha_pai']['dist']['existing']
-    ws['K28'] = gains['ha_pai']['dist']['additional']
+    ws['K27'] = gains['ha_pt']['dist']['existing']
+    ws['K28'] = gains['ha_pt']['dist']['additional']
     ws['L27'] = gains['ha_iht']['dist']['existing']
     ws['L28'] = gains['ha_iht']['dist']['additional']
     ws['J42'] = gains['ha_aht']['cost']['existing']
     ws['J43'] = gains['ha_aht']['cost']['additional']
-    ws['K42'] = gains['ha_pai']['cost']['existing']
-    ws['K43'] = gains['ha_pai']['cost']['additional']
+    ws['K42'] = gains['ha_pt']['cost']['existing']
+    ws['K43'] = gains['ha_pt']['cost']['additional']
     ws['L42'] = gains['ha_iht']['cost']['existing']
     ws['L43'] = gains['ha_iht']['cost']['additional']
     ws['P14'] = gains['ka_aht']['time']['existing']
     ws['P15'] = gains['ka_aht']['time']['additional']
-    ws['Q14'] = gains['ka_pai']['time']['existing']
-    ws['Q15'] = gains['ka_pai']['time']['additional']
+    ws['Q14'] = gains['ka_pt']['time']['existing']
+    ws['Q15'] = gains['ka_pt']['time']['additional']
     ws['R14'] = gains['ka_iht']['time']['existing']
     ws['R15'] = gains['ka_iht']['time']['additional']
     ws['P27'] = gains['ka_aht']['dist']['existing']
     ws['P28'] = gains['ka_aht']['dist']['additional']
-    ws['Q27'] = gains['ka_pai']['dist']['existing']
-    ws['Q28'] = gains['ka_pai']['dist']['additional']
+    ws['Q27'] = gains['ka_pt']['dist']['existing']
+    ws['Q28'] = gains['ka_pt']['dist']['additional']
     ws['R27'] = gains['ka_iht']['dist']['existing']
     ws['R28'] = gains['ka_iht']['dist']['additional']
     ws['P42'] = gains['ka_aht']['cost']['existing']
     ws['P43'] = gains['ka_aht']['cost']['additional']
-    ws['Q42'] = gains['ka_pai']['cost']['existing']
-    ws['Q43'] = gains['ka_pai']['cost']['additional']
+    ws['Q42'] = gains['ka_pt']['cost']['existing']
+    ws['Q43'] = gains['ka_pt']['cost']['additional']
     ws['R42'] = gains['ka_iht']['cost']['existing']
     ws['R43'] = gains['ka_iht']['cost']['additional']
     ws['V14'] = gains['jl_aht']['time']['existing']
     ws['V15'] = gains['jl_aht']['time']['additional']
-    ws['W14'] = gains['jl_pai']['time']['existing']
-    ws['W15'] = gains['jl_pai']['time']['additional']
+    ws['W14'] = gains['jl_pt']['time']['existing']
+    ws['W15'] = gains['jl_pt']['time']['additional']
     ws['X14'] = gains['jl_iht']['time']['existing']
     ws['X15'] = gains['jl_iht']['time']['additional']
     ws['V42'] = gains['jl_aht']['cost']['existing']
     ws['V43'] = gains['jl_aht']['cost']['additional']
-    ws['W42'] = gains['jl_pai']['cost']['existing']
-    ws['W43'] = gains['jl_pai']['cost']['additional']
+    ws['W42'] = gains['jl_pt']['cost']['existing']
+    ws['W43'] = gains['jl_pt']['cost']['additional']
     ws['X42'] = gains['jl_iht']['cost']['existing']
     ws['X43'] = gains['jl_iht']['cost']['additional']
     ws = wb.get_sheet_by_name('Tuottajahyodyt')
@@ -305,11 +320,11 @@ def write_results_2 (wb, miles, revenues, gains):
     ws['T19'] = miles['pt_hr']['metro']
     ws['T20'] = miles['pt_hr']['train']
     ws['B46'] = revenues['jl_aht']
-    ws['C46'] = revenues['jl_pai']
+    ws['C46'] = revenues['jl_pt']
     ws['D46'] = revenues['jl_iht']
     ws = wb.get_sheet_by_name('Julkistaloudelliset')
     ws['F13'] = revenues['ha_aht']
-    ws['G13'] = revenues['ha_pai']
+    ws['G13'] = revenues['ha_pt']
     ws['H13'] = revenues['ha_iht']
 
 def main (args):
@@ -324,15 +339,15 @@ def main (args):
     miles['pt_hr'] = pt_miles(miles0['jl']['hr'], miles1['jl']['hr'])
     revenues = {}
     gains = {}
-    for tp in ["aht"]:
+    for tp in ["aht", "pt", "iht"]:
         ve1 = read_scen(args[2], tp)
         ve0 = read_scen(args[1], tp)
-        revenues["jl_" + tp] = calc_revenue(ve0["transit"], ve1["transit"])
-        revenues["ha_" + tp] = calc_revenue(ve0["car"], ve1["car"])
+        revenues["jl_" + tp] = calc_revenue(ve0["transit_work"], ve1["transit_work"])
+        revenues["ha_" + tp] = calc_revenue(ve0["car_work"], ve1["car_work"])
         print "Revenues aht calculated"
-        gains["ha_" + tp] = calc_gains(ve0["car"], ve1["car"])
+        gains["ha_" + tp] = calc_gains(ve0["car_work"], ve1["car_work"])
         gains["ka_" + tp] = calc_gains(ve0["truck"], ve1["truck"])
-        gains["jl_" + tp] = calc_gains(ve0["transit"], ve1["transit"])
+        gains["jl_" + tp] = calc_gains(ve0["transit_work"], ve1["transit_work"])
         print "Gains " + tp + " calculated"
     wb = load_workbook(args[3])
     year = int(args[4])
@@ -345,5 +360,5 @@ def main (args):
     wb.save('cba_' + args[2] + '.xlsx')
 
 
-main(sys.argv)
-main([0, "test", "test"])
+# main(sys.argv)
+main([0, "2030_test", "2030_test", "CBA_kehikko.xlsx", 1])
