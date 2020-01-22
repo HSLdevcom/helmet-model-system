@@ -2737,8 +2737,8 @@ car_density = {
         "helsinki": -2.290e-2,
     },
     "log": {
-        #"time": 2.024e-1,
-        #"cost": -1.040e-1,
+        #"time_ratio": 2.024e-1,
+        #"cost_ratio": -1.040e-1,
     },
 }
 vector_calibration_threshold = 5
