@@ -1622,12 +1622,12 @@ destination_choice = {
             },
         },
         "log": {
-            "size": 1,
+            "size": 0.823988178,
         },
         "size": {
-            "workplaces": numpy.exp(2.53759200723),
-            "population_own": numpy.exp(1.17058855327),
-            "population_other": 1,
+            "workplaces": numpy.exp(3.941389653),
+            "population_own": numpy.exp(3.054259386),
+            "population_other": 1.0,
         },
     },
     "oop": {
@@ -2031,7 +2031,6 @@ mode_choice = {
     },
     "sop": {
         "all": {
-            "individual_dummy": {},
         },
     },
     "oop": {
