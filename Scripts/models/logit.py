@@ -365,12 +365,7 @@ class OriginModel(LogitModel):
                 Choice probabilities
         """
         b = self.dest_choice_param
-        utility = self._calc_origin_util(impedance)
-        exps = numpy.exp(utility)
-        # Size = kokotekija
-        size = numpy.ones_like(exps)
-        size = self._add_zone_util(size, b["size"])
-        exps *= numpy.power(size, b["log"]["size"])
+        exps = self._calc_exps(impedance, b)
         expsums = numpy.sum(exps, axis=1)
         prob = {}
         # Mode is needed here to get through tests even
@@ -378,13 +373,30 @@ class OriginModel(LogitModel):
         prob["all"] = exps.T / expsums
         return prob
 
-    def _calc_origin_util(self, impedance):
-        b = self.dest_choice_param
+    def _calc_exps(self, impedance, b):
+        # Linear terms
         utility = numpy.zeros_like(next(iter(impedance["car"].values())))
-        for mode in b["impedance"]:
-            self._add_impedance(utility, impedance[mode], b["impedance"][mode])
+        self._add_constant(utility, b["constant"])
         self._add_zone_util(utility, b["attraction"])
-        return utility
+        exps = numpy.exp(utility)
+        # Size = kokotekija
+        size = numpy.ones_like(exps)
+        self._add_zone_util(size, b["size"])
+        exps *= numpy.power(size, b["log"]["size"])
+        # Utility = mode-dependent utilities
+        exponents = numpy.zeros_like(exps)
+        self._add_exponent_terms(exponents, impedance, b["exponent"])
+        exps *= numpy.power(exponents, b["log"]["exponent"])
+        return exps
+    
+    def _add_exponent_terms(self, exponents, impedance, b):
+        for mode in b:
+            utility = numpy.zeros_like(exponents)
+            self._add_constant(utility, b[mode]["constant"])
+            self._add_impedance(utility, impedance[mode], b[mode]["impedance"])
+            self._add_zone_util(utility, b[mode]["attraction"])
+            exponents += numpy.exp(utility)
+        return exponents
 
 
 class GenerationModel():

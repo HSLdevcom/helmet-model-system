@@ -1607,22 +1607,22 @@ destination_choice = {
         },
     },
     "sop": {
+        "constant": 0.0,
         "attraction": {
             "own_zone": 0.451052614,
         },
-        "impedance": {},
         "log": {
             "size": 0.823988178,
-            "exp": 0.852045667,
+            "exponent": 0.852045667,
         },
         "size": {
             "workplaces": numpy.exp(3.941389653),
             "population_own": numpy.exp(3.054259386),
             "population_other": 1.0,
         },
-        "utility": {
+        "exponent": {
             "car": {
-                "constant": 0,
+                "constant": 0.0,
                 "generation": {},
                 "attraction": {
                     "own_zone_area": -0.01478815,
