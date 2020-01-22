@@ -64,6 +64,7 @@ class ModelSystem:
                     base_demand[ass_class] = mtx[ass_class]
             self.ass_model.assign(tp, base_demand)
             impedance[tp] = self.ass_model.get_impedance()
+        self._update_ratios(impedance, "aht")
         return impedance
 
     def run(self, impedance, is_last_iteration=False):
