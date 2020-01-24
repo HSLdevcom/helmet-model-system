@@ -44,7 +44,8 @@ class LinearModel:
     def _add_log_zone_terms(self, prediction, b, generation=False):
         zdata = self.zone_data
         for i in b:
-            prediction += b[i] * numpy.log(zdata.get_data(i, self.bounds, generation))
+            prediction += b[i] * numpy.log(zdata.get_data(i, self.bounds,
+                generation))
         return prediction
 
 class CarDensityModel(LinearModel):
@@ -54,11 +55,17 @@ class CarDensityModel(LinearModel):
         self.parameters = parameters
 
     def predict(self):
-        b = self.parameters
-        prediction = numpy.zeros(self.bounds.stop)
-        self._add_constant(prediction, b["constant"])
-        self._add_zone_terms(prediction, b["generation"], True)
-        self._add_log_zone_terms(prediction, b["log"], True)
+        try:
+            b = self.parameters
+            prediction = numpy.zeros(self.bounds.stop)
+            self._add_constant(prediction, b["constant"])
+            self._add_zone_terms(prediction, b["generation"], True)
+            self._add_log_zone_terms(prediction, b["log"], True)
+        except KeyError:
+            # On first iteration, time and cost ratios are not yet set. In that
+            # case, we fall back to using input car density values.
+            prediction = self.zone_data.get_data("car_density", self.bounds,
+                True)
         prediction = pandas.Series(
             prediction, self.zone_data.zone_numbers[self.bounds])
         self.print_results(prediction)
@@ -73,7 +80,8 @@ class CarDensityModel(LinearModel):
                 
         # Print car density by zone
         result.print_data(prediction, "car_density.txt",
-                          self.zone_data.zone_numbers[self.bounds], "car_density")
+                          self.zone_data.zone_numbers[self.bounds],
+                          "car_density")
         
         # print car density by municipality
         prediction_municipality = []
@@ -84,7 +92,8 @@ class CarDensityModel(LinearModel):
             # over 6 years old (from HEHA)
             prediction_municipality.append( car_density.loc[i].sum() 
                                     / population_7_99.loc[i].sum())
-        result.print_data(prediction_municipality, "car_density_per_municipality.txt",
+        result.print_data(prediction_municipality,
+                          "car_density_per_municipality.txt",
                           parameters.municipality.keys(), "car_density")
                           
         # print car density by area (to get Helsinki CBD vs. Helsinki other)
