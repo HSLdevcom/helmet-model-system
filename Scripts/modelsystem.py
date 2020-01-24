@@ -8,6 +8,7 @@ from demand.trips import DemandModel
 from demand.external import ExternalModel
 from datatypes.purpose import SecDestPurpose
 from transform.impedance_transformer import ImpedanceTransformer
+from models.linear import CarDensityModel
 import parameters
 import numpy
 import threading
@@ -37,6 +38,8 @@ class ModelSystem:
                                 self.ass_model.zone_numbers)
         self.dtm = dt.DepartureTimeModel(self.ass_model.nr_zones)
         self.imptrans = ImpedanceTransformer()
+        bounds = slice(0, self.zdata_forecast.first_peripheral_zone)
+        self.cdm = CarDensityModel(self.zdata_forecast, bounds, parameters.car_density)
         self.ass_classes = dict.fromkeys(parameters.emme_mtx["demand"].keys())
         self.mode_share = []
 
@@ -69,6 +72,8 @@ class ModelSystem:
     def run(self, impedance, is_last_iteration=False):
         self.dtm.add_demand(self.trucks)
         self.dtm.add_demand(self.trailer_trucks)
+        prediction = self.cdm.predict()
+        self.zdata_forecast["car_density"][:self.zdata_forecast.first_peripheral_zone] = prediction
         if self.is_agent_model:
             for purpose in self.dm.tour_purposes:
                 if isinstance(purpose, SecDestPurpose):

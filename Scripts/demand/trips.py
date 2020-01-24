@@ -38,7 +38,6 @@ class DemandModel:
                         self.purpose_dict[source].sec_dest_purpose = purpose
         bounds = slice(0, zone_data.first_peripheral_zone)
         self.cm = logit.CarUseModel(zone_data, bounds)
-        self.cdm = linear.CarDensityModel(zone_data, bounds, parameters.car_density)
         self.gm = logit.GenerationModel(self.zone_data)
         zone_data["car_users"] = self.cm.calc_prob()
         self.age_groups = (
