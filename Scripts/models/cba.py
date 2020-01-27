@@ -8,7 +8,7 @@ import re
 import parameters as param
 
 
-def read_scen (scenario, time_period):
+def read_scen(scenario, time_period):
     """Read travel cost and demand data for scenario from files"""
     script_dir = os.path.dirname(os.path.realpath(__file__))
     project_dir = os.path.join(script_dir, "..", "..")
@@ -43,7 +43,7 @@ def read_scen (scenario, time_period):
     print "Files read"
     return matrices    
 
-def calc_revenue (ve0, ve1):
+def calc_revenue(ve0, ve1):
     """Calculate difference in producer revenue between scenarios ve1 and ve0"""
     revenue = 0
     demand_change = ve1["demand"] - ve0["demand"]
@@ -54,7 +54,7 @@ def calc_revenue (ve0, ve1):
     revenue += (cost_change * ve1["demand"])[demand_change < 0].sum()
     return revenue
 
-def calc_cost_gains (ve0, ve1):
+def calc_cost_gains(ve0, ve1):
     """Calculate difference in consumer surplus between scenarios ve1 and ve0"""
     gains = {"existing": 0, "additional": 0}
     gain = ve1["cost"] - ve0["cost"]
@@ -65,7 +65,7 @@ def calc_cost_gains (ve0, ve1):
     gains["additional"] -= 0.5 * (demand_change * gain)[demand_change < 0].sum()
     return gains
 
-def calc_gains (ve0, ve1):
+def calc_gains(ve0, ve1):
     """Calculate time, distance and cost gains"""
     gains = {}
     gains["time"] = calc_cost_gains(
@@ -91,7 +91,7 @@ def calc_gains (ve0, ve1):
     gains["cost"] = calc_cost_gains(ve0, ve1)
     return gains
 
-def mileages (scenario):
+def mileages(scenario):
     """Read scenario data from files"""
     script_dir = os.path.dirname(os.path.realpath(__file__))
     project_dir = os.path.join(script_dir, "..", "..")
@@ -125,12 +125,12 @@ def mileages (scenario):
     }
     return miles
 
-def mile_gains (miles0, miles1):
+def mile_gains(miles0, miles1):
     """Calculate mile gains"""
     miles = miles1 - miles0
     return miles
 
-def pt_miles (miles0, miles1):
+def pt_miles(miles0, miles1):
     """Calculate public transport mile gains"""
     miles = {}
     miles["bus"] = miles1["bus"] - miles0["bus"]
@@ -140,8 +140,14 @@ def pt_miles (miles0, miles1):
     miles["tram"] = miles1["tram"] - miles0["tram"]
     return miles
 
-def write_results_1 (wb, miles, revenues, gains):
+def write_results_1(wb, miles, revenues, gains):
     """Write results for year 1"""
+    ws = wb.get_sheet_by_name("ha_tyo")
+    write_gains_1(ws, gains["car"])
+    ws = wb.get_sheet_by_name("ka")
+    write_gains_1(ws, gains["truck"])
+    ws = wb.get_sheet_by_name("jl_tyo")
+    write_gains_1(ws, gains["transit"])
     ws = wb.get_sheet_by_name("Ulkoisvaikutukset")
     ws["I19"] = miles["car"][1]
     ws["J19"] = miles["car"][2]
@@ -163,55 +169,6 @@ def write_results_1 (wb, miles, revenues, gains):
     ws["K22"] = miles["trailer_truck"][3]
     ws["L22"] = miles["trailer_truck"][4]
     ws["M22"] = miles["trailer_truck"][5]
-    ws = wb.get_sheet_by_name("Kayttajahyodyt")
-    ws["J9"] = gains["car"]["aht"]["time"]["existing"]
-    ws["J10"] = gains["car"]["aht"]["time"]["additional"]
-    ws["K9"] = gains["car"]["pt"]["time"]["existing"]
-    ws["K10"] = gains["car"]["pt"]["time"]["additional"]
-    ws["L9"] = gains["car"]["iht"]["time"]["existing"]
-    ws["L10"] = gains["car"]["iht"]["time"]["additional"]
-    ws["J22"] = gains["car"]["aht"]["dist"]["existing"]
-    ws["J23"] = gains["car"]["aht"]["dist"]["additional"]
-    ws["K22"] = gains["car"]["pt"]["dist"]["existing"]
-    ws["K23"] = gains["car"]["pt"]["dist"]["additional"]
-    ws["L22"] = gains["car"]["iht"]["dist"]["existing"]
-    ws["L23"] = gains["car"]["iht"]["dist"]["additional"]
-    ws["J37"] = gains["car"]["aht"]["cost"]["existing"]
-    ws["J38"] = gains["car"]["aht"]["cost"]["additional"]
-    ws["K37"] = gains["car"]["pt"]["cost"]["existing"]
-    ws["K38"] = gains["car"]["pt"]["cost"]["additional"]
-    ws["L37"] = gains["car"]["iht"]["cost"]["existing"]
-    ws["L38"] = gains["car"]["iht"]["cost"]["additional"]
-    ws["P9"] = gains["truck"]["aht"]["time"]["existing"]
-    ws["P10"] = gains["truck"]["aht"]["time"]["additional"]
-    ws["Q9"] = gains["truck"]["pt"]["time"]["existing"]
-    ws["Q10"] = gains["truck"]["pt"]["time"]["additional"]
-    ws["R9"] = gains["truck"]["iht"]["time"]["existing"]
-    ws["R10"] = gains["truck"]["iht"]["time"]["additional"]
-    ws["P22"] = gains["truck"]["aht"]["dist"]["existing"]
-    ws["P23"] = gains["truck"]["aht"]["dist"]["additional"]
-    ws["Q22"] = gains["truck"]["pt"]["dist"]["existing"]
-    ws["Q23"] = gains["truck"]["pt"]["dist"]["additional"]
-    ws["R22"] = gains["truck"]["iht"]["dist"]["existing"]
-    ws["R23"] = gains["truck"]["iht"]["dist"]["additional"]
-    ws["P37"] = gains["truck"]["aht"]["cost"]["existing"]
-    ws["P38"] = gains["truck"]["aht"]["cost"]["additional"]
-    ws["Q37"] = gains["truck"]["pt"]["cost"]["existing"]
-    ws["Q38"] = gains["truck"]["pt"]["cost"]["additional"]
-    ws["R37"] = gains["truck"]["iht"]["cost"]["existing"]
-    ws["R38"] = gains["truck"]["iht"]["cost"]["additional"]
-    ws["V9"] = gains["transit"]["aht"]["time"]["existing"]
-    ws["V10"] = gains["transit"]["aht"]["time"]["additional"]
-    ws["W9"] = gains["transit"]["pt"]["time"]["existing"]
-    ws["W10"] = gains["transit"]["pt"]["time"]["additional"]
-    ws["X9"] = gains["transit"]["iht"]["time"]["existing"]
-    ws["X10"] = gains["transit"]["iht"]["time"]["additional"]
-    ws["V37"] = gains["transit"]["aht"]["cost"]["existing"]
-    ws["V38"] = gains["transit"]["aht"]["cost"]["additional"]
-    ws["W37"] = gains["transit"]["pt"]["cost"]["existing"]
-    ws["W38"] = gains["transit"]["pt"]["cost"]["additional"]
-    ws["X37"] = gains["transit"]["iht"]["cost"]["existing"]
-    ws["X38"] = gains["transit"]["iht"]["cost"]["additional"]
     ws = wb.get_sheet_by_name("Tuottajahyodyt")
     ws["S8"] = miles["transit"]["dist"]["bus"]
     ws["S9"] = miles["transit"]["dist"]["trunk"]
@@ -231,8 +188,34 @@ def write_results_1 (wb, miles, revenues, gains):
     ws["G8"] = revenues["car"]["pt"]
     ws["H8"] = revenues["car"]["iht"]
 
-def write_results_2 (wb, miles, revenues, gains):
+def write_gains_1(ws, gains):
+    ws["B9"] = gains["aht"]["time"]["existing"]
+    ws["B10"] = gains["aht"]["time"]["additional"]
+    ws["C9"] = gains["pt"]["time"]["existing"]
+    ws["C10"] = gains["pt"]["time"]["additional"]
+    ws["D9"] = gains["iht"]["time"]["existing"]
+    ws["D10"] = gains["iht"]["time"]["additional"]
+    ws["B22"] = gains["aht"]["dist"]["existing"]
+    ws["B23"] = gains["aht"]["dist"]["additional"]
+    ws["C22"] = gains["pt"]["dist"]["existing"]
+    ws["C23"] = gains["pt"]["dist"]["additional"]
+    ws["D22"] = gains["iht"]["dist"]["existing"]
+    ws["D23"] = gains["iht"]["dist"]["additional"]
+    ws["B37"] = gains["aht"]["cost"]["existing"]
+    ws["B38"] = gains["aht"]["cost"]["additional"]
+    ws["C37"] = gains["pt"]["cost"]["existing"]
+    ws["C38"] = gains["pt"]["cost"]["additional"]
+    ws["D37"] = gains["iht"]["cost"]["existing"]
+    ws["D38"] = gains["iht"]["cost"]["additional"]
+
+def write_results_2(wb, miles, revenues, gains):
     """Write results for year 2"""
+    ws = wb.get_sheet_by_name("ha_tyo")
+    write_gains_2(ws, gains["car"])
+    ws = wb.get_sheet_by_name("ka")
+    write_gains_2(ws, gains["truck"])
+    ws = wb.get_sheet_by_name("jl_tyo")
+    write_gains_2(ws, gains["transit"])
     ws = wb.get_sheet_by_name("Ulkoisvaikutukset")
     ws["I32"] = miles["car"][1]
     ws["J32"] = miles["car"][2]
@@ -255,54 +238,6 @@ def write_results_2 (wb, miles, revenues, gains):
     ws["L35"] = miles["trailer_truck"][4]
     ws["M35"] = miles["trailer_truck"][5]
     ws = wb.get_sheet_by_name("Kayttajahyodyt")
-    ws["J14"] = gains["car"]["aht"]["time"]["existing"]
-    ws["J15"] = gains["car"]["aht"]["time"]["additional"]
-    ws["K14"] = gains["car"]["pt"]["time"]["existing"]
-    ws["K15"] = gains["car"]["pt"]["time"]["additional"]
-    ws["L14"] = gains["car"]["iht"]["time"]["existing"]
-    ws["L15"] = gains["car"]["iht"]["time"]["additional"]
-    ws["J27"] = gains["car"]["aht"]["dist"]["existing"]
-    ws["J28"] = gains["car"]["aht"]["dist"]["additional"]
-    ws["K27"] = gains["car"]["pt"]["dist"]["existing"]
-    ws["K28"] = gains["car"]["pt"]["dist"]["additional"]
-    ws["L27"] = gains["car"]["iht"]["dist"]["existing"]
-    ws["L28"] = gains["car"]["iht"]["dist"]["additional"]
-    ws["J42"] = gains["car"]["aht"]["cost"]["existing"]
-    ws["J43"] = gains["car"]["aht"]["cost"]["additional"]
-    ws["K42"] = gains["car"]["pt"]["cost"]["existing"]
-    ws["K43"] = gains["car"]["pt"]["cost"]["additional"]
-    ws["L42"] = gains["car"]["iht"]["cost"]["existing"]
-    ws["L43"] = gains["car"]["iht"]["cost"]["additional"]
-    ws["P14"] = gains["truck"]["aht"]["time"]["existing"]
-    ws["P15"] = gains["truck"]["aht"]["time"]["additional"]
-    ws["Q14"] = gains["truck"]["pt"]["time"]["existing"]
-    ws["Q15"] = gains["truck"]["pt"]["time"]["additional"]
-    ws["R14"] = gains["truck"]["iht"]["time"]["existing"]
-    ws["R15"] = gains["truck"]["iht"]["time"]["additional"]
-    ws["P27"] = gains["truck"]["aht"]["dist"]["existing"]
-    ws["P28"] = gains["truck"]["aht"]["dist"]["additional"]
-    ws["Q27"] = gains["truck"]["pt"]["dist"]["existing"]
-    ws["Q28"] = gains["truck"]["pt"]["dist"]["additional"]
-    ws["R27"] = gains["truck"]["iht"]["dist"]["existing"]
-    ws["R28"] = gains["truck"]["iht"]["dist"]["additional"]
-    ws["P42"] = gains["truck"]["aht"]["cost"]["existing"]
-    ws["P43"] = gains["truck"]["aht"]["cost"]["additional"]
-    ws["Q42"] = gains["truck"]["pt"]["cost"]["existing"]
-    ws["Q43"] = gains["truck"]["pt"]["cost"]["additional"]
-    ws["R42"] = gains["truck"]["iht"]["cost"]["existing"]
-    ws["R43"] = gains["truck"]["iht"]["cost"]["additional"]
-    ws["V14"] = gains["transit"]["aht"]["time"]["existing"]
-    ws["V15"] = gains["transit"]["aht"]["time"]["additional"]
-    ws["W14"] = gains["transit"]["pt"]["time"]["existing"]
-    ws["W15"] = gains["transit"]["pt"]["time"]["additional"]
-    ws["X14"] = gains["transit"]["iht"]["time"]["existing"]
-    ws["X15"] = gains["transit"]["iht"]["time"]["additional"]
-    ws["V42"] = gains["transit"]["aht"]["cost"]["existing"]
-    ws["V43"] = gains["transit"]["aht"]["cost"]["additional"]
-    ws["W42"] = gains["transit"]["pt"]["cost"]["existing"]
-    ws["W43"] = gains["transit"]["pt"]["cost"]["additional"]
-    ws["X42"] = gains["transit"]["iht"]["cost"]["existing"]
-    ws["X43"] = gains["transit"]["iht"]["cost"]["additional"]
     ws = wb.get_sheet_by_name("Tuottajahyodyt")
     ws["S16"] = miles["transit"]["dist"]["bus"]
     ws["S17"] = miles["transit"]["dist"]["trunk"]
@@ -322,7 +257,27 @@ def write_results_2 (wb, miles, revenues, gains):
     ws["G13"] = revenues["car"]["pt"]
     ws["H13"] = revenues["car"]["iht"]
 
-def main (args):
+def write_gains_2(ws, gains):
+    ws["B14"] = gains["aht"]["time"]["existing"]
+    ws["B15"] = gains["aht"]["time"]["additional"]
+    ws["C14"] = gains["pt"]["time"]["existing"]
+    ws["C15"] = gains["pt"]["time"]["additional"]
+    ws["D14"] = gains["iht"]["time"]["existing"]
+    ws["D15"] = gains["iht"]["time"]["additional"]
+    ws["B27"] = gains["aht"]["dist"]["existing"]
+    ws["B28"] = gains["aht"]["dist"]["additional"]
+    ws["C27"] = gains["pt"]["dist"]["existing"]
+    ws["C28"] = gains["pt"]["dist"]["additional"]
+    ws["D27"] = gains["iht"]["dist"]["existing"]
+    ws["D28"] = gains["iht"]["dist"]["additional"]
+    ws["B42"] = gains["aht"]["cost"]["existing"]
+    ws["B43"] = gains["aht"]["cost"]["additional"]
+    ws["C42"] = gains["pt"]["cost"]["existing"]
+    ws["C43"] = gains["pt"]["cost"]["additional"]
+    ws["D42"] = gains["iht"]["cost"]["existing"]
+    ws["D43"] = gains["iht"]["cost"]["additional"]
+
+def main(args):
     miles1 = mileages(args[2])
     miles0 = mileages(args[1])
     miles = {}
