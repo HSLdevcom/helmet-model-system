@@ -143,11 +143,23 @@ def pt_miles(miles0, miles1):
 def write_results_1(wb, miles, revenues, gains):
     """Write results for year 1"""
     ws = wb.get_sheet_by_name("ha_tyo")
-    write_gains_1(ws, gains["car"])
+    write_gains_1(ws, gains["car_work"])
+    ws = wb.get_sheet_by_name("ha_muu")
+    write_gains_1(ws, gains["car_leisure"])
+    ws = wb.get_sheet_by_name("jl_tyo")
+    write_gains_1(ws, gains["transit_work"])
+    ws = wb.get_sheet_by_name("jl_muu")
+    write_gains_1(ws, gains["transit_leisure"])
+    ws = wb.get_sheet_by_name("pp_tyo")
+    write_gains_1(ws, gains["bike_work"])
+    ws = wb.get_sheet_by_name("pp_muu")
+    write_gains_1(ws, gains["bike_leisure"])
     ws = wb.get_sheet_by_name("ka")
     write_gains_1(ws, gains["truck"])
-    ws = wb.get_sheet_by_name("jl_tyo")
-    write_gains_1(ws, gains["transit"])
+    ws = wb.get_sheet_by_name("yhd")
+    write_gains_1(ws, gains["trailer_truck"])
+    ws = wb.get_sheet_by_name("pa")
+    write_gains_1(ws, gains["van"])
     ws = wb.get_sheet_by_name("Ulkoisvaikutukset")
     ws["I19"] = miles["car"][1]
     ws["J19"] = miles["car"][2]
@@ -211,11 +223,23 @@ def write_gains_1(ws, gains):
 def write_results_2(wb, miles, revenues, gains):
     """Write results for year 2"""
     ws = wb.get_sheet_by_name("ha_tyo")
-    write_gains_2(ws, gains["car"])
+    write_gains_2(ws, gains["car_work"])
+    ws = wb.get_sheet_by_name("ha_muu")
+    write_gains_2(ws, gains["car_leisure"])
+    ws = wb.get_sheet_by_name("jl_tyo")
+    write_gains_2(ws, gains["transit_work"])
+    ws = wb.get_sheet_by_name("jl_muu")
+    write_gains_2(ws, gains["transit_leisure"])
+    ws = wb.get_sheet_by_name("pp_tyo")
+    write_gains_2(ws, gains["bike_work"])
+    ws = wb.get_sheet_by_name("pp_muu")
+    write_gains_2(ws, gains["bike_leisure"])
     ws = wb.get_sheet_by_name("ka")
     write_gains_2(ws, gains["truck"])
-    ws = wb.get_sheet_by_name("jl_tyo")
-    write_gains_2(ws, gains["transit"])
+    ws = wb.get_sheet_by_name("yhd")
+    write_gains_2(ws, gains["trailer_truck"])
+    ws = wb.get_sheet_by_name("pa")
+    write_gains_2(ws, gains["van"])
     ws = wb.get_sheet_by_name("Ulkoisvaikutukset")
     ws["I32"] = miles["car"][1]
     ws["J32"] = miles["car"][2]
@@ -293,19 +317,26 @@ def main(args):
         "transit": {},
     }
     gains = {
-        "car": {}, 
-        "transit": {}, 
+        "car_work": {},
+        "car_leisure": {},
+        "transit_work": {},
+        "transit_leisure": {},
+        "bike_work": {},
+        "bike_leisure": {},
         "truck": {},
+        "trailer_truck":{},
+        "van": {},
     }
     for tp in ["aht", "pt", "iht"]:
         ve1 = read_scen(args[2], tp)
         ve0 = read_scen(args[1], tp)
+        # TODO Add other purposes to revenues
         revenues["transit"][tp] = calc_revenue(ve0["transit_work"], ve1["transit_work"])
         revenues["car"][tp] = calc_revenue(ve0["car_work"], ve1["car_work"])
         print "Revenues aht calculated"
-        gains["car"][tp] = calc_gains(ve0["car_work"], ve1["car_work"])
-        gains["truck"][tp] = calc_gains(ve0["truck"], ve1["truck"])
-        gains["transit"][tp] = calc_gains(ve0["transit_work"], ve1["transit_work"])
+        for transport_class in gains:
+            gains[transport_class][tp] = calc_gains(
+                ve0[transport_class], ve1[transport_class])
         print "Gains " + tp + " calculated"
     wb = load_workbook(args[3])
     year = int(args[4])
@@ -315,8 +346,8 @@ def main(args):
         write_results_2(wb, miles, revenues, gains)
     else:
         print "ENNUSTEVUOSI must be either 1 or 2"
-    wb.save("cba_" + args[2] + ".xlsx")
+    wb.save("..\\cba_" + args[2] + ".xlsx")
 
 
 # main(sys.argv)
-main([0, "2030_test", "2030_test", "CBA_kehikko.xlsx", 1])
+main([0, "2030_test", "2030_test", "..\\CBA_kehikko.xlsx", 1])
