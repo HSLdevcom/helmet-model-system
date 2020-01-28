@@ -338,7 +338,7 @@ def main(args):
         write_results_2(wb, miles, revenues, gains)
     else:
         print "ENNUSTEVUOSI must be either 1 or 2"
-    wb.save("..\\cba_" + args[2] + ".xlsx")
+    wb.save("..\\Results\\cba_" + args[2] + ".xlsx")
 
 
 # main(sys.argv)
