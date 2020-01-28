@@ -355,7 +355,7 @@ class SecDestModel(LogitModel):
         return prob
 
 
-class OriginModel(LogitModel):
+class OriginModel(DestModeModel):
     def calc_prob(self, impedance):
         """Calculate matrix of choice probabilities.
         
@@ -369,22 +369,20 @@ class OriginModel(LogitModel):
         Return
         ------
         dict
-            Mode (transit) : numpy 2-d matrix
+            Mode (car/transit/bike/walk) : numpy 2-d matrix
                 Choice probabilities
         """
-        b = self.dest_choice_param
-        utility = self._calc_origin_util(impedance)
-        exps = numpy.exp(utility)
-        # Size = kokotekija
-        size = numpy.ones_like(exps)
-        size = self._add_zone_util(size, b["size"])
-        exps *= numpy.power(size, b["log"]["size"])
-        expsums = numpy.sum(exps, axis=1)
-        prob = {}
-        # Mode is needed here to get through tests even
-        # though the origin model does not take modes into account.
-        prob["all"] = exps.T / expsums
-        return prob
+        # Sum of exponents in V(d)
+        mode_expsum = self._calc_mode_util(impedance)
+        logsum = {"logsum": mode_expsum}
+        # U = V(d) + LSM*ln(S(d)) = dest_expsum["logsum"]
+        dest_expsum = self._calc_dest_util("logsum", logsum)
+        # prob = {}
+        dest_prob = self.dest_exps["logsum"].T / dest_expsum
+        # for mode in self.mode_choice_param:
+        #     mode_prob = (self.mode_exps[mode] / mode_expsum).T
+        #     prob[mode] = mode_prob * dest_prob
+        return dest_prob
 
 
 class GenerationModel():
