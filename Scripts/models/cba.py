@@ -304,35 +304,31 @@ def write_gains_2(ws, gains):
 def main(args):
     miles1 = mileages(args[2])
     miles0 = mileages(args[1])
-    miles = {}
-    miles["car"] = mile_gains(miles0["car"], miles1["car"])
-    miles["truck"] = mile_gains(miles0["truck"], miles1["truck"])
-    miles["van"] = mile_gains(miles0["van"], miles1["van"])
-    miles["trailer_truck"] = mile_gains(miles0["trailer_truck"], miles1["trailer_truck"])
+    miles = dict.fromkeys(["car", "truck", "trailer_truck", "van"])
+    for ass_class in miles:
+        miles[ass_class] = mile_gains(miles0[ass_class], miles1[ass_class])
     miles["transit"] = {}
-    miles["transit"]["dist"] = pt_miles(miles0["transit"]["dist"], miles1["transit"]["dist"])
-    miles["transit"]["time"] = pt_miles(miles0["transit"]["time"], miles1["transit"]["time"])
+    miles["transit"]["dist"] = pt_miles(
+        miles0["transit"]["dist"], miles1["transit"]["dist"])
+    miles["transit"]["time"] = pt_miles(
+        miles0["transit"]["time"], miles1["transit"]["time"])
     revenues = {
         "car": {},
         "transit": {},
     }
-    gains = {
-        "car_work": {},
-        "car_leisure": {},
-        "transit_work": {},
-        "transit_leisure": {},
-        "bike_work": {},
-        "bike_leisure": {},
-        "truck": {},
-        "trailer_truck":{},
-        "van": {},
-    }
-    for tp in ["aht", "pt", "iht"]:
+    gains = dict.fromkeys(param.transport_classes)
+    for transport_class in gains:
+        gains[transport_class] = {}
+    for tp in param.emme_scenario:
         ve1 = read_scen(args[2], tp)
         ve0 = read_scen(args[1], tp)
-        # TODO Add other purposes to revenues
-        revenues["transit"][tp] = calc_revenue(ve0["transit_work"], ve1["transit_work"])
-        revenues["car"][tp] = calc_revenue(ve0["car_work"], ve1["car_work"])
+        revenues["transit"][tp] = 0
+        for transit_class in ("transit_work", "transit_leisure"):
+            revenues["transit"][tp] += calc_revenue(
+                ve0[transit_class], ve1[transit_class])
+        revenues["car"][tp] = 0
+        for ass_mode in param.assignment_mode:
+            revenues["car"][tp] += calc_revenue(ve0[ass_mode], ve1[ass_mode])
         print "Revenues aht calculated"
         for transport_class in gains:
             gains[transport_class][tp] = calc_gains(
