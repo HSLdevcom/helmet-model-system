@@ -26,10 +26,6 @@ def read_scen(scenario, time_period):
                 mtx_label = transport_class.split('_')[0]
                 if mtx_label == "transit" or mtx_label == "bike":
                     ass_class = mtx_label
-                elif transport_class in ("truck", "trailer_truck", "van"):
-                    # TODO Calculate and output impendance matrices for
-                    # these modes in end assignment
-                    ass_class = "car_work"
                 else:
                     ass_class = transport_class
             else:

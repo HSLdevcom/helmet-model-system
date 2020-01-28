@@ -274,6 +274,18 @@ emme_mtx = {
             "id": "mf16",
             "description": "walk travel time",
         },
+        "trailer_truck": {
+            "id": "mf17",
+            "description": "trailer truck time",
+        },
+        "truck":  {
+            "id":"mf18",
+            "description": "truck time",
+        },
+        "van":  {
+            "id":"mf19",
+            "description": "van time",
+        },
     },
     "dist": {
         "car_work": {
@@ -296,6 +308,18 @@ emme_mtx = {
             "id": "mf26",
             "description": "walk travel distance",
         },
+        "trailer_truck": {
+            "id": "mf27",
+            "description": "trailer truck distance",
+        },
+        "truck":  {
+            "id":"mf28",
+            "description": "truck distance",
+        },
+        "van":  {
+            "id":"mf29",
+            "description": "van distance",
+        },
     },
     "cost": {
         "car_work": {
@@ -310,6 +334,18 @@ emme_mtx = {
             "id": "mf34",
             "description": "transit travel cost",
         },
+        "trailer_truck": {
+            "id": "mf37",
+            "description": "trailer truck cost",
+        },
+        "truck":  {
+            "id":"mf38",
+            "description": "truck cost",
+        },
+        "van":  {
+            "id":"mf39",
+            "description": "van cost",
+        },
     },
     "gen_cost": {
         "car_work": {
@@ -319,6 +355,18 @@ emme_mtx = {
         "car_leisure": {
             "id": "mf42",
             "description": "car leisure travel generalized cost",
+        },
+        "trailer_truck": {
+            "id": "mf47",
+            "description": "trailer truck travel generalized cost",
+        },
+        "truck":  {
+            "id":"mf48",
+            "description": "truck travel generalized cost",
+        },
+        "van":  {
+            "id":"mf49",
+            "description": "van travel generalized cost",
         },
     },
     "transit": {

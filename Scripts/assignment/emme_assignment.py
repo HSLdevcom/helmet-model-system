@@ -5,7 +5,7 @@ import numpy
 import pandas
 import parameters as param
 from abstract_assignment import AssignmentModel, ImpedanceSource
-from datatypes.car import Car, PrivateCar
+from datatypes.car import Car
 from datatypes.journey_level import JourneyLevel
 from datatypes.path_analysis import PathAnalysis
 import datahandling.resultdata as result
@@ -432,15 +432,11 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
 
     def _specify(self):
         # Car assignment specification
-        car_work = PrivateCar("car_work")
-        car_leisure = PrivateCar("car_leisure")
+        car_work = Car("car_work")
+        car_leisure = Car("car_leisure")
         van = Car("van")
-        truck = Car(ass_class="truck",
-                    value_of_time_inv=0.2,
-                    link_costs="length")
-        trailer_truck = Car(ass_class="trailer_truck",
-                            value_of_time_inv=0.2,
-                            link_costs="length")
+        truck = Car("truck", 0.2, "length")
+        trailer_truck = Car("trailer_truck", 0.2, "length")
         self.car_spec = {
             "type": "SOLA_TRAFFIC_ASSIGNMENT",
             "classes": [
