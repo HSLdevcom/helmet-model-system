@@ -63,7 +63,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             self._calc_extra_wait_time(scen_id)
             self._assign_transit(scen_id)
         
-    def get_impedance(self):
+    def get_impedance(self, is_last_iteration=False):
         """Get travel impedance matrices for one time period from assignment.
         
         Return
@@ -80,23 +80,23 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         mtxs["time"]["bike"] = self._cap(mtxs["time"]["bike"])
         mtxs["time"]["car_work"] = self._gcost_to_time("car_work")
         mtxs["time"]["car_leisure"] = self._gcost_to_time("car_leisure")
-        for ass_cl in ("car_work", "car_leisure"):
-            mtxs["cost"][ass_cl] += self.dist_cost * mtxs["dist"][ass_cl]
+        if not is_last_iteration:
+            for ass_cl in ("car_work", "car_leisure"):
+                mtxs["cost"][ass_cl] += self.dist_cost * mtxs["dist"][ass_cl]
         return mtxs
     
     def set_matrices(self, matrices):
         emmebank = self.emme.modeller.emmebank
-        tmp_mtx = None
+        tmp_mtx = {
+            "transit": 0,
+            "bike": 0,
+        }
         for mtx in matrices:
             mtx_label = mtx.split('_')[0]
-            if mtx_label == "transit" or mtx_label == "bike":
+            if mtx_label in tmp_mtx:
                 idx = param.emme_mtx["demand"][mtx_label]["id"]
-                try:
-                    tmp_mtx += matrices[mtx]
-                    emmebank.matrix(idx).set_numpy_data(tmp_mtx)
-                    tmp_mtx = None
-                except TypeError:
-                    tmp_mtx = matrices[mtx]
+                tmp_mtx[mtx_label] += matrices[mtx]
+                emmebank.matrix(idx).set_numpy_data(tmp_mtx[mtx_label])
             else:
                 idx = param.emme_mtx["demand"][mtx]["id"]
                 emmebank.matrix(idx).set_numpy_data(matrices[mtx])
@@ -115,6 +115,8 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             Subtype (car_work/truck/inv_time/...) : numpy 2-d matrix
                 Matrix of the specified type
         """
+        # TODO Remove freight impedance matrices from selection,
+        # if not last iteration
         matrices = dict.fromkeys(param.emme_mtx[mtx_type].keys())
         for mtx in matrices:
             matrices[mtx] = self.get_matrix(mtx_type, mtx)
