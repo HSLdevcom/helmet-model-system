@@ -15,12 +15,8 @@ class LinearModel:
             prediction += b
         except ValueError: # Separate params for cap region and surrounding
             k = self.zone_data.first_surrounding_zone
-            if prediction.ndim == 1: # 1-d array calculation
-                prediction[:k] += b[0]
-                prediction[k:] += b[1]
-            else: # 2-d matrix calculation
-                prediction[:k, :] += b[0]
-                prediction[k:, :] += b[1]
+            prediction[:k] += b[0]
+            prediction[k:] += b[1]
 
     def _add_zone_terms(self, prediction, b, generation=False):
         zdata = self.zone_data
@@ -33,12 +29,8 @@ class LinearModel:
                     i, self.bounds, generation, zdata.CAPITAL_REGION)
                 data_surrounding = zdata.get_data(
                     i, self.bounds, generation, zdata.SURROUNDING_AREA)
-                if prediction.ndim == 1: # 1-d array calculation
-                    prediction[:k] += b[i][0] * data_capital_region
-                    prediction[k:] += b[i][1] * data_surrounding
-                else: # 2-d matrix calculation
-                    prediction[:k, :] += b[i][0] * data_capital_region
-                    prediction[k:, :] += b[i][1] * data_surrounding
+                prediction[:k] += b[i][0] * data_capital_region
+                prediction[k:] += b[i][1] * data_surrounding
         return prediction
 
     def _add_log_zone_terms(self, prediction, b, generation=False):
@@ -65,7 +57,7 @@ class CarDensityModel(LinearModel):
             # On first iteration, time and cost ratios are not yet set. In that
             # case, we fall back to using input car density values.
             prediction = self.zone_data.get_data("car_density", self.bounds,
-                True)
+                generation=True)
         prediction = pandas.Series(
             prediction, self.zone_data.zone_numbers[self.bounds])
         self.print_results(prediction)
