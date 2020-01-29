@@ -377,12 +377,12 @@ class OriginModel(DestModeModel):
         logsum = {"logsum": mode_expsum}
         # U = V(d) + LSM*ln(S(d)) = dest_expsum["logsum"]
         dest_expsum = self._calc_dest_util("logsum", logsum)
-        # prob = {}
+        prob = {}
         dest_prob = self.dest_exps["logsum"].T / dest_expsum
-        # for mode in self.mode_choice_param:
-        #     mode_prob = (self.mode_exps[mode] / mode_expsum).T
-        #     prob[mode] = mode_prob * dest_prob
-        return dest_prob
+        for mode in self.mode_choice_param:
+            mode_prob = (self.mode_exps[mode] / mode_expsum).T
+            prob[mode] = mode_prob * dest_prob
+        return prob
 
 
 class GenerationModel():
