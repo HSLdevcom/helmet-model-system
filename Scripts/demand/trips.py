@@ -37,7 +37,7 @@ class DemandModel:
                         self.purpose_dict[source].sec_dest_purpose = purpose
         bounds = slice(0, zone_data.first_peripheral_zone)
         self.cm = logit.CarUseModel(zone_data, bounds)
-        self.gm = logit.GenerationModel(self.zone_data)
+        self.gm = logit.TourCombinationModel(self.zone_data)
         zone_data["car_users"] = self.cm.calc_prob()
         self.age_groups = (
             (7, 17),
