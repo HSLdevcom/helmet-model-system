@@ -4,7 +4,7 @@ import math
 import parameters
 import datahandling.resultdata as result
 
-class LinearModel:
+class LinearModel(object):
     def __init__(self, zone_data, bounds, parameters):
         """Initialize a linear model.
 
