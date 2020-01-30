@@ -6,6 +6,18 @@ import datahandling.resultdata as result
 
 class LinearModel:
     def __init__(self, zone_data, bounds, parameters):
+        """Initialize a linear model.
+
+        Parameters
+        ----------
+        zone_data : ZoneData
+            A ZoneData object defining the input data of zones.
+        bounds : slice
+            Defines the area on which the model is predicting to (usually the
+            metropolitan area).
+        parameters : dict
+            Linear model parameters.
+        """        
         self.zone_data = zone_data
         self.bounds = bounds
         self.parameters = parameters
@@ -41,11 +53,6 @@ class LinearModel:
         return prediction
 
 class CarDensityModel(LinearModel):
-    def __init__(self, zone_data, bounds, parameters):
-        self.zone_data = zone_data
-        self.bounds = bounds
-        self.parameters = parameters
-
     def predict(self):
         try:
             b = self.parameters
