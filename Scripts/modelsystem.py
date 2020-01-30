@@ -11,6 +11,7 @@ from transform.impedance_transformer import ImpedanceTransformer
 from models.linear import CarDensityModel
 import parameters
 import numpy
+import pandas
 import threading
 import multiprocessing
 
@@ -233,7 +234,9 @@ class ModelSystem:
         result.print_data(
             time_ratio, "impedance_ratio.txt",
             self.ass_model.zone_numbers, "time")
-        self.zdata_forecast["time_ratio"] = time_ratio
+        time_ratio_series = pandas.Series(numpy.ma.getdata(time_ratio),
+            self.ass_model.zone_numbers)
+        self.zdata_forecast["time_ratio"] = time_ratio_series
         car_cost = numpy.ma.average(
             impedance[tp]["cost"]["car_work"], axis=1,
             weights=self.dtm.demand[tp]["car_work"])
@@ -244,4 +247,6 @@ class ModelSystem:
         result.print_data(
             cost_ratio, "impedance_ratio.txt",
             self.ass_model.zone_numbers, "cost")
-        self.zdata_forecast["cost_ratio"] = cost_ratio
+        cost_ratio_series = pandas.Series(numpy.ma.getdata(cost_ratio),
+            self.ass_model.zone_numbers)
+        self.zdata_forecast["cost_ratio"] = cost_ratio_series
