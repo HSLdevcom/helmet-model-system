@@ -1,10 +1,10 @@
 {
-    "SCENARIO_NAME": "helmet",
-    "ITERATION_COUNT": 5,
+    "SCENARIO_NAME": "convergence_2016_no_ave",
+    "ITERATION_COUNT": 10,
     "USE_EMME": true,
     "LOG_LEVEL": "INFO",
     "LOG_FORMAT": "TEXT",
-    "EMME_PROJECT_PATH": "",
-    "DATA_PATH": "2030",
+    "EMME_PROJECT_PATH": "C:\\helmet-model-system\\sijo_HM31.emp",
+    "DATA_PATH": "2018",
     "USE_FIXED_TRANSIT_COST": true
 }

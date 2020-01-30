@@ -143,14 +143,16 @@ class ModelSystem:
                         int_demand += purpose.attracted_tours[mode]
             ext_demand = self.em.calc_external(mode, int_demand)
             self.dtm.add_demand(ext_demand)
+        # count tours sums and mode shares
+        # print to file for convergence check
         tour_sum = {}
         for mode in ["car", "transit", "bike", "walk"]:
             tour_sum[mode] = 0
         for purpose in self.dm.tour_purposes:
             if ((purpose.dest != "source") and 
                 not isinstance(purpose, SecDestPurpose)):
-                for mode in purpose.demand_sums:
-                    tour_sum[mode] += purpose.demand_sums[mode]
+                for mode in purpose.demsums:
+                    tour_sum[mode] += purpose.demsums[mode]
         sum_all = sum(tour_sum.values())
         result.print_iteration_data(
             tour_sum.values(),
@@ -161,6 +163,7 @@ class ModelSystem:
         for mode in tour_sum:
             mode_share[mode] = tour_sum[mode] / sum_all
         self.mode_share.append(mode_share)
+        # count impedance for conv checks
         impedance = {}
         for tp in parameters.emme_scenario:
             self.dtm.add_vans(tp, self.zdata_forecast.nr_zones)

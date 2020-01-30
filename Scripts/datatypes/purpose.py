@@ -111,7 +111,7 @@ class TourPurpose(Purpose):
         """
         tours = self.gen_model.get_tours()
         demand = {}
-        demsums = {}
+        self.demsums = {}
         attracted_tours = 0
         for mode in self.model.mode_choice_param:
             mtx = (self.prob.pop(mode) * tours).T
@@ -137,15 +137,15 @@ class TourPurpose(Purpose):
             result.print_data(
                 numpy.diag(own_zone_aggregated), "own_zone_demand.txt",
                 own_zone_aggregated.index, self.name + "_" + mode[0])
-            demsums[mode] = self.generated_tours[mode].sum()
+            self.demsums[mode] = self.generated_tours[mode].sum()
         result.print_data(
             attracted_tours, "attraction.txt",
             self.zone_data.zone_numbers, self.name)
-        demand_all = sum(demsums.values())
-        mode_shares = {mode: demsums[mode] / demand_all for mode in demsums}
+        demand_all = sum(self.demsums.values())
+        mode_shares = {mode: self.demsums[mode] / demand_all for mode in self.demsums}
         result.print_data(
             pandas.Series(mode_shares), "mode_share.txt",
-            demsums.keys(), self.name)
+            self.demsums.keys(), self.name)
         return demand
     
     def _aggregate(self, mtx):
