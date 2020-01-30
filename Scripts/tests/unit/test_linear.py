@@ -22,30 +22,12 @@ class LinearModelTest(unittest.TestCase):
         mtx = numpy.arange(24, dtype=numpy.float32)
         mtx.shape = (4, 6)
         mtx[numpy.diag_indices(4)] = 0
-        impedance = {
-            "car": {
-                "time": mtx,
-                "cost": mtx,
-                "dist": mtx,
-            },
-            "transit": {
-                "time": mtx,
-                "cost": mtx,
-                "dist": mtx,
-            },
-            "bike": {
-                "dist": mtx,
-            },
-            "walk": {
-                "dist": mtx,
-            },
-        }
         pur.bounds = slice(0, 4)
         pur.zone_numbers = (5, 6, 7, 2792)
-        
         bounds = slice(0, zd.first_peripheral_zone)
         model = CarDensityModel(zd, bounds, parameters.car_density)
         prediction = model.predict()
+        zd["car_density"][:zd.first_peripheral_zone] = prediction
         self._validate(prediction)
         
     
