@@ -65,6 +65,9 @@ class ModelSystem:
             with self.basematrices.open("demand", tp) as mtx:
                 for ass_class in self.ass_classes:
                     self.dtm.demand[tp][ass_class] = mtx[ass_class]
+            # Base matrices do not provide "transit_work" as its own assignment
+            # class but "transit" is close enough.
+            self.dtm.demand[tp]["transit_work"] = self.dtm.demand[tp]["transit"]
             self.ass_model.assign(tp, self.dtm.demand[tp])
             impedance[tp] = self.ass_model.get_impedance()
             if tp == "aht":
