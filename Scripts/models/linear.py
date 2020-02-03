@@ -54,17 +54,11 @@ class LinearModel(object):
 
 class CarDensityModel(LinearModel):
     def predict(self):
-        try:
-            b = self.parameters
-            prediction = numpy.zeros(self.bounds.stop)
-            self._add_constant(prediction, b["constant"])
-            self._add_zone_terms(prediction, b["generation"], True)
-            self._add_log_zone_terms(prediction, b["log"], True)
-        except KeyError:
-            # On first iteration, time and cost ratios are not yet set. In that
-            # case, we fall back to using input car density values.
-            prediction = self.zone_data.get_data("car_density", self.bounds,
-                generation=True)
+        b = self.parameters
+        prediction = numpy.zeros(self.bounds.stop)
+        self._add_constant(prediction, b["constant"])
+        self._add_zone_terms(prediction, b["generation"], True)
+        self._add_log_zone_terms(prediction, b["log"], True)
         prediction = pandas.Series(
             prediction, self.zone_data.zone_numbers[self.bounds])
         self.print_results(prediction)
