@@ -2027,7 +2027,7 @@ mode_choice = {
             "constant": 0.0,
             "generation": {},
             "attraction": {
-				"own_zone_area": -0.01478815,
+                "own_zone_area": -0.01478815,
                 "parking_cost_work": -0.154340268,
             },
             "impedance": {
