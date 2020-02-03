@@ -62,11 +62,10 @@ class ModelSystem:
                 fixed_cost)
         for tp in parameters.emme_scenario:
             self.logger.info("Assigning period " + tp)
-            base_demand = {}
             with self.basematrices.open("demand", tp) as mtx:
                 for ass_class in self.ass_classes:
-                    base_demand[ass_class] = mtx[ass_class]
-            self.ass_model.assign(tp, base_demand)
+                    self.dtm.demand[tp][ass_class] = mtx[ass_class]
+            self.ass_model.assign(tp, self.dtm.demand[tp])
             impedance[tp] = self.ass_model.get_impedance()
             if tp == "aht":
                 self._update_ratios(impedance, tp)
