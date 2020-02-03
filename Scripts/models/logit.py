@@ -387,7 +387,7 @@ class OriginModel(LogitModel):
         return prob
 
 
-class GenerationModel():
+class TourCombinationModel():
     def __init__(self, zone_data):
         self.zone_data = zone_data
         self.param = parameters.tour_combinations
