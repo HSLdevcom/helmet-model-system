@@ -8,6 +8,55 @@ import re
 import parameters as param
 
 
+def do_cba(alt_0, alt_1, year, excelfile):
+    """Runs CBA and writes the results to excel file.
+
+    Parameters
+    ----------
+    alt_0 : str
+        Name of do-nothing scenario, for which 
+        forecast results are available in Results folder
+    alt_1 : str
+        Name of project scenario, for which 
+        forecast results are available in Results folder
+    year : int
+        The evaluation year (1 or 2)
+    excelfile : str
+        Path to excel file where results will be written
+    """
+    mile_diff = miles(alt_1) - miles(alt_0)
+    transit_mile_diff = transit_miles(alt_1) - transit_miles(alt_0)
+    revenues = {
+        "car": {},
+        "transit": {},
+    }
+    gains = dict.fromkeys(param.transport_classes)
+    for transport_class in gains:
+        gains[transport_class] = {}
+    for tp in param.emme_scenario:
+        ve1 = read_scen(alt_1, tp)
+        ve0 = read_scen(alt_0, tp)
+        revenues["transit"][tp] = 0
+        for transit_class in ("transit_work", "transit_leisure"):
+            revenues["transit"][tp] += calc_revenue(
+                ve0[transit_class], ve1[transit_class])
+        revenues["car"][tp] = 0
+        for ass_mode in param.assignment_mode:
+            revenues["car"][tp] += calc_revenue(ve0[ass_mode], ve1[ass_mode])
+        print "Revenues " + tp + " calculated"
+        for transport_class in gains:
+            gains[transport_class][tp] = calc_gains(
+                ve0[transport_class], ve1[transport_class])
+        print "Gains " + tp + " calculated"
+    wb = load_workbook(excelfile)
+    if year == 1:
+        write_results_1(wb, mile_diff, transit_mile_diff, revenues, gains)
+    elif year == 2:
+        write_results_2(wb, mile_diff, transit_mile_diff, revenues, gains)
+    else:
+        print "Evaluation year must be either 1 or 2"
+    wb.save("..\\Results\\cba_" + alt_1 + ".xlsx")
+
 def read_scen(scenario, time_period):
     """Read travel cost and demand data for scenario from files"""
     script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -268,55 +317,6 @@ def write_gains_2(ws, gains):
     ws["D42"] = gains["iht"]["cost"]["existing"]
     ws["D43"] = gains["iht"]["cost"]["additional"]
 
-def do_cba(alt_0, alt_1, year, excelfile):
-    """Runs CBA and writes the results to excel file.
 
-    Parameters
-    ----------
-    alt_0 : str
-        Name of do-nothing scenario, for which 
-        forecast results are available in Results folder
-    alt_1 : str
-        Name of project scenario, for which 
-        forecast results are available in Results folder
-    year : int
-        The evaluation year (1 or 2)
-    excelfile : str
-        Path to excel file where results will be written
-    """
-    mile_diff = miles(alt_1) - miles(alt_0)
-    transit_mile_diff = transit_miles(alt_1) - transit_miles(alt_0)
-    revenues = {
-        "car": {},
-        "transit": {},
-    }
-    gains = dict.fromkeys(param.transport_classes)
-    for transport_class in gains:
-        gains[transport_class] = {}
-    for tp in param.emme_scenario:
-        ve1 = read_scen(alt_1, tp)
-        ve0 = read_scen(alt_0, tp)
-        revenues["transit"][tp] = 0
-        for transit_class in ("transit_work", "transit_leisure"):
-            revenues["transit"][tp] += calc_revenue(
-                ve0[transit_class], ve1[transit_class])
-        revenues["car"][tp] = 0
-        for ass_mode in param.assignment_mode:
-            revenues["car"][tp] += calc_revenue(ve0[ass_mode], ve1[ass_mode])
-        print "Revenues " + tp + " calculated"
-        for transport_class in gains:
-            gains[transport_class][tp] = calc_gains(
-                ve0[transport_class], ve1[transport_class])
-        print "Gains " + tp + " calculated"
-    wb = load_workbook(excelfile)
-    if year == 1:
-        write_results_1(wb, mile_diff, transit_mile_diff, revenues, gains)
-    elif year == 2:
-        write_results_2(wb, mile_diff, transit_mile_diff, revenues, gains)
-    else:
-        print "Evaluation year must be either 1 or 2"
-    wb.save("..\\Results\\cba_" + alt_1 + ".xlsx")
-
-
-# do_cba(sys.argv[1], sys.argv[2], int(sys.argv[3]), sys.argv[4])
-do_cba("2030_test", "2030_test", 1, "..\\CBA_kehikko.xlsx")
+do_cba(sys.argv[1], sys.argv[2], int(sys.argv[3]), sys.argv[4])
+# do_cba("2030_test", "2030_test", 1, "..\\CBA_kehikko.xlsx")
