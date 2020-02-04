@@ -87,7 +87,7 @@ def calc_gains(ve0, ve1):
     gains["cost"] = calc_cost_gains(ve0, ve1)
     return gains
 
-def mileages(scenario):
+def miles(scenario):
     """Read scenario data from files"""
     script_dir = os.path.dirname(os.path.realpath(__file__))
     project_dir = os.path.join(script_dir, "..", "..")
@@ -95,48 +95,19 @@ def mileages(scenario):
     data_dir = os.path.abspath(data_dir)
     filename = os.path.join(data_dir, "vehicle_kms.txt")
     data = pandas.read_csv(filename, delim_whitespace=True)
+    return data
+
+def transit_miles(scenario):
+    """Read scenario data from files"""
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    project_dir = os.path.join(script_dir, "..", "..")
+    data_dir = os.path.join(project_dir, "Results", scenario)
+    data_dir = os.path.abspath(data_dir)
     filename = os.path.join(data_dir, "transit_kms.txt")
-    transit_data = pandas.read_csv(filename, delim_whitespace=True)
-    miles = {
-        "car": data["car"],
-        "truck": data["truck"],
-        "van": data["van"],
-        "trailer_truck": data["trailer_truck"],
-        "transit": {
-            "time": {
-                "bus": transit_data["time"]["bde"], 
-                "trunk": transit_data["time"]["g"],
-                "metro": transit_data["time"]["m"],
-                "train": transit_data["time"]["rj"],
-                "tram": transit_data["time"]["tp"],
-            },
-            "dist": {
-                "bus": transit_data["km"]["bde"], 
-                "trunk": transit_data["km"]["g"],
-                "metro": transit_data["km"]["m"],
-                "train": transit_data["km"]["rj"],
-                "tram": transit_data["km"]["tp"],
-            },
-        },
-    }
-    return miles
+    data = pandas.read_csv(filename, delim_whitespace=True)
+    return data
 
-def mile_gains(miles0, miles1):
-    """Calculate mile gains"""
-    miles = miles1 - miles0
-    return miles
-
-def pt_miles(miles0, miles1):
-    """Calculate public transport mile gains"""
-    miles = {}
-    miles["bus"] = miles1["bus"] - miles0["bus"]
-    miles["trunk"] = miles1["trunk"] - miles0["trunk"]
-    miles["metro"] = miles1["metro"] - miles0["metro"]
-    miles["train"] = miles1["train"] - miles0["train"]
-    miles["tram"] = miles1["tram"] - miles0["tram"]
-    return miles
-
-def write_results_1(wb, miles, revenues, gains):
+def write_results_1(wb, miles, transit_miles, revenues, gains):
     """Write results for year 1"""
     ws = wb.get_sheet_by_name("ha_tyo")
     write_gains_1(ws, gains["car_work"])
@@ -178,16 +149,16 @@ def write_results_1(wb, miles, revenues, gains):
     ws["L22"] = miles["trailer_truck"][4]
     ws["M22"] = miles["trailer_truck"][5]
     ws = wb.get_sheet_by_name("Tuottajahyodyt")
-    ws["S8"] = miles["transit"]["dist"]["bus"]
-    ws["S9"] = miles["transit"]["dist"]["trunk"]
-    ws["S10"] = miles["transit"]["dist"]["tram"]
-    ws["S11"] = miles["transit"]["dist"]["metro"]
-    ws["S12"] = miles["transit"]["dist"]["train"]
-    ws["T8"] = miles["transit"]["time"]["bus"]
-    ws["T9"] = miles["transit"]["time"]["trunk"]
-    ws["T10"] = miles["transit"]["time"]["tram"]
-    ws["T11"] = miles["transit"]["time"]["metro"]
-    ws["T12"] = miles["transit"]["time"]["train"]
+    ws["S8"] = transit_miles["dist"]["bus"]
+    ws["S9"] = transit_miles["dist"]["trunk"]
+    ws["S10"] = transit_miles["dist"]["tram"]
+    ws["S11"] = transit_miles["dist"]["metro"]
+    ws["S12"] = transit_miles["dist"]["train"]
+    ws["T8"] = transit_miles["time"]["bus"]
+    ws["T9"] = transit_miles["time"]["trunk"]
+    ws["T10"] = transit_miles["time"]["tram"]
+    ws["T11"] = transit_miles["time"]["metro"]
+    ws["T12"] = transit_miles["time"]["train"]
     ws["B43"] = revenues["transit"]["aht"]
     ws["C43"] = revenues["transit"]["pt"]
     ws["D43"] = revenues["transit"]["iht"]
@@ -216,7 +187,7 @@ def write_gains_1(ws, gains):
     ws["D37"] = gains["iht"]["cost"]["existing"]
     ws["D38"] = gains["iht"]["cost"]["additional"]
 
-def write_results_2(wb, miles, revenues, gains):
+def write_results_2(wb, miles, transit_miles, revenues, gains):
     """Write results for year 2"""
     ws = wb.get_sheet_by_name("ha_tyo")
     write_gains_2(ws, gains["car_work"])
@@ -259,16 +230,16 @@ def write_results_2(wb, miles, revenues, gains):
     ws["M35"] = miles["trailer_truck"][5]
     ws = wb.get_sheet_by_name("Kayttajahyodyt")
     ws = wb.get_sheet_by_name("Tuottajahyodyt")
-    ws["S16"] = miles["transit"]["dist"]["bus"]
-    ws["S17"] = miles["transit"]["dist"]["trunk"]
-    ws["S18"] = miles["transit"]["dist"]["tram"]
-    ws["S19"] = miles["transit"]["dist"]["metro"]
-    ws["S20"] = miles["transit"]["dist"]["train"]
-    ws["T16"] = miles["transit"]["time"]["bus"]
-    ws["T17"] = miles["transit"]["time"]["trunk"]
-    ws["T18"] = miles["transit"]["time"]["tram"]
-    ws["T19"] = miles["transit"]["time"]["metro"]
-    ws["T20"] = miles["transit"]["time"]["train"]
+    ws["S16"] = transit_miles["dist"]["bus"]
+    ws["S17"] = transit_miles["dist"]["trunk"]
+    ws["S18"] = transit_miles["dist"]["tram"]
+    ws["S19"] = transit_miles["dist"]["metro"]
+    ws["S20"] = transit_miles["dist"]["train"]
+    ws["T16"] = transit_miles["time"]["bus"]
+    ws["T17"] = transit_miles["time"]["trunk"]
+    ws["T18"] = transit_miles["time"]["tram"]
+    ws["T19"] = transit_miles["time"]["metro"]
+    ws["T20"] = transit_miles["time"]["train"]
     ws["B46"] = revenues["transit"]["aht"]
     ws["C46"] = revenues["transit"]["pt"]
     ws["D46"] = revenues["transit"]["iht"]
@@ -297,17 +268,24 @@ def write_gains_2(ws, gains):
     ws["D42"] = gains["iht"]["cost"]["existing"]
     ws["D43"] = gains["iht"]["cost"]["additional"]
 
-def main(args):
-    miles1 = mileages(args[2])
-    miles0 = mileages(args[1])
-    miles = dict.fromkeys(["car", "truck", "trailer_truck", "van"])
-    for ass_class in miles:
-        miles[ass_class] = mile_gains(miles0[ass_class], miles1[ass_class])
-    miles["transit"] = {}
-    miles["transit"]["dist"] = pt_miles(
-        miles0["transit"]["dist"], miles1["transit"]["dist"])
-    miles["transit"]["time"] = pt_miles(
-        miles0["transit"]["time"], miles1["transit"]["time"])
+def do_cba(alt_0, alt_1, year, excelfile):
+    """Runs CBA and writes the results to excel file.
+
+    Parameters
+    ----------
+    alt_0 : str
+        Name of do-nothing scenario, for which 
+        forecast results are available in Results folder
+    alt_1 : str
+        Name of project scenario, for which 
+        forecast results are available in Results folder
+    year : int
+        The evaluation year (1 or 2)
+    excelfile : str
+        Path to excel file where results will be written
+    """
+    mile_diff = miles(alt_1) - miles(alt_0)
+    transit_mile_diff = transit_miles(alt_1) - transit_miles(alt_0)
     revenues = {
         "car": {},
         "transit": {},
@@ -316,8 +294,8 @@ def main(args):
     for transport_class in gains:
         gains[transport_class] = {}
     for tp in param.emme_scenario:
-        ve1 = read_scen(args[2], tp)
-        ve0 = read_scen(args[1], tp)
+        ve1 = read_scen(alt_1, tp)
+        ve0 = read_scen(alt_0, tp)
         revenues["transit"][tp] = 0
         for transit_class in ("transit_work", "transit_leisure"):
             revenues["transit"][tp] += calc_revenue(
@@ -325,21 +303,20 @@ def main(args):
         revenues["car"][tp] = 0
         for ass_mode in param.assignment_mode:
             revenues["car"][tp] += calc_revenue(ve0[ass_mode], ve1[ass_mode])
-        print "Revenues aht calculated"
+        print "Revenues " + tp + " calculated"
         for transport_class in gains:
             gains[transport_class][tp] = calc_gains(
                 ve0[transport_class], ve1[transport_class])
         print "Gains " + tp + " calculated"
-    wb = load_workbook(args[3])
-    year = int(args[4])
+    wb = load_workbook(excelfile)
     if year == 1:
-        write_results_1(wb, miles, revenues, gains)
+        write_results_1(wb, mile_diff, transit_mile_diff, revenues, gains)
     elif year == 2:
-        write_results_2(wb, miles, revenues, gains)
+        write_results_2(wb, mile_diff, transit_mile_diff, revenues, gains)
     else:
-        print "ENNUSTEVUOSI must be either 1 or 2"
-    wb.save("..\\Results\\cba_" + args[2] + ".xlsx")
+        print "Evaluation year must be either 1 or 2"
+    wb.save("..\\Results\\cba_" + alt_1 + ".xlsx")
 
 
-# main(sys.argv)
-main([0, "2030_test", "2030_test", "..\\CBA_kehikko.xlsx", 1])
+# do_cba(sys.argv[1], sys.argv[2], int(sys.argv[3]), sys.argv[4])
+do_cba("2030_test", "2030_test", 1, "..\\CBA_kehikko.xlsx")

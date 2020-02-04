@@ -298,16 +298,22 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         emmebank = self.emme.modeller.emmebank
         freight_classes = ["van", "truck", "trailer_truck"]
         vdfs = [1, 2, 3, 4, 5]
-        transit_modes = ["bde", "g", "m", "rj", "tp"]
+        transit_modes = {
+            "bus": "bde",
+            "trunk": "g",
+            "metro": "m",
+            "train": "rj",
+            "tram": "tp",
+        }
         kms = dict.fromkeys(freight_classes + ["car"])
         for ass_class in kms:
             kms[ass_class] = dict.fromkeys(vdfs)
             for vdf in kms[ass_class]:
                 kms[ass_class][vdf] = 0
-        transit_kms = dict.fromkeys(transit_modes)
+        transit_dists = dict.fromkeys(transit_modes)
         transit_times = dict.fromkeys(transit_modes)
         for mode in transit_modes:
-            transit_kms[mode] = 0
+            transit_dists[mode] = 0
             transit_times[mode] = 0
         for tp in param.emme_scenario:
             scen_id = param.emme_scenario[tp]
@@ -327,26 +333,26 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                                                * link.length)
                         car_vol -= link[param.link_volumes[ass_class]]
                     kms["car"][vdf] += ( param.volume_factors["car"][tp] 
-                                      * car_vol 
-                                      * link.length)
+                                       * car_vol 
+                                       * link.length)
             for line in network.transit_lines():
                 for modes in transit_modes:
-                    if line.mode.id in modes:
+                    if line.mode.id in transit_modes[modes]:
                         mode = modes
                 for segment in line.segments():
-                    transit_kms[mode] += ( param.volume_factors["transit"][tp]
-                                         * line["@vm1"]
-                                         * segment.link.length)
+                    transit_dists[mode] += ( param.volume_factors["transit"][tp]
+                                           * line["@vm1"]
+                                           * segment.link.length)
                     transit_times[mode] += ( param.volume_factors["transit"][tp]
-                                        * line["@vm1"]
-                                        * segment.transit_time)
+                                           * line["@vm1"]
+                                           * segment.transit_time)
         for ass_class in kms:
             result.print_data(
                 kms[ass_class].values(), "vehicle_kms.txt",
                 kms[ass_class].keys(), ass_class)
         result.print_data(
-            transit_kms.values(), "transit_kms.txt",
-            transit_kms.keys(), "km")
+            transit_dists.values(), "transit_kms.txt",
+            transit_dists.keys(), "dist")
         result.print_data(
             transit_times.values(), "transit_kms.txt",
             transit_times.keys(), "time")
