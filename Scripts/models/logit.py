@@ -74,14 +74,6 @@ class LogitModel:
             dest_exps[impedance["dist"] > threshold] = 0
         return dest_exps
 
-    def _calc_origin_util(self, impedance):
-        b = self.dest_choice_param
-        utility = numpy.zeros_like(next(iter(impedance["car"].values())))
-        for mode in b["impedance"]:
-            self._add_impedance(utility, impedance[mode], b["impedance"][mode])
-        self._add_zone_util(utility, b["attraction"])
-        return utility
-
     def _add_constant(self, utility, b):
         try: # If only one parameter
             utility += b
