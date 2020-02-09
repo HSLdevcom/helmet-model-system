@@ -1696,10 +1696,12 @@ destination_choice = {
         },
     },
 }
+# Mode choice (calibrated)
 mode_choice = {
     "hw": {
         "car": {
-            "constant": 0,
+            "constant": (0.844179295926 * (0 + 0.231), 
+                         0.844179295926 * (0 + 0.146)),
             "generation": {
                 "car_density": (0.844179295926 * 1000 * 0.286886466040e-2, 0.844179295926 * 1000 * 0.412205399149e-2),
             },
@@ -1713,7 +1715,8 @@ mode_choice = {
             },
         },
         "transit": {
-            "constant": (0.844179295926 * 3.15335645065, 0.844179295926 * 3.09257722177),
+            "constant": (0.844179295926 * (3.15335645065 - 0.208), 
+                         0.844179295926 * (3.09257722177 - 0.475)),
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -1723,7 +1726,8 @@ mode_choice = {
             "individual_dummy": {},
         },
         "bike": {
-            "constant": (0.844179295926 * 3.65997812160, 0.844179295926 * 4.10083690370),
+            "constant": (0.844179295926 * (3.65997812160 + 0.226), 
+                         0.844179295926 * (4.10083690370 + 0.205)),
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -1733,7 +1737,8 @@ mode_choice = {
             "individual_dummy": {},
         },
         "walk": {
-            "constant": (0.844179295926 * 6.06426484277, 0.844179295926 * 6.31407702335),
+            "constant": (0.844179295926 * (6.06426484277 - 0.161),
+                         0.844179295926 * (6.31407702335 - 0.341)),
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -1745,7 +1750,8 @@ mode_choice = {
     },
     "hc": {
         "car": {
-            "constant": 0,
+            "constant": (0.272803753976 * (0 + 0.550),
+                         0.272803753976 * (0 - 0.636)),
             "generation": {
                 "car_density": 0.272803753976 * 1000 * 0.201094997058e-01,
             },
@@ -1757,7 +1763,8 @@ mode_choice = {
             "individual_dummy": {},
         },
         "transit": {
-            "constant": 0.272803753976 * 13.2817160786,
+            "constant": (0.272803753976 * (13.2817160786 + 0.129),
+                         0.272803753976 * (13.2817160786 - 0.695)),
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -1767,7 +1774,8 @@ mode_choice = {
             "individual_dummy": {},
         },
         "bike": {
-            "constant": 0.272803753976 * 11.3490028510,
+            "constant": (0.272803753976 * (11.3490028510 + 0.179),
+                         0.272803753976 * (11.3490028510 + 1.762)),
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -1777,7 +1785,8 @@ mode_choice = {
             "individual_dummy": {},
         },
         "walk": {
-            "constant": 0.272803753976 * 17.7784859496,
+            "constant": (0.272803753976 * (17.7784859496 + 0.010),
+                         0.272803753976 * (17.7784859496 - 1.079)),
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -1789,7 +1798,7 @@ mode_choice = {
     },
     "hu": {
         "car": {
-            "constant": 0,
+            "constant": (0 - 0.264, 0 + 0.407),
             "generation": {
                 "car_density": 1000 * 0.504851816443e-2,
             },
@@ -1801,7 +1810,7 @@ mode_choice = {
             "individual_dummy": {},
         },
         "transit": {
-            "constant": 3.10747422821,
+            "constant": (3.10747422821 - 0.040, 3.10747422821 + 0.539),
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -1811,7 +1820,7 @@ mode_choice = {
             "individual_dummy": {},
         },
         "bike": {
-            "constant": 3.23689689401,
+            "constant": (3.23689689401 + 0.686, 3.23689689401 + 1.829),
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -1821,7 +1830,7 @@ mode_choice = {
             "individual_dummy": {},
         }, 
         "walk": {
-            "constant": 6.15888890793,
+            "constant": (6.15888890793 + 0.257, 6.15888890793 + 0.868), 
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -1833,7 +1842,8 @@ mode_choice = {
     },
     "hs": {
         "car": {
-            "constant": 0,
+            "constant": (0.539979474415 * (0 + 0.295), 
+                         0.539979474415 * (0 + 0.091)),
             "generation": {
                 "car_density": (0.539979474415 * 1000 * 0.952522128478e-2, 0.539979474415 * 1000 * 0.156268961848e-1),
             },
@@ -1847,7 +1857,8 @@ mode_choice = {
             },
         },
         "transit": {
-            "constant": (0.539979474415 * 5.13091589060, 0.539979474415 * 4.98462338486),
+            "constant": (0.539979474415 * (5.13091589060 - 0.209), 
+                         0.539979474415 * (4.98462338486 - 0.638)),
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -1857,7 +1868,8 @@ mode_choice = {
             "individual_dummy": {},
         },
         "bike": {
-            "constant": (0.539979474415 * 3.98060152237, 0.539979474415 * 7.26646802781),
+            "constant": (0.539979474415 * (3.98060152237 - 0.542), 
+                         0.539979474415 * (7.26646802781 - 0.961)),
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -1867,7 +1879,8 @@ mode_choice = {
             "individual_dummy": {},
         }, 
         "walk": {
-            "constant": (0.539979474415 * 10.8293044790, 0.539979474415 * 12.6937820419),
+            "constant": (0.539979474415 * (10.8293044790 - 0.125),
+                         0.539979474415 * (12.6937820419 + 0.248)),
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -1879,7 +1892,8 @@ mode_choice = {
     },
     "ho": {
         "car": {
-            "constant": 0,
+            "constant": (0.151688898 * (0 + 0.338),
+                         0.151688898 * (0 - 0.485)),
             "generation": {
                 "car_density": (0.151688898 * 1000 * 0.029028726, 0.151688898 * 1000 * 0.010179897),
             },
@@ -1893,7 +1907,8 @@ mode_choice = {
             },
         },
         "transit": {
-            "constant": (0.151688898 * 8.71611785, 0.151688898 * -9.326014274),
+            "constant": (0.151688898 * (8.71611785 - 0.033), 
+                         0.151688898 * (-9.326014274 + 0.573)),
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -1903,7 +1918,8 @@ mode_choice = {
             "individual_dummy": {},
         },
         "bike": {
-            "constant": (0.151688898 * 5.077652282, 0.151688898 * -1.017242495),
+            "constant": (0.151688898 * (5.077652282 - 1.292), 
+                         0.151688898 * (-1.017242495 - 1.235)),
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -1913,7 +1929,8 @@ mode_choice = {
             "individual_dummy": {},
         }, 
         "walk": {
-            "constant": (0.151688898 * 20.72419038, 0.151688898 * 12.53617415),
+            "constant": (0.151688898 * (20.72419038 + 0.016), 
+                         0.151688898 * (12.53617415 + 0.759)),
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -1926,7 +1943,8 @@ mode_choice = {
     "hoo": None,
     "wo": {
        "car": {
-            "constant": 0,
+            "constant": (.798132431338 * (0 + 0.291),
+                         .798132431338 * (0 + 0.539)),
             "generation": {
                 "car_density": (.798132431338 * 1000 * .00221109216997, .798132431338 * 1000 * .00228561511302),
             },
@@ -1938,7 +1956,8 @@ mode_choice = {
             "individual_dummy": {},
         },
         "transit": {
-            "constant": .798132431338 * 1.00739274058,
+            "constant": (.798132431338 * (1.00739274058 + 0.222),
+                         .798132431338 * (1.00739274058 - 3.806)),
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -1948,7 +1967,8 @@ mode_choice = {
             "individual_dummy": {},
         },
         "bike": {
-            "constant": (.798132431338 * -.869336973071, .798132431338 * -.517146785790),
+            "constant": (.798132431338 * (-.869336973071 + 1.322),
+                         .798132431338 * (-.517146785790 - 0.730)),
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -1958,7 +1978,8 @@ mode_choice = {
             "individual_dummy": {},
         }, 
         "walk": {
-            "constant": .798132431338 * 4.70332901113,
+            "constant": (.798132431338 * (4.70332901113 - 0.216),
+                         .798132431338 * (4.70332901113 - 0.486)),
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -1970,7 +1991,8 @@ mode_choice = {
     },
     "oo": {
         "car": {
-            "constant": 0,
+            "constant": (.798132431338 * (0 + 0.010),
+                         .798132431338 * (0 + 0.404)),
             "generation": {
                 "car_density": (.798132431338 * 1000 * .00221109216997, .798132431338 * 1000 * .00228561511302),
             },
@@ -1982,7 +2004,8 @@ mode_choice = {
             "individual_dummy": {},
         },
         "transit": {
-            "constant": .798132431338 * 1.00739274058,
+            "constant": (.798132431338 * (1.00739274058 + 0.297),
+                         .798132431338 * (1.00739274058 - 1.187)),
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -1992,7 +2015,8 @@ mode_choice = {
             "individual_dummy": {},
         },
         "bike": {
-            "constant": (.798132431338 * -.869336973071, .798132431338 * -.517146785790),
+            "constant": (.798132431338 * (-.869336973071 - 2.366),
+                         .798132431338 * (-.517146785790 + 0.492)),
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -2002,7 +2026,8 @@ mode_choice = {
             "individual_dummy": {},
         }, 
         "walk": {
-            "constant": .798132431338 * 4.70332901113,
+            "constant": (.798132431338 * (4.70332901113 - 0.004),
+                         .798132431338 * (4.70332901113 + 0.111)),
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -2014,7 +2039,7 @@ mode_choice = {
     },
     "hwp": {
         "car": {
-            "constant": 0,
+            "constant": (0 - 0.018),
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -2024,7 +2049,7 @@ mode_choice = {
             "individual_dummy": {},
         },
         "transit": {
-            "constant": -1.79569982464, # T_const
+            "constant": (-1.79569982464 + 0.279), # T_const
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -2036,7 +2061,7 @@ mode_choice = {
     },
     "hop": {
         "car": {
-            "constant": 0,
+            "constant": (0 + 0.012),
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -2046,7 +2071,7 @@ mode_choice = {
             "individual_dummy": {},
         },
         "transit": {
-            "constant": -1.26883605707,
+            "constant": (-1.26883605707 - 0.137),
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -2085,7 +2110,7 @@ mode_choice = {
     },
     "oop": {
         "car": {
-            "constant": 0,
+            "constant": (0.715272183645 * (0 + 0.123)),
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -2095,7 +2120,7 @@ mode_choice = {
             "individual_dummy": {},
         },
         "transit": {
-            "constant": 0.715272183645 * -3.44371464477,
+            "constant": (0.715272183645 * (-3.44371464477 + 0.324)),
             "generation": {},
             "attraction": {},
             "impedance": {},
