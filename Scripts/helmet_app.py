@@ -48,22 +48,22 @@ class HelmetApplication:
             return
         impedance = self.model.assign_base_demand(Config.USE_FIXED_TRANSIT_COST)
         self._status["state"] = "running"
-        for round in range(1, iterations+1):
-            self._status["current"] = round
+        for i in range(1, iterations+1):
+            self._status["current"] = i
             try:
-                self.logger.info("Starting iteration {}".format(round), extra=self._get_status())
-                if round == iterations:
+                self.logger.info("Starting iteration {}".format(i), extra=self._get_status())
+                if i == iterations:
                     impedance = self.model.run(impedance, is_last_iteration=True)
                 else:
                     impedance = self.model.run(impedance)
                 self._status["completed"] = self._status["completed"] + 1
             except Exception as error:
                 self._status["failed"] = self._status["failed"] + 1
-                is_fatal = self.handle_error("Exception at iteration {}".format(round), error)
+                is_fatal = self.handle_error("Exception at iteration {}".format(i), error)
                 if is_fatal:
                     self.logger.error("Fatal error occured, simulation aborted.", extra=self._get_status())
                     break
-            if round == iterations:
+            if i == iterations:
                 self._status['state'] = 'finished'
         self.logger.info("Simulation ended.", extra=self._get_status())
 
