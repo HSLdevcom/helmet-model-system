@@ -1,18 +1,14 @@
 from utils.config import Config
 from utils.log import Log
-import os
 import datahandling.resultdata as result
-from assignment.abstract_assignment import AssignmentModel
 from assignment.emme_assignment import EmmeAssignmentModel
 from assignment.mock_assignment import MockAssignmentModel
 import modelsystem
 from datahandling.matrixdata import MatrixData
 from emme.emme_context import EmmeContext
-import parameters
-import numpy
 
 
-class HelmetApplication():
+class HelmetApplication:
     def __init__(self, config):
         self._config = config
         self.logger = Log.get_instance()
@@ -35,7 +31,7 @@ class HelmetApplication():
         if config.get_value(Config.USE_EMME):
             self.logger.info("Initializing Emme..")
             emme_context = EmmeContext(self._config.get_value(Config.EMME_PROJECT_PATH))
-            ass_model = EmmeAssignmentModel(emme_context)
+            ass_model = EmmeAssignmentModel(emme_context, first_scenario_id=config.get_value(Config.FIRST_SCENARIO_ID))
         else:
             self.logger.info("Initializing MockAssignmentModel..")
             ass_model = MockAssignmentModel(MatrixData(config.get_value(Config.SCENARIO_NAME)))
@@ -91,7 +87,7 @@ class HelmetApplication():
 
 # Main entry point for the application
 if __name__ == "__main__":
-    config = Config.read_from_file()
-    Log.get_instance().initialize(config)
-    app = HelmetApplication(config)
+    file_based_config = Config.read_from_file()
+    Log.get_instance().initialize(file_based_config)
+    app = HelmetApplication(file_based_config)
     app.run()
