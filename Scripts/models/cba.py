@@ -8,7 +8,7 @@ import re
 import parameters as param
 
 
-def do_cba(alt_0, alt_1, year, excelfile):
+def run_cost_benefit_analysis(scenario_0, scenario_1, year, excelfile):
     """Runs CBA and writes the results to excel file.
 
     Parameters
@@ -24,18 +24,16 @@ def do_cba(alt_0, alt_1, year, excelfile):
     excelfile : str
         Path to excel file where results will be written
     """
-    mile_diff = miles(alt_1) - miles(alt_0)
-    transit_mile_diff = transit_miles(alt_1) - transit_miles(alt_0)
+    mile_diff = read_miles(scenario_1) - read_miles(scenario_0)
+    transit_mile_diff = read_transit_miles(scenario_1) - read_transit_miles(scenario_0)
     revenues = {
         "car": {},
         "transit": {},
     }
-    gains = dict.fromkeys(param.transport_classes)
-    for transport_class in gains:
-        gains[transport_class] = {}
+    gains = dict.fromkeys(param.transport_classes, {})
     for tp in param.emme_scenario:
-        ve1 = read_scen(alt_1, tp)
-        ve0 = read_scen(alt_0, tp)
+        ve1 = read_scenario(scenario_1, tp)
+        ve0 = read_scenario(scenario_0, tp)
         revenues["transit"][tp] = 0
         for transit_class in ("transit_work", "transit_leisure"):
             revenues["transit"][tp] += calc_revenue(
@@ -55,13 +53,13 @@ def do_cba(alt_0, alt_1, year, excelfile):
         write_results_2(wb, mile_diff, transit_mile_diff, revenues, gains)
     else:
         print "Evaluation year must be either 1 or 2"
-    wb.save("..\\Results\\cba_" + alt_1 + ".xlsx")
+    wb.save("..\\Results\\cba_" + scenario_1 + ".xlsx")
 
-def read_scen(scenario, time_period):
+def read_scenario(scenario_name, time_period):
     """Read travel cost and demand data for scenario from files"""
     script_dir = os.path.dirname(os.path.realpath(__file__))
     project_dir = os.path.join(script_dir, "..", "..")
-    path = os.path.join(project_dir, "Matrices", scenario)
+    path = os.path.join(project_dir, "Matrices", scenario_name)
     files = dict.fromkeys(["demand", "time", "cost", "dist"])
     for mtx_type in files:
         file_name = mtx_type + '_' + time_period + ".omx"
@@ -136,17 +134,17 @@ def calc_gains(ve0, ve1):
     gains["cost"] = calc_cost_gains(ve0, ve1)
     return gains
 
-def miles(scenario):
+def read_miles(scenario_name):
     """Read scenario data from files"""
     script_dir = os.path.dirname(os.path.realpath(__file__))
     project_dir = os.path.join(script_dir, "..", "..")
-    data_dir = os.path.join(project_dir, "Results", scenario)
+    data_dir = os.path.join(project_dir, "Results", scenario_name)
     data_dir = os.path.abspath(data_dir)
     filename = os.path.join(data_dir, "vehicle_kms.txt")
     data = pandas.read_csv(filename, delim_whitespace=True)
     return data
 
-def transit_miles(scenario):
+def read_transit_miles(scenario):
     """Read scenario data from files"""
     script_dir = os.path.dirname(os.path.realpath(__file__))
     project_dir = os.path.join(script_dir, "..", "..")
@@ -318,5 +316,5 @@ def write_gains_2(ws, gains):
     ws["D43"] = gains["iht"]["cost"]["additional"]
 
 
-do_cba(sys.argv[1], sys.argv[2], int(sys.argv[3]), sys.argv[4])
+run_cost_benefit_analysis(sys.argv[1], sys.argv[2], int(sys.argv[3]), sys.argv[4])
 # do_cba("2030_test", "2030_test", 1, "..\\CBA_kehikko.xlsx")

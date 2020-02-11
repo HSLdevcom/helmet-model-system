@@ -307,20 +307,15 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         }
         kms = dict.fromkeys(freight_classes + ["car"])
         for ass_class in kms:
-            kms[ass_class] = dict.fromkeys(vdfs)
-            for vdf in kms[ass_class]:
-                kms[ass_class][vdf] = 0
-        transit_dists = dict.fromkeys(transit_modes)
-        transit_times = dict.fromkeys(transit_modes)
-        for mode in transit_modes:
-            transit_dists[mode] = 0
-            transit_times[mode] = 0
+            kms[ass_class] = dict.fromkeys(vdfs, 0)
+        transit_dists = dict.fromkeys(transit_modes, 0)
+        transit_times = dict.fromkeys(transit_modes, 0)
         for tp in param.emme_scenario:
             scen_id = param.emme_scenario[tp]
             scenario = emmebank.scenario(scen_id)
             network = scenario.get_network()
             for link in network.links():
-                if vdf <= 5:
+                if link.volume_delay_func <= 5:
                     vdf = link.volume_delay_func
                 else:
                     # Links with bus lane
