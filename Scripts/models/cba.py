@@ -8,7 +8,7 @@ import re
 import parameters as param
 
 
-def run_cost_benefit_analysis(scenario_0, scenario_1, year, excelfile):
+def run_cost_benefit_analysis(scenario_0, scenario_1, year):
     """Runs CBA and writes the results to excel file.
 
     Parameters
@@ -24,6 +24,8 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, excelfile):
     excelfile : str
         Path to excel file where results will be written
     """
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    excelfile = os.path.join(script_dir, "..", "CBA_kehikko.xlsx")
     mile_diff = read_miles(scenario_1) - read_miles(scenario_0)
     transit_mile_diff = read_transit_miles(scenario_1) - read_transit_miles(scenario_0)
     revenues = {
@@ -144,11 +146,11 @@ def read_miles(scenario_name):
     data = pandas.read_csv(filename, delim_whitespace=True)
     return data
 
-def read_transit_miles(scenario):
+def read_transit_miles(scenario_name):
     """Read scenario data from files"""
     script_dir = os.path.dirname(os.path.realpath(__file__))
     project_dir = os.path.join(script_dir, "..", "..")
-    data_dir = os.path.join(project_dir, "Results", scenario)
+    data_dir = os.path.join(project_dir, "Results", scenario_name)
     data_dir = os.path.abspath(data_dir)
     filename = os.path.join(data_dir, "transit_kms.txt")
     data = pandas.read_csv(filename, delim_whitespace=True)
@@ -316,5 +318,5 @@ def write_gains_2(ws, gains):
     ws["D43"] = gains["iht"]["cost"]["additional"]
 
 
-run_cost_benefit_analysis(sys.argv[1], sys.argv[2], int(sys.argv[3]), sys.argv[4])
-# do_cba("2030_test", "2030_test", 1, "..\\CBA_kehikko.xlsx")
+run_cost_benefit_analysis(sys.argv[1], sys.argv[2], int(sys.argv[3]))
+# run_cost_benefit_analysis("2030_test", "2030_test", 1)
