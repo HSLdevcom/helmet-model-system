@@ -19,7 +19,7 @@ class DepartureTimeModel:
 
     def init_demand(self):
         """Initialize demand for all time periods."""
-        self.demand = dict.fromkeys(param.emme_scenario.keys())
+        self.demand = dict.fromkeys(param.emme_scenario)
         for time_period in self.demand:
             ass_classes = dict.fromkeys(param.transport_classes)
             self.demand[time_period] = ass_classes
