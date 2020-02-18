@@ -148,7 +148,7 @@ class ModelSystem:
         for tp in parameters.emme_scenario:
             self.dtm.add_vans(tp, self.zdata_forecast.nr_zones)
             self.ass_model.assign(tp, self.dtm.demand[tp], is_last_iteration)
-            impedance[tp] = self.ass_model.get_impedance()
+            impedance[tp] = self.ass_model.get_impedance(is_last_iteration)
             if tp == "aht":
                 car_time = numpy.ma.average(
                     impedance[tp]["time"]["car_work"], axis=1,

@@ -3,7 +3,7 @@ import numpy
 import pandas
 import parameters as param
 from abstract_assignment import AssignmentModel, ImpedanceSource
-from datatypes.car import Car, PrivateCar
+from datatypes.car import Car
 from datatypes.journey_level import JourneyLevel
 from datatypes.path_analysis import PathAnalysis
 import datahandling.resultdata as result
@@ -75,7 +75,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             self._calc_extra_wait_time(scen_id)
             self._assign_transit(scen_id)
         
-    def get_impedance(self):
+    def get_impedance(self, is_last_iteration=False):
         """Get travel impedance matrices for one time period from assignment.
         
         Return
@@ -92,23 +92,23 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         mtxs["time"]["bike"] = self._cap(mtxs["time"]["bike"])
         mtxs["time"]["car_work"] = self._gcost_to_time("car_work")
         mtxs["time"]["car_leisure"] = self._gcost_to_time("car_leisure")
-        for ass_cl in ("car_work", "car_leisure"):
-            mtxs["cost"][ass_cl] += self.dist_cost * mtxs["dist"][ass_cl]
+        if not is_last_iteration:
+            for ass_cl in ("car_work", "car_leisure"):
+                mtxs["cost"][ass_cl] += self.dist_cost * mtxs["dist"][ass_cl]
         return mtxs
     
     def set_matrices(self, matrices):
         emmebank = self.emme.modeller.emmebank
-        tmp_mtx = None
+        tmp_mtx = {
+            "transit": 0,
+            "bike": 0,
+        }
         for mtx in matrices:
             mtx_label = mtx.split('_')[0]
-            if mtx_label == "transit" or mtx_label == "bike":
+            if mtx_label in tmp_mtx:
                 idx = param.emme_mtx["demand"][mtx_label]["id"]
-                try:
-                    tmp_mtx += matrices[mtx]
-                    emmebank.matrix(idx).set_numpy_data(tmp_mtx)
-                    tmp_mtx = None
-                except TypeError:
-                    tmp_mtx = matrices[mtx]
+                tmp_mtx[mtx_label] += matrices[mtx]
+                emmebank.matrix(idx).set_numpy_data(tmp_mtx[mtx_label])
             else:
                 idx = param.emme_mtx["demand"][mtx]["id"]
                 emmebank.matrix(idx).set_numpy_data(matrices[mtx])
@@ -127,6 +127,8 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             Subtype (car_work/truck/inv_time/...) : numpy 2-d matrix
                 Matrix of the specified type
         """
+        # TODO Remove freight impedance matrices from selection,
+        # if not last iteration
         matrices = dict.fromkeys(param.emme_mtx[mtx_type].keys())
         for mtx in matrices:
             matrices[mtx] = self.get_matrix(mtx_type, mtx)
@@ -307,23 +309,24 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         emmebank = self.emme.modeller.emmebank
         freight_classes = ["van", "truck", "trailer_truck"]
         vdfs = [1, 2, 3, 4, 5]
-        transit_modes = ["bde", "g", "m", "rj", "tp"]
+        transit_modes = {
+            "bus": "bde",
+            "trunk": "g",
+            "metro": "m",
+            "train": "rj",
+            "tram": "tp",
+        }
         kms = dict.fromkeys(freight_classes + ["car"])
         for ass_class in kms:
-            kms[ass_class] = dict.fromkeys(vdfs)
-            for vdf in kms[ass_class]:
-                kms[ass_class][vdf] = 0
-        transit_kms = dict.fromkeys(transit_modes)
-        transit_times = dict.fromkeys(transit_modes)
-        for mode in transit_modes:
-            transit_kms[mode] = 0
-            transit_times[mode] = 0
-        for tp in self.emme_scenario:
-            scen_id = self.emme_scenario[tp]
+            kms[ass_class] = dict.fromkeys(vdfs, 0)
+        transit_dists = dict.fromkeys(transit_modes, 0)
+        transit_times = dict.fromkeys(transit_modes, 0)
+        for tp in param.emme_scenario:
+            scen_id = param.emme_scenario[tp]
             scenario = emmebank.scenario(scen_id)
             network = scenario.get_network()
             for link in network.links():
-                if vdf <= 5:
+                if link.volume_delay_func <= 5:
                     vdf = link.volume_delay_func
                 else:
                     # Links with bus lane
@@ -336,26 +339,26 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                                                * link.length)
                         car_vol -= link[param.link_volumes[ass_class]]
                     kms["car"][vdf] += ( param.volume_factors["car"][tp] 
-                                      * car_vol 
-                                      * link.length)
+                                       * car_vol 
+                                       * link.length)
             for line in network.transit_lines():
                 for modes in transit_modes:
-                    if line.mode.id in modes:
+                    if line.mode.id in transit_modes[modes]:
                         mode = modes
                 for segment in line.segments():
-                    transit_kms[mode] += ( param.volume_factors["transit"][tp]
-                                         * line["@vm1"]
-                                         * segment.link.length)
+                    transit_dists[mode] += ( param.volume_factors["transit"][tp]
+                                           * line["@vm1"]
+                                           * segment.link.length)
                     transit_times[mode] += ( param.volume_factors["transit"][tp]
-                                        * line["@vm1"]
-                                        * segment.transit_time)
+                                           * line["@vm1"]
+                                           * segment.transit_time)
         for ass_class in kms:
             result.print_data(
                 kms[ass_class].values(), "vehicle_kms.txt",
                 kms[ass_class].keys(), ass_class)
         result.print_data(
-            transit_kms.values(), "transit_kms.txt",
-            transit_kms.keys(), "km")
+            transit_dists.values(), "transit_kms.txt",
+            transit_dists.keys(), "dist")
         result.print_data(
             transit_times.values(), "transit_kms.txt",
             transit_times.keys(), "time")
@@ -443,15 +446,11 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
 
     def _specify(self):
         # Car assignment specification
-        car_work = PrivateCar("car_work")
-        car_leisure = PrivateCar("car_leisure")
+        car_work = Car("car_work")
+        car_leisure = Car("car_leisure")
         van = Car("van")
-        truck = Car(ass_class="truck",
-                    value_of_time_inv=0.2,
-                    link_costs="length")
-        trailer_truck = Car(ass_class="trailer_truck",
-                            value_of_time_inv=0.2,
-                            link_costs="length")
+        truck = Car("truck", 0.2, "length")
+        trailer_truck = Car("trailer_truck", 0.2, "length")
         self.car_spec = {
             "type": "SOLA_TRAFFIC_ASSIGNMENT",
             "classes": [
