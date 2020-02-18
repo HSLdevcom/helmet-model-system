@@ -1,7 +1,8 @@
 import os
 import json
 
-class Config():
+
+class Config:
     
     SCENARIO_NAME = 'SCENARIO_NAME'
     ITERATION_COUNT = 'ITERATION_COUNT'
@@ -11,6 +12,7 @@ class Config():
     DATA_PATH = 'DATA_PATH'
     EMME_PROJECT_PATH = 'EMME_PROJECT_PATH'
     USE_FIXED_TRANSIT_COST = 'USE_FIXED_TRANSIT_COST'
+    FIRST_SCENARIO_ID = 'FIRST_SCENARIO_ID'
 
     DefaultScenario = "helmet"
 

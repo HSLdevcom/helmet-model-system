@@ -1,6 +1,4 @@
 import os
-import logging
-import copy
 import numpy
 import pandas
 import parameters as param
@@ -10,8 +8,15 @@ from datatypes.journey_level import JourneyLevel
 from datatypes.path_analysis import PathAnalysis
 import datahandling.resultdata as result
 
+
 class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
-    def __init__(self, emme_context, car_dist_cost=param.dist_cost):
+    def __init__(self, emme_context, car_dist_cost=param.dist_cost, first_scenario_id=19):
+        """
+        first_scenario_id (bike scenario) is usually #19,
+            followed by (#20) walk scenario, (#21) morning scenario, (#22) midday scenario, and (#23) evening scenario.
+        If first scenario is set something else (e.g. #5), then following scenarios are also adjusted (#6, #7, #8, #9).
+        Walk scenario is not calculated, so effective scenarios by convention are <first>, +2, +3, +4.
+        """
         self.emme = emme_context
         for mtx_type in param.emme_mtx:
             mtx = param.emme_mtx[mtx_type]
@@ -23,10 +28,17 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                     default_value=0,
                     overwrite=True)
         self.dist_cost = car_dist_cost
-        for time_period in param.emme_scenario:
-            self._calc_road_cost(param.emme_scenario[time_period])
-            self._calc_boarding_penalties(param.emme_scenario[time_period])
-            self._calc_background_traffic(param.emme_scenario[time_period])
+        self.bike_scenario = first_scenario_id
+        # +1 (unused) is walk scenario
+        self.emme_scenario = {
+            "aht": first_scenario_id+2,
+            "pt": first_scenario_id+3,
+            "iht": first_scenario_id+4,
+        }
+        for time_period in self.emme_scenario:
+            self._calc_road_cost(self.emme_scenario[time_period])
+            self._calc_boarding_penalties(self.emme_scenario[time_period])
+            self._calc_background_traffic(self.emme_scenario[time_period])
         self._specify()
         self._has_assigned_bike_and_walk = False
     
@@ -42,7 +54,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         """
         self.emme.logger.info("Assignment starts...")
         self.set_matrices(matrices)
-        scen_id = param.emme_scenario[time_period]
+        scen_id = self.emme_scenario[time_period]
         if not self._has_assigned_bike_and_walk:
             self._assign_pedestrians(scen_id)
             self._assign_bikes(param.bike_scenario,
@@ -144,7 +156,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
     def zone_numbers(self):
         """Numpy array of all zone numbers.""" 
         emmebank = self.emme.modeller.emmebank
-        scen = emmebank.scenario(param.emme_scenario["aht"])
+        scen = emmebank.scenario(self.emme_scenario["aht"])
         return scen.zone_numbers
     
     @property
@@ -257,8 +269,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
 
     def _calc_road_cost(self, scen_id):
         """Calculate road charges and driving costs for one scenario."""
-        self.emme.logger.info("Calculates road charges for scenario "
-                        + str(scen_id))
+        self.emme.logger.info("Calculates road charges for scenario " + str(scen_id))
         emmebank = self.emme.modeller.emmebank
         scenario = emmebank.scenario(scen_id)
         netw_specs = []
@@ -368,7 +379,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         emmebank = self.emme.modeller.emmebank
         idx = param.emme_mtx["cost"]["transit"]["id"]
         if default_cost is None:
-            scen_id = param.emme_scenario["aht"]
+            scen_id = self.emme_scenario["aht"]
             # Move transfer penalty to boarding penalties,
             # a side effect is that it then also affects first boarding
             self._calc_boarding_penalties(scen_id, 5)

@@ -1,18 +1,14 @@
 from utils.config import Config
 from utils.log import Log
-import os
 import datahandling.resultdata as result
-from assignment.abstract_assignment import AssignmentModel
 from assignment.emme_assignment import EmmeAssignmentModel
 from assignment.mock_assignment import MockAssignmentModel
 import modelsystem
 from datahandling.matrixdata import MatrixData
 from emme.emme_context import EmmeContext
-import parameters
-import numpy
 
 
-class HelmetApplication():
+class HelmetApplication:
     def __init__(self, config):
         self._config = config
         self.logger = Log.get_instance()
@@ -35,7 +31,7 @@ class HelmetApplication():
         if config.get_value(Config.USE_EMME):
             self.logger.info("Initializing Emme..")
             emme_context = EmmeContext(self._config.get_value(Config.EMME_PROJECT_PATH))
-            ass_model = EmmeAssignmentModel(emme_context)
+            ass_model = EmmeAssignmentModel(emme_context, first_scenario_id=config.get_value(Config.FIRST_SCENARIO_ID))
         else:
             self.logger.info("Initializing MockAssignmentModel..")
             ass_model = MockAssignmentModel(MatrixData(config.get_value(Config.SCENARIO_NAME)))
@@ -52,22 +48,22 @@ class HelmetApplication():
             return
         impedance = self.model.assign_base_demand(Config.USE_FIXED_TRANSIT_COST)
         self._status["state"] = "running"
-        for round in range(1, iterations+1):
-            self._status["current"] = round
+        for i in range(1, iterations+1):
+            self._status["current"] = i
             try:
-                self.logger.info("Starting iteration {}".format(round), extra=self._get_status())
-                if round == iterations:
+                self.logger.info("Starting iteration {}".format(i), extra=self._get_status())
+                if i == iterations:
                     impedance = self.model.run(impedance, is_last_iteration=True)
                 else:
                     impedance = self.model.run(impedance)
                 self._status["completed"] = self._status["completed"] + 1
             except Exception as error:
                 self._status["failed"] = self._status["failed"] + 1
-                is_fatal = self.handle_error("Exception at iteration {}".format(round), error)
+                is_fatal = self.handle_error("Exception at iteration {}".format(i), error)
                 if is_fatal:
                     self.logger.error("Fatal error occured, simulation aborted.", extra=self._get_status())
                     break
-            if round == iterations:
+            if i == iterations:
                 self._status['state'] = 'finished'
         self.logger.info("Simulation ended.", extra=self._get_status())
 
@@ -91,7 +87,7 @@ class HelmetApplication():
 
 # Main entry point for the application
 if __name__ == "__main__":
-    config = Config.read_from_file()
-    Log.get_instance().initialize(config)
-    app = HelmetApplication(config)
+    file_based_config = Config.read_from_file()
+    Log.get_instance().initialize(file_based_config)
+    app = HelmetApplication(file_based_config)
     app.run()
