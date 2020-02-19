@@ -3,7 +3,7 @@ from utils.log import Log
 import datahandling.resultdata as result
 from assignment.emme_assignment import EmmeAssignmentModel
 from assignment.mock_assignment import MockAssignmentModel
-import modelsystem
+from modelsystem import ModelSystem
 from datahandling.matrixdata import MatrixData
 from emme.emme_context import EmmeContext
 
@@ -35,7 +35,7 @@ class HelmetApplication:
         else:
             self.logger.info("Initializing MockAssignmentModel..")
             ass_model = MockAssignmentModel(MatrixData(config.get_value(Config.SCENARIO_NAME)))
-        self.model = modelsystem.ModelSystem(self._config.get_value(Config.DATA_PATH), "2016", "base", ass_model, name)
+        self.model = ModelSystem(self._config.get_value(Config.DATA_PATH), "2016", "base", ass_model, name)
         self._status["results"] = self.model.mode_share
 
     def run(self):
@@ -75,7 +75,6 @@ class HelmetApplication:
     def _validate_input(self):
         # TODO read the scenario from parameters / config and read input data & validate it
         return True
-
 
     def _validate_demand(self, demand):
         # TODO read the scenario from parameters / config and read input data & validate it
