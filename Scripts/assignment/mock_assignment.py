@@ -18,6 +18,8 @@ class MockAssignmentModel(AssignmentModel, ImpedanceSource):
             Time period (aht/pt/iht)
         matrices: dict
             Assignment class (car_work/transit/...): numpy 2-d matrix
+        is_last_iteration: bool
+        is_first_iteration: bool
         """
         self.time_period = time_period
         with self.matrices.open("demand", time_period, 'w') as mtx:

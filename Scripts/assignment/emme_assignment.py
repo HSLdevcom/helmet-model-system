@@ -42,7 +42,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         self._specify()
         self._has_assigned_bike_and_walk = False
     
-    def assign(self, time_period, matrices, is_last_iteration=False):
+    def assign(self, time_period, matrices, is_last_iteration=False, is_first_iteration=False):
         """Assign cars, bikes and transit for one time period.
         
         Parameters
@@ -51,6 +51,8 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             Time period (aht/pt/iht)
         matrices: dict
             Assignment class (car_work/transit/...) : numpy 2-d matrix
+        is_last_iteration: bool
+        is_first_iteration: bool
         """
         self.emme.logger.info("Assignment starts...")
         self.set_matrices(matrices)
