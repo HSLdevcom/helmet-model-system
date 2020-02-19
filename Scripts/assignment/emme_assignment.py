@@ -175,7 +175,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         fwt = self.get_matrix("transit", "fw_time")
         wt_weight = param.waiting_time_perception_factor
         # Calculate transit travel time where first waiting time is damped
-        dtt = travel_time + wt_weight*((5/3*fwt)**0.8 - fwt)
+        dtt = travel_time + wt_weight*((5./3.*fwt)**0.8 - fwt)
         return dtt
 
     def _cap(self, travel_time):
@@ -214,7 +214,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "selections": {
                 "transit_line": "hdw=1,900",
             },
-            "expression": "60/hdw",
+            "expression": "60.0/hdw",
             "result": "@vm1",
             "aggregation": None,
         }
@@ -738,7 +738,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                                  + b["ctime"]*cumulative_time 
                                  + b["cspeed"]*cumulative_speed)
                 # Estimated waiting time addition caused by headway deviation
-                segment["@wait_time_dev"] = headway_sd**2 / (2*line.headway)
+                segment["@wait_time_dev"] = headway_sd**2 / (2.0*line.headway)
         scenario.publish_network(network)
 
     def _assign_transit(self, scen_id, count_zone_boardings=False):
