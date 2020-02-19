@@ -14,6 +14,8 @@ class AssignmentModel:
             Time period (aht/pt/iht)
         matrices: dict
             Assignment class (car_work/transit/...): numpy 2-d matrix
+        is_last_iteration: bool
+        is_first_iteration: bool
         """
         pass
 
