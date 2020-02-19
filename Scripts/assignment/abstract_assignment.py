@@ -51,7 +51,7 @@ class ImpedanceSource:
         pass
     
     @abstractmethod
-    def calc_transit_cost(self):
+    def calc_transit_cost(self, fares, peripheral_cost, default_cost=None):
         pass
 
     @abstractmethod

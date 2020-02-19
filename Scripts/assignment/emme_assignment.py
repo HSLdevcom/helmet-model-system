@@ -86,10 +86,9 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             Type (time/cost/dist) : dict
                 Assignment class (car_work/transit/...) : numpy 2-d matrix
         """
-        mtxs = {}
-        mtxs["time"] = self.get_matrices("time")
-        mtxs["dist"] = self.get_matrices("dist")
-        mtxs["cost"] = self.get_matrices("cost")
+        mtxs = {"time": self.get_matrices("time"),
+                "dist": self.get_matrices("dist"),
+                "cost": self.get_matrices("cost")}
         mtxs["time"]["transit"] = self._damp(mtxs["time"]["transit"])
         mtxs["time"]["bike"] = self._cap(mtxs["time"]["bike"])
         mtxs["time"]["car_work"] = self._gcost_to_time("car_work")
@@ -115,13 +114,15 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                 idx = param.emme_mtx["demand"][mtx]["id"]
                 emmebank.matrix(idx).set_numpy_data(matrices[mtx])
     
-    def get_matrices(self, mtx_type):
+    def get_matrices(self, mtx_type, time_period=None):
         """Get all matrices of specified type.
         
         Parameters
         ----------
         mtx_type : str
             Type (demand/time/transit/...)
+        time_period: str
+            (Unused currently)
 
         Return
         ------
@@ -336,24 +337,22 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                 if vdf in vdfs:
                     car_vol = link.auto_volume
                     for ass_class in freight_classes:
-                        kms[ass_class][vdf] += ( param.volume_factors[ass_class][tp]
-                                               * link[param.link_volumes[ass_class]]
-                                               * link.length)
+                        kms[ass_class][vdf] += (param.volume_factors[ass_class][tp]
+                                                * link[param.link_volumes[ass_class]]
+                                                * link.length)
                         car_vol -= link[param.link_volumes[ass_class]]
-                    kms["car"][vdf] += ( param.volume_factors["car"][tp] 
-                                       * car_vol 
-                                       * link.length)
+                    kms["car"][vdf] += (param.volume_factors["car"][tp] * car_vol * link.length)
             for line in network.transit_lines():
                 for modes in transit_modes:
                     if line.mode.id in transit_modes[modes]:
                         mode = modes
                 for segment in line.segments():
-                    transit_dists[mode] += ( param.volume_factors["transit"][tp]
-                                           * line["@vm1"]
-                                           * segment.link.length)
-                    transit_times[mode] += ( param.volume_factors["transit"][tp]
-                                           * line["@vm1"]
-                                           * segment.transit_time)
+                    transit_dists[mode] += (param.volume_factors["transit"][tp]
+                                            * line["@vm1"]
+                                            * segment.link.length)
+                    transit_times[mode] += (param.volume_factors["transit"][tp]
+                                            * line["@vm1"]
+                                            * segment.transit_time)
         for ass_class in kms:
             resultdata.print_data(
                 kms[ass_class].values(), "vehicle_kms.txt",
@@ -375,8 +374,8 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             Zone fare vector and fare exclusiveness vector
         peripheral_cost : numpy 2-d matrix
             Fixed cost matrix for peripheral zones
-        default_cost (optional) : numpy 2-d matrix
-            Fixed cost matrix to use instead of calculated cost
+        default_cost : numpy 2-d matrix
+            (optional) Fixed cost matrix to use instead of calculated cost
         """
         emmebank = self.emme.modeller.emmebank
         idx = param.emme_mtx["cost"]["transit"]["id"]
@@ -697,14 +696,14 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                 cumulative_length += segment.link.length
                 # Travel time for buses in mixed traffic
                 if segment.transit_time_func == 1:
-                    cumulative_time += ( segment.data2 * segment.link.length
-                                       # + segment.link["@timau"]
-                                       + segment.link.auto_time
-                                       + segment.dwell_time)
+                    cumulative_time += (segment.data2 * segment.link.length
+                                        # + segment.link["@timau"]
+                                        + segment.link.auto_time
+                                        + segment.dwell_time)
                 # Travel time for buses on bus lanes
                 if segment.transit_time_func == 2:
-                    cumulative_time += ( segment.data2 * segment.link.length
-                                       + segment.dwell_time)
+                    cumulative_time += (segment.data2 * segment.link.length
+                                        + segment.dwell_time)
                 # Travel time for trams AHT
                 if segment.transit_time_func == 3:
                     speedstr = str(int(segment.link.data1))
@@ -713,31 +712,31 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                     # have only 5 digits.
                     speed = int(speedstr[:-4])
                     cumulative_time += ((segment.link.length / speed) * 60
-                                       + segment.dwell_time)
+                                        + segment.dwell_time)
                 # Travel time for trams PT
                 if segment.transit_time_func == 4:
                     speedstr = str(int(segment.link.data1))
                     # Digits 3-4 from end represent PT speed.
                     speed = int(speedstr[-4:-2])
                     cumulative_time += ((segment.link.length / speed) * 60
-                                       + segment.dwell_time)
+                                        + segment.dwell_time)
                 # Travel time for trams IHT
                 if segment.transit_time_func == 5:
                     speedstr = str(int(segment.link.data1))
                     # Digits 1-2 from end represent IHT speed.
                     speed = int(speedstr[-2:])
                     cumulative_time += ((segment.link.length / speed) * 60
-                                       + segment.dwell_time)
+                                        + segment.dwell_time)
                 if cumulative_time > 0:
-                    cumulative_speed = ( cumulative_length 
-                                       / cumulative_time 
-                                       * 60)
+                    cumulative_speed = (cumulative_length
+                                        / cumulative_time
+                                        * 60)
                 # Headway standard deviation for buses and trams
                 if line.mode.id in param.headway_sd_func:
                     b = param.headway_sd_func[line.mode.id]
-                    headway_sd = ( b["asc"] 
-                                 + b["ctime"]*cumulative_time 
-                                 + b["cspeed"]*cumulative_speed)
+                    headway_sd = (b["asc"]
+                                  + b["ctime"]*cumulative_time
+                                  + b["cspeed"]*cumulative_speed)
                 # Estimated waiting time addition caused by headway deviation
                 segment["@wait_time_dev"] = headway_sd**2 / (2.0*line.headway)
         scenario.publish_network(network)
@@ -769,8 +768,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             self.emme.matrix_results(bcost_spec, scenario)
         else:
             self.emme.matrix_results(self.transit_result_spec, scenario)
-        self.emme.logger.info("Transit assignment performed for scenario " 
-                        + str(scen_id))
+        self.emme.logger.info("Transit assignment performed for scenario {}".format(str(scen_id)))
 
     def _assign_congested_transit(self, scen_id):
         """Perform congested transit assignment for one scenario."""
@@ -783,5 +781,4 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             stopping_criteria=param.trass_stop,
             log_worksheets=False, scenario=scenario)
         self.emme.matrix_results(self.transit_result_spec, scenario)
-        self.emme.logger.info("Transit assignment performed for scenario " 
-                        + str(scen_id))
+        self.emme.logger.info("Transit assignment performed for scenario {}".format(str(scen_id)))
