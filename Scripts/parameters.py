@@ -1656,17 +1656,15 @@ destination_choice = {
     },
     "sop": {
         "logsum": {
-            "attraction": {
-                "own_zone": 0.451052614,
-            },
+            "attraction": {},
             "impedance": {},
             "log": {
-                "logsum": 0.852045667,
-                "size": 0.823988178,
+                "logsum": 0.965362394545,
+                "size": 0.824042001570,
             },
             "size": {
-                "workplaces": numpy.exp(3.941389653),
-                "population_own": numpy.exp(3.054259386),
+                "workplaces": numpy.exp(3.14507125938),
+                "population_own": numpy.exp(2.81410191915),
                 "population_other": 1.0,
             },
         },
@@ -2075,23 +2073,22 @@ mode_choice = {
             "constant": 0.0,
             "generation": {},
             "attraction": {
-                "own_zone_area": -0.01478815,
-                "parking_cost_work": -0.154340268,
+                "parking_cost_work": -0.159971555486,
             },
             "impedance": {
-                "time": -0.021262374,
-                "cost": -0.154340268,
+                "time": -0.0196290964372,
+                "cost": -0.159971555486,
             },
             "log": {},
             "individual_dummy": {},
         },
         "transit": {
-            "constant": -2.060141017,
+            "constant": -2.41105246174,
             "generation": {},
             "attraction": {},
             "impedance": {
-                "time": -0.007909217,
-                "cost": -0.154340268 / 30,
+                "time": -0.00662557845042,
+                "cost": -0.159971555486 / 30,
             },
             "log": {},
             "individual_dummy": {},
