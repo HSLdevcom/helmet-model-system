@@ -1,21 +1,18 @@
 import unittest
-
-import logging
-import os
 import numpy
 import modelsystem
-import datahandling.resultdata as result
+from datahandling import resultdata
 from assignment.mock_assignment import MockAssignmentModel
 from datahandling.matrixdata import MatrixData
-from demand.freight import FreightModel
 from datatypes.demand import Demand
 import parameters
+
 
 class ModelTest(unittest.TestCase):
     
     def test_models(self):
         print("Testing assignment..")
-        result.set_path("test")
+        resultdata.set_path("test")
         ass_model = MockAssignmentModel(MatrixData("2016_test"))
         model = modelsystem.ModelSystem("2030_test", "2016_test", "base_test", ass_model, "test")
         # model.dm.create_population()
@@ -40,7 +37,7 @@ class ModelTest(unittest.TestCase):
         print("Assignment test done")
     
     def test_agent_model(self):
-        result.set_path("test")
+        resultdata.set_path("test")
         ass_model = MockAssignmentModel(MatrixData("2016_test"))
         model = modelsystem.ModelSystem("2030_test", "2016_test", "base_test", ass_model, "test", is_agent_model=True)
         impedance = model.assign_base_demand()
@@ -67,4 +64,3 @@ class ModelTest(unittest.TestCase):
         self.assertIs(type(demand.matrix), numpy.ndarray)
         self.assertEquals(demand.matrix.ndim, 2)
         self.assertEquals(demand.matrix.shape[1], 6)
-        

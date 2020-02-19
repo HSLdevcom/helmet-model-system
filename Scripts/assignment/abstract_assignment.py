@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
 
+
 class AssignmentModel:
     __metaclass__ = ABCMeta
 

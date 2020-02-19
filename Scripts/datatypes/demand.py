@@ -1,5 +1,6 @@
 import parameters
 
+
 class Demand:
     def __init__(self, purpose, mode, matrix, origin=None):
         """Demand matrix for whole day

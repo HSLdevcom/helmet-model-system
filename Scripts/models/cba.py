@@ -4,7 +4,6 @@ import os
 import openmatrix as omx
 import numpy
 import pandas
-import re
 import parameters as param
 
 
@@ -57,6 +56,7 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year):
         print "Evaluation year must be either 1 or 2"
     wb.save("..\\Results\\cba_" + scenario_1 + ".xlsx")
 
+
 def read_scenario(scenario_name, time_period):
     """Read travel cost and demand data for scenario from files"""
     script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -88,6 +88,7 @@ def read_scenario(scenario_name, time_period):
     print "Files read"
     return matrices    
 
+
 def calc_revenue(ve0, ve1):
     """Calculate difference in producer revenue between scenarios ve1 and ve0"""
     revenue = 0
@@ -99,6 +100,7 @@ def calc_revenue(ve0, ve1):
     revenue += (cost_change * ve1["demand"])[demand_change < 0].sum()
     return revenue
 
+
 def calc_cost_gains(ve0, ve1):
     """Calculate difference in consumer surplus between scenarios ve1 and ve0"""
     gains = {"existing": 0, "additional": 0}
@@ -109,6 +111,7 @@ def calc_cost_gains(ve0, ve1):
     gains["existing"] += (ve1["demand"] * gain)[demand_change < 0].sum()
     gains["additional"] -= 0.5 * (demand_change * gain)[demand_change < 0].sum()
     return gains
+
 
 def calc_gains(ve0, ve1):
     """Calculate time, distance and cost gains"""
@@ -136,6 +139,7 @@ def calc_gains(ve0, ve1):
     gains["cost"] = calc_cost_gains(ve0, ve1)
     return gains
 
+
 def read_miles(scenario_name):
     """Read scenario data from files"""
     script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -146,6 +150,7 @@ def read_miles(scenario_name):
     data = pandas.read_csv(filename, delim_whitespace=True)
     return data
 
+
 def read_transit_miles(scenario_name):
     """Read scenario data from files"""
     script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -155,6 +160,7 @@ def read_transit_miles(scenario_name):
     filename = os.path.join(data_dir, "transit_kms.txt")
     data = pandas.read_csv(filename, delim_whitespace=True)
     return data
+
 
 def write_results_1(wb, miles, transit_miles, revenues, gains):
     """Write results for year 1"""
@@ -216,6 +222,7 @@ def write_results_1(wb, miles, transit_miles, revenues, gains):
     ws["G8"] = revenues["car"]["pt"]
     ws["H8"] = revenues["car"]["iht"]
 
+
 def write_gains_1(ws, gains):
     ws["B9"] = gains["aht"]["time"]["existing"]
     ws["B10"] = gains["aht"]["time"]["additional"]
@@ -235,6 +242,7 @@ def write_gains_1(ws, gains):
     ws["C38"] = gains["pt"]["cost"]["additional"]
     ws["D37"] = gains["iht"]["cost"]["existing"]
     ws["D38"] = gains["iht"]["cost"]["additional"]
+
 
 def write_results_2(wb, miles, transit_miles, revenues, gains):
     """Write results for year 2"""
@@ -296,6 +304,7 @@ def write_results_2(wb, miles, transit_miles, revenues, gains):
     ws["F13"] = revenues["car"]["aht"]
     ws["G13"] = revenues["car"]["pt"]
     ws["H13"] = revenues["car"]["iht"]
+
 
 def write_gains_2(ws, gains):
     ws["B14"] = gains["aht"]["time"]["existing"]

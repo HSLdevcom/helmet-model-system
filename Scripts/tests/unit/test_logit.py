@@ -3,15 +3,14 @@
 
 import numpy
 import unittest
-import parameters
 from datahandling.zonedata import ZoneData
-from models.logit import ModeDestModel, DestModeModel
-import datahandling.resultdata as result
+from models.logit import ModeDestModel
+from datahandling import resultdata
 
 
 class LogitModelTest(unittest.TestCase):
     def test_logit_calc(self):
-        result.set_path("test")
+        resultdata.set_path("test")
         class Purpose:
             pass
         pur = Purpose()

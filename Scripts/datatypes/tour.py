@@ -18,7 +18,7 @@ class Tour:
         self.orig = origin
         self.dest = None
         self.sec_dest = None
-        self.matrix = 1 # So far, one person per tour
+        self.matrix = 1  # So far, one person per tour
         try:
             self.sec_dest_prob = purpose.sec_dest_purpose.gen_model.param[purpose.name]
         except AttributeError:

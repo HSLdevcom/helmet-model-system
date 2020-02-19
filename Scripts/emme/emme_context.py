@@ -4,6 +4,7 @@ import logging
 import inro.emme.desktop.app as _app
 import inro.modeller as _m
 
+
 # Creates and initializes EMME-resources
 class EmmeContext:
     def __init__(self, filepath):
@@ -57,4 +58,3 @@ class EmmeContext:
     def flush(self):
         """Flush the logbook (i.e., do nothing)."""
         pass
-    

@@ -6,7 +6,7 @@ from abstract_assignment import AssignmentModel, ImpedanceSource
 from datatypes.car import Car
 from datatypes.journey_level import JourneyLevel
 from datatypes.path_analysis import PathAnalysis
-import datahandling.resultdata as result
+from datahandling import resultdata
 
 
 class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
@@ -353,13 +353,13 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                                            * line["@vm1"]
                                            * segment.transit_time)
         for ass_class in kms:
-            result.print_data(
+            resultdata.print_data(
                 kms[ass_class].values(), "vehicle_kms.txt",
                 kms[ass_class].keys(), ass_class)
-        result.print_data(
+        resultdata.print_data(
             transit_dists.values(), "transit_kms.txt",
             transit_dists.keys(), "dist")
-        result.print_data(
+        resultdata.print_data(
             transit_times.values(), "transit_kms.txt",
             transit_times.keys(), "time")
 
@@ -783,4 +783,3 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         self.emme.matrix_results(self.transit_result_spec, scenario)
         self.emme.logger.info("Transit assignment performed for scenario " 
                         + str(scen_id))
-        

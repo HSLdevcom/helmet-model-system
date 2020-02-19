@@ -2,9 +2,10 @@ import parameters as param
 import models.logit as logit
 import models.generation as generation
 from datatypes.demand import Demand
-import datahandling.resultdata as result
+from datahandling import resultdata
 import numpy
 import pandas
+
 
 class Purpose:
     def __init__(self, specification, zone_data):
@@ -125,25 +126,25 @@ class TourPurpose(Purpose):
             attracted_tours += self.attracted_tours[mode]
             trip_lengths = self._count_trip_lengths(
                 mtx, self.dist)
-            result.print_data(
+            resultdata.print_data(
                 trip_lengths, "trip_lengths.txt",
                 trip_lengths.index, self.name + "_" + mode[0])
             aggregated_demand = self._aggregate(mtx)
-            result.print_matrix(aggregated_demand,
+            resultdata.print_matrix(aggregated_demand,
                                 "aggregated_demand", self.name + "_" + mode)
             own_zone = self.zone_data.get_data("own_zone", self.bounds)
             own_zone_demand = own_zone * mtx
             own_zone_aggregated = self._aggregate(own_zone_demand)
-            result.print_data(
+            resultdata.print_data(
                 numpy.diag(own_zone_aggregated), "own_zone_demand.txt",
                 own_zone_aggregated.index, self.name + "_" + mode[0])
             demsums[mode] = self.generated_tours[mode].sum()
-        result.print_data(
+        resultdata.print_data(
             attracted_tours, "attraction.txt",
             self.zone_data.zone_numbers, self.name)
         demand_all = sum(demsums.values())
         mode_shares = {mode: demsums[mode] / demand_all for mode in demsums}
-        result.print_data(
+        resultdata.print_data(
             pandas.Series(mode_shares), "mode_share.txt",
             demsums.keys(), self.name)
         return demand

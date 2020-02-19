@@ -1,8 +1,7 @@
-import os
-import numpy
 import logging
 import parameters as param
 from abstract_assignment import AssignmentModel, ImpedanceSource 
+
 
 class MockAssignmentModel(AssignmentModel, ImpedanceSource):
     def __init__(self, matrices):

@@ -3,6 +3,7 @@ import numpy
 import pandas
 import parameters as param
 
+
 class ZoneData:
     CAPITAL_REGION = 0
     SURROUNDING_AREA = 1
@@ -194,6 +195,7 @@ class ZoneData:
                 return self._values[key].values
         else: # Return matrix (purpose zones -> all zones)
             return self._values[key][l:u, :]
+
 
 def read_file(data_dir, file_end, zone_numbers=None, squeeze=False):
     file_found = False

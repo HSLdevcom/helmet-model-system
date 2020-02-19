@@ -51,6 +51,6 @@ class ExternalModel:
                 mtx.loc[l:u] = ( self.growth[mode].values
                                * zone_weights[:, numpy.newaxis]
                                * base_vector.values)
-            else: # External-external trips
+            else:  # External-external trips
                 mtx.loc[int(target)] = self.growth[mode] * base_vector.values
         return Demand(self.purpose, mode, mtx.values.T)

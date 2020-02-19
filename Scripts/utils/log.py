@@ -5,6 +5,7 @@ import logging
 import logging.handlers
 from config import Config
 
+
 # Wrapper on top of standard Python logging interface so we can easily configure
 # output of the logs in one single place. 
 # Possible output targets: 
