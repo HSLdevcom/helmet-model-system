@@ -1,6 +1,6 @@
 from utils.config import Config
 from utils.log import Log
-import datahandling.resultdata as result
+from datahandling import resultdata
 from assignment.emme_assignment import EmmeAssignmentModel
 from assignment.mock_assignment import MockAssignmentModel
 from modelsystem import ModelSystem
@@ -27,7 +27,7 @@ class HelmetApplication:
             "log": self.logger.get_filename()
         }
         self.logger.info("Initializing matrices and models..", extra=self._get_status())
-        result.set_path(name)
+        resultdata.set_path(name)
         if config.get_value(Config.USE_EMME):
             self.logger.info("Initializing Emme..")
             emme_context = EmmeContext(self._config.get_value(Config.EMME_PROJECT_PATH))
