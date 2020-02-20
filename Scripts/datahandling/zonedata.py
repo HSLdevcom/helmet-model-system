@@ -118,22 +118,18 @@ class ZoneData:
             if not numpy.isfinite(data).all():
                 for (i, val) in data.iteritems():
                     if not numpy.isfinite(val):
-                        errtext = "{} for zone {} is not a finite number"
-                        raise ValueError(errtext.format(key, i).capitalize())
+                        raise ValueError("{} for zone {} is not a finite number".format(key, i).capitalize())
         except TypeError:
             for (i, val) in data.iteritems():
                 try:
                     float(val)
                 except ValueError:
-                    errtext = "{} for zone {} is not a number"
-                    raise TypeError(errtext.format(key, i).capitalize())
-            errtext = "{} could not be read"
-            raise TypeError(errtext.format(key).capitalize())
+                    raise TypeError("{} for zone {} is not a number".format(key, i).capitalize())
+            raise TypeError("{} could not be read".format(key).capitalize())
         if (data < 0).any():
             for (i, val) in data.iteritems():
                 if val < 0:
-                    errtext = "{} ({}) for zone {} is negative"
-                    raise ValueError(errtext.format(key, val, i).capitalize())
+                    raise ValueError("{} ({}) for zone {} is negative".format(key, val, i).capitalize())
         self._values[key] = data
 
     def zone_index(self, zone_number):
@@ -141,8 +137,7 @@ class ZoneData:
         if len(match) == 1 and len(match[0]) == 1:
             return match[0][0]
         else:
-            errtext = "Found several matching zone numbers {}"
-            raise IndexError(errtext.format(zone_number))
+            raise IndexError("Found several matching zone numbers {}".format(zone_number))
 
     def get_freight_data(self):
         """Get zone data for freight traffic calculation.
@@ -183,17 +178,17 @@ class ZoneData:
         """
         l = bounds.start
         u = bounds.stop
-        if part is not None: # Return values for partial area only
+        if part is not None:  # Return values for partial area only
             if part == self.CAPITAL_REGION:
                 u = self.first_surrounding_zone
             else:
                 l = self.first_surrounding_zone
         if self._values[key].ndim == 1: # If not a compound (i.e., matrix)
-            if generation: # Return values for purpose zones
+            if generation:  # Return values for purpose zones
                 return self._values[key][l:u].values
-            else: # Return values for all zones
+            else:  # Return values for all zones
                 return self._values[key].values
-        else: # Return matrix (purpose zones -> all zones)
+        else:  # Return matrix (purpose zones -> all zones)
             return self._values[key][l:u, :]
 
 
@@ -202,14 +197,12 @@ def read_file(data_dir, file_end, zone_numbers=None, squeeze=False):
     for file_name in os.listdir(data_dir):
         if file_name.endswith(file_end):
             if file_found:
-                errtext = "Multiple {} files found in folder {}"
-                raise NameError(errtext.format(file_end, data_dir))
+                raise NameError("Multiple {} files found in folder {}".format(file_end, data_dir))
             else:
                 path = os.path.join(data_dir, file_name)
                 file_found = True
     if not file_found:
-        errtext = "No {} file found in folder {}"
-        raise NameError(errtext.format(file_end, data_dir))
+        raise NameError("No {} file found in folder {}".format(file_end, data_dir))
     if squeeze:
         header = None
     else:
@@ -217,16 +210,13 @@ def read_file(data_dir, file_end, zone_numbers=None, squeeze=False):
     data = pandas.read_csv(
         path, delim_whitespace=True, squeeze=squeeze, keep_default_na=False,
         na_values="", comment='#', header=header)
-    if data.index.is_numeric():
-        if data.index.hasnans:
-            errtext = "Row with only spaces or tabs in file {}"
-            raise IndexError(errtext.format(path))
+    if data.index.is_numeric() and data.index.hasnans:
+        raise IndexError("Row with only spaces or tabs in file {}".format(path))
     else:
         for i in data.index:
             try:
                 if numpy.isnan(i):
-                    errtext = "Row with only spaces or tabs in file {}"
-                    raise IndexError(errtext.format(path))
+                    raise IndexError("Row with only spaces or tabs in file {}".format(path))
             except TypeError:
                 # Text indices are ok and should not raise an exception
                 pass
@@ -234,10 +224,8 @@ def read_file(data_dir, file_end, zone_numbers=None, squeeze=False):
         if (data.index != zone_numbers).any():
             for i in data.index:
                 if int(i) not in zone_numbers:
-                    errtext = "Zone number {} from file {} not found in network"
-                    raise IndexError(errtext.format(i, path))
+                    raise IndexError("Zone number {} from file {} not found in network".format(i, path))
             for i in zone_numbers:
                 if i not in data.index:
-                    errtext = "Zone number {} not found in file {}"
-                    raise IndexError(errtext.format(i, path))
+                    raise IndexError("Zone number {} not found in file {}".format(i, path))
     return data
