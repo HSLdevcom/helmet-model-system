@@ -6,6 +6,8 @@ import inro.modeller as _m
 
 
 # Creates and initializes EMME-resources
+# TODO MON: Consider a rename. Usually 3rd party API is called "x-bindings" or "bindings for X". EmmeProjectBindings? Or just EmmeProject?
+# TODO MON: or e.g. /emme_bindings/emme_project.py as indicator "this class wraps a project path, giving API using that"
 class EmmeContext:
     def __init__(self, filepath):
         self.logger = Log.get_instance()
