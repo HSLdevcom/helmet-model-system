@@ -31,11 +31,14 @@ class Config:
         return instance
 
     def get_value(self, key):
+        # TODO MON: reverse maybe to "if config set -> that, else if os-environ set -> that, else None / raise KeyError or ValueError
+        # TODO MON: would make sense because initially {}, from file or set_value -> we don't wanna override by env(?), default env, else is error
         from_env = os.environ.get(key, None)
         if from_env:
             return from_env
         else:
             return self.__config[key]
 
+    # TODO MON: maybe use e.g. @property EMME_PROJECT_PATH(self): and @EMME_PROJECT_PATH.setter, and rename __set_value & __get_value
     def set_value(self, key, value):
         self.__config[key] = value
