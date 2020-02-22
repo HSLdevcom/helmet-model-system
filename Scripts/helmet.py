@@ -1,3 +1,4 @@
+# TODO MON: This is absolutely redundant and could be replaced with helmet_app.py with __main__ & def main(config):
 import sys
 import json
 from utils.log import Log
