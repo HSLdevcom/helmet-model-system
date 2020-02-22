@@ -209,7 +209,9 @@ class ModelSystem:
     def _distribute_sec_dests(self, purpose, mode, impedance):
         threads = []
         demand = []
+        # TODO MON: This'd be extremely important to be an input argument, since parameters.py is tracked in version control.
         nr_threads = parameters.performance_settings["number_of_processors"]
+        # TODO MON: what if nr_threads is higher than cpu_count but not explicitly "max"
         if nr_threads == "max":
             nr_threads = multiprocessing.cpu_count()
         elif nr_threads <= 0:
