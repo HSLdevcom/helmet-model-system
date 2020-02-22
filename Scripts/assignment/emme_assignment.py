@@ -17,6 +17,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         If first scenario is set something else (e.g. #5), then following scenarios are also adjusted (#6, #7, #8, #9).
         Walk scenario is not calculated, so effective scenarios by convention are <first>, +2, +3, +4.
         """
+        # TODO MON: consider rename as per emme.py comments. E.g. self.emme_project , because EMME's library allows for many interfaces e.g. TMGtools
         self.emme = emme_context
         for mtx_type in param.emme_mtx:
             mtx = param.emme_mtx[mtx_type]
@@ -41,7 +42,9 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             self._calc_background_traffic(self.emme_scenario[time_period])
         self._specify()
         self._has_assigned_bike_and_walk = False
-    
+
+    # TODO MON: This connects to emme_project's emmebank, which is then used to get_impedance -> get_matrices -> get_matrix. Maybe rename.
+    # TODO MON: E.g. "run_???_simulation", "calculate_offering" (if demand calculation is performed by model-system)? Need to ask.
     def assign(self, time_period, matrices, is_last_iteration=False, is_first_iteration=False):
         """Assign cars, bikes and transit for one time period.
         
@@ -76,7 +79,8 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             self._assign_cars(scen_id, param.stopping_criteria_coarse)
             self._calc_extra_wait_time(scen_id)
             self._assign_transit(scen_id)
-        
+
+    # TODO MON: If this is ALWAYS called after .assign(), could they be merged? Currently both re-route via emmebank, which is ambiguous.
     def get_impedance(self, is_last_iteration=False):
         """Get travel impedance matrices for one time period from assignment.
         
@@ -97,7 +101,8 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             for ass_cl in ("car_work", "car_leisure"):
                 mtxs["cost"][ass_cl] += self.dist_cost * mtxs["dist"][ass_cl]
         return mtxs
-    
+
+    # TODO MON: Could this emphasise "set_emmebank_matrices" ? and param "matrices" maybe "matrices_labels"
     def set_matrices(self, matrices):
         emmebank = self.emme.modeller.emmebank
         tmp_mtx = {
@@ -113,7 +118,9 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             else:
                 idx = param.emme_mtx["demand"][mtx]["id"]
                 emmebank.matrix(idx).set_numpy_data(matrices[mtx])
-    
+
+    # TODO MON: Same as set_matrices. Although may be could be removed entirely if
+    # TODO MON: return {subtype: self.get_matrix(mtx_type, subtype) for subtype in param.emme_mtx[mtx_type]}
     def get_matrices(self, mtx_type, time_period=None):
         """Get all matrices of specified type.
         
@@ -136,7 +143,9 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         for mtx in matrices:
             matrices[mtx] = self.get_matrix(mtx_type, mtx)
         return matrices
-    
+
+    # TODO MON: Would it make sense to name type1 -> "assignment-/simulation_type" (if covers the whole assignment, demand?), type2 -> "subtype"
+    # TODO MON: or is type1 more so "measured_attribute" where as type2 a "context" where the attribute is measured in?
     def get_matrix(self, type1, type2):
         """Get matrix with type pair (e.g., demand, car_work).
         
@@ -155,13 +164,15 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         emme_id = param.emme_mtx[type1][type2]["id"]
         return self.emme.modeller.emmebank.matrix(emme_id).get_numpy_data()
 
+    # TODO MON: Should this indicate it's specificly "morning rush hour zone numbers in emme_project (emmebank)"?
     @property
     def zone_numbers(self):
         """Numpy array of all zone numbers.""" 
         emmebank = self.emme.modeller.emmebank
         scen = emmebank.scenario(self.emme_scenario["aht"])
         return scen.zone_numbers
-    
+
+    # TODO MON: Same as zone_numbers property
     @property
     def mapping(self):
         """dict: Dictionary of zone numbers and corresponding indices."""
@@ -170,11 +181,12 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             mapping[zone] = idx
         return mapping
 
+    # TODO MON: Same as zone_numbers property
     @property
     def nr_zones(self):
         """int: Number of zones in assignment model."""
         return len(self.zone_numbers)
-    
+
     def _damp(self, travel_time):
         """Reduce the impact from first waiting time on total travel time."""
         fwt = self.get_matrix("transit", "fw_time")
@@ -183,11 +195,14 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         dtt = travel_time + wt_weight*((5./3.*fwt)**0.8 - fwt)
         return dtt
 
+    # TODO MON: Floating the capped value
     def _cap(self, travel_time):
         """Cap travel time to 9999."""
         travel_time = travel_time.clip(None, 9999)
         return travel_time
-    
+
+    # TODO MON: google-cost to time? calc_time_cost(_from_generalized_cost)?
+    # TODO MON: reasoning: because the method doesn't take generalized cost as an arg (to convert), but rather returns the calculated time_cost
     def _gcost_to_time(self, ass_class):
         """Remove monetary cost from generalized cost."""
         # Traffic assignment produces a generalized cost matrix.
@@ -198,6 +213,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         tdist = self.get_matrix("dist", ass_class)
         return gcost - vot_inv *(tcost + self.dist_cost*tdist)
 
+    # TODO MON: Since netw_spec isn't re-used, it could be directly passed to network_calc instead of continuous re-ass'
     def _calc_background_traffic(self, scen_id):
         """Calculate background traffic (buses)."""
         emmebank = self.emme.modeller.emmebank
@@ -270,6 +286,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         }
         self.emme.network_calc(netw_spec, scen)
 
+    # TODO MON: emmebank is used once, and netw_specs could be written in list literal, and actually passed directly to network_calc
     def _calc_road_cost(self, scen_id):
         """Calculate road charges and driving costs for one scenario."""
         self.emme.logger.info("Calculates road charges for scenario " + str(scen_id))
@@ -309,6 +326,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         self.emme.network_calc(netw_specs, scenario)
 
     def print_vehicle_kms(self):
+        # TODO MON: emmebank is redundant variable (used one time), indentation could be set in single lines 1-per-operation
         emmebank = self.emme.modeller.emmebank
         freight_classes = ["van", "truck", "trailer_truck"]
         vdfs = [1, 2, 3, 4, 5]
@@ -379,6 +397,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         """
         emmebank = self.emme.modeller.emmebank
         idx = param.emme_mtx["cost"]["transit"]["id"]
+        # TODO MON: this could be rewritten as "if default cost is not None: -> 1 line and early return", saves indent and early return good practise
         if default_cost is None:
             scen_id = self.emme_scenario["aht"]
             # Move transfer penalty to boarding penalties,
@@ -617,6 +636,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         """Perform bike traffic assignment for one scenario."""
         emmebank = self.emme.modeller.emmebank
         scen = emmebank.scenario(scen_id)
+        # TODO MON: Do these reside in the template emme project or what? .in files; self.emme.path forwards to emmebank path
         function_file = os.path.join(self.emme.path, param.func_bike)  # TODO refactor paths out from here
         self.emme.process_functions(function_file)
         spec = self.bike_spec
@@ -663,6 +683,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         """Calculate boarding penalties for transit assignment."""
         emmebank = self.emme.modeller.emmebank
         scenario = emmebank.scenario(scen_id)
+        # TODO MON: This doesn't take much time (if not repeated millions of times?), netw_specs could be list comprehension
         extrastr = "+" + str(extra_penalty)
         # Definition of line specific boarding penalties
         netw_specs = []
@@ -746,6 +767,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         if count_zone_boardings:
             jlevel1 = JourneyLevel(False, True)
             jlevel2 = JourneyLevel(True, True)
+            # TODO MON: This could be inlined like distance matrix id
             mtx = param.emme_mtx["transit"]["board_cost"]["id"]
             bcost_spec = {
                 "type": "EXTENDED_TRANSIT_MATRIX_RESULTS",
