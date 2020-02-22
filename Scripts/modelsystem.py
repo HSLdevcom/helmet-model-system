@@ -41,13 +41,16 @@ class ModelSystem:
         self.mode_share = []
 
     def assign_base_demand(self, use_fixed_transit_cost=False):
+        # TODO MON: Is this used as a "reset" or are these always calculated on init? Could be either None or this in constructor.
         self.trucks = self.fm.calc_freight_traffic("truck")
         self.trailer_trucks = self.fm.calc_freight_traffic("trailer_truck")
         impedance = {}
+        # TODO MON: what is the purpose of this logical block? (1) (calc_transit_cost saves the data in emmebank, and isn't part of abstract ass)
         with self.basematrices.open("cost", "peripheral") as mtx:
             peripheral_cost = mtx["transit"]
             if use_fixed_transit_cost:
                 self.logger.info("Using fixed transit cost matrix")
+                # TODO MON: re-using mtx is ambiguous
                 with self.basematrices.open("cost", "aht") as mtx:
                     fixed_cost = mtx["transit"]
             else:
@@ -56,8 +59,10 @@ class ModelSystem:
             self.ass_model.calc_transit_cost(
                 self.zdata_forecast.transit_zone, peripheral_cost,
                 fixed_cost)
+        # TODO MON: what is the purpose of this logical block? (2)
         for tp in parameters.emme_scenario:
             self.logger.info("Assigning period " + tp)
+            # TODO MON: This could be written inside with-statement using dict comprehension, no need to init it outside
             base_demand = {}
             with self.basematrices.open("demand", tp) as mtx:
                 for ass_class in self.ass_classes:
@@ -66,9 +71,13 @@ class ModelSystem:
             impedance[tp] = self.ass_model.get_impedance()
         return impedance
 
+    # TODO MON: If generally speaking of iterations, would "run_iteration" make more sense? An iteration of "what"?
     def run(self, impedance, is_last_iteration=False):
+        # TODO MON: what is the purpose of this logical block? "add demand required by(?) truck and trailer truck traffic to DTM"?
+        # TODO MON: e.g. how does Departure Time Model affect the whole traffic assignment? It's used later in weights, but can it be briefly summed?
         self.dtm.add_demand(self.trucks)
         self.dtm.add_demand(self.trailer_trucks)
+        # TODO MON: What is agent model, briefly? How does it affect a single iteration, briefly?
         if self.is_agent_model:
             for purpose in self.dm.tour_purposes:
                 if isinstance(purpose, SecDestPurpose):
@@ -95,6 +104,7 @@ class ModelSystem:
                     if tour.mode == "car":
                         tour.choose_driver()
                     self.dtm.add_demand(tour)
+        # TODO MON: If not an agent model, what is the alternative (briefly)? How does it affect a single iteration, briefly?
         else:
             for purpose in self.dm.tour_purposes:
                 if isinstance(purpose, SecDestPurpose):
@@ -119,6 +129,7 @@ class ModelSystem:
                     if purpose.dest != "source":
                         for mode in demand:
                             self.dtm.add_demand(demand[mode])
+        # TODO MON: Was the previous block "(internal?) demand calculation and application" where as this block is "what"?
         trip_sum = {}
         for mode in parameters.external_modes:
             if mode == "truck":
@@ -144,12 +155,15 @@ class ModelSystem:
         for mode in trip_sum:
             mode_share[mode] = trip_sum[mode] / sum_all
         self.mode_share.append(mode_share)
+        # TODO MON: Prev. impedance could be renamed previous_iter_impedance, so it doesn't collide with this. And this be very top (good practise).
         impedance = {}
         for tp in parameters.emme_scenario:
             self.dtm.add_vans(tp, self.zdata_forecast.nr_zones)
             self.ass_model.assign(tp, self.dtm.demand[tp], is_last_iteration)
             impedance[tp] = self.ass_model.get_impedance(is_last_iteration)
             if tp == "aht":
+                # TODO MON: Visually, one operation per one line, if not very long, is preferable. If split to multi-line, then also 1-arg-per-line.
+                # TODO MON: Makes it more readable since usually first thing to check is the beginning of oper, not arguments passed.
                 car_time = numpy.ma.average(
                     impedance[tp]["time"]["car_work"], axis=1,
                     weights=self.dtm.demand[tp]["car_work"])
@@ -160,6 +174,7 @@ class ModelSystem:
                 resultdata.print_data(
                     time_ratio, "impedance_ratio.txt",
                     self.ass_model.zone_numbers, "time")
+                # TODO MON: What is the purpose of previous and next logical blocks? It's quite apparent they're separate. They're also aht specific.
                 car_cost = numpy.ma.average(
                     impedance[tp]["cost"]["car_work"], axis=1,
                     weights=self.dtm.demand[tp]["car_work"])
@@ -170,6 +185,7 @@ class ModelSystem:
                 resultdata.print_data(
                     cost_ratio, "impedance_ratio.txt",
                     self.ass_model.zone_numbers, "cost")
+            # TODO MON: time periods could be iterated again, to separate last-iteration specific operations to same block (instead of here and there)
             if is_last_iteration:
                 zone_numbers = self.ass_model.zone_numbers
                 with self.resultmatrices.open("demand", tp, 'w') as mtx:
@@ -185,6 +201,7 @@ class ModelSystem:
                             mtx[ass_class] = cost_data
         if is_last_iteration:
             self.ass_model.print_vehicle_kms()
+        # TODO MON: If these essentially "reset" some things, could those be explicitly mentioned (e.g. what does resetting DTM affect)? Empty result?
         self.dtm.init_demand()
         resultdata.flush()
         return impedance

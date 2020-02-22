@@ -1,6 +1,7 @@
 from parameters import impedance_share
 
 
+# TODO MON: This module could be a function, since it doesn't have any internal state
 class ImpedanceTransformer:
     def __init__(self):
         pass
