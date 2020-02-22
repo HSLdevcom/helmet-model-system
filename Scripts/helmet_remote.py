@@ -14,6 +14,7 @@ scenario = line['scenario']
 use_fixed_transit_cost = line['use_fixed_transit_cost']
 first_scenario_id = line['first_scenario_id']
 
+# TODO MON: (check notes in Config.py, with those this all could be performed via CLI argparser params in __main__)
 # set configuration per incoming params
 config = Config()
 config.set_value(Config.LOG_FORMAT, 'JSON')
