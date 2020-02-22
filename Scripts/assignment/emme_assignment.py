@@ -81,6 +81,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             self._assign_transit(scen_id)
 
     # TODO MON: If this is ALWAYS called after .assign(), could they be merged? Currently both re-route via emmebank, which is ambiguous.
+    # TODO MON: Then the ABC class as well as MockAssignment would have to be adjusted respectively.
     def get_impedance(self, is_last_iteration=False):
         """Get travel impedance matrices for one time period from assignment.
         
