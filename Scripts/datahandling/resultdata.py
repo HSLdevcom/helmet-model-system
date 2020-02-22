@@ -33,6 +33,7 @@ def print_data(data, filename, zone_numbers, colname):
     _buffer[filename].to_csv(filepath, sep='\t', float_format="%1.5f")
 
 
+# TODO MON: This could use a lot of {}.formats and spaces between logical groups of operations, and removal of one-time variables
 def print_matrix(data, filename, sheetname):
     if _use_txt:
         txtfilepath = os.path.join(_path, filename + '_' + sheetname + ".txt")
