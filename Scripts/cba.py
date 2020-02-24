@@ -1,10 +1,13 @@
-from openpyxl import Workbook, load_workbook
-import sys
+from openpyxl import load_workbook
 import os
 import openmatrix as omx
 import numpy
 import pandas
 import parameters as param
+from argparse import ArgumentParser
+
+SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
+PROJECT_DIR = os.path.join(SCRIPT_DIR, "..")
 
 
 def run_cost_benefit_analysis(scenario_0, scenario_1, year):
@@ -12,19 +15,16 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year):
 
     Parameters
     ----------
-    alt_0 : str
+    scenario_0 : str
         Name of do-nothing scenario, for which 
         forecast results are available in Results folder
-    alt_1 : str
+    scenario_1 : str
         Name of project scenario, for which 
         forecast results are available in Results folder
     year : int
         The evaluation year (1 or 2)
-    excelfile : str
-        Path to excel file where results will be written
     """
-    script_dir = os.path.dirname(os.path.realpath(__file__))
-    excelfile = os.path.join(script_dir, "..", "CBA_kehikko.xlsx")
+    excelfile = os.path.join(SCRIPT_DIR, "CBA_kehikko.xlsx")
     mile_diff = read_miles(scenario_1) - read_miles(scenario_0)
     transit_mile_diff = read_transit_miles(scenario_1) - read_transit_miles(scenario_0)
     revenues = {
@@ -59,9 +59,7 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year):
 
 def read_scenario(scenario_name, time_period):
     """Read travel cost and demand data for scenario from files"""
-    script_dir = os.path.dirname(os.path.realpath(__file__))
-    project_dir = os.path.join(script_dir, "..", "..")
-    path = os.path.join(project_dir, "Matrices", scenario_name)
+    path = os.path.join(PROJECT_DIR, "Matrices", scenario_name)
     files = dict.fromkeys(["demand", "time", "cost", "dist"])
     for mtx_type in files:
         file_name = mtx_type + '_' + time_period + ".omx"
@@ -142,24 +140,14 @@ def calc_gains(ve0, ve1):
 
 def read_miles(scenario_name):
     """Read scenario data from files"""
-    script_dir = os.path.dirname(os.path.realpath(__file__))
-    project_dir = os.path.join(script_dir, "..", "..")
-    data_dir = os.path.join(project_dir, "Results", scenario_name)
-    data_dir = os.path.abspath(data_dir)
-    filename = os.path.join(data_dir, "vehicle_kms.txt")
-    data = pandas.read_csv(filename, delim_whitespace=True)
-    return data
+    file_path = os.path.join(PROJECT_DIR, "Results", scenario_name, "vehicle_kms.txt")
+    return pandas.read_csv(file_path, delim_whitespace=True)
 
 
 def read_transit_miles(scenario_name):
     """Read scenario data from files"""
-    script_dir = os.path.dirname(os.path.realpath(__file__))
-    project_dir = os.path.join(script_dir, "..", "..")
-    data_dir = os.path.join(project_dir, "Results", scenario_name)
-    data_dir = os.path.abspath(data_dir)
-    filename = os.path.join(data_dir, "transit_kms.txt")
-    data = pandas.read_csv(filename, delim_whitespace=True)
-    return data
+    file_path = os.path.join(PROJECT_DIR, "Results", scenario_name, "transit_kms.txt")
+    return pandas.read_csv(file_path, delim_whitespace=True)
 
 
 def write_results_1(wb, miles, transit_miles, revenues, gains):
@@ -327,5 +315,11 @@ def write_gains_2(ws, gains):
     ws["D43"] = gains["iht"]["cost"]["additional"]
 
 
-run_cost_benefit_analysis(sys.argv[1], sys.argv[2], int(sys.argv[3]))
-# run_cost_benefit_analysis("2030_test", "2030_test", 1)
+if __name__ == "__main__":
+    parser = ArgumentParser(epilog="Calculates the Cost-Benefit Analysis between Results of two HELMET-Scenarios, "
+                                   "and writes the outcome in CBA_kehikko.xlsx -file (in same folder).")
+    parser.add_argument("baseline_scenario", type=str, help="A 'do-nothing' baseline scenario.")
+    parser.add_argument("projected_scenario", type=str, help="A projected scenario, compared to the baseline scenario.")
+    parser.add_argument("evaluation_year", type=int, choices={1, 2}, help="Evaluation year, either 1 or 2.")
+    args = parser.parse_args()
+    run_cost_benefit_analysis(args.baseline_scenario, args.projected_scenario, args.evaluation_year)
