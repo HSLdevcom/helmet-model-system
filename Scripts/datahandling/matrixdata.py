@@ -1,9 +1,7 @@
 import os
 import openmatrix as omx
 import numpy
-# TODO MON: Maybe move this to utils, and name more explicitly (e.g. read_csv_file or read_input_file)
-# y
-from zonedata import read_file
+from utils.read_csv_file import read_csv_file
 from contextlib import contextmanager
 
 
@@ -21,7 +19,7 @@ class MatrixData:
         mtxfile.close()
 
     def get_external(self, transport_mode):
-        return read_file(self.path, "external_"+transport_mode+".txt")
+        return read_csv_file(self.path, "external_"+transport_mode+".txt")
 
 
 class MatrixFile(object):

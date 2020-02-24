@@ -2,6 +2,7 @@ import os
 import numpy
 import pandas
 import parameters as param
+from utils.read_csv_file import read_csv_file
 
 
 class ZoneData:
@@ -30,23 +31,23 @@ class ZoneData:
         data_dir = os.path.abspath(data_dir)
         if not os.path.exists(data_dir):
             raise NameError("Directory " + data_dir + " does not exist.")
-        popdata = read_file(data_dir, ".pop", self.zone_numbers)
-        workdata = read_file(data_dir, ".wrk", self.zone_numbers)
-        schooldata = read_file(data_dir, ".edu", self.zone_numbers)
-        landdata = read_file(data_dir, ".lnd", self.zone_numbers)
-        cardata = read_file(data_dir, ".car", self.zone_numbers)
-        parkdata = read_file(data_dir, ".prk", self.zone_numbers)
-        self.externalgrowth = read_file(data_dir, ".ext", external_zones)
+        popdata = read_csv_file(data_dir, ".pop", self.zone_numbers)
+        workdata = read_csv_file(data_dir, ".wrk", self.zone_numbers)
+        schooldata = read_csv_file(data_dir, ".edu", self.zone_numbers)
+        landdata = read_csv_file(data_dir, ".lnd", self.zone_numbers)
+        cardata = read_csv_file(data_dir, ".car", self.zone_numbers)
+        parkdata = read_csv_file(data_dir, ".prk", self.zone_numbers)
+        self.externalgrowth = read_csv_file(data_dir, ".ext", external_zones)
         transit_zone = {}
-        transit = read_file(data_dir, ".tco")
+        transit = read_csv_file(data_dir, ".tco")
         transit_zone["fare"] = transit["fare"].to_dict()
         transit_zone["exclusive"] = transit["exclusive"].dropna().to_dict()
         transit_zone["dist_fare"] = transit_zone["fare"].pop("dist")
         transit_zone["start_fare"] = transit_zone["fare"].pop("start")
         self.transit_zone = transit_zone
-        car_cost = read_file(data_dir, ".cco", squeeze=True)
+        car_cost = read_csv_file(data_dir, ".cco", squeeze=True)
         self.car_dist_cost = car_cost[0]
-        truckdata = read_file(data_dir, ".trk", squeeze=True)
+        truckdata = read_csv_file(data_dir, ".trk", squeeze=True)
         self.trailers_prohibited = map(int, truckdata.loc[0, :])
         self.garbage_destination = map(int, truckdata.loc[1, :].dropna())
         pop = popdata["total"]
@@ -190,42 +191,3 @@ class ZoneData:
                 return self._values[key].values
         else:  # Return matrix (purpose zones -> all zones)
             return self._values[key][l:u, :]
-
-
-def read_file(data_dir, file_end, zone_numbers=None, squeeze=False):
-    file_found = False
-    for file_name in os.listdir(data_dir):
-        if file_name.endswith(file_end):
-            if file_found:
-                raise NameError("Multiple {} files found in folder {}".format(file_end, data_dir))
-            else:
-                path = os.path.join(data_dir, file_name)
-                file_found = True
-    if not file_found:
-        raise NameError("No {} file found in folder {}".format(file_end, data_dir))
-    if squeeze:
-        header = None
-    else:
-        header = "infer"
-    data = pandas.read_csv(
-        path, delim_whitespace=True, squeeze=squeeze, keep_default_na=False,
-        na_values="", comment='#', header=header)
-    if data.index.is_numeric() and data.index.hasnans:
-        raise IndexError("Row with only spaces or tabs in file {}".format(path))
-    else:
-        for i in data.index:
-            try:
-                if numpy.isnan(i):
-                    raise IndexError("Row with only spaces or tabs in file {}".format(path))
-            except TypeError:
-                # Text indices are ok and should not raise an exception
-                pass
-    if zone_numbers is not None:
-        if (data.index != zone_numbers).any():
-            for i in data.index:
-                if int(i) not in zone_numbers:
-                    raise IndexError("Zone number {} from file {} not found in network".format(i, path))
-            for i in zone_numbers:
-                if i not in data.index:
-                    raise IndexError("Zone number {} not found in file {}".format(i, path))
-    return data
