@@ -8,6 +8,7 @@ from datahandling.matrixdata import MatrixData
 from emme.emme_context import EmmeContext
 from argparse import ArgumentParser
 import sys
+import os
 
 
 def main(config, logger):
@@ -30,11 +31,11 @@ def main(config, logger):
     logger.info("Initializing matrices and models..", extra=log_extra)
     if config.USE_EMME:
         logger.info("Initializing Emme..")
-        ass_model = EmmeAssignmentModel(EmmeContext(config.EMME_PROJECT_PATH),
-                                        first_scenario_id=config.FIRST_SCENARIO_ID)
+        ass_model = EmmeAssignmentModel(EmmeContext(config.EMME_PROJECT_PATH), first_scenario_id=config.FIRST_SCENARIO_ID)
     else:
         logger.info("Initializing MockAssignmentModel..")
-        ass_model = MockAssignmentModel(MatrixData(config.SCENARIO_NAME))
+        mock_result_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "Matrices", config.SCENARIO_NAME)
+        ass_model = MockAssignmentModel(MatrixData(mock_result_path))
     model = ModelSystem(config.DATA_PATH, "2016", "base", ass_model, name)
     log_extra["status"]["results"] = model.mode_share
 

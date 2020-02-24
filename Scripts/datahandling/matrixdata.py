@@ -8,12 +8,8 @@ from contextlib import contextmanager
 
 
 class MatrixData:
-    # TODO MON: Consider passing path as 2nd parameter, no change in practise but moving that logic to where it's init
-    # y
-    def __init__(self, scenario):
-        script_dir = os.path.dirname(os.path.realpath(__file__))
-        project_dir = os.path.join(script_dir, "..", "..")
-        self.path = os.path.join(project_dir, "Matrices", scenario)
+    def __init__(self, path):
+        self.path = path
         if not os.path.exists(self.path):
             os.makedirs(self.path)
     

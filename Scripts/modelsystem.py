@@ -12,6 +12,7 @@ import parameters
 import numpy
 import threading
 import multiprocessing
+import os
 
 
 class ModelSystem:
@@ -20,8 +21,8 @@ class ModelSystem:
         self.ass_model = ass_model
         self.zdata_base = ZoneData(base_zone_data_path, ass_model.zone_numbers)
         self.zdata_forecast = ZoneData(zone_data_path, ass_model.zone_numbers)
-        self.basematrices = MatrixData(base_matrices)
-        self.resultmatrices = MatrixData(name)
+        self.basematrices = MatrixData(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "Matrices", base_matrices))
+        self.resultmatrices = MatrixData(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "Matrices", name))
         self.is_agent_model = is_agent_model
         if is_agent_model:
             self.dm = DemandModel(self.zdata_forecast, is_agent_model)

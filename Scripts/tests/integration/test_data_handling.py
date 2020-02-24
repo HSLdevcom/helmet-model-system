@@ -13,13 +13,13 @@ import numpy
 class MatrixDataTest(unittest.TestCase):
     
     def test_constructor(self):
-        m = MatrixData("2016_test")
+        m = MatrixData(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "..", "..", "Matrices", "2016_test"))
         # Verify that the base folder exists
         self.assertTrue(os.path.isdir(m.path))
         self.assertTrue(m.path.endswith("2016_test"))
 
     def test_matrix_operations(self):
-        m = MatrixData("2016_test")
+        m = MatrixData(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "..", "..", "Matrices", "2016_test"))
         # TODO add matrices for gen_cost, transit, bike? 
         # TODO now MockAssignmentModel writes the demand-matrices in it's tests, think about this.. 
         MATRIX_TYPES = ["time", "dist", "cost"]
