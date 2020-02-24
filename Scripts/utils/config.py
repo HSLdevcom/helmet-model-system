@@ -3,16 +3,6 @@ import json
 
 
 class Config:
-    
-    SCENARIO_NAME = 'SCENARIO_NAME'
-    ITERATION_COUNT = 'ITERATION_COUNT'
-    USE_EMME = 'USE_EMME'
-    LOG_LEVEL = 'LOG_LEVEL'
-    LOG_FORMAT = 'LOG_FORMAT'
-    DATA_PATH = 'DATA_PATH'
-    EMME_PROJECT_PATH = 'EMME_PROJECT_PATH'
-    USE_FIXED_TRANSIT_COST = 'USE_FIXED_TRANSIT_COST'
-    FIRST_SCENARIO_ID = 'FIRST_SCENARIO_ID'
 
     DefaultScenario = "helmet"
 
@@ -23,22 +13,75 @@ class Config:
     def read_from_file(path="dev-config.json"):
         print 'reading configuration from file "{}"'.format(path)
         instance = Config()
-
         with open(path, 'r') as f:
             instance.__config = json.load(f)
-
         print 'read {} config variables'.format(len(instance.__config))
         return instance
 
-    def get_value(self, key):
-        # TODO MON: reverse maybe to "if config set -> that, else if os-environ set -> that, else None / raise KeyError or ValueError
-        # TODO MON: would make sense because initially {}, from file or set_value -> we don't wanna override by env(?), default env, else is error
-        from_env = os.environ.get(key, None)
-        if from_env:
-            return from_env
-        else:
+    def __get_value(self, key):
+        # Lookup from explicitly set values
+        if key in self.__config:
             return self.__config[key]
+        # As backup, try lookup from environment variables
+        elif os.environ.get(key, None) is not None:
+            return os.environ[key]
+        # Else raise KeyError since the config was instantiated without setting the key
+        else:
+            raise KeyError("Tried to lookup Config.{} which isn't set and doesn't exist in environment variables".format(key))
 
-    # TODO MON: maybe use e.g. @property EMME_PROJECT_PATH(self): and @EMME_PROJECT_PATH.setter, and rename __set_value & __get_value
-    def set_value(self, key, value):
+    def __set_value(self, key, value):
         self.__config[key] = value
+
+    @property
+    def SCENARIO_NAME(self): return self.__get_value("SCENARIO_NAME")
+
+    @SCENARIO_NAME.setter
+    def SCENARIO_NAME(self, value): self.__set_value("SCENARIO_NAME", value)
+
+    @property
+    def ITERATION_COUNT(self): return self.__get_value("ITERATION_COUNT")
+
+    @ITERATION_COUNT.setter
+    def ITERATION_COUNT(self, value): self.__set_value("ITERATION_COUNT", value)
+
+    @property
+    def USE_EMME(self): return self.__get_value("USE_EMME")
+
+    @USE_EMME.setter
+    def USE_EMME(self, value): self.__set_value("USE_EMME", value)
+
+    @property
+    def LOG_LEVEL(self): return self.__get_value("LOG_LEVEL")
+
+    @LOG_LEVEL.setter
+    def LOG_LEVEL(self, value): self.__set_value("LOG_LEVEL", value)
+
+    @property
+    def LOG_FORMAT(self): return self.__get_value("LOG_FORMAT")
+
+    @LOG_FORMAT.setter
+    def LOG_FORMAT(self, value): self.__set_value("LOG_FORMAT", value)
+
+    @property
+    def DATA_PATH(self): return self.__get_value("DATA_PATH")
+
+    @DATA_PATH.setter
+    def DATA_PATH(self, value): self.__set_value("DATA_PATH", value)
+
+    @property
+    def EMME_PROJECT_PATH(self): return self.__get_value("EMME_PROJECT_PATH")
+
+    @EMME_PROJECT_PATH.setter
+    def EMME_PROJECT_PATH(self, value): self.__set_value("EMME_PROJECT_PATH", value)
+
+    @property
+    def USE_FIXED_TRANSIT_COST(self): return self.__get_value("USE_FIXED_TRANSIT_COST")
+
+    @USE_FIXED_TRANSIT_COST.setter
+    def USE_FIXED_TRANSIT_COST(self, value): self.__set_value("USE_FIXED_TRANSIT_COST", value)
+
+    @property
+    def FIRST_SCENARIO_ID(self): return self.__get_value("FIRST_SCENARIO_ID")
+
+    @FIRST_SCENARIO_ID.setter
+    def FIRST_SCENARIO_ID(self, value): self.__set_value("FIRST_SCENARIO_ID", value)

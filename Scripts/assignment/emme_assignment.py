@@ -18,6 +18,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         Walk scenario is not calculated, so effective scenarios by convention are <first>, +2, +3, +4.
         """
         # TODO MON: consider rename as per emme.py comments. E.g. self.emme_project , because EMME's library allows for many interfaces e.g. TMGtools
+        # y (prion jalkeen)
         self.emme = emme_context
         for mtx_type in param.emme_mtx:
             mtx = param.emme_mtx[mtx_type]
@@ -43,8 +44,6 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         self._specify()
         self._has_assigned_bike_and_walk = False
 
-    # TODO MON: This connects to emme_project's emmebank, which is then used to get_impedance -> get_matrices -> get_matrix. Maybe rename.
-    # TODO MON: E.g. "run_???_simulation", "calculate_offering" (if demand calculation is performed by model-system)? Need to ask.
     def assign(self, time_period, matrices, is_last_iteration=False, is_first_iteration=False):
         """Assign cars, bikes and transit for one time period.
         
@@ -82,6 +81,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
 
     # TODO MON: If this is ALWAYS called after .assign(), could they be merged? Currently both re-route via emmebank, which is ambiguous.
     # TODO MON: Then the ABC class as well as MockAssignment would have to be adjusted respectively.
+    # y
     def get_impedance(self, is_last_iteration=False):
         """Get travel impedance matrices for one time period from assignment.
         
@@ -95,15 +95,16 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                 "dist": self.get_matrices("dist"),
                 "cost": self.get_matrices("cost")}
         mtxs["time"]["transit"] = self._damp(mtxs["time"]["transit"])
-        mtxs["time"]["bike"] = self._cap(mtxs["time"]["bike"])
-        mtxs["time"]["car_work"] = self._gcost_to_time("car_work")
-        mtxs["time"]["car_leisure"] = self._gcost_to_time("car_leisure")
+        mtxs["time"]["bike"] = mtxs["time"]["bike"].clip(None, 9999.)
+        mtxs["time"]["car_work"] = self._extract_timecost_from_gcost("car_work")
+        mtxs["time"]["car_leisure"] = self._extract_timecost_from_gcost("car_leisure")
         if not is_last_iteration:
             for ass_cl in ("car_work", "car_leisure"):
                 mtxs["cost"][ass_cl] += self.dist_cost * mtxs["dist"][ass_cl]
         return mtxs
 
     # TODO MON: Could this emphasise "set_emmebank_matrices" ? and param "matrices" maybe "matrices_labels"
+    # y (ei prio)
     def set_matrices(self, matrices):
         emmebank = self.emme.modeller.emmebank
         tmp_mtx = {
@@ -122,6 +123,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
 
     # TODO MON: Same as set_matrices. Although may be could be removed entirely if
     # TODO MON: return {subtype: self.get_matrix(mtx_type, subtype) for subtype in param.emme_mtx[mtx_type]}
+    # y (ei prio)
     def get_matrices(self, mtx_type, time_period=None):
         """Get all matrices of specified type.
         
@@ -145,16 +147,14 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             matrices[mtx] = self.get_matrix(mtx_type, mtx)
         return matrices
 
-    # TODO MON: Would it make sense to name type1 -> "assignment-/simulation_type" (if covers the whole assignment, demand?), type2 -> "subtype"
-    # TODO MON: or is type1 more so "measured_attribute" where as type2 a "context" where the attribute is measured in?
-    def get_matrix(self, type1, type2):
+    def get_matrix(self, assignment_result_type, subtype):
         """Get matrix with type pair (e.g., demand, car_work).
         
         Parameters
         ----------
-        type1 : str
+        assignment_result_type : str
             Type (demand/time/transit/...)
-        type2 : str
+        subtype : str
             Subtype (car_work/truck/inv_time/...)
 
         Return
@@ -162,10 +162,11 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         numpy 2-d matrix
             Matrix of the specified type
         """
-        emme_id = param.emme_mtx[type1][type2]["id"]
+        emme_id = param.emme_mtx[assignment_result_type][subtype]["id"]
         return self.emme.modeller.emmebank.matrix(emme_id).get_numpy_data()
 
     # TODO MON: Should this indicate it's specificly "morning rush hour zone numbers in emme_project (emmebank)"?
+    # aina samat, siksi aht. Long-term tarkoitus paasta naiden kovakoodauksesta eroon
     @property
     def zone_numbers(self):
         """Numpy array of all zone numbers.""" 
@@ -174,6 +175,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         return scen.zone_numbers
 
     # TODO MON: Same as zone_numbers property
+    # aina samat, siksi aht
     @property
     def mapping(self):
         """dict: Dictionary of zone numbers and corresponding indices."""
@@ -183,6 +185,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         return mapping
 
     # TODO MON: Same as zone_numbers property
+    # aina samat, siksi aht
     @property
     def nr_zones(self):
         """int: Number of zones in assignment model."""
@@ -196,15 +199,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         dtt = travel_time + wt_weight*((5./3.*fwt)**0.8 - fwt)
         return dtt
 
-    # TODO MON: Floating the capped value
-    def _cap(self, travel_time):
-        """Cap travel time to 9999."""
-        travel_time = travel_time.clip(None, 9999)
-        return travel_time
-
-    # TODO MON: google-cost to time? calc_time_cost(_from_generalized_cost)?
-    # TODO MON: reasoning: because the method doesn't take generalized cost as an arg (to convert), but rather returns the calculated time_cost
-    def _gcost_to_time(self, ass_class):
+    def _extract_timecost_from_gcost(self, ass_class):
         """Remove monetary cost from generalized cost."""
         # Traffic assignment produces a generalized cost matrix.
         # To get travel time, monetary cost is removed from generalized cost.
@@ -214,13 +209,12 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         tdist = self.get_matrix("dist", ass_class)
         return gcost - vot_inv *(tcost + self.dist_cost*tdist)
 
-    # TODO MON: Since netw_spec isn't re-used, it could be directly passed to network_calc instead of continuous re-ass'
     def _calc_background_traffic(self, scen_id):
         """Calculate background traffic (buses)."""
         emmebank = self.emme.modeller.emmebank
         scen = emmebank.scenario(scen_id)
         # Reset @vm1 to zero
-        netw_spec = {
+        self.emme.network_calc({
             "type": "NETWORK_CALCULATION",
             "selections": {
                 "transit_line": "all",
@@ -228,10 +222,9 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "expression": "0",
             "result": "@vm1",
             "aggregation": None,
-        }
-        self.emme.network_calc(netw_spec, scen)
+        }, scen)
         # Calculate number of line departures per hour
-        netw_spec = {
+        self.emme.network_calc({
             "type": "NETWORK_CALCULATION",
             "selections": {
                 "transit_line": "hdw=1,900",
@@ -239,10 +232,9 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "expression": "60.0/hdw",
             "result": "@vm1",
             "aggregation": None,
-        }
-        self.emme.network_calc(netw_spec, scen)
+        }, scen)
         # Reset @vm to zero
-        netw_spec = {
+        self.emme.network_calc({
             "type": "NETWORK_CALCULATION",
             "selections": {
                 "link": "all",
@@ -250,10 +242,9 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "expression": "0",
             "result": "@vm",
             "aggregation": None,
-        }
-        self.emme.network_calc(netw_spec, scen)
+        }, scen)
         # Calculate number of link departures per hour
-        netw_spec = {
+        self.emme.network_calc({
             "type": "NETWORK_CALCULATION",
             "selections": {
                 "link": "all",
@@ -262,10 +253,9 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "expression": "@vm1",
             "result": "@vm",
             "aggregation": "+",
-        }
-        self.emme.network_calc(netw_spec, scen)
+        }, scen)
         # Reset ul3 to zero
-        netw_spec = {
+        self.emme.network_calc({
             "type": "NETWORK_CALCULATION",
             "selections": {
                 "link": "all",
@@ -273,10 +263,9 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "expression": "0",
             "result": param.background_traffic,
             "aggregation": None,
-        }
-        self.emme.network_calc(netw_spec, scen)
+        }, scen)
         # Set ul3 to @vm for links without bus lane
-        netw_spec = {
+        self.emme.network_calc({
             "type": "NETWORK_CALCULATION",
             "selections": {
                 "link": "vdf=1,5",
@@ -284,18 +273,14 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "expression": "@vm",
             "result": param.background_traffic,
             "aggregation": None,
-        }
-        self.emme.network_calc(netw_spec, scen)
+        }, scen)
 
-    # TODO MON: emmebank is used once, and netw_specs could be written in list literal, and actually passed directly to network_calc
     def _calc_road_cost(self, scen_id):
         """Calculate road charges and driving costs for one scenario."""
         self.emme.logger.info("Calculates road charges for scenario " + str(scen_id))
-        emmebank = self.emme.modeller.emmebank
-        scenario = emmebank.scenario(scen_id)
-        netw_specs = []
-        # Link cost [eur]
-        netw_specs.append({
+        scenario = self.emme.modeller.emmebank.scenario(scen_id)
+        netw_specs = [{
+            # Link cost [eur]
             "type": "NETWORK_CALCULATION",
             "selections": {
                 "link": "all",
@@ -303,19 +288,17 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "expression": "@hinta*length",
             "result": "@ruma",
             "aggregation": None,
-        })
-        # Driving cost [eur]
-        netw_specs.append({
+        }, {
+            # Driving cost [eur]
             "type": "NETWORK_CALCULATION",
             "selections": {
                 "link": "all",
             },
-            "expression": str(self.dist_cost)+"*length",
+            "expression": str(self.dist_cost) + "*length",
             "result": "@rumpi",
             "aggregation": None,
-        })
-        # Total cost [eur]
-        netw_specs.append({
+        }, {
+            # Total cost [eur]
             "type": "NETWORK_CALCULATION",
             "selections": {
                 "link": "all",
@@ -323,12 +306,10 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "expression": "@ruma+@rumpi",
             "result": "@rumsi",
             "aggregation": None,
-        })
+        }]
         self.emme.network_calc(netw_specs, scenario)
 
     def print_vehicle_kms(self):
-        # TODO MON: emmebank is redundant variable (used one time), indentation could be set in single lines 1-per-operation
-        emmebank = self.emme.modeller.emmebank
         freight_classes = ["van", "truck", "trailer_truck"]
         vdfs = [1, 2, 3, 4, 5]
         transit_modes = {
@@ -345,7 +326,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         transit_times = dict.fromkeys(transit_modes, 0)
         for tp in param.emme_scenario:
             scen_id = param.emme_scenario[tp]
-            scenario = emmebank.scenario(scen_id)
+            scenario = self.emme.modeller.emmebank.scenario(scen_id)
             network = scenario.get_network()
             for link in network.links():
                 if link.volume_delay_func <= 5:
@@ -398,72 +379,72 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         """
         emmebank = self.emme.modeller.emmebank
         idx = param.emme_mtx["cost"]["transit"]["id"]
-        # TODO MON: this could be rewritten as "if default cost is not None: -> 1 line and early return", saves indent and early return good practise
-        if default_cost is None:
-            scen_id = self.emme_scenario["aht"]
-            # Move transfer penalty to boarding penalties,
-            # a side effect is that it then also affects first boarding
-            self._calc_boarding_penalties(scen_id, 5)
-            scenario = emmebank.scenario(scen_id)
-            has_visited = {}
-            mapping = self.mapping
-            network = scenario.get_network()
-            transit_zones = set()
-            for node in network.nodes():
-                transit_zones.add(node.label)
-            for transit_zone in transit_zones:
-                # Set tag to 1 for nodes in transit zone and 0 elsewhere
-                for node in network.nodes():
-                    node.data1 = (node.label == transit_zone)
-                scenario.publish_network(network)
-                # Transit assignment with zone tag as weightless boarding cost
-                self._assign_transit(scen_id, True)
-                nr_visits = self.get_matrix("transit", "board_cost")
-                # If the number of visits is less than 1, there seems to
-                # be an easy way to avoid visiting this transit zone
-                has_visited[transit_zone] = (nr_visits >= 1)
-            for centroid in network.centroids():
-                # Add transit zone of destination to visited
-                has_visited[centroid.label][:, mapping[centroid.number]] = True
-            maxprice = 999
-            cost = numpy.full_like(nr_visits, maxprice)
-            mtx = next(iter(has_visited.values()))
-            for zone_combination in fares["fare"]:
-                goes_outside = numpy.full_like(mtx, False)
-                for transit_zone in has_visited:
-                    # Check if the OD-flow has been at a node that is
-                    # outside of this zone combination 
-                    if transit_zone not in zone_combination:
-                        goes_outside |= has_visited[transit_zone]
-                is_inside = ~goes_outside
-                if zone_combination in fares["exclusive"]:
-                    # Calculate fares exclusive for municipality citizens
-                    zn = self.zone_numbers
-                    exclusion = pandas.DataFrame(is_inside, zn, zn)
-                    municipality = fares["exclusive"][zone_combination]
-                    inclusion = param.municipality[municipality]
-                    exclusion.loc[:inclusion[0]-1] = False
-                    exclusion.loc[inclusion[1]+1:] = False
-                    is_inside = exclusion.values
-                zone_price = fares["fare"][zone_combination]
-                # If OD-flow matches several combinations, pick cheapest
-                cost[is_inside] = numpy.minimum(cost[is_inside], zone_price)
-            # Calculate distance-based cost from inv-distance
-            dist = self.get_matrix("dist", "transit")
-            dist_cost = fares["start_fare"] + fares["dist_fare"]*dist
-            cost[cost==maxprice] = dist_cost[cost==maxprice]
-            # Replace fare for peripheral zones with fixed matrix
-            bounds = param.areas["peripheral"]
-            zn = pandas.Index(self.zone_numbers)
-            l, u = zn.slice_locs(bounds[0], bounds[1])
-            cost[l:u, :u] = peripheral_cost
-            cost[:u, l:u] = peripheral_cost.T
-            emmebank.matrix(idx).set_numpy_data(cost)
-            # Reset boarding penalties
-            self._calc_boarding_penalties(scen_id)
-        else:
+        if default_cost is not None:
             # Use fixed cost matrix
             emmebank.matrix(idx).set_numpy_data(default_cost)
+            return
+
+        scen_id = self.emme_scenario["aht"]
+        # Move transfer penalty to boarding penalties,
+        # a side effect is that it then also affects first boarding
+        self._calc_boarding_penalties(scen_id, 5)
+        scenario = emmebank.scenario(scen_id)
+        has_visited = {}
+        mapping = self.mapping
+        network = scenario.get_network()
+        transit_zones = set()
+        for node in network.nodes():
+            transit_zones.add(node.label)
+        for transit_zone in transit_zones:
+            # Set tag to 1 for nodes in transit zone and 0 elsewhere
+            for node in network.nodes():
+                node.data1 = (node.label == transit_zone)
+            scenario.publish_network(network)
+            # Transit assignment with zone tag as weightless boarding cost
+            self._assign_transit(scen_id, True)
+            nr_visits = self.get_matrix("transit", "board_cost")
+            # If the number of visits is less than 1, there seems to
+            # be an easy way to avoid visiting this transit zone
+            has_visited[transit_zone] = (nr_visits >= 1)
+        for centroid in network.centroids():
+            # Add transit zone of destination to visited
+            has_visited[centroid.label][:, mapping[centroid.number]] = True
+        maxprice = 999
+        cost = numpy.full_like(nr_visits, maxprice)
+        mtx = next(iter(has_visited.values()))
+        for zone_combination in fares["fare"]:
+            goes_outside = numpy.full_like(mtx, False)
+            for transit_zone in has_visited:
+                # Check if the OD-flow has been at a node that is
+                # outside of this zone combination
+                if transit_zone not in zone_combination:
+                    goes_outside |= has_visited[transit_zone]
+            is_inside = ~goes_outside
+            if zone_combination in fares["exclusive"]:
+                # Calculate fares exclusive for municipality citizens
+                zn = self.zone_numbers
+                exclusion = pandas.DataFrame(is_inside, zn, zn)
+                municipality = fares["exclusive"][zone_combination]
+                inclusion = param.municipality[municipality]
+                exclusion.loc[:inclusion[0]-1] = False
+                exclusion.loc[inclusion[1]+1:] = False
+                is_inside = exclusion.values
+            zone_price = fares["fare"][zone_combination]
+            # If OD-flow matches several combinations, pick cheapest
+            cost[is_inside] = numpy.minimum(cost[is_inside], zone_price)
+        # Calculate distance-based cost from inv-distance
+        dist = self.get_matrix("dist", "transit")
+        dist_cost = fares["start_fare"] + fares["dist_fare"]*dist
+        cost[cost==maxprice] = dist_cost[cost==maxprice]
+        # Replace fare for peripheral zones with fixed matrix
+        bounds = param.areas["peripheral"]
+        zn = pandas.Index(self.zone_numbers)
+        l, u = zn.slice_locs(bounds[0], bounds[1])
+        cost[l:u, :u] = peripheral_cost
+        cost[:u, l:u] = peripheral_cost.T
+        emmebank.matrix(idx).set_numpy_data(cost)
+        # Reset boarding penalties
+        self._calc_boarding_penalties(scen_id)
 
     def _specify(self):
         # Car assignment specification
@@ -638,6 +619,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         emmebank = self.emme.modeller.emmebank
         scen = emmebank.scenario(scen_id)
         # TODO MON: Do these reside in the template emme project or what? .in files; self.emme.path forwards to emmebank path
+        # ovat runkoprojektissa mukana
         function_file = os.path.join(self.emme.path, param.func_bike)  # TODO refactor paths out from here
         self.emme.process_functions(function_file)
         spec = self.bike_spec
@@ -684,8 +666,6 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         """Calculate boarding penalties for transit assignment."""
         emmebank = self.emme.modeller.emmebank
         scenario = emmebank.scenario(scen_id)
-        # TODO MON: This doesn't take much time (if not repeated millions of times?), netw_specs could be list comprehension
-        extrastr = "+" + str(extra_penalty)
         # Definition of line specific boarding penalties
         netw_specs = []
         # Bus
@@ -695,7 +675,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                 "selections": {
                     "transit_line": "mode=" + mode,
                 },
-                "expression": str(param.boarding_penalty[mode]) + extrastr,
+                "expression": str(param.boarding_penalty[mode]) + "+" + str(extra_penalty),
                 "result": "ut3",
                 "aggregation": None,
             })
@@ -768,14 +748,12 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         if count_zone_boardings:
             jlevel1 = JourneyLevel(False, True)
             jlevel2 = JourneyLevel(True, True)
-            # TODO MON: This could be inlined like distance matrix id
-            mtx = param.emme_mtx["transit"]["board_cost"]["id"]
             bcost_spec = {
                 "type": "EXTENDED_TRANSIT_MATRIX_RESULTS",
                 "by_mode_subset": {
                     "modes": param.transit_modes,
                     "distance": param.emme_mtx["dist"]["transit"]["id"],
-                    "actual_total_boarding_costs": mtx,
+                    "actual_total_boarding_costs": param.emme_mtx["transit"]["board_cost"]["id"],
                 },
             }
         else:

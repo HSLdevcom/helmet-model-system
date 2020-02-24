@@ -21,6 +21,7 @@ def set_path(scenario):
 
 
 def flush():
+    # TODO write output in flush, refactor buffer logic
     global _buffer
     _buffer = {}
 
@@ -34,6 +35,7 @@ def print_data(data, filename, zone_numbers, colname):
 
 
 # TODO MON: This could use a lot of {}.formats and spaces between logical groups of operations, and removal of one-time variables
+# y (primaaristen jalkeen)
 def print_matrix(data, filename, sheetname):
     if _use_txt:
         txtfilepath = os.path.join(_path, filename + '_' + sheetname + ".txt")

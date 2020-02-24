@@ -17,15 +17,15 @@ first_scenario_id = line['first_scenario_id']
 # TODO MON: (check notes in Config.py, with those this all could be performed via CLI argparser params in __main__)
 # set configuration per incoming params
 config = Config()
-config.set_value(Config.LOG_FORMAT, 'JSON')
-config.set_value(Config.LOG_LEVEL, log_level)
-config.set_value(Config.DATA_PATH, data_path)
-config.set_value(Config.EMME_PROJECT_PATH, emme_path)
-config.set_value(Config.ITERATION_COUNT, iterations)
-config.set_value(Config.USE_EMME, True)
-config.set_value(Config.USE_FIXED_TRANSIT_COST, use_fixed_transit_cost)
-config.set_value(Config.FIRST_SCENARIO_ID, first_scenario_id)
-config.set_value(Config.SCENARIO_NAME, scenario)
+config.LOG_FORMAT = 'JSON'
+config.LOG_LEVEL = log_level
+config.DATA_PATH = data_path
+config.EMME_PROJECT_PATH = emme_path
+config.ITERATION_COUNT = iterations
+config.USE_EMME = True
+config.USE_FIXED_TRANSIT_COST = use_fixed_transit_cost
+config.FIRST_SCENARIO_ID = first_scenario_id
+config.SCENARIO_NAME = scenario
 
 log = Log.get_instance().initialize(config)
 log.info('Running helmet_app.py via Helmet UI..')
