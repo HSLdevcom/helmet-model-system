@@ -10,12 +10,10 @@ class Config:
         self.__config = {}
 
     @staticmethod
-    def read_from_file(path="dev-config.json"):
-        print 'reading configuration from file "{}"'.format(path)
+    def read_from_file(path=os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "dev-config.json")):
         instance = Config()
         with open(path, 'r') as f:
             instance.__config = json.load(f)
-        print 'read {} config variables'.format(len(instance.__config))
         return instance
 
     def __get_value(self, key):
