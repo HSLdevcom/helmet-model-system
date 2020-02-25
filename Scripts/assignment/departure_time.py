@@ -1,6 +1,5 @@
 import logging
 import numpy
-import os
 import parameters as param
 
 
@@ -14,18 +13,16 @@ class DepartureTimeModel:
             Number of zones in assignment model
         """
         self.nr_zones = nr_zones
-        self.init_demand()
+        self.demand = dict.fromkeys(param.emme_scenario,
+                                    dict.fromkeys(param.transport_classes,
+                                                  numpy.zeros((self.nr_zones, self.nr_zones))))
         self.logger = logging.getLogger()
 
     def init_demand(self):
-        """Initialize demand for all time periods."""
-        self.demand = dict.fromkeys(param.emme_scenario.keys())
-        for time_period in self.demand:
-            ass_classes = dict.fromkeys(param.transport_classes)
-            self.demand[time_period] = ass_classes
-            for ass_class in ass_classes:
-                zeros = numpy.zeros((self.nr_zones, self.nr_zones))
-                self.demand[time_period][ass_class] = zeros
+        """Initialize/reset demand for all time periods (each including transport_classes, each being set to zeros)."""
+        self.demand = dict.fromkeys(param.emme_scenario,
+                                    dict.fromkeys(param.transport_classes,
+                                                  numpy.zeros((self.nr_zones, self.nr_zones))))
 
     def add_demand(self, demand):
         """Add demand matrix for whole day.
@@ -37,9 +34,7 @@ class DepartureTimeModel:
         """
         if demand.mode not in ("walk", "car_passenger"):
             if demand.mode in ("car", "transit", "bike"):
-                ass_class = ( demand.mode 
-                            + '_'
-                            + param.assignment_class[demand.purpose.name])
+                ass_class = (demand.mode + '_' + param.assignment_class[demand.purpose.name])
             else:
                 ass_class = demand.mode
             if len(demand.position) == 2:
@@ -48,16 +43,11 @@ class DepartureTimeModel:
                     self._add_2d_demand(
                         share[time_period], ass_class, time_period,
                         demand.matrix, demand.position)
-                debugtext = "Added demand for {}, {}"
-                self.logger.debug(
-                    debugtext.format(demand.purpose.name, demand.mode))
+                self.logger.debug("Added demand for {}, {}".format(demand.purpose.name, demand.mode))
             elif len(demand.position) == 3:
                 for time_period in param.emme_scenario:
                     self._add_3d_demand(demand, ass_class, time_period)
-                debugtext = "Added demand for {}, {}, {}"
-                self.logger.debug(
-                    debugtext.format(
-                        demand.purpose.name, demand.mode, demand.orig))
+                self.logger.debug("Added demand for {}, {}, {}".format(demand.purpose.name, demand.mode, demand.orig))
             else:
                 raise IndexError("Tuple position has wrong dimensions.")
 
@@ -65,10 +55,10 @@ class DepartureTimeModel:
         """Slice demand, include transpose and add for one time period."""
         r_0 = mtx_pos[0]
         c_0 = mtx_pos[1]
-        try: # Addition of matrix
+        try:  # Addition of matrix
             r_n = r_0 + mtx.shape[0]
             c_n = c_0 + mtx.shape[1]
-        except AttributeError: # Addition of agent
+        except AttributeError:  # Addition of agent
             r_n = r_0 + 1
             c_n = c_0 + 1
             mtx = numpy.asarray([mtx])
@@ -80,13 +70,11 @@ class DepartureTimeModel:
             share = param.backup_demand_share[time_period]
             large_mtx[r_0:r_n, c_0:c_n] += share[0] * mtx
             large_mtx[c_0:c_n, r_0:r_n] += share[1] * mtx.T
-            warntext = ("{}x{} matrix not matching {} demand shares."
-                      "Resorted to backup demand shares.")
-            self.logger.warn(
-                warntext.format(
-                    str(mtx.shape[0]),
-                    str(mtx.shape[0]),
-                    str(len(demand_share[0]))))
+            self.logger.warn("{}x{} matrix not matching {} demand shares. Resorted to backup demand shares.".format(
+                str(mtx.shape[0]),
+                str(mtx.shape[0]),
+                str(len(demand_share[0]))
+            ))
 
     def _add_3d_demand(self, demand, ass_class, time_period):
         """Add three-way demand."""
@@ -95,12 +83,12 @@ class DepartureTimeModel:
         o = demand.position[0]
         d1 = demand.position[1]
         d2 = demand.position[2]
-        try: # Addition of matrix
+        try:  # Addition of matrix
             colsum = mtx.sum(0)[:, numpy.newaxis]
             share = param.demand_share[demand.purpose.name][demand.mode][tp]
             self._add_2d_demand(share[0], ass_class, tp, mtx, (d1, d2))
             self._add_2d_demand(share[1], ass_class, tp, colsum, (d2, o))
-        except AttributeError: # Addition of agent
+        except AttributeError:  # Addition of agent
             share = param.demand_share[demand.purpose.name][demand.mode][tp]
             self._add_2d_demand(share, ass_class, tp, mtx, (o, d1))
             sec_purpose_name = demand.purpose.sec_dest_purpose.name
@@ -120,8 +108,7 @@ class DepartureTimeModel:
         """
         n = nr_zones
         mtx = self.demand[time_period]
-        car_demand = ( mtx["car_work"][0:n, 0:n]
-                     + mtx["car_leisure"][0:n, 0:n])
+        car_demand = (mtx["car_work"][0:n, 0:n] + mtx["car_leisure"][0:n, 0:n])
         share = param.demand_share["freight"]["van"][time_period]
         self._add_2d_demand(share, "van", time_period, car_demand, (0, 0))
         mtx["van"][0:n, 0:n] += mtx["truck"][0:n, 0:n]

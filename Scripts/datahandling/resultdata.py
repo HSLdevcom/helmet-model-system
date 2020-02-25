@@ -1,4 +1,3 @@
-import numpy
 import os
 import pandas
 try:
@@ -10,6 +9,7 @@ except ImportError:
 _path = ".."
 _buffer = {}
 
+
 def set_path(scenario):
     script_dir = os.path.dirname(os.path.realpath(__file__))
     project_dir = os.path.join(script_dir, "..", "..")
@@ -19,9 +19,12 @@ def set_path(scenario):
     global _path 
     _path = data_dir
 
+
 def flush():
+    # TODO write output in flush, refactor buffer logic
     global _buffer
     _buffer = {}
+
 
 def print_data(data, filename, zone_numbers, colname):
     filepath = os.path.join(_path, filename)
@@ -30,6 +33,9 @@ def print_data(data, filename, zone_numbers, colname):
     _buffer[filename][colname] = data
     _buffer[filename].to_csv(filepath, sep='\t', float_format="%1.5f")
 
+
+# TODO MON: This could use a lot of {}.formats and spaces between logical groups of operations, and removal of one-time variables
+# y (primaaristen jalkeen)
 def print_matrix(data, filename, sheetname):
     if _use_txt:
         txtfilepath = os.path.join(_path, filename + '_' + sheetname + ".txt")

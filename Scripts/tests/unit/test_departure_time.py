@@ -1,9 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
-
 import numpy
 import unittest
-import parameters
 from assignment.departure_time import DepartureTimeModel
 
 

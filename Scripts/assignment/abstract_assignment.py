@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
 
+
 class AssignmentModel:
     __metaclass__ = ABCMeta
 
@@ -13,6 +14,8 @@ class AssignmentModel:
             Time period (aht/pt/iht)
         matrices: dict
             Assignment class (car_work/transit/...): numpy 2-d matrix
+        is_last_iteration: bool
+        is_first_iteration: bool
         """
         pass
 
@@ -48,7 +51,7 @@ class ImpedanceSource:
         pass
     
     @abstractmethod
-    def calc_transit_cost(self):
+    def calc_transit_cost(self, fares, peripheral_cost, default_cost=None):
         pass
 
     @abstractmethod

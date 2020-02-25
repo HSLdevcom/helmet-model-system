@@ -1,29 +1,25 @@
 import os
 import openmatrix as omx
 import numpy
-from zonedata import read_file
+from utils.read_csv_file import read_csv_file
 from contextlib import contextmanager
 
 
 class MatrixData:
-    def __init__(self, scenario):
-        script_dir = os.path.dirname(os.path.realpath(__file__))
-        project_dir = os.path.join(script_dir, "..", "..")
-        self.path = os.path.join(project_dir, "Matrices", scenario)
+    def __init__(self, path):
+        self.path = path
         if not os.path.exists(self.path):
             os.makedirs(self.path)
     
     @contextmanager
     def open(self, mtx_type, time_period, m='r'):
-        try:
-            file_name = os.path.join(self.path, mtx_type+'_'+time_period+".omx")
-            mtxfile = MatrixFile(omx.open_file(file_name, m))
-            yield mtxfile
-        finally:
-            mtxfile.close()
+        file_name = os.path.join(self.path, mtx_type+'_'+time_period+".omx")
+        mtxfile = MatrixFile(omx.open_file(file_name, m))
+        yield mtxfile
+        mtxfile.close()
 
-    def get_external(self, mode):
-        return read_file(self.path, "external_"+mode+".txt")
+    def get_external(self, transport_mode):
+        return read_csv_file(self.path, "external_"+transport_mode+".txt")
 
 
 class MatrixFile(object):

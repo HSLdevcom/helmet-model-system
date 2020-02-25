@@ -1,8 +1,7 @@
-import os
-import numpy
 import logging
 import parameters as param
 from abstract_assignment import AssignmentModel, ImpedanceSource 
+
 
 class MockAssignmentModel(AssignmentModel, ImpedanceSource):
     def __init__(self, matrices):
@@ -19,6 +18,8 @@ class MockAssignmentModel(AssignmentModel, ImpedanceSource):
             Time period (aht/pt/iht)
         matrices: dict
             Assignment class (car_work/transit/...): numpy 2-d matrix
+        is_last_iteration: bool
+        is_first_iteration: bool
         """
         self.time_period = time_period
         with self.matrices.open("demand", time_period, 'w') as mtx:
@@ -35,19 +36,19 @@ class MockAssignmentModel(AssignmentModel, ImpedanceSource):
             Type (time/cost/dist) : dict
                 Assignment class (car_work/transit/...) : numpy 2-d matrix
         """
-        mtxs = {}
-        mtxs["time"] = self.get_matrices("time", self.time_period)
-        mtxs["cost"] = self.get_matrices("cost", self.time_period)
-        mtxs["dist"] = self.get_matrices("dist", self.time_period)
-        return mtxs
+        return {"time": self.get_matrices("time", self.time_period),
+                "cost": self.get_matrices("cost", self.time_period),
+                "dist": self.get_matrices("dist", self.time_period)}
     
-    def get_matrices(self, mtx_type, time_period):
+    def get_matrices(self, mtx_type, time_period=None):
         """Get all matrices of specified type.
         
         Parameters
         ----------
         mtx_type : str
             Type (demand/time/transit/...)
+        time_period : str
+            Matrices' time period.
 
         Return
         ------

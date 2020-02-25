@@ -5,6 +5,7 @@ import logging
 import logging.handlers
 from config import Config
 
+
 # Wrapper on top of standard Python logging interface so we can easily configure
 # output of the logs in one single place. 
 # Possible output targets: 
@@ -25,8 +26,8 @@ class Log:
 
     def initialize(self, config, emme_context=None):
         # JSON logger for communicating with UI
-        numeric_level = getattr(logging, config.get_value(Config.LOG_LEVEL), 20)
-        if config.get_value(Config.LOG_FORMAT) == 'JSON':
+        numeric_level = getattr(logging, config.LOG_LEVEL, 20)
+        if config.LOG_FORMAT == 'JSON':
             jsonFormat = logging.Formatter('%(json)s')
             streamHandler = logging.StreamHandler(sys.stderr)
             streamHandler.flush = sys.stderr.flush
@@ -36,8 +37,8 @@ class Log:
         else:
             logging.basicConfig(level=numeric_level, stream=sys.stdout, format='%(asctime)s [%(levelname)s] %(message)s')
         # Rotating file logger
-        if config.get_value(Config.SCENARIO_NAME) is not None:
-            file = config.get_value(Config.SCENARIO_NAME) + ".log"
+        if config.SCENARIO_NAME is not None:
+            file = config.SCENARIO_NAME + ".log"
         else:
             file = Config.DefaultScenario + '.log'
         self._filename = os.path.join(sys.path[0], file)

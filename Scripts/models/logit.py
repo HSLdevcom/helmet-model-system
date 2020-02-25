@@ -2,7 +2,7 @@ import numpy
 import pandas
 import math
 import parameters
-import datahandling.resultdata as result
+from datahandling import resultdata
 
 
 class LogitModel:
@@ -201,7 +201,7 @@ class ModeDestModel(LogitModel):
         """
         mode_expsum = self._calc_utils(impedance)
         logsum = numpy.log(mode_expsum)
-        result.print_data(
+        resultdata.print_data(
             pandas.Series(logsum, self.purpose.zone_numbers),
             "accessibility.txt", self.zone_data.zone_numbers,
             self.purpose.name)
@@ -280,7 +280,7 @@ class ModeDestModel(LogitModel):
             logsum = pandas.Series(numpy.log(expsum), self.purpose.zone_numbers)
             label = self.purpose.name + "_" + mode[0]
             self.zone_data._values[label] = logsum
-            result.print_data(
+            resultdata.print_data(
                 logsum, "accessibility.txt",
                 self.zone_data.zone_numbers, label)
         return self._calc_mode_util(self.dest_expsums)
@@ -359,7 +359,7 @@ class OriginModel(DestModeModel):
     pass
 
 
-class TourCombinationModel():
+class TourCombinationModel:
     def __init__(self, zone_data):
         self.zone_data = zone_data
         self.param = parameters.tour_combinations
@@ -445,6 +445,7 @@ class TourCombinationModel():
                     prob[tour_combination] *= nr_tours_prob
         return prob
 
+
 class CarUseModel(LogitModel):
     def __init__(self, zone_data, bounds):
         self.zone_data = zone_data
@@ -472,8 +473,7 @@ class CarUseModel(LogitModel):
             except TypeError:
                 dummy_share = numpy.ones_like(prob)
                 for j in i:
-                    dummy_share *= self.zone_data.get_data(
-                        "share_"+j, self.bounds, generation=True)
+                    dummy_share *= self.zone_data.get_data("share_"+j, self.bounds, generation=True)
             no_dummy_share -= dummy_share
             ind_exps = numpy.exp(b["individual_dummy"][i]) * self.exps
             ind_prob = ind_exps / (ind_exps+1)
@@ -501,13 +501,11 @@ class CarUseModel(LogitModel):
     def print_results(self, prob):
         """ Print results, mainly for calibration purposes"""
         population = self.zone_data["population"]
-        population_7_99 = ( population[:self.zone_data.first_peripheral_zone]
-                          * self.zone_data["share_age_7-99"])
+        population_7_99 = (population[:self.zone_data.first_peripheral_zone] * self.zone_data["share_age_7-99"])
         car_users = prob * population_7_99
                 
         # Print car user share by zone
-        result.print_data(prob, "car_use.txt",
-                          self.zone_data.zone_numbers[self.bounds], "car_use")
+        resultdata.print_data(prob, "car_use.txt", self.zone_data.zone_numbers[self.bounds], "car_use")
         
         # print car use share by municipality
         prob_municipality = []
@@ -516,10 +514,9 @@ class CarUseModel(LogitModel):
                       parameters.municipality[municipality][1])
             # comparison data has car user shares of population
             # over 6 years old (from HEHA)
-            prob_municipality.append( car_users.loc[i].sum() 
-                                    / population_7_99.loc[i].sum())
-        result.print_data(prob_municipality, "car_use_per_municipality.txt",
-                          parameters.municipality.keys(), "car_use")
+            prob_municipality.append(car_users.loc[i].sum() / population_7_99.loc[i].sum())
+        resultdata.print_data(prob_municipality, "car_use_per_municipality.txt",
+                              parameters.municipality.keys(), "car_use")
                           
         # print car use share by area (to get Helsinki CBD vs. Helsinki other)
         prob_area = []
@@ -528,7 +525,6 @@ class CarUseModel(LogitModel):
                       parameters.areas[area][1])
             # comparison data has car user shares of population
             # over 6 years old (from HEHA)
-            prob_area.append( car_users.loc[i].sum()
-                            / population_7_99.loc[i].sum())
-        result.print_data(prob_area, "car_use_per_area.txt",
-                          parameters.areas.keys(), "car_use")
+            prob_area.append(car_users.loc[i].sum() / population_7_99.loc[i].sum())
+        resultdata.print_data(prob_area, "car_use_per_area.txt",
+                              parameters.areas.keys(), "car_use")

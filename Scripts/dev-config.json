@@ -1,10 +1,13 @@
 {
-    "SCENARIO_NAME": "helmet",
-    "ITERATION_COUNT": 5,
-    "USE_EMME": true,
     "LOG_LEVEL": "INFO",
     "LOG_FORMAT": "TEXT",
-    "EMME_PROJECT_PATH": "",
+
+    "USE_EMME": true,
+
+    "SCENARIO_NAME": "helmet",
+    "EMME_PROJECT_PATH": "C:\\Users\\mwah\\Documents\\Helmet_model_system_40\\Helmet_model_system_40.emp",
+    "FIRST_SCENARIO_ID": 19,
     "DATA_PATH": "2030",
+    "ITERATION_COUNT": 5,
     "USE_FIXED_TRANSIT_COST": true
 }
