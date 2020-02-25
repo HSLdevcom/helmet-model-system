@@ -28,7 +28,7 @@ class ImpedanceSource:
         pass
 
     @abstractmethod
-    def get_impedance(self, time_period=None):
+    def get_impedance(self, is_last_iteration=False):
         """Get travel impedance matrices for one time period.
         
         Return

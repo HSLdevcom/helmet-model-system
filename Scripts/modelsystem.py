@@ -158,7 +158,7 @@ class ModelSystem:
         for tp in parameters.emme_scenario:
             self.dtm.add_vans(tp, self.zdata_forecast.nr_zones)
             self.ass_model.assign(tp, self.dtm.demand[tp], is_last_iteration)
-            impedance[tp] = self.ass_model.get_impedance()
+            impedance[tp] = self.ass_model.get_impedance(is_last_iteration)
             if tp == "aht":
                 self._update_ratios(impedance, tp)
             if is_last_iteration:
@@ -247,7 +247,7 @@ class ModelSystem:
         transit_cost = numpy.ma.average(
             impedance[tp]["cost"]["transit"], axis=1,
             weights=self.dtm.demand[tp]["transit_work"])
-        cost_ratio = transit_cost / 44 / car_cost
+        cost_ratio = transit_cost / 44. / car_cost
         result.print_data(
             cost_ratio, "impedance_ratio.txt",
             self.ass_model.zone_numbers, "cost")

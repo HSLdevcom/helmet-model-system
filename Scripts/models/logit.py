@@ -355,39 +355,11 @@ class SecDestModel(LogitModel):
         return prob
 
 
-class OriginModel(LogitModel):
-    def calc_prob(self, impedance):
-        """Calculate matrix of choice probabilities.
-        
-        Parameters
-        ----------
-        impedance : dict
-            Mode (car/transit/bike/walk) : dict
-                Type (time/cost/dist) : numpy 2-d matrix
-                    Impedances
-        
-        Return
-        ------
-        dict
-            Mode (transit) : numpy 2-d matrix
-                Choice probabilities
-        """
-        b = self.dest_choice_param
-        utility = self._calc_origin_util(impedance)
-        exps = numpy.exp(utility)
-        # Size = kokotekija
-        size = numpy.ones_like(exps)
-        size = self._add_zone_util(size, b["size"])
-        exps *= numpy.power(size, b["log"]["size"])
-        expsums = numpy.sum(exps, axis=1)
-        prob = {}
-        # Mode is needed here to get through tests even
-        # though the origin model does not take modes into account.
-        prob["all"] = exps.T / expsums
-        return prob
+class OriginModel(DestModeModel):
+    pass
 
 
-class GenerationModel():
+class TourCombinationModel():
     def __init__(self, zone_data):
         self.zone_data = zone_data
         self.param = parameters.tour_combinations
