@@ -1657,16 +1657,16 @@ destination_choice = {
     "sop": {
         "logsum": {
             "attraction": {
-                "own_zone": 0.451052614,
+                "own_zone": 0.491757816367,
             },
             "impedance": {},
             "log": {
-                "logsum": 0.852045667,
-                "size": 0.823988178,
+                "logsum": 0.852698948873,
+                "size": 0.824476718431,
             },
             "size": {
-                "workplaces": numpy.exp(3.941389653),
-                "population_own": numpy.exp(3.054259386),
+                "workplaces": numpy.exp(3.93387218470),
+                "population_own": numpy.exp(3.04338951027),
                 "population_other": 1.0,
             },
         },
@@ -2088,7 +2088,9 @@ mode_choice = {
         "transit": {
             "constant": -2.060141017,
             "generation": {},
-            "attraction": {},
+            "attraction": {
+                "own_zone_area": -0.115937409151,
+            },
             "impedance": {
                 "time": -0.007909217,
                 "cost": -0.154340268 / 30.0,
