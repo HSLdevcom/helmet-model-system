@@ -26,7 +26,7 @@ class MockAssignmentModel(AssignmentModel, ImpedanceSource):
                 mtx[ass_class] = matrices[ass_class]
         self.logger.info("Saved demand matrices for " + str(time_period))
     
-    def get_impedance(self):
+    def get_impedance(self, is_last_iteration=False):
         """Get travel impedance matrices for one time period from files.
         
         Return

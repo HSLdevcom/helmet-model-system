@@ -181,44 +181,44 @@ link_volumes = {
 # TODO Update
 volume_factors = {
     "car": {
-        "aht": 1 / 0.47,
-        "pt": 1 / 0.09,
-        "iht": 1 / 0.38,
+        "aht": 1. / 0.47,
+        "pt": 1. / 0.09,
+        "iht": 1. / 0.38,
     },
     "car_work": {
-        "aht": 1 / 0.47,
-        "pt": 1 / 0.09,
-        "iht": 1 / 0.38,
+        "aht": 1. / 0.47,
+        "pt": 1. / 0.09,
+        "iht": 1. / 0.38,
     },
     "car_leisure": {
-        "aht": 1 / 0.47,
-        "pt": 1 / 0.09,
-        "iht": 1 / 0.38,
+        "aht": 1. / 0.47,
+        "pt": 1. / 0.09,
+        "iht": 1. / 0.38,
     },
     "transit": {
-        "aht": 1 / 0.47,
-        "pt": 1 / 0.09,
-        "iht": 1 / 0.38,
+        "aht": 1. / 0.47,
+        "pt": 1. / 0.09,
+        "iht": 1. / 0.38,
     },
     "bike": {
-        "aht": 1 / 0.47,
-        "pt": 1 / 0.09,
-        "iht": 1 / 0.38,
+        "aht": 1. / 0.47,
+        "pt": 1. / 0.09,
+        "iht": 1. / 0.38,
     },
     "trailer_truck": {
-        "aht": 1 / 0.47,
-        "pt": 1 / 0.09,
-        "iht": 1 / 0.38,
+        "aht": 1. / 0.47,
+        "pt": 1. / 0.09,
+        "iht": 1. / 0.38,
     },
     "truck": {
-        "aht": 1 / 0.47,
-        "pt": 1 / 0.09,
-        "iht": 1 / 0.38,
+        "aht": 1. / 0.47,
+        "pt": 1. / 0.09,
+        "iht": 1. / 0.38,
     },
     "van": {
-        "aht": 1 / 0.47,
-        "pt": 1 / 0.09,
-        "iht": 1 / 0.38,
+        "aht": 1. / 0.47,
+        "pt": 1. / 0.09,
+        "iht": 1. / 0.38,
     },
 }
 # Emme matrix IDs
@@ -274,6 +274,18 @@ emme_mtx = {
             "id": "mf16",
             "description": "walk travel time",
         },
+        "trailer_truck": {
+            "id": "mf17",
+            "description": "trailer truck time",
+        },
+        "truck":  {
+            "id":"mf18",
+            "description": "truck time",
+        },
+        "van":  {
+            "id":"mf19",
+            "description": "van time",
+        },
     },
     "dist": {
         "car_work": {
@@ -296,6 +308,18 @@ emme_mtx = {
             "id": "mf26",
             "description": "walk travel distance",
         },
+        "trailer_truck": {
+            "id": "mf27",
+            "description": "trailer truck distance",
+        },
+        "truck":  {
+            "id":"mf28",
+            "description": "truck distance",
+        },
+        "van":  {
+            "id":"mf29",
+            "description": "van distance",
+        },
     },
     "cost": {
         "car_work": {
@@ -310,6 +334,18 @@ emme_mtx = {
             "id": "mf34",
             "description": "transit travel cost",
         },
+        "trailer_truck": {
+            "id": "mf37",
+            "description": "trailer truck cost",
+        },
+        "truck":  {
+            "id":"mf38",
+            "description": "truck cost",
+        },
+        "van":  {
+            "id":"mf39",
+            "description": "van cost",
+        },
     },
     "gen_cost": {
         "car_work": {
@@ -319,6 +355,18 @@ emme_mtx = {
         "car_leisure": {
             "id": "mf42",
             "description": "car leisure travel generalized cost",
+        },
+        "trailer_truck": {
+            "id": "mf47",
+            "description": "trailer truck travel generalized cost",
+        },
+        "truck":  {
+            "id":"mf48",
+            "description": "truck travel generalized cost",
+        },
+        "van":  {
+            "id":"mf49",
+            "description": "van travel generalized cost",
         },
     },
     "transit": {
@@ -977,7 +1025,7 @@ destination_choice = {
             },
             "impedance": {
                 "time": -0.111547282384e-1,
-                "cost": ((-0.411197516348e-1) / 60, -0.976929479166e-1 / 44),
+                "cost": ((-0.411197516348e-1) / 60.0, -0.976929479166e-1 / 44.0),
             },
             "log": {
                 "size": 1.00000000000, # L_S_M
@@ -1113,7 +1161,7 @@ destination_choice = {
             "impedance": {
                 "time": (-0.136559859790e-1 - 0.005,
                          -0.136559859790e-1 - 0.005),
-                "cost": (-0.216784178710 / 60, -0.216784178710 / 44),
+                "cost": (-0.216784178710 / 60.0, -0.216784178710 / 44.0),
             },
             "log": {
                 "size": 1.00000000000,
@@ -1182,7 +1230,7 @@ destination_choice = {
             },
             "impedance": {
                 "time": -0.299237931923e-1,
-                "cost": -0.112450201944 / 30,
+                "cost": -0.112450201944 / 30.0,
             },
             "log": {
                 "size": 1.00000000000,
@@ -1361,7 +1409,7 @@ destination_choice = {
             },
             "impedance": {
                 "time": -0.054854548,
-                "cost": -0.071273703 / 30,
+                "cost": -0.071273703 / 30.0,
             },
             "log": {
                 "size": 0.564060942,
@@ -1585,7 +1633,7 @@ destination_choice = {
             },
             "impedance": {
                 "time": -0.808893404926e-2,
-                "cost": (-0.167648454911 - 0.07) / 44,
+                "cost": (-0.167648454911 - 0.07) / 44.0,
             },
             "log": {
                 "size": 0.906272269187, # LN_Size
@@ -1621,7 +1669,7 @@ destination_choice = {
             "attraction": {},
             "impedance": {
                 "time": -0.552308836126e-2,
-                "cost": (-0.188691214282 - 0.04) / 30,
+                "cost": (-0.188691214282 - 0.04) / 30.0,
             },
             "log": {
                 "size": 1, # L_S_M
@@ -1681,8 +1729,8 @@ destination_choice = {
             },
             "impedance": {
                 "time": -0.819579857062e-2,
-                "cost": ((-0.227398812175 - 0.2) / 30,
-                         (-0.227398812175 - 0.2) / 30),
+                "cost": ((-0.227398812175 - 0.2) / 30.0,
+                         (-0.227398812175 - 0.2) / 30.0),
             },
             "log": {
                 "size": 1, # L_S_M
@@ -2102,7 +2150,7 @@ mode_choice = {
             "attraction": {},
             "impedance": {
                 "time": -0.007909217,
-                "cost": -0.154340268 / 30,
+                "cost": -0.154340268 / 30.0,
             },
             "log": {},
             "individual_dummy": {},
