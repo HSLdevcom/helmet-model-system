@@ -16,12 +16,12 @@ import os
 
 
 class ModelSystem:
-    def __init__(self, zone_data_path, base_zone_data_path, base_matrices, ass_model, name, is_agent_model=False):
+    def __init__(self, zone_data_path, base_zone_data_path, base_matrices_path, ass_model, name, is_agent_model=False):
         self.logger = Log.get_instance()
         self.ass_model = ass_model
         self.zdata_base = ZoneData(base_zone_data_path, ass_model.zone_numbers)
+        self.basematrices = MatrixData(base_matrices_path)
         self.zdata_forecast = ZoneData(zone_data_path, ass_model.zone_numbers)
-        self.basematrices = MatrixData(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "Matrices", base_matrices))
         self.resultmatrices = MatrixData(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "Matrices", name))
         self.is_agent_model = is_agent_model
         if is_agent_model:

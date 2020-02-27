@@ -29,14 +29,30 @@ def main(config, logger):
 
     # Read input matrices (.omx) and zonedata (.csv), and initialize models (assignment model and model-system)
     logger.info("Initializing matrices and models..", extra=log_extra)
+
+    base_zonedata_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "Scenario_input_data", "2016")
+    if not os.path.exists(base_zonedata_path):
+        raise NameError("Directory " + base_zonedata_path + " does not exist.")
+
+    base_matrices_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "Matrices", "base")
+    if not os.path.exists(base_matrices_path):
+        raise NameError("Directory " + base_matrices_path + " does not exist.")
+
+    forecast_zonedata_path = config.DATA_PATH
+    if not os.path.exists(forecast_zonedata_path):
+        raise NameError("Directory " + forecast_zonedata_path + " does not exist.")
+
     if config.USE_EMME:
         logger.info("Initializing Emme..")
         ass_model = EmmeAssignmentModel(EmmeContext(config.EMME_PROJECT_PATH), first_scenario_id=config.FIRST_SCENARIO_ID)
     else:
         logger.info("Initializing MockAssignmentModel..")
         mock_result_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "Matrices", config.SCENARIO_NAME)
+        if not os.path.exists(mock_result_path):
+            raise NameError("Mock Results directory " + mock_result_path + " does not exist.")
         ass_model = MockAssignmentModel(MatrixData(mock_result_path))
-    model = ModelSystem(config.DATA_PATH, "2016", "base", ass_model, name)
+
+    model = ModelSystem(forecast_zonedata_path, base_zonedata_path, base_matrices_path, ass_model, name)
     log_extra["status"]["results"] = model.mode_share
 
     # Run traffic assignment simulation for N iterations, on last iteration model-system will save the results

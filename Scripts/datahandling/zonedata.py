@@ -1,4 +1,3 @@
-import os
 import numpy
 import pandas
 import parameters as param
@@ -9,7 +8,7 @@ class ZoneData:
     CAPITAL_REGION = 0
     SURROUNDING_AREA = 1
     
-    def __init__(self, scenario, zone_numbers):
+    def __init__(self, data_dir, zone_numbers):
         self._values = {}
         zone_numbers = numpy.array(zone_numbers)
         surrounding = param.areas["surrounding"]
@@ -25,12 +24,6 @@ class ZoneData:
         first_external = numpy.where(zone_numbers >= external[0])[0][0]
         self.first_external_zone = first_external
         external_zones = zone_numbers[first_external:]
-        script_dir = os.path.dirname(os.path.realpath(__file__))
-        project_dir = os.path.join(script_dir, "..", "..")
-        data_dir = os.path.join(project_dir, "Scenario_input_data", scenario)
-        data_dir = os.path.abspath(data_dir)
-        if not os.path.exists(data_dir):
-            raise NameError("Directory " + data_dir + " does not exist.")
         popdata = read_csv_file(data_dir, ".pop", self.zone_numbers)
         workdata = read_csv_file(data_dir, ".wrk", self.zone_numbers)
         schooldata = read_csv_file(data_dir, ".edu", self.zone_numbers)
