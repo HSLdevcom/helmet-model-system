@@ -151,6 +151,10 @@ if __name__ == "__main__":
         help="Using this flag activates use of pre-calculated (fixed) transit costs."),
     args = parser.parse_args()
 
+    # This should be refactored some day to use Python base logger (which is in-built singleton already)
+    config.LOG_LEVEL = args.log_level
+    config.LOG_FORMAT = args.log_format
+    config.SCENARIO_NAME = args.scenario_name
     logger = Log.get_instance().initialize(config)
     logger.debug('sys.version_info=' + str(sys.version_info[0]))
     logger.debug('sys.path=' + str(sys.path))
