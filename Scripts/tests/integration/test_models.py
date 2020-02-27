@@ -8,14 +8,19 @@ from datatypes.demand import Demand
 import parameters
 import os
 
+TEST_DATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "test_data")
+
 
 class ModelTest(unittest.TestCase):
     
     def test_models(self):
         print("Testing assignment..")
         resultdata.set_path("test")
-        ass_model = MockAssignmentModel(MatrixData(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "..", "..", "Matrices", "2016_test")))
-        model = modelsystem.ModelSystem("2030_test", "2016_test", "base_test", ass_model, "test")
+        ass_model = MockAssignmentModel(MatrixData(os.path.join(TEST_DATA_PATH, "Matrices", "2016_test")))
+        zone_data_path = os.path.join(TEST_DATA_PATH, "Scenario_input_data", "2030_test")
+        base_zone_data_path = os.path.join(TEST_DATA_PATH, "Scenario_input_data", "2016_test")
+        base_matrices_path = os.path.join(TEST_DATA_PATH, "Matrices", "base_test")
+        model = modelsystem.ModelSystem(zone_data_path, base_zone_data_path, base_matrices_path, ass_model, "test")
         # model.dm.create_population()
         # self.assertEqual(7, len(ass_classes))
         impedance = model.assign_base_demand()
@@ -39,8 +44,11 @@ class ModelTest(unittest.TestCase):
     
     def test_agent_model(self):
         resultdata.set_path("test")
-        ass_model = MockAssignmentModel(MatrixData(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "..", "..", "Matrices", "2016_test")))
-        model = modelsystem.ModelSystem("2030_test", "2016_test", "base_test", ass_model, "test", is_agent_model=True)
+        ass_model = MockAssignmentModel(MatrixData(os.path.join(TEST_DATA_PATH, "Matrices", "2016_test")))
+        zone_data_path = os.path.join(TEST_DATA_PATH, "Scenario_input_data", "2030_test")
+        base_zone_data_path = os.path.join(TEST_DATA_PATH, "Scenario_input_data", "2016_test")
+        base_matrices_path = os.path.join(TEST_DATA_PATH, "Matrices", "base_test")
+        model = modelsystem.ModelSystem(zone_data_path, base_zone_data_path, base_matrices_path, ass_model, "test", is_agent_model=True)
         impedance = model.assign_base_demand()
         impedance = model.run_iteration(impedance)
 

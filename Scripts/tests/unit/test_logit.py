@@ -1,11 +1,13 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
-
 import numpy
 import unittest
 from datahandling.zonedata import ZoneData
 from models.logit import ModeDestModel
 from datahandling import resultdata
+import os
+
+TEST_DATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "test_data")
 
 
 class LogitModelTest(unittest.TestCase):
@@ -15,7 +17,7 @@ class LogitModelTest(unittest.TestCase):
             pass
         pur = Purpose()
         zi = numpy.array([5, 6, 7, 2792, 16001, 17000, 31000, 31501])
-        zd = ZoneData("2016_test", zi)
+        zd = ZoneData(os.path.join(TEST_DATA_PATH, "Scenario_input_data", "2016_test"), zi)
         mtx = numpy.arange(24, dtype=numpy.float32)
         mtx.shape = (4, 6)
         mtx[numpy.diag_indices(4)] = 0
@@ -62,8 +64,7 @@ class LogitModelTest(unittest.TestCase):
             prob = model.calc_prob(impedance)
             for mode in ("car", "transit"):
                 self._validate(prob[mode])
-        
-    
+
     def _validate(self, prob):
         self.assertIs(type(prob), numpy.ndarray)
         self.assertEquals(prob.ndim, 2)
