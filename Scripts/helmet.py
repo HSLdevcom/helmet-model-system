@@ -14,6 +14,9 @@ import os
 def main(config, logger):
     name = config.SCENARIO_NAME if config.SCENARIO_NAME is not None else Config.DefaultScenario
     iterations = config.ITERATION_COUNT
+    base_zonedata_path = os.path.join(config.BASELINE_DATA_PATH, "2016_zonedata")
+    base_matrices_path = os.path.join(config.BASELINE_DATA_PATH, "2016_basematrices")
+    forecast_zonedata_path = config.FORECAST_DATA_PATH
     log_extra = {
         "status": {
             "name": name,
@@ -25,23 +28,20 @@ def main(config, logger):
             "log": logger.get_filename()
         }
     }
+
+    # Initialize result matrices' folder TODO refactor
     resultdata.set_path(name)
 
     # Read input matrices (.omx) and zonedata (.csv), and initialize models (assignment model and model-system)
     logger.info("Initializing matrices and models..", extra=log_extra)
-
-    base_zonedata_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "Scenario_input_data", "2016")
+    # Check input data folders exist
     if not os.path.exists(base_zonedata_path):
-        raise NameError("Directory " + base_zonedata_path + " does not exist.")
-
-    base_matrices_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "Matrices", "base")
+        raise NameError("Baseline zonedata directory {} does not exist.".format(base_zonedata_path))
     if not os.path.exists(base_matrices_path):
-        raise NameError("Directory " + base_matrices_path + " does not exist.")
-
-    forecast_zonedata_path = config.DATA_PATH
+        raise NameError("Baseline zonedata directory {} does not exist.".format(base_matrices_path))
     if not os.path.exists(forecast_zonedata_path):
-        raise NameError("Directory " + forecast_zonedata_path + " does not exist.")
-
+        raise NameError("Forecast data directory '{}' does not exist.".format(forecast_zonedata_path))
+    # Choose and initialize the Traffic Assignment (supply)model
     if config.USE_EMME:
         logger.info("Initializing Emme..")
         ass_model = EmmeAssignmentModel(EmmeContext(config.EMME_PROJECT_PATH), first_scenario_id=config.FIRST_SCENARIO_ID)
@@ -51,14 +51,14 @@ def main(config, logger):
         if not os.path.exists(mock_result_path):
             raise NameError("Mock Results directory " + mock_result_path + " does not exist.")
         ass_model = MockAssignmentModel(MatrixData(mock_result_path))
-
+    # Initialize model system (wrapping Assignment-model, and providing Demand-calculations as Python modules)
     model = ModelSystem(forecast_zonedata_path, base_zonedata_path, base_matrices_path, ass_model, name)
     log_extra["status"]["results"] = model.mode_share
 
     # Run traffic assignment simulation for N iterations, on last iteration model-system will save the results
     log_extra["status"]["state"] = "preparing"
     logger.info("Starting simulation with {} iterations..".format(iterations), extra=log_extra)
-    impedance = model.assign_base_demand(Config.USE_FIXED_TRANSIT_COST)
+    impedance = model.assign_base_demand(config.USE_FIXED_TRANSIT_COST)
     log_extra["status"]["state"] = "running"
     for i in range(1, iterations + 1):
         log_extra["status"]["current"] = i
@@ -110,8 +110,13 @@ if __name__ == "__main__":
         type=int,
         help="First (biking) scenario ID within EMME project (.emp).")
     parser.add_argument(
-        "--data-path",
-        dest="data_path",
+        "--baseline-data-path",
+        dest="baseline_data_path",
+        type=str,
+        help="Path to folder containing both baseline zonedata and -matrices (Given privately by project manager)")
+    parser.add_argument(
+        "--forecast-data-path",
+        dest="forecast_data_path",
         type=str,
         help="Path to folder containing forecast zonedata")
     parser.add_argument(
@@ -127,7 +132,7 @@ if __name__ == "__main__":
         help="Using this flag activates use of pre-calculated (fixed) transit costs.")
     args = parser.parse_args()
 
-    # Optionally override each config value with args (if given)
+    # Optionally override each config value with args (if given) (could for-loop with x-attr, but intentionally verbose)
     if args.log_level is not None:
         config.LOG_LEVEL = args.log_level
     if args.log_format is not None:
@@ -140,8 +145,10 @@ if __name__ == "__main__":
         config.EMME_PROJECT_PATH = args.emme_path
     if args.first_scenario_id is not None:
         config.FIRST_SCENARIO_ID = args.first_scenario_id
-    if args.data_path is not None:
-        config.DATA_PATH = args.data_path
+    if args.baseline_data_path is not None:
+        config.BASELINE_DATA_PATH = args.baseline_data_path
+    if args.forecast_data_path is not None:
+        config.FORECAST_DATA_PATH = args.forecast_data_path
     if args.iterations is not None:
         config.ITERATION_COUNT = args.iterations
     if args.use_fixed_transit_cost:
@@ -152,7 +159,8 @@ if __name__ == "__main__":
     logger.debug('sys.path=' + str(sys.path))
     logger.debug('log_level=' + config.LOG_LEVEL)
     logger.debug('emme_path=' + config.EMME_PROJECT_PATH)
-    logger.debug('data_path=' + config.DATA_PATH)
+    logger.debug('baseline_data_path=' + config.BASELINE_DATA_PATH)
+    logger.debug('forecast_data_path=' + config.FORECAST_DATA_PATH)
     logger.debug('iterations=' + str(config.ITERATION_COUNT))
     logger.debug('use_fixed_transit_cost=' + str(config.USE_FIXED_TRANSIT_COST))
     logger.debug('first_scenario_id=' + str(config.FIRST_SCENARIO_ID))

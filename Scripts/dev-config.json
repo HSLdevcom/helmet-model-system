@@ -5,9 +5,10 @@
     "USE_EMME": true,
 
     "SCENARIO_NAME": "helmet",
-    "EMME_PROJECT_PATH": "C:\\Users\\mwah\\Documents\\Helmet_model_system_40\\Helmet_model_system_40.emp",
+    "EMME_PROJECT_PATH": "",
     "FIRST_SCENARIO_ID": 19,
-    "DATA_PATH": "2030",
+    "BASELINE_DATA_PATH": "",
+    "FORECAST_DATA_PATH": "",
     "ITERATION_COUNT": 5,
-    "USE_FIXED_TRANSIT_COST": true
+    "USE_FIXED_TRANSIT_COST": false
 }
