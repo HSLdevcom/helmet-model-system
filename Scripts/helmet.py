@@ -70,9 +70,9 @@ def main(args, logger):
             impedance = (model.run_iteration(impedance, is_last_iteration=True)
                          if i == iterations
                          else model.run_iteration(impedance))
-            log_extra["status"]["completed"] = log_extra["status"]["completed"] + 1
+            log_extra["status"]["completed"] += 1
         except Exception as error:
-            log_extra["status"]["failed"] = log_extra["status"]["failed"] + 1
+            log_extra["status"]["failed"] += 1
             logger.error("Exception at iteration {}".format(i), error)
             logger.error("Fatal error occured, simulation aborted.", extra=log_extra)
             break
