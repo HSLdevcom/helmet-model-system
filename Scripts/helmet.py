@@ -17,6 +17,7 @@ def main(args, logger):
     base_zonedata_path = os.path.join(args.baseline_data_path, "2016_zonedata")
     base_matrices_path = os.path.join(args.baseline_data_path, "2016_basematrices")
     forecast_zonedata_path = args.forecast_data_path
+    results_path = args.results_path
     emme_project_path = args.emme_path
     log_extra = {
         "status": {
@@ -55,7 +56,7 @@ def main(args, logger):
         logger.info("Initializing Emme..")
         ass_model = EmmeAssignmentModel(EmmeContext(emme_project_path), first_scenario_id=args.first_scenario_id)
     # Initialize model system (wrapping Assignment-model, and providing Demand-calculations as Python modules)
-    model = ModelSystem(forecast_zonedata_path, base_zonedata_path, base_matrices_path, ass_model, name)
+    model = ModelSystem(forecast_zonedata_path, base_zonedata_path, base_matrices_path, results_path, ass_model, name)
     log_extra["status"]["results"] = model.mode_share
 
     # Run traffic assignment simulation for N iterations, on last iteration model-system will save the results
@@ -112,6 +113,12 @@ if __name__ == "__main__":
         type=str,
         default=config.SCENARIO_NAME,
         help="Name of traffic assignment (HELMET) scenario. Influences result folder name and log file name."),
+    parser.add_argument(
+        "--results-path",
+        dest="results_path",
+        type=str,
+        default=config.RESULTS_PATH,
+        help="Path to folder where result data is saved to."),
     # HELMET scenario input data
     parser.add_argument(
         "--emme-path",

@@ -73,6 +73,12 @@ class Config:
     def FORECAST_DATA_PATH(self, value): self.__set_value("FORECAST_DATA_PATH", value)
 
     @property
+    def RESULTS_PATH(self): return self.__get_value("RESULTS_PATH")
+
+    @RESULTS_PATH.setter
+    def RESULTS_PATH(self, value): self.__set_value("RESULTS_PATH", value)
+
+    @property
     def EMME_PROJECT_PATH(self): return self.__get_value("EMME_PROJECT_PATH")
 
     @EMME_PROJECT_PATH.setter
