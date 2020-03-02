@@ -2,11 +2,11 @@ import numpy
 import pandas
 import math
 import parameters
-from datahandling import resultdata
 
 
 class LogitModel:
-    def __init__(self, zone_data, purpose, is_agent_model):
+    def __init__(self, zone_data, purpose, resultdata, is_agent_model):
+        self.resultdata = resultdata
         self.purpose = purpose
         self.bounds = purpose.bounds
         self.zone_data = zone_data
@@ -306,10 +306,12 @@ class ModeDestModel(LogitModel):
         """
         mode_expsum = self._calc_utils(impedance)
         logsum = numpy.log(mode_expsum)
-        resultdata.print_data(
+        self.resultdata.print_data(
             pandas.Series(logsum, self.purpose.zone_numbers),
-            "accessibility.txt", self.zone_data.zone_numbers,
-            self.purpose.name)
+            "accessibility.txt",
+            self.zone_data.zone_numbers,
+            self.purpose.name
+        )
         return self._calc_prob(mode_expsum)
     
     def calc_individual_prob(self, mod_mode, dummy):
@@ -385,9 +387,12 @@ class ModeDestModel(LogitModel):
             logsum = pandas.Series(numpy.log(expsum), self.purpose.zone_numbers)
             label = self.purpose.name + "_" + mode[0]
             self.zone_data._values[label] = logsum
-            resultdata.print_data(
-                logsum, "accessibility.txt",
-                self.zone_data.zone_numbers, label)
+            self.resultdata.print_data(
+                logsum,
+                "accessibility.txt",
+                self.zone_data.zone_numbers,
+                label
+            )
         return self._calc_mode_util(self.dest_expsums)
 
     def _calc_prob(self, mode_expsum):
@@ -552,7 +557,8 @@ class TourCombinationModel:
 
 
 class CarUseModel(LogitModel):
-    def __init__(self, zone_data, bounds):
+    def __init__(self, zone_data, bounds, resultdata):
+        self.resultdata = resultdata
         self.zone_data = zone_data
         self.bounds = bounds
     
@@ -610,7 +616,7 @@ class CarUseModel(LogitModel):
         car_users = prob * population_7_99
                 
         # Print car user share by zone
-        resultdata.print_data(prob, "car_use.txt", self.zone_data.zone_numbers[self.bounds], "car_use")
+        self.resultdata.print_data(prob, "car_use.txt", self.zone_data.zone_numbers[self.bounds], "car_use")
         
         # print car use share by municipality
         prob_municipality = []
@@ -620,8 +626,7 @@ class CarUseModel(LogitModel):
             # comparison data has car user shares of population
             # over 6 years old (from HEHA)
             prob_municipality.append(car_users.loc[i].sum() / population_7_99.loc[i].sum())
-        resultdata.print_data(prob_municipality, "car_use_per_municipality.txt",
-                              parameters.municipality.keys(), "car_use")
+        self.resultdata.print_data(prob_municipality, "car_use_per_municipality.txt", parameters.municipality.keys(), "car_use")
                           
         # print car use share by area (to get Helsinki CBD vs. Helsinki other)
         prob_area = []
@@ -631,5 +636,4 @@ class CarUseModel(LogitModel):
             # comparison data has car user shares of population
             # over 6 years old (from HEHA)
             prob_area.append(car_users.loc[i].sum() / population_7_99.loc[i].sum())
-        resultdata.print_data(prob_area, "car_use_per_area.txt",
-                              parameters.areas.keys(), "car_use")
+        self.resultdata.print_data(prob_area, "car_use_per_area.txt", parameters.areas.keys(), "car_use")

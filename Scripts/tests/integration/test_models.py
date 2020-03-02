@@ -1,7 +1,6 @@
 import unittest
 import numpy
 import modelsystem
-from datahandling import resultdata
 from assignment.mock_assignment import MockAssignmentModel
 from datahandling.matrixdata import MatrixData
 from datatypes.demand import Demand
@@ -15,11 +14,10 @@ class ModelTest(unittest.TestCase):
     
     def test_models(self):
         print("Testing assignment..")
-        resultdata.set_path("test")
-        ass_model = MockAssignmentModel(MatrixData(os.path.join(TEST_DATA_PATH, "Matrices", "2016_test")))
+        ass_model = MockAssignmentModel(MatrixData(os.path.join(TEST_DATA_PATH, "Results", "test", "Matrices")))
         zone_data_path = os.path.join(TEST_DATA_PATH, "Scenario_input_data", "2030_test")
-        base_zone_data_path = os.path.join(TEST_DATA_PATH, "Scenario_input_data", "2016_test")
-        base_matrices_path = os.path.join(TEST_DATA_PATH, "Matrices", "base_test")
+        base_zone_data_path = os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata_test")
+        base_matrices_path = os.path.join(TEST_DATA_PATH, "Base_input_data", "base_matrices_test")
         results_path = os.path.join(TEST_DATA_PATH, "Results")
         model = modelsystem.ModelSystem(zone_data_path, base_zone_data_path, base_matrices_path, results_path, ass_model, "test")
         # model.dm.create_population()
@@ -44,11 +42,10 @@ class ModelTest(unittest.TestCase):
         print("Assignment test done")
     
     def test_agent_model(self):
-        resultdata.set_path("test")
-        ass_model = MockAssignmentModel(MatrixData(os.path.join(TEST_DATA_PATH, "Matrices", "2016_test")))
+        ass_model = MockAssignmentModel(MatrixData(os.path.join(TEST_DATA_PATH, "Results", "test", "Matrices")))
         zone_data_path = os.path.join(TEST_DATA_PATH, "Scenario_input_data", "2030_test")
-        base_zone_data_path = os.path.join(TEST_DATA_PATH, "Scenario_input_data", "2016_test")
-        base_matrices_path = os.path.join(TEST_DATA_PATH, "Matrices", "base_test")
+        base_zone_data_path = os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata_test")
+        base_matrices_path = os.path.join(TEST_DATA_PATH, "Base_input_data", "base_matrices_test")
         results_path = os.path.join(TEST_DATA_PATH, "Results")
         model = modelsystem.ModelSystem(zone_data_path, base_zone_data_path, base_matrices_path, results_path, ass_model, "test", is_agent_model=True)
         impedance = model.assign_base_demand()

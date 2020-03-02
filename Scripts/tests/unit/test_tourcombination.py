@@ -13,7 +13,7 @@ TEST_DATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..",
 class TourCombinationModelTest(unittest.TestCase):
     def test_generation(self):
         zi = numpy.array([5, 6, 7, 2792, 16001, 17000, 31000, 31501])
-        zd = ZoneData(os.path.join(TEST_DATA_PATH, "Scenario_input_data", "2016_test"), zi)
+        zd = ZoneData(os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata_test"), zi)
         zd._values["hu_t"] = pandas.Series([0, 0, 0, 0], [5, 6, 7, 2792])
         zd._values["ho_w"] = pandas.Series([0, 0, 0, 0], [5, 6, 7, 2792])
         model = TourCombinationModel(zd)

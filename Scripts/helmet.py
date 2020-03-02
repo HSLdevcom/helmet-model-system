@@ -1,6 +1,5 @@
 from utils.config import Config
 from utils.log import Log
-from datahandling import resultdata
 from assignment.emme_assignment import EmmeAssignmentModel
 from assignment.mock_assignment import MockAssignmentModel
 from modelsystem import ModelSystem
@@ -31,9 +30,6 @@ def main(args, logger):
         }
     }
 
-    # Initialize result matrices' folder TODO refactor as well as Line47 "mock_result_path = ..."
-    resultdata.set_path(name)
-
     # Read input matrices (.omx) and zonedata (.csv), and initialize models (assignment model and model-system)
     logger.info("Initializing matrices and models..", extra=log_extra)
     # Check input data folders/files exist
@@ -48,7 +44,7 @@ def main(args, logger):
     # Choose and initialize the Traffic Assignment (supply)model
     if args.do_not_use_emme:
         logger.info("Initializing MockAssignmentModel..")
-        mock_result_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "Matrices", args.scenario_name)
+        mock_result_path = os.path.join(results_path, args.scenario_name)
         if not os.path.exists(mock_result_path):
             raise NameError("Mock Results directory " + mock_result_path + " does not exist.")
         ass_model = MockAssignmentModel(MatrixData(mock_result_path))

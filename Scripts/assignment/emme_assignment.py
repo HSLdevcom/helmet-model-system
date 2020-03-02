@@ -6,7 +6,6 @@ from abstract_assignment import AssignmentModel, ImpedanceSource
 from datatypes.car import Car
 from datatypes.journey_level import JourneyLevel
 from datatypes.path_analysis import PathAnalysis
-from datahandling import resultdata
 
 
 class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
@@ -309,7 +308,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         }]
         self.emme.network_calc(netw_specs, scenario)
 
-    def print_vehicle_kms(self):
+    def print_vehicle_kms(self, resultdata):
         freight_classes = ["van", "truck", "trailer_truck"]
         vdfs = [1, 2, 3, 4, 5]
         transit_modes = {

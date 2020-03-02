@@ -1,6 +1,6 @@
 from utils.log import Log
 import assignment.departure_time as dt
-from datahandling import resultdata
+from datahandling.resultdata import ResultsData
 from datahandling.zonedata import ZoneData
 from datahandling.matrixdata import MatrixData
 from demand.freight import FreightModel
@@ -19,17 +19,22 @@ class ModelSystem:
     def __init__(self, zone_data_path, base_zone_data_path, base_matrices_path, results_path, ass_model, name, is_agent_model=False):
         self.logger = Log.get_instance()
         self.ass_model = ass_model
+        self.is_agent_model = is_agent_model
+        # Input data
         self.zdata_base = ZoneData(base_zone_data_path, ass_model.zone_numbers)
         self.basematrices = MatrixData(base_matrices_path)
         self.zdata_forecast = ZoneData(zone_data_path, ass_model.zone_numbers)
-        self.resultmatrices = MatrixData(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "Matrices", name))
-        self.is_agent_model = is_agent_model
+        # Output data
+        self.resultmatrices = MatrixData(os.path.join(results_path, name, "Matrices"))
+        self.resultdata = ResultsData(os.path.join(results_path, name))
+
         if is_agent_model:
-            self.dm = DemandModel(self.zdata_forecast, is_agent_model)
+            self.dm = DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=is_agent_model)
             self.dm.create_population()
         else:
-            self.dm = DemandModel(self.zdata_forecast)
+            self.dm = DemandModel(self.zdata_forecast, self.resultdata)
             self.dm.create_population_segments()
+
         self.fm = FreightModel(self.zdata_base,
                                self.zdata_forecast,
                                self.basematrices)
@@ -169,25 +174,30 @@ class ModelSystem:
             # Car Ownership -model specific block
             if tp == "aht":
                 car_time = numpy.ma.average(
-                    impedance[tp]["time"]["car_work"], axis=1,
-                    weights=self.dtm.demand[tp]["car_work"])
+                    impedance[tp]["time"]["car_work"],
+                    axis=1,
+                    weights=self.dtm.demand[tp]["car_work"]
+                )
                 transit_time = numpy.ma.average(
-                    impedance[tp]["time"]["transit"], axis=1,
-                    weights=self.dtm.demand[tp]["transit_work"])
+                    impedance[tp]["time"]["transit"],
+                    axis=1,
+                    weights=self.dtm.demand[tp]["transit_work"]
+                )
                 time_ratio = transit_time / car_time
-                resultdata.print_data(
-                    time_ratio, "impedance_ratio.txt",
-                    self.ass_model.zone_numbers, "time")
+                self.resultdata.print_data(time_ratio, "impedance_ratio.txt", self.ass_model.zone_numbers, "time")
+
                 car_cost = numpy.ma.average(
-                    impedance[tp]["cost"]["car_work"], axis=1,
-                    weights=self.dtm.demand[tp]["car_work"])
+                    impedance[tp]["cost"]["car_work"],
+                    axis=1,
+                    weights=self.dtm.demand[tp]["car_work"]
+                )
                 transit_cost = numpy.ma.average(
-                    impedance[tp]["cost"]["transit"], axis=1,
-                    weights=self.dtm.demand[tp]["transit_work"])
+                    impedance[tp]["cost"]["transit"],
+                    axis=1,
+                    weights=self.dtm.demand[tp]["transit_work"]
+                )
                 cost_ratio = transit_cost / 44. / car_cost
-                resultdata.print_data(
-                    cost_ratio, "impedance_ratio.txt",
-                    self.ass_model.zone_numbers, "cost")
+                self.resultdata.print_data(cost_ratio, "impedance_ratio.txt", self.ass_model.zone_numbers, "cost")
 
             if is_last_iteration:
                 zone_numbers = self.ass_model.zone_numbers
@@ -204,11 +214,11 @@ class ModelSystem:
                             mtx[ass_class] = cost_data
 
         if is_last_iteration:
-            self.ass_model.print_vehicle_kms()
+            self.ass_model.print_vehicle_kms(self.resultdata)
 
         # Reset time-period specific demand matrices (DTM), and empty result buffer
         self.dtm.init_demand()
-        resultdata.flush()
+        self.resultdata.flush()
         return impedance
 
     def _distribute_sec_dests(self, purpose, mode, impedance):
