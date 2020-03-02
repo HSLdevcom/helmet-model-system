@@ -1,13 +1,10 @@
 import numpy
 import pandas
 import parameters
-from datatypes.purpose import Purpose, TourPurpose, SecDestPurpose
-import models.logit as logit
-import models.linear as linear
+from datatypes.purpose import TourPurpose, SecDestPurpose
+from models import logit
 from datatypes.person import Person
-from datatypes.tour import Tour
-import random
-import datahandling.resultdata as result
+from datahandling import resultdata
 
 
 class DemandModel:
@@ -88,7 +85,7 @@ class DemandModel:
                     self.purpose_dict[purpose].gen_model.tours += nr_tours
                 nr_tours_sums[combination] = nr_tours.sum()
             data[age] = nr_tours_sums.sort_index()
-        result.print_matrix(data, "generation", "tour_combinations")
+        resultdata.print_matrix(data, "generation", "tour_combinations")
 
     def create_population(self):
         """Create population for agent-based simulation."""
