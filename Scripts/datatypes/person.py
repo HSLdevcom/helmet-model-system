@@ -2,6 +2,7 @@ import numpy
 import random
 from datatypes.tour import Tour
 
+
 class Person:
     FEMALE = 0
     MALE = 1

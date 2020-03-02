@@ -1,11 +1,13 @@
-from openpyxl import Workbook, load_workbook
-import sys
+from openpyxl import load_workbook
 import os
 import openmatrix as omx
 import numpy
 import pandas
-import re
 import parameters as param
+from argparse import ArgumentParser
+
+SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
+PROJECT_DIR = os.path.join(SCRIPT_DIR, "..")
 
 
 def run_cost_benefit_analysis(scenario_0, scenario_1, year):
@@ -13,19 +15,16 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year):
 
     Parameters
     ----------
-    alt_0 : str
+    scenario_0 : str
         Name of do-nothing scenario, for which 
         forecast results are available in Results folder
-    alt_1 : str
+    scenario_1 : str
         Name of project scenario, for which 
         forecast results are available in Results folder
     year : int
         The evaluation year (1 or 2)
-    excelfile : str
-        Path to excel file where results will be written
     """
-    script_dir = os.path.dirname(os.path.realpath(__file__))
-    excelfile = os.path.join(script_dir, "..", "CBA_kehikko.xlsx")
+    excelfile = os.path.join(SCRIPT_DIR, "CBA_kehikko.xlsx")
     mile_diff = read_miles(scenario_1) - read_miles(scenario_0)
     transit_mile_diff = read_transit_miles(scenario_1) - read_transit_miles(scenario_0)
     revenues = {
@@ -57,11 +56,10 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year):
         print "Evaluation year must be either 1 or 2"
     wb.save("..\\Results\\cba_" + scenario_1 + ".xlsx")
 
+
 def read_scenario(scenario_name, time_period):
     """Read travel cost and demand data for scenario from files"""
-    script_dir = os.path.dirname(os.path.realpath(__file__))
-    project_dir = os.path.join(script_dir, "..", "..")
-    path = os.path.join(project_dir, "Matrices", scenario_name)
+    path = os.path.join(PROJECT_DIR, "Matrices", scenario_name)
     files = dict.fromkeys(["demand", "time", "cost", "dist"])
     for mtx_type in files:
         file_name = mtx_type + '_' + time_period + ".omx"
@@ -88,6 +86,7 @@ def read_scenario(scenario_name, time_period):
     print "Files read"
     return matrices    
 
+
 def calc_revenue(ve0, ve1):
     """Calculate difference in producer revenue between scenarios ve1 and ve0"""
     revenue = 0
@@ -99,6 +98,7 @@ def calc_revenue(ve0, ve1):
     revenue += (cost_change * ve1["demand"])[demand_change < 0].sum()
     return revenue
 
+
 def calc_cost_gains(ve0, ve1):
     """Calculate difference in consumer surplus between scenarios ve1 and ve0"""
     gains = {"existing": 0, "additional": 0}
@@ -109,6 +109,7 @@ def calc_cost_gains(ve0, ve1):
     gains["existing"] += (ve1["demand"] * gain)[demand_change < 0].sum()
     gains["additional"] -= 0.5 * (demand_change * gain)[demand_change < 0].sum()
     return gains
+
 
 def calc_gains(ve0, ve1):
     """Calculate time, distance and cost gains"""
@@ -136,25 +137,18 @@ def calc_gains(ve0, ve1):
     gains["cost"] = calc_cost_gains(ve0, ve1)
     return gains
 
+
 def read_miles(scenario_name):
     """Read scenario data from files"""
-    script_dir = os.path.dirname(os.path.realpath(__file__))
-    project_dir = os.path.join(script_dir, "..", "..")
-    data_dir = os.path.join(project_dir, "Results", scenario_name)
-    data_dir = os.path.abspath(data_dir)
-    filename = os.path.join(data_dir, "vehicle_kms.txt")
-    data = pandas.read_csv(filename, delim_whitespace=True)
-    return data
+    file_path = os.path.join(PROJECT_DIR, "Results", scenario_name, "vehicle_kms.txt")
+    return pandas.read_csv(file_path, delim_whitespace=True)
+
 
 def read_transit_miles(scenario_name):
     """Read scenario data from files"""
-    script_dir = os.path.dirname(os.path.realpath(__file__))
-    project_dir = os.path.join(script_dir, "..", "..")
-    data_dir = os.path.join(project_dir, "Results", scenario_name)
-    data_dir = os.path.abspath(data_dir)
-    filename = os.path.join(data_dir, "transit_kms.txt")
-    data = pandas.read_csv(filename, delim_whitespace=True)
-    return data
+    file_path = os.path.join(PROJECT_DIR, "Results", scenario_name, "transit_kms.txt")
+    return pandas.read_csv(file_path, delim_whitespace=True)
+
 
 def write_results_1(wb, miles, transit_miles, revenues, gains):
     """Write results for year 1"""
@@ -216,6 +210,7 @@ def write_results_1(wb, miles, transit_miles, revenues, gains):
     ws["G8"] = revenues["car"]["pt"]
     ws["H8"] = revenues["car"]["iht"]
 
+
 def write_gains_1(ws, gains):
     ws["B9"] = gains["aht"]["time"]["existing"]
     ws["B10"] = gains["aht"]["time"]["additional"]
@@ -235,6 +230,7 @@ def write_gains_1(ws, gains):
     ws["C38"] = gains["pt"]["cost"]["additional"]
     ws["D37"] = gains["iht"]["cost"]["existing"]
     ws["D38"] = gains["iht"]["cost"]["additional"]
+
 
 def write_results_2(wb, miles, transit_miles, revenues, gains):
     """Write results for year 2"""
@@ -297,6 +293,7 @@ def write_results_2(wb, miles, transit_miles, revenues, gains):
     ws["G13"] = revenues["car"]["pt"]
     ws["H13"] = revenues["car"]["iht"]
 
+
 def write_gains_2(ws, gains):
     ws["B14"] = gains["aht"]["time"]["existing"]
     ws["B15"] = gains["aht"]["time"]["additional"]
@@ -318,5 +315,11 @@ def write_gains_2(ws, gains):
     ws["D43"] = gains["iht"]["cost"]["additional"]
 
 
-run_cost_benefit_analysis(sys.argv[1], sys.argv[2], int(sys.argv[3]))
-# run_cost_benefit_analysis("2030_test", "2030_test", 1)
+if __name__ == "__main__":
+    parser = ArgumentParser(epilog="Calculates the Cost-Benefit Analysis between Results of two HELMET-Scenarios, "
+                                   "and writes the outcome in CBA_kehikko.xlsx -file (in same folder).")
+    parser.add_argument("baseline_scenario", type=str, help="A 'do-nothing' baseline scenario.")
+    parser.add_argument("projected_scenario", type=str, help="A projected scenario, compared to the baseline scenario.")
+    parser.add_argument("evaluation_year", type=int, choices={1, 2}, help="Evaluation year, either 1 or 2.")
+    args = parser.parse_args()
+    run_cost_benefit_analysis(args.baseline_scenario, args.projected_scenario, args.evaluation_year)

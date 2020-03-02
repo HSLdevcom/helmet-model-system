@@ -1,13 +1,10 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
-
 import numpy
 import pandas
 import unittest
-import parameters
 from datahandling.zonedata import ZoneData
 from models.logit import TourCombinationModel
-import datahandling.resultdata as result
 
 
 class TourCombinationModelTest(unittest.TestCase):
@@ -24,4 +21,3 @@ class TourCombinationModelTest(unittest.TestCase):
         self.assertIs(type(prob["-"]), pandas.core.series.Series)
         self.assertEquals(prob["hw-ho"].values.ndim, 1)
         self.assertEquals(prob["hw-hs"].values.shape[0], 4)
-        

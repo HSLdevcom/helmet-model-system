@@ -1,22 +1,20 @@
 import unittest
-
-import logging
-import os
 import numpy
 import modelsystem
-import datahandling.resultdata as result
+from datahandling import resultdata
 from assignment.mock_assignment import MockAssignmentModel
 from datahandling.matrixdata import MatrixData
-from demand.freight import FreightModel
 from datatypes.demand import Demand
 import parameters
+import os
+
 
 class ModelTest(unittest.TestCase):
     
     def test_models(self):
         print("Testing assignment..")
-        result.set_path("test")
-        ass_model = MockAssignmentModel(MatrixData("2016_test"))
+        resultdata.set_path("test")
+        ass_model = MockAssignmentModel(MatrixData(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "..", "..", "Matrices", "2016_test")))
         model = modelsystem.ModelSystem("2030_test", "2016_test", "base_test", ass_model, "test")
         # model.dm.create_population()
         # self.assertEqual(7, len(ass_classes))
@@ -29,7 +27,7 @@ class ModelTest(unittest.TestCase):
             self.assertIsNotNone(impedance[tp]["dist"])
             
         print("Adding demand and assigning")
-        impedance = model.run(impedance)
+        impedance = model.run_iteration(impedance)
         # for mode in demand:
         #     self._validate_demand(demand[mode])
         self.assertEquals(len(parameters.emme_scenario), len(impedance))
@@ -40,11 +38,11 @@ class ModelTest(unittest.TestCase):
         print("Assignment test done")
     
     def test_agent_model(self):
-        result.set_path("test")
-        ass_model = MockAssignmentModel(MatrixData("2016_test"))
+        resultdata.set_path("test")
+        ass_model = MockAssignmentModel(MatrixData(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "..", "..", "Matrices", "2016_test")))
         model = modelsystem.ModelSystem("2030_test", "2016_test", "base_test", ass_model, "test", is_agent_model=True)
         impedance = model.assign_base_demand()
-        impedance = model.run(impedance)
+        impedance = model.run_iteration(impedance)
 
     def _validate_impedances(self, impedances):
         self.assertIsNotNone(impedances)
@@ -67,4 +65,3 @@ class ModelTest(unittest.TestCase):
         self.assertIs(type(demand.matrix), numpy.ndarray)
         self.assertEquals(demand.matrix.ndim, 2)
         self.assertEquals(demand.matrix.shape[1], 6)
-        

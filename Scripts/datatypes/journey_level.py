@@ -1,5 +1,6 @@
 import parameters as param
 
+
 class JourneyLevel:
     def __init__(self, boarded, count_zone_boardings=False):
         # Definition of transition rules: all modes are allowed

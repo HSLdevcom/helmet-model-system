@@ -1,6 +1,7 @@
 import parameters as param
 from path_analysis import PathAnalysis
 
+
 class Car:
     def __init__(self, ass_class,
                  value_of_time_inv=None, link_costs="@rumsi"):

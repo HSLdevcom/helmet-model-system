@@ -1,6 +1,10 @@
-from parameters import impedance_share, tour_purposes
+from parameters import impedance_share
+
 
 class ImpedanceTransformer:
+    def __init__(self):
+        pass
+
     def transform(self, purpose, impedance):
         """Perform transformation from time period dependent matrices 
         to aggregate impedance matrices for specific travel purpose.

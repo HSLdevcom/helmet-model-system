@@ -86,6 +86,8 @@ class ModelSystem:
         # Add truck and trailer truck demand to time-period specific matrices (DTM) used in traffic assignment
         self.dtm.add_demand(self.trucks)
         self.dtm.add_demand(self.trailer_trucks)
+
+        # Update car density
         prediction = self.cdm.predict()
         self.zdata_forecast["car_density"][:self.zdata_forecast.first_peripheral_zone] = prediction
 
@@ -181,6 +183,7 @@ class ModelSystem:
             # Car Ownership -model specific block
             if tp == "aht":
                 self._update_ratios(impedance, tp)
+            
             if is_last_iteration:
                 zone_numbers = self.ass_model.zone_numbers
                 with self.resultmatrices.open("demand", tp, 'w') as mtx:

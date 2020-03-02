@@ -4,6 +4,7 @@ import parameters
 from datatypes.demand import Demand
 from datatypes.purpose import Purpose
 
+
 class FreightModel:
     def __init__(self, zone_data_base, zone_data_forecast, base_demand):
         self.zdata_b = zone_data_base
@@ -76,7 +77,7 @@ class FreightModel:
         b = pandas.Series(parameters.tour_generation[mode])
         return (b * zone_data).sum(1) + 0.001
 
-    def fratar(self, target_vect, trips, max_iter = 10):
+    def fratar(self, target_vect, trips, max_iter=10):
         """Perform fratar adjustment of matrix.
 
         Parameters
@@ -124,5 +125,5 @@ class FreightModel:
         n = production_base
         s = production_forecast
         threshold = parameters.vector_calibration_threshold
-        n[n==0] = 0.000001
+        n[n == 0] = 0.000001
         return numpy.where(s < threshold*n, s * b/n, s + threshold*(b - n))
