@@ -265,7 +265,7 @@ class ModelSystem:
             impedance[tp]["time"]["transit"], axis=1,
             weights=self.dtm.demand[tp]["transit_work"])
         time_ratio = transit_time / car_time
-        result.print_data(
+        resultdata.print_data(
             time_ratio, "impedance_ratio.txt",
             self.ass_model.zone_numbers, "time")
         time_ratio_series = pandas.Series(numpy.ma.getdata(time_ratio),
@@ -278,7 +278,8 @@ class ModelSystem:
             impedance[tp]["cost"]["transit"], axis=1,
             weights=self.dtm.demand[tp]["transit_work"])
         cost_ratio = transit_cost / 44. / car_cost
-        result.print_data(
+        cost_ratio = cost_ratio.clip(0.01, None)
+        resultdata.print_data(
             cost_ratio, "impedance_ratio.txt",
             self.ass_model.zone_numbers, "cost")
         cost_ratio_series = pandas.Series(numpy.ma.getdata(cost_ratio),
