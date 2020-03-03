@@ -2882,12 +2882,13 @@ car_usage = {
 car_density = {
     "constant": 0.0,
     "generation": {
-        "share_detached_houses": 2.413e-3,
-        "helsinki": -2.290e-2,
+        "share_detached_houses": 2.408e-03,
+        "espoo_vant_kau": 7.185e-02,
+        "surrounding": 1.229e-01,
     },
     "log": {
-        "time_ratio": 2.024e-1,
-        "cost_ratio": -1.040e-1,
+        "time_ratio": 1.405e-01,
+        "cost_ratio": 1.405e-01,
     },
 }
 vector_calibration_threshold = 5

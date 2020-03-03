@@ -268,9 +268,8 @@ class ModelSystem:
         resultdata.print_data(
             time_ratio, "impedance_ratio.txt",
             self.ass_model.zone_numbers, "time")
-        time_ratio_series = pandas.Series(numpy.ma.getdata(time_ratio),
-            self.ass_model.zone_numbers)
-        self.zdata_forecast["time_ratio"] = time_ratio_series
+        self.zdata_forecast["time_ratio"] = pandas.Series(
+            numpy.ma.getdata(time_ratio), self.ass_model.zone_numbers)
         car_cost = numpy.ma.average(
             impedance[tp]["cost"]["car_work"], axis=1,
             weights=self.dtm.demand[tp]["car_work"])
@@ -282,6 +281,5 @@ class ModelSystem:
         resultdata.print_data(
             cost_ratio, "impedance_ratio.txt",
             self.ass_model.zone_numbers, "cost")
-        cost_ratio_series = pandas.Series(numpy.ma.getdata(cost_ratio),
-            self.ass_model.zone_numbers)
-        self.zdata_forecast["cost_ratio"] = cost_ratio_series
+        self.zdata_forecast["cost_ratio"] = pandas.Series(
+            numpy.ma.getdata(cost_ratio), self.ass_model.zone_numbers)
