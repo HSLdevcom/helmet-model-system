@@ -7,16 +7,6 @@ except ImportError:
     _use_txt = True
 
 
-# helmet.py -> set_path
-
-# generation.py -> print_data( ... tours.txt ...)
-# emme_assignment -> print_data ( ... X_kms.txt ... )
-# purpose.py -> print_data & print_matrix
-# trips.py -> print_matrix
-# logit.py -> print_data
-
-# test_models.py -> set_path
-# test_logit.py -> set_path
 class ResultsData:
     def __init__(self, results_directory_path):
         if not os.path.exists(results_directory_path):
