@@ -14,7 +14,7 @@ def main(args, logger):
     name = args.scenario_name if args.scenario_name is not None else Config.DefaultScenario
     iterations = args.iterations
     base_zonedata_path = os.path.join(args.baseline_data_path, "2016_zonedata")
-    base_matrices_path = os.path.join(args.baseline_data_path, "2016_basematrices")
+    base_matrices_path = os.path.join(args.baseline_data_path, "base_matrices")
     forecast_zonedata_path = args.forecast_data_path
     results_path = args.results_path
     emme_project_path = args.emme_path
