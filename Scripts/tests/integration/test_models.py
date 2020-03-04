@@ -1,6 +1,6 @@
 import unittest
 import numpy
-import modelsystem
+from modelsystem import ModelSystem, AgentModelSystem
 from assignment.mock_assignment import MockAssignmentModel
 from datahandling.matrixdata import MatrixData
 from datatypes.demand import Demand
@@ -19,7 +19,7 @@ class ModelTest(unittest.TestCase):
         base_zone_data_path = os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata_test")
         base_matrices_path = os.path.join(TEST_DATA_PATH, "Base_input_data", "base_matrices_test")
         results_path = os.path.join(TEST_DATA_PATH, "Results")
-        model = modelsystem.ModelSystem(zone_data_path, base_zone_data_path, base_matrices_path, results_path, ass_model, "test")
+        model = ModelSystem(zone_data_path, base_zone_data_path, base_matrices_path, results_path, ass_model, "test")
         # model.dm.create_population()
         # self.assertEqual(7, len(ass_classes))
         impedance = model.assign_base_demand()
@@ -47,7 +47,7 @@ class ModelTest(unittest.TestCase):
         base_zone_data_path = os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata_test")
         base_matrices_path = os.path.join(TEST_DATA_PATH, "Base_input_data", "base_matrices_test")
         results_path = os.path.join(TEST_DATA_PATH, "Results")
-        model = modelsystem.ModelSystem(zone_data_path, base_zone_data_path, base_matrices_path, results_path, ass_model, "test", is_agent_model=True)
+        model = AgentModelSystem(zone_data_path, base_zone_data_path, base_matrices_path, results_path, ass_model, "test")
         impedance = model.assign_base_demand()
         impedance = model.run_iteration(impedance)
 
