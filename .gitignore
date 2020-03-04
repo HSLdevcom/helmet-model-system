@@ -42,16 +42,6 @@ Database/usemacro_*
 Database/STRAT_s21
 Database/STRAT_s22
 Database/STRAT_s23
-EMME_macros_and_infiles/builddb
-EMME_macros_and_infiles/core_interface_log
-EMME_macros_and_infiles/errors
-EMME_macros_and_infiles/fort.18
-EMME_macros_and_infiles/emmebank
-EMME_macros_and_infiles/reports
-EMME_macros_and_infiles/usemacro_*
-EMME_macros_and_infiles/STRAT_s21
-EMME_macros_and_infiles/STRAT_s22
-EMME_macros_and_infiles/STRAT_s23
 Logbook/project.mlbk-shm
 Logbook/project.mlbk-wal
 Scenario_input_data/2016/*
