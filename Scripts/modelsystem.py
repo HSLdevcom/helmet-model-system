@@ -84,9 +84,7 @@ class ModelSystem:
             else:
                 self.logger.info("Calculating transit cost")
                 fixed_cost = None
-            self.ass_model.calc_transit_cost(
-                self.zdata_forecast.transit_zone, peripheral_cost,
-                fixed_cost)
+            self.ass_model.calc_transit_cost(self.zdata_forecast.transit_zone, peripheral_cost, fixed_cost)
 
         # Perform traffic assignment and get result impedance, for each time period
         for tp in parameters.emme_scenario:
@@ -192,11 +190,7 @@ class ModelSystem:
     def _distribute_sec_dests(self, purpose, mode, impedance):
         threads = []
         demand = []
-        # TODO MON: This'd be extremely important to be an input argument, since parameters.py is tracked in version control.
-        # y, ALSO USED IN EMME ASSIGNMENT (look up)
         nr_threads = parameters.performance_settings["number_of_processors"]
-        # TODO MON: what if nr_threads is higher than cpu_count but not explicitly "max"
-        # unnecessary check, but default could be maximum
         if nr_threads == "max":
             nr_threads = multiprocessing.cpu_count()
         elif nr_threads <= 0:
