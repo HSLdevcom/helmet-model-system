@@ -4,7 +4,7 @@ from assignment.emme_assignment import EmmeAssignmentModel
 from assignment.mock_assignment import MockAssignmentModel
 from modelsystem import ModelSystem
 from datahandling.matrixdata import MatrixData
-from emme.emme_context import EmmeContext
+from emme_bindings.emme_project import EmmeProject
 from argparse import ArgumentParser
 import sys
 import os
@@ -50,7 +50,7 @@ def main(args, logger):
         ass_model = MockAssignmentModel(MatrixData(mock_result_path))
     else:
         logger.info("Initializing Emme..")
-        ass_model = EmmeAssignmentModel(EmmeContext(emme_project_path), first_scenario_id=args.first_scenario_id)
+        ass_model = EmmeAssignmentModel(EmmeProject(emme_project_path), first_scenario_id=args.first_scenario_id)
     # Initialize model system (wrapping Assignment-model, and providing Demand-calculations as Python modules)
     model = ModelSystem(forecast_zonedata_path, base_zonedata_path, base_matrices_path, results_path, ass_model, name)
     log_extra["status"]["results"] = model.mode_share

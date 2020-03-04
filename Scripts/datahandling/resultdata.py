@@ -8,6 +8,12 @@ except ImportError:
 
 
 class ResultsData:
+    """
+    Saves all result data to same folder.
+    Currently print_data & print_matrix re-write over and over per [filename], until all data has been written,
+        this could be refactored to more sensible, but requires further discussion on "what is written and where".
+        Then also _buffer-/flush() -logic could be removed.
+    """
     def __init__(self, results_directory_path):
         if not os.path.exists(results_directory_path):
             os.makedirs(results_directory_path)
@@ -15,7 +21,6 @@ class ResultsData:
         self._buffer = {}
 
     def flush(self):
-        # TODO write output in flush, refactor buffer logic
         self._buffer = {}
 
     def print_data(self, data, filename, zone_numbers, colname):
@@ -24,7 +29,6 @@ class ResultsData:
         if filename not in self._buffer:
             self._buffer[filename] = pandas.DataFrame(index=zone_numbers)
         self._buffer[filename][colname] = data
-        # TODO MON: doesn't this write partial csv's repeatedly (to same file?) until last [colname]?
         self._buffer[filename].to_csv(filepath, sep='\t', float_format="%1.5f")
 
     def print_matrix(self, data, filename, sheetname):
@@ -33,7 +37,6 @@ class ResultsData:
             data.to_csv(os.path.join(self.path, "{}_{}.txt".format(filename, sheetname)), sep='\t', float_format="%8.1f")
 
         # Else init Workbook -> write data to a new sheet of it -> save the workbook in .xlsx
-        # TODO MON: same as print data, doesn't this do same rewrite for every worksheet?
         else:
             # Get/Create new worksheet
             if filename in self._buffer:
