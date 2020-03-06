@@ -13,16 +13,24 @@ class DepartureTimeModel:
             Number of zones in assignment model
         """
         self.nr_zones = nr_zones
-        self.demand = dict.fromkeys(param.emme_scenario,
-                                    dict.fromkeys(param.transport_classes,
-                                                  numpy.zeros((self.nr_zones, self.nr_zones))))
+        self.demand = dict.fromkeys(param.emme_scenario)
+        for time_period in self.demand:
+            ass_classes = dict.fromkeys(param.transport_classes)
+            self.demand[time_period] = ass_classes
+            for ass_class in ass_classes:
+                zeros = numpy.zeros((self.nr_zones, self.nr_zones))
+                self.demand[time_period][ass_class] = zeros
         self.logger = logging.getLogger()
 
     def init_demand(self):
         """Initialize/reset demand for all time periods (each including transport_classes, each being set to zeros)."""
-        self.demand = dict.fromkeys(param.emme_scenario,
-                                    dict.fromkeys(param.transport_classes,
-                                                  numpy.zeros((self.nr_zones, self.nr_zones))))
+        self.demand = dict.fromkeys(param.emme_scenario)
+        for time_period in self.demand:
+            ass_classes = dict.fromkeys(param.transport_classes)
+            self.demand[time_period] = ass_classes
+            for ass_class in ass_classes:
+                zeros = numpy.zeros((self.nr_zones, self.nr_zones))
+                self.demand[time_period][ass_class] = zeros
 
     def add_demand(self, demand):
         """Add demand matrix for whole day.
