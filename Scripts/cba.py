@@ -33,7 +33,9 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, results_directory):
         "car": {},
         "transit": {},
     }
-    gains = dict.fromkeys(param.transport_classes, {})
+    gains = dict.fromkeys(param.transport_classes)
+    for transport_class in gains:
+        gains[transport_class] = {}
     for tp in param.emme_scenario:
         ve1 = read_scenario(os.path.join(results_directory, scenario_1, "Matrices"), tp)
         ve0 = read_scenario(os.path.join(results_directory, scenario_0, "Matrices"), tp)
