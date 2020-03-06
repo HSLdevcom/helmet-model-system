@@ -18,6 +18,13 @@ class MatrixData:
         yield mtxfile
         mtxfile.close()
 
+    def list_matrices(self, mtx_type, time_period, m='r'):
+        file_name = os.path.join(self.path, mtx_type+'_'+time_period+".omx")
+        mtxfile = omx.open_file(file_name, m)
+        names = mtxfile.list_matrices()
+        mtxfile.close()
+        return names
+
     def get_external(self, transport_mode):
         return read_csv_file(self.path, "external_"+transport_mode+".txt")
 
