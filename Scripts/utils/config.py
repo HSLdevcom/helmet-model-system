@@ -61,10 +61,22 @@ class Config:
     def LOG_FORMAT(self, value): self.__set_value("LOG_FORMAT", value)
 
     @property
-    def DATA_PATH(self): return self.__get_value("DATA_PATH")
+    def BASELINE_DATA_PATH(self): return self.__get_value("BASELINE_DATA_PATH")
 
-    @DATA_PATH.setter
-    def DATA_PATH(self, value): self.__set_value("DATA_PATH", value)
+    @BASELINE_DATA_PATH.setter
+    def BASELINE_DATA_PATH(self, value): self.__set_value("BASELINE_DATA_PATH", value)
+
+    @property
+    def FORECAST_DATA_PATH(self): return self.__get_value("FORECAST_DATA_PATH")
+
+    @FORECAST_DATA_PATH.setter
+    def FORECAST_DATA_PATH(self, value): self.__set_value("FORECAST_DATA_PATH", value)
+
+    @property
+    def RESULTS_PATH(self): return self.__get_value("RESULTS_PATH")
+
+    @RESULTS_PATH.setter
+    def RESULTS_PATH(self, value): self.__set_value("RESULTS_PATH", value)
 
     @property
     def EMME_PROJECT_PATH(self): return self.__get_value("EMME_PROJECT_PATH")

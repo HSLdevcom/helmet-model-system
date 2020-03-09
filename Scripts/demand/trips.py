@@ -4,26 +4,28 @@ import parameters
 from datatypes.purpose import TourPurpose, SecDestPurpose
 from models import logit
 from datatypes.person import Person
-from datahandling import resultdata
 
 
 class DemandModel:
-    def __init__(self, zone_data, is_agent_model=False):
+    def __init__(self, zone_data, resultdata, is_agent_model=False):
         """Container for private tour purposes and models.
 
         Parameters
         ----------
         zone_data : ZoneData
             Data used for all demand calculations
+        resultdata : ResultData
+            Writer object to result directory
         """
+        self.resultdata = resultdata
         self.zone_data = zone_data
         self.tour_purposes = []
         self.purpose_dict = {}
         for purpose_spec in parameters.tour_purposes:
             if "sec_dest" in purpose_spec:
-                purpose = SecDestPurpose(purpose_spec, zone_data, is_agent_model)
+                purpose = SecDestPurpose(purpose_spec, zone_data, resultdata, is_agent_model=is_agent_model)
             else:
-                purpose = TourPurpose(purpose_spec, zone_data, is_agent_model)
+                purpose = TourPurpose(purpose_spec, zone_data, resultdata, is_agent_model=is_agent_model)
             self.tour_purposes.append(purpose)
             self.purpose_dict[purpose_spec["name"]] = purpose
         for purpose_spec in parameters.tour_purposes:
@@ -34,7 +36,7 @@ class DemandModel:
                     if "sec_dest" in purpose_spec:
                         self.purpose_dict[source].sec_dest_purpose = purpose
         bounds = slice(0, zone_data.first_peripheral_zone)
-        self.cm = logit.CarUseModel(zone_data, bounds)
+        self.cm = logit.CarUseModel(zone_data, bounds, self.resultdata)
         self.gm = logit.TourCombinationModel(self.zone_data)
         zone_data["car_users"] = self.cm.calc_prob()
         self.age_groups = (
@@ -85,7 +87,7 @@ class DemandModel:
                     self.purpose_dict[purpose].gen_model.tours += nr_tours
                 nr_tours_sums[combination] = nr_tours.sum()
             data[age] = nr_tours_sums.sort_index()
-        resultdata.print_matrix(data, "generation", "tour_combinations")
+        self.resultdata.print_matrix(data, "generation", "tour_combinations")
 
     def create_population(self):
         """Create population for agent-based simulation."""

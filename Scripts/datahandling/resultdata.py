@@ -6,65 +6,67 @@ try:
 except ImportError:
     _use_txt = True
 
-_path = ".."
-_buffer = {}
 
+class ResultsData:
+    """
+    Saves all result data to same folder.
+    Currently print_data & print_matrix re-write over and over per [filename], until all data has been written,
+        this could be refactored to more sensible, but requires further discussion on "what is written and where".
+        Then also _buffer-/flush() -logic could be removed.
+    """
+    def __init__(self, results_directory_path):
+        if not os.path.exists(results_directory_path):
+            os.makedirs(results_directory_path)
+        self.path = results_directory_path
+        self._buffer = {}
 
-def set_path(scenario):
-    script_dir = os.path.dirname(os.path.realpath(__file__))
-    project_dir = os.path.join(script_dir, "..", "..")
-    data_dir = os.path.join(project_dir, "Results", scenario)
-    if not os.path.exists(data_dir):
-        os.makedirs(data_dir)
-    global _path 
-    _path = data_dir
+    def flush(self):
+        self._buffer = {}
 
+    def print_data(self, data, filename, zone_numbers, colname):
+        """Get/Create buf[filename] dataframe (with index=zone_numbers) -> set df[colname] to data -> save df to csv"""
+        filepath = os.path.join(self.path, filename)
+        if filename not in self._buffer:
+            self._buffer[filename] = pandas.DataFrame(index=zone_numbers)
+        self._buffer[filename][colname] = data
+        self._buffer[filename].to_csv(filepath, sep='\t', float_format="%1.5f")
 
-def flush():
-    # TODO write output in flush, refactor buffer logic
-    global _buffer
-    _buffer = {}
+    def print_matrix(self, data, filename, sheetname):
+        # If no Workbook module available (= _use_txt), save df (in arg data) to csv
+        if _use_txt:
+            data.to_csv(os.path.join(self.path, "{}_{}.txt".format(filename, sheetname)), sep='\t', float_format="%8.1f")
 
-
-def print_data(data, filename, zone_numbers, colname):
-    filepath = os.path.join(_path, filename)
-    if filename not in _buffer:
-        _buffer[filename] = pandas.DataFrame(index=zone_numbers)
-    _buffer[filename][colname] = data
-    _buffer[filename].to_csv(filepath, sep='\t', float_format="%1.5f")
-
-
-# TODO MON: This could use a lot of {}.formats and spaces between logical groups of operations, and removal of one-time variables
-# y (primaaristen jalkeen)
-def print_matrix(data, filename, sheetname):
-    if _use_txt:
-        txtfilepath = os.path.join(_path, filename + '_' + sheetname + ".txt")
-        data.to_csv(txtfilepath, sep='\t', float_format="%8.1f")
-    else:
-        xlsxfilepath = os.path.join(_path, filename + ".xlsx")
-        if filename in _buffer:
-            ws = _buffer[filename].create_sheet(sheetname)
+        # Else init Workbook -> write data to a new sheet of it -> save the workbook in .xlsx
         else:
-            _buffer[filename] = Workbook()
-            ws = _buffer[filename].active
-            ws.title = sheetname
-        for j in xrange(0, data.shape[1]):
-            ws.cell(row=1, column=j+2).value = data.columns[j]
-        for i in xrange(0, data.shape[0]):
-            ws.cell(row=i+2, column=1).value = data.index[i]
+            # Get/Create new worksheet
+            if filename in self._buffer:
+                ws = self._buffer[filename].create_sheet(sheetname)
+            else:
+                self._buffer[filename] = Workbook()
+                ws = self._buffer[filename].active
+                ws.title = sheetname
+
+            # Write data to each cell
             for j in xrange(0, data.shape[1]):
-                ws.cell(row=i+2, column=j+2).value = data.iloc[i, j]
-        _buffer[filename].save(xlsxfilepath)
-    listfilepath = os.path.join(_path, filename + ".txt")
-    filename = filename  + "_list"
-    if filename not in _buffer:
-        _buffer[filename] = []
-    rowtext = "{}\t{}\t{}\t{}\n"
-    sheetname = sheetname.replace("_", "\t")
-    for j in data.columns:
-        for i in data.index:
-            val = rowtext.format(i, j, sheetname, str(data[j][i]))
-            _buffer[filename].append(val)
-    with open(listfilepath, 'w') as f:
-        for row in _buffer[filename]:
-            f.write(row)
+                ws.cell(row=1, column=j+2).value = data.columns[j]
+            for i in xrange(0, data.shape[0]):
+                ws.cell(row=i+2, column=1).value = data.index[i]
+                for j in xrange(0, data.shape[1]):
+                    ws.cell(row=i+2, column=j+2).value = data.iloc[i, j]
+
+            # Save the workbook
+            self._buffer[filename].save(os.path.join(self.path, "{}.xlsx".format(filename)))
+
+        # Create list file
+        listfilepath = os.path.join(self.path, "{}.txt".format(filename))
+        filename = "{}_list".format(filename)
+        if filename not in self._buffer:
+            self._buffer[filename] = []
+        sheetname = sheetname.replace("_", "\t")
+        for j in data.columns:
+            for i in data.index:
+                val = "{}\t{}\t{}\t{}\n".format(i, j, sheetname, str(data[j][i]))
+                self._buffer[filename].append(val)
+        with open(listfilepath, 'w') as f:
+            for row in self._buffer[filename]:
+                f.write(row)

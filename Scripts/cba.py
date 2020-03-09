@@ -10,7 +10,7 @@ SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 PROJECT_DIR = os.path.join(SCRIPT_DIR, "..")
 
 
-def run_cost_benefit_analysis(scenario_0, scenario_1, year):
+def run_cost_benefit_analysis(scenario_0, scenario_1, year, results_directory):
     """Runs CBA and writes the results to excel file.
 
     Parameters
@@ -23,6 +23,8 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year):
         forecast results are available in Results folder
     year : int
         The evaluation year (1 or 2)
+    results_directory : str
+        Path to where "scenario_name/Matrices" result folder exists
     """
     excelfile = os.path.join(SCRIPT_DIR, "CBA_kehikko.xlsx")
     mile_diff = read_miles(scenario_1) - read_miles(scenario_0)
@@ -31,10 +33,12 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year):
         "car": {},
         "transit": {},
     }
-    gains = dict.fromkeys(param.transport_classes, {})
+    gains = dict.fromkeys(param.transport_classes)
+    for transport_class in gains:
+        gains[transport_class] = {}
     for tp in param.emme_scenario:
-        ve1 = read_scenario(scenario_1, tp)
-        ve0 = read_scenario(scenario_0, tp)
+        ve1 = read_scenario(os.path.join(results_directory, scenario_1, "Matrices"), tp)
+        ve0 = read_scenario(os.path.join(results_directory, scenario_0, "Matrices"), tp)
         revenues["transit"][tp] = 0
         for transit_class in ("transit_work", "transit_leisure"):
             revenues["transit"][tp] += calc_revenue(
@@ -57,9 +61,8 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year):
     wb.save("..\\Results\\cba_" + scenario_1 + ".xlsx")
 
 
-def read_scenario(scenario_name, time_period):
+def read_scenario(path, time_period):
     """Read travel cost and demand data for scenario from files"""
-    path = os.path.join(PROJECT_DIR, "Matrices", scenario_name)
     files = dict.fromkeys(["demand", "time", "cost", "dist"])
     for mtx_type in files:
         file_name = mtx_type + '_' + time_period + ".omx"
@@ -321,5 +324,6 @@ if __name__ == "__main__":
     parser.add_argument("baseline_scenario", type=str, help="A 'do-nothing' baseline scenario.")
     parser.add_argument("projected_scenario", type=str, help="A projected scenario, compared to the baseline scenario.")
     parser.add_argument("evaluation_year", type=int, choices={1, 2}, help="Evaluation year, either 1 or 2.")
+    parser.add_argument("--results-path", dest="results_path", type=str, required=True, help="Path to Results directory.")
     args = parser.parse_args()
-    run_cost_benefit_analysis(args.baseline_scenario, args.projected_scenario, args.evaluation_year)
+    run_cost_benefit_analysis(args.baseline_scenario, args.projected_scenario, args.evaluation_year, arg.results_path)

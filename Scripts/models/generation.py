@@ -1,10 +1,10 @@
 import pandas
 import parameters
-from datahandling import resultdata
 
 
 class GenerationModel:
-    def __init__(self, purpose):
+    def __init__(self, purpose, resultdata):
+        self.resultdata = resultdata
         self.zone_data = purpose.zone_data
         self.purpose = purpose
         self.param = parameters.tour_generation[purpose.name]
@@ -37,8 +37,7 @@ class GenerationModel:
         numpy 1-d array
             Vector of tour numbers per zone
         """
-        resultdata.print_data(
-            self.tours, "tours.txt", self.zone_data.zone_numbers, self.purpose.name)
+        self.resultdata.print_data(self.tours, "tours.txt", self.zone_data.zone_numbers, self.purpose.name)
         return self.tours.values
 
 
@@ -60,9 +59,12 @@ class NonHomeGeneration(GenerationModel):
             b = self.param[source.name]
             for mode in source.attracted_tours:
                 tours += b * source.attracted_tours[mode]
-        resultdata.print_data(
+        self.resultdata.print_data(
             pandas.Series(tours, self.purpose.zone_numbers),
-            "tours.txt", self.zone_data.zone_numbers, self.purpose.name)
+            "tours.txt",
+            self.zone_data.zone_numbers,
+            self.purpose.name
+        )
         return tours
 
 

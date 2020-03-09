@@ -55,5 +55,5 @@ class ImpedanceSource:
         pass
 
     @abstractmethod
-    def print_vehicle_kms(self):
+    def print_vehicle_kms(self, resultdatawriter):
         pass
