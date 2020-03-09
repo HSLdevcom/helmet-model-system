@@ -4,12 +4,12 @@ import unittest
 import parameters
 from datahandling.zonedata import ZoneData
 from models.linear import CarDensityModel
-import datahandling.resultdata as result
+from datahandling.resultdata import ResultsData
 
 
 class LinearModelTest(unittest.TestCase):
     def test_linear_calc(self):
-        result.set_path("test")
+        resultdata = ResultsData(os.path.join(TEST_DATA_PATH, "Results", "test"))
         class Purpose:
             pass
         pur = Purpose()
