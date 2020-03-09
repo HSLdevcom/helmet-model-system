@@ -40,7 +40,7 @@ class ModelSystem:
         self.dtm = dt.DepartureTimeModel(self.ass_model.nr_zones)
         self.imptrans = ImpedanceTransformer()
         bounds = slice(0, self.zdata_forecast.first_peripheral_zone)
-        self.cdm = CarDensityModel(self.zdata_forecast, bounds, parameters.car_density)
+        self.cdm = CarDensityModel(self.zdata_forecast, bounds, parameters.car_density, self.resultdata)
         self.ass_classes = dict.fromkeys(parameters.emme_mtx["demand"].keys())
         self.mode_share = []
         self.trucks = self.fm.calc_freight_traffic("truck")

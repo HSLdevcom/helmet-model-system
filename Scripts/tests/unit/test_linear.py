@@ -5,6 +5,9 @@ import parameters
 from datahandling.zonedata import ZoneData
 from models.linear import CarDensityModel
 from datahandling.resultdata import ResultsData
+import os
+
+TEST_DATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "test_data")
 
 
 class LinearModelTest(unittest.TestCase):
@@ -14,7 +17,7 @@ class LinearModelTest(unittest.TestCase):
             pass
         pur = Purpose()
         zi = numpy.array([5, 6, 7, 2792, 16001, 17000, 31000, 31501])
-        zd = ZoneData("2016_test", zi)
+        zd = ZoneData(os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata_test"), zi)
         zd["time_ratio"] = pandas.Series([0.9, 1.5, 1.3, 1.9, 2.0, 3.1, 0.0, 0.0],
             zi)
         zd["cost_ratio"] = pandas.Series([1.1, 0.9, 0.8, 1.2, 0.5, 0.4, 0.0, 0.0],
@@ -25,7 +28,7 @@ class LinearModelTest(unittest.TestCase):
         pur.bounds = slice(0, 4)
         pur.zone_numbers = (5, 6, 7, 2792)
         bounds = slice(0, zd.first_peripheral_zone)
-        model = CarDensityModel(zd, bounds, parameters.car_density)
+        model = CarDensityModel(zd, bounds, parameters.car_density, resultdata)
         prediction = model.predict()
         zd["car_density"][:zd.first_peripheral_zone] = prediction
         self._validate(prediction)

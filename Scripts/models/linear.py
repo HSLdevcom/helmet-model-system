@@ -2,10 +2,10 @@ import numpy
 import pandas
 import math
 import parameters
-import datahandling.resultdata as result
+
 
 class LinearModel(object):
-    def __init__(self, zone_data, bounds, parameters):
+    def __init__(self, zone_data, bounds, parameters, resultdata):
         """Initialize a linear model.
 
         Parameters
@@ -21,6 +21,7 @@ class LinearModel(object):
         self.zone_data = zone_data
         self.bounds = bounds
         self.parameters = parameters
+        self.resultdata = resultdata
 
     def _add_constant(self, prediction, b):
         try: # If only one parameter
@@ -72,9 +73,9 @@ class CarDensityModel(LinearModel):
         car_density = prediction
                 
         # Print car density by zone
-        result.print_data(prediction, "car_density.txt",
-                          self.zone_data.zone_numbers[self.bounds],
-                          "car_density")
+        self.resultdata.print_data(
+            prediction, "car_density.txt",
+            self.zone_data.zone_numbers[self.bounds], "car_density")
         
         # print car density by municipality
         prediction_municipality = []
@@ -85,9 +86,9 @@ class CarDensityModel(LinearModel):
             # over 6 years old (from HEHA)
             prediction_municipality.append( car_density.loc[i].sum() 
                                     / population_7_99.loc[i].sum())
-        result.print_data(prediction_municipality,
-                          "car_density_per_municipality.txt",
-                          parameters.municipality.keys(), "car_density")
+        self.resultdata.print_data(
+            prediction_municipality, "car_density_per_municipality.txt",
+            parameters.municipality.keys(), "car_density")
                           
         # print car density by area (to get Helsinki CBD vs. Helsinki other)
         prediction_area = []
@@ -98,5 +99,6 @@ class CarDensityModel(LinearModel):
             # over 6 years old (from HEHA)
             prediction_area.append( car_density.loc[i].sum()
                             / population_7_99.loc[i].sum())
-        result.print_data(prediction_area, "car_density_per_area.txt",
-                          parameters.areas.keys(), "car_density")
+        self.resultdata.print_data(
+            prediction_area, "car_density_per_area.txt",
+            parameters.areas.keys(), "car_density")
