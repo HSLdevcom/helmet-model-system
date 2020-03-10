@@ -27,17 +27,17 @@ class LinearModelTest(unittest.TestCase):
         mtx[numpy.diag_indices(4)] = 0
         pur.bounds = slice(0, 4)
         pur.zone_numbers = (5, 6, 7, 2792)
-        bounds = slice(0, zd.first_peripheral_zone)
-        model = CarDensityModel(zd, bounds, parameters.car_density, resultdata)
+        bounds = slice(0, zd.nr_zones)
+        model = CarDensityModel(zd, zd, bounds, resultdata)
         prediction = model.predict()
-        zd["car_density"][:zd.first_peripheral_zone] = prediction
+        zd["car_density"] = prediction
         self._validate(prediction)
         
     
     def _validate(self, prediction):
         self.assertIs(type(prediction), pandas.core.series.Series)
         self.assertEquals(prediction.ndim, 1)
-        self.assertEquals(prediction.shape[0], 4)
-        self.assertEquals(prediction.size, 4)
+        self.assertEquals(prediction.shape[0], 6)
+        self.assertEquals(prediction.size, 6)
         self.assertNotEquals(prediction.iloc[0], 0)
         assert numpy.isfinite(prediction).all()

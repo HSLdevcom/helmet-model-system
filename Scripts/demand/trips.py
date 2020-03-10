@@ -38,7 +38,6 @@ class DemandModel:
         bounds = slice(0, zone_data.first_peripheral_zone)
         self.cm = logit.CarUseModel(zone_data, bounds, self.resultdata)
         self.gm = logit.TourCombinationModel(self.zone_data)
-        zone_data["car_users"] = self.cm.calc_prob()
         self.age_groups = (
             (7, 17),
             (18, 29),
@@ -48,6 +47,7 @@ class DemandModel:
         )
 
     def create_population_segments(self):
+        self.zone_data["car_users"] = self.cm.calc_prob()
         self.segments = {}
         first_peripheral_zone = self.zone_data.first_peripheral_zone
         pop = self.zone_data["population"][:first_peripheral_zone]

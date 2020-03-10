@@ -39,19 +39,18 @@ class ModelSystem:
                                 self.ass_model.zone_numbers)
         self.dtm = dt.DepartureTimeModel(self.ass_model.nr_zones)
         self.imptrans = ImpedanceTransformer()
-        bounds = slice(0, self.zdata_forecast.first_peripheral_zone)
-        self.cdm = CarDensityModel(self.zdata_forecast, bounds, parameters.car_density, self.resultdata)
+        bounds = slice(0, self.zdata_forecast.nr_zones)
+        self.cdm = CarDensityModel(self.zdata_base, self.zdata_forecast, bounds, self.resultdata)
         self.ass_classes = dict.fromkeys(parameters.emme_mtx["demand"].keys())
         self.mode_share = []
         self.trucks = self.fm.calc_freight_traffic("truck")
         self.trailer_trucks = self.fm.calc_freight_traffic("trailer_truck")
 
     def __init_demand_model(self):
-        dm = DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=False)
-        dm.create_population_segments()
-        return dm
+        return DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=False)
 
     def __add_internal_demand(self, previous_iter_impedance, is_last_iteration):
+        self.dm.create_population_segments()
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
                 purpose.gen_model.init_tours()
@@ -114,7 +113,8 @@ class ModelSystem:
 
         # Update car density
         prediction = self.cdm.predict()
-        self.zdata_forecast["car_density"][:self.zdata_forecast.first_peripheral_zone] = prediction
+        self.zdata_forecast["car_density"] = prediction
+        self.zdata_forecast["cars_per_1000"] = 1000 * prediction
 
         self.__add_internal_demand(previous_iter_impedance, is_last_iteration)
 
@@ -255,11 +255,10 @@ class ModelSystem:
 class AgentModelSystem(ModelSystem):
 
     def __init_demand_model(self):
-        dm = DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=True)
-        dm.create_population()
-        return dm
+        return DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=True)
 
     def __add_internal_demand(self, previous_iter_impedance, is_last_iteration):
+        self.dm.create_population()
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
                 purpose.init_sums()

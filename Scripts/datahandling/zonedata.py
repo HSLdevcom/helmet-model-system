@@ -28,7 +28,6 @@ class ZoneData:
         workdata = read_csv_file(data_dir, ".wrk", self.zone_numbers)
         schooldata = read_csv_file(data_dir, ".edu", self.zone_numbers)
         landdata = read_csv_file(data_dir, ".lnd", self.zone_numbers)
-        cardata = read_csv_file(data_dir, ".car", self.zone_numbers)
         parkdata = read_csv_file(data_dir, ".prk", self.zone_numbers)
         self.externalgrowth = read_csv_file(data_dir, ".ext", external_zones)
         transit_zone = {}
@@ -59,9 +58,6 @@ class ZoneData:
         self["share_male"] = pandas.Series(0.5, zone_numbers)
         self.nr_zones = len(self.zone_numbers)
         self["population_density"] = pop / landdata["builtar"]
-        self["car_users"] = cardata["caruse"]
-        self["car_density"] = cardata["cardens"]
-        self["cars_per_1000"] = 1000 * self["car_density"]
         wp = workdata["total"]
         self["workplaces"] = wp
         serv = workdata["sh_serv"] * wp
@@ -190,3 +186,10 @@ class ZoneData:
                 return self._values[key].values
         else:  # Return matrix (purpose zones -> all zones)
             return self._values[key][l:u, :]
+
+class BaseZoneData(ZoneData):
+    def __init__(self, data_dir, zone_numbers):
+        ZoneData.__init__(self, data_dir, zone_numbers)
+        cardata = read_csv_file(data_dir, ".car", self.zone_numbers)
+        self["car_density"] = cardata["cardens"]
+        self["cars_per_1000"] = 1000 * self["car_density"]
