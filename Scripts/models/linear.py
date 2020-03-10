@@ -5,7 +5,7 @@ import parameters
 
 
 class LinearModel(object):
-    def __init__(self, zone_data, bounds, resultdata):
+    def __init__(self, zone_data_base, zone_data_forecast, bounds, resultdata):
         """Initialize a linear model.
 
         Parameters
@@ -16,7 +16,8 @@ class LinearModel(object):
             Defines the area on which the model is predicting to (usually the
             metropolitan area).
         """        
-        self.zone_data = zone_data
+        self.zone_data = zone_data_forecast
+        self.zone_data_base = zone_data_base
         self.bounds = bounds
         self.resultdata = resultdata
 
@@ -61,6 +62,7 @@ class CarDensityModel(LinearModel):
         prediction += self._add_constant(prediction, b["constant"])
         prediction += self._add_zone_terms(prediction, b["generation"], True)
         prediction += self._add_log_zone_terms(prediction, b["log"], True)
+        prediction = prediction.clip(0.0, None)
         prediction = pandas.Series(
             prediction, self.zone_data.zone_numbers[self.bounds])
         self.print_results(prediction)
