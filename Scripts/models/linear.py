@@ -5,7 +5,7 @@ import parameters
 
 
 class LinearModel(object):
-    def __init__(self, zone_data, bounds, parameters, resultdata):
+    def __init__(self, zone_data, bounds, resultdata):
         """Initialize a linear model.
 
         Parameters
@@ -15,23 +15,23 @@ class LinearModel(object):
         bounds : slice
             Defines the area on which the model is predicting to (usually the
             metropolitan area).
-        parameters : dict
-            Linear model parameters.
         """        
         self.zone_data = zone_data
         self.bounds = bounds
-        self.parameters = parameters
         self.resultdata = resultdata
 
-    def _add_constant(self, prediction, b):
+    def _add_constant(self, shape, b):
+        prediction = numpy.zeros_like(shape)
         try: # If only one parameter
             prediction += b
         except ValueError: # Separate params for cap region and surrounding
             k = self.zone_data.first_surrounding_zone
             prediction[:k] += b[0]
             prediction[k:] += b[1]
+        return prediction
 
-    def _add_zone_terms(self, prediction, b, generation=False):
+    def _add_zone_terms(self, shape, b, generation=False):
+        prediction = numpy.zeros_like(shape)
         zdata = self.zone_data
         for i in b:
             try: # If only one parameter
@@ -46,7 +46,8 @@ class LinearModel(object):
                 prediction[k:] += b[i][1] * data_surrounding
         return prediction
 
-    def _add_log_zone_terms(self, prediction, b, generation=False):
+    def _add_log_zone_terms(self, shape, b, generation=False):
+        prediction = numpy.zeros_like(shape)
         zdata = self.zone_data
         for i in b:
             prediction += b[i] * numpy.log(zdata.get_data(i, self.bounds,
@@ -55,11 +56,11 @@ class LinearModel(object):
 
 class CarDensityModel(LinearModel):
     def predict(self):
-        b = self.parameters
+        b = parameters.car_density
         prediction = numpy.zeros(self.bounds.stop)
-        self._add_constant(prediction, b["constant"])
-        self._add_zone_terms(prediction, b["generation"], True)
-        self._add_log_zone_terms(prediction, b["log"], True)
+        prediction += self._add_constant(prediction, b["constant"])
+        prediction += self._add_zone_terms(prediction, b["generation"], True)
+        prediction += self._add_log_zone_terms(prediction, b["log"], True)
         prediction = pandas.Series(
             prediction, self.zone_data.zone_numbers[self.bounds])
         self.print_results(prediction)
