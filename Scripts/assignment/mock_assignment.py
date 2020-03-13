@@ -36,11 +36,11 @@ class MockAssignmentModel(AssignmentModel, ImpedanceSource):
             Type (time/cost/dist) : dict
                 Assignment class (car_work/transit/...) : numpy 2-d matrix
         """
-        return {"time": self.get_matrices("time", self.time_period),
-                "cost": self.get_matrices("cost", self.time_period),
-                "dist": self.get_matrices("dist", self.time_period)}
+        return {"time": self.get_emmebank_matrices("time", self.time_period),
+                "cost": self.get_emmebank_matrices("cost", self.time_period),
+                "dist": self.get_emmebank_matrices("dist", self.time_period)}
     
-    def get_matrices(self, mtx_type, time_period=None):
+    def get_emmebank_matrices(self, mtx_type, time_period=None):
         """Get all matrices of specified type.
         
         Parameters
