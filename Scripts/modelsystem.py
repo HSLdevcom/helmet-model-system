@@ -37,7 +37,10 @@ class ModelSystem:
                                 self.ass_model.zone_numbers)
         self.dtm = dt.DepartureTimeModel(self.ass_model.nr_zones)
         self.imptrans = ImpedanceTransformer()
-        self.ass_classes = dict.fromkeys(parameters.emme_mtx["demand"].keys())
+        # TODO: Should be better defined as parameter when we don't  
+        # have different transit matrices as input data. 
+        # Could use this list_matrices as inpout validation.
+        self.ass_classes = self.basematrices.list_matrices("demand", "aht")
         self.mode_share = []
         self.trucks = self.fm.calc_freight_traffic("truck")
         self.trailer_trucks = self.fm.calc_freight_traffic("trailer_truck")
