@@ -24,13 +24,13 @@ class LogitModel:
         for mode in self.mode_choice_param:
             b = self.mode_choice_param[mode]
             utility = numpy.zeros_like(expsum)
-            utility += self._add_constant(utility, b["constant"])
-            utility += self._add_zone_util(
+            self._add_constant(utility, b["constant"])
+            utility = self._add_zone_util(
                 utility.T, b["generation"], generation=True).T
-            utility += self._add_zone_util(utility, b["attraction"])
-            utility += self._add_impedance(utility, impedance[mode], b["impedance"])
+            self._add_zone_util(utility, b["attraction"])
+            self._add_impedance(utility, impedance[mode], b["impedance"])
             exps = numpy.exp(utility)
-            exps *= self._add_log_impedance(exps, impedance[mode], b["log"])
+            self._add_log_impedance(exps, impedance[mode], b["log"])
             self.mode_exps[mode] = exps
             expsum += exps
         return expsum
@@ -38,19 +38,19 @@ class LogitModel:
     def _calc_dest_util(self, mode, impedance):
         b = self.dest_choice_param[mode]
         utility = numpy.zeros_like(next(iter(impedance.values())), self.dtype)
-        utility += self._add_zone_util(utility, b["attraction"])
-        utility += self._add_impedance(utility, impedance, b["impedance"])
+        self._add_zone_util(utility, b["attraction"])
+        self._add_impedance(utility, impedance, b["impedance"])
         self.dest_exps[mode] = numpy.exp(utility)
         size = numpy.zeros_like(utility)
-        utility += self._add_zone_util(size, b["size"])
+        self._add_zone_util(size, b["size"])
         impedance["size"] = size
         if "transform" in b:
             b_transf = b["transform"]
             transimp = numpy.zeros_like(utility)
-            transimp += self._add_zone_util(transimp, b_transf["attraction"])
-            transimp += self._add_impedance(transimp, impedance, b_transf["impedance"])
+            self._add_zone_util(transimp, b_transf["attraction"])
+            self._add_impedance(transimp, impedance, b_transf["impedance"])
             impedance["transform"] = transimp
-        self.dest_exps[mode] *= self._add_log_impedance(self.dest_exps[mode], impedance, b["log"])
+        self._add_log_impedance(self.dest_exps[mode], impedance, b["log"])
         if mode != "logsum":
             threshold = parameters.distance_boundary[mode]
             self.dest_exps[mode][impedance["dist"] > threshold] = 0
@@ -62,19 +62,19 @@ class LogitModel:
     def _calc_sec_dest_util(self, mode, impedance, orig, dest):
         b = self.dest_choice_param[mode]
         utility = numpy.zeros_like(next(iter(impedance.values())), self.dtype)
-        utility += self._add_sec_zone_util(utility, b["attraction"], orig, dest)
-        utility += self._add_impedance(utility, impedance, b["impedance"])
+        self._add_sec_zone_util(utility, b["attraction"], orig, dest)
+        self._add_impedance(utility, impedance, b["impedance"])
         dest_exps = numpy.exp(utility)
         size = numpy.zeros_like(utility)
         size += self._add_sec_zone_util(size, b["size"])
         impedance["size"] = size
-        dest_exps *= self._add_log_impedance(dest_exps, impedance, b["log"])
+        self._add_sec_zone_util(size, b["size"])
         if mode != "logsum":
             threshold = parameters.distance_boundary[mode]
             dest_exps[impedance["dist"] > threshold] = 0
         return dest_exps
 
-    def _add_constant(self, shape, b):
+    def _add_constant(self, utility, b):
         """Calculates constant term for utility function.
         
         Parameters
@@ -91,7 +91,6 @@ class LogitModel:
             A numpy array of the same size and type as `shape` but filled with
             the constant value. The result is to be added to utility.
         """
-        utility = numpy.zeros_like(shape)
         try: # If only one parameter
             utility += b
         except ValueError: # Separate params for cap region and surrounding
@@ -102,9 +101,8 @@ class LogitModel:
             else: # 2-d matrix calculation
                 utility[:k, :] += b[0]
                 utility[k:, :] += b[1]
-        return utility
     
-    def _add_impedance(self, shape, impedance, b):
+    def _add_impedance(self, utility, impedance, b):
         """Calculates simple linear impedance terms for utility function.
         
         Parameters
@@ -124,7 +122,6 @@ class LogitModel:
             A numpy array of the same size and type as `shape` but filled with
             the impedance terms. The result is to be added to utility.
         """
-        utility = numpy.zeros_like(shape)
         for i in b:
             try: # If only one parameter
                 utility += b[i] * impedance[i]
@@ -134,7 +131,7 @@ class LogitModel:
                 utility[k:, :] += b[i][1] * impedance[i][k:, :]
         return utility
 
-    def _add_log_impedance(self, shape, impedance, b):
+    def _add_log_impedance(self, exps, impedance, b):
         """Calculates log transformations of impedance for utility function.
         
         This is an optimized way of calculating log terms. Calculates
@@ -160,7 +157,6 @@ class LogitModel:
             the impedance terms. The result is to be multiplied with the
             exponents of utility.
         """
-        exps = numpy.ones_like(shape)
         for i in b:
             try: # If only one parameter
                 exps *= numpy.power(impedance[i] + 1, b[i])
@@ -170,7 +166,7 @@ class LogitModel:
                 exps[k:, :] *= numpy.power(impedance[i][k:, :] + 1, b[i][1])
         return exps
     
-    def _add_zone_util(self, shape, b, generation=False):
+    def _add_zone_util(self, utility, b, generation=False):
         """Calculates simple linear zone terms for utility function.
         
         Parameters
@@ -191,7 +187,6 @@ class LogitModel:
             A numpy array of the same size and type as `shape` but filled with
             the zone terms. The result is to be added to utility.
         """
-        utility = numpy.zeros_like(shape)
         zdata = self.zone_data
         for i in b:
             try: # If only one parameter
@@ -210,8 +205,7 @@ class LogitModel:
                     utility[k:, :] += b[i][1] * data_surrounding
         return utility
     
-    def _add_sec_zone_util(self, shape, b, orig=None, dest=None):
-        utility = numpy.zeros_like(shape)
+    def _add_sec_zone_util(self, utility, b, orig=None, dest=None):
         zdata = self.zone_data
         for i in b:
             data = zdata.get_data(i, self.bounds, generation=True)
@@ -223,7 +217,7 @@ class LogitModel:
                 utility += b[i][1] * data[dest, :u]
         return utility
 
-    def _add_log_zone_util(self, shape, b, generation=False):
+    def _add_log_zone_util(self, exps, b, generation=False):
         """Calculates log transformations of zone data for utility function.
         
         This is an optimized way of calculating log terms. Calculates
@@ -250,7 +244,6 @@ class LogitModel:
             the zone terms. The result is to be multiplied with the
             exponents of utility.
         """
-        exps = numpy.ones_like(shape)
         zdata = self.zone_data
         for i in b:
             exps *= numpy.power(
@@ -565,10 +558,10 @@ class CarUseModel(LogitModel):
     def calc_basic_prob(self):
         b = parameters.car_usage
         utility = numpy.zeros(self.bounds.stop)
-        utility += self._add_constant(utility, b["constant"])
-        utility += self._add_zone_util(utility, b["generation"], True)
+        self._add_constant(utility, b["constant"])
+        self._add_zone_util(utility, b["generation"], True)
         self.exps = numpy.exp(utility)
-        self.exps *= self._add_log_zone_util(self.exps, b["log"], True)
+        self._add_log_zone_util(self.exps, b["log"], True)
         prob = self.exps / (self.exps+1)
         return prob
 
