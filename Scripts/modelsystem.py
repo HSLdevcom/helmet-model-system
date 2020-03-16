@@ -41,7 +41,10 @@ class ModelSystem:
         self.imptrans = ImpedanceTransformer()
         bounds = slice(0, self.zdata_forecast.nr_zones)
         self.cdm = CarDensityModel(self.zdata_base, self.zdata_forecast, bounds, self.resultdata)
-        self.ass_classes = dict.fromkeys(parameters.emme_mtx["demand"].keys())
+        # TODO: Should be better defined as parameter when we don't  
+        # have different transit matrices as input data. 
+        # Could use this list_matrices as input validation.
+        self.ass_classes = self.basematrices.list_matrices("demand", "aht")
         self.mode_share = []
         self.trucks = self.fm.calc_freight_traffic("truck")
         self.trailer_trucks = self.fm.calc_freight_traffic("trailer_truck")
@@ -95,9 +98,6 @@ class ModelSystem:
             with self.basematrices.open("demand", tp) as mtx:
                 for ass_class in self.ass_classes:
                     self.dtm.demand[tp][ass_class] = mtx[ass_class]
-            # Base matrices do not provide "transit_work" as its own assignment
-            # class but "transit" is close enough.
-            self.dtm.demand[tp]["transit_work"] = self.dtm.demand[tp]["transit"]
             self.ass_model.assign(tp, self.dtm.demand[tp])
             impedance[tp] = self.ass_model.get_impedance()
             if tp == "aht":
