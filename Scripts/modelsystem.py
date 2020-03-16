@@ -1,7 +1,7 @@
 from utils.log import Log
 import assignment.departure_time as dt
 from datahandling.resultdata import ResultsData
-from datahandling.zonedata import ZoneData
+from datahandling.zonedata import ZoneData, BaseZoneData
 from datahandling.matrixdata import MatrixData
 from demand.freight import FreightModel
 from demand.trips import DemandModel
@@ -22,7 +22,7 @@ class ModelSystem:
         self.logger = Log.get_instance()
         self.ass_model = ass_model
         # Input data
-        self.zdata_base = ZoneData(base_zone_data_path, ass_model.zone_numbers)
+        self.zdata_base = BaseZoneData(base_zone_data_path, ass_model.zone_numbers)
         self.basematrices = MatrixData(base_matrices_path)
         self.zdata_forecast = ZoneData(zone_data_path, ass_model.zone_numbers)
         # Output data
