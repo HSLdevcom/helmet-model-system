@@ -66,7 +66,7 @@ class LogitModel:
         self._add_impedance(utility, impedance, b["impedance"])
         dest_exps = numpy.exp(utility)
         size = numpy.zeros_like(utility)
-        size += self._add_sec_zone_util(size, b["size"])
+        self._add_sec_zone_util(size, b["size"])
         impedance["size"] = size
         self._add_log_impedance(dest_exps, impedance, b["log"])
         if mode != "logsum":
