@@ -68,7 +68,7 @@ class LogitModel:
         size = numpy.zeros_like(utility)
         size += self._add_sec_zone_util(size, b["size"])
         impedance["size"] = size
-        self._add_sec_zone_util(size, b["size"])
+        self._add_log_impedance(dest_exps, impedance, b["log"])
         if mode != "logsum":
             threshold = parameters.distance_boundary[mode]
             dest_exps[impedance["dist"] > threshold] = 0
