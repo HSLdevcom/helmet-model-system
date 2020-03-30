@@ -537,13 +537,13 @@ class TourCombinationModel:
             scale_param = parameters.tour_number_scale
             nr_tours_exps[nr_tours] *= numpy.power(combination_expsum, scale_param)
             nr_tours_expsum += nr_tours_exps[nr_tours]
-        prob["-"] = 1
+        prob[()] = 1
         for nr_tours in self.param:
             if nr_tours != 0:
                 nr_tours_prob = nr_tours_exps[nr_tours] / nr_tours_expsum
                 # Tour number probability is calibrated
                 nr_tours_prob *= self.increases[nr_tours]
-                prob["-"] -= nr_tours_prob
+                prob[()] -= nr_tours_prob
                 for tour_combination in self.param[nr_tours]:
                     prob[tour_combination] *= nr_tours_prob
         return prob

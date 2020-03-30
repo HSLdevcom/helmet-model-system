@@ -65,12 +65,16 @@ class DemandModel:
             self.segments[age]["no_car"] = (1-car_share) * age_share * pop
 
     def generate_tours(self):
+        """Generate vector of tours for each tour purpose.
+
+        Result is stored in `purpose.gen_model.tours`.
+        """
         for purpose in self.tour_purposes:
             purpose.gen_model.init_tours()
             if purpose.area == "peripheral" or purpose.dest == "source":
                 purpose.gen_model.add_tours()
         bounds = slice(0, self.zone_data.first_peripheral_zone)
-        data = pandas.DataFrame()
+        data = pandas.DataFrame()  # For printing of results
         for age_group in self.age_groups:
             age = "age_" + str(age_group[0]) + "-" + str(age_group[1])
             segment = self.segments[age]
@@ -78,14 +82,12 @@ class DemandModel:
             prob_n = self.gm.calc_prob(age, is_car_user=False, zones=bounds)
             nr_tours_sums = pandas.Series()
             for combination in prob_c:
+                # Each combination is a tuple of tours performed during a day
                 nr_tours = ( prob_c[combination] * segment["car_users"]
                            + prob_n[combination] * segment["no_car"])
-                tour_list = combination.split('-')
-                if tour_list[0] == "":
-                    tour_list = []
-                for purpose in tour_list:
+                for purpose in combination:
                     self.purpose_dict[purpose].gen_model.tours += nr_tours
-                nr_tours_sums[combination] = nr_tours.sum()
+                nr_tours_sums["-".join(combination)] = nr_tours.sum()
             data[age] = nr_tours_sums.sort_index()
         self.resultdata.print_matrix(data, "generation", "tour_combinations")
 
