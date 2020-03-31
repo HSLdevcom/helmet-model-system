@@ -254,6 +254,7 @@ class LogitModel:
 class ModeDestModel(LogitModel):
     def calc_prob(self, impedance):
         """Calculate matrix of choice probabilities.
+
         Insert individual dummy variables.
         
         Parameters
@@ -263,8 +264,8 @@ class ModeDestModel(LogitModel):
                 Type (time/cost/dist) : numpy 2-d matrix
                     Impedances
         
-        Return
-        ------
+        Returns
+        -------
         dict
             Mode (car/transit/bike/walk) : numpy 2-d matrix
                 Choice probabilities
@@ -282,7 +283,7 @@ class ModeDestModel(LogitModel):
         return prob
     
     def calc_basic_prob(self, impedance):
-        """Calculate matrix of choice probabilities.
+        """Calculate matrix of mode and destination choice probabilities.
         
         Parameters
         ----------
@@ -291,8 +292,8 @@ class ModeDestModel(LogitModel):
                 Type (time/cost/dist) : numpy 2-d matrix
                     Impedances
         
-        Return
-        ------
+        Returns
+        -------
         dict
             Mode (car/transit/bike/walk) : numpy 2-d matrix
                 Choice probabilities
@@ -308,7 +309,9 @@ class ModeDestModel(LogitModel):
         return self._calc_prob(mode_expsum)
     
     def calc_individual_prob(self, mod_mode, dummy):
-        """Calculate matrix of choice probabilities
+        """Calculate matrix of probabilities with individual dummies.
+        
+        Calculate matrix of mode and destination choice probabilities
         with individual dummy variable included.
         
         Parameters
@@ -318,8 +321,8 @@ class ModeDestModel(LogitModel):
         dummy : str
             The name of the individual dummy
         
-        Return
-        ------
+        Returns
+        -------
         dict
             Mode (car/transit/bike/walk) : numpy 2-d matrix
                 Choice probabilities
@@ -337,8 +340,10 @@ class ModeDestModel(LogitModel):
         return self._calc_prob(mode_expsum)
     
     def calc_individual_mode_prob(self, is_car_user, zone):
-        """Calculate choice probabilities for individual agent
-        with individual dummy variable included.
+        """Calculate individual choice probabilities with individual dummies.
+        
+        Calculate mode choice probabilities for individual
+        agent with individual dummy variable included.
         
         Parameters
         ----------
@@ -347,10 +352,11 @@ class ModeDestModel(LogitModel):
         zone : int
             Index of zone where the agent lives
         
-        Return
-        ------
+        Returns
+        -------
         list
-            Choice probabilities for purpose modes
+            float
+                Choice probabilities for purpose modes
         """
         mode_exps = {}
         mode_expsum = 0
@@ -411,8 +417,8 @@ class DestModeModel(LogitModel):
                 Type (time/cost/dist) : numpy 2-d matrix
                     Impedances
         
-        Return
-        ------
+        Returns
+        -------
         dict
             Mode (car/transit/bike/walk) : numpy 2-d matrix
                 Choice probabilities
@@ -444,8 +450,8 @@ class SecDestModel(LogitModel):
         destination:
             Destination
         
-        Return
-        ------
+        Returns
+        -------
         numpy 2-d matrix
                 Choice probabilities
         """
@@ -481,8 +487,8 @@ class TourCombinationModel:
         zones : int or slice
             Zone number (for agent model) or zone data slice
 
-        Return
-        ------
+        Returns
+        -------
         dict
             Tour combination (-/hw/hw-ho/...) : float or numpy 1-d array
                 Choice probability

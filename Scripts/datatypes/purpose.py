@@ -7,24 +7,26 @@ import pandas
 
 
 class Purpose:
-    def __init__(self, specification, zone_data):
-        """Generic container class without methods.
-        Sets the purpose zone bounds.
+    """Generic container class without methods.
+    
+    Sets the purpose zone bounds.
 
-        Parameters
-        ----------
-        specification : dict
-            "name" : str
-                Tour purpose name
-            "orig" : str
-                Origin of the tours
-            "dest" : str
-                Destination of the tours
-            "area" : str
-                Model area
-        zone_data : ZoneData
-            Data used for all demand calculations
-        """
+    Parameters
+    ----------
+    specification : dict
+        "name" : str
+            Tour purpose name
+        "orig" : str
+            Origin of the tours
+        "dest" : str
+            Destination of the tours
+        "area" : str
+            Model area
+    zone_data : ZoneData
+        Data used for all demand calculations
+    """
+
+    def __init__(self, specification, zone_data):
         self.name = specification["name"]
         self.orig = specification["orig"]
         self.dest = specification["dest"]
@@ -53,27 +55,28 @@ class Purpose:
 
 
 class TourPurpose(Purpose):
-    def __init__(self, specification, zone_data, resultdata, is_agent_model):
-        """Standard two-way tour purpose.
+    """Standard two-way tour purpose.
 
-        Parameters
-        ----------
-        specification : dict
-            "name" : str
-                Tour purpose name (hw/oo/hop/sop/...)
-            "orig" : str
-                Origin of the tours (home/source)
-            "dest" : str
-                Destination of the tours (work/other/source/...)
-            "area" : str
-                Model area (metropolitan/peripheral)
-        zone_data : ZoneData
-            Data used for all demand calculations
-        resultdata : ResultData
-            Writer object for result directory
-        is_agent_model : bool (optional)
-            Whether the model is used for agent-based simulation
-        """
+    Parameters
+    ----------
+    specification : dict
+        "name" : str
+            Tour purpose name (hw/oo/hop/sop/...)
+        "orig" : str
+            Origin of the tours (home/source)
+        "dest" : str
+            Destination of the tours (work/other/source/...)
+        "area" : str
+            Model area (metropolitan/peripheral)
+    zone_data : ZoneData
+        Data used for all demand calculations
+    resultdata : ResultData
+        Writer object for result directory
+    is_agent_model : bool (optional)
+        Whether the model is used for agent-based simulation
+    """
+
+    def __init__(self, specification, zone_data, resultdata, is_agent_model):
         Purpose.__init__(self, specification, zone_data)
         self.resultdata = resultdata
         if self.orig == "source":
@@ -194,27 +197,28 @@ class TourPurpose(Purpose):
 
 
 class SecDestPurpose(Purpose):
-    def __init__(self, specification, zone_data, resultdata, is_agent_model):
-        """Purpose for secondary destination of tour.
+    """Purpose for secondary destination of tour.
 
-        Parameters
-        ----------
-        specification : dict
-            "name" : str
-                Tour purpose name (hoo)
-            "orig" : str
-                Origin of the tours (home)
-            "dest" : str
-                Destination of the tours (any)
-            "area" : str
-                Model area (metropolitan)
-        zone_data : ZoneData
-            Data used for all demand calculations
-        resultdata : ResultData
-            Writer object to result directory
-        is_agent_model : bool (optional)
-            Whether the model is used for agent-based simulation
-        """
+    Parameters
+    ----------
+    specification : dict
+        "name" : str
+            Tour purpose name (hoo)
+        "orig" : str
+            Origin of the tours (home)
+        "dest" : str
+            Destination of the tours (any)
+        "area" : str
+            Model area (metropolitan)
+    zone_data : ZoneData
+        Data used for all demand calculations
+    resultdata : ResultData
+        Writer object to result directory
+    is_agent_model : bool (optional)
+        Whether the model is used for agent-based simulation
+    """
+
+    def __init__(self, specification, zone_data, resultdata, is_agent_model):
         Purpose.__init__(self, specification, zone_data)
         self.gen_model = generation.SecDestGeneration(self, resultdata)
         self.model = logit.SecDestModel(

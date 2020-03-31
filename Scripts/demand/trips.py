@@ -7,18 +7,19 @@ from datatypes.person import Person
 
 
 class DemandModel:
-    def __init__(self, zone_data, resultdata, is_agent_model=False):
-        """Container for private tour purposes and models.
+    """Container for private tour purposes and models.
 
-        Parameters
-        ----------
-        zone_data : ZoneData
-            Data used for all demand calculations
-        resultdata : ResultData
-            Writer object to result directory
-        is_agent_model : bool (optional)
-            Whether the model is used for agent-based simulation
-        """
+    Parameters
+    ----------
+    zone_data : ZoneData
+        Data used for all demand calculations
+    resultdata : ResultData
+        Writer object to result directory
+    is_agent_model : bool (optional)
+        Whether the model is used for agent-based simulation
+    """
+    
+    def __init__(self, zone_data, resultdata, is_agent_model=False):
         self.resultdata = resultdata
         self.zone_data = zone_data
         self.tour_purposes = []
