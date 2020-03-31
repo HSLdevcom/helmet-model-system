@@ -13,17 +13,7 @@ class GenerationModel:
         self.tours = pandas.Series(0, self.purpose.zone_numbers)
 
     def add_tours(self):
-        """Add generated tours to vector.
-        
-        Parameters
-        ----------
-        segment : numpy 1-d array, optional
-            Population segment for which tours are added
-        age : string, optional
-            Age group of population segment
-        is_car_user : string, optional
-            Whether population segment consists of car users or not
-        """
+        """Add generated tours to vector."""
         b = self.param
         for i in b:
             self.tours += b[i] * self.zone_data[i][self.purpose.bounds]

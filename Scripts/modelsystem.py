@@ -47,7 +47,6 @@ class ModelSystem:
 
     def __init_demand_model(self):
         dm = DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=False)
-        dm.create_population_segments()
         return dm
 
     def __add_internal_demand(self, previous_iter_impedance, is_last_iteration):
@@ -233,7 +232,6 @@ class AgentModelSystem(ModelSystem):
 
     def __init_demand_model(self):
         dm = DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=True)
-        dm.create_population()
         return dm
 
     def __add_internal_demand(self, previous_iter_impedance, is_last_iteration):
