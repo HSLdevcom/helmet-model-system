@@ -664,14 +664,36 @@ class CarUseModel(LogitModel):
         Data used for all demand calculations
     bounds : slice
         Zone bounds
+    age_groups : tuple
+        tuple
+            int
+                Age intervals
     resultdata : ResultData
         Writer object to result directory
     """
 
-    def __init__(self, zone_data, bounds, resultdata):
+    def __init__(self, zone_data, bounds, age_groups, resultdata):
         self.resultdata = resultdata
         self.zone_data = zone_data
         self.bounds = bounds
+        self.genders = ("female", "male")
+        self.age_groups = age_groups
+        self.param = parameters.car_usage
+        for i in self.param["individual_dummy"]:
+            self._check(i)
+    
+    def _check(self, dummy):
+        try:
+            age_interval = dummy.split('_')[1]
+        except AttributeError:
+            # If the dummy is for a compound segment (age + gender)
+            age_interval = dummy[0].split('_')[1]
+            if dummy[1] not in self.genders:
+                raise AttributeError(
+                    "Car use dummy name {} not valid".format(dummy[1]))
+        if tuple(map(int, age_interval.split('-'))) not in self.age_groups:
+            raise AttributeError(
+                "Car use dummy name {} not valid".format(age_interval))
     
     def calc_basic_prob(self):
         """Calculate car user probabilities without individual dummies.
@@ -681,7 +703,7 @@ class CarUseModel(LogitModel):
         numpy.ndarray
                 Choice probabilities
         """
-        b = parameters.car_usage
+        b = self.param
         utility = numpy.zeros(self.bounds.stop)
         self._add_constant(utility, b["constant"])
         self._add_zone_util(utility, b["generation"], True)
@@ -701,7 +723,7 @@ class CarUseModel(LogitModel):
         prob = self.calc_basic_prob()
         no_dummy_share = 1
         dummy_prob = 0
-        b = parameters.car_usage
+        b = self.param
         for i in b["individual_dummy"]:
             try:
                 dummy_share = self.zone_data.get_data(
@@ -733,7 +755,7 @@ class CarUseModel(LogitModel):
         age_group : str
             Agent/segment age group
         gender : str
-            Agent/segment gender
+            Agent/segment gender (female/male)
         zone : int (optional)
             Index of zone where the agent lives, if no zone index is given,
             calculation is done for all zones
@@ -743,11 +765,12 @@ class CarUseModel(LogitModel):
         numpy.ndarray
                 Choice probabilities
         """
+        self._check((age_group, gender))
         if zone is None:
             exp = self.exps
         else:
             exp = self.exps[self.zone_data.zone_index(zone)]
-        b = parameters.car_usage
+        b = self.param
         if age_group in b["individual_dummy"]:
             exp = numpy.exp(b["individual_dummy"][age_group]) * exp
         if (age_group, gender) in b["individual_dummy"]:

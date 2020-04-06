@@ -41,9 +41,6 @@ class DemandModel:
                     if "sec_dest" in purpose_spec:
                         self.purpose_dict[source].sec_dest_purpose = purpose
         bounds = slice(0, zone_data.first_peripheral_zone)
-        self.cm = logit.CarUseModel(zone_data, bounds, self.resultdata)
-        self.gm = logit.TourCombinationModel(self.zone_data)
-        zone_data["car_users"] = self.cm.calc_prob()
         self.age_groups = (
             (7, 17),
             (18, 29),
@@ -51,12 +48,12 @@ class DemandModel:
             (50, 64),
             (65, 99),
         )
-        if is_agent_model:
-            self.population = self._create_population()
-        else:
-            self.segments = self._create_population_segments()
+        self.cm = logit.CarUseModel(
+            zone_data, bounds, self.age_groups, self.resultdata)
+        self.gm = logit.TourCombinationModel(self.zone_data)
+        zone_data["car_users"] = self.cm.calc_prob()
 
-    def _create_population_segments(self):
+    def create_population_segments(self):
         """Create population segments.
         
         Returns
@@ -66,21 +63,21 @@ class DemandModel:
                 Car user (car_user/no_car) : pandas Series
                     Zone array with number of people belonging to segment
         """
-        segments = {}
+        self.segments = {}
         first_peripheral_zone = self.zone_data.first_peripheral_zone
         pop = self.zone_data["population"][:first_peripheral_zone]
         for age_group in self.age_groups:
             age = "age_" + str(age_group[0]) + "-" + str(age_group[1])
-            segments[age] = {}
+            self.segments[age] = {}
             age_share = self.zone_data["share_" + age][:first_peripheral_zone]
-            car_use_f = self.cm.calc_individual_prob(age, Person.FEMALE)
-            car_use_m = self.cm.calc_individual_prob(age, Person.MALE)
-            car_share = 0.5*car_use_f + 0.5*car_use_m
-            segments[age]["car_users"] = car_share * age_share * pop
-            segments[age]["no_car"] = (1-car_share) * age_share * pop
-        return segments
+            car_share = 0
+            for gender in self.cm.genders:
+                car_share += ( self.zone_data["share_" + gender][:first_peripheral_zone]
+                             * self.cm.calc_individual_prob(age, gender))
+            self.segments[age]["car_users"] = car_share * age_share * pop
+            self.segments[age]["no_car"] = (1-car_share) * age_share * pop
 
-    def _create_population(self):
+    def create_population(self):
         """Create population for agent-based simulation.
         
         Returns
@@ -89,7 +86,7 @@ class DemandModel:
             Person
         """
         self.cm.calc_basic_prob()
-        population = []
+        self.population = []
         zones = self.zone_data.zone_numbers[:self.zone_data.first_peripheral_zone]
         for idx in zones:
             weights = [1]
@@ -105,8 +102,7 @@ class DemandModel:
                     # Group -1 is under-7-year-olds and they have weights[0]
                     age_group = self.age_groups[group]
                     person = Person(idx, age_group, self.gm, self.cm)
-                    population.append(person)
-        return population
+                    self.population.append(person)
 
     def generate_tours(self):
         """Generate vector of tours for each tour purpose.

@@ -27,7 +27,7 @@ class ModelSystem:
         self.resultmatrices = MatrixData(os.path.join(results_path, name, "Matrices"))
         self.resultdata = ResultsData(os.path.join(results_path, name))
 
-        self.dm = self.__init_demand_model()
+        self.dm = self._init_demand_model()
 
         self.fm = FreightModel(self.zdata_base,
                                self.zdata_forecast,
@@ -45,11 +45,12 @@ class ModelSystem:
         self.trucks = self.fm.calc_freight_traffic("truck")
         self.trailer_trucks = self.fm.calc_freight_traffic("trailer_truck")
 
-    def __init_demand_model(self):
+    def _init_demand_model(self):
         dm = DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=False)
+        dm.create_population_segments()
         return dm
 
-    def __add_internal_demand(self, previous_iter_impedance, is_last_iteration):
+    def _add_internal_demand(self, previous_iter_impedance, is_last_iteration):
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
                 purpose.gen_model.init_tours()
@@ -104,7 +105,7 @@ class ModelSystem:
         self.dtm.add_demand(self.trucks)
         self.dtm.add_demand(self.trailer_trucks)
 
-        self.__add_internal_demand(previous_iter_impedance, is_last_iteration)
+        self._add_internal_demand(previous_iter_impedance, is_last_iteration)
 
         # Calculate external demand
         trip_sum = {}
@@ -230,11 +231,12 @@ class ModelSystem:
 
 class AgentModelSystem(ModelSystem):
 
-    def __init_demand_model(self):
+    def _init_demand_model(self):
         dm = DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=True)
+        dm.create_population()
         return dm
 
-    def __add_internal_demand(self, previous_iter_impedance, is_last_iteration):
+    def _add_internal_demand(self, previous_iter_impedance, is_last_iteration):
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
                 purpose.init_sums()
