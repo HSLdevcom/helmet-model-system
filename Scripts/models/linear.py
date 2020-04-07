@@ -21,8 +21,7 @@ class LinearModel(object):
         self.bounds = bounds
         self.resultdata = resultdata
 
-    def _add_constant(self, shape, b):
-        prediction = numpy.zeros_like(shape)
+    def _add_constant(self, prediction, b):
         try: # If only one parameter
             prediction += b
         except ValueError: # Separate params for cap region and surrounding
@@ -31,8 +30,7 @@ class LinearModel(object):
             prediction[k:] += b[1]
         return prediction
 
-    def _add_zone_terms(self, shape, b, generation=False):
-        prediction = numpy.zeros_like(shape)
+    def _add_zone_terms(self, prediction, b, generation=False):
         zdata = self.zone_data
         for i in b:
             try: # If only one parameter
@@ -47,21 +45,21 @@ class LinearModel(object):
                 prediction[k:] += b[i][1] * data_surrounding
         return prediction
 
-    def _add_log_zone_terms(self, shape, b, generation=False):
-        prediction = numpy.zeros_like(shape)
+    def _add_log_zone_terms(self, prediction, b, generation=False):
         zdata = self.zone_data
         for i in b:
             prediction += b[i] * numpy.log(zdata.get_data(i, self.bounds,
                 generation))
         return prediction
 
+
 class CarDensityModel(LinearModel):
     def predict(self):
         b = parameters.car_density
         prediction = numpy.zeros(self.bounds.stop)
-        prediction += self._add_constant(prediction, b["constant"])
-        prediction += self._add_zone_terms(prediction, b["generation"], True)
-        prediction += self._add_log_zone_terms(prediction, b["log"], True)
+        self._add_constant(prediction, b["constant"])
+        self._add_zone_terms(prediction, b["generation"], True)
+        self._add_log_zone_terms(prediction, b["log"], True)
         prediction = prediction.clip(0.0, None)
         prediction = pandas.Series(
             prediction, self.zone_data.zone_numbers[self.bounds])
