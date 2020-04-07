@@ -143,21 +143,24 @@ class TourPurpose(Purpose):
                 "{}_{}".format(self.name, mode[0])
             )
             aggregated_demand = self._aggregate(mtx)
-            self.resultdata.print_matrix(aggregated_demand, "aggregated_demand", "{}_{}".format(self.name, mode))
+            self.resultdata.print_matrix(
+                aggregated_demand, "aggregated_demand",
+                "{}_{}".format(self.name, mode))
             own_zone = self.zone_data.get_data("own_zone", self.bounds)
             own_zone_demand = own_zone * mtx
             own_zone_aggregated = self._aggregate(own_zone_demand)
             self.resultdata.print_data(
-                numpy.diag(own_zone_aggregated),
-                "own_zone_demand.txt",
-                own_zone_aggregated.index,
-                "{}_{}".format(self.name, mode[0])
-            )
+                numpy.diag(own_zone_aggregated), "own_zone_demand.txt",
+                own_zone_aggregated.index, "{}_{}".format(self.name, mode[0]))
             demsums[mode] = self.generated_tours[mode].sum()
-        self.resultdata.print_data(attracted_tours, "attraction.txt", self.zone_data.zone_numbers, self.name)
+        self.resultdata.print_data(
+            attracted_tours, "attraction.txt", 
+            self.zone_data.zone_numbers, self.name)
         demand_all = sum(demsums.values())
         mode_shares = {mode: demsums[mode] / demand_all for mode in demsums}
-        self.resultdata.print_data(pandas.Series(mode_shares), "mode_share.txt", demsums.keys(), self.name)
+        self.resultdata.print_data(
+            pandas.Series(mode_shares), "mode_share.txt",
+            demsums.keys(), self.name)
         return demand
     
     def _aggregate(self, mtx):
@@ -265,9 +268,8 @@ class SecDestPurpose(Purpose):
             # If no o-d pairs have demand above threshold,
             # the sole destination with largest demand is picked
             dests = generation.argmax()
-            generation_sum = generation.sum()
             generation.fill(0)
-            generation[dests] = generation_sum
+            generation[dests] = generation.sum()
         else:
             generation[dests] *= generation.sum() / generation[dests].sum()
             generation[~dests] = 0
