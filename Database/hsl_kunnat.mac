@@ -1,4 +1,4 @@
-~# *** hsl_kunnat_2018.mac
+~# *** hsl_kunnat_2012.mac
 ~# TE 12.4.2019
 ~#
 ~# lasketaan attribuutti @hsl, joka kertoo, onko pysäkkisolmu HSL-alueella (0=ei, 1=on)
@@ -39,8 +39,6 @@
  ui3=245
  ui3=257
  ui3=753
- ui3=755
- ui3=858
  
  4
  q

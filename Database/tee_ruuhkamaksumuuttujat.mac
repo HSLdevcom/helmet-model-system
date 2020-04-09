@@ -10,24 +10,6 @@
  @hinta
  ruuhkamaksu euroa per km
  0
-~#
- 2
- 2 \linkkimuuttuja
- @ruma
- ruuhkamaksu euroa per linkki
- 0
-~#
- 2
- 2 \linkkimuuttuja
- @rumpi
- ruuhkamaksu pituudeksi muutettuna (km)
- 0
-~#
- 2
- 2 \linkkimuuttuja
- @rumsi
- pituus ja ruuhkamaksu painotettuna (km)
- 0
 ~# TE lisannyt 5.5.2017, jotta tietulleja voidaan kasitella
  2
  2
