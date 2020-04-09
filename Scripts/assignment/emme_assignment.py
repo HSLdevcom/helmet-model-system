@@ -38,17 +38,20 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                     overwrite=True)
         self.dist_cost = car_dist_cost
         self.bike_scenario = first_scenario_id
+        self._create_attr(self.bike_scenario, param.bike_attributes)
+        self.day_scenario = first_scenario_id+1
+        self._create_attr(self.day_scenario, param.emme_attributes)
         # +1 (unused) is walk scenario
-        self.emme_scenario = {
+        self.emme_scenarios = {
             "aht": first_scenario_id+2,
             "pt": first_scenario_id+3,
             "iht": first_scenario_id+4,
         }
-        for time_period in self.emme_scenario:
-            self._create_attr(self.emme_scenario[time_period])
-            self._calc_road_cost(self.emme_scenario[time_period])
-            self._calc_boarding_penalties(self.emme_scenario[time_period])
-            self._calc_background_traffic(self.emme_scenario[time_period])
+        for time_period in self.emme_scenarios:
+            self._create_attr(self.emme_scenarios[time_period], param.emme_attributes)
+            self._calc_road_cost(self.emme_scenarios[time_period])
+            self._calc_boarding_penalties(self.emme_scenarios[time_period])
+            self._calc_background_traffic(self.emme_scenarios[time_period])
         self._specify()
         self._has_assigned_bike_and_walk = False
 
@@ -66,7 +69,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         """
         self.emme_project.logger.info("Assignment starts...")
         self.set_emmebank_matrices(matrices)
-        scen_id = self.emme_scenario[time_period]
+        scen_id = self.emme_scenarios[time_period]
         if not self._has_assigned_bike_and_walk:
             self._assign_pedestrians(scen_id)
             self._assign_bikes(param.bike_scenario,
@@ -179,7 +182,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
     def zone_numbers(self):
         """Numpy array of all zone numbers.""" 
         emmebank = self.emme_project.modeller.emmebank
-        scen = emmebank.scenario(self.emme_scenario["aht"])
+        scen = emmebank.scenario(self.emme_scenarios["aht"])
         return scen.zone_numbers
 
     @property
@@ -224,13 +227,13 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             overwrite = True,
             scenario = scen)
     
-    def _create_attr(self, scen_id):
+    def _create_attr(self, scen_id, attributes):
         """Create attributes needed in assignment."""
         emmebank = self.emme_project.modeller.emmebank
         scen = emmebank.scenario(scen_id)
         # defined in params
-        for attr in param.emme_attributes.keys():
-            self.create_attribute(attr, param.emme_attributes[attr], "model calc", scen)
+        for attr in attributes.keys():
+            self.create_attribute(attr, attributes[attr], "model calc", scen)
 
     def _calc_background_traffic(self, scen_id):
         """Calculate background traffic (buses)."""
@@ -337,7 +340,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             emmebank.matrix(idx).set_numpy_data(default_cost)
             return
 
-        scen_id = self.emme_scenario["aht"]
+        scen_id = self.emme_scenarios["aht"]
         # Move transfer penalty to boarding penalties,
         # a side effect is that it then also affects first boarding
         self._calc_boarding_penalties(scen_id, 5)
