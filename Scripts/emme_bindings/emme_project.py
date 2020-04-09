@@ -25,6 +25,8 @@ class EmmeProject:
         self.path = os.path.dirname(self.modeller.emmebank.path)
         self.create_matrix = self.modeller.tool(
             "inro.emme.data.matrix.create_matrix")
+        self.matrix_calc = self.modeller.tool(
+            "inro.emme.matrix_calculation.matrix_calculator")
         self.network_calc = self.modeller.tool(
             "inro.emme.network_calculation.network_calculator")
         self.process_functions = self.modeller.tool(
@@ -41,6 +43,8 @@ class EmmeProject:
             "inro.emme.transit_assignment.congested_transit_assignment")
         self.matrix_results = self.modeller.tool(
             "inro.emme.transit_assignment.extended.matrix_results")
+        self.create_extra_attribute = self.modeller.tool(
+            "inro.emme.data.extra_attribute.create_extra_attribute")
     
     def write(self, message):
         """Write to logbook."""
