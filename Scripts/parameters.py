@@ -53,14 +53,14 @@ headway_sd_func = {
 }
 # Stopping criteria for last traffic assignment
 stopping_criteria_fine = {
-    "max_iterations": 5,
+    "max_iterations": 200,
     "relative_gap": 0.00001,
     "best_relative_gap": 0.001,
     "normalized_gap": 0.0005,
 }
 # Stopping criteria for traffic assignment in loop
 stopping_criteria_coarse = {
-    "max_iterations": 5,
+    "max_iterations": 100,
     "relative_gap": 0.0001,
     "best_relative_gap": 0.01,
     "normalized_gap": 0.005,
@@ -76,7 +76,7 @@ trass_func = {
 }
 # Stopping criteria for congested transit assignment
 trass_stop = {
-    "max_iterations": 2,
+    "max_iterations": 10,
     "normalized_gap": 0.01,
     "relative_gap": 0.001
 }
