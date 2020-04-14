@@ -4,6 +4,20 @@ from datatypes.tour import Tour
 
 
 class Person:
+    """Container for person attributes.
+    
+    Parameters
+    ----------
+    zone : int
+        Zone number, where person resides
+    age_group : str
+        Age group to which the person belongs
+    generation_model : models.logit.TourCombinationModel
+        Model used to create tours
+    car_use_model : models.logit.CarUseModel
+        Model used to decide if car user
+    """
+
     FEMALE = 0
     MALE = 1
     
