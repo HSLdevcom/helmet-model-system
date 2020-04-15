@@ -104,6 +104,11 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         mtxs = {"time": self.get_emmebank_matrices("time"),
                 "dist": self.get_emmebank_matrices("dist"),
                 "cost": self.get_emmebank_matrices("cost")}
+        # fix the emme path analysis results (dist and cost zero if path not found)
+        for mtx_type in mtxs: 
+            for mtx_class in mtxs[mtx_type]: 
+                mtxs[mtx_type][mtx_class][ mtxs["time"][mtx_class] > 999999 ] = 999999
+        # adjust impedance 
         mtxs["time"]["transit"] = self._damp(mtxs["time"]["transit"])
         mtxs["time"]["bike"] = mtxs["time"]["bike"].clip(None, 9999.)
         mtxs["time"]["car_work"] = self._extract_timecost_from_gcost("car_work")
@@ -111,11 +116,6 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         if not is_last_iteration:
             for ass_cl in ("car_work", "car_leisure"):
                 mtxs["cost"][ass_cl] += self.dist_unit_cost * mtxs["dist"][ass_cl]
-        # adjust the emme path analysis results ( dist and cost are zero if path not found)
-        # set large value matching with time matrix, which return correct value
-        for mtx_type in mtxs: 
-            for mtx_class in mtxs[mtx_type]: 
-                mtxs[mtx_type][mtx_class][ mtxs["time"][mtx_class] > 999999 ] = 999999
         return mtxs
 
     def set_emmebank_matrices(self, matrices):
