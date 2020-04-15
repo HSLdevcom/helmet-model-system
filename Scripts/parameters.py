@@ -12,8 +12,8 @@ vot_inv = {
     "business": 6,
     "leisure": 6,
 }
-# Default distance cost [eur/km]
-dist_cost = 0.12
+# Default distance unit cost [eur/km]
+dist_unit_cost = 0.12
 # Boarding penalties for different transit modes
 boarding_penalty = {
     "b": 3,  # Bus
@@ -172,8 +172,8 @@ aux_modes = [
 # in helmet-model-system 
 emme_attributes = {
     "@bus": "LINK",
-    "@rumsi": "LINK",
-    "@ruma": "LINK",
+    "@total_cost": "LINK",
+    "@toll_cost": "LINK",
     "@wait_time_dev": "TRANSIT_SEGMENT",
     "@car_work": "LINK",
     "@car_leisure": "LINK",
