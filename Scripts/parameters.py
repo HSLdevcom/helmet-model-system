@@ -110,7 +110,6 @@ emme_scenario = {
     "pt": 22,
     "iht": 23,
 }
-bike_scenario = 19
 transport_classes = (
     "car_work",
     "car_leisure",
