@@ -48,71 +48,48 @@ python test_assignment.py
 
 ## Development
 
-### Environment
+If you do not have INRO Emme license or you wish to develop HELMET 4.0 source code, you need to set up a development enviroment. Although not covered here, installing [Git](https://git-scm.com/downloads) is highly recommended!
 
-We have two execution environments:
-- deployed "production" environment
-- local development environment
+### Environment and dependencies
 
-In both cases we're using Python version 2.7 because our final deployment target (EMME) supports only 2.7.
+We are using Python 2.7 because it is supported by INRO Emme software.
 
-### Dependencies
+1. Install Python 2.7. (2020-04-16: Do not install Python 2.7.17 because it will not work correctly until [this issue](https://github.com/pypa/pipenv/issues/4016) is resolved. Install Python 2.7.16 instead.)
+2. Add `C:\Python27` and `C:\Python27\Scripts` to your local PATH variable in "Environment Variables".
+3. Open a new Command Prompt and type `python --version`. You should get `Python 2.7.16` or some other Python 2.7 version. 
 
-*Local development env: Pipenv*
+`pip` is the recommended package installer for Python. The normal Python installation routine installs `pip` to `C:\Python27\Scripts`. Type `pip --version` to Command Prompt to check if `pip` is installed and in your PATH. The command should return `pip 20.0.2 from c:\python27\lib\site-packages\pip (python 2.7)` (`pip` version may vary).
 
-In the development setup we're using *pipenv* to import the libraries. Pipenv isolates our environment from the other global python modules and makes sure we don't break anything else with our setup.   
+We are using `pipenv` to import the same open source libraries which INRO Emme software uses. `pipenv` isolates our environment from the other global Python modules and makes sure we don't break anything with our setup. Optional introduction to `pipenv` can be found from [Python docs](https://docs.python-guide.org/dev/virtualenvs/) or [Jonathan Cutrer's blog](https://jcutrer.com/python/pipenv-pipfile).
 
-Intro to pipenv can be found from these links:
-- https://docs.python-guide.org/dev/virtualenvs/
-- https://jcutrer.com/python/pipenv-pipfile
+1. Open Command Prompt.
+2. Install `pipenv` by running `python -m pip install --user pipenv`. `pipenv` should now be installed in `%APPDATA%\Python\Scripts` (eg. `C:\Users\USERNAME\AppData\Roaming\Python\Scripts`).
+3. Add `%APPDATA%\Python\Scripts` to your local PATH variable.
+4. Close and reopen Command Prompt and check that `pipenv` is recognised by typing `pipenv --version`. It should return `pipenv, version 2018.11.26`.
+4. Download [helmet-model-system](https://github.com/HSLdevcom/helmet-model-system) repository and open a Command Prompt to its "Scripts" folder.
+5. Install dependencies from `Pipfile`:
+    - First setup: `pipenv --python 2.7 install --dev`
+    - Additional syncing if new packages are added: `pipenv --python 2.7 sync --dev`
+6. Depending on your operating system, rename either `.env-win` (Windows) or `.env-nix` (Linux) to `.env`. In Windows, you can do this in Command Propmpt by typing `copy .env-win .env`.
 
-1) Pre-requirement is to have some Python2 version and pip installed. Recommendation is to install
-pip to user home (%APPDATA%/Python/Scripts/pip.exe) and keep it out of the system PATH.
-You can use [import-python helper script](Scripts/import-python.bat) in case you installed it to the local user.
+Now, you should have a virtual environment in `C:\Users\USERNAME\.virtualenvs\Scripts-xxxxxxxx\Lib\site-packages`.
 
-2) Install pipenv (unless you already have it).   
-
-```
-pip install --user pipenv
-```
-
-3) Then install the requirements from Pipfile using pipenv.  
-
-```
-# First setup:
-pipenv --python 2.7 install --dev
-# Once setup is done you can just run
-pipenv --python 2.7 sync --dev
-```
-
-Install new libraries when needed (will update Pipfile, please commit that to repository):
-
-```
-pipenv --python 2.7 install <your-new-library>
-```
-
-### Tests
-
-We're using PyTest framework. Test are in [tests-folder](Scripts/tests) and can be invoked with
-
-```
-pipenv run pytest tests
-```
-
-Remember to give the folder as parameter, otherwise pytest will run all the tests with the dependencies also. Also, remember to run `Scripts/import-dev-dependencies.bat` to get the path to Python libraries in `Scripts/pythonlibs`.
-
-In case you wish to run tests on Visual Studio Code, do either of the following:
-
-1. Rename `Scripts/.env-win` as `Scripts/.env`, or
-2. Open workspace settings by pressing Ctrl + Shift + P and selecting "Preferences: Open Workspace Settings", and add the line `"python.envFile": "${workspaceFolder}/.env-win"`.
-
-Now Visual Studio Code should discover all tests.
-
-### Running
-
-During development when using pipenv:
+Use `pipenv` when executing scripts. For example:
 
 ```
 cd Scripts
 pipenv run python test_assignment.py
 ```
+
+### Visual Studio Code
+
+The following extensions are recommended when developing with Visual Studio Code:
+
+- [Python](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
+- [Test Explorer UI](https://marketplace.visualstudio.com/items?itemName=hbenl.vscode-test-explorer)
+- [Python Test Explorer for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=LittleFoxTeam.vscode-python-test-adapter)
+
+A couple of tips to get it all working:
+
+- Remember to first setup your development environment. After that, open "Scripts" folder in Visual Studio Code, and select your virtual environment from bottom left Python interpreter list.
+- To configure tests, click `Ctrl-Shift-P`, type `Python: Configure tests`, select `pytest` framework, and `tests` as the directory containing tests. Tests should appear in the Test Explorer (click the chemistry bottle from the left).
