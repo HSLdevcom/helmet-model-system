@@ -6,26 +6,33 @@ This repository contains python files for Helmet 4.0 Model System. Source codes 
 
 ## Usage
 
+In this chapter, we will guide you how to install HELMET 4.0 to work with INRO Emme software. The user is not expected to install any new software apart from [helmet-model-system](https://github.com/HSLdevcom/helmet-model-system) and [helmet-ui](https://github.com/HSLdevcom/helmet-ui).
+
+If you do not have an Emme license or you wish to develop HELMET 4.0 further, please scroll down to [Development](#development) chapter.
+
 ### Setup
 
-*Deployed production env: EMME*
+In production, we are using Python 2.7 which is supported by and installed together with INRO Emme software.
 
-In "Production-mode" we are using python library dependencies that come with EMME installation.
-Add ```%EMMEPATH%\Programs``` to your local PATH-variable to get access to these dependencies.
-At the moment user is not expected to install any software, other than the provided scripts in the [Scripts-folder](Scripts).
+We are using those Python dependencies that come with INRO Emme installation. To get access to these dependencies, you need to add them to your local PATH variable:
 
-*For Production setup: Create EMME Bank
+1. Open Control Panel.
+2. Go to User Accounts, then click again User Accounts, then select from the left hand menu "Change my environment variables".
+3. From the top box ("User variables for USERNAME"), find and select "Path" variable, and click "Edit...".
+4. Click "New" and write `%EMMEPATH%\Programs`.
+5. Click OK in the "Edit enrivonment variable" window, and then click OK again in the "Environment Variables" window.
 
-- Open EMME Desktop application
-- Create new project named 'helmet-model-system' where the path should match your project name & path
-  - The wizard should create you a (large binary) file 'helmet-model-system.emp' inside your project folder
-- Follow external instructions to configure the EMME-project details.
-- End result: Your working folder is filled with EMME-project-specific folders and files and
-our [Scripts-folder](Scripts) being one of those folders.
+Next, you need to initialize an Emme project:
+
+1. Open Emme desktop application.
+2. Create new project called `helmet-model-system` in which the path should match your project name and path.
+   - The wizard should create you a (large binary) file called `helmet-model-system.emp` inside your project folder
+3. Follow external instructions to configure the details of the Emme project. Now, your working folder is filled with Emme project specific folders and files.
+4. From this repository, copy the contents of the [Scripts](Scripts) folder to the "Scripts" folder in the Emme project.
 
 ### Running
 
-In deployed-mode (with EMME) run application from command line or using [Helmet UI](https://github.com/HSLdevcom/helmet-ui). Before running from command line, configurations in [dev-config.json](Scripts/dev-config.json) need to be set.
+You can run HELMET 4.0 from the command line or by using [helmet-ui](https://github.com/HSLdevcom/helmet-ui). Before running from the command line, set the configurations in [dev-config.json](Scripts/dev-config.json). Then, open command line to your Emme project and type:
 
 ```
 cd Scripts
