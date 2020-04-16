@@ -1,11 +1,47 @@
 [![Build Status](https://travis-ci.org/HSLdevcom/helmet-model-system.svg?branch=master)](https://travis-ci.org/HSLdevcom/helmet-model-system)
 
-
 # helmet-model-system
 
 This repository contains python files for Helmet 4.0 Model System. Source codes can be found in the [Scripts-folder](Scripts).
 
-## Setup
+## Usage
+
+### Setup
+
+*Deployed production env: EMME*
+
+In "Production-mode" we are using python library dependencies that come with EMME installation.
+Add ```%EMMEPATH%\Programs``` to your local PATH-variable to get access to these dependencies.
+At the moment user is not expected to install any software, other than the provided scripts in the [Scripts-folder](Scripts).
+
+*For Production setup: Create EMME Bank
+
+- Open EMME Desktop application
+- Create new project named 'helmet-model-system' where the path should match your project name & path
+  - The wizard should create you a (large binary) file 'helmet-model-system.emp' inside your project folder
+- Follow external instructions to configure the EMME-project details.
+- End result: Your working folder is filled with EMME-project-specific folders and files and
+our [Scripts-folder](Scripts) being one of those folders.
+
+### Running
+
+In deployed-mode (with EMME) run application from command line or using [Helmet UI](https://github.com/HSLdevcom/helmet-ui). Before running from command line, configurations in [dev-config.json](Scripts/dev-config.json) need to be set.
+
+```
+cd Scripts
+python helmet.py
+```
+
+Emme assignment can be tested without further configuration:
+
+```
+cd Scripts
+python test_assignment.py
+```
+
+## Development
+
+### Environment
 
 We have two execution environments:
 - deployed "production" environment
@@ -14,16 +50,6 @@ We have two execution environments:
 In both cases we're using Python version 2.7 because our final deployment target (EMME) supports only 2.7.
 
 ### Dependencies
-
-We have several external dependencies in our codebase, f.ex NumPy and OMX, etc. Importing the dependencies depend on the environment (local-development or production). In production-mode they come via EMME and in development we use PipEnv.
-
-
-*Deployed production env: EMME*
-
-In "Production-mode" we are using python library dependencies that come with EMME installation.
-Add ```%EMMEPATH%\Programs``` to your local PATH-variable to get access to these dependencies.
-At the moment user is not expected to install any software, other than the provided scripts in the [Scripts-folder](Scripts).
-
 
 *Local development env: Pipenv*
 
@@ -39,13 +65,13 @@ You can use [import-python helper script](Scripts/import-python.bat) in case you
 
 2) Install pipenv (unless you already have it).   
 
-```   
+```
 pip install --user pipenv
 ```
 
 3) Then install the requirements from Pipfile using pipenv.  
 
-```   
+```
 # First setup:
 pipenv --python 2.7 install --dev
 # Once setup is done you can just run
@@ -54,26 +80,15 @@ pipenv --python 2.7 sync --dev
 
 Install new libraries when needed (will update Pipfile, please commit that to repository):
 
-```   
+```
 pipenv --python 2.7 install <your-new-library>
 ```
 
-
-### For Production setup: Create EMME Bank
-
-- Open EMME Desktop application
-- Create new project named 'helmet-model-system' where the path should match your project name & path
-  - The wizard should create you a (large binary) file 'helmet-model-system.emp' inside your project folder
-- Follow external instructions to configure the EMME-project details.
-- End result: Your working folder is filled with EMME-project-specific folders and files and
-our [Scripts-folder](Scripts) being one of those folders.
-
-
-## Tests
+### Tests
 
 We're using PyTest framework. Test are in [tests-folder](Scripts/tests) and can be invoked with
 
-```   
+```
 pipenv run pytest tests
 ```
 
@@ -86,25 +101,11 @@ In case you wish to run tests on Visual Studio Code, do either of the following:
 
 Now Visual Studio Code should discover all tests.
 
-## Running
-
-In deployed-mode (with EMME) run application from command line or using [Helmet UI](https://github.com/HSLdevcom/helmet-ui). Before running from command line, configurations in [dev-config.json](Scripts/dev-config.json) need to be set.
-
-```
-cd Scripts
-python helmet.py
-```
-
-Emme assignment can be tested without further configuration:
-
-```   
-cd Scripts
-python test_assignment.py
-```   
+### Running
 
 During development when using pipenv:
 
-```   
+```
 cd Scripts
 pipenv run python test_assignment.py
-```   
+```
