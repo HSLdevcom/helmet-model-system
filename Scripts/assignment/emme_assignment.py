@@ -128,10 +128,20 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             if mtx_label in tmp_mtx:
                 idx = self.demand_mtx[mtx_label]["id"]
                 tmp_mtx[mtx_label] += matrices[mtx]
-                emmebank.matrix(idx).set_numpy_data(tmp_mtx[mtx_label])
+                if numpy.isnan(tmp_mtx[mtx_label]).any():
+                    msg = "NAs in Numpy-demand matrix. Would cause infinite loop in Emme-assignment."
+                    self.emme_project.logger.error(msg)
+                    raise ValueError(msg)
+                else:
+                    emmebank.matrix(idx).set_numpy_data(tmp_mtx[mtx_label])
             else:
                 idx = self.demand_mtx[mtx]["id"]
-                emmebank.matrix(idx).set_numpy_data(matrices[mtx])
+                if numpy.isnan(matrices[mtx]).any():
+                    msg = "NAs in Numpy-demand matrix. Would cause infinite loop in Emme-assignment."
+                    self.emme_project.logger.error(msg)
+                    raise ValueError(msg)
+                else:
+                    emmebank.matrix(idx).set_numpy_data(matrices[mtx])
 
     def get_emmebank_matrices(self, mtx_type, time_period=None):
         """Get all matrices of specified type.
