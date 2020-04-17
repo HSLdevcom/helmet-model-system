@@ -176,14 +176,16 @@ emme_attributes = {
     "@wait_time_dev": "TRANSIT_SEGMENT",
     "@car_work": "LINK",
     "@car_leisure": "LINK",
+    "@transit_work": "TRANSIT_SEGMENT",
+    "@transit_leisure": "TRANSIT_SEGMENT",
     "@trailer_truck": "LINK",
     "@truck": "LINK",
     "@van": "LINK", 
 }
 bike_attributes = {
-    "@fvol_aht": "LINK",
-    "@fvol_iht": "LINK",
-    "@fvol_pt": "LINK",
+    "@bike_aht": "LINK",
+    "@bike_iht": "LINK",
+    "@bike_pt": "LINK",
 }
 transit_assignment_modes = transit_modes + aux_modes
 # Link attribute for volumes
@@ -273,7 +275,11 @@ emme_demand_mtx = {
         "id": "mf2",
         "description": "car leisure demand",
     },
-    "transit":  {
+    "transit_work":  {
+        "id":"mf3",
+        "description": "transit demand",
+    },
+    "transit_leisure":  {
         "id":"mf4",
         "description": "transit demand",
     },
@@ -304,7 +310,11 @@ emme_result_mtx = {
             "id": "mf12",
             "description": "car leisure travel time",
         },
-        "transit": {
+        "transit_work": {
+            "id": "mf13",
+            "description": "transit travel time",
+        },
+        "transit_leisure": {
             "id": "mf14",
             "description": "transit travel time",
         },
@@ -338,7 +348,11 @@ emme_result_mtx = {
             "id": "mf22",
             "description": "car leisure travel distance",
         },
-        "transit": {
+        "transit_work": {
+            "id": "mf23",
+            "description": "transit in-vehicle distance",
+        },
+        "transit_leisure": {
             "id": "mf24",
             "description": "transit in-vehicle distance",
         },
@@ -372,7 +386,11 @@ emme_result_mtx = {
             "id": "mf32",
             "description": "car leisure travel cost",
         },
-        "transit": {
+        "transit_work": {
+            "id": "mf33",
+            "description": "transit travel cost",
+        },
+        "transit_leisure": {
             "id": "mf34",
             "description": "transit travel cost",
         },
@@ -411,45 +429,73 @@ emme_result_mtx = {
             "description": "van travel generalized cost",
         },
     },
-    "trip_components":{
-        "transit_inv_time": {
+    "trip_part":{
+        "transit_work_inv_time": {
             "id": "mf51",
             "description": "transit in-vehicle time",
         },
-        "transit_aux_time": {
+        "transit_work_aux_time": {
             "id": "mf52",
             "description": "transit auxilliary time",
         },
-        "transit_tw_time": {
+        "transit_work_tw_time": {
             "id": "mf53",
             "description": "transit total waiting time",
         },
-        "transit_fw_time": {
+        "transit_work_fw_time": {
             "id": "mf54",
             "description": "transit first waiting time",
         },
-        "transit_board_time": {
+        "transit_work_board_time": {
             "id": "mf55",
             "description": "transit boarding time",
         },
-        "transit_board_cost": {
+        "transit_work_board_cost": {
             "id": "mf58",
             "description": "transit boarding cost",
         },
-        "transit_num_board": {
+        "transit_work_num_board": {
             "id": "mf56",
             "description": "transit trip number of boardings",
         },
-        "bike_separate_dist": {
+        "transit_leisure_inv_time": {
+            "id": "mf57",
+            "description": "transit in-vehicle time",
+        },
+        "transit_leisure_aux_time": {
+            "id": "mf58",
+            "description": "transit auxilliary time",
+        },
+        "transit_leisure_tw_time": {
+            "id": "mf59",
+            "description": "transit total waiting time",
+        },
+        "transit_leisure_fw_time": {
+            "id": "mf60",
+            "description": "transit first waiting time",
+        },
+        "transit_leisure_board_time": {
             "id": "mf61",
+            "description": "transit boarding time",
+        },
+        "transit_leisure_board_cost": {
+            "id": "mf62",
+            "description": "transit boarding cost",
+        },
+        "transit_leisure_num_board": {
+            "id": "mf63",
+            "description": "transit trip number of boardings",
+        },
+        "bike_separate_dist": {
+            "id": "mf64",
             "description": "separate bike way distance",
         },
         "bike_streetside_dist": {
-            "id": "mf62",
+            "id": "mf65",
             "description": "street-side bike way distance",
         },
         "bike_mixed_dist": {
-            "id": "mf63",
+            "id": "mf66",
             "description": "bike distance in mixed traffic",
         },
     }

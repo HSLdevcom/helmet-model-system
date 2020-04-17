@@ -30,11 +30,11 @@ class ImpedanceTransformer:
         day_imp = {}
         for mode in impedance_share[purpose.name]:
             day_imp[mode] = {}
-            if mode == "car":
+            if mode in ["car", "transit"]:
                 if purpose.dest == "work":
-                    ass_class = "car_work"
+                    ass_class = "{}_{}".format(mode, "work")
                 else:
-                    ass_class = "car_leisure"
+                    ass_class = "{}_{}".format(mode, "leisure")
             else:
                 ass_class = mode
             for idx, time_period in enumerate(impedance):

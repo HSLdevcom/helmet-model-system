@@ -148,7 +148,7 @@ class ModelSystem:
                     weights=self.dtm.demand[tp]["car_work"]
                 )
                 transit_time = numpy.ma.average(
-                    impedance[tp]["time"]["transit"],
+                    impedance[tp]["time"]["transit_work"],
                     axis=1,
                     weights=self.dtm.demand[tp]["transit_work"]
                 )
@@ -161,7 +161,7 @@ class ModelSystem:
                     weights=self.dtm.demand[tp]["car_work"]
                 )
                 transit_cost = numpy.ma.average(
-                    impedance[tp]["cost"]["transit"],
+                    impedance[tp]["cost"]["transit_work"],
                     axis=1,
                     weights=self.dtm.demand[tp]["transit_work"]
                 )
