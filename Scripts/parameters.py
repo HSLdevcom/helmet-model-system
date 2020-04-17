@@ -181,9 +181,9 @@ emme_attributes = {
     "@van": "LINK", 
 }
 bike_attributes = {
-    "@fvol_aht": "LINK",
-    "@fvol_iht": "LINK",
-    "@fvol_pt": "LINK",
+    "@bike_aht": "LINK",
+    "@bike_iht": "LINK",
+    "@bike_pt": "LINK",
 }
 transit_assignment_modes = transit_modes + aux_modes
 # Link attribute for volumes

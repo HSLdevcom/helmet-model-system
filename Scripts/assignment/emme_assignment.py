@@ -74,7 +74,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             self._assign_bikes(self.bike_scenario,
                             self.result_mtx["dist"]["bike"]["id"],
                             "all",
-                            "@fvol_"+time_period)
+                            "@bike_"+time_period)
             self._has_assigned_bike_and_walk = True
         if is_last_iteration:
             self._assign_cars(scen_id, param.stopping_criteria_fine)
@@ -83,7 +83,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             self._assign_bikes(self.bike_scenario,
                            self.result_mtx["dist"]["bike"]["id"],
                            "all",
-                           "@fvol_"+time_period)
+                           "@bike_"+time_period)
         else:
             self._assign_cars(scen_id, param.stopping_criteria_coarse)
             self._calc_extra_wait_time(scen_id)
