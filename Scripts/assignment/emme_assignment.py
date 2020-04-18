@@ -682,6 +682,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         self.emme_project.logger.info("Congested transit assignment started")
         self.emme_project.congested_assignment(
             transit_assignment_spec=[self.transit_work_spec.transit_spec, self.transit_leisure_spec.transit_spec],
+            class_names=["work", "leisure"],
             congestion_function=param.trass_func,
             stopping_criteria=param.trass_stop,
             log_worksheets=False, scenario=scen,
