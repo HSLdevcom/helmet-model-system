@@ -12,8 +12,8 @@ vot_inv = {
     "business": 6,
     "leisure": 6,
 }
-# Default distance cost [eur/km]
-dist_cost = 0.12
+# Default distance unit cost [eur/km]
+dist_unit_cost = 0.12
 # Boarding penalties for different transit modes
 boarding_penalty = {
     "b": 3,  # Bus
@@ -110,7 +110,6 @@ emme_scenario = {
     "pt": 22,
     "iht": 23,
 }
-bike_scenario = 19
 transport_classes = (
     "car_work",
     "car_leisure",
@@ -168,15 +167,33 @@ aux_modes = [
     'a',
     's',
 ]
+# Link attributes initialized 
+# in helmet-model-system 
+emme_attributes = {
+    "@bus": "LINK",
+    "@total_cost": "LINK",
+    "@toll_cost": "LINK",
+    "@wait_time_dev": "TRANSIT_SEGMENT",
+    "@car_work": "LINK",
+    "@car_leisure": "LINK",
+    "@trailer_truck": "LINK",
+    "@truck": "LINK",
+    "@van": "LINK", 
+}
+bike_attributes = {
+    "@bike_aht": "LINK",
+    "@bike_iht": "LINK",
+    "@bike_pt": "LINK",
+}
 transit_assignment_modes = transit_modes + aux_modes
 # Link attribute for volumes
 link_volumes = {
-    "car_work": None,
-    "car_leisure": None,
-    "trailer_truck": "@yhd",
-    "truck": "@ka",
-    "van": "@pa",
-}
+    "car_work": "@car_work",
+    "car_leisure": "@car_leisure",
+    "trailer_truck": "@trailer_truck",
+    "truck": "@truck",
+    "van": "@van"
+    }
 # Factors for 24-h expansion of volumes
 # TODO Update
 volume_factors = {
@@ -196,63 +213,88 @@ volume_factors = {
         "iht": 1. / 0.38,
     },
     "transit": {
-        "aht": 1. / 0.47,
-        "pt": 1. / 0.09,
-        "iht": 1. / 0.38,
+        "aht": 1. / 0.48,
+        "pt": 1. / 0.11,
+        "iht": 1. / 0.46,
+    },
+    "transit_work": {
+        "aht": 1. / 0.48,
+        "pt": 1. / 0.11,
+        "iht": 1. / 0.46,
+    },
+    "transit_leisure": {
+        "aht": 1. / 0.48,
+        "pt": 1. / 0.11,
+        "iht": 1. / 0.46,
     },
     "bike": {
-        "aht": 1. / 0.47,
-        "pt": 1. / 0.09,
+        "aht": 1. / 0.61,
+        "pt": 1. / 0.10,
+        "iht": 1. / 0.38,
+    },
+    "bike_work": {
+        "aht": 1. / 0.61,
+        "pt": 1. / 0.10,
+        "iht": 1. / 0.38,
+    },
+    "bike_leisure": {
+        "aht": 1. / 0.61,
+        "pt": 1. / 0.10,
         "iht": 1. / 0.38,
     },
     "trailer_truck": {
-        "aht": 1. / 0.47,
-        "pt": 1. / 0.09,
-        "iht": 1. / 0.38,
+        "aht": 1 / 0.3,
+        "pt": 1 / 0.1,
+        "iht": 1 / 0.3,
     },
     "truck": {
-        "aht": 1. / 0.47,
-        "pt": 1. / 0.09,
-        "iht": 1. / 0.38,
+         "aht": 1 / 0.3,
+        "pt": 1 / 0.1,
+        "iht": 1 / 0.3,
     },
     "van": {
-        "aht": 1. / 0.47,
-        "pt": 1. / 0.09,
-        "iht": 1. / 0.38,
+        "aht": 1 / 0.3,
+        "pt": 1 / 0.1,
+        "iht": 1 / 0.3,
+    },
+    "bus": {
+        "aht": 1 / 0.3,
+        "pt": 1 / 0.1,
+        "iht": 1 / 0.3,
     },
 }
 # Emme matrix IDs
-emme_mtx = {
-    "demand": {
-        "car_work": {
-            "id": "mf1",
-            "description": "car work demand",
-        },
-        "car_leisure": {
-            "id": "mf2",
-            "description": "car leisure demand",
-        },
-        "transit":  {
-            "id":"mf4",
-            "description": "transit demand",
-        },
-        "bike":  {
-            "id":"mf5",
-            "description": "bicyclist demand",
-        },
-        "trailer_truck": {
-            "id": "mf7",
-            "description": "trailer truck demand",
-        },
-        "truck":  {
-            "id":"mf8",
-            "description": "truck demand",
-        },
-        "van":  {
-            "id":"mf9",
-            "description": "van demand",
-        },
+emme_demand_mtx = {
+    "car_work": {
+        "id": "mf1",
+        "description": "car work demand",
     },
+    "car_leisure": {
+        "id": "mf2",
+        "description": "car leisure demand",
+    },
+    "transit":  {
+        "id":"mf4",
+        "description": "transit demand",
+    },
+    "bike":  {
+        "id":"mf5",
+        "description": "bicyclist demand",
+    },
+    "trailer_truck": {
+        "id": "mf7",
+        "description": "trailer truck demand",
+    },
+    "truck":  {
+        "id":"mf8",
+        "description": "truck demand",
+    },
+    "van":  {
+        "id":"mf9",
+        "description": "van demand",
+    },
+}
+emme_result_mtx = {
     "time": {
         "car_work": {
             "id": "mf11",
@@ -369,52 +411,49 @@ emme_mtx = {
             "description": "van travel generalized cost",
         },
     },
-    "transit": {
-        "inv_time": {
+    "trip_components":{
+        "transit_inv_time": {
             "id": "mf51",
             "description": "transit in-vehicle time",
         },
-        "aux_time": {
+        "transit_aux_time": {
             "id": "mf52",
             "description": "transit auxilliary time",
         },
-        "tw_time": {
+        "transit_tw_time": {
             "id": "mf53",
             "description": "transit total waiting time",
         },
-        "fw_time": {
+        "transit_fw_time": {
             "id": "mf54",
             "description": "transit first waiting time",
         },
-        "board_time": {
+        "transit_board_time": {
             "id": "mf55",
             "description": "transit boarding time",
         },
-        "board_cost": {
+        "transit_board_cost": {
             "id": "mf58",
             "description": "transit boarding cost",
         },
-        "num_board": {
+        "transit_num_board": {
             "id": "mf56",
             "description": "transit trip number of boardings",
         },
-    },
-    "bike": {
-        "separate_dist": {
+        "bike_separate_dist": {
             "id": "mf61",
             "description": "separate bike way distance",
         },
-        "streetside_dist": {
+        "bike_streetside_dist": {
             "id": "mf62",
             "description": "street-side bike way distance",
         },
-        "mixed_dist": {
+        "bike_mixed_dist": {
             "id": "mf63",
             "description": "bike distance in mixed traffic",
         },
-    },
+    }
 }
-background_traffic = "ul3"
 
 ### DEPARTURE TIME PARAMETERS ###
 
