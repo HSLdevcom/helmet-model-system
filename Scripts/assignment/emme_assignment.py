@@ -34,7 +34,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                     matrix_id=mtx[ass_class]["id"],
                     matrix_name=mtx_type+"_"+ass_class,
                     matrix_description=mtx[ass_class]["description"],
-                    default_value=0,
+                    default_value=999999,
                     overwrite=True)
         self.dist_unit_cost = car_dist_cost
         self.bike_scenario = first_scenario_id
@@ -79,7 +79,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         if is_last_iteration:
             self._assign_cars(scen_id, param.stopping_criteria_fine)
             self._calc_extra_wait_time(scen_id)
-            self._assign_congested_transit(scen_id)
+            self._assign_congested_transit(["transit_work", "transit_leisure"], scen_id)
             self._assign_bikes(self.bike_scenario,
                            self.result_mtx["dist"]["bike"]["id"],
                            "all",
@@ -87,7 +87,8 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         else:
             self._assign_cars(scen_id, param.stopping_criteria_coarse)
             self._calc_extra_wait_time(scen_id)
-            self._assign_transit(scen_id)
+            self._assign_transit("transit_work", scen_id, add_volumes=False)
+            self._assign_transit("transit_leisure", scen_id, add_volumes=True)
 
     # TODO Could they be merged with (right after) .assign(). Currently both re-route via emmebank, which is ambiguous.
     # Then the ABC class as well as MockAssignment would have to be adjusted respectively.
@@ -324,7 +325,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             transit_times.values(), "transit_kms.txt",
             transit_times.keys(), "time")
 
-    def calc_transit_cost(self, fares, peripheral_cost, default_cost=None):
+    def calc_transit_cost(self, transit_class, fares, peripheral_cost, default_cost=None):
         """Calculate transit zone cost matrix by performing 
         multiple transit assignments.
         
@@ -338,7 +339,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             (optional) Fixed cost matrix to use instead of calculated cost
         """
         emmebank = self.emme_project.modeller.emmebank
-        idx = self.result_mtx["cost"]["transit_work"]["id"]
+        idx = self.result_mtx["cost"][transit_class]["id"]
         if default_cost is not None:
             # Use fixed cost matrix
             emmebank.matrix(idx).set_numpy_data(default_cost)
@@ -361,8 +362,8 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                 node.data1 = (node.label == transit_zone)
             scen.publish_network(network)
             # Transit assignment with zone tag as weightless boarding cost
-            self._assign_transit(scen_id, True)
-            nr_visits = self.get_matrix("trip_part", "transit_work_board_cost")
+            self._assign_transit(transit_class, scen_id, count_zone_boardings=True, add_volumes=False)
+            nr_visits = self.get_matrix("trip_part", transit_class + "_board_cost")
             # If the number of visits is less than 1, there seems to
             # be an easy way to avoid visiting this transit zone
             has_visited[transit_zone] = (nr_visits >= 1)
@@ -393,7 +394,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             # If OD-flow matches several combinations, pick cheapest
             cost[is_inside] = numpy.minimum(cost[is_inside], zone_price)
         # Calculate distance-based cost from inv-distance
-        dist = self.get_matrix("dist", "transit_work")
+        dist = self.get_matrix("dist", transit_class)
         dist_cost = fares["start_fare"] + fares["dist_fare"]*dist
         cost[cost==maxprice] = dist_cost[cost==maxprice]
         # Replace fare for peripheral zones with fixed matrix
@@ -499,11 +500,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                     "od_values": self.result_mtx["dist"]["walk"]["id"],
                 },
             },
-        }
-        # Transit assignment specification
-        self.transit_zone_board = Transit("transit_work", self.demand_mtx, self.result_mtx, count_zone_boardings = True)
-        self.transit_work_spec = Transit("transit_work", self.demand_mtx, self.result_mtx)
-        self.transit_leisure_spec = Transit("transit_leisure", self.demand_mtx, self.result_mtx)
+        }        
         
     def _assign_cars(self, scen_id, stopping_criteria):
         """Perform car_work traffic assignment for one scenario."""
@@ -644,56 +641,43 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                 segment["@wait_time_dev"] = headway_sd**2 / (2.0*line.headway)
         scen.publish_network(network)
 
-    def _assign_transit(self, scen_id, count_zone_boardings=False):
+    def _assign_transit(self, transit_class, scen_id, count_zone_boardings=False, add_volumes=False):
         """Perform transit assignment for one scenario."""
         emmebank = self.emme_project.modeller.emmebank
         scen = emmebank.scenario(scen_id)
-        self.emme_project.logger.info("Transit assignment started")
+        self.emme_project.logger.info("Transit assignment started for class {}".format(transit_class))
         if count_zone_boardings:
-            self.emme_project.transit_assignment(
-                    specification=self.transit_zone_board.transit_spec, 
-                    scenario=scen, save_strategies=True)
-            self.emme_project.matrix_results(
-                self.transit_zone_board.transit_result_spec, scen)
+            spec = Transit(transit_class, self.demand_mtx, self.result_mtx, count_zone_boardings = True)
+            self.emme_project.transit_assignment(specification=spec.transit_spec, scenario=scen, save_strategies=True)
+            self.emme_project.matrix_results(spec.transit_result_spec, scen)
         else:
             # assign transit_work class (init volumes)
+            spec = Transit(transit_class, self.demand_mtx, self.result_mtx)
             self.emme_project.transit_assignment(
-                specification=self.transit_work_spec.transit_spec, 
-                scenario=scen, save_strategies=True, add_volumes = False, class_name="work")
-            # assign transit_leisure class (add to previous volumes)
-            self.emme_project.transit_assignment(
-                    specification=self.transit_leisure_spec.transit_spec, 
-                    scenario=scen, save_strategies=True, add_volumes = True, class_name="leisure")
-            # save matrix results for both classes
-            self.emme_project.matrix_results(
-                self.transit_work_spec.transit_result_spec, scenario=scen, class_name="work")
-            self.emme_project.matrix_results(
-                self.transit_leisure_spec.transit_result_spec, scenario=scen, class_name="leisure")
-            self.emme_project.network_results(
-                self.transit_work_spec.ntw_results_spec, scenario=scen, class_name="work")
-            self.emme_project.network_results(
-                self.transit_leisure_spec.ntw_results_spec, scenario=scen, class_name="leisure")
-        self.emme_project.logger.info("Transit assignment performed for scenario {}".format(str(scen_id)))
+                specification=spec.transit_spec, scenario=scen, save_strategies=True, 
+                add_volumes = add_volumes, class_name=transit_class)
+            # save matrix and network results for both transit classes
+            self.emme_project.matrix_results(spec.transit_result_spec, scenario=scen, class_name=transit_class)
+            self.emme_project.network_results(spec.ntw_results_spec, scenario=scen, class_name=transit_class)
+        self.emme_project.logger.info(
+            "Transit assignment performed for scenario {} and class {}".format(str(scen_id), transit_class))
 
-    def _assign_congested_transit(self, scen_id):
+    def _assign_congested_transit(self, transit_classes, scen_id):
         """Perform congested transit assignment for one scenario."""
         emmebank = self.emme_project.modeller.emmebank
         scen = emmebank.scenario(scen_id)
         self.emme_project.logger.info("Congested transit assignment started")
+        tcs = [Transit(tc, self.demand_mtx, self.result_mtx) for tc in transit_classes]
         self.emme_project.congested_assignment(
-            transit_assignment_spec=[self.transit_work_spec.transit_spec, self.transit_leisure_spec.transit_spec],
-            class_names=["work", "leisure"],
+            transit_assignment_spec=[spec.transit_spec for spec in tcs],
+            class_names=transit_classes,
             congestion_function=param.trass_func,
             stopping_criteria=param.trass_stop,
             log_worksheets=False, scenario=scen,
             save_strategies=True)
         # save matrix results for both classes
-        self.emme_project.matrix_results(
-            self.transit_work_spec.transit_result_spec, scenario=scen, class_name="work")
-        self.emme_project.matrix_results(
-            self.transit_leisure_spec.transit_result_spec, scenario=scen, class_name="leisure")
-        self.emme_project.network_results(
-                self.transit_work_spec.ntw_results_spec, scenario=scen, class_name="work")
-        self.emme_project.network_results(
-            self.transit_leisure_spec.ntw_results_spec, scenario=scen, class_name="leisure")
-        self.emme_project.logger.info("Transit assignment performed for scenario {}".format(str(scen_id)))
+        for name, spec in zip(transit_classes, tcs):
+            self.emme_project.matrix_results(spec.transit_result_spec, scenario=scen, class_name=name)
+            self.emme_project.network_results(spec.ntw_results_spec, scenario=scen, class_name=name)
+        self.emme_project.logger.info(
+            "Congested transit assignment performed for scenario {}".format(str(scen_id)))

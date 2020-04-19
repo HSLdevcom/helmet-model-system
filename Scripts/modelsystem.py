@@ -85,9 +85,10 @@ class ModelSystem:
                 with self.basematrices.open("cost", "aht") as aht_mtx:
                     fixed_cost = aht_mtx["transit"]
             else:
-                self.logger.info("Calculating transit cost")
                 fixed_cost = None
-            self.ass_model.calc_transit_cost(self.zdata_forecast.transit_zone, peripheral_cost, fixed_cost)
+            for transit_class in ["transit_work", "transit_leisure"]:
+                self.logger.info("Calculating transit cost for class {}".format(transit_class))
+                self.ass_model.calc_transit_cost(transit_class, self.zdata_forecast.transit_zone, peripheral_cost, fixed_cost)
 
         # Perform traffic assignment and get result impedance, for each time period
         for tp in parameters.emme_scenario:

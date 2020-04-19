@@ -2,12 +2,12 @@
     "LOG_LEVEL": "INFO",
     "LOG_FORMAT": "TEXT",
     "USE_EMME": true,
-    "SCENARIO_NAME": "2016_full_10_round",
+    "SCENARIO_NAME": "2016_transit_wl_10r",
     "RESULTS_PATH": "C:\\Users\\FIAS34036\\helmet\\system-results",
     "EMME_PROJECT_PATH": "C:\\Users\\FIAS34036\\helmet\\helmet-model-system\\sijo_HM31.emp",
-    "FIRST_SCENARIO_ID": 19,
-    "BASELINE_DATA_PATH": "C:\\Users\\FIAS34036\\helmet\\baseline_data_full",
-    "FORECAST_DATA_PATH": "C:\\Users\\FIAS34036\\helmet\\baseline_data_full\\2016_zonedata",
-    "ITERATION_COUNT": 3,
+    "FIRST_SCENARIO_ID": 119,
+    "BASELINE_DATA_PATH": "C:\\Users\\FIAS34036\\helmet\\baseline-data-full",
+    "FORECAST_DATA_PATH": "C:\\Users\\FIAS34036\\helmet\\baseline-data-full\\2016_zonedata",
+    "ITERATION_COUNT": 10,
     "USE_FIXED_TRANSIT_COST": false
 }
