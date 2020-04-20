@@ -454,6 +454,7 @@ emme_result_mtx = {
         },
     }
 }
+background_traffic = "ul3"
 
 ### DEPARTURE TIME PARAMETERS ###
 

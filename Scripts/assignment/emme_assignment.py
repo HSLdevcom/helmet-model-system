@@ -243,7 +243,9 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         emmebank = self.emme_project.modeller.emmebank
         scen = emmebank.scenario(scen_id)
         network = scen.get_network()
-        # calc @bus and ul3
+        # emme api has name "data3" for ul3
+        param_name = param.background_traffic.replace("ul", "data")
+        # calc @bus and data3
         extra_attr = "@bus"
         for link in network.links():
             segment_freq = 0
@@ -253,7 +255,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                     segment_freq += 60 / segment_hdw
             link[extra_attr] = segment_freq
             if link.volume_delay_func in [1,2,3,4,5]:
-                link["data3"] = segment_freq
+                link[param_name] = segment_freq
         scen.publish_network(network)
 
     def _calc_road_cost(self, scen_id):
@@ -427,7 +429,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                 van.spec,
             ],
             "background_traffic": {
-                "link_component": "ul3",
+                "link_component": param.background_traffic,
                 "add_transit_vehicles": False,
             },
             "performance_settings": param.performance_settings,
