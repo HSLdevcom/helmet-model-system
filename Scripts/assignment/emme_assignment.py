@@ -409,14 +409,14 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
     def _specify(self):
         # Car assignment specification
         car_work = Car("car_work", self.demand_mtx, self.result_mtx)
-        car_leisure = Car("car_leisure",self.demand_mtx, self.result_mtx)
+        car_leisure = Car("car_leisure", self.demand_mtx, self.result_mtx)
         van = Car("van", self.demand_mtx, self.result_mtx)
         truck = Car(
             "truck", self.demand_mtx, self.result_mtx, 
-            value_of_time_inv = 0.2,link_costs = "length")
+            value_of_time_inv=0.2,link_costs="length")
         trailer_truck = Car(
             "trailer_truck", self.demand_mtx, self.result_mtx,
-            value_of_time_inv = 0.2, link_costs = "length")
+            value_of_time_inv=0.2, link_costs="length")
         self.car_spec = {
             "type": "SOLA_TRAFFIC_ASSIGNMENT",
             "classes": [
