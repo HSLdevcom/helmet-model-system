@@ -1612,7 +1612,7 @@ destination_choice = {
         "car": {
             "attraction": {
                 "parking_cost_work": -0.167648454911 + 0.06,
-                "share_detached_houses": 0.579675740565e-2,
+                "share_detached_houses": 0.579675740565,
                 "own_zone_area": -0.194842606662e-1 - 0.004,
             },
             "impedance": {
@@ -2214,7 +2214,7 @@ tour_combinations = {
                 "age_65-99": -1.185980639 - 0.0771
             },
             "zone": {
-                "share_detached_houses": -0.005910000
+                "share_detached_houses": -0.5910000
             },
         },
 # utility function 3
@@ -2224,7 +2224,7 @@ tour_combinations = {
                 "age_7-17":  0.000000000 - 0.0641
             },
             "zone": {
-                "share_detached_houses": -0.005910000
+                "share_detached_houses": -0.5910000
             },
         },
 # utility function 4
@@ -2237,7 +2237,7 @@ tour_combinations = {
                 "age_65-99": -3.636471246 - 0.5649
             },
             "zone": {
-                "share_detached_houses": -0.005910000 ,
+                "share_detached_houses": -0.5910000 ,
                 "hu_t":  0.148402259
             },
         },
@@ -2252,7 +2252,7 @@ tour_combinations = {
                 "age_65-99":  1.250192981 - 0.0811
             },
             "zone": {
-                "share_detached_houses": -0.005910000
+                "share_detached_houses": -0.5910000
             },
         },
 # utility function 6
@@ -2266,7 +2266,7 @@ tour_combinations = {
                 "age_65-99":  0.394182783 - 0.1262
             },
             "zone": {
-                "share_detached_houses": -0.005910000
+                "share_detached_houses": -0.5910000
             },
         },
 # utility function 7
@@ -2608,7 +2608,7 @@ tour_combinations = {
                 "car_users":  1.544612164
             },
             "zone": {
-                "share_detached_houses": -0.008050000
+                "share_detached_houses": -0.8050000
             },
         },
 # utility function 32
@@ -2622,7 +2622,7 @@ tour_combinations = {
                 "car_users":  1.544612164
             },
             "zone": {
-                "share_detached_houses": -0.008050000
+                "share_detached_houses": -0.8050000
             },
         },
 # utility function 33
@@ -2636,7 +2636,7 @@ tour_combinations = {
                 "car_users":  1.544612164
             },
             "zone": {
-                "share_detached_houses": -0.008050000
+                "share_detached_houses": -0.8050000
             },
         },
 # utility function 34
@@ -2650,7 +2650,7 @@ tour_combinations = {
                 "car_users":  1.544612164
             },
             "zone": {
-                "share_detached_houses": -0.008050000
+                "share_detached_houses": -0.8050000
             },
         },
 # utility function 35
@@ -2664,7 +2664,7 @@ tour_combinations = {
                 "car_users":  1.544612164
             },
             "zone": {
-                "share_detached_houses": -0.008050000
+                "share_detached_houses": -0.8050000
             },
         },
 # utility function 36
@@ -2678,7 +2678,7 @@ tour_combinations = {
                 "car_users":  1.544612164
             },
             "zone": {
-                "share_detached_houses": -0.008050000
+                "share_detached_houses": -0.8050000
             },
         },
 # utility function 37
@@ -2692,7 +2692,7 @@ tour_combinations = {
                 "car_users":  1.544612164
             },
             "zone": {
-                "share_detached_houses": -0.008050000
+                "share_detached_houses": -0.8050000
             },
         },
 # utility function 38
@@ -2706,7 +2706,8 @@ tour_combinations = {
                 "car_users":  1.544612164
             },
             "zone": {
-                "share_detached_houses": -0.008050000             },
+                "share_detached_houses": -0.8050000
+            },
         },
     },
 }
