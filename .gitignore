@@ -44,9 +44,10 @@ Database/STRAT*/*
 Database/emlocki
 Logbook/project.mlbk-shm
 Logbook/project.mlbk-wal
-Matrices/2016/*
-Matrices/2030/*
-Matrices/base/*
+Network_builds/*
+Worksheets/*
+Specifications/*
+Views/*
 Scripts/.pytest_cache
 Scripts/tests/.pytest_cache
 Scripts/.env
