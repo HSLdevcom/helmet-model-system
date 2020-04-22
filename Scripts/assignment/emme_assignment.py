@@ -357,6 +357,18 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         transit_zones = set()
         for node in network.nodes():
             transit_zones.add(node.label)
+        # check that fare zones exist in network
+        self.emme_project.logger.debug(
+            "Network has fare zones {}".format(', '.join(transit_zones)))
+        zones_in_zonedata = set(char for char in ''.join(fares["fare"].keys()))
+        self.emme_project.logger.debug(
+            "Zonedata has fare zones {}".format(', '.join(zones_in_zonedata)))
+        if not zones_in_zonedata <= transit_zones:
+            self.emme_project.logger.warn(
+                "All zones in transit costs do not exist in Emme-network labels.")
+        if not transit_zones <= zones_in_zonedata:
+            self.emme_project.logger.warn(
+                "All Emme-node labels do not have transit costs specified.")
         for transit_zone in transit_zones:
             # Set tag to 1 for nodes in transit zone and 0 elsewhere
             for node in network.nodes():
