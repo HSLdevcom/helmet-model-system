@@ -93,3 +93,11 @@ A couple of tips to get it all working:
 
 - Remember to first setup your development environment. After that, open "Scripts" folder in Visual Studio Code, and select your virtual environment from bottom left Python interpreter list.
 - To configure tests, click `Ctrl-Shift-P`, type `Python: Configure tests`, select `pytest` framework, and `tests` as the directory containing tests. Tests should appear in the Test Explorer (click the chemistry bottle from the left).
+
+### OMX 
+
+Emme supports OpenMatrix library for exporting matrices. 
+
+- More info here: https://github.com/osPlanning/omx/wiki/EMME 
+- Python source codes: https://github.com/osPlanning/omx-python
+- Useful tool for exporting from cmd line: https://github.com/bstabler/EMXtoOMX
