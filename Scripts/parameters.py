@@ -143,6 +143,11 @@ assignment_mode = {
     "truck": 'k',
     "van": 'v',
 }
+freight_classes = [
+    "van", 
+    "truck", 
+    "trailer_truck",
+]
 vot_class = {
     "car_work": "work",
     "car_leisure": "leisure",
@@ -163,6 +168,13 @@ transit_modes = [
     't',
     'w',
 ]
+transit_mode_groups = {
+    "bus": "bde",
+    "trunk": "g",
+    "metro": "m",
+    "train": "rj",
+    "tram": "tp",
+    }
 aux_modes = [
     'a',
     's',
@@ -179,11 +191,15 @@ emme_attributes = {
     "@trailer_truck": "LINK",
     "@truck": "LINK",
     "@van": "LINK", 
+    "@transit_segment": "TRANSIT_SEGMENT",
+    "@transit_link": "LINK",
+    "@transit_node": "NODE",
 }
 bike_attributes = {
     "@bike_aht": "LINK",
     "@bike_iht": "LINK",
     "@bike_pt": "LINK",
+    "@bike_day": "LINK",
 }
 transit_assignment_modes = transit_modes + aux_modes
 # Link attribute for volumes
