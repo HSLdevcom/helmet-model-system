@@ -33,7 +33,7 @@ reports=
  s=%4%
  1.23
  2
- skenaario %1% pyorailyverkko
+ skenaario %2% pyorailyverkko
  q
 ~# ** poistetaan vanha sisalto
  2.12
@@ -214,7 +214,7 @@ reports=
  s=%5%
  1.23
  2
- skenaario %1% vrk
+ skenaario %2% vrk
  q
 ~< f_bussi_M2016_3p.mac
 ~< f_us2_M2016_4p.mac
@@ -225,7 +225,7 @@ reports=
  s=%6%
  1.23
  2
- skenaario %1% aht
+ skenaario %2% aht
  q
 ~< f_bussi_M2016_3a.mac
 ~< f_us2_M2016_4a.mac
@@ -236,7 +236,7 @@ reports=
  s=%7%
  1.23
  2
- skenaario %1% pt
+ skenaario %2% pt
  q
 ~< f_bussi_M2016_3p.mac
 ~< f_us2_M2016_4p.mac
@@ -247,7 +247,7 @@ reports=
  s=%8%
  1.23
  2
- skenaario %1% iht
+ skenaario %2% iht
  q
 ~< f_bussi_M2016_3i.mac
 ~< f_us2_M2016_4i.mac
