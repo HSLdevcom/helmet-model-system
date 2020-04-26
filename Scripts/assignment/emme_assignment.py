@@ -27,7 +27,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "pt": Scenario(self.emme_project, first_scenario_id+3),
             "iht": Scenario(self.emme_project, first_scenario_id+4)
         }
-        for scen in self.emme_scenarios:
+        for scen in self.emme_scenarios.values():
             scen.create_attributes(param.emme_attributes)
             scen._calc_road_cost()
             scen._calc_boarding_penalties()
@@ -219,12 +219,12 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
     def print_vehicle_kms(self, resultdata):
         vdfs = [1, 2, 3, 4, 5]
         transit_modes = param.transit_mode_groups
-        kms = dict.fromkeys(freight_classes + ["car"])
+        kms = dict.fromkeys(param.freight_classes + ["car"])
         for ass_class in kms:
             kms[ass_class] = dict.fromkeys(vdfs, 0)
         transit_dists = dict.fromkeys(transit_modes, 0)
         transit_times = dict.fromkeys(transit_modes, 0)
-        for tp in self.emme_scenario:
+        for tp in self.emme_scenarios:
             scenario = self.emme_scenarios[tp]
             network = scenario.get_network()
             for link in network.links():
