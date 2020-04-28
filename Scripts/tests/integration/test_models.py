@@ -1,23 +1,25 @@
 import unittest
-
-import logging
-import os
 import numpy
-import modelsystem
-import datahandling.resultdata as result
+from modelsystem import ModelSystem, AgentModelSystem
 from assignment.mock_assignment import MockAssignmentModel
 from datahandling.matrixdata import MatrixData
-from demand.freight import FreightModel
 from datatypes.demand import Demand
 import parameters
+import os
+
+TEST_DATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "test_data")
+
 
 class ModelTest(unittest.TestCase):
     
     def test_models(self):
         print("Testing assignment..")
-        result.set_path("test")
-        ass_model = MockAssignmentModel(MatrixData("2016_test"))
-        model = modelsystem.ModelSystem("2030_test", "2016_test", "base_test", ass_model, "test")
+        ass_model = MockAssignmentModel(MatrixData(os.path.join(TEST_DATA_PATH, "Results", "test", "Matrices")))
+        zone_data_path = os.path.join(TEST_DATA_PATH, "Scenario_input_data", "2030_test")
+        base_zone_data_path = os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata_test")
+        base_matrices_path = os.path.join(TEST_DATA_PATH, "Base_input_data", "base_matrices_test")
+        results_path = os.path.join(TEST_DATA_PATH, "Results")
+        model = ModelSystem(zone_data_path, base_zone_data_path, base_matrices_path, results_path, ass_model, "test")
         # model.dm.create_population()
         # self.assertEqual(7, len(ass_classes))
         impedance = model.assign_base_demand()
@@ -29,7 +31,7 @@ class ModelTest(unittest.TestCase):
             self.assertIsNotNone(impedance[tp]["dist"])
             
         print("Adding demand and assigning")
-        impedance = model.run(impedance)
+        impedance = model.run_iteration(impedance)
         # for mode in demand:
         #     self._validate_demand(demand[mode])
         self.assertEquals(len(parameters.emme_scenario), len(impedance))
@@ -40,11 +42,14 @@ class ModelTest(unittest.TestCase):
         print("Assignment test done")
     
     def test_agent_model(self):
-        result.set_path("test")
-        ass_model = MockAssignmentModel(MatrixData("2016_test"))
-        model = modelsystem.ModelSystem("2030_test", "2016_test", "base_test", ass_model, "test", is_agent_model=True)
+        ass_model = MockAssignmentModel(MatrixData(os.path.join(TEST_DATA_PATH, "Results", "test", "Matrices")))
+        zone_data_path = os.path.join(TEST_DATA_PATH, "Scenario_input_data", "2030_test")
+        base_zone_data_path = os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata_test")
+        base_matrices_path = os.path.join(TEST_DATA_PATH, "Base_input_data", "base_matrices_test")
+        results_path = os.path.join(TEST_DATA_PATH, "Results")
+        model = AgentModelSystem(zone_data_path, base_zone_data_path, base_matrices_path, results_path, ass_model, "test")
         impedance = model.assign_base_demand()
-        impedance = model.run(impedance)
+        impedance = model.run_iteration(impedance)
 
     def _validate_impedances(self, impedances):
         self.assertIsNotNone(impedances)
@@ -54,7 +59,7 @@ class ModelTest(unittest.TestCase):
         self.assertIsNotNone(impedances["cost"])
         self.assertIsNotNone(impedances["dist"])
         self.assertIs(type(impedances["time"]), dict)
-        self.assertEquals(len(impedances["time"]), 5)
+        self.assertEquals(len(impedances["time"]), 8)
         self.assertIsNotNone(impedances["time"]["transit"])
         self.assertIs(type(impedances["time"]["transit"]), numpy.ndarray)
         self.assertEquals(impedances["time"]["transit"].ndim, 2)
@@ -67,4 +72,3 @@ class ModelTest(unittest.TestCase):
         self.assertIs(type(demand.matrix), numpy.ndarray)
         self.assertEquals(demand.matrix.ndim, 2)
         self.assertEquals(demand.matrix.shape[1], 6)
-        

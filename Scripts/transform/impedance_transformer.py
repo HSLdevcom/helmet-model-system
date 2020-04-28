@@ -1,4 +1,5 @@
-from parameters import impedance_share, tour_purposes
+from parameters import impedance_share
+
 
 class ImpedanceTransformer:
     def __init__(self):

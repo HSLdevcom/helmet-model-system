@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
 
+
 class AssignmentModel:
     __metaclass__ = ABCMeta
 
@@ -13,6 +14,8 @@ class AssignmentModel:
             Time period (aht/pt/iht)
         matrices: dict
             Assignment class (car_work/transit/...): numpy 2-d matrix
+        is_last_iteration: bool
+        is_first_iteration: bool
         """
         pass
 
@@ -28,7 +31,7 @@ class ImpedanceSource:
         pass
 
     @abstractmethod
-    def get_impedance(self, time_period=None):
+    def get_impedance(self, is_last_iteration=False):
         """Get travel impedance matrices for one time period.
         
         Return
@@ -40,7 +43,7 @@ class ImpedanceSource:
         pass
 
     @abstractmethod
-    def get_matrices(self, mtx_type, time_period=None):
+    def get_emmebank_matrices(self, mtx_type, time_period=None):
         pass
 
     @abstractmethod
@@ -48,9 +51,9 @@ class ImpedanceSource:
         pass
     
     @abstractmethod
-    def calc_transit_cost(self):
+    def calc_transit_cost(self, fares, peripheral_cost, default_cost=None):
         pass
 
     @abstractmethod
-    def print_vehicle_kms(self):
+    def print_vehicle_kms(self, resultdatawriter):
         pass

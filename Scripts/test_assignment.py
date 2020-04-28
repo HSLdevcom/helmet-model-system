@@ -1,17 +1,17 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
-import unittest
 import assignment.emme_assignment as ass
 import numpy
 from datahandling.zonedata import ZoneData
 import os
 import logging
-from parameters import emme_scenario, demand_share
+from parameters import emme_scenario
 from datahandling.matrixdata import MatrixData
-from emme.emme_context import EmmeContext
+from emme_bindings.emme_project import EmmeProject
 
-class EmmeAssignmentTest():
+
+class EmmeAssignmentTest:
     def __init__(self):
         logging.basicConfig(format='%(asctime)s %(message)s',
                             datefmt='%Y-%m-%d %H:%M:%S',
@@ -21,7 +21,7 @@ class EmmeAssignmentTest():
         for file_name in os.listdir(project_dir):
             if file_name.endswith(".emp"):
                 empfile = os.path.join(project_dir, file_name)
-        emme_context = EmmeContext(empfile)
+        emme_context = EmmeProject(empfile)
         self.ass_model = ass.EmmeAssignmentModel(emme_context, 0.12)
     
     def test_assignment(self):
@@ -40,7 +40,7 @@ class EmmeAssignmentTest():
         for tp in emme_scenario:
             self.ass_model.assign(tp, demand)
             travel_cost[tp] = self.ass_model.get_impedance()
-        costs_files = MatrixData("2016_test")
+        costs_files = MatrixData(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "Matrices", "2016_test"))
         for time_period in travel_cost:
             for mtx_type in travel_cost[time_period]:
                 zone_numbers = self.ass_model.zone_numbers
@@ -55,6 +55,7 @@ class EmmeAssignmentTest():
         zdata = ZoneData("2030_test", ZONE_INDEXES)
         peripheral_cost = numpy.ones((2, 6))
         self.ass_model.calc_transit_cost(zdata.transit_zone, peripheral_cost)
+
 
 em = EmmeAssignmentTest()
 em.test_assignment()

@@ -1,6 +1,6 @@
 from utils.log import Log
-import datahandling.resultdata as result
 import assignment.departure_time as dt
+from datahandling.resultdata import ResultsData
 from datahandling.zonedata import ZoneData
 from datahandling.matrixdata import MatrixData
 from demand.freight import FreightModel
@@ -12,23 +12,23 @@ import parameters
 import numpy
 import threading
 import multiprocessing
+import os
 
 
 class ModelSystem:
-    def __init__(self, zone_data_path, base_zone_data_path, base_matrices, ass_model, name, is_agent_model=False):
+    def __init__(self, zone_data_path, base_zone_data_path, base_matrices_path, results_path, ass_model, name):
         self.logger = Log.get_instance()
         self.ass_model = ass_model
+        # Input data
         self.zdata_base = ZoneData(base_zone_data_path, ass_model.zone_numbers)
+        self.basematrices = MatrixData(base_matrices_path)
         self.zdata_forecast = ZoneData(zone_data_path, ass_model.zone_numbers)
-        self.basematrices = MatrixData(base_matrices)
-        self.resultmatrices = MatrixData(name)
-        self.is_agent_model = is_agent_model
-        if is_agent_model:
-            self.dm = DemandModel(self.zdata_forecast, is_agent_model)
-            self.dm.create_population()
-        else:
-            self.dm = DemandModel(self.zdata_forecast)
-            self.dm.create_population_segments()
+        # Output data
+        self.resultmatrices = MatrixData(os.path.join(results_path, name, "Matrices"))
+        self.resultdata = ResultsData(os.path.join(results_path, name))
+
+        self.dm = self._init_demand_model()
+
         self.fm = FreightModel(self.zdata_base,
                                self.zdata_forecast,
                                self.basematrices)
@@ -37,89 +37,78 @@ class ModelSystem:
                                 self.ass_model.zone_numbers)
         self.dtm = dt.DepartureTimeModel(self.ass_model.nr_zones)
         self.imptrans = ImpedanceTransformer()
-        self.ass_classes = dict.fromkeys(parameters.emme_mtx["demand"].keys())
+        # TODO: Should be better defined as parameter when we don't  
+        # have different transit matrices as input data. 
+        # Could use this list_matrices as inpout validation.
+        self.ass_classes = self.basematrices.list_matrices("demand", "aht")
         self.mode_share = []
-
-    def assign_base_demand(self, use_fixed_transit_cost=False):
         self.trucks = self.fm.calc_freight_traffic("truck")
         self.trailer_trucks = self.fm.calc_freight_traffic("trailer_truck")
+
+    def _init_demand_model(self):
+        dm = DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=False)
+        dm.create_population_segments()
+        return dm
+
+    def _add_internal_demand(self, previous_iter_impedance, is_last_iteration):
+        for purpose in self.dm.tour_purposes:
+            if isinstance(purpose, SecDestPurpose):
+                purpose.gen_model.init_tours()
+            else:
+                purpose_impedance = self.imptrans.transform(purpose, previous_iter_impedance)
+                purpose.calc_prob(purpose_impedance)
+        self.dm.generate_tours()
+        for purpose in self.dm.tour_purposes:
+            if isinstance(purpose, SecDestPurpose):
+                purpose_impedance = self.imptrans.transform(purpose, previous_iter_impedance)
+                purpose.generate_tours()
+                if is_last_iteration:
+                    for mode in purpose.model.dest_choice_param:
+                        self._distribute_sec_dests(purpose, mode, purpose_impedance)
+                else:
+                    self._distribute_sec_dests(purpose, "car", purpose_impedance)
+            else:
+                demand = purpose.calc_demand()
+                if purpose.dest != "source":
+                    for mode in demand:
+                        self.dtm.add_demand(demand[mode])
+
+    # possibly merge with init
+    def assign_base_demand(self, use_fixed_transit_cost=False):
         impedance = {}
-        with self.basematrices.open("cost", "peripheral") as mtx:
-            peripheral_cost = mtx["transit"]
+
+        # Calculate transit cost matrix, and save it to emmebank
+        with self.basematrices.open("cost", "peripheral") as peripheral_mtx:
+            peripheral_cost = peripheral_mtx["transit"]
             if use_fixed_transit_cost:
                 self.logger.info("Using fixed transit cost matrix")
-                with self.basematrices.open("cost", "aht") as mtx:
-                    fixed_cost = mtx["transit"]
+                with self.basematrices.open("cost", "aht") as aht_mtx:
+                    fixed_cost = aht_mtx["transit"]
             else:
                 self.logger.info("Calculating transit cost")
                 fixed_cost = None
-            self.ass_model.calc_transit_cost(
-                self.zdata_forecast.transit_zone, peripheral_cost,
-                fixed_cost)
+            self.ass_model.calc_transit_cost(self.zdata_forecast.transit_zone, peripheral_cost, fixed_cost)
+
+        # Perform traffic assignment and get result impedance, for each time period
         for tp in parameters.emme_scenario:
             self.logger.info("Assigning period " + tp)
-            base_demand = {}
             with self.basematrices.open("demand", tp) as mtx:
-                for ass_class in self.ass_classes:
-                    base_demand[ass_class] = mtx[ass_class]
+                base_demand = {ass_class: mtx[ass_class] for ass_class in self.ass_classes}
             self.ass_model.assign(tp, base_demand)
             impedance[tp] = self.ass_model.get_impedance()
         self.imptrans.average_car_impedance(impedance)
         return impedance
 
-    def run(self, impedance, is_last_iteration=False):
+    def run_iteration(self, previous_iter_impedance, is_last_iteration=False):
+        impedance = {}
+
+        # Add truck and trailer truck demand, to time-period specific matrices (DTM), used in traffic assignment
         self.dtm.add_demand(self.trucks)
         self.dtm.add_demand(self.trailer_trucks)
-        if self.is_agent_model:
-            for purpose in self.dm.tour_purposes:
-                if isinstance(purpose, SecDestPurpose):
-                    purpose.init_sums()
-                else:
-                    purpose_impedance = self.imptrans.transform(purpose, impedance)
-                    if purpose.area == "peripheral" or purpose.name == "oop":
-                        purpose.calc_prob(purpose_impedance)
-                        purpose.gen_model.init_tours()
-                        purpose.gen_model.add_tours()
-                        demand = purpose.calc_demand()
-                        if purpose.dest != "source":
-                            for mode in demand:
-                                self.dtm.add_demand(demand[mode])
-                    else:
-                        purpose.init_sums()
-                        purpose.model.calc_basic_prob(purpose_impedance)
-            purpose_impedance = self.imptrans.transform(self.dm.purpose_dict["hoo"], impedance)
-            for person in self.dm.population:
-                person.add_tours(self.dm.purpose_dict)
-                for tour in person.tours:
-                    tour.choose_mode(person.is_car_user)
-                    tour.choose_destination(purpose_impedance)
-                    if tour.mode == "car":
-                        tour.choose_driver()
-                    self.dtm.add_demand(tour)
-        else:
-            for purpose in self.dm.tour_purposes:
-                if isinstance(purpose, SecDestPurpose):
-                    purpose.gen_model.init_tours()
-                else:
-                    purpose_impedance = self.imptrans.transform(purpose, impedance)
-                    purpose.calc_prob(purpose_impedance)
-            self.dm.generate_tours()
-            for purpose in self.dm.tour_purposes:
-                if isinstance(purpose, SecDestPurpose):
-                    purpose_impedance = self.imptrans.transform(purpose, impedance)
-                    purpose.generate_tours()
-                    if is_last_iteration:
-                        for mode in purpose.model.dest_choice_param:
-                            self._distribute_sec_dests(
-                                purpose, mode, purpose_impedance)
-                    else:
-                        self._distribute_sec_dests(
-                            purpose, "car", purpose_impedance)
-                else:
-                    demand = purpose.calc_demand()
-                    if purpose.dest != "source":
-                        for mode in demand:
-                            self.dtm.add_demand(demand[mode])
+
+        self._add_internal_demand(previous_iter_impedance, is_last_iteration)
+
+        # Calculate external demand
         trip_sum = {}
         for mode in parameters.external_modes:
             if mode == "truck":
@@ -145,32 +134,41 @@ class ModelSystem:
         for mode in trip_sum:
             mode_share[mode] = trip_sum[mode] / sum_all
         self.mode_share.append(mode_share)
-        impedance = {}
+
+        # Calculate and return traffic impedance
         for tp in parameters.emme_scenario:
             self.dtm.add_vans(tp, self.zdata_forecast.nr_zones)
             self.ass_model.assign(tp, self.dtm.demand[tp], is_last_iteration)
-            impedance[tp] = self.ass_model.get_impedance()
+            impedance[tp] = self.ass_model.get_impedance(is_last_iteration)
+
+            # Car Ownership -model specific block
             if tp == "aht":
                 car_time = numpy.ma.average(
-                    impedance[tp]["time"]["car_work"], axis=1,
-                    weights=self.dtm.demand[tp]["car_work"])
+                    impedance[tp]["time"]["car_work"],
+                    axis=1,
+                    weights=self.dtm.demand[tp]["car_work"]
+                )
                 transit_time = numpy.ma.average(
-                    impedance[tp]["time"]["transit"], axis=1,
-                    weights=self.dtm.demand[tp]["transit_work"])
+                    impedance[tp]["time"]["transit"],
+                    axis=1,
+                    weights=self.dtm.demand[tp]["transit_work"]
+                )
                 time_ratio = transit_time / car_time
-                result.print_data(
-                    time_ratio, "impedance_ratio.txt",
-                    self.ass_model.zone_numbers, "time")
+                self.resultdata.print_data(time_ratio, "impedance_ratio.txt", self.ass_model.zone_numbers, "time")
+
                 car_cost = numpy.ma.average(
-                    impedance[tp]["cost"]["car_work"], axis=1,
-                    weights=self.dtm.demand[tp]["car_work"])
+                    impedance[tp]["cost"]["car_work"],
+                    axis=1,
+                    weights=self.dtm.demand[tp]["car_work"]
+                )
                 transit_cost = numpy.ma.average(
-                    impedance[tp]["cost"]["transit"], axis=1,
-                    weights=self.dtm.demand[tp]["transit_work"])
-                cost_ratio = transit_cost / 44 / car_cost
-                result.print_data(
-                    cost_ratio, "impedance_ratio.txt",
-                    self.ass_model.zone_numbers, "cost")
+                    impedance[tp]["cost"]["transit"],
+                    axis=1,
+                    weights=self.dtm.demand[tp]["transit_work"]
+                )
+                cost_ratio = transit_cost / 44. / car_cost
+                self.resultdata.print_data(cost_ratio, "impedance_ratio.txt", self.ass_model.zone_numbers, "cost")
+
             if is_last_iteration:
                 zone_numbers = self.ass_model.zone_numbers
                 with self.resultmatrices.open("demand", tp, 'w') as mtx:
@@ -186,9 +184,11 @@ class ModelSystem:
                             mtx[ass_class] = cost_data
         self.imptrans.average_car_impedance(impedance)
         if is_last_iteration:
-            self.ass_model.print_vehicle_kms()
+            self.ass_model.print_vehicle_kms(self.resultdata)
+
+        # Reset time-period specific demand matrices (DTM), and empty result buffer
         self.dtm.init_demand()
-        result.flush()
+        self.resultdata.flush()
         return impedance
 
     def _distribute_sec_dests(self, purpose, mode, impedance):
@@ -228,3 +228,38 @@ class ModelSystem:
         for i in dests:
             demand = purpose.distribute_tours(mode, impedance[mode], i)
             container.add_demand(demand)
+
+
+class AgentModelSystem(ModelSystem):
+
+    def _init_demand_model(self):
+        dm = DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=True)
+        dm.create_population()
+        return dm
+
+    def _add_internal_demand(self, previous_iter_impedance, is_last_iteration):
+        for purpose in self.dm.tour_purposes:
+            if isinstance(purpose, SecDestPurpose):
+                purpose.init_sums()
+            else:
+                purpose_impedance = self.imptrans.transform(purpose, previous_iter_impedance)
+                if purpose.area == "peripheral" or purpose.name == "oop":
+                    purpose.calc_prob(purpose_impedance)
+                    purpose.gen_model.init_tours()
+                    purpose.gen_model.add_tours()
+                    demand = purpose.calc_demand()
+                    if purpose.dest != "source":
+                        for mode in demand:
+                            self.dtm.add_demand(demand[mode])
+                else:
+                    purpose.init_sums()
+                    purpose.model.calc_basic_prob(purpose_impedance)
+        purpose_impedance = self.imptrans.transform(self.dm.purpose_dict["hoo"], previous_iter_impedance)
+        for person in self.dm.population:
+            person.add_tours(self.dm.purpose_dict)
+            for tour in person.tours:
+                tour.choose_mode(person.is_car_user)
+                tour.choose_destination(purpose_impedance)
+                if tour.mode == "car":
+                    tour.choose_driver()
+                self.dtm.add_demand(tour)

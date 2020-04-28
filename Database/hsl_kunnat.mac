@@ -1,5 +1,5 @@
-~# *** hsl_kunnat_2018.mac
-~# TE 12.4.2019
+~# *** hsl_kunnat.mac
+~# 15.4.2020
 ~#
 ~# lasketaan attribuutti @hsl, joka kertoo, onko pysäkkisolmu HSL-alueella (0=ei, 1=on)
 ~#
