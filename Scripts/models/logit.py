@@ -5,6 +5,20 @@ import parameters
 
 
 class LogitModel:
+    """Generic logit model with mode/destination choice.
+
+    Parameters
+    ----------
+    zone_data : ZoneData
+        Data used for all demand calculations
+    purpose : TourPurpose
+        Tour purpose (type of tour)
+    resultdata : ResultData
+        Writer object to result directory
+    is_agent_model : bool (optional)
+        Whether the model is used for agent-based simulation
+    """
+
     def __init__(self, zone_data, purpose, resultdata, is_agent_model):
         self.resultdata = resultdata
         self.purpose = purpose
@@ -24,13 +38,13 @@ class LogitModel:
         for mode in self.mode_choice_param:
             b = self.mode_choice_param[mode]
             utility = numpy.zeros_like(expsum)
-            utility += self._add_constant(utility, b["constant"])
-            utility += self._add_zone_util(
+            self._add_constant(utility, b["constant"])
+            utility = self._add_zone_util(
                 utility.T, b["generation"], generation=True).T
-            utility += self._add_zone_util(utility, b["attraction"])
-            utility += self._add_impedance(utility, impedance[mode], b["impedance"])
+            self._add_zone_util(utility, b["attraction"])
+            self._add_impedance(utility, impedance[mode], b["impedance"])
             exps = numpy.exp(utility)
-            exps *= self._add_log_impedance(exps, impedance[mode], b["log"])
+            self._add_log_impedance(exps, impedance[mode], b["log"])
             self.mode_exps[mode] = exps
             expsum += exps
         return expsum
@@ -38,19 +52,19 @@ class LogitModel:
     def _calc_dest_util(self, mode, impedance):
         b = self.dest_choice_param[mode]
         utility = numpy.zeros_like(next(iter(impedance.values())), self.dtype)
-        utility += self._add_zone_util(utility, b["attraction"])
-        utility += self._add_impedance(utility, impedance, b["impedance"])
+        self._add_zone_util(utility, b["attraction"])
+        self._add_impedance(utility, impedance, b["impedance"])
         self.dest_exps[mode] = numpy.exp(utility)
         size = numpy.zeros_like(utility)
-        utility += self._add_zone_util(size, b["size"])
+        self._add_zone_util(size, b["size"])
         impedance["size"] = size
         if "transform" in b:
             b_transf = b["transform"]
             transimp = numpy.zeros_like(utility)
-            transimp += self._add_zone_util(transimp, b_transf["attraction"])
-            transimp += self._add_impedance(transimp, impedance, b_transf["impedance"])
+            self._add_zone_util(transimp, b_transf["attraction"])
+            self._add_impedance(transimp, impedance, b_transf["impedance"])
             impedance["transform"] = transimp
-        self.dest_exps[mode] *= self._add_log_impedance(self.dest_exps[mode], impedance, b["log"])
+        self._add_log_impedance(self.dest_exps[mode], impedance, b["log"])
         if mode != "logsum":
             threshold = parameters.distance_boundary[mode]
             self.dest_exps[mode][impedance["dist"] > threshold] = 0
@@ -62,19 +76,19 @@ class LogitModel:
     def _calc_sec_dest_util(self, mode, impedance, orig, dest):
         b = self.dest_choice_param[mode]
         utility = numpy.zeros_like(next(iter(impedance.values())), self.dtype)
-        utility += self._add_sec_zone_util(utility, b["attraction"], orig, dest)
-        utility += self._add_impedance(utility, impedance, b["impedance"])
+        self._add_sec_zone_util(utility, b["attraction"], orig, dest)
+        self._add_impedance(utility, impedance, b["impedance"])
         dest_exps = numpy.exp(utility)
         size = numpy.zeros_like(utility)
-        size += self._add_sec_zone_util(size, b["size"])
+        self._add_sec_zone_util(size, b["size"])
         impedance["size"] = size
-        dest_exps *= self._add_log_impedance(dest_exps, impedance, b["log"])
+        self._add_log_impedance(dest_exps, impedance, b["log"])
         if mode != "logsum":
             threshold = parameters.distance_boundary[mode]
             dest_exps[impedance["dist"] > threshold] = 0
         return dest_exps
 
-    def _add_constant(self, shape, b):
+    def _add_constant(self, utility, b):
         """Calculates constant term for utility function.
         
         Parameters
@@ -91,7 +105,6 @@ class LogitModel:
             A numpy array of the same size and type as `shape` but filled with
             the constant value. The result is to be added to utility.
         """
-        utility = numpy.zeros_like(shape)
         try: # If only one parameter
             utility += b
         except ValueError: # Separate params for cap region and surrounding
@@ -102,9 +115,8 @@ class LogitModel:
             else: # 2-d matrix calculation
                 utility[:k, :] += b[0]
                 utility[k:, :] += b[1]
-        return utility
     
-    def _add_impedance(self, shape, impedance, b):
+    def _add_impedance(self, utility, impedance, b):
         """Calculates simple linear impedance terms for utility function.
         
         Parameters
@@ -124,7 +136,6 @@ class LogitModel:
             A numpy array of the same size and type as `shape` but filled with
             the impedance terms. The result is to be added to utility.
         """
-        utility = numpy.zeros_like(shape)
         for i in b:
             try: # If only one parameter
                 utility += b[i] * impedance[i]
@@ -134,7 +145,7 @@ class LogitModel:
                 utility[k:, :] += b[i][1] * impedance[i][k:, :]
         return utility
 
-    def _add_log_impedance(self, shape, impedance, b):
+    def _add_log_impedance(self, exps, impedance, b):
         """Calculates log transformations of impedance for utility function.
         
         This is an optimized way of calculating log terms. Calculates
@@ -160,7 +171,6 @@ class LogitModel:
             the impedance terms. The result is to be multiplied with the
             exponents of utility.
         """
-        exps = numpy.ones_like(shape)
         for i in b:
             try: # If only one parameter
                 exps *= numpy.power(impedance[i] + 1, b[i])
@@ -170,7 +180,7 @@ class LogitModel:
                 exps[k:, :] *= numpy.power(impedance[i][k:, :] + 1, b[i][1])
         return exps
     
-    def _add_zone_util(self, shape, b, generation=False):
+    def _add_zone_util(self, utility, b, generation=False):
         """Calculates simple linear zone terms for utility function.
         
         Parameters
@@ -191,7 +201,6 @@ class LogitModel:
             A numpy array of the same size and type as `shape` but filled with
             the zone terms. The result is to be added to utility.
         """
-        utility = numpy.zeros_like(shape)
         zdata = self.zone_data
         for i in b:
             try: # If only one parameter
@@ -210,8 +219,7 @@ class LogitModel:
                     utility[k:, :] += b[i][1] * data_surrounding
         return utility
     
-    def _add_sec_zone_util(self, shape, b, orig=None, dest=None):
-        utility = numpy.zeros_like(shape)
+    def _add_sec_zone_util(self, utility, b, orig=None, dest=None):
         zdata = self.zone_data
         for i in b:
             data = zdata.get_data(i, self.bounds, generation=True)
@@ -223,7 +231,7 @@ class LogitModel:
                 utility += b[i][1] * data[dest, :u]
         return utility
 
-    def _add_log_zone_util(self, shape, b, generation=False):
+    def _add_log_zone_util(self, exps, b, generation=False):
         """Calculates log transformations of zone data for utility function.
         
         This is an optimized way of calculating log terms. Calculates
@@ -250,7 +258,6 @@ class LogitModel:
             the zone terms. The result is to be multiplied with the
             exponents of utility.
         """
-        exps = numpy.ones_like(shape)
         zdata = self.zone_data
         for i in b:
             exps *= numpy.power(
@@ -259,9 +266,34 @@ class LogitModel:
 
 
 class ModeDestModel(LogitModel):
+    """Nested logit model with mode choice in upper level.
+
+    Uses logsums from destination choice model as utility
+    in mode choice model.
+
+         choice
+        /     \\
+      m1        m2
+     / \\      / \\
+    d1   d2   d1   d2
+
+    Parameters
+    ----------
+    zone_data : ZoneData
+        Data used for all demand calculations
+    purpose : TourPurpose
+        Tour purpose (type of tour)
+    resultdata : ResultData
+        Writer object to result directory
+    is_agent_model : bool (optional)
+        Whether the model is used for agent-based simulation
+    """
+
     def calc_prob(self, impedance):
         """Calculate matrix of choice probabilities.
-        Insert individual dummy variables.
+
+        First calculates basic probabilities. Then inserts individual
+        dummy variables by calling `calc_individual_prob()`.
         
         Parameters
         ----------
@@ -270,8 +302,8 @@ class ModeDestModel(LogitModel):
                 Type (time/cost/dist) : numpy 2-d matrix
                     Impedances
         
-        Return
-        ------
+        Returns
+        -------
         dict
             Mode (car/transit/bike/walk) : numpy 2-d matrix
                 Choice probabilities
@@ -289,7 +321,9 @@ class ModeDestModel(LogitModel):
         return prob
     
     def calc_basic_prob(self, impedance):
-        """Calculate matrix of choice probabilities.
+        """Calculate matrix of mode and destination choice probabilities.
+
+        Individual dummy variables are not included.
         
         Parameters
         ----------
@@ -298,8 +332,8 @@ class ModeDestModel(LogitModel):
                 Type (time/cost/dist) : numpy 2-d matrix
                     Impedances
         
-        Return
-        ------
+        Returns
+        -------
         dict
             Mode (car/transit/bike/walk) : numpy 2-d matrix
                 Choice probabilities
@@ -308,14 +342,13 @@ class ModeDestModel(LogitModel):
         logsum = numpy.log(mode_expsum)
         self.resultdata.print_data(
             pandas.Series(logsum, self.purpose.zone_numbers),
-            "accessibility.txt",
-            self.zone_data.zone_numbers,
-            self.purpose.name
-        )
+            "accessibility.txt", self.zone_data.zone_numbers, self.purpose.name)
         return self._calc_prob(mode_expsum)
     
     def calc_individual_prob(self, mod_mode, dummy):
-        """Calculate matrix of choice probabilities
+        """Calculate matrix of probabilities with individual dummies.
+        
+        Calculate matrix of mode and destination choice probabilities
         with individual dummy variable included.
         
         Parameters
@@ -325,8 +358,8 @@ class ModeDestModel(LogitModel):
         dummy : str
             The name of the individual dummy
         
-        Return
-        ------
+        Returns
+        -------
         dict
             Mode (car/transit/bike/walk) : numpy 2-d matrix
                 Choice probabilities
@@ -344,8 +377,10 @@ class ModeDestModel(LogitModel):
         return self._calc_prob(mode_expsum)
     
     def calc_individual_mode_prob(self, is_car_user, zone):
-        """Calculate choice probabilities for individual agent
-        with individual dummy variable included.
+        """Calculate individual choice probabilities with individual dummies.
+        
+        Calculate mode choice probabilities for individual
+        agent with individual dummy variable included.
         
         Parameters
         ----------
@@ -354,10 +389,11 @@ class ModeDestModel(LogitModel):
         zone : int
             Index of zone where the agent lives
         
-        Return
-        ------
+        Returns
+        -------
         list
-            Choice probabilities for purpose modes
+            float
+                Choice probabilities for purpose modes
         """
         mode_exps = {}
         mode_expsum = 0
@@ -388,11 +424,8 @@ class ModeDestModel(LogitModel):
             label = self.purpose.name + "_" + mode[0]
             self.zone_data._values[label] = logsum
             self.resultdata.print_data(
-                logsum,
-                "accessibility.txt",
-                self.zone_data.zone_numbers,
-                label
-            )
+                logsum, "accessibility.txt",
+                self.zone_data.zone_numbers, label)
         return self._calc_mode_util(self.dest_expsums)
 
     def _calc_prob(self, mode_expsum):
@@ -408,6 +441,30 @@ class ModeDestModel(LogitModel):
 
 
 class DestModeModel(LogitModel):
+    """Nested logit model with destination choice in upper level.
+
+    Used only in peripheral non-home source model.
+    Uses logsums from mode choice model as utility
+    in destination choice model.
+
+         choice
+        /     \\
+      d1        d2
+     / \\      / \\
+    m1   m2   m1   m2
+
+    Parameters
+    ----------
+    zone_data : ZoneData
+        Data used for all demand calculations
+    purpose : TourPurpose
+        Tour purpose (type of tour)
+    resultdata : ResultData
+        Writer object to result directory
+    is_agent_model : bool (optional)
+        Whether the model is used for agent-based simulation
+    """
+
     def calc_prob(self, impedance):
         """Calculate matrix of choice probabilities.
         
@@ -418,8 +475,8 @@ class DestModeModel(LogitModel):
                 Type (time/cost/dist) : numpy 2-d matrix
                     Impedances
         
-        Return
-        ------
+        Returns
+        -------
         dict
             Mode (car/transit/bike/walk) : numpy 2-d matrix
                 Choice probabilities
@@ -436,7 +493,24 @@ class DestModeModel(LogitModel):
 
 
 class SecDestModel(LogitModel):
-    def calc_prob(self, mode, impedance, origin=None, destination=None):
+    """Logit model for secondary destination choice.
+
+    Attaches secondary destinations to tours with already calculated
+    modes and destinations.
+
+    Parameters
+    ----------
+    zone_data : ZoneData
+        Data used for all demand calculations
+    purpose : TourPurpose
+        Tour purpose (type of tour)
+    resultdata : ResultData
+        Writer object to result directory
+    is_agent_model : bool (optional)
+        Whether the model is used for agent-based simulation
+    """
+
+    def calc_prob(self, mode, impedance, origin, destination=None):
         """Calculate matrix of choice probabilities.
         
         Parameters
@@ -447,12 +521,13 @@ class SecDestModel(LogitModel):
             Type (time/cost/dist) : numpy 2d matrix
                 Impedances
         origin: int
-            Origin
-        destination:
-            Destination
+            Origin zone index
+        destination: int or ndarray (optional)
+            Destination zone index or boolean array (if calculation for 
+            all primary destinations is performed in parallel)
         
-        Return
-        ------
+        Returns
+        -------
         numpy 2-d matrix
                 Choice probabilities
         """
@@ -470,6 +545,19 @@ class OriginModel(DestModeModel):
 
 
 class TourCombinationModel:
+    """Nested logit model for tour combination choice.
+
+    Number of tours per day is the upper level of the model and each
+    number-of-tour nest can have different combinations of tours
+    (e.g., a two-tour combination can be hw-ho, hw-hs or ho-ho, etc.).
+    Base for tour generation.
+
+    Parameters
+    ----------
+    zone_data : ZoneData
+        Data used for all demand calculations
+    """
+
     def __init__(self, zone_data):
         self.zone_data = zone_data
         self.param = parameters.tour_combinations
@@ -478,6 +566,10 @@ class TourCombinationModel:
     
     def calc_prob(self, age_group, is_car_user, zones):
         """Calculate choice probabilities for each tour combination.
+
+        Calculation is done for one specific population group
+        (age + is car user or not) and probabilities are returned for every
+        possible tour combination.
         
         Parameters
         ----------
@@ -488,19 +580,23 @@ class TourCombinationModel:
         zones : int or slice
             Zone number (for agent model) or zone data slice
 
-        Return
-        ------
+        Returns
+        -------
         dict
-            Tour combination (-/hw/hw-ho/...) : float or numpy 1-d array
+            key : tuple of str
+                Tour combination (-/hw/hw-ho/...)
+            value : float or numpy 1-d array
                 Choice probability
         """
         prob = {}
         nr_tours_exps = {}
         nr_tours_expsum = 0
         for nr_tours in self.param:
+            # Upper level of nested logit model
             combination_exps = {}
             combination_expsum = 0
             for tour_combination in self.param[nr_tours]:
+                # Lower level of nested logit model
                 if tour_combination in self.conditions:
                     if self.conditions[tour_combination][0]:
                         # If this tour pattern is exclusively for one age group
@@ -544,47 +640,100 @@ class TourCombinationModel:
             scale_param = parameters.tour_number_scale
             nr_tours_exps[nr_tours] *= numpy.power(combination_expsum, scale_param)
             nr_tours_expsum += nr_tours_exps[nr_tours]
-        prob["-"] = 1
+        # Probability of no tours at all (empty tuple) is deduced from
+        # other combinations (after calibration)
+        prob[()] = 1
         for nr_tours in self.param:
             if nr_tours != 0:
                 nr_tours_prob = nr_tours_exps[nr_tours] / nr_tours_expsum
                 # Tour number probability is calibrated
                 nr_tours_prob *= self.increases[nr_tours]
-                prob["-"] -= nr_tours_prob
+                prob[()] -= nr_tours_prob
                 for tour_combination in self.param[nr_tours]:
+                    # Upper and lower level probabilities are combined
                     prob[tour_combination] *= nr_tours_prob
         return prob
 
 
 class CarUseModel(LogitModel):
-    def __init__(self, zone_data, bounds, resultdata):
+    """Binary logit model for car use.
+
+    Parameters
+    ----------
+    zone_data : ZoneData
+        Data used for all demand calculations
+    bounds : slice
+        Zone bounds
+    age_groups : tuple
+        tuple
+            int
+                Age intervals
+    resultdata : ResultData
+        Writer object to result directory
+    """
+
+    def __init__(self, zone_data, bounds, age_groups, resultdata):
         self.resultdata = resultdata
         self.zone_data = zone_data
         self.bounds = bounds
+        self.genders = ("female", "male")
+        self.age_groups = age_groups
+        self.param = parameters.car_usage
+        for i in self.param["individual_dummy"]:
+            self._check(i)
+    
+    def _check(self, dummy):
+        try:
+            age_interval = dummy.split('_')[1]
+        except AttributeError:
+            # If the dummy is for a compound segment (age + gender)
+            age_interval = dummy[0].split('_')[1]
+            if dummy[1] not in self.genders:
+                raise AttributeError(
+                    "Car use dummy name {} not valid".format(dummy[1]))
+        if tuple(map(int, age_interval.split('-'))) not in self.age_groups:
+            raise AttributeError(
+                "Car use dummy name {} not valid".format(age_interval))
     
     def calc_basic_prob(self):
-        b = parameters.car_usage
+        """Calculate car user probabilities without individual dummies.
+
+        Returns
+        -------
+        numpy.ndarray
+                Choice probabilities
+        """
+        b = self.param
         utility = numpy.zeros(self.bounds.stop)
-        utility += self._add_constant(utility, b["constant"])
-        utility += self._add_zone_util(utility, b["generation"], True)
+        self._add_constant(utility, b["constant"])
+        self._add_zone_util(utility, b["generation"], True)
         self.exps = numpy.exp(utility)
-        self.exps *= self._add_log_zone_util(self.exps, b["log"], True)
+        self._add_log_zone_util(self.exps, b["log"], True)
         prob = self.exps / (self.exps+1)
         return prob
 
     def calc_prob(self):
+        """Calculate car user probabilities with individual dummies included.
+
+        Returns
+        -------
+        pandas.Series
+                Choice probabilities
+        """
         prob = self.calc_basic_prob()
         no_dummy_share = 1
         dummy_prob = 0
-        b = parameters.car_usage
+        b = self.param
         for i in b["individual_dummy"]:
             try:
                 dummy_share = self.zone_data.get_data(
                     "share_"+i, self.bounds, generation=True)
             except TypeError:
+                # If the dummy is for a compound segment (age + gender)
                 dummy_share = numpy.ones_like(prob)
                 for j in i:
-                    dummy_share *= self.zone_data.get_data("share_"+j, self.bounds, generation=True)
+                    dummy_share *= self.zone_data.get_data(
+                        "share_"+j, self.bounds, generation=True)
             no_dummy_share -= dummy_share
             ind_exps = numpy.exp(b["individual_dummy"][i]) * self.exps
             ind_prob = ind_exps / (ind_exps+1)
@@ -597,11 +746,31 @@ class CarUseModel(LogitModel):
         return prob
     
     def calc_individual_prob(self, age_group, gender, zone=None):
+        """Calculate car user probability with individual dummies included.
+        
+        Uses results from previously run `calc_basic_prob()`.
+        
+        Parameters
+        ----------
+        age_group : str
+            Agent/segment age group
+        gender : str
+            Agent/segment gender (female/male)
+        zone : int (optional)
+            Index of zone where the agent lives, if no zone index is given,
+            calculation is done for all zones
+        
+        Returns
+        -------
+        numpy.ndarray
+                Choice probabilities
+        """
+        self._check((age_group, gender))
         if zone is None:
             exp = self.exps
         else:
             exp = self.exps[self.zone_data.zone_index(zone)]
-        b = parameters.car_usage
+        b = self.param
         if age_group in b["individual_dummy"]:
             exp = numpy.exp(b["individual_dummy"][age_group]) * exp
         if (age_group, gender) in b["individual_dummy"]:

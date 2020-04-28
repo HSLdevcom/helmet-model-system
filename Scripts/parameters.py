@@ -12,8 +12,8 @@ vot_inv = {
     "business": 6,
     "leisure": 6,
 }
-# Default distance cost [eur/km]
-dist_cost = 0.12
+# Default distance unit cost [eur/km]
+dist_unit_cost = 0.12
 # Boarding penalties for different transit modes
 boarding_penalty = {
     "b": 3,  # Bus
@@ -110,7 +110,6 @@ emme_scenario = {
     "pt": 22,
     "iht": 23,
 }
-bike_scenario = 19
 transport_classes = (
     "car_work",
     "car_leisure",
@@ -168,15 +167,33 @@ aux_modes = [
     'a',
     's',
 ]
+# Link attributes initialized 
+# in helmet-model-system 
+emme_attributes = {
+    "@bus": "LINK",
+    "@total_cost": "LINK",
+    "@toll_cost": "LINK",
+    "@wait_time_dev": "TRANSIT_SEGMENT",
+    "@car_work": "LINK",
+    "@car_leisure": "LINK",
+    "@trailer_truck": "LINK",
+    "@truck": "LINK",
+    "@van": "LINK", 
+}
+bike_attributes = {
+    "@bike_aht": "LINK",
+    "@bike_iht": "LINK",
+    "@bike_pt": "LINK",
+}
 transit_assignment_modes = transit_modes + aux_modes
 # Link attribute for volumes
 link_volumes = {
-    "car_work": None,
-    "car_leisure": None,
-    "trailer_truck": "@yhd",
-    "truck": "@ka",
-    "van": "@pa",
-}
+    "car_work": "@car_work",
+    "car_leisure": "@car_leisure",
+    "trailer_truck": "@trailer_truck",
+    "truck": "@truck",
+    "van": "@van"
+    }
 # Factors for 24-h expansion of volumes
 # TODO Update
 volume_factors = {
@@ -196,63 +213,88 @@ volume_factors = {
         "iht": 1. / 0.38,
     },
     "transit": {
-        "aht": 1. / 0.47,
-        "pt": 1. / 0.09,
-        "iht": 1. / 0.38,
+        "aht": 1. / 0.48,
+        "pt": 1. / 0.11,
+        "iht": 1. / 0.46,
+    },
+    "transit_work": {
+        "aht": 1. / 0.48,
+        "pt": 1. / 0.11,
+        "iht": 1. / 0.46,
+    },
+    "transit_leisure": {
+        "aht": 1. / 0.48,
+        "pt": 1. / 0.11,
+        "iht": 1. / 0.46,
     },
     "bike": {
-        "aht": 1. / 0.47,
-        "pt": 1. / 0.09,
+        "aht": 1. / 0.61,
+        "pt": 1. / 0.10,
+        "iht": 1. / 0.38,
+    },
+    "bike_work": {
+        "aht": 1. / 0.61,
+        "pt": 1. / 0.10,
+        "iht": 1. / 0.38,
+    },
+    "bike_leisure": {
+        "aht": 1. / 0.61,
+        "pt": 1. / 0.10,
         "iht": 1. / 0.38,
     },
     "trailer_truck": {
-        "aht": 1. / 0.47,
-        "pt": 1. / 0.09,
-        "iht": 1. / 0.38,
+        "aht": 1 / 0.3,
+        "pt": 1 / 0.1,
+        "iht": 1 / 0.3,
     },
     "truck": {
-        "aht": 1. / 0.47,
-        "pt": 1. / 0.09,
-        "iht": 1. / 0.38,
+         "aht": 1 / 0.3,
+        "pt": 1 / 0.1,
+        "iht": 1 / 0.3,
     },
     "van": {
-        "aht": 1. / 0.47,
-        "pt": 1. / 0.09,
-        "iht": 1. / 0.38,
+        "aht": 1 / 0.3,
+        "pt": 1 / 0.1,
+        "iht": 1 / 0.3,
+    },
+    "bus": {
+        "aht": 1 / 0.3,
+        "pt": 1 / 0.1,
+        "iht": 1 / 0.3,
     },
 }
 # Emme matrix IDs
-emme_mtx = {
-    "demand": {
-        "car_work": {
-            "id": "mf1",
-            "description": "car work demand",
-        },
-        "car_leisure": {
-            "id": "mf2",
-            "description": "car leisure demand",
-        },
-        "transit":  {
-            "id":"mf4",
-            "description": "transit demand",
-        },
-        "bike":  {
-            "id":"mf5",
-            "description": "bicyclist demand",
-        },
-        "trailer_truck": {
-            "id": "mf7",
-            "description": "trailer truck demand",
-        },
-        "truck":  {
-            "id":"mf8",
-            "description": "truck demand",
-        },
-        "van":  {
-            "id":"mf9",
-            "description": "van demand",
-        },
+emme_demand_mtx = {
+    "car_work": {
+        "id": "mf1",
+        "description": "car work demand",
     },
+    "car_leisure": {
+        "id": "mf2",
+        "description": "car leisure demand",
+    },
+    "transit":  {
+        "id":"mf4",
+        "description": "transit demand",
+    },
+    "bike":  {
+        "id":"mf5",
+        "description": "bicyclist demand",
+    },
+    "trailer_truck": {
+        "id": "mf7",
+        "description": "trailer truck demand",
+    },
+    "truck":  {
+        "id":"mf8",
+        "description": "truck demand",
+    },
+    "van":  {
+        "id":"mf9",
+        "description": "van demand",
+    },
+}
+emme_result_mtx = {
     "time": {
         "car_work": {
             "id": "mf11",
@@ -369,50 +411,48 @@ emme_mtx = {
             "description": "van travel generalized cost",
         },
     },
-    "transit": {
-        "inv_time": {
+    "trip_components":{
+        "transit_inv_time": {
             "id": "mf51",
             "description": "transit in-vehicle time",
         },
-        "aux_time": {
+        "transit_aux_time": {
             "id": "mf52",
             "description": "transit auxilliary time",
         },
-        "tw_time": {
+        "transit_tw_time": {
             "id": "mf53",
             "description": "transit total waiting time",
         },
-        "fw_time": {
+        "transit_fw_time": {
             "id": "mf54",
             "description": "transit first waiting time",
         },
-        "board_time": {
+        "transit_board_time": {
             "id": "mf55",
             "description": "transit boarding time",
         },
-        "board_cost": {
+        "transit_board_cost": {
             "id": "mf58",
             "description": "transit boarding cost",
         },
-        "num_board": {
+        "transit_num_board": {
             "id": "mf56",
             "description": "transit trip number of boardings",
         },
-    },
-    "bike": {
-        "separate_dist": {
+        "bike_separate_dist": {
             "id": "mf61",
             "description": "separate bike way distance",
         },
-        "streetside_dist": {
+        "bike_streetside_dist": {
             "id": "mf62",
             "description": "street-side bike way distance",
         },
-        "mixed_dist": {
+        "bike_mixed_dist": {
             "id": "mf63",
             "description": "bike distance in mixed traffic",
         },
-    },
+    }
 }
 background_traffic = "ul3"
 
@@ -1612,7 +1652,7 @@ destination_choice = {
         "car": {
             "attraction": {
                 "parking_cost_work": -0.167648454911 + 0.06,
-                "share_detached_houses": 0.579675740565e-2,
+                "share_detached_houses": 0.579675740565,
                 "own_zone_area": -0.194842606662e-1 - 0.004,
             },
             "impedance": {
@@ -2194,7 +2234,7 @@ tour_number_increase = {
 tour_combinations = {
 # utility function 1
     0: {
-        "-" : {
+        () : {
             "constant":   0.000000000,
             "individual_dummy": {
                 "age_50-64": -0.305509545 ,
@@ -2205,7 +2245,7 @@ tour_combinations = {
 # utility function 2
     },
     1: {
-        "hw" : {
+        ("hw",) : {
             "constant":   0.000000000 + 0.0210,
             "individual_dummy": {
                 "age_18-29":  2.306249018 + 0.1065,
@@ -2214,21 +2254,21 @@ tour_combinations = {
                 "age_65-99": -1.185980639 - 0.0771
             },
             "zone": {
-                "share_detached_houses": -0.005910000
+                "share_detached_houses": -0.5910000
             },
         },
 # utility function 3
-        "hc" : {
+        ("hc",) : {
             "constant":   3.308625072 + 0.0150,
             "individual_dummy": {
                 "age_7-17":  0.000000000 - 0.0641
             },
             "zone": {
-                "share_detached_houses": -0.005910000
+                "share_detached_houses": -0.5910000
             },
         },
 # utility function 4
-        "hu" : {
+        ("hu",) : {
             "constant":   0.000000000 + 0.3000,
             "individual_dummy": {
                 "age_18-29":  0.000000000 + 0.0653,
@@ -2237,12 +2277,12 @@ tour_combinations = {
                 "age_65-99": -3.636471246 - 0.5649
             },
             "zone": {
-                "share_detached_houses": -0.005910000 ,
+                "share_detached_houses": -0.5910000 ,
                 "hu_t":  0.148402259
             },
         },
 # utility function 5
-        "hs" : {
+        ("hs",) : {
             "constant":   0.000000000,
             "individual_dummy": {
                 "age_7-17":   0.000000000 - 0.0600,
@@ -2252,11 +2292,11 @@ tour_combinations = {
                 "age_65-99":  1.250192981 - 0.0811
             },
             "zone": {
-                "share_detached_houses": -0.005910000
+                "share_detached_houses": -0.5910000
             },
         },
 # utility function 6
-        "ho" : {
+        ("ho",) : {
             "constant":   0.811674639,
             "individual_dummy": {
                 "age_7-17":   0.000000000 - 0.1096,
@@ -2266,13 +2306,13 @@ tour_combinations = {
                 "age_65-99":  0.394182783 - 0.1262
             },
             "zone": {
-                "share_detached_houses": -0.005910000
+                "share_detached_houses": -0.5910000
             },
         },
 # utility function 7
     },
     2: {
-        "hw-hw" : {
+        ("hw", "hw") : {
             "constant":  -6.702389265,
             "individual_dummy": {
                 "age_18-29":  2.306249018 - 1.0022,
@@ -2286,7 +2326,7 @@ tour_combinations = {
             },
         },
 # utility function 8
-        "hw-hu" : {
+        ("hw", "hu") : {
             "constant":  -8.418852173 + 0.2000,
             "individual_dummy": {
                 "age_18-29":  2.306249018 - 0.4439,
@@ -2301,7 +2341,7 @@ tour_combinations = {
             },
         },
 # utility function 9
-        "hw-hs" : {
+        ("hw", "hs") : {
             "constant":  -5.468303413,
             "individual_dummy": {
                 "age_18-29":  0.632156675 +  2.306249018 - 0.1900,
@@ -2315,7 +2355,7 @@ tour_combinations = {
             },
         },
 # utility function 10
-        "hw-ho" : {
+        ("hw", "ho") : {
             "constant":  -3.969665707,
             "individual_dummy": {
                 "age_18-29":  2.306249018 + 0.0229,
@@ -2329,7 +2369,7 @@ tour_combinations = {
             },
         },
 # utility function 11
-        "hc-hc" : {
+        ("hc", "hc") : {
             "constant":  -2.189925729,
             "individual_dummy": {},
             "zone": {
@@ -2337,7 +2377,7 @@ tour_combinations = {
             },
         },
 # utility function 12
-        "hc-hs" : {
+        ("hc", "hs") : {
             "constant":  -0.932031836,
             "individual_dummy": {
                 "age_7-17":   0.000000000 - 0.0317,
@@ -2351,7 +2391,7 @@ tour_combinations = {
             },
         },
 # utility function 13
-        "hc-ho" : {
+        ("hc", "ho") : {
             "constant":   1.040646615,
             "individual_dummy": {
                 "age_7-17":   0.000000000 - 0.0322,
@@ -2362,7 +2402,7 @@ tour_combinations = {
             },
         },
 # utility function 14
-        "hu-hs" : {
+        ("hu", "hs") : {
             "constant":  -5.264912587 + 0.0736,
             "individual_dummy": {
                 "age_18-29":  0.632156675 - 0.0197,
@@ -2377,7 +2417,7 @@ tour_combinations = {
             },
         },
 # utility function 15
-        "hu-ho" : {
+        ("hu", "ho") : {
             "constant":  -4.133565561 + 0.0834,
             "individual_dummy": {
                 "age_18-29":  0.000000000 + 0.2038,
@@ -2392,7 +2432,7 @@ tour_combinations = {
             },
         },
 # utility function 16
-        "hs-hs" : {
+        ("hs", "hs") : {
             "constant":  -4.347727916,
             "individual_dummy": {
                 "age_18-29":  0.632156675 - 0.2125,
@@ -2406,7 +2446,7 @@ tour_combinations = {
             },
         },
 # utility function 17
-        "hs-ho" : {
+        ("hs", "ho") : {
             "constant":  -3.615413138,
             "individual_dummy": {
                 "age_7-17":   0.000000000 + 0.1376,
@@ -2421,7 +2461,7 @@ tour_combinations = {
             },
         },
 # utility function 18
-        "ho-ho" : {
+        ("ho", "ho") : {
             "constant":  -2.954069138,
             "individual_dummy": {
                 "age_7-17":   0.000000000 + 0.5035,
@@ -2438,7 +2478,7 @@ tour_combinations = {
 # utility function 19
     },
     3: {
-        "hw-hw-ho" : {
+        ("hw", "hw", "ho") : {
             "constant":  -7.640316015,
             "individual_dummy": {
                 "age_18-29":  2.306249018 ,
@@ -2450,7 +2490,7 @@ tour_combinations = {
             "zone": {},
         },
 # utility function 20
-        "hw-hs-hs" : {
+        ("hw", "hs", "hs") : {
             "constant":  -6.996908123,
             "individual_dummy": {
                 "age_18-29":  0.632156675 +  2.306249018 - 0.7910,
@@ -2462,7 +2502,7 @@ tour_combinations = {
             "zone": {},
         },
 # utility function 21
-        "hw-hs-ho" : {
+        ("hw", "hs", "ho") : {
             "constant":  -6.280857590,
             "individual_dummy": {
                 "age_18-29":  0.632156675 +  2.306249018 + 0.2580,
@@ -2474,7 +2514,7 @@ tour_combinations = {
             "zone": {},
         },
 # utility function 22
-        "hw-ho-ho" : {
+        ("hw", "ho", "ho") : {
             "constant":  -5.143814369,
             "individual_dummy": {
                 "age_18-29":  2.306249018 - 0.2782,
@@ -2486,7 +2526,7 @@ tour_combinations = {
             "zone": {},
         },
 # utility function 23
-        "hc-hs-ho" : {
+        ("hc", "hs", "ho") : {
             "constant":  -1.110080901,
             "individual_dummy": {
                 "age_7-17":   0.000000000 - 0.1097,
@@ -2500,7 +2540,7 @@ tour_combinations = {
             },
         },
 # utility function 24
-        "hc-ho-ho" : {
+        ("hc", "ho", "ho") : {
             "constant":   0.000000000,
             "individual_dummy": {
                 "age_7-17":   0.000000000 - 0.1805,
@@ -2511,7 +2551,7 @@ tour_combinations = {
             },
         },
 # utility function 25
-        "hu-hs-ho" : {
+        ("hu", "hs", "ho") : {
             "constant": -11.751808160,
             "individual_dummy": {
                 "age_18-29":  0.632156675 + 0.1437,
@@ -2526,7 +2566,7 @@ tour_combinations = {
             },
         },
 # utility function 26
-        "hu-ho-ho" : {
+        ("hu", "ho", "ho") : {
             "constant": -11.342729830,
             "individual_dummy": {
                 "age_18-29": -0.000000000 + 0.1541,
@@ -2541,7 +2581,7 @@ tour_combinations = {
             },
         },
 # utility function 27
-        "hs-hs-hs" : {
+        ("hs", "hs", "hs") : {
             "constant":  -5.575050535,
             "individual_dummy": {
                 "age_18-29":  0.632156675 - 2.3203,
@@ -2555,7 +2595,7 @@ tour_combinations = {
             },
         },
 # utility function 28
-        "hs-hs-ho" : {
+        ("hs", "hs", "ho") : {
             "constant":  -4.709369964,
             "individual_dummy": {
                 "age_18-29":  0.632156675 - 0.7508,
@@ -2569,7 +2609,7 @@ tour_combinations = {
             },
         },
 # utility function 29
-        "hs-ho-ho" : {
+        ("hs", "ho", "ho") : {
             "constant":  -4.115616267,
             "individual_dummy": {
                 "age_18-29":  0.632156675 - 0.1442,
@@ -2583,7 +2623,7 @@ tour_combinations = {
             },
         },
 # utility function 30
-        "ho-ho-ho" : {
+        ("ho", "ho", "ho") : {
             "constant":  -4.110394781,
             "individual_dummy": {
                 "age_30-49":  0.000000000 - 0.1750,
@@ -2598,7 +2638,7 @@ tour_combinations = {
 # utility function 31
     },
     4: {
-        "hw-hs-hs-ho" : {
+        ("hw", "hs", "hs", "ho") : {
             "constant":  -8.782904966,
             "individual_dummy": {
                 "age_18-29":  0.632156675 +  2.306249018 ,
@@ -2608,11 +2648,11 @@ tour_combinations = {
                 "car_users":  1.544612164
             },
             "zone": {
-                "share_detached_houses": -0.008050000
+                "share_detached_houses": -0.8050000
             },
         },
 # utility function 32
-        "hw-hs-ho-ho" : {
+        ("hw", "hs", "ho", "ho") : {
             "constant":  -7.819600775,
             "individual_dummy": {
                 "age_18-29":  0.632156675 +  2.306249018 + 0.5615,
@@ -2622,11 +2662,11 @@ tour_combinations = {
                 "car_users":  1.544612164
             },
             "zone": {
-                "share_detached_houses": -0.008050000
+                "share_detached_houses": -0.8050000
             },
         },
 # utility function 33
-        "hw-ho-ho-ho" : {
+        ("hw", "ho", "ho", "ho") : {
             "constant":  -6.323991971,
             "individual_dummy": {
                 "age_18-29":  2.306249018 + 0.3338,
@@ -2636,11 +2676,11 @@ tour_combinations = {
                 "car_users":  1.544612164
             },
             "zone": {
-                "share_detached_houses": -0.008050000
+                "share_detached_houses": -0.8050000
             },
         },
 # utility function 34
-        "hs-hs-hs-hs" : {
+        ("hs", "hs", "hs", "hs") : {
             "constant":  -6.563838110,
             "individual_dummy": {
                 "age_18-29":  0.632156675 ,
@@ -2650,11 +2690,11 @@ tour_combinations = {
                 "car_users":  1.544612164
             },
             "zone": {
-                "share_detached_houses": -0.008050000
+                "share_detached_houses": -0.8050000
             },
         },
 # utility function 35
-        "hs-hs-hs-ho" : {
+        ("hs", "hs", "hs", "ho") : {
             "constant":  -6.280534875,
             "individual_dummy": {
                 "age_18-29":  0.632156675 - 1.3263,
@@ -2664,11 +2704,11 @@ tour_combinations = {
                 "car_users":  1.544612164
             },
             "zone": {
-                "share_detached_houses": -0.008050000
+                "share_detached_houses": -0.8050000
             },
         },
 # utility function 36
-        "hs-hs-ho-ho" : {
+        ("hs", "hs", "ho", "ho") : {
             "constant":  -5.728407971,
             "individual_dummy": {
                 "age_18-29":  0.632156675 - 0.8239,
@@ -2678,11 +2718,11 @@ tour_combinations = {
                 "car_users":  1.544612164
             },
             "zone": {
-                "share_detached_houses": -0.008050000
+                "share_detached_houses": -0.8050000
             },
         },
 # utility function 37
-        "hs-ho-ho-ho" : {
+        ("hs", "ho", "ho", "ho") : {
             "constant":  -5.167664200,
             "individual_dummy": {
                 "age_18-29":  0.632156675 - 0.8511,
@@ -2692,11 +2732,11 @@ tour_combinations = {
                 "car_users":  1.544612164
             },
             "zone": {
-                "share_detached_houses": -0.008050000
+                "share_detached_houses": -0.8050000
             },
         },
 # utility function 38
-        "ho-ho-ho-ho" : {
+        ("ho", "ho", "ho", "ho") : {
             "constant":  -4.892323651,
             "individual_dummy": {
                 "age_18-29":  0.000000000 - 2.0113,
@@ -2706,7 +2746,8 @@ tour_combinations = {
                 "car_users":  1.544612164
             },
             "zone": {
-                "share_detached_houses": -0.008050000             },
+                "share_detached_houses": -0.8050000
+            },
         },
     },
 }
