@@ -84,6 +84,15 @@ def read_scenario(path, time_period):
                 matrices[transport_class][mtx_type] = 0
             else:
                 matrices[transport_class][mtx_type] = numpy.array(files[mtx_type][ass_class])
+                if mtx_type == "cost":
+                    if transport_class == "transit_work":
+                        trips_per_month = numpy.full_like(matrices[transport_class][mtx_type], 60)
+                        # Surrounding area has a lower number of trips per month
+                        trips_per_month[901:, :] = 44
+                        trips_per_month = 0.5 * (trips_per_month+trips_per_month.T)
+                        matrices[transport_class][mtx_type] / trips_per_month
+                    if transport_class == "transit_leisure":
+                        matrices[transport_class][mtx_type] / 30
     for mtx_type in files:
         files[mtx_type].close()
     print "Files read"
@@ -326,4 +335,4 @@ if __name__ == "__main__":
     parser.add_argument("evaluation_year", type=int, choices={1, 2}, help="Evaluation year, either 1 or 2.")
     parser.add_argument("--results-path", dest="results_path", type=str, required=True, help="Path to Results directory.")
     args = parser.parse_args()
-    run_cost_benefit_analysis(args.baseline_scenario, args.projected_scenario, args.evaluation_year, arg.results_path)
+    run_cost_benefit_analysis(args.baseline_scenario, args.projected_scenario, args.evaluation_year, args.results_path)
