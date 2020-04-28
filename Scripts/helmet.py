@@ -39,16 +39,16 @@ def main(args, logger):
         raise NameError("Baseline zonedata directory '{}' does not exist.".format(base_matrices_path))
     if not os.path.exists(forecast_zonedata_path):
         raise NameError("Forecast data directory '{}' does not exist.".format(forecast_zonedata_path))
-    if not os.path.isfile(emme_project_path):
-        raise NameError(".emp project file not found in given '{}' location.".format(emme_project_path))
     # Choose and initialize the Traffic Assignment (supply)model
     if args.do_not_use_emme:
         logger.info("Initializing MockAssignmentModel..")
-        mock_result_path = os.path.join(results_path, args.scenario_name)
+        mock_result_path = os.path.join(results_path, args.scenario_name, "Matrices")
         if not os.path.exists(mock_result_path):
             raise NameError("Mock Results directory " + mock_result_path + " does not exist.")
         ass_model = MockAssignmentModel(MatrixData(mock_result_path))
     else:
+        if not os.path.isfile(emme_project_path):
+            raise NameError(".emp project file not found in given '{}' location.".format(emme_project_path))
         logger.info("Initializing Emme..")
         ass_model = EmmeAssignmentModel(EmmeProject(emme_project_path), first_scenario_id=args.first_scenario_id)
     # Initialize model system (wrapping Assignment-model, and providing Demand-calculations as Python modules)

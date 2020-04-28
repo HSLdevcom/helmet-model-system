@@ -4,6 +4,23 @@ import numpy
 
 
 def read_csv_file(data_dir, file_end, zone_numbers=None, squeeze=False):
+    """Read (zone) data from space-separated file.
+    
+    Parameters
+    ----------
+    data_dir : str
+        Directory where scenario input data files are found
+    file_end : str
+        Ending of the file in question (e.g., ".pop")
+    zone_numbers : ndarray (optional)
+        Zone numbers to compare with for validation
+    squeeze : bool (optional)
+        If the parsed data only contains one column and no header
+
+    Returns
+    -------
+    pandas DataFrame
+    """
     file_found = False
     for file_name in os.listdir(data_dir):
         if file_name.endswith(file_end):
