@@ -38,10 +38,13 @@ Database/errors
 Database/fort.18
 Database/emmebank
 Database/sijopankki*/*
+Database/verkot_*/*
 Database/reports
 Database/usemacro_*
 Database/STRAT*/*
 Database/emlocki
+Database/aja_*.mac
+Database/d2*.in
 Logbook/project.mlbk-shm
 Logbook/project.mlbk-wal
 Matrices/2016/*
@@ -50,7 +53,7 @@ Matrices/base/*
 Scripts/.pytest_cache
 Scripts/tests/.pytest_cache
 Scripts/.env
-database/d2*.in
+
 
 Scripts/tests/test_data/Results/test/*
 !Scripts/tests/test_data/Results/test/Matrices
