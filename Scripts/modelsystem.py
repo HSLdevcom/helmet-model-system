@@ -29,7 +29,7 @@ class ModelSystem:
         self.resultmatrices = MatrixData(os.path.join(results_path, name, "Matrices"))
         self.resultdata = ResultsData(os.path.join(results_path, name))
 
-        self.dm = self.__init_demand_model()
+        self.dm = self._init_demand_model()
 
         self.fm = FreightModel(self.zdata_base,
                                self.zdata_forecast,
@@ -49,10 +49,10 @@ class ModelSystem:
         self.trucks = self.fm.calc_freight_traffic("truck")
         self.trailer_trucks = self.fm.calc_freight_traffic("trailer_truck")
 
-    def __init_demand_model(self):
+    def _init_demand_model(self):
         return DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=False)
 
-    def __add_internal_demand(self, previous_iter_impedance, is_last_iteration):
+    def _add_internal_demand(self, previous_iter_impedance, is_last_iteration):
         self.dm.create_population_segments()
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
@@ -116,7 +116,7 @@ class ModelSystem:
         self.zdata_forecast["car_density"] = prediction
         self.zdata_forecast["cars_per_1000"] = 1000 * prediction
 
-        self.__add_internal_demand(previous_iter_impedance, is_last_iteration)
+        self._add_internal_demand(previous_iter_impedance, is_last_iteration)
 
         # Calculate external demand
         trip_sum = {}
@@ -254,10 +254,10 @@ class ModelSystem:
 
 class AgentModelSystem(ModelSystem):
 
-    def __init_demand_model(self):
+    def _init_demand_model(self):
         return DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=True)
 
-    def __add_internal_demand(self, previous_iter_impedance, is_last_iteration):
+    def _add_internal_demand(self, previous_iter_impedance, is_last_iteration):
         self.dm.create_population()
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):

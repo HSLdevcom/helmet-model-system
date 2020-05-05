@@ -4,16 +4,17 @@ import parameters
 
 
 class Tour:
+    """Tour definition for agent-based simulation.
+    
+    Parameters
+    ----------
+    purpose : datatypes.purpose.TourPurpose
+        Travel purpose (hw/hs/ho/...)
+    origin : int or Tour
+        Origin zone number or origin tour (if non-home tour)
+    """
+
     def __init__(self, purpose, origin):
-        """Tour definition for agent-based simulation.
-        
-        Parameters
-        ----------
-        purpose : Purpose
-            Travel purpose (hw/hs/ho/...)
-        origin : int
-            Origin zone number
-        """
         self.purpose = purpose
         self.orig = origin
         self.dest = None
@@ -26,8 +27,12 @@ class Tour:
     
     @property
     def position(self):
-        """tuple: (origin, destination, (secondary destination))
-        Position where to insert the demand
+        """Index position in matrix where to insert the demand.
+        
+        Returns
+        -------
+        tuple of ints
+            (origin, destination, (secondary destination))
         """
         zone_data = self.purpose.zone_data
         try:
@@ -41,16 +46,38 @@ class Tour:
         return position
 
     def choose_mode(self, is_car_user):
+        """Choose tour travel mode.
+
+        Assumes tour purpose model has already calculated probability matrices.
+        
+        Parameters
+        ----------
+        is_car_user : bool
+            Whether the person is car user or not
+        """
         model = self.purpose.model
         probs = model.calc_individual_mode_prob(is_car_user, self.position[0])
         self.mode = numpy.random.choice(a=self.purpose.modes, p=probs)
         self.purpose.generated_tours[self.mode][self.position[0]] += 1
 
     def choose_destination(self, impedance):
-        zone_numbers = self.purpose.zone_data.zone_numbers
+        """Choose primary and possibly secondary destinations for the tour.
+
+        Assumes tour purpose model has already calculated probability matrices.
+
+        Parameters
+        ----------
+        impedance : dict
+            Mode (car/transit/bike/walk) : dict
+                Type (time/cost/dist) : numpy.ndarray
+                    2d matrix with purpose impedance
+        """
+        # Primary destination choice
         probs = self.purpose.model.dest_prob[self.mode][:, self.position[0]]
-        self.dest = numpy.random.choice(a=zone_numbers, p=probs)
+        self.dest = numpy.random.choice(
+            a=self.purpose.zone_data.zone_numbers, p=probs)
         self.purpose.attracted_tours[self.mode][self.position[1]] += 1
+        # Secondary destination choice
         sec_dest_purpose = self.purpose.sec_dest_purpose
         try:
             if (self.position[0] < sec_dest_purpose.bounds.stop
@@ -70,6 +97,7 @@ class Tour:
             self.sec_dest = None
     
     def choose_driver(self):
+        """Choose if tour is as car driver or car passenger."""
         # TODO Differentiate car users and others
         if random.random() > parameters.car_driver_share[self.purpose.name]:
             self.mode = "car_passenger"

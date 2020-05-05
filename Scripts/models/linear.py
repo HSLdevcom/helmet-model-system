@@ -21,8 +21,7 @@ class LinearModel(object):
         self.bounds = bounds
         self.resultdata = resultdata
 
-    def _add_constant(self, shape, b):
-        prediction = numpy.zeros_like(shape)
+    def _add_constant(self, prediction, b):
         try: # If only one parameter
             prediction += b
         except ValueError: # Separate params for cap region and surrounding
@@ -31,8 +30,7 @@ class LinearModel(object):
             prediction[k:] += b[1]
         return prediction
 
-    def _add_zone_terms(self, shape, b, generation=False):
-        prediction = numpy.zeros_like(shape)
+    def _add_zone_terms(self, prediction, b, generation=False):
         zdata = self.zone_data
         for i in b:
             try: # If only one parameter
@@ -47,21 +45,21 @@ class LinearModel(object):
                 prediction[k:] += b[i][1] * data_surrounding
         return prediction
 
-    def _add_log_zone_terms(self, shape, b, generation=False):
-        prediction = numpy.zeros_like(shape)
+    def _add_log_zone_terms(self, prediction, b, generation=False):
         zdata = self.zone_data
         for i in b:
             prediction += b[i] * numpy.log(zdata.get_data(i, self.bounds,
                 generation))
         return prediction
 
+
 class CarDensityModel(LinearModel):
     def predict(self):
         b = parameters.car_density
         prediction = numpy.zeros(self.bounds.stop)
-        prediction += self._add_constant(prediction, b["constant"])
-        prediction += self._add_zone_terms(prediction, b["generation"], True)
-        prediction += self._add_log_zone_terms(prediction, b["log"], True)
+        self._add_constant(prediction, b["constant"])
+        self._add_zone_terms(prediction, b["generation"], True)
+        self._add_log_zone_terms(prediction, b["log"], True)
         prediction = prediction.clip(0.0, None)
         prediction = pandas.Series(
             prediction, self.zone_data.zone_numbers[self.bounds])
@@ -70,6 +68,9 @@ class CarDensityModel(LinearModel):
 
     def print_results(self, prediction):
         """ Print results, mainly for calibration purposes"""
+
+        # In validation data, car user shares are calculated for people
+        # over 6 years old (like HEHA).
         population = self.zone_data["population"]
         population_7_99 = ( population[:self.zone_data.first_peripheral_zone]
                           * self.zone_data["share_age_7-99"])
@@ -85,10 +86,9 @@ class CarDensityModel(LinearModel):
         for municipality in parameters.municipality:
             i = slice(parameters.municipality[municipality][0],
                       parameters.municipality[municipality][1])
-            # comparison data has car user shares of population
-            # over 6 years old (from HEHA)
-            prediction_municipality.append( car_density.loc[i].sum() 
-                                    / population_7_99.loc[i].sum())
+            x = car_density.loc[i]
+            w = population_7_99.loc[i]
+            prediction_municipality.append((x * w).sum() / w.sum())
         self.resultdata.print_data(
             prediction_municipality, "car_density_per_municipality.txt",
             parameters.municipality.keys(), "car_density")
@@ -98,10 +98,9 @@ class CarDensityModel(LinearModel):
         for area in parameters.areas:
             i = slice(parameters.areas[area][0],
                       parameters.areas[area][1])
-            # comparison data has car user shares of population
-            # over 6 years old (from HEHA)
-            prediction_area.append( car_density.loc[i].sum()
-                            / population_7_99.loc[i].sum())
+            x = car_density.loc[i]
+            w = population_7_99.loc[i]
+            prediction_area.append((x * w).sum() / w.sum())
         self.resultdata.print_data(
             prediction_area, "car_density_per_area.txt",
             parameters.areas.keys(), "car_density")

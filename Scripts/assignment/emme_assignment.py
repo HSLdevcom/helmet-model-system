@@ -243,7 +243,9 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         emmebank = self.emme_project.modeller.emmebank
         scen = emmebank.scenario(scen_id)
         network = scen.get_network()
-        # calc @bus and ul3
+        # emme api has name "data3" for ul3
+        param_name = param.background_traffic.replace("ul", "data")
+        # calc @bus and data3
         extra_attr = "@bus"
         for link in network.links():
             segment_freq = 0
@@ -253,7 +255,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                     segment_freq += 60 / segment_hdw
             link[extra_attr] = segment_freq
             if link.volume_delay_func in [1,2,3,4,5]:
-                link["data3"] = segment_freq
+                link[param_name] = segment_freq
         scen.publish_network(network)
 
     def _calc_road_cost(self, scen_id):
@@ -355,6 +357,18 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         transit_zones = set()
         for node in network.nodes():
             transit_zones.add(node.label)
+        # check that fare zones exist in network
+        self.emme_project.logger.debug(
+            "Network has fare zones {}".format(', '.join(transit_zones)))
+        zones_in_zonedata = set(char for char in ''.join(fares["fare"].keys()))
+        self.emme_project.logger.debug(
+            "Zonedata has fare zones {}".format(', '.join(zones_in_zonedata)))
+        if not zones_in_zonedata <= transit_zones:
+            self.emme_project.logger.warn(
+                "All zones in transit costs do not exist in Emme-network labels.")
+        if not transit_zones <= zones_in_zonedata:
+            self.emme_project.logger.warn(
+                "All Emme-node labels do not have transit costs specified.")
         for transit_zone in transit_zones:
             # Set tag to 1 for nodes in transit zone and 0 elsewhere
             for node in network.nodes():
@@ -409,14 +423,14 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
     def _specify(self):
         # Car assignment specification
         car_work = Car("car_work", self.demand_mtx, self.result_mtx)
-        car_leisure = Car("car_leisure",self.demand_mtx, self.result_mtx)
+        car_leisure = Car("car_leisure", self.demand_mtx, self.result_mtx)
         van = Car("van", self.demand_mtx, self.result_mtx)
         truck = Car(
             "truck", self.demand_mtx, self.result_mtx, 
-            value_of_time_inv = 0.2,link_costs = "length")
+            value_of_time_inv=0.2,link_costs="length")
         trailer_truck = Car(
             "trailer_truck", self.demand_mtx, self.result_mtx,
-            value_of_time_inv = 0.2, link_costs = "length")
+            value_of_time_inv=0.2, link_costs="length")
         self.car_spec = {
             "type": "SOLA_TRAFFIC_ASSIGNMENT",
             "classes": [
@@ -427,7 +441,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                 van.spec,
             ],
             "background_traffic": {
-                "link_component": "ul3",
+                "link_component": param.background_traffic,
                 "add_transit_vehicles": False,
             },
             "performance_settings": param.performance_settings,
