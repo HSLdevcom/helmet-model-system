@@ -7,8 +7,6 @@ import parameters as param
 from argparse import ArgumentParser
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
-PROJECT_DIR = os.path.join(SCRIPT_DIR, "..")
-
 
 def run_cost_benefit_analysis(scenario_0, scenario_1, year, results_directory):
     """Runs CBA and writes the results to excel file.
@@ -27,8 +25,8 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, results_directory):
         Path to where "scenario_name/Matrices" result folder exists
     """
     excelfile = os.path.join(SCRIPT_DIR, "CBA_kehikko.xlsx")
-    mile_diff = read_miles(scenario_1) - read_miles(scenario_0)
-    transit_mile_diff = read_transit_miles(scenario_1) - read_transit_miles(scenario_0)
+    mile_diff = read_miles(results_directory, scenario_1) - read_miles(results_directory, scenario_0)
+    transit_mile_diff = read_transit_miles(results_directory, scenario_1) - read_transit_miles(results_directory, scenario_0)
     revenues = {
         "car": {},
         "transit": {},
@@ -58,7 +56,10 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, results_directory):
         write_results_2(wb, mile_diff, transit_mile_diff, revenues, gains)
     else:
         print "Evaluation year must be either 1 or 2"
-    wb.save("..\\Results\\cba_" + scenario_1 + ".xlsx")
+
+    results_filename =  "cba_{}_{}.xlsx".format(scenario_1, scenario_0)
+    wb.save(os.path.join(results_directory, scenario_1, results_filename))
+    print "CBA results saved to file: {}".format(results_filename)
 
 
 def read_scenario(path, time_period):
@@ -84,6 +85,15 @@ def read_scenario(path, time_period):
                 matrices[transport_class][mtx_type] = 0
             else:
                 matrices[transport_class][mtx_type] = numpy.array(files[mtx_type][ass_class])
+                if mtx_type == "cost":
+                    if transport_class == "transit_work":
+                        trips_per_month = numpy.full_like(matrices[transport_class][mtx_type], 60)
+                        # Surrounding area has a lower number of trips per month
+                        trips_per_month[901:, :] = 44
+                        trips_per_month = 0.5 * (trips_per_month+trips_per_month.T)
+                        matrices[transport_class][mtx_type] = matrices[transport_class][mtx_type] / trips_per_month
+                    if transport_class == "transit_leisure":
+                        matrices[transport_class][mtx_type] = matrices[transport_class][mtx_type] / 30
     for mtx_type in files:
         files[mtx_type].close()
     print "Files read"
@@ -141,15 +151,15 @@ def calc_gains(ve0, ve1):
     return gains
 
 
-def read_miles(scenario_name):
+def read_miles(results_directory, scenario_name):
     """Read scenario data from files"""
-    file_path = os.path.join(PROJECT_DIR, "Results", scenario_name, "vehicle_kms.txt")
+    file_path = os.path.join(results_directory, scenario_name, "vehicle_kms.txt")
     return pandas.read_csv(file_path, delim_whitespace=True)
 
 
-def read_transit_miles(scenario_name):
+def read_transit_miles(results_directory, scenario_name):
     """Read scenario data from files"""
-    file_path = os.path.join(PROJECT_DIR, "Results", scenario_name, "transit_kms.txt")
+    file_path = os.path.join(results_directory, scenario_name, "transit_kms.txt")
     return pandas.read_csv(file_path, delim_whitespace=True)
 
 
@@ -326,4 +336,4 @@ if __name__ == "__main__":
     parser.add_argument("evaluation_year", type=int, choices={1, 2}, help="Evaluation year, either 1 or 2.")
     parser.add_argument("--results-path", dest="results_path", type=str, required=True, help="Path to Results directory.")
     args = parser.parse_args()
-    run_cost_benefit_analysis(args.baseline_scenario, args.projected_scenario, args.evaluation_year, arg.results_path)
+    run_cost_benefit_analysis(args.baseline_scenario, args.projected_scenario, args.evaluation_year, args.results_path)
