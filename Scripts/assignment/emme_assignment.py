@@ -280,6 +280,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "metro": "m",
             "train": "rj",
             "tram": "tp",
+            "other": ""
         }
         kms = dict.fromkeys(freight_classes + ["car"])
         for ass_class in kms:
