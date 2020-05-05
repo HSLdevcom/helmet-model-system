@@ -75,14 +75,19 @@ class ModelSystem:
         return dm
 
     def _add_internal_demand(self, previous_iter_impedance, is_last_iteration):
+        # Mode and destination probability matrices are calculated first,
+        # as logsums from probability calculation are used in tour generation.
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
                 purpose.gen_model.init_tours()
             else:
-                purpose_impedance = self.imptrans.transform(
-                    purpose, previous_iter_impedance)
-                purpose.calc_prob(purpose_impedance)
+                purpose.calc_prob(
+                    self.imptrans.transform(purpose, previous_iter_impedance))
+        
+        # Tour generation
         self.dm.generate_tours()
+        
+        # Assigning of tours to mode, destination and time period
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
                 purpose_impedance = self.imptrans.transform(
@@ -308,6 +313,27 @@ class ModelSystem:
 
 
 class AgentModelSystem(ModelSystem):
+    """Object keeping track of all sub-models and tasks in agent model system.
+
+    Agents are added one-by-one to departure time model,
+    where they are (so far) split in deterministic fractions.
+    
+    Parameters
+    ----------
+    zone_data_path : str
+        Directory path where input data for forecast year are found
+    base_zone_data_path : str
+        Directory path where input data for base year are found
+    base_matrices_path : str
+        Directory path where base demand matrices are found
+    results_path : str
+        Directory path where to store results
+    assignment_model : assignment.abstract_assignment.AssignmentModel
+        Assignment model wrapper used in model runs,
+        can be EmmeAssignmentModel or MockAssignmentModel
+    name : str
+        Name of scenario, used for results subfolder
+    """
 
     def _init_demand_model(self):
         dm = DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=True)
