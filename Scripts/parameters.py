@@ -179,11 +179,14 @@ emme_attributes = {
     "@trailer_truck": "LINK",
     "@truck": "LINK",
     "@van": "LINK", 
+    "@transit_volume": "LINK",
+    "@transit_boardings": "TRANSIT_SEGMENT",
 }
 bike_attributes = {
     "@bike_aht": "LINK",
     "@bike_iht": "LINK",
     "@bike_pt": "LINK",
+    "@bike_day": "LINK",
 }
 transit_assignment_modes = transit_modes + aux_modes
 # Link attribute for volumes

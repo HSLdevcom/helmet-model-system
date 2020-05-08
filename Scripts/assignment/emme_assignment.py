@@ -1,25 +1,38 @@
-import os
 import numpy
 import pandas
 import parameters as param
 from abstract_assignment import AssignmentModel, ImpedanceSource
-from datatypes.car import Car
-from datatypes.journey_level import JourneyLevel
-from datatypes.path_analysis import PathAnalysis
+from datatypes.emme_scenario import BasicScenario, BikeScenario, DayScenario
 
 
 class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
-    def __init__(self, emme_context, first_scenario_id, car_dist_cost=param.dist_unit_cost,
-                demand_mtx=param.emme_demand_mtx, result_mtx=param.emme_result_mtx):
+    def __init__(self, emme_project, first_scenario_id, car_dist_cost=param.dist_unit_cost, fixed_transit_cost=False):
         """
-        first_scenario_id (bike scenario) is usually #19,
-            followed by (#20) walk scenario, (#21) morning scenario, (#22) midday scenario, and (#23) evening scenario.
-        If first scenario is set something else (e.g. #5), then following scenarios are also adjusted (#6, #7, #8, #9).
-        Walk scenario is not calculated, so effective scenarios by convention are <first>, +2, +3, +4.
+        Emme-assignment methods for Helmet-scenario. This class is used as a part of Helmet-model-system run.
+        Helmet-scenario has four Emme-scenarios. 
+        First scenario is bike scenario, followed by day scenario, and three basic car and transit scenarios (morning, midday, evening).
         """
-        self.emme_project = emme_context
-        self.demand_mtx = demand_mtx
-        self.result_mtx = result_mtx
+        self.emme_project = emme_project
+        # create scenario instances and initialize attributes
+        self.bike_scenario = BikeScenario(self.emme_project, first_scenario_id)
+        self.bike_scenario.create_attributes(param.bike_attributes)
+        self.bike_scenario._specify()
+        self.day_scenario = DayScenario(self.emme_project, first_scenario_id+1)
+        self.day_scenario.create_attributes(param.emme_attributes)
+        self.emme_scenarios = {
+            "aht": BasicScenario(self.emme_project, first_scenario_id+2),
+            "pt": BasicScenario(self.emme_project, first_scenario_id+3),
+            "iht": BasicScenario(self.emme_project, first_scenario_id+4)
+        }
+        for scen in self.emme_scenarios.values():
+            scen.create_attributes(param.emme_attributes)
+            scen._calc_road_cost()
+            scen._calc_boarding_penalties()
+            scen._calc_background_traffic()
+            scen._specify()
+        # initialize matrices
+        self.demand_mtx=param.emme_demand_mtx
+        self.result_mtx=param.emme_result_mtx
         for ass_class in self.demand_mtx:
             self.emme_project.create_matrix(
                 matrix_id=self.demand_mtx[ass_class]["id"],
@@ -36,23 +49,8 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                     matrix_description=mtx[ass_class]["description"],
                     default_value=999999,
                     overwrite=True)
-        self.dist_unit_cost = car_dist_cost
-        self.bike_scenario = first_scenario_id
-        self.create_attributes(self.bike_scenario, param.bike_attributes)
-        self.day_scenario = first_scenario_id+1
-        self.create_attributes(self.day_scenario, param.emme_attributes)
-        self.emme_scenarios = {
-            "aht": first_scenario_id+2,
-            "pt": first_scenario_id+3,
-            "iht": first_scenario_id+4,
-        }
-        for time_period in self.emme_scenarios:
-            self.create_attributes(self.emme_scenarios[time_period], param.emme_attributes)
-            self._calc_road_cost(self.emme_scenarios[time_period])
-            self._calc_boarding_penalties(self.emme_scenarios[time_period])
-            self._calc_background_traffic(self.emme_scenarios[time_period])
-        self._specify()
         self._has_assigned_bike_and_walk = False
+        self.dist_unit_cost = car_dist_cost
 
     def assign(self, time_period, matrices, is_last_iteration=False, is_first_iteration=False):
         """Assign cars, bikes and transit for one time period.
@@ -66,28 +64,28 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         is_last_iteration: bool
         is_first_iteration: bool
         """
+        scenario = self.emme_scenarios[time_period]
         self.emme_project.logger.info("Assignment starts...")
         self.set_emmebank_matrices(matrices)
-        scen_id = self.emme_scenarios[time_period]
         if not self._has_assigned_bike_and_walk:
-            self._assign_pedestrians(scen_id)
-            self._assign_bikes(self.bike_scenario,
-                            self.result_mtx["dist"]["bike"]["id"],
-                            "all",
-                            "@bike_"+time_period)
+            scenario._assign_pedestrians()
+            self.bike_scenario._assign_bikes("all", "@bike_"+time_period)
             self._has_assigned_bike_and_walk = True
         if is_last_iteration:
-            self._assign_cars(scen_id, param.stopping_criteria_fine)
-            self._calc_extra_wait_time(scen_id)
-            self._assign_congested_transit(scen_id)
-            self._assign_bikes(self.bike_scenario,
-                           self.result_mtx["dist"]["bike"]["id"],
-                           "all",
-                           "@bike_"+time_period)
+            scenario._assign_cars(param.stopping_criteria_fine)
+            scenario._calc_extra_wait_time()
+            scenario._assign_congested_transit()
+            self.bike_scenario._assign_bikes("all", "@bike_"+time_period)
+            # calculate 24h volumes
+            for result_attribute in param.link_volumes:
+                self.auto_link_24h(result_attribute)
+            self.transit_link_volume_24h() 
+            self.transit_segment_boardings_24h()
+            self.bike_link_24h() 
         else:
-            self._assign_cars(scen_id, param.stopping_criteria_coarse)
-            self._calc_extra_wait_time(scen_id)
-            self._assign_transit(scen_id)
+            scenario._assign_cars(param.stopping_criteria_coarse)
+            scenario._calc_extra_wait_time()
+            scenario._assign_transit()
 
     # TODO Could they be merged with (right after) .assign(). Currently both re-route via emmebank, which is ambiguous.
     # Then the ABC class as well as MockAssignment would have to be adjusted respectively.
@@ -186,10 +184,8 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
 
     @property
     def zone_numbers(self):
-        """Numpy array of all zone numbers.""" 
-        emmebank = self.emme_project.modeller.emmebank
-        scen = emmebank.scenario(self.emme_scenarios["aht"])
-        return scen.zone_numbers
+        """Numpy array of all zone numbers in aht scenario.""" 
+        return self.emme_scenarios["aht"].zone_numbers
 
     @property
     def mapping(self):
@@ -221,56 +217,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         tcost = self.get_matrix("cost", ass_class)
         tdist = self.get_matrix("dist", ass_class)
         return gcost - vot_inv *(tcost + self.dist_unit_cost*tdist)
-        
-    def create_attributes(self, scen_id, attributes):
-        """Create attributes needed in assignment."""
-        emmebank = self.emme_project.modeller.emmebank
-        scen = emmebank.scenario(scen_id)
-        # defined in params
-        for attr in attributes.keys():
-            extr = self.emme_project.create_extra_attribute(
-                extra_attribute_type = attributes[attr],
-                extra_attribute_name = attr,
-                extra_attribute_description = "HM40 results attr",
-                extra_attribute_default_value = 0,
-                overwrite = True,
-                scenario = scen)
-            self.emme_project.logger.debug(
-                "Created attr {} for scen {}".format(extr.name, scen_id))
-
-    def _calc_background_traffic(self, scen_id):
-        """Calculate background traffic (buses)."""
-        emmebank = self.emme_project.modeller.emmebank
-        scen = emmebank.scenario(scen_id)
-        network = scen.get_network()
-        # emme api has name "data3" for ul3
-        param_name = param.background_traffic.replace("ul", "data")
-        # calc @bus and data3
-        extra_attr = "@bus"
-        for link in network.links():
-            segment_freq = 0
-            for segment in link.segments():
-                segment_hdw = segment.line.headway
-                if 0 < segment_hdw < 900: 
-                    segment_freq += 60 / segment_hdw
-            link[extra_attr] = segment_freq
-            if link.volume_delay_func in [1,2,3,4,5]:
-                link[param_name] = segment_freq
-        scen.publish_network(network)
-
-    def _calc_road_cost(self, scen_id):
-        """Calculate road charges and driving costs for one scenario."""
-        self.emme_project.logger.info("Calculates road charges for scenario " + str(scen_id))
-        emmebank = self.emme_project.modeller.emmebank
-        scen = emmebank.scenario(scen_id)
-        network = scen.get_network()
-        for link in network.links():
-            toll_cost = link.length * link["@hinta"] # km * e/km = eur
-            dist_cost = self.dist_unit_cost * link.length # (eur/km) * km = eur
-            link['@toll_cost'] = toll_cost
-            link["@total_cost"] = (toll_cost + dist_cost)
-        scen.publish_network(network)
-        
+    
     def print_vehicle_kms(self, resultdata):
         freight_classes = ["van", "truck", "trailer_truck"]
         vdfs = [1, 2, 3, 4, 5]
@@ -287,10 +234,9 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             kms[ass_class] = dict.fromkeys(vdfs, 0)
         transit_dists = dict.fromkeys(transit_modes, 0)
         transit_times = dict.fromkeys(transit_modes, 0)
-        for tp in param.emme_scenario:
-            scen_id = param.emme_scenario[tp]
-            scen = self.emme_project.modeller.emmebank.scenario(scen_id)
-            network = scen.get_network()
+        for tp in self.emme_scenarios:
+            scenario = self.emme_scenarios[tp]
+            network = scenario.get_network()
             for link in network.links():
                 if link.volume_delay_func <= 5:
                     vdf = link.volume_delay_func
@@ -342,20 +288,18 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             (optional) Fixed cost matrix to use instead of calculated cost
         """
         emmebank = self.emme_project.modeller.emmebank
+        scenario = self.emme_scenarios["aht"]
+        network = scenario.get_network()
         idx = self.result_mtx["cost"]["transit"]["id"]
         if default_cost is not None:
             # Use fixed cost matrix
             emmebank.matrix(idx).set_numpy_data(default_cost)
             return
 
-        scen_id = self.emme_scenarios["aht"]
         # Move transfer penalty to boarding penalties,
         # a side effect is that it then also affects first boarding
-        self._calc_boarding_penalties(scen_id, 5)
-        scen = emmebank.scenario(scen_id)
         has_visited = {}
         mapping = self.mapping
-        network = scen.get_network()
         transit_zones = set()
         for node in network.nodes():
             transit_zones.add(node.label)
@@ -372,16 +316,13 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             self.emme_project.logger.warn(
                 "All Emme-node labels do not have transit costs specified.")
         for transit_zone in transit_zones:
-            # Set tag to 1 for nodes in transit zone and 0 elsewhere
-            for node in network.nodes():
-                node.data1 = (node.label == transit_zone)
-            scen.publish_network(network)
             # Transit assignment with zone tag as weightless boarding cost
-            self._assign_transit(scen_id, True)
+            scenario.assign_transit_cost(transit_zone)
             nr_visits = self.get_matrix("trip_components", "transit_board_cost")
             # If the number of visits is less than 1, there seems to
             # be an easy way to avoid visiting this transit zone
             has_visited[transit_zone] = (nr_visits >= 1)
+        network = scenario.get_network()
         for centroid in network.centroids():
             # Add transit zone of destination to visited
             has_visited[centroid.label][:, mapping[centroid.number]] = True
@@ -419,347 +360,113 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         cost[l:u, :u] = peripheral_cost
         cost[:u, l:u] = peripheral_cost.T
         emmebank.matrix(idx).set_numpy_data(cost)
-        # Reset boarding penalties
-        self._calc_boarding_penalties(scen_id)
 
-    def _specify(self):
-        # Car assignment specification
-        car_work = Car("car_work", self.demand_mtx, self.result_mtx)
-        car_leisure = Car("car_leisure", self.demand_mtx, self.result_mtx)
-        van = Car("van", self.demand_mtx, self.result_mtx)
-        truck = Car(
-            "truck", self.demand_mtx, self.result_mtx, 
-            value_of_time_inv=0.2,link_costs="length")
-        trailer_truck = Car(
-            "trailer_truck", self.demand_mtx, self.result_mtx,
-            value_of_time_inv=0.2, link_costs="length")
-        self.car_spec = {
-            "type": "SOLA_TRAFFIC_ASSIGNMENT",
-            "classes": [
-                car_work.spec,
-                car_leisure.spec,
-                trailer_truck.spec,
-                truck.spec,
-                van.spec,
-            ],
-            "background_traffic": {
-                "link_component": param.background_traffic,
-                "add_transit_vehicles": False,
-            },
-            "performance_settings": param.performance_settings,
-            "stopping_criteria": None, # This is defined later
-        }
-        # Bike assignment specification
-        self.bike_spec = {
-            "type": "STANDARD_TRAFFIC_ASSIGNMENT",
-            "classes": [ 
-                {
-                    "mode": param.bike_mode,
-                    "demand": self.demand_mtx["bike"]["id"],
-                    "results": {
-                        "od_travel_times": {
-                            "shortest_paths": self.result_mtx["time"]["bike"]["id"],
-                        },
-                        "link_volumes": None, # This is defined later
-                    },
-                    "analysis": {
-                        "results": {
-                            "od_values": None, # This is defined later
-                        },
-                    },
-                }
-            ],
-            "path_analysis": PathAnalysis("ul3").spec,
-            "stopping_criteria": {
-                "max_iterations": 1,
-                "best_relative_gap": 1,
-                "relative_gap": 1,
-                "normalized_gap": 1,
-            },
-            "performance_settings": param.performance_settings
-        }  
-        # Pedestrian assignment specification
-        self.walk_spec = {
-            "type": "STANDARD_TRANSIT_ASSIGNMENT",
-            "modes": param.aux_modes,
-            "demand": self.demand_mtx["bike"]["id"],
-            "waiting_time": {
-                "headway_fraction": 0.01,
-                "effective_headways": "hdw",
-                "perception_factor": 0,
-            },
-            "boarding_time": {
-                "penalty": 0,
-                "perception_factor": 0,
-            },
-            "aux_transit_time": {
-                "perception_factor": 1,
-            },
-            "od_results": {
-                "transit_times": self.result_mtx["time"]["walk"]["id"],
-            },
-            "strategy_analysis": {
-                "sub_path_combination_operator": "+",
-                "sub_strategy_combination_operator": "average",
-                "trip_components": {
-                    "aux_transit": "length",
-                },
-                "selected_demand_and_transit_volumes": {
-                    "sub_strategies_to_retain": "ALL",
-                    "selection_threshold": {
-                        "lower": None,
-                        "upper": None,
-                    },
-                },
-                "results": {
-                    "od_values": self.result_mtx["dist"]["walk"]["id"],
-                },
-            },
-        }
-        # Transit assignment specification
-        # Two journey levels are added at a later stage.
-        # The two journey levels are identical, except that at the second
-        # level an extra boarding penalty is implemented,
-        # hence a transfer penalty. Waiting time length is also different. 
-        # Walk only trips are not allowed.
-        no_penalty = dict.fromkeys(["at_nodes", "on_lines", "on_segments"])
-        no_penalty["global"] = {
-            "penalty": 0, 
-            "perception_factor": 1,
-        }
-        self.transit_spec = {
-            "type": "EXTENDED_TRANSIT_ASSIGNMENT",
-            "modes": param.transit_assignment_modes,
-            "demand": self.demand_mtx["transit"]["id"],
-            "waiting_time": {
-                "headway_fraction": param.standard_headway_fraction,
-                "effective_headways": "hdw",
-                "spread_factor": 1,
-                "perception_factor": param.waiting_time_perception_factor
-            },
-            "boarding_time": {
-                "global": None,
-                "at_nodes": None,
-                "on_lines": {
-                    "penalty": "ut3",
-                    "perception_factor": 1
-                },
-                "on_segments": param.extra_waiting_time,
-            },
-            # Boarding cost is defined for each journey level separately,
-            # so here we just set the default to zero.
-            "boarding_cost": no_penalty,
-            "in_vehicle_time": {
-                "perception_factor": 1
-            },
-            "aux_transit_time": param.aux_transit_time,
-            "flow_distribution_at_origins": {
-                "choices_at_origins": "OPTIMAL_STRATEGY",
-            },
-            "flow_distribution_at_regular_nodes_with_aux_transit_choices": {
-                "choices_at_regular_nodes": "OPTIMAL_STRATEGY",
-            },
-            "flow_distribution_between_lines": {
-                "consider_total_impedance": False
-            },
-            "journey_levels": None,
-            "performance_settings": param.performance_settings,
-        }
-        # Transit assignment result specification
-        self.transit_result_spec = {
-            "type": "EXTENDED_TRANSIT_MATRIX_RESULTS",
-            "total_impedance": self.result_mtx["time"]["transit"]["id"],
-            "actual_first_waiting_times": self.result_mtx["trip_components"]["transit_fw_time"]["id"],
-            "actual_total_waiting_times": self.result_mtx["trip_components"]["transit_tw_time"]["id"],
-            "by_mode_subset": {
-                "modes": param.transit_modes,
-                "distance": self.result_mtx["dist"]["transit"]["id"],
-                "avg_boardings": self.result_mtx["trip_components"]["transit_num_board"]["id"],
-                "actual_total_boarding_times": self.result_mtx["trip_components"]["transit_board_time"]["id"],
-                "actual_in_vehicle_times": self.result_mtx["trip_components"]["transit_inv_time"]["id"],
-                "actual_aux_transit_times": self.result_mtx["trip_components"]["transit_aux_time"]["id"],
-            },
-        }
+    def auto_link_24h(self, attr):
+        """ 
+        Sums and expands link volumes from different scenarios to one result scenario.
 
-    def _assign_cars(self, scen_id, stopping_criteria):
-        """Perform car_work traffic assignment for one scenario."""
-        emmebank = self.emme_project.modeller.emmebank
-        scen = emmebank.scenario(scen_id)
-        function_file = os.path.join(self.emme_project.path, param.func_car)  # TODO refactor paths out from here
-        self.emme_project.process_functions(function_file)
-        self.emme_project.logger.info("Car assignment started...")
-        self.car_spec["stopping_criteria"] = stopping_criteria
-        self.emme_project.car_assignment(self.car_spec, scen)
-        self.emme_project.logger.info("Car assignment performed for scenario "
-                                      + str(scen_id))
-    
-    def _assign_bikes(self, scen_id, length_mat_id, length_for_links, link_vol):
-        """Perform bike traffic assignment for one scenario."""
-        emmebank = self.emme_project.modeller.emmebank
-        scen = emmebank.scenario(scen_id)
-        function_file = os.path.join(self.emme_project.path, param.func_bike)  # TODO refactor paths out from here
-        self.emme_project.process_functions(function_file)
-        spec = self.bike_spec
-        spec["classes"][0]["results"]["link_volumes"] = link_vol
-        spec["classes"][0]["analysis"]["results"]["od_values"] = length_mat_id
-        # Reset ul3 to zero
-        netw_spec = {
-            "type": "NETWORK_CALCULATION",
-            "selections": {
-                "link": "all",
-            },
-            "expression": "0",
-            "result": spec["path_analysis"]["link_component"],
-            "aggregation": None,
-        }
-        self.emme_project.network_calc(netw_spec, scen)
-        # Define for which links to calculate length and save in ul3
-        netw_spec = {
-            "type": "NETWORK_CALCULATION",
-            "selections": {
-                "link": length_for_links,
-            },
-            "expression": "length",
-            "result": spec["path_analysis"]["link_component"],
-            "aggregation": None,
-        }
-        self.emme_project.network_calc(netw_spec, scen)
-        self.emme_project.logger.info("Bike assignment started")
-        self.emme_project.bike_assignment(specification=spec, scenario=scen)
-        self.emme_project.logger.info("Bike assignment performed for scenario "
-                                      + str(scen_id))
-    
-    def _assign_pedestrians(self, scen_id):
-        """Perform pedestrian assignment for one scenario."""
-        emmebank = self.emme_project.modeller.emmebank
-        scen = emmebank.scenario(scen_id)
-        self.emme_project.logger.info("Pedestrian assignment started")
-        self.emme_project.pedestrian_assignment(
-            specification=self.walk_spec, scenario=scen)
-        self.emme_project.logger.info("Pedestrian assignment performed for scenario "
-                                      + str(scen_id))
+         Parameters
+        ----------
+        attr : str
+            Attribute name thatis usually part of Parameters: link_volumes.
+        """
+        extra_attr = param.link_volumes[attr]
+        # get attr from different time periods to dictionary
+        links_attr = {}
+        for tp in self.emme_scenarios:
+            tp_attr = {}
+            scenario = self.emme_scenarios[tp]
+            network = scenario.get_network()
+            for link in network.links():
+                tp_attr[link.id] = link[extra_attr]
+            links_attr[tp] = tp_attr
+        # create attr to save volume
+        extra_attr_day = str(param.link_volumes[attr])
+        network = self.day_scenario.get_network()
+        # save link volumes to result network
+        for link in network.links():
+            day_attr = 0
+            for tp in self.emme_scenarios:
+                if link.id in links_attr[tp]:
+                    day_attr += links_attr[tp][link.id] * param.volume_factors[attr][tp]
+            link[extra_attr_day] = day_attr
+        self.day_scenario.set_network(network)
 
-    def _calc_boarding_penalties(self, scen_id, extra_penalty=0):
-        """Calculate boarding penalties for transit assignment."""
-        emmebank = self.emme_project.modeller.emmebank
-        scen = emmebank.scenario(scen_id)
-        # Definition of line specific boarding penalties
-        netw_specs = []
-        # Bus
-        for mode in param.boarding_penalty:
-            netw_specs.append({
-                "type": "NETWORK_CALCULATION",
-                "selections": {
-                    "transit_line": "mode=" + mode,
-                },
-                "expression": str(param.boarding_penalty[mode]) + "+" + str(extra_penalty),
-                "result": "ut3",
-                "aggregation": None,
-            })
-        self.emme_project.network_calc(netw_specs, scen)
-        
-    def _calc_extra_wait_time(self, scen_id):
-        """Calculate extra waiting time for one scenario."""
-        emmebank = self.emme_project.modeller.emmebank
-        scen = emmebank.scenario(scen_id)
-        network = scen.get_network()
-        # Calculation of cumulative line segment travel time and speed
-        self.emme_project.logger.info("Calculates cumulative travel times for scenario "
-                                      + str(scen_id))
-        for line in network.transit_lines():
-            cumulative_length = 0
-            cumulative_time = 0
-            cumulative_speed = 0
-            headway_sd = 0
-            for segment in line.segments():
-                cumulative_length += segment.link.length
-                # Travel time for buses in mixed traffic
-                if segment.transit_time_func == 1:
-                    cumulative_time += (segment.data2 * segment.link.length
-                                        # + segment.link["@timau"]
-                                        + segment.link.auto_time
-                                        + segment.dwell_time)
-                # Travel time for buses on bus lanes
-                if segment.transit_time_func == 2:
-                    cumulative_time += (segment.data2 * segment.link.length
-                                        + segment.dwell_time)
-                # Travel time for trams AHT
-                if segment.transit_time_func == 3:
-                    speedstr = str(int(segment.link.data1))
-                    # Digits 5-6 from end (1-2 from beg.) represent AHT
-                    # speed. If AHT speed is less than 10, data1 will 
-                    # have only 5 digits.
-                    speed = int(speedstr[:-4])
-                    cumulative_time += ((segment.link.length / speed) * 60
-                                        + segment.dwell_time)
-                # Travel time for trams PT
-                if segment.transit_time_func == 4:
-                    speedstr = str(int(segment.link.data1))
-                    # Digits 3-4 from end represent PT speed.
-                    speed = int(speedstr[-4:-2])
-                    cumulative_time += ((segment.link.length / speed) * 60
-                                        + segment.dwell_time)
-                # Travel time for trams IHT
-                if segment.transit_time_func == 5:
-                    speedstr = str(int(segment.link.data1))
-                    # Digits 1-2 from end represent IHT speed.
-                    speed = int(speedstr[-2:])
-                    cumulative_time += ((segment.link.length / speed) * 60
-                                        + segment.dwell_time)
-                if cumulative_time > 0:
-                    cumulative_speed = (cumulative_length
-                                        / cumulative_time
-                                        * 60)
-                # Headway standard deviation for buses and trams
-                if line.mode.id in param.headway_sd_func:
-                    b = param.headway_sd_func[line.mode.id]
-                    headway_sd = (b["asc"]
-                                  + b["ctime"]*cumulative_time
-                                  + b["cspeed"]*cumulative_speed)
-                # Estimated waiting time addition caused by headway deviation
-                segment["@wait_time_dev"] = headway_sd**2 / (2.0*line.headway)
-        scen.publish_network(network)
+    def transit_link_volume_24h(self):
+        """ 
+        Sums and expands segment volumes to links from different scenario.
+        """
+        attr = "transit"
+        extra_attr = "@transit_volume"
+        # get voltr from different time periods to dictionary
+        links_attr = {}
+        for tp in self.emme_scenarios:
+            tp_attr = {}
+            scenario = self.emme_scenarios[tp]
+            network = scenario.get_network()
+            for link in network.links():
+                voltr_segment = 0
+                for segment in link.segments():
+                    voltr_segment += segment.transit_volume
+                link[extra_attr] = voltr_segment
+                tp_attr[link.id] = voltr_segment
+            links_attr[tp] = tp_attr
+            scenario.set_network(network)
+        # save link volumes to result network
+        network = self.day_scenario.get_network()
+        for link in network.links():
+            day_attr = 0
+            for tp in self.emme_scenarios:
+                if link.id in links_attr[tp]:
+                    day_attr += links_attr[tp][link.id] * param.volume_factors[attr][tp]
+            link[extra_attr] = day_attr
+        self.day_scenario.set_network(network)
 
-    def _assign_transit(self, scen_id, count_zone_boardings=False):
-        """Perform transit assignment for one scenario."""
-        if count_zone_boardings:
-            jlevel1 = JourneyLevel(False, True)
-            jlevel2 = JourneyLevel(True, True)
-            bcost_spec = {
-                "type": "EXTENDED_TRANSIT_MATRIX_RESULTS",
-                "by_mode_subset": {
-                    "modes": param.transit_modes,
-                    "distance": self.result_mtx["dist"]["transit"]["id"],
-                    "actual_total_boarding_costs": self.result_mtx["trip_components"]["transit_board_cost"]["id"],
-                },
-            }
-        else:
-            jlevel1 = JourneyLevel(boarded=False)
-            jlevel2 = JourneyLevel(boarded=True)
-        self.transit_spec["journey_levels"] = [jlevel1.spec, jlevel2.spec]
-        # self.transit_spec["boarding_cost"] = bcost
-        emmebank = self.emme_project.modeller.emmebank
-        scen = emmebank.scenario(scen_id)
-        self.emme_project.logger.info("Transit assignment started")
-        self.emme_project.transit_assignment(
-            specification=self.transit_spec, 
-            scenario=scen, save_strategies=True)
-        if count_zone_boardings:
-            self.emme_project.matrix_results(bcost_spec, scen)
-        else:
-            self.emme_project.matrix_results(self.transit_result_spec, scen)
-        self.emme_project.logger.info("Transit assignment performed for scenario {}".format(str(scen_id)))
+    def transit_segment_boardings_24h(self):
+        """ 
+        Sums and expands transit boardings to segments.
+        """
+        attr = "transit"
+        extra_attr = "@transit_boardings"
+        # get attr from different time periods to dictionary
+        segments_attr = {}
+        for tp in self.emme_scenarios:
+            tp_attr = {}
+            scenario = self.emme_scenarios[tp]
+            network = scenario.get_network()
+            for segment in network.transit_segments():
+                tp_attr[segment.id] = segment.transit_boardings
+            segments_attr[tp] = tp_attr
+        # save link volumes to result network
+        network = self.day_scenario.get_network()
+        for segment in network.transit_segments():
+            day_attr = 0
+            for tp in self.emme_scenarios:
+                if segment.id in segments_attr[tp]:
+                    day_attr += segments_attr[tp][segment.id] * param.volume_factors[attr][tp]
+            segment[extra_attr] = day_attr
+        self.day_scenario.set_network(network)
 
-    def _assign_congested_transit(self, scen_id):
-        """Perform congested transit assignment for one scenario."""
-        emmebank = self.emme_project.modeller.emmebank
-        scen = emmebank.scenario(scen_id)
-        self.emme_project.logger.info("Congested transit assignment started")
-        self.emme_project.congested_assignment(
-            transit_assignment_spec=self.transit_spec,
-            congestion_function=param.trass_func,
-            stopping_criteria=param.trass_stop,
-            log_worksheets=False, scenario=scen,
-            save_strategies=True)
-        self.emme_project.matrix_results(self.transit_result_spec, scen)
-        self.emme_project.logger.info("Transit assignment performed for scenario {}".format(str(scen_id)))
+    def bike_link_24h(self):
+        """ 
+        Sums and expands bike volumes from different scenarios to one result scenario.
+        """
+        attr = "bike"
+        # get attr from different time periods to dictionary
+        links_attr = {}
+        for tp in param.emme_scenario:
+            extra_attr = "@{}_{}".format(attr, tp)
+            tp_attr = {}
+            network = self.bike_scenario.get_network()
+            for link in network.links():
+                tp_attr[link.id] = link[extra_attr]
+            links_attr[tp] = tp_attr
+        # save link volumes to result network
+        for link in network.links():
+            day_attr = 0
+            for tp in param.emme_scenario:
+                if link.id in links_attr[tp]:
+                    day_attr += links_attr[tp][link.id] * param.volume_factors[attr][tp]
+            extra_attr = "@{}_{}".format(attr, "day")
+            link[extra_attr] = day_attr
+        self.bike_scenario.set_network(network)
