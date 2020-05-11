@@ -43,6 +43,8 @@ Database/reports
 Database/usemacro_*
 Database/STRAT*/*
 Database/emlocki
+Database/aja_*.mac
+Database/d2*.in
 Logbook/project.mlbk-shm
 Logbook/project.mlbk-wal
 Network_builds/*
@@ -52,7 +54,7 @@ Views/*
 Scripts/.pytest_cache
 Scripts/tests/.pytest_cache
 Scripts/.env
-database/d2*.in
+
 
 Scripts/tests/test_data/Results/test/*
 !Scripts/tests/test_data/Results/test/Matrices

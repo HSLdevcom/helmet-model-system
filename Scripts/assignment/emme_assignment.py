@@ -218,8 +218,15 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
     
     def print_vehicle_kms(self, resultdata):
         vdfs = [1, 2, 3, 4, 5]
-        transit_modes = param.transit_mode_groups
-        kms = dict.fromkeys(param.freight_classes + ["car"])
+        transit_modes = {
+            "bus": "bde",
+            "trunk": "g",
+            "metro": "m",
+            "train": "rj",
+            "tram": "tp",
+            "other": ""
+        }
+        kms = dict.fromkeys(freight_classes + ["car"])
         for ass_class in kms:
             kms[ass_class] = dict.fromkeys(vdfs, 0)
         transit_dists = dict.fromkeys(transit_modes, 0)
@@ -242,6 +249,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                         car_vol -= link[param.link_volumes[ass_class]]
                     kms["car"][vdf] += (param.volume_factors["car"][tp] * car_vol * link.length)
             for line in network.transit_lines():
+                mode = "other"
                 for modes in transit_modes:
                     if line.mode.id in transit_modes[modes]:
                         mode = modes
