@@ -280,6 +280,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "metro": "m",
             "train": "rj",
             "tram": "tp",
+            "other": ""
         }
         kms = dict.fromkeys(freight_classes + ["car"])
         for ass_class in kms:
@@ -305,6 +306,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                         car_vol -= link[param.link_volumes[ass_class]]
                     kms["car"][vdf] += (param.volume_factors["car"][tp] * car_vol * link.length)
             for line in network.transit_lines():
+                mode = "other"
                 for modes in transit_modes:
                     if line.mode.id in transit_modes[modes]:
                         mode = modes
