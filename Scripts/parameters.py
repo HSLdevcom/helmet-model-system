@@ -143,6 +143,11 @@ assignment_mode = {
     "truck": 'k',
     "van": 'v',
 }
+freight_classes = [
+    "van", 
+    "truck", 
+    "trailer_truck",
+]
 vot_class = {
     "car_work": "work",
     "car_leisure": "leisure",
@@ -163,6 +168,13 @@ transit_modes = [
     't',
     'w',
 ]
+transit_mode_groups = {
+    "bus": "bde",
+    "trunk": "g",
+    "metro": "m",
+    "train": "rj",
+    "tram": "tp",
+    }
 aux_modes = [
     'a',
     's',

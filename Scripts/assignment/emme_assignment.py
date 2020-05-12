@@ -219,7 +219,6 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         return gcost - vot_inv *(tcost + self.dist_unit_cost*tdist)
     
     def print_vehicle_kms(self, resultdata):
-        freight_classes = ["van", "truck", "trailer_truck"]
         vdfs = [1, 2, 3, 4, 5]
         transit_modes = {
             "bus": "bde",
@@ -245,7 +244,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                     vdf = link.volume_delay_func - 5
                 if vdf in vdfs:
                     car_vol = link.auto_volume
-                    for ass_class in freight_classes:
+                    for ass_class in param.freight_classes:
                         kms[ass_class][vdf] += (param.volume_factors[ass_class][tp]
                                                 * link[param.link_volumes[ass_class]]
                                                 * link.length)

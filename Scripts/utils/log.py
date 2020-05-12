@@ -24,7 +24,7 @@ class Log:
             Log.__instance = Log()
         return Log.__instance
 
-    def initialize(self, config, emme_context=None):
+    def initialize(self, config, emme_context=None, result_log=False):
         # JSON logger for communicating with UI
         numeric_level = getattr(logging, config.LOG_LEVEL, 20)
         if config.LOG_FORMAT == 'JSON':
@@ -37,13 +37,17 @@ class Log:
         else:
             logging.basicConfig(level=numeric_level, stream=sys.stdout, format='%(asctime)s [%(levelname)s] %(message)s')
         # Rotating file logger
-        if config.SCENARIO_NAME is not None:
-            file = config.SCENARIO_NAME + ".log"
+        if result_log:
+            logtype = "results_"
         else:
-            file = Config.DefaultScenario + '.log'
+            logtype = "run_"
+        if config.SCENARIO_NAME is not None:
+            file = logtype + config.SCENARIO_NAME + ".log"
+        else:
+            file = logtype + Config.DefaultScenario + '.log'
         self._filename = os.path.join(sys.path[0], file)
         fileFormat = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
-        fileHandler = logging.handlers.TimedRotatingFileHandler(self._filename, when='midnight', backupCount=7)
+        fileHandler = logging.handlers.TimedRotatingFileHandler(self._filename, when='H', interval=10, backupCount=7)
         fileHandler.setFormatter(fileFormat)
         fileHandler.setLevel(numeric_level)
         self.__logger.addHandler(fileHandler)
