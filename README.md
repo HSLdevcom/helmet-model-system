@@ -20,7 +20,7 @@ We are using those Python dependencies that come with INRO Emme installation. To
 2. Go to User Accounts, then click again User Accounts, then select from the left hand menu "Change my environment variables".
 3. From the top box ("User variables for USERNAME"), find and select "Path" variable, and click "Edit...".
 4. Click "New" and write `%EMMEPATH%\Programs`.
-5. Click OK in the "Edit enrivonment variable" window, and then click OK again in the "Environment Variables" window.
+5. Click OK in the "Edit environment variable" window, and then click OK again in the "Environment Variables" window.
 
 Next, you need to initialize an Emme project:
 
