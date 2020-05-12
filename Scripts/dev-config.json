@@ -5,9 +5,9 @@
     "SCENARIO_NAME": "test",
     "RESULTS_PATH": "C:\\Users\\FIAS34036\\helmet\\system-results",
     "EMME_PROJECT_PATH": "C:\\Users\\FIAS34036\\helmet\\helmet-model-system\\sijo_HM31.emp",
-    "FIRST_SCENARIO_ID": 39,
+    "FIRST_SCENARIO_ID": 119,
     "BASELINE_DATA_PATH": "C:\\Users\\FIAS34036\\helmet\\baseline-data-full",
-    "FORECAST_DATA_PATH": "C:\\Users\\FIAS34036\\helmet\\baseline-data-full\\2016_zonedata",
-    "ITERATION_COUNT": 3,
+    "FORECAST_DATA_PATH": "C:\\Users\\FIAS34036\\helmet\\scenario-input-data\\2019",
+    "ITERATION_COUNT": 1,
     "USE_FIXED_TRANSIT_COST": false
 }
