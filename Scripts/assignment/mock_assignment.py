@@ -8,6 +8,7 @@ class MockAssignmentModel(AssignmentModel, ImpedanceSource):
         self.matrices = matrices
         self.logger = logging.getLogger()
         self.logger.info("Reading matrices from " + str(self.matrices.path))
+        self.result_mtx=param.emme_result_mtx
     
     def assign(self, time_period, matrices, is_last_iteration=False, is_first_iteration=False):
         """Assign cars, bikes and transit for one time period.
@@ -56,7 +57,7 @@ class MockAssignmentModel(AssignmentModel, ImpedanceSource):
             Subtype (car_work/truck/inv_time/...) : numpy 2-d matrix
                 Matrix of the specified type
         """
-        matrices = dict.fromkeys(param.emme_mtx[mtx_type].keys())
+        matrices = dict.fromkeys(self.result_mtx[mtx_type].keys())
         with self.matrices.open(mtx_type, time_period) as mtx:
             for mode in matrices:
                 matrices[mode] = mtx[mode]
@@ -84,5 +85,5 @@ class MockAssignmentModel(AssignmentModel, ImpedanceSource):
     def calc_transit_cost(self, fare, peripheral_cost, default_cost=None):
         pass
 
-    def print_vehicle_kms(self):
+    def print_vehicle_kms(self, resultdata):
         pass

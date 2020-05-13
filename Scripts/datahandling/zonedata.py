@@ -37,8 +37,8 @@ class ZoneData:
         transit_zone["dist_fare"] = transit_zone["fare"].pop("dist")
         transit_zone["start_fare"] = transit_zone["fare"].pop("start")
         self.transit_zone = transit_zone
-        car_cost = read_csv_file(data_dir, ".cco", squeeze=True)
-        self.car_dist_cost = car_cost[0]
+        car_cost = read_csv_file(data_dir, ".cco", squeeze=False)
+        self.car_dist_cost = car_cost["dist_cost"][0]
         truckdata = read_csv_file(data_dir, ".trk", squeeze=True)
         self.trailers_prohibited = map(int, truckdata.loc[0, :])
         self.garbage_destination = map(int, truckdata.loc[1, :].dropna())
@@ -129,6 +129,18 @@ class ZoneData:
         self._values[key] = data
 
     def zone_index(self, zone_number):
+        """Get index of given zone number.
+
+        Parameters
+        ----------
+        zone_number : int
+            The zone number to look up
+        
+        Returns
+        -------
+        int
+            Index of zone number
+        """
         match = numpy.where(self.zone_numbers == zone_number)
         if len(match) == 1 and len(match[0]) == 1:
             return match[0][0]
@@ -138,8 +150,8 @@ class ZoneData:
     def get_freight_data(self):
         """Get zone data for freight traffic calculation.
         
-        Return
-        ------
+        Returns
+        -------
         pandas DataFrame
             Zone data for freight traffic calculation
         """
@@ -168,8 +180,8 @@ class ZoneData:
         part : int, optional
             0 if capital region, 1 if surrounding area
         
-        Return
-        ------
+        Returns
+        -------
         pandas Series or numpy 2-d matrix
         """
         l = bounds.start
