@@ -37,8 +37,8 @@ class ZoneData:
         transit_zone["dist_fare"] = transit_zone["fare"].pop("dist")
         transit_zone["start_fare"] = transit_zone["fare"].pop("start")
         self.transit_zone = transit_zone
-        car_cost = read_csv_file(data_dir, ".cco", squeeze=True)
-        self.car_dist_cost = car_cost[0]
+        car_cost = read_csv_file(data_dir, ".cco", squeeze=False)
+        self.car_dist_cost = car_cost["dist_cost"][0]
         truckdata = read_csv_file(data_dir, ".trk", squeeze=True)
         self.trailers_prohibited = map(int, truckdata.loc[0, :])
         self.garbage_destination = map(int, truckdata.loc[1, :].dropna())
