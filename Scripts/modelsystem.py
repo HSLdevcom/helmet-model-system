@@ -82,6 +82,9 @@ class ModelSystem:
     def assign_base_demand(self, use_fixed_transit_cost=False):
         impedance = {}
 
+        # create attributes and background variables to network
+        self.ass_model.prepare_network()
+
         # Calculate transit cost matrix, and save it to emmebank
         with self.basematrices.open("cost", "peripheral") as peripheral_mtx:
             peripheral_cost = peripheral_mtx["transit"]
