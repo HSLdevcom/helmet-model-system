@@ -87,3 +87,6 @@ class MockAssignmentModel(AssignmentModel, ImpedanceSource):
 
     def print_vehicle_kms(self, resultdata):
         pass
+
+    def prepare_network(self):
+        pass
