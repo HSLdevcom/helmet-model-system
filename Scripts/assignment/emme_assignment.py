@@ -45,7 +45,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             "iht": first_scenario_id+4,
         }
 
-    def _prepare_network(self):
+    def prepare_network(self):
         """Create extra attributes and calc backgroud variables for assignment."""
         self.create_attributes(self.bike_scenario, param.bike_attributes)
         self.create_attributes(self.day_scenario, param.emme_attributes)
@@ -72,7 +72,6 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         self.set_emmebank_matrices(matrices)
         scen_id = self.emme_scenarios[time_period]
         if is_first_iteration:
-            self._prepare_network()
             self._assign_pedestrians(scen_id)
             self._assign_bikes(self.bike_scenario,
                             self.result_mtx["dist"]["bike"]["id"],
