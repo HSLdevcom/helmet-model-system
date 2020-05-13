@@ -22,7 +22,9 @@ class ModelSystem:
         # Input data
         self.zdata_base = ZoneData(base_zone_data_path, ass_model.zone_numbers)
         self.basematrices = MatrixData(base_matrices_path)
-        self.zdata_forecast = ZoneData(zone_data_path, ass_model.zone_numbers)
+        self.zdata_forecast = ZoneData(zone_data_path, ass_model.zone_numbers) 
+        # Set dist unit cost from zonedata
+        self.ass_model.dist_unit_cost = self.zdata_forecast.car_dist_cost
         # Output data
         self.resultmatrices = MatrixData(os.path.join(results_path, name, "Matrices"))
         self.resultdata = ResultsData(os.path.join(results_path, name))
@@ -94,7 +96,7 @@ class ModelSystem:
             self.logger.info("Assigning period " + tp)
             with self.basematrices.open("demand", tp) as mtx:
                 base_demand = {ass_class: mtx[ass_class] for ass_class in self.ass_classes}
-            self.ass_model.assign(tp, base_demand)
+            self.ass_model.assign(tp, base_demand, is_first_iteration=True)
             impedance[tp] = self.ass_model.get_impedance()
         return impedance
 
