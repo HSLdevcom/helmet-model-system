@@ -55,14 +55,32 @@ class LinearModel(object):
 
 class CarDensityModel(LinearModel):
     def predict(self):
+        """Get car ownership prediction for zones.
+        
+        Return
+        ------
+        pandas Series
+            Zone vector of cars per inhabitant
+        """
         b = parameters.car_density
         prediction = numpy.zeros(self.bounds.stop)
         self._add_constant(prediction, b["constant"])
         self._add_zone_terms(prediction, b["generation"], True)
         self._add_log_zone_terms(prediction, b["log"], True)
+        # Car density cannot be negative
         prediction = prediction.clip(0.0, None)
-        prediction = pandas.Series(
-            prediction, self.zone_data.zone_numbers[self.bounds])
+        base_pop = self.zone_data_base["population"]
+        forecast_pop = self.zone_data["population"]
+        # Car ownership model is applied only for population growth
+        pop_growth = (forecast_pop - base_pop).clip(0, None)
+        # Share of population that is growth
+        # (set to zero if population is zero)
+        pop_growth_share = numpy.divide(
+            pop_growth, forecast_pop, out=numpy.zeros_like(pop_growth),
+            where=forecast_pop!=0)
+        base_car_density = self.zone_data_base["car_density"]
+        prediction = (pop_growth_share * prediction
+                      + (1-pop_growth_share) * base_car_density)
         self.print_results(prediction)
         return prediction
 
