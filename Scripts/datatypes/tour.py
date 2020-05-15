@@ -80,7 +80,8 @@ class Tour:
         # Secondary destination choice
         sec_dest_purpose = self.purpose.sec_dest_purpose
         try:
-            if self.position[1] < sec_dest_purpose.bounds.stop:
+            if (self.position[0] < sec_dest_purpose.bounds.stop
+                    and self.position[1] < sec_dest_purpose.bounds.stop):
                 is_in_area = True
             else:
                 is_in_area = False

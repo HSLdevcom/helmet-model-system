@@ -1,15 +1,17 @@
 from utils.log import Log
 import assignment.departure_time as dt
 from datahandling.resultdata import ResultsData
-from datahandling.zonedata import ZoneData
+from datahandling.zonedata import ZoneData, BaseZoneData
 from datahandling.matrixdata import MatrixData
 from demand.freight import FreightModel
 from demand.trips import DemandModel
 from demand.external import ExternalModel
 from datatypes.purpose import SecDestPurpose
 from transform.impedance_transformer import ImpedanceTransformer
+from models.linear import CarDensityModel
 import parameters
 import numpy
+import pandas
 import threading
 import multiprocessing
 import os
@@ -20,7 +22,7 @@ class ModelSystem:
         self.logger = Log.get_instance()
         self.ass_model = ass_model
         # Input data
-        self.zdata_base = ZoneData(base_zone_data_path, ass_model.zone_numbers)
+        self.zdata_base = BaseZoneData(base_zone_data_path, ass_model.zone_numbers)
         self.basematrices = MatrixData(base_matrices_path)
         self.zdata_forecast = ZoneData(zone_data_path, ass_model.zone_numbers) 
         # Set dist unit cost from zonedata
@@ -39,20 +41,21 @@ class ModelSystem:
                                 self.ass_model.zone_numbers)
         self.dtm = dt.DepartureTimeModel(self.ass_model.nr_zones)
         self.imptrans = ImpedanceTransformer()
+        bounds = slice(0, self.zdata_forecast.nr_zones)
+        self.cdm = CarDensityModel(self.zdata_base, self.zdata_forecast, bounds, self.resultdata)
         # TODO: Should be better defined as parameter when we don't  
         # have different transit matrices as input data. 
-        # Could use this list_matrices as inpout validation.
+        # Could use this list_matrices as input validation.
         self.ass_classes = self.basematrices.list_matrices("demand", "aht")
         self.mode_share = []
         self.trucks = self.fm.calc_freight_traffic("truck")
         self.trailer_trucks = self.fm.calc_freight_traffic("trailer_truck")
 
     def _init_demand_model(self):
-        dm = DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=False)
-        dm.create_population_segments()
-        return dm
+        return DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=False)
 
     def _add_internal_demand(self, previous_iter_impedance, is_last_iteration):
+        self.dm.create_population_segments()
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
                 purpose.gen_model.init_tours()
@@ -101,6 +104,8 @@ class ModelSystem:
                 base_demand = {ass_class: mtx[ass_class] for ass_class in self.ass_classes}
             self.ass_model.assign(tp, base_demand, is_first_iteration=True)
             impedance[tp] = self.ass_model.get_impedance()
+            if tp == "aht":
+                self._update_ratios(impedance, tp)
         return impedance
 
     def run_iteration(self, previous_iter_impedance, is_last_iteration=False):
@@ -109,6 +114,11 @@ class ModelSystem:
         # Add truck and trailer truck demand, to time-period specific matrices (DTM), used in traffic assignment
         self.dtm.add_demand(self.trucks)
         self.dtm.add_demand(self.trailer_trucks)
+
+        # Update car density
+        prediction = self.cdm.predict()
+        self.zdata_forecast["car_density"] = prediction
+        self.zdata_forecast["cars_per_1000"] = 1000 * prediction
 
         self._add_internal_demand(previous_iter_impedance, is_last_iteration)
 
@@ -147,32 +157,8 @@ class ModelSystem:
 
             # Car Ownership -model specific block
             if tp == "aht":
-                car_time = numpy.ma.average(
-                    impedance[tp]["time"]["car_work"],
-                    axis=1,
-                    weights=self.dtm.demand[tp]["car_work"]
-                )
-                transit_time = numpy.ma.average(
-                    impedance[tp]["time"]["transit"],
-                    axis=1,
-                    weights=self.dtm.demand[tp]["transit_work"]
-                )
-                time_ratio = transit_time / car_time
-                self.resultdata.print_data(time_ratio, "impedance_ratio.txt", self.ass_model.zone_numbers, "time")
-
-                car_cost = numpy.ma.average(
-                    impedance[tp]["cost"]["car_work"],
-                    axis=1,
-                    weights=self.dtm.demand[tp]["car_work"]
-                )
-                transit_cost = numpy.ma.average(
-                    impedance[tp]["cost"]["transit"],
-                    axis=1,
-                    weights=self.dtm.demand[tp]["transit_work"]
-                )
-                cost_ratio = transit_cost / 44. / car_cost
-                self.resultdata.print_data(cost_ratio, "impedance_ratio.txt", self.ass_model.zone_numbers, "cost")
-
+                self._update_ratios(impedance, tp)
+            
             if is_last_iteration:
                 zone_numbers = self.ass_model.zone_numbers
                 with self.resultmatrices.open("demand", tp, 'w') as mtx:
@@ -233,15 +219,50 @@ class ModelSystem:
             demand = purpose.distribute_tours(mode, impedance[mode], i)
             container.add_demand(demand)
 
+    def _update_ratios(self, impedance, tp):
+        """Calculate time and cost ratios.
+        
+        Parameters
+        ----------
+        impedance : dict
+            Impedance matrices.
+        tp : str
+            TIme period (usually aht in this function).
+        """ 
+        car_time = numpy.ma.average(
+            impedance[tp]["time"]["car_work"], axis=1,
+            weights=self.dtm.demand[tp]["car_work"])
+        transit_time = numpy.ma.average(
+            impedance[tp]["time"]["transit"], axis=1,
+            weights=self.dtm.demand[tp]["transit_work"])
+        time_ratio = transit_time / car_time
+        self.resultdata.print_data(
+            time_ratio, "impedance_ratio.txt",
+            self.ass_model.zone_numbers, "time")
+        self.zdata_forecast["time_ratio"] = pandas.Series(
+            numpy.ma.getdata(time_ratio), self.ass_model.zone_numbers)
+        car_cost = numpy.ma.average(
+            impedance[tp]["cost"]["car_work"], axis=1,
+            weights=self.dtm.demand[tp]["car_work"])
+        transit_cost = numpy.ma.average(
+            impedance[tp]["cost"]["transit"], axis=1,
+            weights=self.dtm.demand[tp]["transit_work"])
+        cost_ratio = transit_cost / 44. / car_cost
+        cost_ratio = cost_ratio.clip(0.01, None)
+        self.resultdata.print_data(
+            cost_ratio, "impedance_ratio.txt",
+            self.ass_model.zone_numbers, "cost")
+        self.zdata_forecast["cost_ratio"] = pandas.Series(
+            numpy.ma.getdata(cost_ratio), self.ass_model.zone_numbers)
+
 
 class AgentModelSystem(ModelSystem):
 
     def _init_demand_model(self):
-        dm = DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=True)
-        dm.create_population()
-        return dm
+        return DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=True)
 
     def _add_internal_demand(self, previous_iter_impedance, is_last_iteration):
+        self.dm.create_population()
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
                 purpose.init_sums()

@@ -53,8 +53,6 @@ Matrices/base/*
 Scripts/.pytest_cache
 Scripts/tests/.pytest_cache
 Scripts/.env
-
-
 Scripts/tests/test_data/Results/test/*
 !Scripts/tests/test_data/Results/test/Matrices
 project.mtbx-shm
