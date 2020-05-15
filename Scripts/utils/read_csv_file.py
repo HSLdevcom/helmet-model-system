@@ -38,6 +38,7 @@ def read_csv_file(data_dir, file_end, zone_numbers=None, squeeze=False):
     data = pandas.read_csv(
         path, delim_whitespace=True, squeeze=squeeze, keep_default_na=False,
         na_values="", comment='#', header=header)
+    data.name = file_end
     if data.index.is_numeric() and data.index.hasnans:
         raise IndexError("Row with only spaces or tabs in file {}".format(path))
     else:
