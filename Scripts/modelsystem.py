@@ -21,6 +21,7 @@ class ModelSystem:
     def __init__(self, zone_data_path, base_zone_data_path, base_matrices_path, results_path, ass_model, name):
         self.logger = Log.get_instance()
         self.ass_model = ass_model
+        self.emme_scenarios = self.ass_model.emme_scenarios
         # Input data
         self.zdata_base = BaseZoneData(base_zone_data_path, ass_model.zone_numbers)
         self.basematrices = MatrixData(base_matrices_path)
@@ -39,7 +40,7 @@ class ModelSystem:
         self.em = ExternalModel(self.basematrices,
                                 self.zdata_forecast,
                                 self.ass_model.zone_numbers)
-        self.dtm = dt.DepartureTimeModel(self.ass_model.nr_zones)
+        self.dtm = dt.DepartureTimeModel(self.ass_model.nr_zones, self.emme_scenarios)
         self.imptrans = ImpedanceTransformer()
         bounds = slice(0, self.zdata_forecast.nr_zones)
         self.cdm = CarDensityModel(self.zdata_base, self.zdata_forecast, bounds, self.resultdata)
@@ -98,7 +99,7 @@ class ModelSystem:
             self.ass_model.calc_transit_cost(self.zdata_forecast.transit_zone, peripheral_cost, fixed_cost)
 
         # Perform traffic assignment and get result impedance, for each time period
-        for tp in parameters.emme_scenario:
+        for tp in self.emme_scenarios:
             self.logger.info("Assigning period " + tp)
             with self.basematrices.open("demand", tp) as mtx:
                 base_demand = {ass_class: mtx[ass_class] for ass_class in self.ass_classes}
@@ -150,7 +151,7 @@ class ModelSystem:
         self.mode_share.append(mode_share)
 
         # Calculate and return traffic impedance
-        for tp in parameters.emme_scenario:
+        for tp in self.emme_scenarios:
             self.dtm.add_vans(tp, self.zdata_forecast.nr_zones)
             self.ass_model.assign(tp, self.dtm.demand[tp], is_last_iteration)
             impedance[tp] = self.ass_model.get_impedance(is_last_iteration)
@@ -200,7 +201,7 @@ class ModelSystem:
             else:
                 dests = xrange(start, bounds.stop)
             # Results will be saved in a temp dtm, to avoid memory clashes
-            dtm = dt.DepartureTimeModel(self.ass_model.nr_zones)
+            dtm = dt.DepartureTimeModel(self.ass_model.nr_zones, self.emme_scenarios)
             demand.append(dtm)
             thread = threading.Thread(
                 target=self._distribute_tours,
