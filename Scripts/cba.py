@@ -27,6 +27,7 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, results_directory):
     excelfile = os.path.join(SCRIPT_DIR, "CBA_kehikko.xlsx")
     mile_diff = read_miles(results_directory, scenario_1) - read_miles(results_directory, scenario_0)
     transit_mile_diff = read_transit_miles(results_directory, scenario_1) - read_transit_miles(results_directory, scenario_0)
+    emme_scenarios = ["aht", "pt", "iht"]
     revenues = {
         "car": {},
         "transit": {},
@@ -34,7 +35,7 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, results_directory):
     gains = dict.fromkeys(param.transport_classes)
     for transport_class in gains:
         gains[transport_class] = {}
-    for tp in param.emme_scenario:
+    for tp in emme_scenarios:
         ve1 = read_scenario(os.path.join(results_directory, scenario_1, "Matrices"), tp)
         ve0 = read_scenario(os.path.join(results_directory, scenario_0, "Matrices"), tp)
         revenues["transit"][tp] = 0
