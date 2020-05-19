@@ -30,7 +30,8 @@ class MatrixDataTest(unittest.TestCase):
             self._validate_matrix_operations(m, matrix_type)
 
     def _validate_matrix_operations(self, matrix_data, matrix_type):
-        for key in params.emme_scenario.keys():
+        emme_scenarios = ["aht", "pt", "iht"]
+        for key in emme_scenarios:
             print("Opening matrix for time period", key)
             with matrix_data.open(matrix_type, time_period=key) as mtx:
                 self.assertIsNotNone(mtx._file)

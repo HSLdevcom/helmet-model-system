@@ -7,7 +7,8 @@ from assignment.departure_time import DepartureTimeModel
 
 class DepartureTimeTest(unittest.TestCase):
     def test_mtx_add(self):
-        dtm = DepartureTimeModel(8)
+        emme_scenarios = {"aht": 21, "pt": 22, "iht": 23}
+        dtm = DepartureTimeModel(8, emme_scenarios)
         mtx = numpy.arange(9)
         mtx.shape = (3, 3)
         class Demand:

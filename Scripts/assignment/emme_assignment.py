@@ -291,8 +291,8 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             kms[ass_class] = dict.fromkeys(vdfs, 0)
         transit_dists = dict.fromkeys(transit_modes, 0)
         transit_times = dict.fromkeys(transit_modes, 0)
-        for tp in param.emme_scenario:
-            scen_id = param.emme_scenario[tp]
+        for tp in self.emme_scenarios:
+            scen_id = self.emme_scenarios[tp]
             scen = self.emme_project.modeller.emmebank.scenario(scen_id)
             network = scen.get_network()
             for link in network.links():
