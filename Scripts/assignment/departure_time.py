@@ -55,7 +55,6 @@ class DepartureTimeModel:
             elif len(demand.position) == 3:
                 for time_period in self.emme_scenarios:
                     self._add_3d_demand(demand, ass_class, time_period)
-                self.logger.debug("Added demand for {}, {}, {}".format(demand.purpose.name, demand.mode, demand.orig))
             else:
                 raise IndexError("Tuple position has wrong dimensions.")
 
