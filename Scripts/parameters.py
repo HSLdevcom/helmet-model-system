@@ -76,7 +76,7 @@ trass_func = {
 }
 # Stopping criteria for congested transit assignment
 trass_stop = {
-    "max_iterations": 10,
+    "max_iterations": 50,
     "normalized_gap": 0.01,
     "relative_gap": 0.001
 }
