@@ -87,6 +87,9 @@ class ModelSystem:
         self.ass_model.prepare_network()
 
         # Calculate transit cost matrix, and save it to emmebank
+        with self.basematrices.open("demand", "aht") as mtx:
+            base_demand = {ass_class: mtx[ass_class] for ass_class in self.ass_classes}
+        self.ass_model.assign("aht", base_demand, is_first_iteration=True)
         with self.basematrices.open("cost", "peripheral") as peripheral_mtx:
             peripheral_cost = peripheral_mtx["transit"]
             if use_fixed_transit_cost:
