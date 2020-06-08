@@ -110,6 +110,8 @@ class ModelSystem:
             impedance[tp] = self.ass_model.get_impedance()
             if tp == "aht":
                 self._update_ratios(impedance, tp)
+        
+        self.imptrans.average_car_impedance(impedance)
         return impedance
 
     def run_iteration(self, previous_iter_impedance, is_last_iteration=False):
@@ -177,6 +179,7 @@ class ModelSystem:
                             cost_data = impedance[tp][mtx_type][ass_class]
                             mtx[ass_class] = cost_data
 
+        self.imptrans.average_car_impedance(impedance)
         if is_last_iteration:
             self.ass_model.print_vehicle_kms(self.resultdata)
 
