@@ -4,6 +4,7 @@ Tämä repository sisältää Helmet-liikenne-ennustejärjestelmän python-ohjel
 
 ## Käyttö
 Tässä kappaleessa neuvotaan, miten Helmet 4.0 asennetaan toimimaan INROn Emme-ohjelmiston kanssa. Kaikki tarvittava löytyy repositoreista helmet-model-system ja helmet-ui. Niiden lisäksi käyttäjän ei tarvitse asentaa muita ohjelmistoja.
+
 Jos sinulla ei ole Emme-lisenssiä tai jos haluat kehittää Helmet 4.0 -järjestelmää edelleen, siirry lukuun Development.
 
 ## Asennus
@@ -24,24 +25,37 @@ Seuraavaksi sinun on määriteltävä Emme-projekti:
 
 ## Ajo
 Helmet 4.0 -ajon voi käynnistää Komentokehote-ikkunasta tai käyttöliittymästä helmet-ui. Ennen kuin käynnistät ajon Komentokehote-ikkunasta, määrittele kansiopolku tiedostoon dev-config.json. Siirry sen jälkeen Emme-projektisi kansioon helmet-model-system ja kirjoita:
+
 cd Scripts
+
 python helmet.py
-Emme assignment can be tested without further configuration:
+
 Emme-sijoittelua voi testata ilman muita määrityksiä:
+
 cd Scripts
+
 python test_assignment.py
 
 ## Kehitystyö
+Jos sinulla ei ole INROn Emme-lisenssiä tai jos haluat kehittää Helmet 4.0 -lähdekoodia edelleen, sinun on määriteltävä testiympäristö. On hyvin suositeltavaa asentaa Git, vaikka sitä ei tässä käsitelläkään.
+
+## Ympäristö ja riippuvuudet
+
 Käytämme Python-versiota 2.7, koska sitä INRO Emme-ohjelmisto tukee.
 1.	Asenna Python 2.7. (2020-04-16: valitse versio Python 2.7.16, koska versio 2.7.17 ei toimi kunnolla ennen kuin tämä on ratkaistu)
 2.	Lisää Ohjauspaneelin ympäristömuuttujissa omaan PATH-muuttujaasi C:\Python27 ja C:\Python27\Scripts.
 3.	Avaa uusi Komentokehote-ikkuna ja kirjoita kehotteen perään 
+
 python --version
+
 (siis kaksi tavuviivaa peräkkäin). Vastaukseksi pitäisi tulla Python 2.7.16 tai jokin muu Python 2.7 -versio.
 
 Python-pakettien suositeltava asennusohjelma on pip. Pythonin normaali asennusrutiini asentaa pip-ohjelman kansioon C:\Python27\Scripts. Kirjoita Komentokehote-ikkunaan
+
 pip --version 
+
 nähdäksesi, onko pip asennettu ja liitetty PATH-määrittelyysi. Komennon pitäisi tulostaa
+
 pip 20.0.2 from c:\python27\lib\site-packages\pip (python 2.7) (pip version voi vaihdella).
 
 pipenv-ohjelmalla haetaan INROn Emme-ohjelmiston käyttämät avoimen lähdekoodin kirjastot. pipenv eristää meidän ympäristömme muista globaaleista Python-moduuleista ja varmistaa, että meidän järjestelmämme ei vahingoita niitä. Johdatus pipenv-ohjelman käyttöön löytyy seuraavilla linkeillä Python docs tai Jonathan Cutrer's blog.
@@ -58,12 +72,14 @@ Tuloksena pitäisi tulla pipenv, version 2018.11.26.
 o	Ensimmäisellä kerralla: pipenv --python 2.7 install --dev
 o	Synkronointi, jos uusi paketteja on lisätty: pipenv --python 2.7 sync --dev
 7.	Riippuen käyttöjärjestelmästäsi muuta tiedoston tyypin .env-win (Windows) tai .env-nix (Linux) tilalle .env. Windows-ympäristössä tämän voi tehdä Komentokehote-ikkunassa kirjoittamalla 
+
 copy .env-win .env.
 
 Nyt sinulla pitäisi olla virtuaaliympäristö kansiossa C:\Users\USERNAME\.virtualenvs\Scripts-xxxxxxxx\Lib\site-packages.
 Kun suoritat skriptejä, kirjoita komennon alkuun pipenv, esimerkiksi:
 
 cd Scripts
+
 pipenv run python test_assignment.py
 
 ## Visual Studio Code
