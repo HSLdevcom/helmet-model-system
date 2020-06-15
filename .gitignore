@@ -9,6 +9,8 @@
 *.pdf
 *.emlk
 *.emv
+*.emt
+*.emw
 *.eml
 *.emu
 *.ema
@@ -32,6 +34,10 @@
 usemacro_*
 STRAT_*
 config
+/*.json
+Network_builds/*
+Worksheets/*
+Media/*
 Database/builddb
 Database/core_interface_log
 Database/errors
