@@ -66,11 +66,11 @@ We are using `pipenv` to import the same open source libraries which INRO Emme s
 2. Install `pipenv` by running `python -m pip install --user pipenv`. `pipenv` should now be installed in `%APPDATA%\Python\Scripts` (eg. `C:\Users\USERNAME\AppData\Roaming\Python\Scripts`).
 3. Add `%APPDATA%\Python\Scripts` to your local PATH variable.
 4. Close and reopen Command Prompt and check that `pipenv` is recognised by typing `pipenv --version`. It should return `pipenv, version 2018.11.26`.
-4. Download [helmet-model-system](https://github.com/HSLdevcom/helmet-model-system) repository and open a Command Prompt to its "Scripts" folder.
-5. Install dependencies from `Pipfile`:
+5. Download [helmet-model-system](https://github.com/HSLdevcom/helmet-model-system) repository and open a Command Prompt to its "Scripts" folder.
+6. Install dependencies from `Pipfile`:
     - First setup: `pipenv --python 2.7 install --dev`
     - Additional syncing if new packages are added: `pipenv --python 2.7 sync --dev`
-6. Depending on your operating system, rename either `.env-win` (Windows) or `.env-nix` (Linux) to `.env`. In Windows, you can do this in Command Propmpt by typing `copy .env-win .env`.
+7. Depending on your operating system, rename either `.env-win` (Windows) or `.env-nix` (Linux) to `.env`. In Windows, you can do this in Command Propmpt by typing `copy .env-win .env`.
 
 Now, you should have a virtual environment in `C:\Users\USERNAME\.virtualenvs\Scripts-xxxxxxxx\Lib\site-packages`.
 
