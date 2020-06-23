@@ -5,7 +5,7 @@ Tämä repository sisältää Helmet-liikenne-ennustejärjestelmän python-ohjel
 ## Käyttö
 Tässä kappaleessa neuvotaan, miten Helmet 4.0 asennetaan toimimaan INROn Emme-ohjelmiston kanssa. Kaikki tarvittava löytyy repositoreista [helmet-model-system](https://github.com/HSLdevcom/helmet-model-system) ja [helmet-ui](https://github.com/HSLdevcom/helmet-ui). Niiden lisäksi käyttäjän ei tarvitse asentaa muita ohjelmistoja.
 
-Jos sinulla ei ole Emme-lisenssiä tai jos haluat kehittää Helmet 4.0 -järjestelmää edelleen, siirry lukuun [Kehitystyö](##Kehitystyö).
+Jos sinulla ei ole Emme-lisenssiä tai jos haluat kehittää Helmet 4.0 -järjestelmää edelleen, siirry lukuun [Kehitystyö](#Kehitystyö).
 
 ### Asennus
 Järjestelmä käyttää Python-versiota 2.7, joka toimitetaan ja asennetaan INROn Emme-ohjelmiston yhteydessä.
@@ -61,16 +61,23 @@ pip 20.0.2 from c:\python27\lib\site-packages\pip (python 2.7) (pip version voi 
 pipenv-ohjelmalla haetaan INROn Emme-ohjelmiston käyttämät avoimen lähdekoodin kirjastot. pipenv eristää meidän ympäristömme muista globaaleista Python-moduuleista ja varmistaa, että meidän järjestelmämme ei vahingoita niitä. Johdatus pipenv-ohjelman käyttöön löytyy seuraavilla linkeillä [Python docs](https://docs.python-guide.org/dev/virtualenvs/) tai [Jonathan Cutrer's blog](https://jcutrer.com/python/pipenv-pipfile).
 1.	Avaa Komentokehote-ikkuna.
 2.	Asenna pipenv komennolla
+
 python -m pip install --user pipenv
+
 Sen pitäisi tulla kansioon %APPDATA%\Python\Scripts (esim. C:\Users\USERNAME\AppData\Roaming\Python\Scripts).
+
 3.	Lisää omaan PATH-määrittelyysi %APPDATA%\Python\Scripts.
 4.	Sulje Komentokehote-ikkuna ja avaa se jälleen. Tarkista, että pipenv tunnistetaan kirjoittamalla 
+
 pipenv –version
+
 Tuloksena pitäisi tulla pipenv, version 2018.11.26.
+
 5.	Lataa itsellesi repository  [helmet-model-system](https://github.com/HSLdevcom/helmet-model-system) ja avaa Komentokehote-ikkunassa sen alikansio Scripts.
 6.	Asenna riippuvuudet tiedostosta Pipfile kirjoittamalla
-o	Ensimmäisellä kerralla: pipenv --python 2.7 install --dev
-o	Synkronointi, jos uusi paketteja on lisätty: pipenv --python 2.7 sync --dev
+-	Ensimmäisellä kerralla: pipenv --python 2.7 install --dev
+-	Synkronointi, jos uusi paketteja on lisätty: pipenv --python 2.7 sync --dev
+
 7.	Riippuen käyttöjärjestelmästäsi muuta tiedoston tyypin .env-win (Windows) tai .env-nix (Linux) tilalle .env. Windows-ympäristössä tämän voi tehdä Komentokehote-ikkunassa kirjoittamalla 
 
 copy .env-win .env.
@@ -89,11 +96,11 @@ Kun käytät Visual Studio Code’a kehitystyössä, seuraavien laajennusten kä
 - [Python Test Explorer for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=LittleFoxTeam.vscode-python-test-adapter)
 
 Muutama vinkki, joilla saat kaiken toimimaan:
-•	Muista ensin määritellä kehitysympäristösi. Avaa sen jälkeen Visual Studio Code’ssa kansio Scripts ja valitse virtuaaliympäristösi vasemman alakulman Python-tulkkien luettelosta.
-•	Testien konfigurointia varten paina Ctrl-Shift-P, kirjoita Python: Configure tests, valitse pytest ja kansio, jossa testit ovat.  Testien pitäisi ilmestyä ikkunaan Test Explorer (paina vasemmalla olevaa pullonkuvaa)
+-	Muista ensin määritellä kehitysympäristösi. Avaa sen jälkeen Visual Studio Code’ssa kansio Scripts ja valitse virtuaaliympäristösi vasemman alakulman Python-tulkkien luettelosta.
+-	Testien konfigurointia varten paina Ctrl-Shift-P, kirjoita Python: Configure tests, valitse pytest ja kansio, jossa testit ovat.  Testien pitäisi ilmestyä ikkunaan Test Explorer (paina vasemmalla olevaa pullonkuvaa)
 
 ### OMX
 Emmen käyttää matriisien siirtoon OpenMatrix-kirjastoa.
-•	Lisätietoja: https://github.com/osPlanning/omx/wiki/EMME
-•	Python-lähdekoodi: https://github.com/osPlanning/omx-python
-•	Hyödyllinen työkalu, kun matriiseja siirretään komentoriviä käyttäen: https://github.com/bstabler/EMXtoOMX
+-	Lisätietoja: https://github.com/osPlanning/omx/wiki/EMME
+-	Python-lähdekoodi: https://github.com/osPlanning/omx-python
+-	Hyödyllinen työkalu, kun matriiseja siirretään komentoriviä käyttäen: https://github.com/bstabler/EMXtoOMX
