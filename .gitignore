@@ -9,6 +9,8 @@
 *.pdf
 *.emlk
 *.emv
+*.emt
+*.emw
 *.eml
 *.emu
 *.ema
@@ -32,6 +34,10 @@
 usemacro_*
 STRAT_*
 config
+/*.json
+Network_builds/*
+Worksheets/*
+Media/*
 Database/builddb
 Database/core_interface_log
 Database/errors
@@ -53,8 +59,6 @@ Matrices/base/*
 Scripts/.pytest_cache
 Scripts/tests/.pytest_cache
 Scripts/.env
-
-
 Scripts/tests/test_data/Results/test/*
 !Scripts/tests/test_data/Results/test/Matrices
 project.mtbx-shm

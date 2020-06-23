@@ -1,8 +1,9 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 import numpy
+import pandas
 import unittest
-from datahandling.zonedata import ZoneData
+from datahandling.zonedata import BaseZoneData
 from models.logit import ModeDestModel
 from datahandling.resultdata import ResultsData
 import os
@@ -17,7 +18,8 @@ class LogitModelTest(unittest.TestCase):
             pass
         pur = Purpose()
         zi = numpy.array([5, 6, 7, 2792, 16001, 17000, 31000, 31501])
-        zd = ZoneData(os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata_test"), zi)
+        zd = BaseZoneData(os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata_test"), zi)
+        zd["car_users"] = pandas.Series([0.5, 0.5, 0.5, 0.5, 0.5, 0.5], zd.zone_numbers)
         mtx = numpy.arange(24, dtype=numpy.float32)
         mtx.shape = (4, 6)
         mtx[numpy.diag_indices(4)] = 0

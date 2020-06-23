@@ -4,7 +4,7 @@ import parameters as param
 
 
 class DepartureTimeModel:
-    def __init__(self, nr_zones):
+    def __init__(self, nr_zones, emme_scenarios):
         """Container for time period and assignment class specific demand.
         
         Parameters
@@ -13,7 +13,8 @@ class DepartureTimeModel:
             Number of zones in assignment model
         """
         self.nr_zones = nr_zones
-        self.demand = dict.fromkeys(param.emme_scenario)
+        self.emme_scenarios = emme_scenarios
+        self.demand = dict.fromkeys(self.emme_scenarios)
         for time_period in self.demand:
             ass_classes = dict.fromkeys(param.transport_classes)
             self.demand[time_period] = ass_classes
@@ -24,7 +25,7 @@ class DepartureTimeModel:
 
     def init_demand(self):
         """Initialize/reset demand for all time periods (each including transport_classes, each being set to zeros)."""
-        self.demand = dict.fromkeys(param.emme_scenario)
+        self.demand = dict.fromkeys(self.emme_scenarios)
         for time_period in self.demand:
             ass_classes = dict.fromkeys(param.transport_classes)
             self.demand[time_period] = ass_classes
@@ -47,15 +48,13 @@ class DepartureTimeModel:
                 ass_class = demand.mode
             if len(demand.position) == 2:
                 share = param.demand_share[demand.purpose.name][demand.mode]
-                for time_period in param.emme_scenario:
+                for time_period in self.emme_scenarios:
                     self._add_2d_demand(
                         share[time_period], ass_class, time_period,
                         demand.matrix, demand.position)
-                self.logger.debug("Added demand for {}, {}".format(demand.purpose.name, demand.mode))
             elif len(demand.position) == 3:
-                for time_period in param.emme_scenario:
+                for time_period in self.emme_scenarios:
                     self._add_3d_demand(demand, ass_class, time_period)
-                self.logger.debug("Added demand for {}, {}, {}".format(demand.purpose.name, demand.mode, demand.orig))
             else:
                 raise IndexError("Tuple position has wrong dimensions.")
 

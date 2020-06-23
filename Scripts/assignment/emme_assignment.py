@@ -9,8 +9,7 @@ from datatypes.path_analysis import PathAnalysis
 
 
 class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
-    def __init__(self, emme_context, first_scenario_id, car_dist_cost=param.dist_unit_cost,
-                demand_mtx=param.emme_demand_mtx, result_mtx=param.emme_result_mtx):
+    def __init__(self, emme_context, first_scenario_id, demand_mtx=param.emme_demand_mtx, result_mtx=param.emme_result_mtx):
         """
         first_scenario_id (bike scenario) is usually #19,
             followed by (#20) walk scenario, (#21) morning scenario, (#22) midday scenario, and (#23) evening scenario.
@@ -36,23 +35,26 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                     matrix_description=mtx[ass_class]["description"],
                     default_value=999999,
                     overwrite=True)
-        self.dist_unit_cost = car_dist_cost
+        # default value for dist. Modelsystem sets new from zonedata
+        self.dist_unit_cost = param.dist_unit_cost
         self.bike_scenario = first_scenario_id
-        self.create_attributes(self.bike_scenario, param.bike_attributes)
         self.day_scenario = first_scenario_id+1
-        self.create_attributes(self.day_scenario, param.emme_attributes)
         self.emme_scenarios = {
             "aht": first_scenario_id+2,
             "pt": first_scenario_id+3,
             "iht": first_scenario_id+4,
         }
+
+    def prepare_network(self):
+        """Create extra attributes and calc backgroud variables for assignment."""
+        self.create_attributes(self.bike_scenario, param.bike_attributes)
+        self.create_attributes(self.day_scenario, param.emme_attributes)
         for time_period in self.emme_scenarios:
             self.create_attributes(self.emme_scenarios[time_period], param.emme_attributes)
             self._calc_road_cost(self.emme_scenarios[time_period])
             self._calc_boarding_penalties(self.emme_scenarios[time_period])
             self._calc_background_traffic(self.emme_scenarios[time_period])
         self._specify()
-        self._has_assigned_bike_and_walk = False
         self.transit_classes = ["transit_work", "transit_leisure"]
 
     def assign(self, time_period, matrices, is_last_iteration=False, is_first_iteration=False):
@@ -70,14 +72,16 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         self.emme_project.logger.info("Assignment starts...")
         self.set_emmebank_matrices(matrices)
         scen_id = self.emme_scenarios[time_period]
-        if not self._has_assigned_bike_and_walk:
+        if is_first_iteration:
             self._assign_pedestrians(scen_id)
             self._assign_bikes(self.bike_scenario,
                             self.result_mtx["dist"]["bike"]["id"],
                             "all",
                             "@bike_"+time_period)
-            self._has_assigned_bike_and_walk = True
-        if is_last_iteration:
+            self._assign_cars(scen_id, param.stopping_criteria_coarse)
+            self._calc_extra_wait_time(scen_id)
+            self._assign_transit(scen_id)
+        elif is_last_iteration:
             self._assign_cars(scen_id, param.stopping_criteria_fine)
             self._calc_extra_wait_time(scen_id)
             self._assign_congested_transit(self.transit_classes, scen_id)
@@ -288,8 +292,8 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             kms[ass_class] = dict.fromkeys(vdfs, 0)
         transit_dists = dict.fromkeys(transit_modes, 0)
         transit_times = dict.fromkeys(transit_modes, 0)
-        for tp in param.emme_scenario:
-            scen_id = param.emme_scenario[tp]
+        for tp in self.emme_scenarios:
+            scen_id = self.emme_scenarios[tp]
             scen = self.emme_project.modeller.emmebank.scenario(scen_id)
             network = scen.get_network()
             for link in network.links():
