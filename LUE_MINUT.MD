@@ -26,19 +26,19 @@ Seuraavaksi sinun on määriteltävä Emme-projekti:
 ### Ajo
 Helmet 4.0 -ajon voi käynnistää Komentokehote-ikkunasta tai käyttöliittymästä helmet-ui. Ennen kuin käynnistät ajon Komentokehote-ikkunasta, määrittele kansiopolku tiedostoon [dev-config.json](Scripts/dev-config.json). Siirry sen jälkeen Emme-projektisi kansioon helmet-model-system ja kirjoita:
 
-...
+```
 cd Scripts
 
 python helmet.py
-...
+```
 
 Emme-sijoittelua voi testata ilman muita määrityksiä:
 
-...
+```
 cd Scripts
 
 python test_assignment.py
-...
+```
 
 ## Kehitystyö
 Jos sinulla ei ole INROn Emme-lisenssiä tai jos haluat kehittää Helmet 4.0 -lähdekoodia edelleen, sinun on määriteltävä testiympäristö. On hyvin suositeltavaa asentaa [Git](https://git-scm.com/downloads), vaikka sitä ei tässä käsitelläkään.
@@ -50,17 +50,17 @@ Käytämme Python-versiota 2.7, koska sitä INRO Emme-ohjelmisto tukee.
 2.	Lisää Ohjauspaneelin ympäristömuuttujissa omaan PATH-muuttujaasi C:\Python27 ja C:\Python27\Scripts.
 3.	Avaa uusi Komentokehote-ikkuna ja kirjoita kehotteen perään 
 
-...
+```
 python --version
-...
+```
 
 (siis kaksi tavuviivaa peräkkäin). Vastaukseksi pitäisi tulla Python 2.7.16 tai jokin muu Python 2.7 -versio.
 
 Python-pakettien suositeltava asennusohjelma on pip. Pythonin normaali asennusrutiini asentaa pip-ohjelman kansioon C:\Python27\Scripts. Kirjoita Komentokehote-ikkunaan
 
-...
+```
 pip --version 
-...
+```
 
 nähdäksesi, onko pip asennettu ja liitetty PATH-määrittelyysi. Komennon pitäisi tulostaa
 
@@ -70,18 +70,18 @@ pipenv-ohjelmalla haetaan INROn Emme-ohjelmiston käyttämät avoimen lähdekood
 1.	Avaa Komentokehote-ikkuna.
 2.	Asenna pipenv komennolla
 
-...
+```
 python -m pip install --user pipenv
-...
+```
 
 Sen pitäisi tulla kansioon %APPDATA%\Python\Scripts (esim. C:\Users\USERNAME\AppData\Roaming\Python\Scripts).
 
 3.	Lisää omaan PATH-määrittelyysi %APPDATA%\Python\Scripts.
 4.	Sulje Komentokehote-ikkuna ja avaa se jälleen. Tarkista, että pipenv tunnistetaan kirjoittamalla 
 
-...
+```
 pipenv –version
-...
+```
 
 Tuloksena pitäisi tulla pipenv, version 2018.11.26.
 
@@ -92,18 +92,18 @@ Tuloksena pitäisi tulla pipenv, version 2018.11.26.
 
 7.	Riippuen käyttöjärjestelmästäsi muuta tiedoston tyypin .env-win (Windows) tai .env-nix (Linux) tilalle .env. Windows-ympäristössä tämän voi tehdä Komentokehote-ikkunassa kirjoittamalla 
 
-...
+```
 copy .env-win .env.
-...
+```
 
 Nyt sinulla pitäisi olla virtuaaliympäristö kansiossa C:\Users\USERNAME\.virtualenvs\Scripts-xxxxxxxx\Lib\site-packages.
 Kun suoritat skriptejä, kirjoita komennon alkuun pipenv, esimerkiksi:
 
-...
+```
 cd Scripts
 
 pipenv run python test_assignment.py
-...
+```
 
 ### Visual Studio Code
 Kun käytät Visual Studio Code’a kehitystyössä, seuraavien laajennusten käyttö on suositeltavaa:
