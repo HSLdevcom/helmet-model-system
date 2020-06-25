@@ -81,7 +81,11 @@ trass_stop = {
     "relative_gap": 0.001
 }
 # Specification for the transit assignment
-transfer_penalty = 5
+transfer_penalty = {
+    "transit_work": 5,
+    "transit_leisure": 5,
+    "transit": 5,
+}
 extra_waiting_time = {
     "penalty": "@wait_time_dev",
     "perception_factor": 3.5

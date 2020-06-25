@@ -64,10 +64,9 @@ class Transit:
             "type": "EXTENDED_TRANSIT_NETWORK_RESULTS",
             "on_segments": {"transit_volumes": "@{}".format(ass_class)}
             }
-
         if count_zone_boardings:
-            jlevel1 = JourneyLevel(False, True)
-            jlevel2 = JourneyLevel(True, True)
+            jlevel1 = JourneyLevel(boarded=False, ass_class=ass_class, count_zone_boardings=True)
+            jlevel2 = JourneyLevel(boarded=True, ass_class=ass_class, count_zone_boardings=True)
             mtx_results_spec = {
                 "type": "EXTENDED_TRANSIT_MATRIX_RESULTS",
                 "by_mode_subset": {
@@ -77,8 +76,8 @@ class Transit:
                 },
             }
         else:
-            jlevel1 = JourneyLevel(boarded=False)
-            jlevel2 = JourneyLevel(boarded=True)
+            jlevel1 = JourneyLevel(boarded=False, ass_class=ass_class)
+            jlevel2 = JourneyLevel(boarded=True, ass_class=ass_class)
             mtx_results_spec = {
                 "type": "EXTENDED_TRANSIT_MATRIX_RESULTS",
                 "total_impedance": self.result_mtx["time"][ass_class]["id"],

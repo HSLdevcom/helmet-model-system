@@ -80,7 +80,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                             "@bike_"+time_period)
             self._assign_cars(scen_id, param.stopping_criteria_coarse)
             self._calc_extra_wait_time(scen_id)
-            self._assign_transit(scen_id)
+            self._assign_transit(self.transit_classes, scen_id)
         elif is_last_iteration:
             self._assign_cars(scen_id, param.stopping_criteria_fine)
             self._calc_extra_wait_time(scen_id)
@@ -92,7 +92,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         else:
             self._assign_cars(scen_id, param.stopping_criteria_coarse)
             self._calc_extra_wait_time(scen_id)
-            self._assign_transit(self.transit_classes, scen_id, add_volumes=False)
+            self._assign_transit(self.transit_classes, scen_id)
 
     # TODO Could they be merged with (right after) .assign(). Currently both re-route via emmebank, which is ambiguous.
     # Then the ABC class as well as MockAssignment would have to be adjusted respectively.
@@ -666,10 +666,11 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                 segment["@wait_time_dev"] = headway_sd**2 / (2.0*line.headway)
         scen.publish_network(network)
 
-    def _assign_transit(self, transit_classes, scen_id, add_volumes=False):
+    def _assign_transit(self, transit_classes, scen_id):
         """Perform transit assignment for one scenario."""
         emmebank = self.emme_project.modeller.emmebank
         scen = emmebank.scenario(scen_id)
+        add_volumes=False
         for transit_class in transit_classes:
             self.emme_project.logger.info("Transit assignment started for class {}".format(transit_class))
             # assign transit_work class (init volumes)
@@ -680,6 +681,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             # save matrix and network results for both transit classes
             self.emme_project.matrix_results(spec.transit_result_spec, scenario=scen, class_name=transit_class)
             self.emme_project.network_results(spec.ntw_results_spec, scenario=scen, class_name=transit_class)
+            add_volumes=True
         self.emme_project.logger.info(
             "Transit assignment performed for scenario {} and class {}".format(str(scen_id), transit_class))
 
