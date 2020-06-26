@@ -175,8 +175,12 @@ emme_attributes = {
     "@wait_time_dev": "TRANSIT_SEGMENT",
     "@car_work": "LINK",
     "@car_leisure": "LINK",
-    "@transit_work": "TRANSIT_SEGMENT",
-    "@transit_leisure": "TRANSIT_SEGMENT",
+    "@transit_work_vol": "TRANSIT_SEGMENT",
+    "@transit_leisure_vol": "TRANSIT_SEGMENT",
+    "@transit_work_boa": "TRANSIT_SEGMENT",
+    "@transit_leisure_boa": "TRANSIT_SEGMENT",
+    "@transit_work_trb": "TRANSIT_SEGMENT",
+    "@transit_leisure_trb": "TRANSIT_SEGMENT",
     "@trailer_truck": "LINK",
     "@truck": "LINK",
     "@van": "LINK", 
@@ -185,6 +189,7 @@ bike_attributes = {
     "@bike_aht": "LINK",
     "@bike_iht": "LINK",
     "@bike_pt": "LINK",
+    "@bike_day": "LINK",
 }
 transit_assignment_modes = transit_modes + aux_modes
 # Link attribute for volumes

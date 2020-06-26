@@ -62,7 +62,11 @@ class Transit:
 
         self.ntw_results_spec = {
             "type": "EXTENDED_TRANSIT_NETWORK_RESULTS",
-            "on_segments": {"transit_volumes": "@{}".format(ass_class)}
+            "on_segments": {
+                "transit_volumes": "@{}_vol".format(ass_class),
+                "total_boardings": "@{}_boa".format(ass_class),
+                "transfer_boardings": "@{}_trb".format(ass_class),
+                }
             }
         if count_zone_boardings:
             jlevel1 = JourneyLevel(boarded=False, ass_class=ass_class, count_zone_boardings=True)
