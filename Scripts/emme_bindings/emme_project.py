@@ -43,6 +43,10 @@ class EmmeProject:
             "inro.emme.transit_assignment.extended.matrix_results")
         self.create_extra_attribute = self.modeller.tool(
             "inro.emme.data.extra_attribute.create_extra_attribute")
+        self.strategy_analysis = self.modeller.tool(
+            "inro.emme.transit_assignment.extended.strategy_based_analysis")
+        self.import_attr = self.modeller.tool(
+            "inro.emme.data.extra_attribute.import_extra_attributes")
     
     def write(self, message):
         """Write to logbook."""
