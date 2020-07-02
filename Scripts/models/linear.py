@@ -87,11 +87,9 @@ class CarDensityModel(LinearModel):
     def print_results(self, prediction):
         """ Print results, mainly for calibration purposes"""
 
-        # In validation data, car user shares are calculated for people
-        # over 6 years old (like HEHA).
-        population = self.zone_data["population"]
-        population_7_99 = ( population[:self.zone_data.first_peripheral_zone]
-                          * self.zone_data["share_age_7-99"])
+        # In validation data, car density is calculated for the whole
+        # population from ages 0 to 999.
+        population = self.zone_data["population"][:self.zone_data.first_peripheral_zone]
         car_density = prediction
                 
         # Print car density by zone
@@ -105,7 +103,7 @@ class CarDensityModel(LinearModel):
             i = slice(parameters.municipality[municipality][0],
                       parameters.municipality[municipality][1])
             x = car_density.loc[i]
-            w = population_7_99.loc[i]
+            w = population.loc[i]
             prediction_municipality.append((x * w).sum() / w.sum())
         self.resultdata.print_data(
             prediction_municipality, "car_density_per_municipality.txt",
@@ -117,7 +115,7 @@ class CarDensityModel(LinearModel):
             i = slice(parameters.areas[area][0],
                       parameters.areas[area][1])
             x = car_density.loc[i]
-            w = population_7_99.loc[i]
+            w = population.loc[i]
             prediction_area.append((x * w).sum() / w.sum())
         self.resultdata.print_data(
             prediction_area, "car_density_per_area.txt",
