@@ -7,6 +7,7 @@ def end_assignment(emme_project, resultmatrices, first_scenario_id):
     Assing volumes for last iteration round.
     """        
     ass_classes = resultmatrices.list_matrices("demand", "aht")
+    ass_model = EmmeAssignmentModel(emme_project, first_scenario_id=first_scenario_id)
     # ask where to save matrices
     while True:
         try:
@@ -17,7 +18,6 @@ def end_assignment(emme_project, resultmatrices, first_scenario_id):
         except ValueError:
             print("Value should be a whole number.") 
     # assignment itself
-    ass_model = EmmeAssignmentModel(emme_project, first_scenario_id=first_scenario_id)
     ass_model.prepare_network()
     for tp in ass_model.emme_scenarios:
         emme_project.logger.info("Assigning transit and car for period {}".format(tp))

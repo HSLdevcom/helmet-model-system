@@ -59,6 +59,12 @@ class Results:
                 print("Value should be a whole number.")
         mtx_operations.del_emmebank_matrices(self.emme_project, mtxtype, lower_limit, upper_limit)
 
+    def run_end_assignment(self):
+        """ 
+        Perform end assignment for current Helmet-scenario.
+        """
+        assign_analysis.end_assignment(self.emme_project, self.resultmatrices, self.first_scenario_id)
+
     def traffic_count(self):
         """ 
         Traffic counts comparisons
