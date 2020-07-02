@@ -1,0 +1,9 @@
+l_count_type	l_count_name
+1	Niemen raja
+2	Kantakaupungin raja
+3	Kaupungin raja
+4	Poikittaislinja
+5	Keha I
+6	Keha II
+7	Keha III
+0	Muut laskennat
