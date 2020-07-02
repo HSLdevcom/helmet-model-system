@@ -9,7 +9,7 @@ from datatypes.path_analysis import PathAnalysis
 
 
 class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
-    def __init__(self, emme_context, first_scenario_id, demand_mtx=param.emme_demand_mtx, result_mtx=param.emme_result_mtx):
+    def __init__(self, emme_context, first_scenario_id):
         """
         first_scenario_id (bike scenario) is usually #19,
             followed by (#20) walk scenario, (#21) morning scenario, (#22) midday scenario, and (#23) evening scenario.
@@ -17,24 +17,6 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         Walk scenario is not calculated, so effective scenarios by convention are <first>, +2, +3, +4.
         """
         self.emme_project = emme_context
-        self.demand_mtx = demand_mtx
-        self.result_mtx = result_mtx
-        for ass_class in self.demand_mtx:
-            self.emme_project.create_matrix(
-                matrix_id=self.demand_mtx[ass_class]["id"],
-                matrix_name="demand_"+ass_class,
-                matrix_description=self.demand_mtx[ass_class]["description"],
-                default_value=0,
-                overwrite=True)
-        for mtx_type in self.result_mtx:
-            mtx = self.result_mtx[mtx_type]
-            for ass_class in mtx:
-                self.emme_project.create_matrix(
-                    matrix_id=mtx[ass_class]["id"],
-                    matrix_name=mtx_type+"_"+ass_class,
-                    matrix_description=mtx[ass_class]["description"],
-                    default_value=999999,
-                    overwrite=True)
         # default value for dist. Modelsystem sets new from zonedata
         self.dist_unit_cost = param.dist_unit_cost
         self.bike_scenario = first_scenario_id
@@ -54,9 +36,10 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             self._calc_road_cost(self.emme_scenarios[time_period])
             self._calc_boarding_penalties(self.emme_scenarios[time_period])
             self._calc_background_traffic(self.emme_scenarios[time_period])
-        self._specify()
 
-    def assign(self, time_period, matrices, is_last_iteration=False, is_first_iteration=False):
+    def assign(self, time_period, matrices, 
+               is_last_iteration=False, is_first_iteration=False,
+               demand_mtx=param.emme_demand_mtx, result_mtx=param.emme_result_mtx):
         """Assign cars, bikes and transit for one time period.
         
         Parameters
@@ -68,8 +51,28 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         is_last_iteration: bool
         is_first_iteration: bool
         """
-        self.emme_project.logger.info("Assignment starts...")
+        self.emme_project.logger.info("Set matrix numbers...")
+        self.demand_mtx = demand_mtx
+        self.result_mtx = result_mtx
+        for ass_class in self.demand_mtx:
+            self.emme_project.create_matrix(
+                matrix_id=self.demand_mtx[ass_class]["id"],
+                matrix_name="demand_"+ass_class,
+                matrix_description=self.demand_mtx[ass_class]["description"],
+                default_value=0,
+                overwrite=True)
+        for mtx_type in self.result_mtx:
+            mtx = self.result_mtx[mtx_type]
+            for ass_class in mtx:
+                self.emme_project.create_matrix(
+                    matrix_id=mtx[ass_class]["id"],
+                    matrix_name=mtx_type+"_"+ass_class,
+                    matrix_description=mtx[ass_class]["description"],
+                    default_value=999999,
+                    overwrite=True)
         self.set_emmebank_matrices(matrices)
+        self._specify()
+        self.emme_project.logger.info("Assignment starts...")
         scen_id = self.emme_scenarios[time_period]
         if is_first_iteration:
             self._assign_pedestrians(scen_id)
