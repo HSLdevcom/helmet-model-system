@@ -23,7 +23,7 @@ class ModelTest(unittest.TestCase):
         # model.dm.create_population()
         # self.assertEqual(7, len(ass_classes))
         impedance = model.assign_base_demand()
-        for tp in parameters.emme_scenario:
+        for tp in ass_model.emme_scenarios:
             print("Validating impedance")
             self.assertEqual(3, len(impedance[tp]))
             self.assertIsNotNone(impedance[tp]["time"])
@@ -34,7 +34,7 @@ class ModelTest(unittest.TestCase):
         impedance = model.run_iteration(impedance)
         # for mode in demand:
         #     self._validate_demand(demand[mode])
-        self.assertEquals(len(parameters.emme_scenario), len(impedance))
+        self.assertEquals(len(ass_model.emme_scenarios), len(impedance))
         self._validate_impedances(impedance["aht"])
         self._validate_impedances(impedance["pt"])
         self._validate_impedances(impedance["iht"])

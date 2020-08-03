@@ -43,7 +43,7 @@ class Log:
             file = Config.DefaultScenario + '.log'
         self._filename = os.path.join(sys.path[0], file)
         fileFormat = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
-        fileHandler = logging.handlers.TimedRotatingFileHandler(self._filename, when='midnight', backupCount=7)
+        fileHandler = logging.handlers.TimedRotatingFileHandler(self._filename, when='H', interval=10, backupCount=7)
         fileHandler.setFormatter(fileFormat)
         fileHandler.setLevel(numeric_level)
         self.__logger.addHandler(fileHandler)
