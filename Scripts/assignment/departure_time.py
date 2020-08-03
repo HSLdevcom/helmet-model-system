@@ -1,17 +1,19 @@
 import logging
 import numpy
+
 import parameters as param
 
 
 class DepartureTimeModel:
+    """Container for time period and assignment class specific demand.
+
+    Parameters
+    ----------
+    nr_zones : int
+        Number of zones in assignment model
+    """
+
     def __init__(self, nr_zones):
-        """Container for time period and assignment class specific demand.
-        
-        Parameters
-        ----------
-        nr_zones : int
-            Number of zones in assignment model
-        """
         self.nr_zones = nr_zones
         self.demand = dict.fromkeys(param.emme_scenario)
         for time_period in self.demand:
