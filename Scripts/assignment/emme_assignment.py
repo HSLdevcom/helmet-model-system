@@ -88,6 +88,12 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                            self.result_mtx["dist"]["bike"]["id"],
                            "all",
                            "@bike_"+time_period)
+            for ass_class in param.link_volumes:
+                self.auto_link_24h(ass_class)
+            self.transit_segment_24h("@transit_vol")
+            self.transit_segment_24h("@transit_boa")
+            self.transit_segment_24h("@transit_trb")
+            self.bike_link_24h()
         else:
             self._assign_cars(scen_id, param.stopping_criteria_coarse)
             self._calc_extra_wait_time(scen_id)
@@ -584,6 +590,14 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                 "actual_aux_transit_times": self.result_mtx["trip_components"]["transit_aux_time"]["id"],
             },
         }
+        self.ntw_results_spec = {
+            "type": "EXTENDED_TRANSIT_NETWORK_RESULTS",
+            "on_segments": {
+                "transit_volumes": "@transit_vol",
+                "total_boardings": "@transit_boa",
+                "transfer_boardings": "@transit_trb",
+                }
+            }    
 
     def _assign_cars(self, scen_id, stopping_criteria):
         """Perform car_work traffic assignment for one scenario."""
@@ -752,6 +766,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             self.emme_project.matrix_results(bcost_spec, scen)
         else:
             self.emme_project.matrix_results(self.transit_result_spec, scen)
+            self.emme_project.network_results(self.ntw_results_spec, scenario=scen)
         self.emme_project.logger.info("Transit assignment performed for scenario {}".format(str(scen_id)))
 
     def _assign_congested_transit(self, scen_id):
@@ -767,3 +782,92 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             save_strategies=True)
         self.emme_project.matrix_results(self.transit_result_spec, scen)
         self.emme_project.logger.info("Transit assignment performed for scenario {}".format(str(scen_id)))
+
+    def auto_link_24h(self, attr):
+        """ 
+        Sums and expands link volumes from different scenarios to one result scenario.
+         Parameters
+        ----------
+        attr : str
+            Attribute name thatis usually part of Parameters: link_volumes.
+        """
+        extra_attr = param.link_volumes[attr]
+        # get attr from different time periods to dictionary
+        links_attr = {}
+        for tp in self.emme_scenarios:
+            tp_attr = {}
+            emmebank = self.emme_project.modeller.emmebank
+            scenario = emmebank.scenario(self.emme_scenarios[tp])
+            network = scenario.get_network()
+            for link in network.links():
+                tp_attr[link.id] = link[extra_attr]
+            links_attr[tp] = tp_attr
+        # create attr to save volume
+        extra_attr_day = str(param.link_volumes[attr])
+        day_scenario = emmebank.scenario(self.day_scenario)
+        network = day_scenario.get_network()
+        # save link volumes to result network
+        for link in network.links():
+            day_attr = 0
+            for tp in self.emme_scenarios:
+                if link.id in links_attr[tp]:
+                    day_attr += links_attr[tp][link.id] * param.volume_factors[attr][tp]
+            link[extra_attr_day] = day_attr
+        day_scenario.publish_network(network)
+
+    def transit_segment_24h(self, attr):
+        """ 
+        Sums and expands transit attributes to 24h.
+
+        Parameters
+        ----------
+        attr : str
+            Attribute name that is usually part of parameters.link_volumes
+        """
+        emmebank = self.emme_project.modeller.emmebank
+        # get attr from different time periods to dictionary
+        networks = {}
+        for tp in self.emme_scenarios:
+            networks[tp] = emmebank.scenario(
+                self.emme_scenarios[tp]).get_network()
+        # save link volumes to result network
+        day_scenario = emmebank.scenario(self.day_scenario)
+        network = day_scenario.get_network()
+        for segment in network.transit_segments():
+            day_attr = 0
+            for tp in self.emme_scenarios:
+                try:
+                    tp_segment = networks[tp].transit_line(
+                        segment.line.id).segment(segment.number)
+                    day_attr += tp_segment[attr] * param.volume_factors["transit"][tp]
+                except (AttributeError, TypeError):
+                    pass
+            segment[attr] = day_attr
+        day_scenario.publish_network(network)
+        self.emme_project.logger.debug("Transit segment results aggregated to 24h")
+    
+    def bike_link_24h(self):
+        """ 
+        Sums and expands bike volumes from different scenarios to one result scenario.
+        """
+        attr = "bike"
+        # get attr from different time periods to dictionary
+        links_attr = {}
+        for tp in self.emme_scenarios:
+            extra_attr = "@{}_{}".format(attr, tp)
+            tp_attr = {}
+            emmebank = self.emme_project.modeller.emmebank
+            bike_scenario = emmebank.scenario(self.bike_scenario)
+            network = bike_scenario.get_network()
+            for link in network.links():
+                tp_attr[link.id] = link[extra_attr]
+            links_attr[tp] = tp_attr
+        # save link volumes to result network
+        for link in network.links():
+            day_attr = 0
+            for tp in self.emme_scenarios:
+                if link.id in links_attr[tp]:
+                    day_attr += links_attr[tp][link.id] * param.volume_factors[attr][tp]
+            extra_attr = "@{}_{}".format(attr, "day")
+            link[extra_attr] = day_attr
+        bike_scenario.publish_network(network)
