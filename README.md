@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/HSLdevcom/helmet-model-system.svg?branch=master)](https://travis-ci.org/HSLdevcom/helmet-model-system)
+[![Build Status](https://travis-ci.com/HSLdevcom/helmet-model-system.svg?branch=master)](https://travis-ci.com/HSLdevcom/helmet-model-system)
 
 # helmet-model-system
 

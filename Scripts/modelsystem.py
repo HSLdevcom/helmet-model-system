@@ -1,3 +1,9 @@
+import threading
+import multiprocessing
+import os
+import numpy
+import pandas
+
 from utils.log import Log
 import assignment.departure_time as dt
 from datahandling.resultdata import ResultsData
@@ -10,37 +16,56 @@ from datatypes.purpose import SecDestPurpose
 from transform.impedance_transformer import ImpedanceTransformer
 from models.linear import CarDensityModel
 import parameters
-import numpy
-import pandas
-import threading
-import multiprocessing
-import os
 
 
 class ModelSystem:
-    def __init__(self, zone_data_path, base_zone_data_path, base_matrices_path, results_path, ass_model, name):
+    """Object keeping track of all sub-models and tasks in model system.
+    
+    Parameters
+    ----------
+    zone_data_path : str
+        Directory path where input data for forecast year are found
+    base_zone_data_path : str
+        Directory path where input data for base year are found
+    base_matrices_path : str
+        Directory path where base demand matrices are found
+    results_path : str
+        Directory path where to store results
+    assignment_model : assignment.abstract_assignment.AssignmentModel
+        Assignment model wrapper used in model runs,
+        can be EmmeAssignmentModel or MockAssignmentModel
+    name : str
+        Name of scenario, used for results subfolder
+    """
+
+    def __init__(self, zone_data_path, base_zone_data_path, base_matrices_path,
+                 results_path, assignment_model, name):
         self.logger = Log.get_instance()
-        self.ass_model = ass_model
+        self.ass_model = assignment_model
         self.emme_scenarios = self.ass_model.emme_scenarios
+
         # Input data
-        self.zdata_base = BaseZoneData(base_zone_data_path, ass_model.zone_numbers)
+        self.zdata_base = BaseZoneData(
+            base_zone_data_path, assignment_model.zone_numbers)
         self.basematrices = MatrixData(base_matrices_path)
-        self.zdata_forecast = ZoneData(zone_data_path, ass_model.zone_numbers) 
+        self.zdata_forecast = ZoneData(
+            zone_data_path, assignment_model.zone_numbers)
+
         # Set dist unit cost from zonedata
         self.ass_model.dist_unit_cost = self.zdata_forecast.car_dist_cost
+
         # Output data
-        self.resultmatrices = MatrixData(os.path.join(results_path, name, "Matrices"))
+        self.resultmatrices = MatrixData(
+            os.path.join(results_path, name, "Matrices"))
         self.resultdata = ResultsData(os.path.join(results_path, name))
 
         self.dm = self._init_demand_model()
-
-        self.fm = FreightModel(self.zdata_base,
-                               self.zdata_forecast,
-                               self.basematrices)
-        self.em = ExternalModel(self.basematrices,
-                                self.zdata_forecast,
-                                self.ass_model.zone_numbers)
-        self.dtm = dt.DepartureTimeModel(self.ass_model.nr_zones, self.emme_scenarios)
+        self.fm = FreightModel(
+            self.zdata_base, self.zdata_forecast, self.basematrices)
+        self.em = ExternalModel(
+            self.basematrices, self.zdata_forecast, self.ass_model.zone_numbers)
+        self.dtm = dt.DepartureTimeModel(
+            self.ass_model.nr_zones, self.emme_scenarios)
         self.imptrans = ImpedanceTransformer()
         bounds = slice(0, self.zdata_forecast.nr_zones)
         self.cdm = CarDensityModel(self.zdata_base, self.zdata_forecast, bounds, self.resultdata)
@@ -56,23 +81,32 @@ class ModelSystem:
         return DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=False)
 
     def _add_internal_demand(self, previous_iter_impedance, is_last_iteration):
+        # Mode and destination probability matrices are calculated first,
+        # as logsums from probability calculation are used in tour generation.
         self.dm.create_population_segments()
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
                 purpose.gen_model.init_tours()
             else:
-                purpose_impedance = self.imptrans.transform(purpose, previous_iter_impedance)
-                purpose.calc_prob(purpose_impedance)
+                purpose.calc_prob(
+                    self.imptrans.transform(purpose, previous_iter_impedance))
+        
+        # Tour generation
         self.dm.generate_tours()
+        
+        # Assigning of tours to mode, destination and time period
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
-                purpose_impedance = self.imptrans.transform(purpose, previous_iter_impedance)
+                purpose_impedance = self.imptrans.transform(
+                    purpose, previous_iter_impedance)
                 purpose.generate_tours()
                 if is_last_iteration:
                     for mode in purpose.model.dest_choice_param:
-                        self._distribute_sec_dests(purpose, mode, purpose_impedance)
+                        self._distribute_sec_dests(
+                            purpose, mode, purpose_impedance)
                 else:
-                    self._distribute_sec_dests(purpose, "car", purpose_impedance)
+                    self._distribute_sec_dests(
+                        purpose, "car", purpose_impedance)
             else:
                 demand = purpose.calc_demand()
                 if purpose.dest != "source":
@@ -81,6 +115,25 @@ class ModelSystem:
 
     # possibly merge with init
     def assign_base_demand(self, use_fixed_transit_cost=False):
+        """Assign base demand to network (before first iteration).
+
+        Parameters
+        ----------
+        use_fixed_transit_cost : bool (optional)
+            If transit cost is already calculated for this scenario and is
+            found in Results folder, it can be reused to save time.
+        
+        Returns
+        -------
+        dict
+            key : str
+                Assignment class (car/transit/bike/walk)
+            value : dict
+                key : str
+                    Impedance type (time/cost/dist)
+                value : numpy.ndarray
+                    Impedance (float 2-d matrix)
+        """
         impedance = {}
 
         # create attributes and background variables to network
@@ -99,13 +152,15 @@ class ModelSystem:
             else:
                 self.logger.info("Calculating transit cost")
                 fixed_cost = None
-            self.ass_model.calc_transit_cost(self.zdata_forecast.transit_zone, peripheral_cost, fixed_cost)
+            self.ass_model.calc_transit_cost(
+                self.zdata_forecast.transit_zone, peripheral_cost, fixed_cost)
 
-        # Perform traffic assignment and get result impedance, for each time period
+        # Perform traffic assignment and get result impedance, 
+        # for each time period
         for tp in self.emme_scenarios:
             self.logger.info("Assigning period " + tp)
             with self.basematrices.open("demand", tp) as mtx:
-                base_demand = {ass_class: mtx[ass_class] for ass_class in self.ass_classes}
+                base_demand = {aclass: mtx[aclass] for aclass in self.ass_classes}
             self.ass_model.assign(tp, base_demand, is_first_iteration=True)
             impedance[tp] = self.ass_model.get_impedance()
             if tp == "aht":
@@ -113,9 +168,38 @@ class ModelSystem:
         return impedance
 
     def run_iteration(self, previous_iter_impedance, is_last_iteration=False):
+        """Calculate demand and assign to network.
+
+        Parameters
+        ----------
+        previous_iter_impedance : dict
+            key : str
+                Assignment class (car/transit/bike/walk)
+            value : dict
+                key : str
+                    Impedance type (time/cost/dist)
+                value : numpy.ndarray
+                    Impedance (float 2-d matrix)
+        is_last_iteration : bool (optional)
+            If this is the last iteration, 
+            secondary destinations are calculated for all modes,
+            congested assignment is performed,
+            and matrix and assignment results are printed.
+        Returns
+        -------
+        dict
+            key : str
+                Assignment class (car/transit/bike/walk)
+            value : dict
+                key : str
+                    Impedance type (time/cost/dist)
+                value : numpy.ndarray
+                    Impedance (float 2-d matrix)
+        """
         impedance = {}
 
-        # Add truck and trailer truck demand, to time-period specific matrices (DTM), used in traffic assignment
+        # Add truck and trailer truck demand, to time-period specific
+        # matrices (DTM), used in traffic assignment
         self.dtm.add_demand(self.trucks)
         self.dtm.add_demand(self.trailer_trucks)
 
@@ -261,6 +345,27 @@ class ModelSystem:
 
 
 class AgentModelSystem(ModelSystem):
+    """Object keeping track of all sub-models and tasks in agent model system.
+
+    Agents are added one-by-one to departure time model,
+    where they are (so far) split in deterministic fractions.
+    
+    Parameters
+    ----------
+    zone_data_path : str
+        Directory path where input data for forecast year are found
+    base_zone_data_path : str
+        Directory path where input data for base year are found
+    base_matrices_path : str
+        Directory path where base demand matrices are found
+    results_path : str
+        Directory path where to store results
+    assignment_model : assignment.abstract_assignment.AssignmentModel
+        Assignment model wrapper used in model runs,
+        can be EmmeAssignmentModel or MockAssignmentModel
+    name : str
+        Name of scenario, used for results subfolder
+    """
 
     def _init_demand_model(self):
         return DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=True)
