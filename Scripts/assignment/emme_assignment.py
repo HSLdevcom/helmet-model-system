@@ -83,7 +83,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         elif is_last_iteration:
             self._assign_cars(scen_id, param.stopping_criteria_fine)
             self._calc_extra_wait_time(scen_id)
-            # self._assign_congested_transit(scen_id)
+            self._assign_congested_transit(scen_id)
             self._assign_bikes(self.bike_scenario,
                            self.result_mtx["dist"]["bike"]["id"],
                            "all",
