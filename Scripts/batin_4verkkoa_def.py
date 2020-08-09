@@ -239,7 +239,7 @@ class batin_4verkkoa(_m.Tool()):
 			except Exception, error:
 		        display('Could not import extra attributes @hwaht, @hwpt and @hwiht')
 			
-			roadprice_path = (default_path + file_toll).replace
+			roadprice_path = (default_path + file_toll).replace("\\","/")
 			display(roadprice_path)
 			try:
 			    import_values(file_path = roadprice_path,
@@ -260,6 +260,39 @@ class batin_4verkkoa(_m.Tool()):
         scen_xx.publish_network(netw_xx)
 		
 		
+	def copy_attribute(self, scen_id, attr_dom, attr_from, attr_to):
+	    ebank = _m.Modeller().emmebank
+        desktop = _m.Modeller().desktop
+        data_explorer = desktop.data_explorer()
+
+		try:
+			scen_xx = ebank.scenario(scen_id)
+			data_explorer.replace_primary_scenario(scen_xx)
+		except Exception, error:
+		    display('Could not change ', scen_id, ' to primary scenario')
+		
+		NAME_NETW_CALC = "inro.emme.network_calculation.network_calculator"
+		network_calc = _m.Modeller().tool(NAME_NETW_CALC)
+        
+		if   (attr_dom = 'node'):
+		   select = "'node' : 'all'"
+		elif (attr_dom = 'link'):
+		   select = "'link' : 'all'"
+		elif (attr_dom = 'line'):
+		   select = "'line' : 'all'"
+		elif (attr_dom = 'segment'):
+		   select = "'line' : 'all', 'link' : 'all'"
+		else:
+		   display('parameter', attr, 'not recognized')
+		
+		network_calc['specification'] = {'aggregation' : None,
+		    'expression' : attr_from,
+			'result' : attr_to,
+			'selections' : {select},
+			'type' : 'NETWORK_CALCULATION'}
+        network_calc.run()
+	
+	
 	def bike_functions(self, scen_id):
 	    ebank = _m.Modeller().emmebank
         desktop = _m.Modeller().desktop
