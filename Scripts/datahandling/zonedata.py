@@ -42,7 +42,10 @@ class ZoneData:
         except ValueError:
             raise ValueError("Zonedata file .tco has fare values not convertible to floats.")
         transit_zone["fare"] = transit["fare"].to_dict()
-        transit_zone["exclusive"] = transit["exclusive"].dropna().to_dict()
+        try:
+            transit_zone["exclusive"] = transit["exclusive"].dropna().to_dict()
+        except KeyError:
+            transit_zone["exclusive"] ={}
         transit_zone["dist_fare"] = transit_zone["fare"].pop("dist")
         transit_zone["start_fare"] = transit_zone["fare"].pop("start")
         self.transit_zone = transit_zone
