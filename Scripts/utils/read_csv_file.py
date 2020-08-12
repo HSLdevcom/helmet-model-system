@@ -50,7 +50,7 @@ def read_csv_file(data_dir, file_end, zone_numbers=None, squeeze=False):
                 # Text indices are ok and should not raise an exception
                 pass
     if zone_numbers is not None:
-        if (data.index != zone_numbers).any():
+        if data.index.size != zone_numbers.size or (data.index != zone_numbers).any():
             for i in data.index:
                 if int(i) not in zone_numbers:
                     raise IndexError("Zone number {} from file {} not found in network".format(i, path))
