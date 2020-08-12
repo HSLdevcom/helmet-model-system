@@ -81,6 +81,23 @@ class ModelSystem:
         return DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=False)
 
     def _add_internal_demand(self, previous_iter_impedance, is_last_iteration):
+        """Produce mode-specific demand matrices and add them
+        for each time-period to container in departure time model.
+
+        Parameters
+        ----------
+        previous_iter_impedance : dict
+            key : str
+                Assignment class (car/transit/bike/walk)
+            value : dict
+                key : str
+                    Impedance type (time/cost/dist)
+                value : numpy.ndarray
+                    Impedance (float 2-d matrix)
+        is_last_iteration : bool (optional)
+            If this is the last iteration, 
+            secondary destinations are calculated for all modes
+        """
         # Mode and destination probability matrices are calculated first,
         # as logsums from probability calculation are used in tour generation.
         self.dm.create_population_segments()
@@ -218,20 +235,13 @@ class ModelSystem:
             elif mode == "trailer_truck":
                 int_demand = self.trailer_trucks.matrix.sum(0) + self.trailer_trucks.matrix.sum(1)
             else:
-                nr_zones = len(self.zdata_base.zone_numbers)
-                int_demand = numpy.zeros(nr_zones)
-                for purpose in self.dm.tour_purposes:
-                    if purpose.dest != "source":
-                        if isinstance(purpose, SecDestPurpose):
-                            bounds = next(iter(purpose.sources)).bounds
-                        else:
-                            bounds = purpose.bounds
-                        int_demand[bounds] += purpose.generated_tours[mode]
-                        int_demand += purpose.attracted_tours[mode]
+                int_demand = self._sum_trips_per_zone(mode)
+                trip_sum[mode] = int_demand.sum()
             ext_demand = self.em.calc_external(mode, int_demand)
-            trip_sum[mode] = int_demand.sum()
             self.dtm.add_demand(ext_demand)
         sum_all = sum(trip_sum.values())
+        # ATM, these mode shares are for car and transit
+        # for the whole model area
         mode_share = {}
         for mode in trip_sum:
             mode_share[mode] = trip_sum[mode] / sum_all
@@ -248,6 +258,7 @@ class ModelSystem:
                 self._update_ratios(impedance, tp)
             
             if is_last_iteration:
+                # Save to .omx files
                 zone_numbers = self.ass_model.zone_numbers
                 with self.resultmatrices.open("demand", tp, 'w') as mtx:
                     mtx.mapping = zone_numbers
@@ -268,6 +279,18 @@ class ModelSystem:
         self.dtm.init_demand()
         self.resultdata.flush()
         return impedance
+
+    def _sum_trips_per_zone(self, mode):
+        int_demand = numpy.zeros(self.zdata_base.nr_zones)
+        for purpose in self.dm.tour_purposes:
+            if purpose.dest != "source":
+                if isinstance(purpose, SecDestPurpose):
+                    bounds = next(iter(purpose.sources)).bounds
+                else:
+                    bounds = purpose.bounds
+                int_demand[bounds] += purpose.generated_tours[mode]
+                int_demand += purpose.attracted_tours[mode]
+        return int_demand
 
     def _distribute_sec_dests(self, purpose, mode, impedance):
         threads = []
@@ -371,6 +394,23 @@ class AgentModelSystem(ModelSystem):
         return DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=True)
 
     def _add_internal_demand(self, previous_iter_impedance, is_last_iteration):
+        """Produce tours and add fractions of them
+        for each time-period to container in departure time model.
+
+        Parameters
+        ----------
+        previous_iter_impedance : dict
+            key : str
+                Assignment class (car/transit/bike/walk)
+            value : dict
+                key : str
+                    Impedance type (time/cost/dist)
+                value : numpy.ndarray
+                    Impedance (float 2-d matrix)
+        is_last_iteration : bool (optional)
+            If this is the last iteration, 
+            secondary destinations are calculated for all modes
+        """
         self.dm.create_population()
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
