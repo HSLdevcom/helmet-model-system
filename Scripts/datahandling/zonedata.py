@@ -29,31 +29,28 @@ class ZoneData:
         schooldata = read_csv_file(data_dir, ".edu", self.zone_numbers)
         landdata = read_csv_file(data_dir, ".lnd", self.zone_numbers)
         parkdata = read_csv_file(data_dir, ".prk", self.zone_numbers)
+        self.externalgrowth = read_csv_file(data_dir, ".ext", external_zones)
+        transit = read_csv_file(data_dir, ".tco")
+        for frame in [popdata, workdata, schooldata, landdata, parkdata,
+                      self.externalgrowth, transit["fare"]]:
+            try:
+                frame = frame.astype(dtype=float, errors='raise')
+            except ValueError:
+                raise ValueError("Zone data file {} has values not convertible to floats.".format(frame.name))
+        transit_zone = {}
+        transit_zone["fare"] = transit["fare"].to_dict()
+        try:
+            transit_zone["exclusive"] = transit["exclusive"].dropna().to_dict()
+        except KeyError:
+            transit_zone["exclusive"] = {}
+        transit_zone["dist_fare"] = transit_zone["fare"].pop("dist")
+        transit_zone["start_fare"] = transit_zone["fare"].pop("start")
+        self.transit_zone = transit_zone
         try:
             cardata = read_csv_file(data_dir, ".car")
             self["parking_norm"] = cardata["prknorm"]
         except (NameError, KeyError):
             self._values["parking_norm"] = None
-        self.externalgrowth = read_csv_file(data_dir, ".ext", external_zones)
-        for frame in [popdata, workdata, schooldata, landdata, parkdata, self.externalgrowth]:
-            try:
-                frame = frame.astype(dtype=float, errors='raise')
-            except ValueError:
-                raise ValueError("Zonedata file {} has values not convertible to floats.".format(frame.name))
-        transit_zone = {}
-        transit = read_csv_file(data_dir, ".tco")
-        try:
-            transit["fare"] = transit["fare"].astype(dtype=float, errors='raise')
-        except ValueError:
-            raise ValueError("Zonedata file .tco has fare values not convertible to floats.")
-        transit_zone["fare"] = transit["fare"].to_dict()
-        try:
-            transit_zone["exclusive"] = transit["exclusive"].dropna().to_dict()
-        except KeyError:
-            transit_zone["exclusive"] ={}
-        transit_zone["dist_fare"] = transit_zone["fare"].pop("dist")
-        transit_zone["start_fare"] = transit_zone["fare"].pop("start")
-        self.transit_zone = transit_zone
         car_cost = read_csv_file(data_dir, ".cco", squeeze=False)
         self.car_dist_cost = car_cost["dist_cost"][0]
         truckdata = read_csv_file(data_dir, ".trk", squeeze=True)
