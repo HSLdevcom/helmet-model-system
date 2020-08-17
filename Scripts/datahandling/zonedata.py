@@ -29,6 +29,11 @@ class ZoneData:
         schooldata = read_csv_file(data_dir, ".edu", self.zone_numbers)
         landdata = read_csv_file(data_dir, ".lnd", self.zone_numbers)
         parkdata = read_csv_file(data_dir, ".prk", self.zone_numbers)
+        try:
+            cardata = read_csv_file(data_dir, ".car")
+            self["parking_norm"] = cardata["prknorm"]
+        except (NameError, KeyError):
+            self._values["parking_norm"] = None
         self.externalgrowth = read_csv_file(data_dir, ".ext", external_zones)
         for frame in [popdata, workdata, schooldata, landdata, parkdata, self.externalgrowth]:
             try:

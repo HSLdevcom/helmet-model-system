@@ -1,6 +1,7 @@
 import numpy
 import pandas
 import math
+
 import parameters
 
 
@@ -63,12 +64,20 @@ class CarDensityModel(LinearModel):
             Zone vector of cars per inhabitant
         """
         b = parameters.car_density
-        prediction = numpy.zeros(self.bounds.stop)
+        prediction = pandas.Series(0.0, self.zone_data.zone_numbers[self.bounds])
         self._add_constant(prediction, b["constant"])
         self._add_zone_terms(prediction, b["generation"], True)
         self._add_log_zone_terms(prediction, b["log"], True)
         # Car density cannot be negative
         prediction = prediction.clip(0.0, None)
+        try:
+            # Take parking norms as given and replace model results
+            # for these zones
+            parking_norm = self.zone_data["parking_norm"]
+            prediction[parking_norm.index] = parking_norm
+        except AttributeError:
+            # If no parking norms are given
+            pass
         base_pop = self.zone_data_base["population"]
         forecast_pop = self.zone_data["population"]
         # Car ownership model is applied only for population growth
