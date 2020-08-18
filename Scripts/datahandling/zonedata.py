@@ -25,19 +25,17 @@ class ZoneData:
         first_external = numpy.where(zone_numbers >= external[0])[0][0]
         self.first_external_zone = first_external
         external_zones = zone_numbers[first_external:]
-        popdata = read_csv_file(data_dir, ".pop", self.zone_numbers)
-        workdata = read_csv_file(data_dir, ".wrk", self.zone_numbers)
-        schooldata = read_csv_file(data_dir, ".edu", self.zone_numbers)
-        landdata = read_csv_file(data_dir, ".lnd", self.zone_numbers)
-        parkdata = read_csv_file(data_dir, ".prk", self.zone_numbers)
-        self.externalgrowth = read_csv_file(data_dir, ".ext", external_zones)
+        popdata = read_csv_file(data_dir, ".pop", self.zone_numbers, float)
+        workdata = read_csv_file(data_dir, ".wrk", self.zone_numbers, float)
+        schooldata = read_csv_file(data_dir, ".edu", self.zone_numbers, float)
+        landdata = read_csv_file(data_dir, ".lnd", self.zone_numbers, float)
+        parkdata = read_csv_file(data_dir, ".prk", self.zone_numbers, float)
+        self.externalgrowth = read_csv_file(data_dir, ".ext", external_zones, float)
         transit = read_csv_file(data_dir, ".tco")
-        for frame in [popdata, workdata, schooldata, landdata, parkdata,
-                      self.externalgrowth, transit["fare"]]:
-            try:
-                frame = frame.astype(dtype=float, errors='raise')
-            except ValueError:
-                raise ValueError("Zone data file {} has values not convertible to floats.".format(frame.name))
+        try:
+            transit["fare"] = transit["fare"].astype(dtype=float, errors='raise')
+        except ValueError:
+            raise ValueError("Zonedata file .tco has fare values not convertible to floats.")
         transit_zone = {}
         transit_zone["fare"] = transit["fare"].to_dict()
         try:

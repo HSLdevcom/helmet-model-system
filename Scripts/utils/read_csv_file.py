@@ -3,7 +3,7 @@ import pandas
 import numpy
 
 
-def read_csv_file(data_dir, file_end, zone_numbers=None, squeeze=False):
+def read_csv_file(data_dir, file_end, zone_numbers=None, dtype=None, squeeze=False):
     """Read (zone) data from space-separated file.
     
     Parameters
@@ -14,6 +14,8 @@ def read_csv_file(data_dir, file_end, zone_numbers=None, squeeze=False):
         Ending of the file in question (e.g., ".pop")
     zone_numbers : ndarray (optional)
         Zone numbers to compare with for validation
+    dtype : data type (optional)
+        Data type to cast data to
     squeeze : bool (optional)
         If the parsed data only contains one column and no header
 
@@ -38,7 +40,6 @@ def read_csv_file(data_dir, file_end, zone_numbers=None, squeeze=False):
     data = pandas.read_csv(
         path, delim_whitespace=True, squeeze=squeeze, keep_default_na=False,
         na_values="", comment='#', header=header)
-    data.name = file_end
     if data.index.is_numeric() and data.index.hasnans:
         raise IndexError("Row with only spaces or tabs in file {}".format(path))
     else:
@@ -57,4 +58,9 @@ def read_csv_file(data_dir, file_end, zone_numbers=None, squeeze=False):
             for i in zone_numbers:
                 if i not in data.index:
                     raise IndexError("Zone number {} not found in file {}".format(i, path))
+    if dtype is not None:
+        try:
+            data = data.astype(dtype=dtype, errors='raise')
+        except ValueError:
+            raise ValueError("Zone data file {} has values not convertible to floats.".format(file_end))
     return data
