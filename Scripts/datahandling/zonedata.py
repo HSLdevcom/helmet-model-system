@@ -10,6 +10,7 @@ class ZoneData:
     
     def __init__(self, data_dir, zone_numbers):
         self._values = {}
+        self.share = ShareChecker(self)
         zone_numbers = numpy.array(zone_numbers)
         surrounding = param.areas["surrounding"]
         peripheral = param.areas["peripheral"]
@@ -58,18 +59,20 @@ class ZoneData:
         self.garbage_destination = map(int, truckdata.loc[1, :].dropna())
         pop = popdata["total"]
         self["population"] = pop
-        self["share_age_7-17"] = popdata["sh_7-17"][:first_peripheral]
-        self["share_age_18-29"] = popdata["sh_1829"][:first_peripheral]
-        self["share_age_30-49"] = popdata["sh_3049"][:first_peripheral]
-        self["share_age_50-64"] = popdata["sh_5064"][:first_peripheral]
-        self["share_age_65-99"] = popdata["sh_65-"][:first_peripheral]
-        self["share_age_7-99"] = ( self["share_age_7-17"]        
-            + self["share_age_18-29"] + self["share_age_30-49"]
-            + self["share_age_50-64"] + self["share_age_65-99"])
-        self["share_age_18-99"] = ( self["share_age_7-99"]
-                                   -self["share_age_7-17"])
-        self["share_female"] = pandas.Series(0.5, zone_numbers)
-        self["share_male"] = pandas.Series(0.5, zone_numbers)
+        self.share["share_age_7-17"] = popdata["sh_7-17"][:first_peripheral]
+        self.share["share_age_18-29"] = popdata["sh_1829"][:first_peripheral]
+        self.share["share_age_30-49"] = popdata["sh_3049"][:first_peripheral]
+        self.share["share_age_50-64"] = popdata["sh_5064"][:first_peripheral]
+        self.share["share_age_65-99"] = popdata["sh_65-"][:first_peripheral]
+        self.share["share_age_7-99"] = (self["share_age_7-17"]      
+                                        + self["share_age_18-29"]
+                                        + self["share_age_30-49"]
+                                        + self["share_age_50-64"]
+                                        + self["share_age_65-99"])
+        self.share["share_age_18-99"] = (self["share_age_7-99"]
+                                         -self["share_age_7-17"])
+        self.share["share_female"] = pandas.Series(0.5, zone_numbers)
+        self.share["share_male"] = pandas.Series(0.5, zone_numbers)
         self.nr_zones = len(self.zone_numbers)
         self["population_density"] = pop / landdata["builtar"]
         wp = workdata["total"]
@@ -86,7 +89,7 @@ class ZoneData:
         self["secondary_schools"] = schooldata["secndry"]
         self["tertiary_education"] = schooldata["tertiary"]
         self["zone_area"] = landdata["builtar"]
-        self["share_detached_houses"] = landdata["detach"]
+        self.share["share_detached_houses"] = landdata["detach"]
         self["cbd"] = pandas.Series(0, self.zone_numbers)
         self["cbd"].loc[:param.areas["helsinki_cbd"][1]] = 1
         self["helsinki"] = pandas.Series(0, self.zone_numbers)
@@ -213,9 +216,22 @@ class ZoneData:
         else:  # Return matrix (purpose zones -> all zones)
             return self._values[key][l:u, :]
 
+
 class BaseZoneData(ZoneData):
     def __init__(self, data_dir, zone_numbers):
         ZoneData.__init__(self, data_dir, zone_numbers)
         cardata = read_csv_file(data_dir, ".car", self.zone_numbers)
         self["car_density"] = cardata["cardens"]
         self["cars_per_1000"] = 1000 * self["car_density"]
+
+
+class ShareChecker:
+    def __init__(self, data):
+        self.data = data
+
+    def __setitem__(self, key, data):
+        if (data > 1).any():
+            for (i, val) in data.iteritems():
+                if val > 1:
+                    raise ValueError("{} ({}) for zone {} is larger than one".format(key, val, i).capitalize())
+        self.data[key] = data
