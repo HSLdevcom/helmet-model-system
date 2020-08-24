@@ -55,7 +55,7 @@ class EmmeAssignmentTest:
         ZONE_INDEXES = numpy.array([5, 6, 7, 2792, 16001, 17000, 31000, 31501])
         zdata = ZoneData(os.path.join(os.path.dirname(os.path.realpath(__file__)), "tests", "test_data", "Scenario_input_data", "2030_test"), ZONE_INDEXES)
         peripheral_cost = numpy.ones((2, 6))
-        self.ass_model.calc_transit_cost("transit_work", zdata.transit_zone, peripheral_cost)
+        self.ass_model.calc_transit_cost(zdata.transit_zone, peripheral_cost)
 
 
 em = EmmeAssignmentTest()

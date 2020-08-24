@@ -340,7 +340,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             transit_times.values(), "transit_kms.txt",
             transit_times.keys(), "time")
 
-    def calc_transit_cost(self, transit_class, fares, peripheral_cost, default_cost=None):
+    def calc_transit_cost(self, fares, peripheral_cost, default_cost=None):
         """Calculate transit zone cost matrix.
         
         Perform multiple transit assignments.
@@ -438,7 +438,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             # If OD-flow matches several combinations, pick cheapest
             cost[is_inside] = numpy.minimum(cost[is_inside], zone_price)
         # Calculate distance-based cost from inv-distance
-        dist = self.get_matrix("dist", transit_class)
+        dist = self.get_matrix("dist", "transit_work")
         dist_cost = fares["start_fare"] + fares["dist_fare"]*dist
         cost[cost==maxprice] = dist_cost[cost==maxprice]
         # Replace fare for peripheral zones with fixed matrix
