@@ -1,6 +1,7 @@
 import numpy
 import pandas
 import math
+
 import parameters
 
 
@@ -15,7 +16,7 @@ class LinearModel(object):
         bounds : slice
             Defines the area on which the model is predicting to (usually the
             metropolitan area).
-        """        
+        """
         self.zone_data = zone_data_forecast
         self.zone_data_base = zone_data_base
         self.bounds = bounds
@@ -54,33 +55,69 @@ class LinearModel(object):
 
 
 class CarDensityModel(LinearModel):
-    def predict(self):
-        """Get car ownership prediction for zones.
-        
-        Return
-        ------
-        pandas Series
-            Zone vector of cars per inhabitant
+    def __init__(self, zone_data_base, zone_data_forecast, bounds, resultdata):
+        """Initialize a car density model.
+
+        Population growth and share of new dwellings that are detached houses
+        are calculated once, to be used later in predictions.
+
+        Parameters
+        ----------
+        zone_data : ZoneData
+            A ZoneData object defining the input data of zones.
+        bounds : slice
+            Defines the area on which the model is predicting to (usually the
+            metropolitan area).
         """
-        b = parameters.car_density
-        prediction = numpy.zeros(self.bounds.stop)
-        self._add_constant(prediction, b["constant"])
-        self._add_zone_terms(prediction, b["generation"], True)
-        self._add_log_zone_terms(prediction, b["log"], True)
-        # Car density cannot be negative
-        prediction = prediction.clip(0.0, None)
+        LinearModel.__init__(
+            self, zone_data_base, zone_data_forecast, bounds, resultdata)
         base_pop = self.zone_data_base["population"]
         forecast_pop = self.zone_data["population"]
         # Car ownership model is applied only for population growth
         pop_growth = (forecast_pop - base_pop).clip(0, None)
         # Share of population that is growth
         # (set to zero if population is zero)
-        pop_growth_share = numpy.divide(
+        self.pop_growth_share = numpy.divide(
             pop_growth, forecast_pop, out=numpy.zeros_like(pop_growth),
             where=forecast_pop!=0)
+        # Share of new dwellings that are detached houses is calculated
+        # from difference in shares in base and forecast data
+        forecast_sh_detached = self.zone_data["share_detached_houses"]
+        base_sh_detached = self.zone_data_base["share_detached_houses"]
+        detached_houses_diff = (forecast_sh_detached*forecast_pop 
+                                - base_sh_detached*base_pop)
+        share_detached_new = numpy.divide(
+            detached_houses_diff, self.pop_growth_share,
+            out=numpy.array(forecast_sh_detached), where=self.pop_growth_share!=0)
+        self.zone_data["share_detached_houses_new"] = pandas.Series(
+            share_detached_new, self.zone_data.zone_numbers[self.bounds])
+    
+    def predict(self):
+        """Get car ownership prediction for zones.
+        
+        Return
+        ------
+        pandas.Series
+            Zone vector of cars per inhabitant
+        """
+        prediction = pandas.Series(0.0, self.zone_data.zone_numbers[self.bounds])
+        b = parameters.car_density
+        self._add_constant(prediction, b["constant"])
+        self._add_zone_terms(prediction, b["generation"], True)
+        self._add_log_zone_terms(prediction, b["log"], True)
+        # Car density cannot be negative
+        prediction = prediction.clip(0.0, None)
+        try:
+            # Take parking norms as given and replace model results
+            # for these zones
+            parking_norm = self.zone_data["parking_norm"]
+            prediction[parking_norm.index] = parking_norm
+        except AttributeError:
+            # If no parking norms are given
+            pass
         base_car_density = self.zone_data_base["car_density"]
-        prediction = (pop_growth_share * prediction
-                      + (1-pop_growth_share) * base_car_density)
+        prediction = (self.pop_growth_share * prediction
+                      + (1-self.pop_growth_share) * base_car_density)
         self.print_results(prediction)
         return prediction
 

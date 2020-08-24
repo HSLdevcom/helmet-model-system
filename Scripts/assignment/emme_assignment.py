@@ -339,13 +339,27 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             transit_times.keys(), "time")
 
     def calc_transit_cost(self, fares, peripheral_cost, default_cost=None):
-        """Calculate transit zone cost matrix by performing 
-        multiple transit assignments.
+        """Calculate transit zone cost matrix.
+        
+        Perform multiple transit assignments.
+        For each assignment, check if a specific zone has been visited
+        by the OD-pair flows. For all the zones that are visited, 
+        check if there is a zone combination fare that includes them all.
+        If not, distance fare is applied.
+
+        Some fares can be exclusively for municipality citizens
+        (i.e., tours starting in that municipality).
         
         Parameters
         ----------
-        fares : pandas Dataframe
-            Zone fare vector and fare exclusiveness vector
+        fares : dict
+            key : str
+                Fare type (fare/exclusive/dist_fare/start_fare)
+            value : dict
+                key : str
+                    Zone combination (AB/ABC/...)
+                value : float/str
+                    Transit fare or name of municipality
         peripheral_cost : numpy 2-d matrix
             Fixed cost matrix for peripheral zones
         default_cost : numpy 2-d matrix
@@ -375,10 +389,10 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         zones_in_zonedata = set(char for char in ''.join(fares["fare"].keys()))
         self.emme_project.logger.debug(
             "Zonedata has fare zones {}".format(', '.join(zones_in_zonedata)))
-        if not zones_in_zonedata <= transit_zones:
+        if zones_in_zonedata > transit_zones:
             self.emme_project.logger.warn(
                 "All zones in transit costs do not exist in Emme-network labels.")
-        if not transit_zones <= zones_in_zonedata:
+        if transit_zones > zones_in_zonedata:
             self.emme_project.logger.warn(
                 "All Emme-node labels do not have transit costs specified.")
         for transit_zone in transit_zones:
