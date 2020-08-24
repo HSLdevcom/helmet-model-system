@@ -88,7 +88,7 @@ class Transit:
                 "actual_first_waiting_times": self.result_mtx["trip_part"][ass_class + "_fw_time"]["id"],
                 "actual_total_waiting_times": self.result_mtx["trip_part"][ass_class + "_tw_time"]["id"],
                 "by_mode_subset": {
-                    "modes": param.transit_modes,
+                    "modes": param.transit_assignment_modes,
                     "distance": self.result_mtx["dist"][ass_class]["id"],
                     "avg_boardings": self.result_mtx["trip_part"][ass_class + "_num_board"]["id"],
                     "actual_total_boarding_times": self.result_mtx["trip_part"][ass_class + "_board_time"]["id"],
