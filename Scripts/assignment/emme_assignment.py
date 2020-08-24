@@ -55,7 +55,6 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             self._calc_boarding_penalties(self.emme_scenarios[time_period])
             self._calc_background_traffic(self.emme_scenarios[time_period])
         self._specify()
-        self.transit_classes = ["transit_work", "transit_leisure"]
 
     def assign(self, time_period, matrices, is_last_iteration=False, is_first_iteration=False):
         """Assign cars, bikes and transit for one time period.
@@ -80,18 +79,18 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                             "@bike_"+time_period)
             self._assign_cars(scen_id, param.stopping_criteria_coarse)
             self._calc_extra_wait_time(scen_id)
-            self._assign_transit(self.transit_classes, scen_id)
+            self._assign_transit(scen_id)
         elif is_last_iteration:
             self._assign_cars(scen_id, param.stopping_criteria_fine)
             self._calc_extra_wait_time(scen_id)
-            self._assign_congested_transit(self.transit_classes, scen_id)
+            self._assign_congested_transit(param.transit_classes, scen_id)
             self._assign_bikes(self.bike_scenario,
                            self.result_mtx["dist"]["bike"]["id"],
                            "all",
                            "@bike_"+time_period)
             for ass_class in param.link_volumes:
                 self.auto_link_24h(ass_class)
-            for transit_class in self.transit_classes:
+            for transit_class in param.transit_classes:
                 self.transit_segment_24h(transit_class, "vol")
                 self.transit_segment_24h(transit_class, "boa")
                 self.transit_segment_24h(transit_class, "trb")
@@ -99,7 +98,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         else:
             self._assign_cars(scen_id, param.stopping_criteria_coarse)
             self._calc_extra_wait_time(scen_id)
-            self._assign_transit(self.transit_classes, scen_id)
+            self._assign_transit(scen_id)
 
     # TODO Could they be merged with (right after) .assign(). Currently both re-route via emmebank, which is ambiguous.
     # Then the ABC class as well as MockAssignment would have to be adjusted respectively.
@@ -375,7 +374,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         emmebank = self.emme_project.modeller.emmebank
         if default_cost is not None:
             # Use fixed cost matrix
-            for transit_class in self.transit_classes:
+            for transit_class in param.transit_classes:
                 idx = self.result_mtx["cost"][transit_class]["id"]
                 emmebank.matrix(idx).set_numpy_data(default_cost)
             return
@@ -456,7 +455,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         l, u = zn.slice_locs(bounds[0], bounds[1])
         cost[l:u, :u] = peripheral_cost
         cost[:u, l:u] = peripheral_cost.T
-        for transit_class in self.transit_classes:
+        for transit_class in param.transit_classes:
             idx = self.result_mtx["cost"][transit_class]["id"]
             emmebank.matrix(idx).set_numpy_data(cost)
         # Reset boarding penalties
@@ -696,7 +695,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                 segment["@wait_time_dev"] = headway_sd**2 / (2.0*line.headway)
         scen.publish_network(network)
 
-    def _assign_transit(self, transit_classes, scen_id):
+    def _assign_transit(self, scen_id):
         """Perform transit assignment for one scenario."""
         emmebank = self.emme_project.modeller.emmebank
         scen = emmebank.scenario(scen_id)

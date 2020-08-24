@@ -120,6 +120,10 @@ transport_classes = (
     "truck",
     "van",
 )
+transit_classes = (
+    "transit_work",
+    "transit_leisure",
+)
 assignment_class = {
     "hw": "work",
     "hc": "leisure",
