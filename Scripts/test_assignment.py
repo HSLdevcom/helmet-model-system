@@ -6,7 +6,6 @@ import numpy
 from datahandling.zonedata import ZoneData
 import os
 import logging
-from parameters import emme_scenario
 from datahandling.matrixdata import MatrixData
 from emme_bindings.emme_project import EmmeProject
 
@@ -22,7 +21,8 @@ class EmmeAssignmentTest:
             if file_name.endswith(".emp"):
                 empfile = os.path.join(project_dir, file_name)
         emme_context = EmmeProject(empfile)
-        self.ass_model = ass.EmmeAssignmentModel(emme_context, 0.12)
+        self.ass_model = ass.EmmeAssignmentModel(emme_context, 19)
+        self.ass_model.prepare_network()
     
     def test_assignment(self):
         nr_zones = self.ass_model.nr_zones
@@ -30,14 +30,15 @@ class EmmeAssignmentTest:
         demand = {
             "car_work": car_matrix,
             "car_leisure": car_matrix,
-            "transit": car_matrix,
+            "transit_work": car_matrix,
+            "transit_leisure": car_matrix,
             "bike": car_matrix,
             "trailer_truck": car_matrix,
             "truck": car_matrix,
             "van": car_matrix,
         }
         travel_cost = {}
-        for tp in emme_scenario:
+        for tp in ("aht", "pt", "iht"):
             self.ass_model.assign(tp, demand)
             travel_cost[tp] = self.ass_model.get_impedance()
         costs_files = MatrixData(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "Matrices", "2016_test"))
@@ -52,9 +53,9 @@ class EmmeAssignmentTest:
 
     def test_transit_cost(self):
         ZONE_INDEXES = numpy.array([5, 6, 7, 2792, 16001, 17000, 31000, 31501])
-        zdata = ZoneData("2030_test", ZONE_INDEXES)
+        zdata = ZoneData(os.path.join(os.path.dirname(os.path.realpath(__file__)), "tests", "test_data", "Scenario_input_data", "2030_test"), ZONE_INDEXES)
         peripheral_cost = numpy.ones((2, 6))
-        self.ass_model.calc_transit_cost(zdata.transit_zone, peripheral_cost)
+        self.ass_model.calc_transit_cost("transit_work", zdata.transit_zone, peripheral_cost)
 
 
 em = EmmeAssignmentTest()
