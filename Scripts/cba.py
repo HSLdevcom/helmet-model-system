@@ -76,7 +76,7 @@ def read_scenario(path, time_period):
         for mtx_type in files:
             if mtx_type != "demand":
                 mtx_label = transport_class.split('_')[0]
-                if mtx_label == "transit" or mtx_label == "bike":
+                if mtx_label == "bike":
                     ass_class = mtx_label
                 else:
                     ass_class = transport_class
