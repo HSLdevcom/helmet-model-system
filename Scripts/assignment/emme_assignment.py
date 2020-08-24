@@ -785,7 +785,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                 try:
                     tp_segment = networks[tp].transit_line(
                         segment.line.id).segment(segment.number)
-                    day_attr += tp_segment[extra_attr] * param.volume_factors["transit"][tp]
+                    day_attr += tp_segment[extra_attr] * param.volume_factors[transit_class][tp]
                 except (AttributeError, TypeError):
                     pass
             segment[extra_attr] = day_attr
