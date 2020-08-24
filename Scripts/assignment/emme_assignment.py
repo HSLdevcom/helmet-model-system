@@ -92,9 +92,9 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             for ass_class in param.link_volumes:
                 self.auto_link_24h(ass_class)
             for transit_class in self.transit_classes:
-                self.transit_segment_volumes_24h(transit_class, "vol")
-                self.transit_segment_boardings_24h(transit_class, "boa")
-                self.transit_segment_trb_24h(transit_class, "trb")
+                self.transit_segment_24h(transit_class, "vol")
+                self.transit_segment_24h(transit_class, "boa")
+                self.transit_segment_24h(transit_class, "trb")
             self.bike_link_24h()
         else:
             self._assign_cars(scen_id, param.stopping_criteria_coarse)
