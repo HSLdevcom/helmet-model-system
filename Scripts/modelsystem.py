@@ -178,11 +178,14 @@ class ModelSystem:
         for tp in self.emme_scenarios:
             self.logger.info("Assigning period " + tp)
             with self.basematrices.open("demand", tp) as mtx:
-                base_demand = {aclass: mtx[aclass] for aclass in self.ass_classes}
-            self.ass_model.assign(tp, base_demand, is_first_iteration=True)
+                for ass_class in self.ass_classes:
+                    self.dtm.demand[tp][ass_class] = mtx[ass_class]
+            self.ass_model.assign(
+                tp, self.dtm.demand[tp], is_first_iteration=True)
             impedance[tp] = self.ass_model.get_impedance()
             if tp == "aht":
                 self._update_ratios(impedance, tp)
+        self.dtm.init_demand()
         return impedance
 
     def run_iteration(self, previous_iter_impedance, is_last_iteration=False):
