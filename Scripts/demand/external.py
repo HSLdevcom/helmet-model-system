@@ -6,6 +6,18 @@ from datatypes.purpose import Purpose
 
 
 class ExternalModel:
+    """External traffic model.
+
+    Parameters
+    ----------
+    base_demand : datahandling.matrixdata.MatrixData
+        Base demand matrices
+    zone_data : datahandling.zonedata.ZoneData
+        Zone data for forecast year
+    zone_numbers : numpy.ndarray
+        Zone numbers from assignment model
+    """
+
     def __init__(self, base_demand, zone_data, zone_numbers):
         self.base_demand = base_demand
         self.internal_zones = zone_data.zone_numbers
@@ -26,7 +38,7 @@ class ExternalModel:
         ----------
         mode : str
             Travel mode (car/transit/truck/trailer_truck)
-        internal_trips : numpy array
+        internal_trips : numpy.ndarray
             Sums of all (intra-area) trips to and frome zones
         
         Return

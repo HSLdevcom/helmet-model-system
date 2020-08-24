@@ -92,9 +92,9 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             for ass_class in param.link_volumes:
                 self.auto_link_24h(ass_class)
             for transit_class in self.transit_classes:
-                self.transit_segment_volumes_24h(transit_class)
-                self.transit_segment_boardings_24h(transit_class)
-                self.transit_segment_trb_24h(transit_class)
+                self.transit_segment_volumes_24h(transit_class, "vol")
+                self.transit_segment_boardings_24h(transit_class, "boa")
+                self.transit_segment_trb_24h(transit_class, "trb")
             self.bike_link_24h()
         else:
             self._assign_cars(scen_id, param.stopping_criteria_coarse)
@@ -341,13 +341,27 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             transit_times.keys(), "time")
 
     def calc_transit_cost(self, transit_class, fares, peripheral_cost, default_cost=None):
-        """Calculate transit zone cost matrix by performing 
-        multiple transit assignments.
+        """Calculate transit zone cost matrix.
+        
+        Perform multiple transit assignments.
+        For each assignment, check if a specific zone has been visited
+        by the OD-pair flows. For all the zones that are visited, 
+        check if there is a zone combination fare that includes them all.
+        If not, distance fare is applied.
+
+        Some fares can be exclusively for municipality citizens
+        (i.e., tours starting in that municipality).
         
         Parameters
         ----------
-        fares : pandas Dataframe
-            Zone fare vector and fare exclusiveness vector
+        fares : dict
+            key : str
+                Fare type (fare/exclusive/dist_fare/start_fare)
+            value : dict
+                key : str
+                    Zone combination (AB/ABC/...)
+                value : float/str
+                    Transit fare or name of municipality
         peripheral_cost : numpy 2-d matrix
             Fixed cost matrix for peripheral zones
         default_cost : numpy 2-d matrix
@@ -378,10 +392,10 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         zones_in_zonedata = set(char for char in ''.join(fares["fare"].keys()))
         self.emme_project.logger.debug(
             "Zonedata has fare zones {}".format(', '.join(zones_in_zonedata)))
-        if not zones_in_zonedata <= transit_zones:
+        if zones_in_zonedata > transit_zones:
             self.emme_project.logger.warn(
                 "All zones in transit costs do not exist in Emme-network labels.")
-        if not transit_zones <= zones_in_zonedata:
+        if transit_zones > zones_in_zonedata:
             self.emme_project.logger.warn(
                 "All Emme-node labels do not have transit costs specified.")
         for transit_zone in transit_zones:
@@ -744,85 +758,40 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             link[extra_attr_day] = day_attr
         day_scenario.publish_network(network)
 
-    def transit_segment_volumes_24h(self, attr):
+    def transit_segment_24h(self, transit_class, attr):
         """ 
-        Sums and expands transit volumes to 24h.
+        Sums and expands transit attributes to 24h.
+
+        Parameters
+        ----------
+        transit_class : str
+            Transit class (transit_work/transit_leisure)
+        attr : str
+            Attribute name that is usually part of parameters.link_volumes
         """
-        extra_attr = "@{}_vol".format(attr)
+        emmebank = self.emme_project.modeller.emmebank
         # get attr from different time periods to dictionary
-        segments_attr = {}
+        networks = {}
         for tp in self.emme_scenarios:
-            tp_attr = {}
-            emmebank = self.emme_project.modeller.emmebank
-            scenario = emmebank.scenario(self.emme_scenarios[tp])
-            network = scenario.get_network()
-            for segment in network.transit_segments():
-                tp_attr[segment.id] = segment[extra_attr]
-            segments_attr[tp] = tp_attr
+            networks[tp] = emmebank.scenario(
+                self.emme_scenarios[tp]).get_network()
+        extra_attr = "@{}_{}".format(transit_class, attr)
         # save link volumes to result network
         day_scenario = emmebank.scenario(self.day_scenario)
         network = day_scenario.get_network()
         for segment in network.transit_segments():
             day_attr = 0
             for tp in self.emme_scenarios:
-                if segment.id in segments_attr[tp]:
-                    day_attr += segments_attr[tp][segment.id] * param.volume_factors["transit"][tp]
+                try:
+                    tp_segment = networks[tp].transit_line(
+                        segment.line.id).segment(segment.number)
+                    day_attr += tp_segment[extra_attr] * param.volume_factors["transit"][tp]
+                except (AttributeError, TypeError):
+                    pass
             segment[extra_attr] = day_attr
         day_scenario.publish_network(network)
-
-    def transit_segment_boardings_24h(self, attr):
-        """ 
-        Sums and expands transit boardings to 24h.
-        """
-        extra_attr = "@{}_boa".format(attr)
-        # get attr from different time periods to dictionary
-        segments_attr = {}
-        for tp in self.emme_scenarios:
-            tp_attr = {}
-            emmebank = self.emme_project.modeller.emmebank
-            scenario = emmebank.scenario(self.emme_scenarios[tp])
-            network = scenario.get_network()
-            for segment in network.transit_segments():
-                tp_attr[segment.id] = segment[extra_attr]
-            segments_attr[tp] = tp_attr
-        # save link volumes to result network
-        day_scenario = emmebank.scenario(self.day_scenario)
-        network = day_scenario.get_network()
-        for segment in network.transit_segments():
-            day_attr = 0
-            for tp in self.emme_scenarios:
-                if segment.id in segments_attr[tp]:
-                    day_attr += segments_attr[tp][segment.id] * param.volume_factors["transit"][tp]
-            segment[extra_attr] = day_attr
-        day_scenario.publish_network(network)
-
-    def transit_segment_trb_24h(self, attr):
-        """ 
-        Sums and expands transit transfer boardings to 24h.
-        """
-        extra_attr = "@{}_trb".format(attr)
-        # get attr from different time periods to dictionary
-        segments_attr = {}
-        for tp in self.emme_scenarios:
-            tp_attr = {}
-            emmebank = self.emme_project.modeller.emmebank
-            scenario = emmebank.scenario(self.emme_scenarios[tp])
-            network = scenario.get_network()
-            for segment in network.transit_segments():
-                tp_attr[segment.id] = segment[extra_attr]
-            segments_attr[tp] = tp_attr
-        # save link volumes to result network
-        day_scenario = emmebank.scenario(self.day_scenario)
-        network = day_scenario.get_network()
-        for segment in network.transit_segments():
-            day_attr = 0
-            for tp in self.emme_scenarios:
-                if segment.id in segments_attr[tp]:
-                    day_attr += segments_attr[tp][segment.id] * param.volume_factors["transit"][tp]
-            segment[extra_attr] = day_attr
-        day_scenario.publish_network(network)
-
-
+        self.emme_project.logger.debug("Transit segment results aggregated to 24h")
+    
     def bike_link_24h(self):
         """ 
         Sums and expands bike volumes from different scenarios to one result scenario.

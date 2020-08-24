@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/HSLdevcom/helmet-model-system.svg?branch=master)](https://travis-ci.org/HSLdevcom/helmet-model-system)
+[![Build Status](https://travis-ci.com/HSLdevcom/helmet-model-system.svg?branch=master)](https://travis-ci.com/HSLdevcom/helmet-model-system)
 
 # helmet-model-system
 
@@ -20,7 +20,7 @@ We are using those Python dependencies that come with INRO Emme installation. To
 2. Go to User Accounts, then click again User Accounts, then select from the left hand menu "Change my environment variables".
 3. From the top box ("User variables for USERNAME"), find and select "Path" variable, and click "Edit...".
 4. Click "New" and write `%EMMEPATH%\Programs`.
-5. Click OK in the "Edit enrivonment variable" window, and then click OK again in the "Environment Variables" window.
+5. Click OK in the "Edit environment variable" window, and then click OK again in the "Environment Variables" window.
 
 Next, you need to initialize an Emme project:
 
@@ -48,7 +48,7 @@ python test_assignment.py
 
 ## Development
 
-If you do not have INRO Emme license or you wish to develop HELMET 4.0 source code, you need to set up a development enviroment. Although not covered here, installing [Git](https://git-scm.com/downloads) is highly recommended!
+If you do not have INRO Emme license or you wish to develop HELMET 4.0 source code, you need to set up a development environment. Although not covered here, installing [Git](https://git-scm.com/downloads) is highly recommended!
 
 ### Environment and dependencies
 
@@ -63,7 +63,7 @@ We are using Python 2.7 because it is supported by INRO Emme software.
 We are using `pipenv` to import the same open source libraries which INRO Emme software uses. `pipenv` isolates our environment from the other global Python modules and makes sure we don't break anything with our setup. Optional introduction to `pipenv` can be found from [Python docs](https://docs.python-guide.org/dev/virtualenvs/) or [Jonathan Cutrer's blog](https://jcutrer.com/python/pipenv-pipfile).
 
 1. Open Command Prompt.
-2. Install `pipenv` by running `python -m pip install --user pipenv`. `pipenv` should now be installed in `%APPDATA%\Python\Scripts` (eg. `C:\Users\USERNAME\AppData\Roaming\Python\Scripts`).
+2. Install `pipenv` by running `python -m pip install --user pipenv`. `pipenv` should now be installed in `%APPDATA%\Python\Scripts` (e.g. `C:\Users\USERNAME\AppData\Roaming\Python\Scripts`).
 3. Add `%APPDATA%\Python\Scripts` to your local PATH variable.
 4. Close and reopen Command Prompt and check that `pipenv` is recognised by typing `pipenv --version`. It should return `pipenv, version 2018.11.26`.
 4. Download [helmet-model-system](https://github.com/HSLdevcom/helmet-model-system) repository and open a Command Prompt to its "Scripts" folder.

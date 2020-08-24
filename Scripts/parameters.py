@@ -184,6 +184,9 @@ emme_attributes = {
     "@trailer_truck": "LINK",
     "@truck": "LINK",
     "@van": "LINK", 
+    "@transit_vol": "TRANSIT_SEGMENT",
+    "@transit_boa": "TRANSIT_SEGMENT",
+    "@transit_trb": "TRANSIT_SEGMENT",
 }
 bike_attributes = {
     "@bike_aht": "LINK",
@@ -2973,7 +2976,7 @@ car_usage = {
 car_density = {
     "constant": 0.0,
     "generation": {
-        "share_detached_houses": 2.523e-01, # Originally estimated for percentages (0-100), here transformed
+        "share_detached_houses_new": 2.523e-01, # Originally estimated for percentages (0-100), here transformed
         "helsinki": 3.782e-02,
         "surrounding": 5.043e-02,
     },
