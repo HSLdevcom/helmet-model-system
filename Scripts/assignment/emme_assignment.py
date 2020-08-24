@@ -120,12 +120,17 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             for mtx_class in mtxs[mtx_type]: 
                 mtxs[mtx_type][mtx_class][ mtxs["time"][mtx_class] > 999999 ] = 999999
         # adjust impedance 
-        mtxs["time"]["transit_work"] = self._damp(mtxs["time"]["transit_work"], "transit_work_fw_time")
-        mtxs["time"]["transit_leisure"] = self._damp(mtxs["time"]["transit_leisure"], "transit_leisure_fw_time")
         mtxs["time"]["bike"] = mtxs["time"]["bike"].clip(None, 9999.)
         mtxs["time"]["car_work"] = self._extract_timecost_from_gcost("car_work")
         mtxs["time"]["car_leisure"] = self._extract_timecost_from_gcost("car_leisure")
-        if not is_last_iteration:
+        mtxs["time"]["transit_work"] = self._damp(
+            mtxs["time"]["transit_work"], "transit_work_fw_time")
+        if is_last_iteration:
+            mtxs["time"]["transit_leisure"] = self._damp(
+                mtxs["time"]["transit_leisure"], "transit_leisure_fw_time")
+        else:
+            for mtx_type in mtxs:
+                mtxs[mtx_type]["transit_leisure"] = mtxs[mtx_type]["transit_work"]
             for ass_cl in ("car_work", "car_leisure"):
                 mtxs["cost"][ass_cl] += self.dist_unit_cost * mtxs["dist"][ass_cl]
         return mtxs
@@ -691,20 +696,15 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         """Perform transit assignment for one scenario."""
         emmebank = self.emme_project.modeller.emmebank
         scen = emmebank.scenario(scen_id)
-        add_volumes=False
-        for transit_class in transit_classes:
-            self.emme_project.logger.info("Transit assignment started for class {}".format(transit_class))
-            # assign transit_work class (init volumes)
-            spec = Transit(transit_class, self.demand_mtx, self.result_mtx)
-            self.emme_project.transit_assignment(
-                specification=spec.transit_spec, scenario=scen, save_strategies=True, 
-                add_volumes = add_volumes, class_name=transit_class)
-            # save matrix and network results for both transit classes
-            self.emme_project.matrix_results(spec.transit_result_spec, scenario=scen, class_name=transit_class)
-            self.emme_project.network_results(spec.ntw_results_spec, scenario=scen, class_name=transit_class)
-            add_volumes=True
+        self.emme_project.logger.info("Transit assignment started")
+        # Here we assign all transit in one class, multi-class assignment is
+        # performed in last iteration (congested assignment)
+        spec = Transit("transit_work", self.demand_mtx, self.result_mtx)
+        self.emme_project.transit_assignment(
+            specification=spec.transit_spec, scenario=scen, save_strategies=True)
+        self.emme_project.matrix_results(spec.transit_result_spec, scenario=scen)
         self.emme_project.logger.info(
-            "Transit assignment performed for scenario {} and class {}".format(str(scen_id), transit_class))
+            "Transit assignment performed for scenario {}".format(str(scen_id)))
 
     def _assign_congested_transit(self, transit_classes, scen_id):
         """Perform congested transit assignment for one scenario."""
