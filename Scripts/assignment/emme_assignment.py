@@ -409,8 +409,12 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                 node.data1 = (node.label == transit_zone)
             scen.publish_network(network)
             # Transit assignment with zone tag as weightless boarding cost
-            spec = Transit(transit_class, self.demand_mtx, self.result_mtx, count_zone_boardings = True)
-            self.emme_project.transit_assignment(specification=spec.transit_spec, scenario=scen, save_strategies=True)
+            spec = Transit(
+                "transit_work", self.demand_mtx, self.result_mtx,
+                count_zone_boardings=True)
+            self.emme_project.transit_assignment(
+                specification=spec.transit_spec, scenario=scen,
+                save_strategies=True)
             self.emme_project.matrix_results(spec.transit_result_spec, scen)
             nr_visits = self.get_matrix("trip_part", transit_class + "_board_cost")
             # If the number of visits is less than 1, there seems to
