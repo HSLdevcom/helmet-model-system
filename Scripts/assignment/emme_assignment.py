@@ -415,7 +415,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                 specification=spec.transit_spec, scenario=scen,
                 save_strategies=True)
             self.emme_project.matrix_results(spec.transit_result_spec, scen)
-            nr_visits = self.get_matrix("trip_part", transit_class + "_board_cost")
+            nr_visits = self.get_matrix("trip_part", "transit_work_board_cost")
             # If the number of visits is less than 1, there seems to
             # be an easy way to avoid visiting this transit zone
             has_visited[transit_zone] = (nr_visits >= 1)
