@@ -332,7 +332,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                                             * segment.link.length)
                     transit_times[mode] += (param.volume_factors["transit"][tp]
                                             * (60 / segment.line.headway)
-                                            * segment.transit_time)
+                                            * segment["@base_timtr"])
         for ass_class in kms:
             resultdata.print_data(
                 kms[ass_class].values(), "vehicle_kms.txt",
