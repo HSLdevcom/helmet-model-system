@@ -89,7 +89,7 @@ class CarDensityModel(LinearModel):
         share_detached_new = numpy.divide(
             detached_houses_diff, pop_growth,
             out=numpy.array(forecast_sh_detached), where=pop_growth!=0)
-        self.zone_data.share["share_detached_houses_new"] = pandas.Series(
+        self.zone_data._values["share_detached_houses_new"] = pandas.Series(
             share_detached_new, self.zone_data.zone_numbers[self.bounds])
     
     def predict(self):
