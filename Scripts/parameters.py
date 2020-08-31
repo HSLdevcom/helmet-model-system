@@ -191,7 +191,8 @@ link_volumes = {
     "car_leisure": "@car_leisure",
     "trailer_truck": "@trailer_truck",
     "truck": "@truck",
-    "van": "@van"
+    "van": "@van",
+    "bus": "@bus"
     }
 # Factors for 24-h expansion of volumes
 # TODO: Trucks and vans

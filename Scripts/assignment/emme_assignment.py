@@ -321,10 +321,10 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                     if line.mode.id in transit_modes[modes]:
                         mode = modes
                 for segment in line.segments():
-                    transit_dists[mode] += (param.volume_factors["transit"][tp]
+                    transit_dists[mode] += (param.volume_factors["bus"][tp]
                                             * (60 / segment.line.headway)
                                             * segment.link.length)
-                    transit_times[mode] += (param.volume_factors["transit"][tp]
+                    transit_times[mode] += (param.volume_factors["bus"][tp]
                                             * (60 / segment.line.headway)
                                             * segment.transit_time)
         for ass_class in kms:
