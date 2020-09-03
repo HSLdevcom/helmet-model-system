@@ -795,6 +795,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             log_worksheets=False, scenario=scen,
             save_strategies=True)
         self.emme_project.matrix_results(self.transit_result_spec, scen)
+        self.emme_project.network_results(self.ntw_results_spec, scenario=scen)
         self.emme_project.logger.info("Transit assignment performed for scenario {}".format(str(scen_id)))
 
     def auto_link_24h(self, attr):
