@@ -228,8 +228,8 @@ class ShareChecker:
         self.data = data
 
     def __setitem__(self, key, data):
-        if (data > 1.001).any():
+        if (data > 1.005).any():
             for (i, val) in data.iteritems():
-                if val > 1.001:
+                if val > 1.005:
                     raise ValueError("{} ({}) for zone {} is larger than one".format(key, val, i).capitalize())
         self.data[key] = data
