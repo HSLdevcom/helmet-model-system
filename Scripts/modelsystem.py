@@ -177,11 +177,14 @@ class ModelSystem:
         for tp in self.emme_scenarios:
             self.logger.info("Assigning period " + tp)
             with self.basematrices.open("demand", tp) as mtx:
-                base_demand = {aclass: mtx[aclass] for aclass in self.ass_classes}
-            self.ass_model.assign(tp, base_demand, is_first_iteration=True)
+                for ass_class in self.ass_classes:
+                    self.dtm.demand[tp][ass_class] = mtx[ass_class]
+            self.ass_model.assign(
+                tp, self.dtm.demand[tp], is_first_iteration=True)
             impedance[tp] = self.ass_model.get_impedance()
             if tp == "aht":
                 self._update_ratios(impedance, tp)
+        self.dtm.init_demand()
         return impedance
 
     def run_iteration(self, previous_iter_impedance, is_last_iteration=False):
@@ -344,7 +347,7 @@ class ModelSystem:
             impedance[tp]["time"]["car_work"], axis=1,
             weights=self.dtm.demand[tp]["car_work"])
         transit_time = numpy.ma.average(
-            impedance[tp]["time"]["transit"], axis=1,
+            impedance[tp]["time"]["transit_work"], axis=1,
             weights=self.dtm.demand[tp]["transit_work"])
         time_ratio = transit_time / car_time
         self.resultdata.print_data(
@@ -356,7 +359,7 @@ class ModelSystem:
             impedance[tp]["cost"]["car_work"], axis=1,
             weights=self.dtm.demand[tp]["car_work"])
         transit_cost = numpy.ma.average(
-            impedance[tp]["cost"]["transit"], axis=1,
+            impedance[tp]["cost"]["transit_work"], axis=1,
             weights=self.dtm.demand[tp]["transit_work"])
         cost_ratio = transit_cost / 44. / car_cost
         cost_ratio = cost_ratio.clip(0.01, None)

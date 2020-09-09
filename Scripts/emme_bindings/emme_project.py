@@ -41,6 +41,8 @@ class EmmeProject:
             "inro.emme.transit_assignment.congested_transit_assignment")
         self.matrix_results = self.modeller.tool(
             "inro.emme.transit_assignment.extended.matrix_results")
+        self.network_results = self.modeller.tool(
+            "inro.emme.transit_assignment.extended.network_results")
         self.create_extra_attribute = self.modeller.tool(
             "inro.emme.data.extra_attribute.create_extra_attribute")
         self.network_results = self.modeller.tool(

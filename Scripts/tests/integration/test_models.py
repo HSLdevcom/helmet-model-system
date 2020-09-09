@@ -37,7 +37,7 @@ class ModelTest(unittest.TestCase):
         self._validate_impedances(impedance["iht"])
 
         # Check that model result does not change
-        self.assertAlmostEquals(model.mode_share[0]["car"], 0.51446995351699742)
+        self.assertAlmostEquals(model.mode_share[0]["car"], 0.73271138091637056)
         
         print("Model system test done")
     
@@ -59,11 +59,11 @@ class ModelTest(unittest.TestCase):
         self.assertIsNotNone(impedances["cost"])
         self.assertIsNotNone(impedances["dist"])
         self.assertIs(type(impedances["time"]), dict)
-        self.assertEquals(len(impedances["time"]), 8)
-        self.assertIsNotNone(impedances["time"]["transit"])
-        self.assertIs(type(impedances["time"]["transit"]), numpy.ndarray)
-        self.assertEquals(impedances["time"]["transit"].ndim, 2)
-        self.assertEquals(len(impedances["time"]["transit"]), 8)
+        self.assertEquals(len(impedances["time"]), 9)
+        self.assertIsNotNone(impedances["time"]["transit_work"])
+        self.assertIs(type(impedances["time"]["transit_work"]), numpy.ndarray)
+        self.assertEquals(impedances["time"]["transit_work"].ndim, 2)
+        self.assertEquals(len(impedances["time"]["transit_work"]), 8)
 
     def _validate_demand(self, demand):
         self.assertIsNotNone(demand)
