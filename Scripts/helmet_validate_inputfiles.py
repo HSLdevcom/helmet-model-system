@@ -61,7 +61,6 @@ def main(args, logger):
             raise ValueError("Forecast data directory '{}' does not exist.".format(forecast_zonedata_paths[i]))
 
         # Check forecasted zonedata
-        assignment_model = EmmeAssignmentModel(EmmeProject(emp_path), first_scenario_id=first_scenario_ids[i])
         forecast_zonedata = ZoneData(forecast_zonedata_paths[i], assignment_model.zone_numbers)
 
     logger.info("Successfully validated all input files")
