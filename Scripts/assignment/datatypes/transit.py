@@ -1,6 +1,6 @@
 import parameters as param
 from path_analysis import PathAnalysis
-from datatypes.journey_level import JourneyLevel
+from journey_level import JourneyLevel
 
 
 class Transit:

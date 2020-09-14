@@ -1,14 +1,16 @@
 import os
 import numpy
 import pandas
+
 import parameters as param
-from abstract_assignment import AssignmentModel, ImpedanceSource
+from abstract_assignment import AssignmentModel
 from datatypes.car import Car
+from datatypes.car_specification import CarSpecification
 from datatypes.transit import Transit
 from datatypes.path_analysis import PathAnalysis
 
 
-class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
+class EmmeAssignmentModel(AssignmentModel):
     def __init__(self, emme_context, first_scenario_id, demand_mtx=param.emme_demand_mtx, result_mtx=param.emme_result_mtx):
         """
         first_scenario_id (bike scenario) is usually #19,
@@ -56,8 +58,9 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             self._calc_background_traffic(self.emme_scenarios[time_period])
         self._specify()
 
-    def assign(self, time_period, matrices, is_last_iteration=False, is_first_iteration=False):
+    def assign(self, time_period, matrices, iteration=None):
         """Assign cars, bikes and transit for one time period.
+        Get travel impedance matrices for one time period from assignment.
         
         Parameters
         ----------
@@ -65,29 +68,37 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             Time period (aht/pt/iht)
         matrices: dict
             Assignment class (car_work/transit/...) : numpy 2-d matrix
-        is_last_iteration: bool
-        is_first_iteration: bool
+        iteration: int or str
+            Iteration number (0, 1, 2, ...) or "last"
+
+        Returns
+        -------
+        dict
+            Type (time/cost/dist) : dict
+                Assignment class (car_work/transit/...) : numpy 2-d matrix
         """
         self.emme_project.logger.info("Assignment starts...")
         self.set_emmebank_matrices(matrices)
         scen_id = self.emme_scenarios[time_period]
-        if is_first_iteration:
+        if iteration==0:
             self._assign_pedestrians(scen_id)
-            self._assign_bikes(self.bike_scenario,
-                            self.result_mtx["dist"]["bike"]["id"],
-                            "all",
-                            "@bike_"+time_period)
+            self._assign_bikes(
+                self.bike_scenario, self.result_mtx["dist"]["bike"]["id"],
+                "all", "@bike_"+time_period)
             self._assign_cars(scen_id, param.stopping_criteria_coarse)
             self._calc_extra_wait_time(scen_id)
             self._assign_transit(scen_id)
-        elif is_last_iteration:
+        elif iteration==1:
+            self._assign_cars(scen_id, param.stopping_criteria_coarse)
+            self._calc_extra_wait_time(scen_id)
+            self._assign_transit(scen_id)
+        elif iteration=="last":
             self._assign_cars(scen_id, param.stopping_criteria_fine)
             self._calc_extra_wait_time(scen_id)
             self._assign_congested_transit(param.transit_classes, scen_id)
-            self._assign_bikes(self.bike_scenario,
-                           self.result_mtx["dist"]["bike"]["id"],
-                           "all",
-                           "@bike_"+time_period)
+            self._assign_bikes(
+                self.bike_scenario, self.result_mtx["dist"]["bike"]["id"],
+                "all", "@bike_"+time_period)
             for ass_class in param.link_volumes:
                 self.auto_link_24h(ass_class)
             for transit_class in param.transit_classes:
@@ -96,21 +107,11 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                 self.transit_segment_24h(transit_class, "trb")
             self.bike_link_24h()
         else:
-            self._assign_cars(scen_id, param.stopping_criteria_coarse)
+            self._assign_cars(
+                scen_id, param.stopping_criteria_coarse, lightweight=True)
             self._calc_extra_wait_time(scen_id)
             self._assign_transit(scen_id)
 
-    # TODO Could they be merged with (right after) .assign(). Currently both re-route via emmebank, which is ambiguous.
-    # Then the ABC class as well as MockAssignment would have to be adjusted respectively.
-    def get_impedance(self, is_last_iteration=False):
-        """Get travel impedance matrices for one time period from assignment.
-        
-        Return
-        ------
-        dict
-            Type (time/cost/dist) : dict
-                Assignment class (car_work/transit/...) : numpy 2-d matrix
-        """
         mtxs = {"time": self.get_emmebank_matrices("time"),
                 "dist": self.get_emmebank_matrices("dist"),
                 "cost": self.get_emmebank_matrices("cost")}
@@ -124,7 +125,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         mtxs["time"]["car_leisure"] = self._extract_timecost_from_gcost("car_leisure")
         mtxs["time"]["transit_work"] = self._damp(
             mtxs["time"]["transit_work"], "transit_work_fw_time")
-        if is_last_iteration:
+        if iteration=="last":
             mtxs["time"]["transit_leisure"] = self._damp(
                 mtxs["time"]["transit_leisure"], "transit_leisure_fw_time")
         else:
@@ -254,24 +255,29 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             self.emme_project.logger.debug(
                 "Created attr {} for scen {}".format(extr.name, scen_id))
 
-    def _calc_background_traffic(self, scen_id):
+    def _calc_background_traffic(self, scen_id, include_trucks=False):
         """Calculate background traffic (buses)."""
         emmebank = self.emme_project.modeller.emmebank
         scen = emmebank.scenario(scen_id)
         network = scen.get_network()
         # emme api has name "data3" for ul3
-        param_name = param.background_traffic.replace("ul", "data")
+        background_traffic = param.background_traffic.replace("ul", "data")
         # calc @bus and data3
-        extra_attr = "@bus"
         for link in network.links():
             segment_freq = 0
             for segment in link.segments():
                 segment_hdw = segment.line.headway
                 if 0 < segment_hdw < 900: 
                     segment_freq += 60 / segment_hdw
-            link[extra_attr] = segment_freq
+            link["@bus"] = segment_freq
             if link.volume_delay_func in [1,2,3,4,5]:
-                link[param_name] = segment_freq
+                # If no bus lane
+                link[background_traffic] = segment_freq
+            else:
+                link[background_traffic] = 0
+            if include_trucks:
+                for ass_class in ("@truck", "@trailer_truck"):
+                    link[background_traffic] += link[ass_class]
         scen.publish_network(network)
 
     def _calc_road_cost(self, scen_id):
@@ -462,32 +468,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         self._calc_boarding_penalties(scen_id)
 
     def _specify(self):
-        # Car assignment specification
-        car_work = Car("car_work", self.demand_mtx, self.result_mtx)
-        car_leisure = Car("car_leisure", self.demand_mtx, self.result_mtx)
-        van = Car("van", self.demand_mtx, self.result_mtx)
-        truck = Car(
-            "truck", self.demand_mtx, self.result_mtx, 
-            value_of_time_inv=0.2,link_costs="length")
-        trailer_truck = Car(
-            "trailer_truck", self.demand_mtx, self.result_mtx,
-            value_of_time_inv=0.2, link_costs="length")
-        self.car_spec = {
-            "type": "SOLA_TRAFFIC_ASSIGNMENT",
-            "classes": [
-                car_work.spec,
-                car_leisure.spec,
-                trailer_truck.spec,
-                truck.spec,
-                van.spec,
-            ],
-            "background_traffic": {
-                "link_component": param.background_traffic,
-                "add_transit_vehicles": False,
-            },
-            "performance_settings": param.performance_settings,
-            "stopping_criteria": None, # This is defined later
-        }
+        self._car_spec = CarSpecification(self.demand_mtx, self.result_mtx)
         # Bike assignment specification
         self.bike_spec = {
             "type": "STANDARD_TRAFFIC_ASSIGNMENT",
@@ -556,15 +537,16 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             },
         }        
         
-    def _assign_cars(self, scen_id, stopping_criteria):
+    def _assign_cars(self, scen_id, stopping_criteria, lightweight=False):
         """Perform car_work traffic assignment for one scenario."""
         emmebank = self.emme_project.modeller.emmebank
         scen = emmebank.scenario(scen_id)
         function_file = os.path.join(self.emme_project.path, param.func_car)  # TODO refactor paths out from here
         self.emme_project.process_functions(function_file)
         self.emme_project.logger.info("Car assignment started...")
-        self.car_spec["stopping_criteria"] = stopping_criteria
-        self.emme_project.car_assignment(self.car_spec, scen)
+        car_spec = self._car_spec.spec(lightweight)
+        car_spec["stopping_criteria"] = stopping_criteria
+        self.emme_project.car_assignment(car_spec, scen)
         self.emme_project.logger.info("Car assignment performed for scenario "
                                       + str(scen_id))
     

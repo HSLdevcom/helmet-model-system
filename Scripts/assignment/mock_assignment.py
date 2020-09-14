@@ -1,9 +1,10 @@
 import logging
+
 import parameters as param
-from abstract_assignment import AssignmentModel, ImpedanceSource 
+from abstract_assignment import AssignmentModel
 
 
-class MockAssignmentModel(AssignmentModel, ImpedanceSource):
+class MockAssignmentModel(AssignmentModel):
     def __init__(self, matrices):
         self.matrices = matrices
         self.logger = logging.getLogger()
@@ -11,33 +12,31 @@ class MockAssignmentModel(AssignmentModel, ImpedanceSource):
         self.result_mtx=param.emme_result_mtx
         self.emme_scenarios = {"aht": 21, "pt": 22, "iht": 23}
     
-    def assign(self, time_period, matrices, is_last_iteration=False, is_first_iteration=False):
+    def assign(self, time_period, matrices, iteration=None):
         """Assign cars, bikes and transit for one time period.
+        Get travel impedance matrices for one time period from assignment.
         
         Parameters
         ----------
         time_period : str
             Time period (aht/pt/iht)
         matrices: dict
-            Assignment class (car_work/transit/...): numpy 2-d matrix
-        is_last_iteration: bool
-        is_first_iteration: bool
+            Assignment class (car_work/transit/...) : numpy 2-d matrix
+        iteration: int or str
+            Iteration number (0, 1, 2, ...) or "last"
+
+        Returns
+        -------
+        dict
+            Type (time/cost/dist) : dict
+                Assignment class (car_work/transit/...) : numpy 2-d matrix
         """
         self.time_period = time_period
         with self.matrices.open("demand", time_period, 'w') as mtx:
             for ass_class in matrices:
                 mtx[ass_class] = matrices[ass_class]
         self.logger.info("Saved demand matrices for " + str(time_period))
-    
-    def get_impedance(self, is_last_iteration=False):
-        """Get travel impedance matrices for one time period from files.
-        
-        Return
-        ------
-        dict
-            Type (time/cost/dist) : dict
-                Assignment class (car_work/transit/...) : numpy 2-d matrix
-        """
+
         return {"time": self.get_emmebank_matrices("time", self.time_period),
                 "cost": self.get_emmebank_matrices("cost", self.time_period),
                 "dist": self.get_emmebank_matrices("dist", self.time_period)}

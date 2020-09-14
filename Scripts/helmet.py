@@ -49,7 +49,7 @@ def main(args, logger):
         if not os.path.isfile(emme_project_path):
             raise NameError(".emp project file not found in given '{}' location.".format(emme_project_path))
         logger.info("Initializing Emme..")
-        from emme_bindings.emme_project import EmmeProject
+        from assignment.emme_bindings.emme_project import EmmeProject
         ass_model = EmmeAssignmentModel(EmmeProject(emme_project_path), first_scenario_id=args.first_scenario_id)
     # Initialize model system (wrapping Assignment-model, and providing Demand-calculations as Python modules)
     model = ModelSystem(forecast_zonedata_path, base_zonedata_path, base_matrices_path, results_path, ass_model, name)
@@ -64,9 +64,9 @@ def main(args, logger):
         log_extra["status"]["current"] = i
         try:
             logger.info("Starting iteration {}".format(i), extra=log_extra)
-            impedance = (model.run_iteration(impedance, is_last_iteration=True)
+            impedance = (model.run_iteration(impedance, "last")
                          if i == iterations
-                         else model.run_iteration(impedance))
+                         else model.run_iteration(impedance, i))
             log_extra["status"]["completed"] += 1
         except Exception as error:
             log_extra["status"]["failed"] += 1

@@ -159,18 +159,18 @@ class ModelSystem:
         # Calculate transit cost matrix, and save it to emmebank
         with self.basematrices.open("demand", "aht") as mtx:
             base_demand = {ass_class: mtx[ass_class] for ass_class in self.ass_classes}
-        self.ass_model.assign("aht", base_demand, is_first_iteration=True)
+        self.ass_model.assign("aht", base_demand, iteration=0)
         with self.basematrices.open("cost", "peripheral") as peripheral_mtx:
             peripheral_cost = peripheral_mtx["transit"]
-            if use_fixed_transit_cost:
-                self.logger.info("Using fixed transit cost matrix")
-                with self.basematrices.open("cost", "aht") as aht_mtx:
-                    fixed_cost = aht_mtx["transit"]
-            else:
-                self.logger.info("Calculating transit cost")
-                fixed_cost = None
-            self.ass_model.calc_transit_cost(
-                self.zdata_forecast.transit_zone, peripheral_cost, fixed_cost)
+        if use_fixed_transit_cost:
+            self.logger.info("Using fixed transit cost matrix")
+            with self.basematrices.open("cost", "aht") as aht_mtx:
+                fixed_cost = aht_mtx["transit"]
+        else:
+            self.logger.info("Calculating transit cost")
+            fixed_cost = None
+        self.ass_model.calc_transit_cost(
+            self.zdata_forecast.transit_zone, peripheral_cost, fixed_cost)
 
         # Perform traffic assignment and get result impedance, 
         # for each time period
@@ -179,15 +179,14 @@ class ModelSystem:
             with self.basematrices.open("demand", tp) as mtx:
                 for ass_class in self.ass_classes:
                     self.dtm.demand[tp][ass_class] = mtx[ass_class]
-            self.ass_model.assign(
-                tp, self.dtm.demand[tp], is_first_iteration=True)
-            impedance[tp] = self.ass_model.get_impedance()
+            impedance[tp] = self.ass_model.assign(
+                tp, self.dtm.demand[tp], iteration=1)
             if tp == "aht":
                 self._update_ratios(impedance, tp)
         self.dtm.init_demand()
         return impedance
 
-    def run_iteration(self, previous_iter_impedance, is_last_iteration=False):
+    def run_iteration(self, previous_iter_impedance, iteration=None):
         """Calculate demand and assign to network.
 
         Parameters
@@ -200,7 +199,8 @@ class ModelSystem:
                     Impedance type (time/cost/dist)
                 value : numpy.ndarray
                     Impedance (float 2-d matrix)
-        is_last_iteration : bool (optional)
+        iteration : int or str (optional)
+            Iteration number (0, 1, 2, ...) or "last"
             If this is the last iteration, 
             secondary destinations are calculated for all modes,
             congested assignment is performed,
@@ -228,7 +228,7 @@ class ModelSystem:
         self.zdata_forecast["car_density"] = prediction
         self.zdata_forecast["cars_per_1000"] = 1000 * prediction
 
-        self._add_internal_demand(previous_iter_impedance, is_last_iteration)
+        self._add_internal_demand(previous_iter_impedance, iteration=="last")
 
         # Calculate external demand
         trip_sum = {}
@@ -253,14 +253,12 @@ class ModelSystem:
         # Calculate and return traffic impedance
         for tp in self.emme_scenarios:
             self.dtm.add_vans(tp, self.zdata_forecast.nr_zones)
-            self.ass_model.assign(tp, self.dtm.demand[tp], is_last_iteration)
-            impedance[tp] = self.ass_model.get_impedance(is_last_iteration)
-
-            # Car Ownership -model specific block
+            impedance[tp] = self.ass_model.assign(
+                tp, self.dtm.demand[tp], iteration)
             if tp == "aht":
                 self._update_ratios(impedance, tp)
             
-            if is_last_iteration:
+            if iteration=="last":
                 # Save to .omx files
                 zone_numbers = self.ass_model.zone_numbers
                 with self.resultmatrices.open("demand", tp, 'w') as mtx:
@@ -275,7 +273,7 @@ class ModelSystem:
                             cost_data = impedance[tp][mtx_type][ass_class]
                             mtx[ass_class] = cost_data
 
-        if is_last_iteration:
+        if iteration=="last":
             self.ass_model.print_vehicle_kms(self.resultdata)
 
         # Reset time-period specific demand matrices (DTM), and empty result buffer
