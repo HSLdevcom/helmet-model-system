@@ -159,7 +159,7 @@ class ModelSystem:
         # Calculate transit cost matrix, and save it to emmebank
         with self.basematrices.open("demand", "aht") as mtx:
             base_demand = {ass_class: mtx[ass_class] for ass_class in self.ass_classes}
-        self.ass_model.assign("aht", base_demand, iteration=0)
+        self.ass_model.assign("aht", base_demand, iteration="init")
         with self.basematrices.open("cost", "peripheral") as peripheral_mtx:
             peripheral_cost = peripheral_mtx["transit"]
         if use_fixed_transit_cost:
@@ -180,7 +180,7 @@ class ModelSystem:
                 for ass_class in self.ass_classes:
                     self.dtm.demand[tp][ass_class] = mtx[ass_class]
             impedance[tp] = self.ass_model.assign(
-                tp, self.dtm.demand[tp], iteration=1)
+                tp, self.dtm.demand[tp], iteration=0)
             if tp == "aht":
                 self._update_ratios(impedance, tp)
         self.dtm.init_demand()

@@ -69,7 +69,7 @@ class EmmeAssignmentModel(AssignmentModel):
         matrices: dict
             Assignment class (car_work/transit/...) : numpy 2-d matrix
         iteration: int or str
-            Iteration number (0, 1, 2, ...) or "last"
+            Iteration number (0, 1, 2, ...) or "init" or "last"
 
         Returns
         -------
@@ -80,7 +80,7 @@ class EmmeAssignmentModel(AssignmentModel):
         self.emme_project.logger.info("Assignment starts...")
         self.set_emmebank_matrices(matrices)
         scen_id = self.emme_scenarios[time_period]
-        if iteration==0:
+        if iteration=="init":
             self._assign_pedestrians(scen_id)
             self._assign_bikes(
                 self.bike_scenario, self.result_mtx["dist"]["bike"]["id"],
@@ -88,11 +88,22 @@ class EmmeAssignmentModel(AssignmentModel):
             self._assign_cars(scen_id, param.stopping_criteria_coarse)
             self._calc_extra_wait_time(scen_id)
             self._assign_transit(scen_id)
+        elif iteration==0:
+            self._assign_cars(scen_id, param.stopping_criteria_coarse)
+            self._calc_extra_wait_time(scen_id)
+            self._assign_transit(scen_id)
         elif iteration==1:
             self._assign_cars(scen_id, param.stopping_criteria_coarse)
             self._calc_extra_wait_time(scen_id)
             self._assign_transit(scen_id)
+            self._calc_background_traffic(scen_id, include_trucks=True)
+        elif isinstance(iteration, int) and iteration>1:
+            self._assign_cars(
+                scen_id, param.stopping_criteria_coarse, lightweight=True)
+            self._calc_extra_wait_time(scen_id)
+            self._assign_transit(scen_id)
         elif iteration=="last":
+            self._calc_background_traffic(scen_id)
             self._assign_cars(scen_id, param.stopping_criteria_fine)
             self._calc_extra_wait_time(scen_id)
             self._assign_congested_transit(param.transit_classes, scen_id)
@@ -107,10 +118,7 @@ class EmmeAssignmentModel(AssignmentModel):
                 self.transit_segment_24h(transit_class, "trb")
             self.bike_link_24h()
         else:
-            self._assign_cars(
-                scen_id, param.stopping_criteria_coarse, lightweight=True)
-            self._calc_extra_wait_time(scen_id)
-            self._assign_transit(scen_id)
+            raise ValueError("Iteration number not valid")
 
         mtxs = {"time": self.get_emmebank_matrices("time"),
                 "dist": self.get_emmebank_matrices("dist"),
