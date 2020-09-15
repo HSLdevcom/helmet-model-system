@@ -58,7 +58,7 @@ class EmmeAssignmentModel(AssignmentModel):
             self._calc_background_traffic(self.emme_scenarios[time_period])
         self._specify()
 
-    def assign(self, time_period, matrices, iteration=None):
+    def assign(self, time_period, matrices, iteration):
         """Assign cars, bikes and transit for one time period.
         Get travel impedance matrices for one time period from assignment.
         

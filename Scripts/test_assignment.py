@@ -7,7 +7,7 @@ from datahandling.zonedata import ZoneData
 import os
 import logging
 from datahandling.matrixdata import MatrixData
-from emme_bindings.emme_project import EmmeProject
+from assignment.emme_bindings.emme_project import EmmeProject
 
 
 class EmmeAssignmentTest:
@@ -39,8 +39,7 @@ class EmmeAssignmentTest:
         }
         travel_cost = {}
         for tp in ("aht", "pt", "iht"):
-            self.ass_model.assign(tp, demand)
-            travel_cost[tp] = self.ass_model.get_impedance()
+            travel_cost[tp] = self.ass_model.assign(tp, demand, iteration="init")
         costs_files = MatrixData(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "Matrices", "2016_test"))
         for time_period in travel_cost:
             for mtx_type in travel_cost[time_period]:
