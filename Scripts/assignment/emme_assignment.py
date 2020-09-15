@@ -120,9 +120,9 @@ class EmmeAssignmentModel(AssignmentModel):
         else:
             raise ValueError("Iteration number not valid")
 
-        mtxs = {"time": self.get_emmebank_matrices("time"),
-                "dist": self.get_emmebank_matrices("dist"),
-                "cost": self.get_emmebank_matrices("cost")}
+        mtxs = {"time": self.get_emmebank_matrices("time", iteration=="last"),
+                "dist": self.get_emmebank_matrices("dist", iteration=="last"),
+                "cost": self.get_emmebank_matrices("cost", iteration=="last")}
         # fix the emme path analysis results (dist and cost zero if path not found)
         for mtx_type in mtxs: 
             for mtx_class in mtxs[mtx_type]: 
@@ -168,13 +168,16 @@ class EmmeAssignmentModel(AssignmentModel):
                 else:
                     emmebank.matrix(idx).set_numpy_data(matrices[mtx])
 
-    def get_emmebank_matrices(self, mtx_type, time_period=None):
+    def get_emmebank_matrices(self, mtx_type, is_last_iteration=False, time_period=None):
         """Get all matrices of specified type.
         
         Parameters
         ----------
         mtx_type : str
             Type (demand/time/transit/...)
+        is_last_iteration : bool (optional)
+            If this is the last iteration, all matrices are returned,
+            otherwise freight impedance matrices are skipped
         time_period: str
             (Unused currently)
 
@@ -184,9 +187,10 @@ class EmmeAssignmentModel(AssignmentModel):
             Subtype (car_work/truck/inv_time/...) : numpy 2-d matrix
                 Matrix of the specified type
         """
-        # TODO Remove freight impedance matrices from selection,
-        # if not last iteration
         matrices = dict.fromkeys(self.result_mtx[mtx_type].keys())
+        if not is_last_iteration:
+            for key in ("van", "truck", "trailer_truck"):
+                del matrices[key]
         for subtype in matrices:
             matrices[subtype] = self.get_matrix(mtx_type, subtype)
         return matrices
