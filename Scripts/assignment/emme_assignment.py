@@ -66,9 +66,9 @@ class EmmeAssignmentModel(AssignmentModel):
         ----------
         time_period : str
             Time period (aht/pt/iht)
-        matrices: dict
+        matrices : dict
             Assignment class (car_work/transit/...) : numpy 2-d matrix
-        iteration: int or str
+        iteration : int or str
             Iteration number (0, 1, 2, ...) or "init" or "last"
 
         Returns

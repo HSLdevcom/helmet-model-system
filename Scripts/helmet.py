@@ -58,7 +58,7 @@ def main(args, logger):
     # Run traffic assignment simulation for N iterations, on last iteration model-system will save the results
     log_extra["status"]["state"] = "preparing"
     logger.info("Starting simulation with {} iterations..".format(iterations), extra=log_extra)
-    impedance = model.assign_base_demand(args.use_fixed_transit_cost)
+    impedance = model.assign_base_demand(args.use_fixed_transit_cost, iterations==0)
     log_extra["status"]["state"] = "running"
     for i in range(1, iterations + 1):
         log_extra["status"]["current"] = i
