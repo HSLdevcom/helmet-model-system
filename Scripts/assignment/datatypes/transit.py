@@ -3,17 +3,42 @@ from path_analysis import PathAnalysis
 from journey_level import JourneyLevel
 
 
-class Transit:
+class TransitSpecification:
+    """
+    Transit assignment specification.
+    
+    Two journey levels are added at a later stage.
+    At the second level an extra boarding penalty is implemented,
+    hence a transfer penalty. Waiting time length is also different. 
+    Walk only trips are not allowed.
+
+    Parameters
+    ----------
+    ass_class : str
+        Assignment class (transit_work/transit_leisure)
+    demand_mtx : dict
+        key : str
+            Assignment class (transit_work/transit_leisure)
+        value : dict
+            id : str
+                Emme matrix id
+            description : dict
+                Matrix description
+    result_mtx : dict
+        key : str
+            Impedance type (time/cost/dist)
+        value : dict
+            key : str
+                Assignment class (transit_work/transit_leisure)
+            value : dict
+                id : str
+                    Emme matrix id
+                description : dict
+                    Matrix description
+    count_zone_boardings : bool (optional)
+        Whether assignment is performed only to count fare zone boardings
+    """
     def __init__(self, ass_class, demand_mtx, result_mtx, count_zone_boardings=False):
-        """
-        Transit assignment specification
-        Two journey levels are added at a later stage.
-        The two journey levels are identical, except that at the second
-        level an extra boarding penalty is implemented,
-        hence a transfer penalty. Waiting time length is also different. 
-        Walk only trips are not allowed.
-        TODO: Update if we keep transit work / leisure and this class.
-        """
         self.demand_mtx = demand_mtx
         self.result_mtx = result_mtx
         no_penalty = dict.fromkeys(["at_nodes", "on_lines", "on_segments"])

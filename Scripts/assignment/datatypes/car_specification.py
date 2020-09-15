@@ -2,6 +2,31 @@ import parameters as param
 from car import Car 
 
 class CarSpecification:
+    """
+    Car assignment specification.
+
+    Parameters
+    ----------
+    demand_mtx : dict
+        key : str
+            Assignment class (transit_work/transit_leisure)
+        value : dict
+            id : str
+                Emme matrix id
+            description : dict
+                Matrix description
+    result_mtx : dict
+        key : str
+            Impedance type (time/cost/dist)
+        value : dict
+            key : str
+                Assignment class (transit_work/transit_leisure)
+            value : dict
+                id : str
+                    Emme matrix id
+                description : dict
+                    Matrix description
+    """
     def __init__(self, demand_mtx, result_mtx):
         self.car_work = Car("car_work", demand_mtx, result_mtx)
         self.car_leisure = Car("car_leisure", demand_mtx, result_mtx)

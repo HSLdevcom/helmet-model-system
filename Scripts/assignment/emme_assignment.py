@@ -6,18 +6,47 @@ import parameters as param
 from abstract_assignment import AssignmentModel
 from datatypes.car import Car
 from datatypes.car_specification import CarSpecification
-from datatypes.transit import Transit
+from datatypes.transit import TransitSpecification
 from datatypes.path_analysis import PathAnalysis
 
 
 class EmmeAssignmentModel(AssignmentModel):
+    """
+    Emme assignment definition.
+
+    Parameters
+    ----------
+    emme_context : assignment.emme_bindings.emme_project.EmmeProject
+        Emme projekt to connect to this assignment
+    first_scenario_id : int
+        Emme scenario id for bike scenario
+        Usually 19, followed by 20 (day scenario), 21 (morning scenario),
+        22 (midday scenario) and 23 (afternoon scenario).
+        If first scenario is set something else (e.g. 5), then following 
+        scenarios are also adjusted (6, 7, 8, 9).
+    demand_mtx : dict
+        key : str
+            Assignment class (transit_work/transit_leisure)
+        value : dict
+            id : str
+                Emme matrix id
+            description : dict
+                Matrix description
+    result_mtx : dict
+        key : str
+            Impedance type (time/cost/dist)
+        value : dict
+            key : str
+                Assignment class (transit_work/transit_leisure)
+            value : dict
+                id : str
+                    Emme matrix id
+                description : dict
+                    Matrix description
+    count_zone_boardings : bool (optional)
+        Whether assignment is performed only to count fare zone boardings
+    """
     def __init__(self, emme_context, first_scenario_id, demand_mtx=param.emme_demand_mtx, result_mtx=param.emme_result_mtx):
-        """
-        first_scenario_id (bike scenario) is usually #19,
-            followed by (#20) walk scenario, (#21) morning scenario, (#22) midday scenario, and (#23) evening scenario.
-        If first scenario is set something else (e.g. #5), then following scenarios are also adjusted (#6, #7, #8, #9).
-        Walk scenario is not calculated, so effective scenarios by convention are <first>, +2, +3, +4.
-        """
         self.emme_project = emme_context
         self.demand_mtx = demand_mtx
         self.result_mtx = result_mtx
@@ -60,6 +89,7 @@ class EmmeAssignmentModel(AssignmentModel):
 
     def assign(self, time_period, matrices, iteration):
         """Assign cars, bikes and transit for one time period.
+
         Get travel impedance matrices for one time period from assignment.
         
         Parameters
@@ -420,15 +450,15 @@ class EmmeAssignmentModel(AssignmentModel):
         if transit_zones > zones_in_zonedata:
             self.emme_project.logger.warn(
                 "All Emme-node labels do not have transit costs specified.")
+        spec = TransitSpecification(
+            "transit_work", self.demand_mtx, self.result_mtx,
+            count_zone_boardings=True)
         for transit_zone in transit_zones:
             # Set tag to 1 for nodes in transit zone and 0 elsewhere
             for node in network.nodes():
                 node.data1 = (node.label == transit_zone)
             scen.publish_network(network)
             # Transit assignment with zone tag as weightless boarding cost
-            spec = Transit(
-                "transit_work", self.demand_mtx, self.result_mtx,
-                count_zone_boardings=True)
             self.emme_project.transit_assignment(
                 specification=spec.transit_spec, scenario=scen,
                 save_strategies=True)
@@ -696,7 +726,7 @@ class EmmeAssignmentModel(AssignmentModel):
         self.emme_project.logger.info("Transit assignment started")
         # Here we assign all transit in one class, multi-class assignment is
         # performed in last iteration (congested assignment)
-        spec = Transit("transit_work", self.demand_mtx, self.result_mtx)
+        spec = TransitSpecification("transit_work", self.demand_mtx, self.result_mtx)
         self.emme_project.transit_assignment(
             specification=spec.transit_spec, scenario=scen, save_strategies=True)
         self.emme_project.matrix_results(spec.transit_result_spec, scenario=scen)
@@ -708,7 +738,7 @@ class EmmeAssignmentModel(AssignmentModel):
         emmebank = self.emme_project.modeller.emmebank
         scen = emmebank.scenario(scen_id)
         self.emme_project.logger.info("Congested transit assignment started")
-        tcs = [Transit(tc, self.demand_mtx, self.result_mtx) for tc in transit_classes]
+        tcs = [TransitSpecification(tc, self.demand_mtx, self.result_mtx) for tc in transit_classes]
         self.emme_project.congested_assignment(
             transit_assignment_spec=[spec.transit_spec for spec in tcs],
             class_names=transit_classes,
