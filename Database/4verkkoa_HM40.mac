@@ -21,9 +21,9 @@
 ~#             p8 skenaarion nimi
 ~#
 ~#  ajo esim
-~#  ~<4verkkoa_HM40.mac 2016_20191014 sijopankki2016 19 20 21 22 23
-~#  ~<4verkkoa_HM40.mac 2018_20191014 sijopankki2018 29 30 31 32 33
-~#  ~<4verkkoa_HM40.mac 2019_20191122 sijopankki2019 39 40 41 42 43
+~#  ~<4verkkoa_HM40.mac 2016_20191014 sijopankki2016 19 20 21 22 23 V2016
+~#  ~<4verkkoa_HM40.mac 2018_20191014 sijopankki2018 29 30 31 32 33 V2018
+~#  ~<4verkkoa_HM40.mac 2019_20191122 sijopankki2019 39 40 41 42 43 V2019
 ~#     
 batchin=
 reports=
