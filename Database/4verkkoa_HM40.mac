@@ -21,9 +21,9 @@
 ~#             p8 skenaarion nimi
 ~#
 ~#  ajo esim
-~#  ~<4verkkoa_HM40.mac 2016_20191014 sijopankki2016 19 20 21 22 23
-~#  ~<4verkkoa_HM40.mac 2018_20191014 sijopankki2018 29 30 31 32 33
-~#  ~<4verkkoa_HM40.mac 2019_20191122 sijopankki2019 39 40 41 42 43
+~#  ~<4verkkoa_HM40.mac 2016_20191014 sijopankki2016 19 20 21 22 23 V2016
+~#  ~<4verkkoa_HM40.mac 2018_20191014 sijopankki2018 29 30 31 32 33 V2018
+~#  ~<4verkkoa_HM40.mac 2019_20191122 sijopankki2019 39 40 41 42 43 V2019
 ~#     
 batchin=
 reports=
@@ -32,7 +32,7 @@ reports=
  s=%3%
  1.23
  2
- skenaario %1% pyorailyverkko
+ skenaario %8% pyorailyverkko
  q
 ~# ** poistetaan vanha sisalto
  2.12
@@ -213,7 +213,7 @@ reports=
  s=%4%
  1.23
  2
- skenaario %1% vrk
+ skenaario %8% vrk
  q
 ~< f_bussi_M2016_3p.mac
 ~< f_us2_M2016_4p.mac
@@ -224,7 +224,7 @@ reports=
  s=%5%
  1.23
  2
- skenaario %1% aht
+ skenaario %8% aht
  q
 ~< f_bussi_M2016_3a.mac
 ~< f_us2_M2016_4a.mac
@@ -235,7 +235,7 @@ reports=
  s=%6%
  1.23
  2
- skenaario %1% pt
+ skenaario %8% pt
  q
 ~< f_bussi_M2016_3p.mac
 ~< f_us2_M2016_4p.mac
@@ -246,7 +246,7 @@ reports=
  s=%7%
  1.23
  2
- skenaario %1% iht
+ skenaario %8% iht
  q
 ~< f_bussi_M2016_3i.mac
 ~< f_us2_M2016_4i.mac
