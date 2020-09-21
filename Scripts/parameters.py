@@ -1119,7 +1119,8 @@ destination_choice = {
         },
         "transit": {
             "attraction": {
-                "cbd": (0.483086068108, 0.483086068108 + 0.1),
+                "cbd": (0.483086068108, 0.483086068108),
+                "helsinki_other": (0.2, 0.2),
             },
             "impedance": {
                 "time": -0.111547282384e-1,
@@ -1188,8 +1189,8 @@ destination_choice = {
         "transit": {
             "attraction": {
                 "own_zone_area_sqrt": -1.40415965463,
-                "cbd": (0.704345842211 + 0.2,
-                        0.704345842211 + 0.5),
+                "cbd": (0.704345842211 + 0.2, 0.704345842211 + 0.2),
+                "helsinki_other": (0.5, 0.2),
             },
             "impedance": {
                 "time": -0.245629127645e-1,
@@ -1324,7 +1325,8 @@ destination_choice = {
         },
         "transit": {
             "attraction": {
-                "cbd": (0.135335656706, 2.62480475297),
+                "cbd": (0.135335656706 - 0.1, 2.62480475297 - 0.1),
+                "helsinki_other": (0.1, 0.1),
             },
             "impedance": {
                 "time": -0.299237931923e-1,
