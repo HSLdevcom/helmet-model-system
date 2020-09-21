@@ -89,15 +89,15 @@ class ZoneData:
         self["zone_area"] = landdata["builtar"]
         self.share["share_detached_houses"] = landdata["detach"]
         self["cbd"] = pandas.Series(0, self.zone_numbers)
-        self["cbd"].loc[:param.areas["helsinki_cbd"][1]] = 1
+        self["cbd"].loc[param.areas["helsinki_cbd"][0]:param.areas["helsinki_cbd"][1]] = 1
         self["helsinki_other"] = pandas.Series(0, self.zone_numbers)
-        self["helsinki_other"].loc[:param.areas["helsinki_other"][1]] = 1
+        self["helsinki_other"].loc[param.areas["helsinki_other"][0]:param.areas["helsinki_other"][1]] = 1
         self["helsinki"] = pandas.Series(0, self.zone_numbers)
-        self["helsinki"].loc[:param.municipality["Helsinki"][1]] = 1
+        self["helsinki"].loc[param.municipality["Helsinki"][0]:param.municipality["Helsinki"][1]] = 1
         self["espoo_vant_kau"] = pandas.Series(0, self.zone_numbers)
-        self["espoo_vant_kau"].loc[:param.areas["espoo_vant_kau"][1]] = 1
+        self["espoo_vant_kau"].loc[param.areas["espoo_vant_kau"][0]:param.areas["espoo_vant_kau"][1]] = 1
         self["surrounding"] = pandas.Series(0, self.zone_numbers)
-        self["surrounding"].loc[:param.areas["surrounding"][1]] = 1
+        self["surrounding"].loc[param.areas["surrounding"][0]:param.areas["surrounding"][1]] = 1
         self["shops_cbd"] = self["cbd"] * self["shops"]
         self["shops_elsewhere"] = (1-self["cbd"]) * self["shops"]
         # Create diagonal matrix with zone area
