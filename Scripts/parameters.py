@@ -1864,8 +1864,8 @@ mode_choice = {
             "constant": (0.844179295926 * (3.15335645065 - 0.158), 
                          0.844179295926 * (3.09257722177 - 0.415)),
             "generation": {
-                "cbd": 0.3,
-                "helsinki_other": 0.3,
+                "cbd": 0.4,
+                "helsinki_other": 0.1,
                 "espoo_vant_kau": -0.2,
             },
             "attraction": {},
@@ -1916,8 +1916,8 @@ mode_choice = {
             "constant": (0.272803753976 * (13.2817160786 + 0.211),
                          0.272803753976 * (13.2817160786 - 0.693)),
             "generation": {
-                "cbd": 0.0,
-                "helsinki_other": 0.6,
+                "cbd": 0.3,
+                "helsinki_other": 0.3,
                 "espoo_vant_kau": -0.3,
             },
             "attraction": {},
@@ -1966,8 +1966,8 @@ mode_choice = {
         "transit": {
             "constant": (3.10747422821 - 0.159, 3.10747422821 + 0.700),
             "generation": {
-                "cbd": 0.4,
-                "helsinki_other": 0.4,
+                "cbd": 0.5,
+                "helsinki_other": 0.1,
                 "espoo_vant_kau": -0.3,
             },
             "attraction": {},
@@ -2018,8 +2018,8 @@ mode_choice = {
             "constant": (0.539979474415 * (5.13091589060 - 0.134), 
                          0.539979474415 * (4.98462338486 - 0.476)),
             "generation": {
-                "cbd": 0.0,
-                "helsinki_other": 0.4,
+                "cbd": 0.1,
+                "helsinki_other": 0.1,
                 "espoo_vant_kau": -0.3,
             },
             "attraction": {},
@@ -2072,8 +2072,8 @@ mode_choice = {
             "constant": (0.151688898 * (8.71611785 - 0.209), 
                          0.151688898 * (-9.326014274 + 0.711)),
             "generation": {
-                "cbd": 0.3,
-                "helsinki_other": 0.8,
+                "cbd": 0.4,
+                "helsinki_other": 0.1,
                 "espoo_vant_kau": -0.7,
             },
             "attraction": {},
@@ -2125,8 +2125,8 @@ mode_choice = {
             "constant": (.798132431338 * (1.00739274058 + 0.284),
                          .798132431338 * (1.00739274058 - 3.652)),
             "generation": {
-                "cbd": 1.5,
-                "helsinki_other": 0.5,
+                "cbd": 1.0,
+                "helsinki_other": -0.5,
                 "espoo_vant_kau": -1.0,
             },
             "attraction": {},
@@ -2177,8 +2177,8 @@ mode_choice = {
             "constant": (.798132431338 * (1.00739274058 + 0.352),
                          .798132431338 * (1.00739274058 - 1.051)),
             "generation": {
-                "cbd": 0.6,
-                "helsinki_other": 0.0,
+                "cbd": 0.2,
+                "helsinki_other": -0.4,
                 "espoo_vant_kau": -0.4,
             },
             "attraction": {},
