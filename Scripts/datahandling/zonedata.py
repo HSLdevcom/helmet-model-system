@@ -90,6 +90,8 @@ class ZoneData:
         self.share["share_detached_houses"] = landdata["detach"]
         self["cbd"] = pandas.Series(0, self.zone_numbers)
         self["cbd"].loc[:param.areas["helsinki_cbd"][1]] = 1
+        self["helsinki_other"] = pandas.Series(0, self.zone_numbers)
+        self["helsinki_other"].loc[:param.areas["helsinki_other"][1]] = 1
         self["helsinki"] = pandas.Series(0, self.zone_numbers)
         self["helsinki"].loc[:param.municipality["Helsinki"][1]] = 1
         self["espoo_vant_kau"] = pandas.Series(0, self.zone_numbers)
