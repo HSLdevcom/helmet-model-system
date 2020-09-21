@@ -81,8 +81,9 @@ class ModelSystem:
         return DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=False)
 
     def _add_internal_demand(self, previous_iter_impedance, is_last_iteration):
-        """Produce mode-specific demand matrices and add them
-        for each time-period to container in departure time model.
+        """Produce mode-specific demand matrices.
+
+        Add them for each time-period to container in departure time model.
 
         Parameters
         ----------
@@ -164,7 +165,7 @@ class ModelSystem:
             peripheral_cost = peripheral_mtx["transit"]
             if use_fixed_transit_cost:
                 self.logger.info("Using fixed transit cost matrix")
-                with self.basematrices.open("cost", "aht") as aht_mtx:
+                with self.resultmatrices.open("cost", "aht") as aht_mtx:
                     fixed_cost = aht_mtx["transit"]
             else:
                 self.logger.info("Calculating transit cost")
