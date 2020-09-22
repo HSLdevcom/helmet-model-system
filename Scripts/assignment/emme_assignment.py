@@ -1,21 +1,52 @@
 import os
 import numpy
 import pandas
+
 import parameters as param
-from abstract_assignment import AssignmentModel, ImpedanceSource
+from abstract_assignment import AssignmentModel
 from datatypes.car import Car
-from datatypes.transit import Transit
+from datatypes.car_specification import CarSpecification
+from datatypes.transit import TransitSpecification
 from datatypes.path_analysis import PathAnalysis
 
 
-class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
+class EmmeAssignmentModel(AssignmentModel):
+    """
+    Emme assignment definition.
+
+    Parameters
+    ----------
+    emme_context : assignment.emme_bindings.emme_project.EmmeProject
+        Emme projekt to connect to this assignment
+    first_scenario_id : int
+        Emme scenario id for bike scenario
+        Usually 19, followed by 20 (day scenario), 21 (morning scenario),
+        22 (midday scenario) and 23 (afternoon scenario).
+        If first scenario is set something else (e.g. 5), then following 
+        scenarios are also adjusted (6, 7, 8, 9).
+    demand_mtx : dict
+        key : str
+            Assignment class (transit_work/transit_leisure)
+        value : dict
+            id : str
+                Emme matrix id
+            description : dict
+                Matrix description
+    result_mtx : dict
+        key : str
+            Impedance type (time/cost/dist)
+        value : dict
+            key : str
+                Assignment class (transit_work/transit_leisure)
+            value : dict
+                id : str
+                    Emme matrix id
+                description : dict
+                    Matrix description
+    count_zone_boardings : bool (optional)
+        Whether assignment is performed only to count fare zone boardings
+    """
     def __init__(self, emme_context, first_scenario_id, demand_mtx=param.emme_demand_mtx, result_mtx=param.emme_result_mtx):
-        """
-        first_scenario_id (bike scenario) is usually #19,
-            followed by (#20) walk scenario, (#21) morning scenario, (#22) midday scenario, and (#23) evening scenario.
-        If first scenario is set something else (e.g. #5), then following scenarios are also adjusted (#6, #7, #8, #9).
-        Walk scenario is not calculated, so effective scenarios by convention are <first>, +2, +3, +4.
-        """
         self.emme_project = emme_context
         self.demand_mtx = demand_mtx
         self.result_mtx = result_mtx
@@ -56,38 +87,59 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             self._calc_background_traffic(self.emme_scenarios[time_period])
         self._specify()
 
-    def assign(self, time_period, matrices, is_last_iteration=False, is_first_iteration=False):
+    def assign(self, time_period, matrices, iteration):
         """Assign cars, bikes and transit for one time period.
+
+        Get travel impedance matrices for one time period from assignment.
         
         Parameters
         ----------
         time_period : str
             Time period (aht/pt/iht)
-        matrices: dict
+        matrices : dict
             Assignment class (car_work/transit/...) : numpy 2-d matrix
-        is_last_iteration: bool
-        is_first_iteration: bool
+        iteration : int or str
+            Iteration number (0, 1, 2, ...) or "init" or "last"
+
+        Returns
+        -------
+        dict
+            Type (time/cost/dist) : dict
+                Assignment class (car_work/transit/...) : numpy 2-d matrix
         """
         self.emme_project.logger.info("Assignment starts...")
         self.set_emmebank_matrices(matrices)
         scen_id = self.emme_scenarios[time_period]
-        if is_first_iteration:
+        if iteration=="init":
             self._assign_pedestrians(scen_id)
-            self._assign_bikes(self.bike_scenario,
-                            self.result_mtx["dist"]["bike"]["id"],
-                            "all",
-                            "@bike_"+time_period)
+            self._assign_bikes(
+                self.bike_scenario, self.result_mtx["dist"]["bike"]["id"],
+                "all", "@bike_"+time_period)
             self._assign_cars(scen_id, param.stopping_criteria_coarse)
             self._calc_extra_wait_time(scen_id)
             self._assign_transit(scen_id)
-        elif is_last_iteration:
+        elif iteration==0:
+            self._assign_cars(scen_id, param.stopping_criteria_coarse)
+            self._calc_extra_wait_time(scen_id)
+            self._assign_transit(scen_id)
+        elif iteration==1:
+            self._assign_cars(scen_id, param.stopping_criteria_coarse)
+            self._calc_extra_wait_time(scen_id)
+            self._assign_transit(scen_id)
+            self._calc_background_traffic(scen_id, include_trucks=True)
+        elif isinstance(iteration, int) and iteration>1:
+            self._assign_cars(
+                scen_id, param.stopping_criteria_coarse, lightweight=True)
+            self._calc_extra_wait_time(scen_id)
+            self._assign_transit(scen_id)
+        elif iteration=="last":
+            self._calc_background_traffic(scen_id)
             self._assign_cars(scen_id, param.stopping_criteria_fine)
             self._calc_extra_wait_time(scen_id)
             self._assign_congested_transit(param.transit_classes, scen_id)
-            self._assign_bikes(self.bike_scenario,
-                           self.result_mtx["dist"]["bike"]["id"],
-                           "all",
-                           "@bike_"+time_period)
+            self._assign_bikes(
+                self.bike_scenario, self.result_mtx["dist"]["bike"]["id"],
+                "all", "@bike_"+time_period)
             for ass_class in param.link_volumes:
                 self.auto_link_24h(ass_class)
             for transit_class in param.transit_classes:
@@ -96,24 +148,11 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                 self.transit_segment_24h(transit_class, "trb")
             self.bike_link_24h()
         else:
-            self._assign_cars(scen_id, param.stopping_criteria_coarse)
-            self._calc_extra_wait_time(scen_id)
-            self._assign_transit(scen_id)
+            raise ValueError("Iteration number not valid")
 
-    # TODO Could they be merged with (right after) .assign(). Currently both re-route via emmebank, which is ambiguous.
-    # Then the ABC class as well as MockAssignment would have to be adjusted respectively.
-    def get_impedance(self, is_last_iteration=False):
-        """Get travel impedance matrices for one time period from assignment.
-        
-        Return
-        ------
-        dict
-            Type (time/cost/dist) : dict
-                Assignment class (car_work/transit/...) : numpy 2-d matrix
-        """
-        mtxs = {"time": self.get_emmebank_matrices("time"),
-                "dist": self.get_emmebank_matrices("dist"),
-                "cost": self.get_emmebank_matrices("cost")}
+        mtxs = {"time": self.get_emmebank_matrices("time", iteration=="last"),
+                "dist": self.get_emmebank_matrices("dist", iteration=="last"),
+                "cost": self.get_emmebank_matrices("cost", iteration=="last")}
         # fix the emme path analysis results (dist and cost zero if path not found)
         for mtx_type in mtxs: 
             for mtx_class in mtxs[mtx_type]: 
@@ -124,7 +163,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         mtxs["time"]["car_leisure"] = self._extract_timecost_from_gcost("car_leisure")
         mtxs["time"]["transit_work"] = self._damp(
             mtxs["time"]["transit_work"], "transit_work_fw_time")
-        if is_last_iteration:
+        if iteration=="last":
             mtxs["time"]["transit_leisure"] = self._damp(
                 mtxs["time"]["transit_leisure"], "transit_leisure_fw_time")
         else:
@@ -159,13 +198,16 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
                 else:
                     emmebank.matrix(idx).set_numpy_data(matrices[mtx])
 
-    def get_emmebank_matrices(self, mtx_type, time_period=None):
+    def get_emmebank_matrices(self, mtx_type, is_last_iteration=False, time_period=None):
         """Get all matrices of specified type.
         
         Parameters
         ----------
         mtx_type : str
             Type (demand/time/transit/...)
+        is_last_iteration : bool (optional)
+            If this is the last iteration, all matrices are returned,
+            otherwise freight impedance matrices are skipped
         time_period: str
             (Unused currently)
 
@@ -175,9 +217,10 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             Subtype (car_work/truck/inv_time/...) : numpy 2-d matrix
                 Matrix of the specified type
         """
-        # TODO Remove freight impedance matrices from selection,
-        # if not last iteration
         matrices = dict.fromkeys(self.result_mtx[mtx_type].keys())
+        if not is_last_iteration:
+            for key in ("van", "truck", "trailer_truck"):
+                del matrices[key]
         for subtype in matrices:
             matrices[subtype] = self.get_matrix(mtx_type, subtype)
         return matrices
@@ -254,24 +297,29 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             self.emme_project.logger.debug(
                 "Created attr {} for scen {}".format(extr.name, scen_id))
 
-    def _calc_background_traffic(self, scen_id):
+    def _calc_background_traffic(self, scen_id, include_trucks=False):
         """Calculate background traffic (buses)."""
         emmebank = self.emme_project.modeller.emmebank
         scen = emmebank.scenario(scen_id)
         network = scen.get_network()
         # emme api has name "data3" for ul3
-        param_name = param.background_traffic.replace("ul", "data")
+        background_traffic = param.background_traffic.replace("ul", "data")
         # calc @bus and data3
-        extra_attr = "@bus"
         for link in network.links():
             segment_freq = 0
             for segment in link.segments():
                 segment_hdw = segment.line.headway
                 if 0 < segment_hdw < 900: 
                     segment_freq += 60 / segment_hdw
-            link[extra_attr] = segment_freq
+            link["@bus"] = segment_freq
             if link.volume_delay_func in [1,2,3,4,5]:
-                link[param_name] = segment_freq
+                # If no bus lane
+                link[background_traffic] = segment_freq
+            else:
+                link[background_traffic] = 0
+            if include_trucks:
+                for ass_class in ("@truck", "@trailer_truck"):
+                    link[background_traffic] += link[ass_class]
         scen.publish_network(network)
 
     def _calc_road_cost(self, scen_id):
@@ -402,15 +450,15 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         if transit_zones > zones_in_zonedata:
             self.emme_project.logger.warn(
                 "All Emme-node labels do not have transit costs specified.")
+        spec = TransitSpecification(
+            "transit_work", self.demand_mtx, self.result_mtx,
+            count_zone_boardings=True)
         for transit_zone in transit_zones:
             # Set tag to 1 for nodes in transit zone and 0 elsewhere
             for node in network.nodes():
                 node.data1 = (node.label == transit_zone)
             scen.publish_network(network)
             # Transit assignment with zone tag as weightless boarding cost
-            spec = Transit(
-                "transit_work", self.demand_mtx, self.result_mtx,
-                count_zone_boardings=True)
             self.emme_project.transit_assignment(
                 specification=spec.transit_spec, scenario=scen,
                 save_strategies=True)
@@ -462,32 +510,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         self._calc_boarding_penalties(scen_id)
 
     def _specify(self):
-        # Car assignment specification
-        car_work = Car("car_work", self.demand_mtx, self.result_mtx)
-        car_leisure = Car("car_leisure", self.demand_mtx, self.result_mtx)
-        van = Car("van", self.demand_mtx, self.result_mtx)
-        truck = Car(
-            "truck", self.demand_mtx, self.result_mtx, 
-            value_of_time_inv=0.2,link_costs="length")
-        trailer_truck = Car(
-            "trailer_truck", self.demand_mtx, self.result_mtx,
-            value_of_time_inv=0.2, link_costs="length")
-        self.car_spec = {
-            "type": "SOLA_TRAFFIC_ASSIGNMENT",
-            "classes": [
-                car_work.spec,
-                car_leisure.spec,
-                trailer_truck.spec,
-                truck.spec,
-                van.spec,
-            ],
-            "background_traffic": {
-                "link_component": param.background_traffic,
-                "add_transit_vehicles": False,
-            },
-            "performance_settings": param.performance_settings,
-            "stopping_criteria": None, # This is defined later
-        }
+        self._car_spec = CarSpecification(self.demand_mtx, self.result_mtx)
         # Bike assignment specification
         self.bike_spec = {
             "type": "STANDARD_TRAFFIC_ASSIGNMENT",
@@ -556,15 +579,16 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
             },
         }        
         
-    def _assign_cars(self, scen_id, stopping_criteria):
+    def _assign_cars(self, scen_id, stopping_criteria, lightweight=False):
         """Perform car_work traffic assignment for one scenario."""
         emmebank = self.emme_project.modeller.emmebank
         scen = emmebank.scenario(scen_id)
         function_file = os.path.join(self.emme_project.path, param.func_car)  # TODO refactor paths out from here
         self.emme_project.process_functions(function_file)
         self.emme_project.logger.info("Car assignment started...")
-        self.car_spec["stopping_criteria"] = stopping_criteria
-        self.emme_project.car_assignment(self.car_spec, scen)
+        car_spec = self._car_spec.spec(lightweight)
+        car_spec["stopping_criteria"] = stopping_criteria
+        self.emme_project.car_assignment(car_spec, scen)
         self.emme_project.logger.info("Car assignment performed for scenario "
                                       + str(scen_id))
     
@@ -702,7 +726,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         self.emme_project.logger.info("Transit assignment started")
         # Here we assign all transit in one class, multi-class assignment is
         # performed in last iteration (congested assignment)
-        spec = Transit("transit_work", self.demand_mtx, self.result_mtx)
+        spec = TransitSpecification("transit_work", self.demand_mtx, self.result_mtx)
         self.emme_project.transit_assignment(
             specification=spec.transit_spec, scenario=scen, save_strategies=True)
         self.emme_project.matrix_results(spec.transit_result_spec, scenario=scen)
@@ -714,7 +738,7 @@ class EmmeAssignmentModel(AssignmentModel, ImpedanceSource):
         emmebank = self.emme_project.modeller.emmebank
         scen = emmebank.scenario(scen_id)
         self.emme_project.logger.info("Congested transit assignment started")
-        tcs = [Transit(tc, self.demand_mtx, self.result_mtx) for tc in transit_classes]
+        tcs = [TransitSpecification(tc, self.demand_mtx, self.result_mtx) for tc in transit_classes]
         self.emme_project.congested_assignment(
             transit_assignment_spec=[spec.transit_spec for spec in tcs],
             class_names=transit_classes,
