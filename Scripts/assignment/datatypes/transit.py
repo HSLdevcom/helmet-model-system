@@ -37,8 +37,10 @@ class TransitSpecification:
                     Matrix description
     count_zone_boardings : bool (optional)
         Whether assignment is performed only to count fare zone boardings
+    is_last_iteration : bool (optional)
+        If this is the last iteration, some other assignment parameters can be defined
     """
-    def __init__(self, ass_class, demand_mtx, result_mtx, count_zone_boardings=False):
+    def __init__(self, ass_class, demand_mtx, result_mtx, count_zone_boardings=False, is_last_iteration=False):
         self.demand_mtx = demand_mtx
         self.result_mtx = result_mtx
         no_penalty = dict.fromkeys(["at_nodes", "on_lines", "on_segments"])
@@ -105,8 +107,8 @@ class TransitSpecification:
                 },
             }
         else:
-            jlevel1 = JourneyLevel(boarded=False, ass_class=ass_class)
-            jlevel2 = JourneyLevel(boarded=True, ass_class=ass_class)
+            jlevel1 = JourneyLevel(boarded=False, ass_class=ass_class, is_last_iteration=is_last_iteration)
+            jlevel2 = JourneyLevel(boarded=True, ass_class=ass_class, is_last_iteration=is_last_iteration)
             mtx_results_spec = {
                 "type": "EXTENDED_TRANSIT_MATRIX_RESULTS",
                 "total_impedance": self.result_mtx["time"][ass_class]["id"],

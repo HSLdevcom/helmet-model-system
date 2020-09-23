@@ -135,6 +135,7 @@ class EmmeAssignmentModel(AssignmentModel):
         elif iteration=="last":
             self._calc_background_traffic(scen_id)
             self._assign_cars(scen_id, param.stopping_criteria_fine)
+            self._calc_boarding_penalties(self.emme_scenarios[time_period], is_last_iteration=True)
             self._calc_extra_wait_time(scen_id)
             self._assign_congested_transit(param.transit_classes, scen_id)
             self._assign_bikes(
@@ -638,24 +639,19 @@ class EmmeAssignmentModel(AssignmentModel):
         self.emme_project.logger.info("Pedestrian assignment performed for scenario "
                                       + str(scen_id))
 
-    def _calc_boarding_penalties(self, scen_id, extra_penalty=0):
+    def _calc_boarding_penalties(self, scen_id, extra_penalty=0, is_last_iteration=False):
         """Calculate boarding penalties for transit assignment."""
         emmebank = self.emme_project.modeller.emmebank
         scen = emmebank.scenario(scen_id)
         # Definition of line specific boarding penalties
-        netw_specs = []
-        # Bus
-        for mode in param.boarding_penalty:
-            netw_specs.append({
-                "type": "NETWORK_CALCULATION",
-                "selections": {
-                    "transit_line": "mode=" + mode,
-                },
-                "expression": str(param.boarding_penalty[mode]) + "+" + str(extra_penalty),
-                "result": "ut3",
-                "aggregation": None,
-            })
-        self.emme_project.network_calc(netw_specs, scen)
+        network = scen.get_network()
+        if is_last_iteration:
+            penalty = param.boarding_penalty
+        else:
+            penalty = param.last_boarding_penalty
+        for line in network.transit_lines():
+            line.data3 = penalty[line.mode.id] + extra_penalty
+        scen.publish_network(network)
         
     def _calc_extra_wait_time(self, scen_id):
         """Calculate extra waiting time for one scenario."""
@@ -738,7 +734,9 @@ class EmmeAssignmentModel(AssignmentModel):
         emmebank = self.emme_project.modeller.emmebank
         scen = emmebank.scenario(scen_id)
         self.emme_project.logger.info("Congested transit assignment started")
-        tcs = [TransitSpecification(tc, self.demand_mtx, self.result_mtx) for tc in transit_classes]
+        tcs = [TransitSpecification(
+            tc, self.demand_mtx, self.result_mtx, is_last_iteration=True
+        ) for tc in transit_classes]
         self.emme_project.congested_assignment(
             transit_assignment_spec=[spec.transit_spec for spec in tcs],
             class_names=transit_classes,
