@@ -646,9 +646,9 @@ class EmmeAssignmentModel(AssignmentModel):
         # Definition of line specific boarding penalties
         network = scen.get_network()
         if is_last_iteration:
-            penalty = param.boarding_penalty
-        else:
             penalty = param.last_boarding_penalty
+        else:
+            penalty = param.boarding_penalty
         for line in network.transit_lines():
             line.data3 = penalty[line.mode.id] + extra_penalty
         scen.publish_network(network)
