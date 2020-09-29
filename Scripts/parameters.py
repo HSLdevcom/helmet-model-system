@@ -8,9 +8,9 @@ performance_settings = {
 }
 # Inversed value of time [min/eur]
 vot_inv = {
-    "work": 6,
-    "business": 6,
-    "leisure": 6,
+    "work": 7.576, # 1 / ((7.92 eur/h) / (60 min/h)) = 7.576 min/eur
+    "business": 2.439, # 1 / ((24.60 eur/h) / (60 min/h)) = 2.439 min/eur
+    "leisure": 11.173, # 1 / ((5.37 eur/h) / (60 min/h)) = 11.173 min/eur
 }
 # Default distance unit cost [eur/km]
 dist_unit_cost = 0.12
