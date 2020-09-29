@@ -649,8 +649,16 @@ class EmmeAssignmentModel(AssignmentModel):
             penalty = param.last_boarding_penalty
         else:
             penalty = param.boarding_penalty
+        missing_penalties = set()
         for line in network.transit_lines():
-            line.data3 = penalty[line.mode.id] + extra_penalty
+            try:
+                line.data3 = penalty[line.mode.id] + extra_penalty
+            except KeyError:
+                missing_penalties.add(line.mode.id)
+        if missing_penalties:
+            missing_penalties = ", ".join(missing_penalties)
+            self.emme_project.logger.warn(
+                "No boarding penalty found for transit modes " + missing_penalties)
         scen.publish_network(network)
         
     def _calc_extra_wait_time(self, scen_id):
