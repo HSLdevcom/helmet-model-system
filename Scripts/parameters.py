@@ -1756,40 +1756,40 @@ destination_choice = {
     "hop": {
         "car": {
             "attraction": {
-                "car_density": 1000 * 0.187305245180e-2,
-                "own_zone_area": -0.138197654412e-1 + 0.0025,
+                "car_density": 1000 * 0.190087895761E-02,
+                "own_zone_area": -0.914703619822E-02 + 0.00,
             },
             "impedance": {
                 "time": -0.288481815905e-1,
-                "cost": -0.188691214282 - 0.015 ,
+                "cost": -0.0207498305,
             },
             "log": {
                 "size": 1, # L_S_M
             },
             "size": {
-                "workplaces": numpy.exp(1.07808303849),
-                "service": numpy.exp(4.57535345257),
-                "shops": numpy.exp(5.35085890989),
-                "comprehensive_schools": numpy.exp(2.40450824304),
-                "population_own": numpy.exp(3.28776000706),
+                "workplaces": numpy.exp(1.23033343181),
+                "service": numpy.exp(4.63048603927),
+                "shops": numpy.exp(5.40401631191),
+                "comprehensive_schools": numpy.exp(2.38807154465),
+                "population_own": numpy.exp(3.32704971816),
                 "population_other": 1,
             },
         },
         "transit": {
             "attraction": {},
             "impedance": {
-                "time": -0.552308836126e-2,
-                "cost": (-0.188691214282 - 0.04) / 30.0,
+                "time": -0.503184346810E-02,
+                "cost": (-0.231841682005 - 0.00) / 30.0,
             },
             "log": {
                 "size": 1, # L_S_M
             },
             "size": {
-                "workplaces": numpy.exp(1.07808303849),
-                "service": numpy.exp(4.57535345257),
-                "shops": numpy.exp(5.35085890989),
-                "comprehensive_schools": numpy.exp(2.40450824304),
-                "population_own": numpy.exp(3.28776000706 + 0.7),
+                "workplaces": numpy.exp(1.23033343181),
+                "service": numpy.exp(4.63048603927),
+                "shops": numpy.exp(5.40401631191),
+                "comprehensive_schools": numpy.exp(2.38807154465),
+                "population_own": numpy.exp(3.32704971816),
                 "population_other": 1,
             },
         },
@@ -2247,7 +2247,7 @@ mode_choice = {
     },
     "hop": {
         "car": {
-            "constant": (0 + 0.009),
+            "constant": (0 + 0.00),
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -2257,7 +2257,7 @@ mode_choice = {
             "individual_dummy": {},
         },
         "transit": {
-            "constant": (-1.26883605707 - 0.101),
+            "constant": (-1.02607987269 - 0.00),
             "generation": {},
             "attraction": {},
             "impedance": {},
