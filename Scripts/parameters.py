@@ -1721,16 +1721,16 @@ destination_choice = {
     "hwp": {
         "car": {
             "attraction": {
-                "parking_cost_work": -0.167648454911 + 0.06,
-                "share_detached_houses": 0.579675740565,
-                "own_zone_area": -0.194842606662e-1 - 0.004,
+                "parking_cost_work": -0.157123873740 + 0.00,
+                "share_detached_houses": 0.580974879625,
+                "own_zone_area": -0.0205161484737 - 0.00,
             },
             "impedance": {
-                "time": -0.188031062001e-1,
-                "cost": -0.167648454911,
+                "time": -0.0207403513,
+                "cost": -0.157123873740,
             },
             "log": {
-                "size": 0.906272269187, # LN_Size
+                "size": 0.906942834933, # LN_Size
             },
             "size": {
                 "workplaces": 1,
@@ -1738,15 +1738,15 @@ destination_choice = {
         },
         "transit": {
             "attraction": {
-                "cbd": 0.490942327168 + 0.35,
-                "own_zone_area": -0.112492660238,
+                "cbd": 0.460082225170 + 0.00,
+                "own_zone_area": -0.113153242090,
             },
             "impedance": {
-                "time": -0.808893404926e-2,
-                "cost": (-0.167648454911 - 0.07) / 44.0,
+                "time": -0.824400763002E-02,
+                "cost": (-0.157123873740 - 0.00) / 44.0,
             },
             "log": {
-                "size": 0.906272269187, # LN_Size
+                "size": 0.906942834933, # LN_Size
             },
             "size": {
                 "workplaces": 1,
@@ -2225,7 +2225,7 @@ mode_choice = {
     },
     "hwp": {
         "car": {
-            "constant": (0 - 0.022),
+            "constant": (0 - 0.00),
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -2235,7 +2235,7 @@ mode_choice = {
             "individual_dummy": {},
         },
         "transit": {
-            "constant": (-1.79569982464 + 0.332), # T_const
+            "constant": (-1.83293849298 + 0.00), # T_const
             "generation": {},
             "attraction": {},
             "impedance": {},
