@@ -1112,8 +1112,8 @@ destination_choice = {
             "size": {
                 "cbd": (numpy.exp(4.6880073518 - 0.00),
                         numpy.exp(5.43822704609 - 0.00)),
-                "workplaces_own": (numpy.exp(0.314367891487 + 0.00),
-                                   numpy.exp(0.906947845409 + 0.00)),
+                "workplaces_own": (numpy.exp(0.314367891487 + 0.10),
+                                   numpy.exp(0.906947845409 + 0.50)),
                 "workplaces_other": 1,
             },
         },
@@ -1124,7 +1124,7 @@ destination_choice = {
             },
             "impedance": {
                 "time": -0.0101838292646,
-                "cost": ((0.100405494227) / 60.0, -0.136755441374 / 44.0),
+                "cost": ((-0.100405494227) / 60.0, -0.136755441374 / 44.0),
             },
             "log": {
                 "size": 1.00000000000, # L_S_M
