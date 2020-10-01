@@ -1424,7 +1424,7 @@ destination_choice = {
             },
             "impedance": {
                 "time": -0.0163548606161,
-                "transform": -0.218431829623,
+                "cost": -0.218431829623 / 30.0,
             },
             "log": {
                 "size": 1,
@@ -1439,12 +1439,6 @@ destination_choice = {
                 "shops": numpy.exp(3.10201560094),
                 "cbd": (numpy.exp(7.82599214329 - 0.00),
                         numpy.exp(4.95459142492 - 0.00)),
-            },
-            "transform": {
-                "attraction": {},
-                "impedance": {
-                    "cost": 1.0 / 30.0,
-                },
             },
         },
         "bike": {
@@ -1573,7 +1567,7 @@ destination_choice = {
             },
             "impedance": {
                 "time": -.0190572340198,
-                "transform": -.281121539905,
+                "cost": -.281121539905 / 30.0,
             },
             "log": {
                 "size": 1,
@@ -1586,12 +1580,6 @@ destination_choice = {
                 "shops_elsewhere": numpy.exp(3.36839356543),
                 "own_zone": (numpy.exp(6.94153078815 - 0.00),
                              numpy.exp(6.94153078815 - 0.00)),
-            },
-            "transform": {
-                "attraction": {},
-                "impedance": {
-                    "cost": 1.0 / 30.0,
-                },
             },
         },
         "bike": {
@@ -1660,7 +1648,7 @@ destination_choice = {
             },
             "impedance": {
                 "time": -.0190572340198,
-                "transform": -.281121539905,
+                "cost": -.281121539905 / 30.0,
             },
             "log": {
                 "size": 1,
@@ -1673,12 +1661,6 @@ destination_choice = {
                 "shops_elsewhere": numpy.exp(3.36839356543),
                 "own_zone": (numpy.exp(6.94153078815 - 0.00),
                              numpy.exp(6.94153078815 - 0.00)),
-            },
-            "transform": {
-                "attraction": {},
-                "impedance": {
-                    "cost": 1.0 / 30.0,
-                },
             },
         },
         "bike": {
