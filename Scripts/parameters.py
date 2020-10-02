@@ -1095,7 +1095,7 @@ impedance_share = {
 
 ### DEMAND MODEL PARAMETERS ###
 
-# Destination choice (calibrated)
+# Destination choice (calibrated 02.10.2020)
 destination_choice = {
     "hw": {
         "car": {
@@ -1836,7 +1836,7 @@ destination_choice = {
         },
     },
 }
-# Mode choice (calibrated 06.05.2020)
+# Mode choice (calibrated 02.10.2020)
 mode_choice = {
     "hw": {
         "car": {
