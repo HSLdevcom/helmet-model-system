@@ -1120,7 +1120,6 @@ destination_choice = {
         "transit": {
             "attraction": {
                 "cbd": (0.491418509053, 0.491418509053),
-                "helsinki_other": (0.00, 0.00),
             },
             "impedance": {
                 "time": -0.0101838292646,
@@ -1407,11 +1406,9 @@ destination_choice = {
             },
             "size": {
                 "population_other": 1,
-                "population_own": (numpy.exp(1.36533858970),
-                                   numpy.exp(1.365338589700)),
+                "population_own": numpy.exp(1.36533858970),
                 "service_other": numpy.exp(2.39351567744),
-                "service_own": (numpy.exp(3.35003762339),
-                                numpy.exp(3.35003762339)),
+                "service_own": numpy.exp(3.35003762339),
                 "shops": numpy.exp(3.10201560094),
                 "cbd": (numpy.exp(7.82599214329),
                         numpy.exp(4.95459142492)),
@@ -1431,11 +1428,9 @@ destination_choice = {
             },
             "size": {
                 "population_other": 1,
-                "population_own": (numpy.exp(1.36533858970),
-                                   numpy.exp(1.36533858970)),
+                "population_own": numpy.exp(1.36533858970),
                 "service_other": numpy.exp(2.39351567744),
-                "service_own": (numpy.exp(3.35003762339),
-                                numpy.exp(3.35003762339)),
+                "service_own": numpy.exp(3.35003762339),
                 "shops": numpy.exp(3.10201560094),
                 "cbd": (numpy.exp(7.82599214329),
                         numpy.exp(4.95459142492)),
@@ -1450,11 +1445,9 @@ destination_choice = {
             },
             "size": {
                 "population_other": 1,
-                "population_own": (numpy.exp(1.36533858970),
-                                   numpy.exp(1.36533858970)),
+                "population_own": numpy.exp(1.36533858970),
                 "service_other": numpy.exp(2.39351567744),
-                "service_own": (numpy.exp(3.35003762339),
-                                numpy.exp(3.35003762339)),
+                "service_own": numpy.exp(3.35003762339),
                 "shops": numpy.exp(3.10201560094),
                 "cbd": (numpy.exp(7.82599214329),
                         numpy.exp(4.95459142492)),
@@ -1473,11 +1466,9 @@ destination_choice = {
             },
             "size": {
                 "population_other": 1,
-                "population_own": (numpy.exp(1.36533858970),
-                                   numpy.exp(1.36533858970)),
+                "population_own": numpy.exp(1.36533858970),
                 "service_other": numpy.exp(2.39351567744),
-                "service_own": (numpy.exp(3.35003762339),
-                                numpy.exp(3.35003762339)),
+                "service_own": numpy.exp(3.35003762339),
                 "shops": numpy.exp(3.10201560094),
                 "cbd": (numpy.exp(7.82599214329),
                         numpy.exp(4.95459142492)),
@@ -2012,8 +2003,6 @@ mode_choice = {
             "constant": (0.522036062262 * (6.72180796903 + 0.158), 
                          0.522036062262 * (6.67197643351 - 0.399)),
             "generation": {
-                "cbd": 0.0,
-                "helsinki_other": 0.0,
                 "espoo_vant_kau": -0.3,
             },
             "attraction": {},
@@ -2067,7 +2056,6 @@ mode_choice = {
                          0.157371648547 * (-9.21721208402 - 0.258)),
             "generation": {
                 "cbd": 0.2,
-                "helsinki_other": 0.0,
                 "espoo_vant_kau": -0.8,
             },
             "attraction": {},
