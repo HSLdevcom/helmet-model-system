@@ -177,9 +177,10 @@ class ModelSystem:
 
         # Perform traffic assignment and get result impedance, 
         # for each time period
+        demand = self.resultmatrices if is_end_assignment else self.basematrices
         for tp in self.emme_scenarios:
             self.logger.info("Assigning period " + tp)
-            with self.basematrices.open("demand", tp) as mtx:
+            with demand.open("demand", tp) as mtx:
                 for ass_class in self.ass_classes:
                     self.dtm.demand[tp][ass_class] = mtx[ass_class]
             impedance[tp] = self.ass_model.assign(
