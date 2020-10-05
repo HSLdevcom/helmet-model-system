@@ -28,8 +28,8 @@ boarding_penalty = {
     'j': 2, # Long-distance train
 }
 last_boarding_penalty = {
-    'b': 3, # Bus
-    'g': 3, # Trunk bus
+    'b': 5, # Bus
+    'g': 2, # Trunk bus
     'd': 5, # Long-distance bus
     'e': 5, # Express bus
     't': 0, # Tram
@@ -98,8 +98,8 @@ trass_stop = {
 }
 # Specification for the transit assignment
 transfer_penalty = {
-    "transit_work": 5,
-    "transit_leisure": 7,
+    "transit_work": 3,
+    "transit_leisure": 5,
     "transit": 5,
 }
 extra_waiting_time = {
