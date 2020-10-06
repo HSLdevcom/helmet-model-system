@@ -157,7 +157,7 @@ reports=
  1
  y
  q
-~< extra_attr.mac
+~# *** must be done when creating a new Emme project ~< extra_attr.mac
 ~#
 ~# ** maaritellaan pysahtymiset
 ~! copy %2%\hsl_kunnat_%1%.mac  hsl_kunnat.mac
