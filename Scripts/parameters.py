@@ -16,12 +16,28 @@ vot_inv = {
 dist_unit_cost = 0.12
 # Boarding penalties for different transit modes
 boarding_penalty = {
-    "b": 3,  # Bus
-    "g": 3,  # Trunk bus
-    "de": 5, # Long-distance and express bus
-    "tp": 0, # Tram and light rail
-    "mw": 0, # Metro and ferry
-    "rj": 2, # Train
+    'b': 3, # Bus
+    'g': 3, # Trunk bus
+    'd': 5, # Long-distance bus
+    'e': 5, # Express bus
+    't': 0, # Tram
+    'p': 0, # Light rail
+    'm': 0, # Metro
+    'w': 0, # Ferry
+    'r': 2, # Commuter train
+    'j': 2, # Long-distance train
+}
+last_boarding_penalty = {
+    'b': 5, # Bus
+    'g': 2, # Trunk bus
+    'd': 5, # Long-distance bus
+    'e': 5, # Express bus
+    't': 0, # Tram
+    'p': 0, # Light rail
+    'm': 0, # Metro
+    'w': 0, # Ferry
+    'r': 2, # Commuter train
+    'j': 2, # Long-distance train
 }
 # Headway standard deviation function parameters for different transit modes
 headway_sd_func = {
@@ -82,7 +98,7 @@ trass_stop = {
 }
 # Specification for the transit assignment
 transfer_penalty = {
-    "transit_work": 5,
+    "transit_work": 3,
     "transit_leisure": 5,
     "transit": 5,
 }
