@@ -141,13 +141,6 @@ class EmmeAssignmentModel(AssignmentModel):
             self._assign_bikes(
                 self.bike_scenario, self.result_mtx["dist"]["bike"]["id"],
                 "all", "@bike_"+time_period)
-            for ass_class in param.link_volumes:
-                self.auto_link_24h(ass_class)
-            for transit_class in param.transit_classes:
-                self.transit_segment_24h(transit_class, "vol")
-                self.transit_segment_24h(transit_class, "boa")
-                self.transit_segment_24h(transit_class, "trb")
-            self.bike_link_24h()
         else:
             raise ValueError("Iteration number not valid")
 
@@ -790,6 +783,8 @@ class EmmeAssignmentModel(AssignmentModel):
                     day_attr += links_attr[tp][link.id] * param.volume_factors[attr][tp]
             link[extra_attr_day] = day_attr
         day_scenario.publish_network(network)
+        self.emme_project.logger.info(
+            "Auto attribute {} aggregated to 24h (scenario {})".format(extra_attr, self.day_scenario))
 
     def transit_segment_24h(self, transit_class, attr):
         """ 
@@ -823,7 +818,8 @@ class EmmeAssignmentModel(AssignmentModel):
                     pass
             segment[extra_attr] = day_attr
         day_scenario.publish_network(network)
-        self.emme_project.logger.debug("Transit segment results aggregated to 24h")
+        self.emme_project.logger.info(
+            "Transit attribute {} aggregated to 24h (scenario {})".format(extra_attr, self.day_scenario))
     
     def bike_link_24h(self):
         """ 
@@ -850,3 +846,5 @@ class EmmeAssignmentModel(AssignmentModel):
             extra_attr = "@{}_{}".format(attr, "day")
             link[extra_attr] = day_attr
         bike_scenario.publish_network(network) 
+        self.emme_project.logger.info(
+            "Bike attribute {} aggregated to 24h (scenario {})".format(extra_attr, self.bike_scenario))
