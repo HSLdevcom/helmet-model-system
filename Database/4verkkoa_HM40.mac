@@ -65,11 +65,11 @@ reports=
  2
  off=11
 ~# tyhjenna ja lue pyoraverkon extra attribuutit
- 2.42
- 1
- y
- q
-~< extra_attr_pyora.mac
+~#  2.42
+~#  1
+~#  y
+~#  q
+~# ~< extra_attr_pyora.mac
 ~# ** luetaan pyoratieluokat (makro poistaa tiedoston d241.in 
 ~# ** ja lukee tiedot parametrina annettavasta tiedostosta)
 ~< pyoratieluokat_lue.mac %3% %2%\d241_pyoratieluokka_%1%.in
@@ -151,13 +151,15 @@ reports=
  2.21
 ~?q=2
  2
+~#  2.42
+~#  1
+~#  y
+~#  q
+~# *** tama on parempi tehda skenaarioihin 19 ja 21-23 jo perustettaessa uutta Emme-projektia
+~# ~< extra_attr.mac
+~#
 ~# ** muutetaan linkkien attribuutit (vdf, ul1, ul2) linkkityypin perusteella
 ~< muuta_linkkien_attribuutit_eikorj.mac
- 2.42
- 1
- y
- q
-~# *** must be done when creating a new Emme project ~< extra_attr.mac
 ~#
 ~# ** maaritellaan pysahtymiset
 ~! copy %2%\hsl_kunnat_%1%.mac  hsl_kunnat.mac
