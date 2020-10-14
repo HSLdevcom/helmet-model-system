@@ -10,6 +10,7 @@ class ZoneData:
     
     def __init__(self, data_dir, zone_numbers):
         self._values = {}
+        self.share = ShareChecker(self)
         zone_numbers = numpy.array(zone_numbers)
         surrounding = param.areas["surrounding"]
         peripheral = param.areas["peripheral"]
@@ -24,28 +25,31 @@ class ZoneData:
         first_external = numpy.where(zone_numbers >= external[0])[0][0]
         self.first_external_zone = first_external
         external_zones = zone_numbers[first_external:]
-        popdata = read_csv_file(data_dir, ".pop", self.zone_numbers)
-        workdata = read_csv_file(data_dir, ".wrk", self.zone_numbers)
-        schooldata = read_csv_file(data_dir, ".edu", self.zone_numbers)
-        landdata = read_csv_file(data_dir, ".lnd", self.zone_numbers)
-        parkdata = read_csv_file(data_dir, ".prk", self.zone_numbers)
-        self.externalgrowth = read_csv_file(data_dir, ".ext", external_zones)
-        for frame in [popdata, workdata, schooldata, landdata, parkdata, self.externalgrowth]:
-            try:
-                frame = frame.astype(dtype=float, errors='raise')
-            except ValueError:
-                raise ValueError("Zonedata file {} has values not convertible to floats.".format(frame.name))
-        transit_zone = {}
+        popdata = read_csv_file(data_dir, ".pop", self.zone_numbers, float)
+        workdata = read_csv_file(data_dir, ".wrk", self.zone_numbers, float)
+        schooldata = read_csv_file(data_dir, ".edu", self.zone_numbers, float)
+        landdata = read_csv_file(data_dir, ".lnd", self.zone_numbers, float)
+        parkdata = read_csv_file(data_dir, ".prk", self.zone_numbers, float)
+        self.externalgrowth = read_csv_file(data_dir, ".ext", external_zones, float)
         transit = read_csv_file(data_dir, ".tco")
         try:
             transit["fare"] = transit["fare"].astype(dtype=float, errors='raise')
         except ValueError:
             raise ValueError("Zonedata file .tco has fare values not convertible to floats.")
+        transit_zone = {}
         transit_zone["fare"] = transit["fare"].to_dict()
-        transit_zone["exclusive"] = transit["exclusive"].dropna().to_dict()
+        try:
+            transit_zone["exclusive"] = transit["exclusive"].dropna().to_dict()
+        except KeyError:
+            transit_zone["exclusive"] = {}
         transit_zone["dist_fare"] = transit_zone["fare"].pop("dist")
         transit_zone["start_fare"] = transit_zone["fare"].pop("start")
         self.transit_zone = transit_zone
+        try:
+            cardata = read_csv_file(data_dir, ".car")
+            self["parking_norm"] = cardata["prknorm"]
+        except (NameError, KeyError):
+            self._values["parking_norm"] = None
         car_cost = read_csv_file(data_dir, ".cco", squeeze=False)
         self.car_dist_cost = car_cost["dist_cost"][0]
         truckdata = read_csv_file(data_dir, ".trk", squeeze=True)
@@ -53,18 +57,20 @@ class ZoneData:
         self.garbage_destination = map(int, truckdata.loc[1, :].dropna())
         pop = popdata["total"]
         self["population"] = pop
-        self["share_age_7-17"] = popdata["sh_7-17"][:first_peripheral]
-        self["share_age_18-29"] = popdata["sh_1829"][:first_peripheral]
-        self["share_age_30-49"] = popdata["sh_3049"][:first_peripheral]
-        self["share_age_50-64"] = popdata["sh_5064"][:first_peripheral]
-        self["share_age_65-99"] = popdata["sh_65-"][:first_peripheral]
-        self["share_age_7-99"] = ( self["share_age_7-17"]        
-            + self["share_age_18-29"] + self["share_age_30-49"]
-            + self["share_age_50-64"] + self["share_age_65-99"])
-        self["share_age_18-99"] = ( self["share_age_7-99"]
-                                   -self["share_age_7-17"])
-        self["share_female"] = pandas.Series(0.5, zone_numbers)
-        self["share_male"] = pandas.Series(0.5, zone_numbers)
+        self.share["share_age_7-17"] = popdata["sh_7-17"][:first_peripheral]
+        self.share["share_age_18-29"] = popdata["sh_1829"][:first_peripheral]
+        self.share["share_age_30-49"] = popdata["sh_3049"][:first_peripheral]
+        self.share["share_age_50-64"] = popdata["sh_5064"][:first_peripheral]
+        self.share["share_age_65-99"] = popdata["sh_65-"][:first_peripheral]
+        self.share["share_age_7-99"] = (self["share_age_7-17"]      
+                                        + self["share_age_18-29"]
+                                        + self["share_age_30-49"]
+                                        + self["share_age_50-64"]
+                                        + self["share_age_65-99"])
+        self.share["share_age_18-99"] = (self["share_age_7-99"]
+                                         -self["share_age_7-17"])
+        self.share["share_female"] = pandas.Series(0.5, zone_numbers)
+        self.share["share_male"] = pandas.Series(0.5, zone_numbers)
         self.nr_zones = len(self.zone_numbers)
         self["population_density"] = pop / landdata["builtar"]
         wp = workdata["total"]
@@ -81,15 +87,17 @@ class ZoneData:
         self["secondary_schools"] = schooldata["secndry"]
         self["tertiary_education"] = schooldata["tertiary"]
         self["zone_area"] = landdata["builtar"]
-        self["share_detached_houses"] = landdata["detach"]
+        self.share["share_detached_houses"] = landdata["detach"]
         self["cbd"] = pandas.Series(0, self.zone_numbers)
-        self["cbd"].loc[:param.areas["helsinki_cbd"][1]] = 1
+        self["cbd"].loc[param.areas["helsinki_cbd"][0]:param.areas["helsinki_cbd"][1]] = 1
+        self["helsinki_other"] = pandas.Series(0, self.zone_numbers)
+        self["helsinki_other"].loc[param.areas["helsinki_other"][0]:param.areas["helsinki_other"][1]] = 1
         self["helsinki"] = pandas.Series(0, self.zone_numbers)
-        self["helsinki"].loc[:param.municipality["Helsinki"][1]] = 1
+        self["helsinki"].loc[param.municipality["Helsinki"][0]:param.municipality["Helsinki"][1]] = 1
         self["espoo_vant_kau"] = pandas.Series(0, self.zone_numbers)
-        self["espoo_vant_kau"].loc[:param.areas["espoo_vant_kau"][1]] = 1
+        self["espoo_vant_kau"].loc[param.areas["espoo_vant_kau"][0]:param.areas["espoo_vant_kau"][1]] = 1
         self["surrounding"] = pandas.Series(0, self.zone_numbers)
-        self["surrounding"].loc[:param.areas["surrounding"][1]] = 1
+        self["surrounding"].loc[param.areas["surrounding"][0]:param.areas["surrounding"][1]] = 1
         self["shops_cbd"] = self["cbd"] * self["shops"]
         self["shops_elsewhere"] = (1-self["cbd"]) * self["shops"]
         # Create diagonal matrix with zone area
@@ -208,9 +216,22 @@ class ZoneData:
         else:  # Return matrix (purpose zones -> all zones)
             return self._values[key][l:u, :]
 
+
 class BaseZoneData(ZoneData):
     def __init__(self, data_dir, zone_numbers):
         ZoneData.__init__(self, data_dir, zone_numbers)
         cardata = read_csv_file(data_dir, ".car", self.zone_numbers)
         self["car_density"] = cardata["cardens"]
         self["cars_per_1000"] = 1000 * self["car_density"]
+
+
+class ShareChecker:
+    def __init__(self, data):
+        self.data = data
+
+    def __setitem__(self, key, data):
+        if (data > 1.005).any():
+            for (i, val) in data.iteritems():
+                if val > 1.005:
+                    raise ValueError("{} ({}) for zone {} is larger than one".format(key, val, i).capitalize())
+        self.data[key] = data

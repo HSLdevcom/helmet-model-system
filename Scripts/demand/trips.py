@@ -95,7 +95,7 @@ class DemandModel:
                 share = self.zone_data[key][idx]
                 weights.append(share)
                 weights[0] -= share
-            for _ in xrange(0, self.zone_data["population"][idx]):
+            for _ in xrange(0, int(self.zone_data["population"][idx])):
                 a = numpy.arange(-1, len(self.age_groups))
                 group = numpy.random.choice(a=a, p=weights)
                 if group != -1:
