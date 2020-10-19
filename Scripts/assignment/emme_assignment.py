@@ -329,7 +329,21 @@ class EmmeAssignmentModel(AssignmentModel):
             link["@total_cost"] = (toll_cost + dist_cost)
         scen.publish_network(network)
         
-    def print_vehicle_kms(self, resultdata):
+    def aggregate_results(self, resultdata):
+        """Aggregate results to 24h and print vehicle kms.
+
+        Parameters
+        ----------
+        resultdata : datahandling.resultdata.Resultdata
+            Result data container to print to
+        """
+        for ass_class in param.link_volumes:
+            self.auto_link_24h(ass_class)
+        for transit_class in param.transit_classes:
+            self.transit_segment_24h(transit_class, "vol")
+            self.transit_segment_24h(transit_class, "boa")
+            self.transit_segment_24h(transit_class, "trb")
+        self.bike_link_24h()
         freight_classes = ["van", "truck", "trailer_truck"]
         vdfs = [1, 2, 3, 4, 5]
         transit_modes = {

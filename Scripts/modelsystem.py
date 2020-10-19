@@ -191,14 +191,7 @@ class ModelSystem:
             if is_end_assignment:
                 self._save_to_omx(impedance[tp], tp)
         if is_end_assignment:
-            for ass_class in parameters.link_volumes:
-                self.ass_model.auto_link_24h(ass_class)
-            for transit_class in parameters.transit_classes:
-                self.ass_model.transit_segment_24h(transit_class, "vol")
-                self.ass_model.transit_segment_24h(transit_class, "boa")
-                self.ass_model.transit_segment_24h(transit_class, "trb")
-            self.ass_model.bike_link_24h()
-            self.ass_model.print_vehicle_kms(self.resultdata)
+            self.ass_model.aggregate_results(self.resultdata)
         self.dtm.init_demand()
         return impedance
 
@@ -277,14 +270,7 @@ class ModelSystem:
             if iteration=="last":
                 self._save_to_omx(impedance[tp], tp)
         if iteration=="last":
-            for ass_class in parameters.link_volumes:
-                self.ass_model.auto_link_24h(ass_class)
-            for transit_class in parameters.transit_classes:
-                self.ass_model.transit_segment_24h(transit_class, "vol")
-                self.ass_model.transit_segment_24h(transit_class, "boa")
-                self.ass_model.transit_segment_24h(transit_class, "trb")
-            self.ass_model.bike_link_24h()
-            self.ass_model.print_vehicle_kms(self.resultdata)
+            self.ass_model.aggregate_results(self.resultdata)
 
         # Reset time-period specific demand matrices (DTM), and empty result buffer
         self.dtm.init_demand()
