@@ -191,7 +191,7 @@ class ModelSystem:
             if is_end_assignment:
                 self._save_to_omx(impedance[tp], tp)
         if is_end_assignment:
-            self.ass_model.print_vehicle_kms(self.resultdata)
+            self.ass_model.aggregate_results(self.resultdata)
         self.dtm.init_demand()
         return impedance
 
@@ -270,7 +270,7 @@ class ModelSystem:
             if iteration=="last":
                 self._save_to_omx(impedance[tp], tp)
         if iteration=="last":
-            self.ass_model.print_vehicle_kms(self.resultdata)
+            self.ass_model.aggregate_results(self.resultdata)
 
         # Reset time-period specific demand matrices (DTM), and empty result buffer
         self.dtm.init_demand()
