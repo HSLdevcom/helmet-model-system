@@ -85,7 +85,7 @@ class MockAssignmentModel(AssignmentModel):
     def calc_transit_cost(self, fare, peripheral_cost, default_cost=None):
         pass
 
-    def print_vehicle_kms(self, resultdata):
+    def aggregate_results(self, resultdata):
         pass
 
     def prepare_network(self):

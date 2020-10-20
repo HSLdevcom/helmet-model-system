@@ -44,7 +44,7 @@ class AssignmentModel:
         pass
 
     @abstractmethod
-    def print_vehicle_kms(self, resultdatawriter):
+    def aggregate_results(self, resultdatawriter):
         pass
     
     @abstractmethod
