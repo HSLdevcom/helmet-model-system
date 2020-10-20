@@ -1,4 +1,4 @@
-from parameters import impedance_share
+from parameters.impedance_transformation import impedance_share
 
 
 class ImpedanceTransformer:
