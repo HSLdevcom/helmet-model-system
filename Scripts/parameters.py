@@ -1749,8 +1749,8 @@ destination_choice = {
                 "own_zone_area": -0.914703619822E-02 + 0.10,
             },
             "impedance": {
-                "time": -0.288481815905e-1,
-                "cost": -0.0207498305,
+                "time": -0.0207498305,
+                "cost": -.231841682005,
             },
             "log": {
                 "size": 1, # L_S_M
