@@ -20,6 +20,8 @@ If you are trying the test model, try `"C:\\FILL_YOUR_PATH\\helmet-model-system\
 
 There should be 9 or 10 different input vector files in your forefact data path. File extensions are similar to your `BASELINE_DATA_PATH\\2016_zonedata` files. The file `.car` is optional (?). 
 
+In the .ext file there must be a value line for every external zone in use (i.e. centroids 31000…31999 In the network). In all other files (excluding files .cco, .tco and .trk) there must be a value line for every internal zone in use (i.e. centroids 1…30999 In the network). It means that if there are no inhabitants, workplaces, parking costs etc. in some zone a zero value line instead of a missing line must be used.
+
 ## `SCENARIO_NAME`
 
 Then, you need to set the name of your scenario. If you are trying the test model, write `"test"`.
