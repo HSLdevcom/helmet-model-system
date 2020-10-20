@@ -1,11 +1,12 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
-import assignment.emme_assignment as ass
-import numpy
-from datahandling.zonedata import ZoneData
 import os
 import logging
+import numpy
+
+import assignment.emme_assignment as ass
+from datahandling.zonedata import ZoneData
 from datahandling.matrixdata import MatrixData
 from assignment.emme_bindings.emme_project import EmmeProject
 

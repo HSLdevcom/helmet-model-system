@@ -1,7 +1,8 @@
 import logging
 import numpy
 
-import parameters as param
+import parameters.departure_time as param
+from parameters.assignment import transport_classes, assignment_classes
 
 
 class DepartureTimeModel:
@@ -18,7 +19,7 @@ class DepartureTimeModel:
         self.emme_scenarios = emme_scenarios
         self.demand = dict.fromkeys(self.emme_scenarios)
         for time_period in self.demand:
-            ass_classes = dict.fromkeys(param.transport_classes)
+            ass_classes = dict.fromkeys(transport_classes)
             self.demand[time_period] = ass_classes
             for ass_class in ass_classes:
                 zeros = numpy.zeros((self.nr_zones, self.nr_zones))
@@ -29,7 +30,7 @@ class DepartureTimeModel:
         """Initialize/reset demand for all time periods (each including transport_classes, each being set to zeros)."""
         self.demand = dict.fromkeys(self.emme_scenarios)
         for time_period in self.demand:
-            ass_classes = dict.fromkeys(param.transport_classes)
+            ass_classes = dict.fromkeys(transport_classes)
             self.demand[time_period] = ass_classes
             for ass_class in ass_classes:
                 zeros = numpy.zeros((self.nr_zones, self.nr_zones))
@@ -45,7 +46,7 @@ class DepartureTimeModel:
         """
         if demand.mode not in ("walk", "car_passenger"):
             if demand.mode in ("car", "transit", "bike"):
-                ass_class = (demand.mode + '_' + param.assignment_class[demand.purpose.name])
+                ass_class = (demand.mode + '_' + assignment_classes[demand.purpose.name])
             else:
                 ass_class = demand.mode
             if len(demand.position) == 2:

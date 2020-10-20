@@ -1,7 +1,7 @@
 import numpy
 import pandas
 
-import parameters
+import parameters.tour_generation as param
 from utils.freight import fratar, calibrate
 from datatypes.demand import Demand
 from datatypes.purpose import Purpose
@@ -60,7 +60,7 @@ class FreightModel:
 
         # If forecast>5*base, destination choice is replaced by area average
         # For simplicity, areas are zone numbers in the same thousand
-        threshold = parameters.vector_calibration_threshold
+        threshold = param.vector_calibration_threshold
         cond = production_forecast < threshold*production_base
         last1000 = zone_numbers[-1] // 1000
         for i in xrange(0, last1000):
@@ -87,7 +87,7 @@ class FreightModel:
         demand = fratar(production, mtx)
         # Add garbage transport to/from garbage zone
         if mode == "truck":
-            b = parameters.garbage_generation
+            b = param.garbage_generation
             garbage = ( b["population"] * zone_data_forecast["population"] 
                       + b["workplaces"] * zone_data_forecast["workplaces"])
             demand[self.zdata_f.garbage_destination] += garbage
@@ -99,5 +99,5 @@ class FreightModel:
         return Demand(self.purpose, mode, demand.values)
 
     def _generate_trips(self, zone_data, mode):
-        b = pandas.Series(parameters.tour_generation[mode])
+        b = pandas.Series(param.tour_generation[mode])
         return (b * zone_data).sum(1) + 0.001

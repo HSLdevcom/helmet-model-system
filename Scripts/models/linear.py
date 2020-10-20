@@ -2,7 +2,8 @@ import numpy
 import pandas
 import math
 
-import parameters
+import parameters.car as param
+import parameters.zone as zone_param
 
 
 class LinearModel(object):
@@ -101,7 +102,7 @@ class CarDensityModel(LinearModel):
             Zone vector of cars per inhabitant
         """
         prediction = pandas.Series(0.0, self.zone_data.zone_numbers[self.bounds])
-        b = parameters.car_density
+        b = param.car_density
         self._add_constant(prediction, b["constant"])
         self._add_zone_terms(prediction, b["generation"], True)
         self._add_log_zone_terms(prediction, b["log"], True)
@@ -136,24 +137,24 @@ class CarDensityModel(LinearModel):
         
         # print car density by municipality
         prediction_municipality = []
-        for municipality in parameters.municipality:
-            i = slice(parameters.municipality[municipality][0],
-                      parameters.municipality[municipality][1])
+        for municipality in zone_param.municipalities:
+            i = slice(zone_param.municipalities[municipality][0],
+                      zone_param.municipalities[municipality][1])
             x = car_density.loc[i]
             w = population.loc[i]
             prediction_municipality.append((x * w).sum() / w.sum())
         self.resultdata.print_data(
             prediction_municipality, "car_density_per_municipality.txt",
-            parameters.municipality.keys(), "car_density")
+            zone_param.municipalities.keys(), "car_density")
                           
         # print car density by area (to get Helsinki CBD vs. Helsinki other)
         prediction_area = []
-        for area in parameters.areas:
-            i = slice(parameters.areas[area][0],
-                      parameters.areas[area][1])
+        for area in zone_param.areas:
+            i = slice(zone_param.areas[area][0],
+                      zone_param.areas[area][1])
             x = car_density.loc[i]
             w = population.loc[i]
             prediction_area.append((x * w).sum() / w.sum())
         self.resultdata.print_data(
             prediction_area, "car_density_per_area.txt",
-            parameters.areas.keys(), "car_density")
+            zone_param.areas.keys(), "car_density")

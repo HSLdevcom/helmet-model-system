@@ -1,12 +1,13 @@
+from argparse import ArgumentParser
+import sys
+import os
+
 from utils.config import Config
 from utils.log import Log
 from assignment.emme_assignment import EmmeAssignmentModel
 from assignment.mock_assignment import MockAssignmentModel
 from modelsystem import ModelSystem
 from datahandling.matrixdata import MatrixData
-from argparse import ArgumentParser
-import sys
-import os
 
 
 def main(args, logger):

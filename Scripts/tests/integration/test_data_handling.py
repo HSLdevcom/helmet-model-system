@@ -3,7 +3,7 @@ from datahandling.zonedata import ZoneData
 from datahandling.matrixdata import MatrixData
 import pandas
 import os
-import parameters as params
+import parameters.assignment as param
 import numpy
 
 TEST_DATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "test_data")
@@ -38,7 +38,7 @@ class MatrixDataTest(unittest.TestCase):
                 # Validate that has some zone numbers and mapping
                 self.assertTrue(len(mtx.zone_numbers) > 0)
                 self.assertEquals(len(mtx.zone_numbers), len(mtx.mapping))
-                modes_for_this_type = params.emme_result_mtx[matrix_type].keys()
+                modes_for_this_type = param.emme_result_mtx[matrix_type].keys()
                 for mode in modes_for_this_type:
                     # Validata that there is some data for each mode
                     print("validating data for matrix mode", mode)

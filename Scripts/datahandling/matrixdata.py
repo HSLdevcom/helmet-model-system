@@ -1,8 +1,9 @@
 import os
 import openmatrix as omx
 import numpy
-from utils.read_csv_file import read_csv_file
 from contextlib import contextmanager
+
+from utils.read_csv_file import read_csv_file
 
 
 class MatrixData:

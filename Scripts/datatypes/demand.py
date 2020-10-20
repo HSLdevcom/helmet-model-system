@@ -1,4 +1,4 @@
-import parameters
+import parameters.car as param
 
 
 class Demand:
@@ -18,8 +18,8 @@ class Demand:
         """
         self.purpose = purpose
         self.mode = mode
-        if mode == "car" and purpose.name in parameters.car_driver_share:
-            self.matrix = parameters.car_driver_share[purpose.name] * matrix
+        if mode == "car" and purpose.name in param.car_driver_share:
+            self.matrix = param.car_driver_share[purpose.name] * matrix
         else:
             self.matrix = matrix
         self.orig = origin
