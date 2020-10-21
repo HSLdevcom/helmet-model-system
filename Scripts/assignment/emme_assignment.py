@@ -109,7 +109,7 @@ class EmmeAssignmentModel(AssignmentModel):
                 Assignment class (car_work/transit/...) : numpy 2-d matrix
         """
         self.emme_project.logger.info("Assignment starts...")
-        self.set_emmebank_matrices(matrices)
+        self.set_emmebank_matrices(matrices, iteration=="last")
         scen_id = self.emme_scenarios[time_period]
         if iteration=="init":
             self._assign_pedestrians(scen_id)
@@ -168,30 +168,45 @@ class EmmeAssignmentModel(AssignmentModel):
                 mtxs["cost"][ass_cl] += self.dist_unit_cost * mtxs["dist"][ass_cl]
         return mtxs
 
-    def set_emmebank_matrices(self, matrices):
-        emmebank = self.emme_project.modeller.emmebank
+    def set_emmebank_matrices(self, matrices, is_last_iteration):
+        """Set matrices in emmebank.
+
+        Bike matrices are added together, so that only one matrix is to be
+        assigned. Similarly, transit matrices are added together if not last
+        iteration. However, they are placed in the matrix "transit_work" to
+        save space.
+
+        Parameters
+        ----------
+        matrices : dict
+            Assignment class (car_work/transit/...) : numpy 2-d matrix
+        is_last_iteration : bool
+            Whether this is the end (multiclass congested transit) assignment
+        """
         tmp_mtx = {
             "bike": 0,
         }
+        if not is_last_iteration:
+            tmp_mtx["transit"] = 0
         for mtx in matrices:
-            mtx_label = mtx.split('_')[0]
-            if mtx_label in tmp_mtx:
-                idx = self.demand_mtx[mtx_label]["id"]
-                tmp_mtx[mtx_label] += matrices[mtx]
-                if numpy.isnan(tmp_mtx[mtx_label]).any():
-                    msg = "NAs in Numpy-demand matrix. Would cause infinite loop in Emme-assignment."
-                    self.emme_project.logger.error(msg)
-                    raise ValueError(msg)
+            mode = mtx.split('_')[0]
+            if mode in tmp_mtx:
+                tmp_mtx[mode] += matrices[mtx]
+                if mode == "transit":
+                    self._set_matrix("transit_work", tmp_mtx[mode])
                 else:
-                    emmebank.matrix(idx).set_numpy_data(tmp_mtx[mtx_label])
+                    self._set_matrix(mode, tmp_mtx[mode])
             else:
-                idx = self.demand_mtx[mtx]["id"]
-                if numpy.isnan(matrices[mtx]).any():
-                    msg = "NAs in Numpy-demand matrix. Would cause infinite loop in Emme-assignment."
-                    self.emme_project.logger.error(msg)
-                    raise ValueError(msg)
-                else:
-                    emmebank.matrix(idx).set_numpy_data(matrices[mtx])
+                self._set_matrix(mtx, matrices[mtx])
+
+    def _set_matrix(self, mtx_label, matrix):
+        if numpy.isnan(matrix).any():
+            msg = "NAs in Numpy-demand matrix. Would cause infinite loop in Emme-assignment."
+            self.emme_project.logger.error(msg)
+            raise ValueError(msg)
+        else:
+            self.emme_project.modeller.emmebank.matrix(
+                self.demand_mtx[mtx_label]["id"]).set_numpy_data(matrix)
 
     def get_emmebank_matrices(self, mtx_type, is_last_iteration=False, time_period=None):
         """Get all matrices of specified type.
