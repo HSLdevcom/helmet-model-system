@@ -638,11 +638,11 @@ destination_choice = {
         "car": {
             "attraction": {
                 "car_density": 1000 * 0.190087895761E-02,
-                "own_zone_area": -0.914703619822E-02 + 0.10,
+                "own_zone_area": -0.914703619822E-02,
             },
             "impedance": {
-                "time": -0.288481815905e-1,
-                "cost": -0.0207498305,
+                "time": -0.0207498305,
+                "cost": -.231841682005,
             },
             "log": {
                 "size": 1, # L_S_M

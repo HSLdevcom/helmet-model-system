@@ -390,7 +390,7 @@ mode_choice = {
     },
     "hop": {
         "car": {
-            "constant": (0 - 0.038),
+            "constant": (0 + 0.075),
             "generation": {},
             "attraction": {},
             "impedance": {},
@@ -400,7 +400,7 @@ mode_choice = {
             "individual_dummy": {},
         },
         "transit": {
-            "constant": (-1.02607987269 + 0.863),
+            "constant": (-1.02607987269 - 0.075),
             "generation": {},
             "attraction": {},
             "impedance": {},
