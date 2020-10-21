@@ -189,13 +189,13 @@ class EmmeAssignmentModel(AssignmentModel):
         if not is_last_iteration:
             tmp_mtx["transit"] = 0
         for mtx in matrices:
-            mtx_label = mtx.split('_')[0]
-            if mtx_label in tmp_mtx:
-                tmp_mtx[mtx_label] += matrices[mtx]
-                if mtx_label == "transit":
-                    self._set_matrix("transit_work", tmp_mtx[mtx_label])
+            mode = mtx.split('_')[0]
+            if mode in tmp_mtx:
+                tmp_mtx[mode] += matrices[mtx]
+                if mode == "transit":
+                    self._set_matrix("transit_work", tmp_mtx[mode])
                 else:
-                    self._set_matrix(mtx_label, tmp_mtx[mtx_label])
+                    self._set_matrix(mode, tmp_mtx[mode])
             else:
                 self._set_matrix(mtx, matrices[mtx])
 
