@@ -15,7 +15,7 @@ from demand.external import ExternalModel
 from datatypes.purpose import SecDestPurpose
 from transform.impedance_transformer import ImpedanceTransformer
 from models.linear import CarDensityModel
-import parameters
+import parameters.assignment as param
 
 
 class ModelSystem:
@@ -242,7 +242,7 @@ class ModelSystem:
 
         # Calculate external demand
         trip_sum = {}
-        for mode in parameters.external_modes:
+        for mode in param.external_modes:
             if mode == "truck":
                 int_demand = self.trucks.matrix.sum(0) + self.trucks.matrix.sum(1)
             elif mode == "trailer_truck":
@@ -305,7 +305,7 @@ class ModelSystem:
     def _distribute_sec_dests(self, purpose, mode, impedance):
         threads = []
         demand = []
-        nr_threads = parameters.performance_settings["number_of_processors"]
+        nr_threads = param.performance_settings["number_of_processors"]
         if nr_threads == "max":
             nr_threads = multiprocessing.cpu_count()
         elif nr_threads <= 0:

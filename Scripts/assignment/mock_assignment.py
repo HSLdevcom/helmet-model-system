@@ -1,6 +1,6 @@
 import logging
 
-import parameters as param
+import parameters.assignment as param
 from abstract_assignment import AssignmentModel
 
 

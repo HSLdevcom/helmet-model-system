@@ -1,6 +1,7 @@
 import numpy
 import pandas
-import parameters
+
+import parameters.zone as param
 from datatypes.purpose import TourPurpose, SecDestPurpose
 from models import logit
 from datatypes.person import Person
@@ -24,7 +25,7 @@ class DemandModel:
         self.zone_data = zone_data
         self.tour_purposes = []
         self.purpose_dict = {}
-        for purpose_spec in parameters.tour_purposes:
+        for purpose_spec in param.tour_purposes:
             if "sec_dest" in purpose_spec:
                 purpose = SecDestPurpose(
                     purpose_spec, zone_data, resultdata, is_agent_model)
@@ -33,7 +34,7 @@ class DemandModel:
                     purpose_spec, zone_data, resultdata, is_agent_model)
             self.tour_purposes.append(purpose)
             self.purpose_dict[purpose_spec["name"]] = purpose
-        for purpose_spec in parameters.tour_purposes:
+        for purpose_spec in param.tour_purposes:
             if "source" in purpose_spec:
                 purpose = self.purpose_dict[purpose_spec["name"]]
                 for source in purpose_spec["source"]:

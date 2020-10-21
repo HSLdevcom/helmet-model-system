@@ -1,5 +1,6 @@
 import pandas
-import parameters
+
+import parameters.tour_generation as param
 
 
 class GenerationModel:
@@ -21,7 +22,7 @@ class GenerationModel:
         self.resultdata = resultdata
         self.zone_data = purpose.zone_data
         self.purpose = purpose
-        self.param = parameters.tour_generation[purpose.name]
+        self.param = param.tour_generation[purpose.name]
 
     def init_tours(self):
         """Initialize `tours` vector to 0."""

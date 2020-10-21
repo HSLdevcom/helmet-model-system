@@ -1,9 +1,11 @@
-import parameters as param
+import numpy
+import pandas
+
+import parameters.zone as param
+from parameters.destination_choice import secondary_destination_threshold
 import models.logit as logit
 import models.generation as generation
 from datatypes.demand import Demand
-import numpy
-import pandas
 
 
 class Purpose:
@@ -263,7 +265,7 @@ class SecDestPurpose(Purpose):
         generation = self.tours[mode][origin, :]
         # All o-d pairs below threshold are neglected,
         # total demand is increased for other pairs.
-        dests = generation > param.secondary_destination_threshold
+        dests = generation > secondary_destination_threshold
         if not dests.any():
             # If no o-d pairs have demand above threshold,
             # the sole destination with largest demand is picked

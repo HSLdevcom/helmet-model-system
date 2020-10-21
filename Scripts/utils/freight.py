@@ -1,6 +1,6 @@
 import numpy
 
-import parameters
+import parameters.tour_generation as param
 
 
 def fratar(target_vect, trips, max_iter=10):
@@ -50,6 +50,6 @@ def calibrate(calib_base, production_base, production_forecast):
     b = calib_base
     n = production_base
     s = production_forecast
-    threshold = parameters.vector_calibration_threshold
+    threshold = param.vector_calibration_threshold
     n[n == 0] = 0.000001
     return numpy.where(s < threshold*n, s * b/n, s + threshold*(b - n))
