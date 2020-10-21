@@ -1,6 +1,7 @@
 import numpy
 import random
-import parameters
+
+import parameters.car as param
 
 
 class Tour:
@@ -99,5 +100,5 @@ class Tour:
     def choose_driver(self):
         """Choose if tour is as car driver or car passenger."""
         # TODO Differentiate car users and others
-        if random.random() > parameters.car_driver_share[self.purpose.name]:
+        if random.random() > param.car_driver_share[self.purpose.name]:
             self.mode = "car_passenger"

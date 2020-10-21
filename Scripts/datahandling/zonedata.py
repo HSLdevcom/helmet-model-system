@@ -1,6 +1,6 @@
 import numpy
 import pandas
-import parameters as param
+import parameters.zone as param
 from utils.read_csv_file import read_csv_file
 
 
@@ -93,7 +93,7 @@ class ZoneData:
         self["helsinki_other"] = pandas.Series(0, self.zone_numbers)
         self["helsinki_other"].loc[param.areas["helsinki_other"][0]:param.areas["helsinki_other"][1]] = 1
         self["helsinki"] = pandas.Series(0, self.zone_numbers)
-        self["helsinki"].loc[param.municipality["Helsinki"][0]:param.municipality["Helsinki"][1]] = 1
+        self["helsinki"].loc[param.municipalities["Helsinki"][0]:param.municipalities["Helsinki"][1]] = 1
         self["espoo_vant_kau"] = pandas.Series(0, self.zone_numbers)
         self["espoo_vant_kau"].loc[param.areas["espoo_vant_kau"][0]:param.areas["espoo_vant_kau"][1]] = 1
         self["surrounding"] = pandas.Series(0, self.zone_numbers)
@@ -109,7 +109,7 @@ class ZoneData:
         # Create matrix where value is 1 if origin and destination is in
         # same municipality
         home_municipality = pandas.DataFrame(0, idx, idx)
-        municipalities = param.municipality
+        municipalities = param.municipalities
         for municipality in municipalities:
             l = municipalities[municipality][0]
             u = municipalities[municipality][1]

@@ -1,7 +1,12 @@
 import numpy
 import pandas
 import math
-import parameters
+
+from parameters.destination_choice import destination_choice, distance_boundary
+from parameters.mode_choice import mode_choice
+from parameters.car import car_usage
+import parameters.tour_generation as generation_params
+import parameters.zone as zone_param
 
 
 class LogitModel:
@@ -26,8 +31,8 @@ class LogitModel:
         self.zone_data = zone_data
         self.dest_exps = {}
         self.mode_exps = {}
-        self.dest_choice_param = parameters.destination_choice[purpose.name]
-        self.mode_choice_param = parameters.mode_choice[purpose.name]
+        self.dest_choice_param = destination_choice[purpose.name]
+        self.mode_choice_param = mode_choice[purpose.name]
         if is_agent_model:
             self.dtype = float
         else:
@@ -66,7 +71,7 @@ class LogitModel:
             impedance["transform"] = transimp
         self._add_log_impedance(self.dest_exps[mode], impedance, b["log"])
         if mode != "logsum":
-            threshold = parameters.distance_boundary[mode]
+            threshold = distance_boundary[mode]
             self.dest_exps[mode][impedance["dist"] > threshold] = 0
         try:
             return self.dest_exps[mode].sum(1)
@@ -84,7 +89,7 @@ class LogitModel:
         impedance["size"] = size
         self._add_log_impedance(dest_exps, impedance, b["log"])
         if mode != "logsum":
-            threshold = parameters.distance_boundary[mode]
+            threshold = distance_boundary[mode]
             dest_exps[impedance["dist"] > threshold] = 0
         return dest_exps
 
@@ -560,9 +565,9 @@ class TourCombinationModel:
 
     def __init__(self, zone_data):
         self.zone_data = zone_data
-        self.param = parameters.tour_combinations
-        self.conditions = parameters.tour_conditions
-        self.increases = parameters.tour_number_increase
+        self.param = generation_params.tour_combinations
+        self.conditions = generation_params.tour_conditions
+        self.increases = generation_params.tour_number_increase
     
     def calc_prob(self, age_group, is_car_user, zones):
         """Calculate choice probabilities for each tour combination.
@@ -637,7 +642,7 @@ class TourCombinationModel:
                     prob[tour_combination] = 0
             util = 0
             nr_tours_exps[nr_tours] = numpy.exp(util)
-            scale_param = parameters.tour_number_scale
+            scale_param = generation_params.tour_number_scale
             nr_tours_exps[nr_tours] *= numpy.power(combination_expsum, scale_param)
             nr_tours_expsum += nr_tours_exps[nr_tours]
         # Probability of no tours at all (empty tuple) is deduced from
@@ -678,7 +683,7 @@ class CarUseModel(LogitModel):
         self.bounds = bounds
         self.genders = ("female", "male")
         self.age_groups = age_groups
-        self.param = parameters.car_usage
+        self.param = car_usage
         for i in self.param["individual_dummy"]:
             self._check(i)
     
@@ -793,26 +798,26 @@ class CarUseModel(LogitModel):
         
         # print car use share by municipality
         prob_municipality = []
-        for municipality in parameters.municipality:
-            i = slice(parameters.municipality[municipality][0],
-                      parameters.municipality[municipality][1])
+        for municipality in zone_param.municipalities:
+            i = slice(zone_param.municipalities[municipality][0],
+                      zone_param.municipalities[municipality][1])
             # comparison data has car user shares of population
             # over 6 years old (from HEHA)
             prob_municipality.append(car_users.loc[i].sum() / population_7_99.loc[i].sum())
         self.resultdata.print_data(prob_municipality,
                                    "car_use_per_municipality.txt",
-                                   parameters.municipality.keys(),
+                                   zone_param.municipalities.keys(),
                                    "car_use")
                           
         # print car use share by area (to get Helsinki CBD vs. Helsinki other)
         prob_area = []
-        for area in parameters.areas:
-            i = slice(parameters.areas[area][0],
-                      parameters.areas[area][1])
+        for area in zone_param.areas:
+            i = slice(zone_param.areas[area][0],
+                      zone_param.areas[area][1])
             # comparison data has car user shares of population
             # over 6 years old (from HEHA)
             prob_area.append(car_users.loc[i].sum() / population_7_99.loc[i].sum())
         self.resultdata.print_data(prob_area,
                                    "car_use_per_area.txt",
-                                   parameters.areas.keys(),
+                                   zone_param.areas.keys(),
                                    "car_use")

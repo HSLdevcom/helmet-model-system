@@ -1,5 +1,6 @@
 import numpy
 import random
+
 from datatypes.tour import Tour
 
 

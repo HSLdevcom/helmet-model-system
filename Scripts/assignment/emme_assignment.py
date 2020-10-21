@@ -2,7 +2,8 @@ import os
 import numpy
 import pandas
 
-import parameters as param
+import parameters.assignment as param
+import parameters.zone as zone_param
 from abstract_assignment import AssignmentModel
 from datatypes.car import Car
 from datatypes.car_specification import CarSpecification
@@ -284,7 +285,7 @@ class EmmeAssignmentModel(AssignmentModel):
         """Remove monetary cost from generalized cost."""
         # Traffic assignment produces a generalized cost matrix.
         # To get travel time, monetary cost is removed from generalized cost.
-        vot_inv = param.vot_inv[param.vot_class[ass_class]]
+        vot_inv = param.vot_inv[param.vot_classes[ass_class]]
         gcost = self.get_matrix("gen_cost", ass_class)
         tcost = self.get_matrix("cost", ass_class)
         tdist = self.get_matrix("dist", ass_class)
@@ -509,7 +510,7 @@ class EmmeAssignmentModel(AssignmentModel):
                 zn = self.zone_numbers
                 exclusion = pandas.DataFrame(is_inside, zn, zn)
                 municipality = fares["exclusive"][zone_combination]
-                inclusion = param.municipality[municipality]
+                inclusion = zone_param.municipalities[municipality]
                 exclusion.loc[:inclusion[0]-1] = False
                 exclusion.loc[inclusion[1]+1:] = False
                 is_inside = exclusion.values
@@ -521,7 +522,7 @@ class EmmeAssignmentModel(AssignmentModel):
         dist_cost = fares["start_fare"] + fares["dist_fare"]*dist
         cost[cost==maxprice] = dist_cost[cost==maxprice]
         # Replace fare for peripheral zones with fixed matrix
-        bounds = param.areas["peripheral"]
+        bounds = zone_param.areas["peripheral"]
         zn = pandas.Index(self.zone_numbers)
         l, u = zn.slice_locs(bounds[0], bounds[1])
         cost[l:u, :u] = peripheral_cost

@@ -1,11 +1,12 @@
+from argparse import ArgumentParser
+import os
+
 from utils.config import Config
 from utils.log import Log
 from assignment.emme_assignment import EmmeAssignmentModel
 from datahandling.matrixdata import MatrixData
 from datahandling.zonedata import ZoneData
 from assignment.emme_bindings.emme_project import EmmeProject
-from argparse import ArgumentParser
-import os
 
 
 def main(args, logger):

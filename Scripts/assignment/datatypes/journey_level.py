@@ -1,4 +1,4 @@
-import parameters as param
+import parameters.assignment as param
 
 
 class JourneyLevel:

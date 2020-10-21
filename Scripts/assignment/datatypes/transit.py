@@ -1,4 +1,4 @@
-import parameters as param
+import parameters.assignment as param
 from path_analysis import PathAnalysis
 from journey_level import JourneyLevel
 
