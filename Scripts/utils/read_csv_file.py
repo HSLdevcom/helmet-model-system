@@ -50,7 +50,13 @@ def read_csv_file(data_dir, file_end, zone_numbers=None, dtype=None, squeeze=Fal
             except TypeError:
                 # Text indices are ok and should not raise an exception
                 pass
+    if data.index.has_duplicates:
+        raise IndexError("Index in file {} has duplicates".format(path))
     if zone_numbers is not None:
+        if not data.index.is_monotonic:
+            # Alternative: Sort data and print warning
+            # data.sort_index(inplace=True)
+            raise IndexError("File {} is not sorted in ascending order".format(path))
         if data.index.size != zone_numbers.size or (data.index != zone_numbers).any():
             for i in data.index:
                 if int(i) not in zone_numbers:
@@ -58,6 +64,7 @@ def read_csv_file(data_dir, file_end, zone_numbers=None, dtype=None, squeeze=Fal
             for i in zone_numbers:
                 if i not in data.index:
                     raise IndexError("Zone number {} not found in file {}".format(i, path))
+            raise IndexError("Zone numbers did not match for file {}".format(path))
     if dtype is not None:
         try:
             data = data.astype(dtype=dtype, errors='raise')
