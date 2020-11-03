@@ -69,10 +69,6 @@ class ModelSystem:
         self.imptrans = ImpedanceTransformer()
         bounds = slice(0, self.zdata_forecast.nr_zones)
         self.cdm = CarDensityModel(self.zdata_base, self.zdata_forecast, bounds, self.resultdata)
-        # TODO: Should be better defined as parameter when we don't  
-        # have different transit matrices as input data. 
-        # Could use this list_matrices as input validation.
-        self.ass_classes = self.basematrices.list_matrices("demand", "aht")
         self.mode_share = []
         self.trucks = self.fm.calc_freight_traffic("truck")
         self.trailer_trucks = self.fm.calc_freight_traffic("trailer_truck")
@@ -161,7 +157,7 @@ class ModelSystem:
 
         # Calculate transit cost matrix, and save it to emmebank
         with self.basematrices.open("demand", "aht") as mtx:
-            base_demand = {ass_class: mtx[ass_class] for ass_class in self.ass_classes}
+            base_demand = {ass_class: mtx[ass_class] for ass_class in param.transport_classes}
         self.ass_model.assign("aht", base_demand, iteration="init")
         with self.basematrices.open("cost", "peripheral") as peripheral_mtx:
             peripheral_cost = peripheral_mtx["transit"]
@@ -181,7 +177,7 @@ class ModelSystem:
         for tp in self.emme_scenarios:
             self.logger.info("Assigning period " + tp)
             with demand.open("demand", tp) as mtx:
-                for ass_class in self.ass_classes:
+                for ass_class in param.transport_classes:
                     self.dtm.demand[tp][ass_class] = mtx[ass_class]
             impedance[tp] = self.ass_model.assign(
                 tp, self.dtm.demand[tp], 

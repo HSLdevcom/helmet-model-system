@@ -33,6 +33,7 @@ class MockAssignmentModel(AssignmentModel):
         """
         self.time_period = time_period
         with self.matrices.open("demand", time_period, 'w') as mtx:
+            mtx.mapping = self.zone_numbers
             for ass_class in matrices:
                 mtx[ass_class] = matrices[ass_class]
         self.logger.info("Saved demand matrices for " + str(time_period))
