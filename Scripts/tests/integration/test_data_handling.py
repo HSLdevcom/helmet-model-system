@@ -15,16 +15,14 @@ TEST_DATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..",
 class MatrixDataTest(unittest.TestCase):
     
     def test_constructor(self):
-        m = MatrixData(os.path.join(TEST_DATA_PATH, "Results", "test", "Matrices"))
+        m = MatrixData(os.path.join(TEST_DATA_PATH, "Base_input_data", "base_matrices_test"))
         # Verify that the base folder exists
         self.assertTrue(os.path.isdir(m.path))
-        self.assertTrue(m.path.endswith("Matrices"))
 
     def test_matrix_operations(self):
-        m = MatrixData(os.path.join(TEST_DATA_PATH, "Results", "test", "Matrices"))
-        # TODO add matrices for gen_cost, transit, bike? 
+        m = MatrixData(os.path.join(TEST_DATA_PATH, "Base_input_data", "base_matrices_test"))
         # TODO now MockAssignmentModel writes the demand-matrices in it's tests, think about this.. 
-        MATRIX_TYPES = ["time", "dist", "cost"]
+        MATRIX_TYPES = ["demand"]
         for matrix_type in MATRIX_TYPES:
             print("validating matrix type", matrix_type)
             self._validate_matrix_operations(m, matrix_type)
@@ -34,23 +32,24 @@ class MatrixDataTest(unittest.TestCase):
         for key in emme_scenarios:
             print("Opening matrix for time period", key)
             with matrix_data.open(matrix_type, time_period=key) as mtx:
-                self.assertIsNotNone(mtx._file)
-                # Validate that has some zone numbers and mapping
-                self.assertTrue(len(mtx.zone_numbers) > 0)
-                self.assertEquals(len(mtx.zone_numbers), len(mtx.mapping))
-                modes_for_this_type = param.emme_result_mtx[matrix_type].keys()
-                for mode in modes_for_this_type:
-                    # Validata that there is some data for each mode
-                    print("validating data for matrix mode", mode)
-                    data = mtx[mode]
-                    assert type(data) is numpy.ndarray
-                    self.assertTrue(len(data) > 0)
-                    assert (data >= 0).all()
+                mtx.check(numpy.array([5, 6, 7, 2792, 16001, 17000, 31001, 31501]))
+                # self.assertIsNotNone(mtx._file)
+                # # Validate that has some zone numbers and mapping
+                # self.assertTrue(len(mtx.zone_numbers) > 0)
+                # self.assertEquals(len(mtx.zone_numbers), len(mtx.mapping))
+                # modes_for_this_type = param.emme_result_mtx[matrix_type].keys()
+                # for mode in modes_for_this_type:
+                #     # Validata that there is some data for each mode
+                #     print("validating data for matrix mode", mode)
+                #     data = mtx[mode]
+                #     assert type(data) is numpy.ndarray
+                #     self.assertTrue(len(data) > 0)
+                #     assert (data >= 0).all()
 
 
 class ZoneDataTest(unittest.TestCase):
     FREIGHT_DATA_INDEXES = [5, 6, 7, 2792, 16001, 17000]
-    ZONE_INDEXES = numpy.array([5, 6, 7, 2792, 16001, 17000, 31000, 31501])
+    ZONE_INDEXES = numpy.array([5, 6, 7, 2792, 16001, 17000, 31001, 31501])
 
     def _get_freight_data_2016(self):
         zdata = ZoneData(os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata_test"), self.ZONE_INDEXES)
