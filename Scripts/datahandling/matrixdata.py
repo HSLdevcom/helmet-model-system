@@ -61,7 +61,7 @@ class MatrixFile(object):
         nr_zones = self.zone_numbers.size
         if mtx.shape[0] != nr_zones or mtx.shape[1] != nr_zones:
             raise IndexError("Matrix {} in file {} dimensions {}x{}, should be {}x{}".format(
-                mode, self._file.filename), mtx.shape[0], mtx.shape[1], nr_zones, nr_zones)
+                mode, self._file.filename, mtx.shape[0], mtx.shape[1], nr_zones, nr_zones))
         if numpy.isnan(mtx).any():
             raise ValueError("Matrix {} in file {} contains NA values".format(
                 mode, self._file.filename))

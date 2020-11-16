@@ -61,8 +61,7 @@ class ModelSystem:
 
         self.dm = self._init_demand_model()
         self.fm = FreightModel(
-            self.zdata_base, self.zdata_forecast, self.basematrices,
-            assignment_model.zone_numbers)
+            self.zdata_base, self.zdata_forecast, self.basematrices)
         self.em = ExternalModel(
             self.basematrices, self.zdata_forecast, self.ass_model.zone_numbers)
         self.dtm = dt.DepartureTimeModel(
