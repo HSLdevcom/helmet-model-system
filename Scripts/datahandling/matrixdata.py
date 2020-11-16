@@ -1,6 +1,7 @@
 import os
 import openmatrix as omx
 import numpy
+import pandas
 from contextlib import contextmanager
 
 from utils.read_csv_file import read_csv_file
@@ -27,6 +28,7 @@ class MatrixData:
 class MatrixFile(object):
     def __init__(self, omx_file, zone_numbers):
         self._file = omx_file
+        self.missing_zones = []
         if zone_numbers is None:
             pass
         elif omx_file.mode == 'r':
@@ -36,12 +38,13 @@ class MatrixFile(object):
                 raise IndexError("Zone numbers not in strictly ascending order in file {}".format(path))
             if mtx_numbers.size != zone_numbers.size or (mtx_numbers != zone_numbers).any():
                 for i in mtx_numbers:
-                    if int(i) not in zone_numbers:
+                    if i not in zone_numbers:
                         raise IndexError("Zone number {} from file {} not found in network".format(i, path))
                 for i in zone_numbers:
                     if i not in mtx_numbers:
-                        raise IndexError("Zone number {} not found in file {}".format(i, path))
-                raise IndexError("Zone numbers did not match for file {}".format(path))
+                        self.missing_zones.append(i)
+                # TODO Print warning
+                self.new_zone_numbers = zone_numbers
             ass_classes = self.matrix_list
             transport_classes = (("truck", "trailer_truck") 
                                  if "freight" in path
@@ -68,6 +71,12 @@ class MatrixFile(object):
         if (mtx < 0).any():
             raise ValueError("Matrix {} in file {} contains negative values".format(
                 mode, self._file.filename))
+        if self.missing_zones:
+            mtx = pandas.DataFrame(mtx, self.zone_numbers)
+            mtx.reindex(
+                index=self.new_zone_numbers, columns=self.new_zone_numbers,
+                fill_value=0)
+            mtx = mtx.values
         return mtx
 
     def __setitem__(self, mode, data):
