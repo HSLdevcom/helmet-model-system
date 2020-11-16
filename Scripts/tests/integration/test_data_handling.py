@@ -7,6 +7,7 @@ import parameters.assignment as param
 import numpy
 
 TEST_DATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "test_data")
+ZONE_INDEXES = numpy.array([5, 6, 7, 2792, 16001, 17000, 31001, 31501])
 
 # Integration tests for validating that we can read the matrices from OMX and CSV files correctly.
 # Assumes that the matrix is fixed and the values don't change throughout the project.
@@ -31,38 +32,26 @@ class MatrixDataTest(unittest.TestCase):
         emme_scenarios = ["aht", "pt", "iht"]
         for key in emme_scenarios:
             print("Opening matrix for time period", key)
-            with matrix_data.open(matrix_type, time_period=key) as mtx:
-                mtx.check(numpy.array([5, 6, 7, 2792, 16001, 17000, 31001, 31501]))
-                # self.assertIsNotNone(mtx._file)
-                # # Validate that has some zone numbers and mapping
-                # self.assertTrue(len(mtx.zone_numbers) > 0)
-                # self.assertEquals(len(mtx.zone_numbers), len(mtx.mapping))
-                # modes_for_this_type = param.emme_result_mtx[matrix_type].keys()
-                # for mode in modes_for_this_type:
-                #     # Validata that there is some data for each mode
-                #     print("validating data for matrix mode", mode)
-                #     data = mtx[mode]
-                #     assert type(data) is numpy.ndarray
-                #     self.assertTrue(len(data) > 0)
-                #     assert (data >= 0).all()
+            with matrix_data.open(matrix_type, key, ZONE_INDEXES) as mtx:
+                for ass_class in param.transport_classes:
+                    a = mtx[ass_class]
 
 
 class ZoneDataTest(unittest.TestCase):
     FREIGHT_DATA_INDEXES = [5, 6, 7, 2792, 16001, 17000]
-    ZONE_INDEXES = numpy.array([5, 6, 7, 2792, 16001, 17000, 31001, 31501])
 
     def _get_freight_data_2016(self):
-        zdata = ZoneData(os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata_test"), self.ZONE_INDEXES)
+        zdata = ZoneData(os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata_test"), ZONE_INDEXES)
         df = zdata.get_freight_data()
         self.assertIsNotNone(df)
         return df
 
     def test_csv_file_read(self):
-        zdata2016 = ZoneData(os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata_test"), self.ZONE_INDEXES)
+        zdata2016 = ZoneData(os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata_test"), ZONE_INDEXES)
         self.assertIsNotNone(zdata2016["population"])
         self.assertIsNotNone(zdata2016["workplaces"])
 
-        zdata2030 = ZoneData(os.path.join(TEST_DATA_PATH, "Scenario_input_data", "2030_test"), self.ZONE_INDEXES)
+        zdata2030 = ZoneData(os.path.join(TEST_DATA_PATH, "Scenario_input_data", "2030_test"), ZONE_INDEXES)
         self.assertIsNotNone(zdata2030["population"])
         self.assertIsNotNone(zdata2030["workplaces"])
 

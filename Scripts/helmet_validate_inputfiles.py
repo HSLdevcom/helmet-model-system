@@ -1,6 +1,5 @@
 from argparse import ArgumentParser
 import os
-import numpy
 
 from utils.config import Config
 from utils.log import Log
@@ -53,8 +52,9 @@ def main(args, logger):
     matrixdata = MatrixData(base_matrices_path)
     for tp in assignment_model.emme_scenarios:
         # TODO Move checks to MatrixData
-        with matrixdata.open("demand", tp) as mtx:
-            mtx.check(assignment_model.zone_numbers)
+        with matrixdata.open("demand", tp, assignment_model.zone_numbers) as mtx:
+            for ass_class in param.transport_classes:
+                a = mtx[ass_class]
 
     # Check scenario based input data
     logger.info("Checking base zonedata & scenario-based input data...")
