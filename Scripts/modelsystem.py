@@ -42,14 +42,15 @@ class ModelSystem:
                  results_path, assignment_model, name):
         self.logger = Log.get_instance()
         self.ass_model = assignment_model
+        self.zone_numbers = self.ass_model.zone_numbers
         self.emme_scenarios = self.ass_model.emme_scenarios
 
         # Input data
         self.zdata_base = BaseZoneData(
-            base_zone_data_path, assignment_model.zone_numbers)
+            base_zone_data_path, self.zone_numbers)
         self.basematrices = MatrixData(base_matrices_path)
         self.zdata_forecast = ZoneData(
-            zone_data_path, assignment_model.zone_numbers)
+            zone_data_path, self.zone_numbers)
 
         # Set dist unit cost from zonedata
         self.ass_model.dist_unit_cost = self.zdata_forecast.car_dist_cost
@@ -63,7 +64,7 @@ class ModelSystem:
         self.fm = FreightModel(
             self.zdata_base, self.zdata_forecast, self.basematrices)
         self.em = ExternalModel(
-            self.basematrices, self.zdata_forecast, self.ass_model.zone_numbers)
+            self.basematrices, self.zdata_forecast, self.zone_numbers)
         self.dtm = dt.DepartureTimeModel(
             self.ass_model.nr_zones, self.emme_scenarios)
         self.imptrans = ImpedanceTransformer()
@@ -278,15 +279,14 @@ class ModelSystem:
         return impedance
 
     def _save_to_omx(self, impedance, tp):
-        zone_numbers = self.ass_model.zone_numbers
         with self.resultmatrices.open("demand", tp, 'w') as mtx:
-            mtx.mapping = zone_numbers
+            mtx.mapping = self.zone_numbers
             for ass_class in self.dtm.demand[tp]:
                 mtx[ass_class] = self.dtm.demand[tp][ass_class]
             self.logger.info("Saved demand matrices for " + str(tp))
         for mtx_type in impedance:
             with self.resultmatrices.open(mtx_type, tp, 'w') as mtx:
-                mtx.mapping = zone_numbers
+                mtx.mapping = self.zone_numbers
                 for ass_class in impedance[mtx_type]:
                     mtx[ass_class] = impedance[mtx_type][ass_class]
 
@@ -359,9 +359,9 @@ class ModelSystem:
         time_ratio = transit_time / car_time
         self.resultdata.print_data(
             time_ratio, "impedance_ratio.txt",
-            self.ass_model.zone_numbers, "time")
+            self.zone_numbers, "time")
         self.zdata_forecast["time_ratio"] = pandas.Series(
-            numpy.ma.getdata(time_ratio), self.ass_model.zone_numbers)
+            numpy.ma.getdata(time_ratio), self.zone_numbers)
         car_cost = numpy.ma.average(
             impedance["cost"]["car_work"], axis=1,
             weights=self.dtm.demand[tp]["car_work"])
@@ -372,9 +372,9 @@ class ModelSystem:
         cost_ratio = cost_ratio.clip(0.01, None)
         self.resultdata.print_data(
             cost_ratio, "impedance_ratio.txt",
-            self.ass_model.zone_numbers, "cost")
+            self.zone_numbers, "cost")
         self.zdata_forecast["cost_ratio"] = pandas.Series(
-            numpy.ma.getdata(cost_ratio), self.ass_model.zone_numbers)
+            numpy.ma.getdata(cost_ratio), self.zone_numbers)
 
 
 class AgentModelSystem(ModelSystem):
