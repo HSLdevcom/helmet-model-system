@@ -2,6 +2,7 @@ import os
 import numpy
 import pandas
 
+import utils.log as log
 import parameters.assignment as param
 import parameters.zone as zone_param
 from abstract_assignment import AssignmentModel
@@ -108,7 +109,7 @@ class EmmeAssignmentModel(AssignmentModel):
             Type (time/cost/dist) : dict
                 Assignment class (car_work/transit/...) : numpy 2-d matrix
         """
-        self.emme_project.logger.info("Assignment starts...")
+        log.info("Assignment starts...")
         self.set_emmebank_matrices(matrices, iteration=="last")
         scen_id = self.emme_scenarios[time_period]
         if iteration=="init":
@@ -202,7 +203,7 @@ class EmmeAssignmentModel(AssignmentModel):
     def _set_matrix(self, mtx_label, matrix):
         if numpy.isnan(matrix).any():
             msg = "NAs in Numpy-demand matrix. Would cause infinite loop in Emme-assignment."
-            self.emme_project.logger.error(msg)
+            log.error(msg)
             raise ValueError(msg)
         else:
             self.emme_project.modeller.emmebank.matrix(
@@ -304,8 +305,7 @@ class EmmeAssignmentModel(AssignmentModel):
                 extra_attribute_default_value = 0,
                 overwrite = True,
                 scenario = scen)
-            self.emme_project.logger.debug(
-                "Created attr {} for scen {}".format(extr.name, scen_id))
+            log.debug("Created attr {} for scen {}".format(extr.name, scen_id))
 
     def _calc_background_traffic(self, scen_id, include_trucks=False):
         """Calculate background traffic (buses)."""
@@ -334,7 +334,7 @@ class EmmeAssignmentModel(AssignmentModel):
 
     def _calc_road_cost(self, scen_id):
         """Calculate road charges and driving costs for one scenario."""
-        self.emme_project.logger.info("Calculates road charges for scenario " + str(scen_id))
+        log.info("Calculates road charges for scenario " + str(scen_id))
         emmebank = self.emme_project.modeller.emmebank
         scen = emmebank.scenario(scen_id)
         network = scen.get_network()
@@ -463,17 +463,13 @@ class EmmeAssignmentModel(AssignmentModel):
         for node in network.nodes():
             transit_zones.add(node.label)
         # check that fare zones exist in network
-        self.emme_project.logger.debug(
-            "Network has fare zones {}".format(', '.join(transit_zones)))
+        log.debug("Network has fare zones {}".format(', '.join(transit_zones)))
         zones_in_zonedata = set(char for char in ''.join(fares["fare"].keys()))
-        self.emme_project.logger.debug(
-            "Zonedata has fare zones {}".format(', '.join(zones_in_zonedata)))
+        log.debug("Zonedata has fare zones {}".format(', '.join(zones_in_zonedata)))
         if zones_in_zonedata > transit_zones:
-            self.emme_project.logger.warn(
-                "All zones in transit costs do not exist in Emme-network labels.")
+            log.warn("All zones in transit costs do not exist in Emme-network labels.")
         if transit_zones > zones_in_zonedata:
-            self.emme_project.logger.warn(
-                "All Emme-node labels do not have transit costs specified.")
+            log.warn("All Emme-node labels do not have transit costs specified.")
         spec = TransitSpecification(
             "transit_work", self.demand_mtx, self.result_mtx,
             count_zone_boardings=True)
@@ -609,12 +605,11 @@ class EmmeAssignmentModel(AssignmentModel):
         scen = emmebank.scenario(scen_id)
         function_file = os.path.join(self.emme_project.path, param.func_car)  # TODO refactor paths out from here
         self.emme_project.process_functions(function_file)
-        self.emme_project.logger.info("Car assignment started...")
+        log.info("Car assignment started...")
         car_spec = self._car_spec.spec(lightweight)
         car_spec["stopping_criteria"] = stopping_criteria
         self.emme_project.car_assignment(car_spec, scen)
-        self.emme_project.logger.info("Car assignment performed for scenario "
-                                      + str(scen_id))
+        log.info("Car assignment performed for scenario " + str(scen_id))
     
     def _assign_bikes(self, scen_id, length_mat_id, length_for_links, link_vol):
         """Perform bike traffic assignment for one scenario."""
@@ -647,20 +642,18 @@ class EmmeAssignmentModel(AssignmentModel):
             "aggregation": None,
         }
         self.emme_project.network_calc(netw_spec, scen)
-        self.emme_project.logger.info("Bike assignment started")
+        log.info("Bike assignment started")
         self.emme_project.bike_assignment(specification=spec, scenario=scen)
-        self.emme_project.logger.info("Bike assignment performed for scenario "
-                                      + str(scen_id))
+        log.info("Bike assignment performed for scenario " + str(scen_id))
     
     def _assign_pedestrians(self, scen_id):
         """Perform pedestrian assignment for one scenario."""
         emmebank = self.emme_project.modeller.emmebank
         scen = emmebank.scenario(scen_id)
-        self.emme_project.logger.info("Pedestrian assignment started")
+        log.info("Pedestrian assignment started")
         self.emme_project.pedestrian_assignment(
             specification=self.walk_spec, scenario=scen)
-        self.emme_project.logger.info("Pedestrian assignment performed for scenario "
-                                      + str(scen_id))
+        log.info("Pedestrian assignment performed for scenario " + str(scen_id))
 
     def _calc_boarding_penalties(self, scen_id, extra_penalty=0, is_last_iteration=False):
         """Calculate boarding penalties for transit assignment."""
@@ -680,8 +673,7 @@ class EmmeAssignmentModel(AssignmentModel):
                 missing_penalties.add(line.mode.id)
         if missing_penalties:
             missing_penalties = ", ".join(missing_penalties)
-            self.emme_project.logger.warn(
-                "No boarding penalty found for transit modes " + missing_penalties)
+            log.warn("No boarding penalty found for transit modes " + missing_penalties)
         scen.publish_network(network)
         
     def _calc_extra_wait_time(self, scen_id):
@@ -690,8 +682,7 @@ class EmmeAssignmentModel(AssignmentModel):
         scen = emmebank.scenario(scen_id)
         network = scen.get_network()
         # Calculation of cumulative line segment travel time and speed
-        self.emme_project.logger.info("Calculates cumulative travel times for scenario "
-                                      + str(scen_id))
+        log.info("Calculates cumulative travel times for scenario " + str(scen_id))
         for line in network.transit_lines():
             cumulative_length = 0
             cumulative_time = 0
@@ -750,21 +741,20 @@ class EmmeAssignmentModel(AssignmentModel):
         """Perform transit assignment for one scenario."""
         emmebank = self.emme_project.modeller.emmebank
         scen = emmebank.scenario(scen_id)
-        self.emme_project.logger.info("Transit assignment started")
+        log.info("Transit assignment started")
         # Here we assign all transit in one class, multi-class assignment is
         # performed in last iteration (congested assignment)
         spec = TransitSpecification("transit_work", self.demand_mtx, self.result_mtx)
         self.emme_project.transit_assignment(
             specification=spec.transit_spec, scenario=scen, save_strategies=True)
         self.emme_project.matrix_results(spec.transit_result_spec, scenario=scen)
-        self.emme_project.logger.info(
-            "Transit assignment performed for scenario {}".format(str(scen_id)))
+        log.info("Transit assignment performed for scenario {}".format(str(scen_id)))
 
     def _assign_congested_transit(self, transit_classes, scen_id):
         """Perform congested transit assignment for one scenario."""
         emmebank = self.emme_project.modeller.emmebank
         scen = emmebank.scenario(scen_id)
-        self.emme_project.logger.info("Congested transit assignment started")
+        log.info("Congested transit assignment started")
         tcs = [TransitSpecification(
             tc, self.demand_mtx, self.result_mtx, is_last_iteration=True
         ) for tc in transit_classes]
@@ -779,8 +769,8 @@ class EmmeAssignmentModel(AssignmentModel):
         for name, spec in zip(transit_classes, tcs):
             self.emme_project.matrix_results(spec.transit_result_spec, scenario=scen, class_name=name)
             self.emme_project.network_results(spec.ntw_results_spec, scenario=scen, class_name=name)
-        self.emme_project.logger.info(
-            "Congested transit assignment performed for scenario {}".format(str(scen_id)))
+        log.info("Congested transit assignment performed for scenario {}".format(
+            str(scen_id)))
 
     def auto_link_24h(self, attr):
         """ 
@@ -813,8 +803,8 @@ class EmmeAssignmentModel(AssignmentModel):
                     day_attr += links_attr[tp][link.id] * param.volume_factors[attr][tp]
             link[extra_attr_day] = day_attr
         day_scenario.publish_network(network)
-        self.emme_project.logger.info(
-            "Auto attribute {} aggregated to 24h (scenario {})".format(extra_attr, self.day_scenario))
+        log.info("Auto attribute {} aggregated to 24h (scenario {})".format(
+            extra_attr, self.day_scenario))
 
     def transit_segment_24h(self, transit_class, attr):
         """ 
@@ -848,8 +838,8 @@ class EmmeAssignmentModel(AssignmentModel):
                     pass
             segment[extra_attr] = day_attr
         day_scenario.publish_network(network)
-        self.emme_project.logger.info(
-            "Transit attribute {} aggregated to 24h (scenario {})".format(extra_attr, self.day_scenario))
+        log.info("Transit attribute {} aggregated to 24h (scenario {})".format(
+            extra_attr, self.day_scenario))
     
     def bike_link_24h(self):
         """ 
@@ -876,5 +866,5 @@ class EmmeAssignmentModel(AssignmentModel):
             extra_attr = "@{}_{}".format(attr, "day")
             link[extra_attr] = day_attr
         bike_scenario.publish_network(network) 
-        self.emme_project.logger.info(
-            "Bike attribute {} aggregated to 24h (scenario {})".format(extra_attr, self.bike_scenario))
+        log.info("Bike attribute {} aggregated to 24h (scenario {})".format(
+            extra_attr, self.bike_scenario))

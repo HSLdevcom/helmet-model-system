@@ -3,14 +3,14 @@ import sys
 import os
 
 from utils.config import Config
-from utils.log import Log
+import utils.log as log
 from assignment.emme_assignment import EmmeAssignmentModel
 from assignment.mock_assignment import MockAssignmentModel
 from modelsystem import ModelSystem
 from datahandling.matrixdata import MatrixData
 
 
-def main(args, logger):
+def main(args):
     name = args.scenario_name if args.scenario_name is not None else Config.DefaultScenario
     iterations = args.iterations
     base_zonedata_path = os.path.join(args.baseline_data_path, "2016_zonedata")
@@ -26,12 +26,12 @@ def main(args, logger):
             "completed": 0,
             "failed": 0,
             "total": args.iterations,
-            "log": logger.get_filename()
+            "log": "TODO", # log.get_filename()
         }
     }
 
     # Read input matrices (.omx) and zonedata (.csv), and initialize models (assignment model and model-system)
-    logger.info("Initializing matrices and models..", extra=log_extra)
+    log.info("Initializing matrices and models..", extra=log_extra)
     # Check input data folders/files exist
     if not os.path.exists(base_zonedata_path):
         raise NameError("Baseline zonedata directory '{}' does not exist.".format(base_zonedata_path))
@@ -41,7 +41,7 @@ def main(args, logger):
         raise NameError("Forecast data directory '{}' does not exist.".format(forecast_zonedata_path))
     # Choose and initialize the Traffic Assignment (supply)model
     if args.do_not_use_emme:
-        logger.info("Initializing MockAssignmentModel..")
+        log.info("Initializing MockAssignmentModel..")
         mock_result_path = os.path.join(results_path, args.scenario_name, "Matrices")
         if not os.path.exists(mock_result_path):
             raise NameError("Mock Results directory " + mock_result_path + " does not exist.")
@@ -49,7 +49,7 @@ def main(args, logger):
     else:
         if not os.path.isfile(emme_project_path):
             raise NameError(".emp project file not found in given '{}' location.".format(emme_project_path))
-        logger.info("Initializing Emme..")
+        log.info("Initializing Emme..")
         from assignment.emme_bindings.emme_project import EmmeProject
         ass_model = EmmeAssignmentModel(EmmeProject(emme_project_path), first_scenario_id=args.first_scenario_id)
     # Initialize model system (wrapping Assignment-model, and providing Demand-calculations as Python modules)
@@ -58,25 +58,25 @@ def main(args, logger):
 
     # Run traffic assignment simulation for N iterations, on last iteration model-system will save the results
     log_extra["status"]["state"] = "preparing"
-    logger.info("Starting simulation with {} iterations..".format(iterations), extra=log_extra)
+    log.info("Starting simulation with {} iterations..".format(iterations), extra=log_extra)
     impedance = model.assign_base_demand(args.use_fixed_transit_cost, iterations==0)
     log_extra["status"]["state"] = "running"
     for i in range(1, iterations + 1):
         log_extra["status"]["current"] = i
         try:
-            logger.info("Starting iteration {}".format(i), extra=log_extra)
+            log.info("Starting iteration {}".format(i), extra=log_extra)
             impedance = (model.run_iteration(impedance, "last")
                          if i == iterations
                          else model.run_iteration(impedance, i))
             log_extra["status"]["completed"] += 1
         except Exception as error:
             log_extra["status"]["failed"] += 1
-            logger.error("Exception at iteration {}".format(i), error)
-            logger.error("Fatal error occured, simulation aborted.", extra=log_extra)
+            log.error("Exception at iteration {}".format(i), error)
+            log.error("Fatal error occured, simulation aborted.", extra=log_extra)
             break
         if i == iterations:
             log_extra["status"]['state'] = 'finished'
-    logger.info("Simulation ended.", extra=log_extra)
+    log.info("Simulation ended.", extra=log_extra)
 
 
 if __name__ == "__main__":
@@ -159,16 +159,16 @@ if __name__ == "__main__":
     config.LOG_LEVEL = args.log_level
     config.LOG_FORMAT = args.log_format
     config.SCENARIO_NAME = args.scenario_name
-    logger = Log.get_instance().initialize(config)
-    logger.debug('sys.version_info=' + str(sys.version_info[0]))
-    logger.debug('sys.path=' + str(sys.path))
-    logger.debug('log_level=' + args.log_level)
-    logger.debug('emme_path=' + args.emme_path)
-    logger.debug('baseline_data_path=' + args.baseline_data_path)
-    logger.debug('forecast_data_path=' + args.forecast_data_path)
-    logger.debug('iterations=' + str(args.iterations))
-    logger.debug('use_fixed_transit_cost=' + str(args.use_fixed_transit_cost))
-    logger.debug('first_scenario_id=' + str(args.first_scenario_id))
-    logger.debug('scenario_name=' + args.scenario_name)
+    log.initialize(config)
+    log.debug('sys.version_info=' + str(sys.version_info[0]))
+    log.debug('sys.path=' + str(sys.path))
+    log.debug('log_level=' + args.log_level)
+    log.debug('emme_path=' + args.emme_path)
+    log.debug('baseline_data_path=' + args.baseline_data_path)
+    log.debug('forecast_data_path=' + args.forecast_data_path)
+    log.debug('iterations=' + str(args.iterations))
+    log.debug('use_fixed_transit_cost=' + str(args.use_fixed_transit_cost))
+    log.debug('first_scenario_id=' + str(args.first_scenario_id))
+    log.debug('scenario_name=' + args.scenario_name)
 
-    main(args, logger)
+    main(args)

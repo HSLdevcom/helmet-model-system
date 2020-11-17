@@ -4,7 +4,7 @@ import os
 import numpy
 import pandas
 
-from utils.log import Log
+import utils.log as log
 import assignment.departure_time as dt
 from datahandling.resultdata import ResultsData
 from datahandling.zonedata import ZoneData, BaseZoneData
@@ -40,7 +40,6 @@ class ModelSystem:
 
     def __init__(self, zone_data_path, base_zone_data_path, base_matrices_path,
                  results_path, assignment_model, name):
-        self.logger = Log.get_instance()
         self.ass_model = assignment_model
         self.emme_scenarios = self.ass_model.emme_scenarios
 
@@ -166,11 +165,11 @@ class ModelSystem:
         with self.basematrices.open("cost", "peripheral") as peripheral_mtx:
             peripheral_cost = peripheral_mtx["transit"]
         if use_fixed_transit_cost:
-            self.logger.info("Using fixed transit cost matrix")
+            log.info("Using fixed transit cost matrix")
             with self.resultmatrices.open("cost", "aht") as aht_mtx:
                 fixed_cost = aht_mtx["transit_work"]
         else:
-            self.logger.info("Calculating transit cost")
+            log.info("Calculating transit cost")
             fixed_cost = None
         self.ass_model.calc_transit_cost(
             self.zdata_forecast.transit_zone, peripheral_cost, fixed_cost)
@@ -179,7 +178,7 @@ class ModelSystem:
         # for each time period
         demand = self.resultmatrices if is_end_assignment else self.basematrices
         for tp in self.emme_scenarios:
-            self.logger.info("Assigning period " + tp)
+            log.info("Assigning period " + tp)
             with demand.open("demand", tp) as mtx:
                 for ass_class in self.ass_classes:
                     self.dtm.demand[tp][ass_class] = mtx[ass_class]
@@ -283,7 +282,7 @@ class ModelSystem:
             mtx.mapping = zone_numbers
             for ass_class in self.dtm.demand[tp]:
                 mtx[ass_class] = self.dtm.demand[tp][ass_class]
-            self.logger.info("Saved demand matrices for " + str(tp))
+            log.info("Saved demand matrices for " + str(tp))
         for mtx_type in impedance:
             with self.resultmatrices.open(mtx_type, tp, 'w') as mtx:
                 mtx.mapping = zone_numbers
