@@ -62,9 +62,10 @@ class MatrixFile(object):
     def __getitem__(self, mode):
         mtx = numpy.array(self._file[mode])
         nr_zones = self.zone_numbers.size
-        if mtx.shape[0] != nr_zones or mtx.shape[1] != nr_zones:
-            raise IndexError("Matrix {} in file {} dimensions {}x{}, should be {}x{}".format(
-                mode, self._file.filename, mtx.shape[0], mtx.shape[1], nr_zones, nr_zones))
+        dim = (nr_zones, nr_zones)
+        if mtx.shape != dim:
+            raise IndexError("Matrix {} in file {} has dimensions {}, should be {}".format(
+                mode, self._file.filename, mtx.shape, dim))
         if numpy.isnan(mtx).any():
             raise ValueError("Matrix {} in file {} contains NA values".format(
                 mode, self._file.filename))
@@ -72,8 +73,8 @@ class MatrixFile(object):
             raise ValueError("Matrix {} in file {} contains negative values".format(
                 mode, self._file.filename))
         if self.missing_zones:
-            mtx = pandas.DataFrame(mtx, self.zone_numbers)
-            mtx.reindex(
+            mtx = pandas.DataFrame(mtx, self.zone_numbers, self.zone_numbers)
+            mtx = mtx.reindex(
                 index=self.new_zone_numbers, columns=self.new_zone_numbers,
                 fill_value=0)
             mtx = mtx.values

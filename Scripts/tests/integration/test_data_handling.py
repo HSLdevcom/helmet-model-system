@@ -30,9 +30,10 @@ class MatrixDataTest(unittest.TestCase):
 
     def _validate_matrix_operations(self, matrix_data, matrix_type):
         emme_scenarios = ["aht", "pt", "iht"]
+        expanded_zones = numpy.insert(ZONE_INDEXES, 3, 8)
         for key in emme_scenarios:
             print("Opening matrix for time period", key)
-            with matrix_data.open(matrix_type, key, ZONE_INDEXES) as mtx:
+            with matrix_data.open(matrix_type, key, expanded_zones) as mtx:
                 for ass_class in param.transport_classes:
                     a = mtx[ass_class]
 
