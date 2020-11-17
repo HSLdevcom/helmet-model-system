@@ -13,6 +13,8 @@ from config import Config
 #   - Log file
 #   - EMME 
 
+filename = None
+
 def initialize(config, emme_context=None):
     # JSON logger for communicating with UI
     logger = logging.getLogger()
@@ -31,6 +33,7 @@ def initialize(config, emme_context=None):
         file = config.SCENARIO_NAME + ".log"
     else:
         file = Config.DefaultScenario + '.log'
+    global filename
     filename = os.path.join(sys.path[0], file)
     fileFormat = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
     fileHandler = logging.handlers.TimedRotatingFileHandler(filename, when='H', interval=10, backupCount=7)
