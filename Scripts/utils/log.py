@@ -15,7 +15,7 @@ from config import Config
 
 filename = None
 
-def initialize(config, emme_context=None):
+def initialize(config):
     # JSON logger for communicating with UI
     logger = logging.getLogger()
     numeric_level = getattr(logging, config.LOG_LEVEL, 20)
@@ -27,7 +27,10 @@ def initialize(config, emme_context=None):
         streamHandler.setLevel(logging.DEBUG) # always debug to pass everything to UI
         logger.addHandler(streamHandler)
     else:
-        logging.basicConfig(level=numeric_level, stream=sys.stdout, format='%(asctime)s [%(levelname)s] %(message)s')
+        logging.basicConfig(
+            level=numeric_level, stream=sys.stdout, 
+            format='%(asctime)s [%(levelname)s] %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S',)
     # Rotating file logger
     if config.SCENARIO_NAME is not None:
         file = config.SCENARIO_NAME + ".log"
@@ -35,8 +38,10 @@ def initialize(config, emme_context=None):
         file = Config.DefaultScenario + '.log'
     global filename
     filename = os.path.join(sys.path[0], file)
-    fileFormat = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
-    fileHandler = logging.handlers.TimedRotatingFileHandler(filename, when='H', interval=10, backupCount=7)
+    fileFormat = logging.Formatter(
+        '%(asctime)s [%(levelname)s] %(message)s', '%Y-%m-%d %H:%M:%S')
+    fileHandler = logging.handlers.TimedRotatingFileHandler(
+        filename, when='H', interval=10, backupCount=7)
     fileHandler.setFormatter(fileFormat)
     fileHandler.setLevel(numeric_level)
     logger.addHandler(fileHandler)

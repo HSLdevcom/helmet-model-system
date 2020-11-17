@@ -80,11 +80,8 @@ class DepartureTimeModel:
             share = param.backup_demand_share[time_period]
             large_mtx[r_0:r_n, c_0:c_n] += share[0] * mtx
             large_mtx[c_0:c_n, r_0:r_n] += share[1] * mtx.T
-            self.logger.warn("{}x{} matrix not matching {} demand shares. Resorted to backup demand shares.".format(
-                str(mtx.shape[0]),
-                str(mtx.shape[0]),
-                str(len(demand_share[0]))
-            ))
+            self.logger.warn("{} {} matrix not matching {} demand shares. Resorted to backup demand shares.".format(
+                mtx.shape, ass_class, len(demand_share[0])))
 
     def _add_3d_demand(self, demand, ass_class, time_period):
         """Add three-way demand."""
