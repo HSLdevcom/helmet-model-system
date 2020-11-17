@@ -114,6 +114,7 @@ class ModelSystem:
         self.dm.generate_tours()
         
         # Assigning of tours to mode, destination and time period
+        self.passenger_modes = set()
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
                 purpose_impedance = self.imptrans.transform(
@@ -131,6 +132,7 @@ class ModelSystem:
                 if purpose.dest != "source":
                     for mode in demand:
                         self.dtm.add_demand(demand[mode])
+                        self.passenger_modes.add(mode)
 
     # possibly merge with init
     def assign_base_demand(self, use_fixed_transit_cost=False, is_end_assignment=False):
@@ -242,7 +244,6 @@ class ModelSystem:
         self._add_internal_demand(previous_iter_impedance, iteration=="last")
 
         # Calculate external demand
-        trip_sum = {}
         for mode in param.external_modes:
             if mode == "truck":
                 int_demand = self.trucks.matrix.sum(0) + self.trucks.matrix.sum(1)
@@ -250,15 +251,21 @@ class ModelSystem:
                 int_demand = self.trailer_trucks.matrix.sum(0) + self.trailer_trucks.matrix.sum(1)
             else:
                 int_demand = self._sum_trips_per_zone(mode)
-                trip_sum[mode] = int_demand.sum()
             ext_demand = self.em.calc_external(mode, int_demand)
             self.dtm.add_demand(ext_demand)
+
+        # Calculate trips and mode shares
+        trip_sum = {}
+        for mode in self.passenger_modes:
+            trip_sum[mode] = self._sum_trips_per_zone(mode)
         sum_all = sum(trip_sum.values())
-        # ATM, these mode shares are for car and transit
-        # for the whole model area
         mode_share = {}
         for mode in trip_sum:
-            mode_share[mode] = trip_sum[mode] / sum_all
+            self.resultdata.print_data(trip_sum[mode], "origins_demand.txt", 
+                self.zdata_base.zone_numbers, mode)
+            self.resultdata.print_data(trip_sum[mode] / sum_all, "origins_shares.txt", 
+                self.zdata_base.zone_numbers, mode)
+            mode_share[mode] = trip_sum[mode].sum() / sum_all.sum()
         self.mode_share.append(mode_share)
 
         # Calculate and return traffic impedance
@@ -293,6 +300,8 @@ class ModelSystem:
     def _sum_trips_per_zone(self, mode):
         int_demand = numpy.zeros(self.zdata_base.nr_zones)
         for purpose in self.dm.tour_purposes:
+            if mode not in purpose.modes:
+                continue 
             if purpose.dest != "source":
                 if isinstance(purpose, SecDestPurpose):
                     bounds = next(iter(purpose.sources)).bounds
