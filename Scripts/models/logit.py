@@ -6,7 +6,7 @@ from parameters.destination_choice import destination_choice, distance_boundary
 from parameters.mode_choice import mode_choice
 from parameters.car import car_usage
 import parameters.tour_generation as generation_params
-import parameters.zone as zone_param
+from utils.zone_interval import ZoneInterval
 
 
 class LogitModel:
@@ -791,33 +791,23 @@ class CarUseModel(LogitModel):
         car_users = prob * population_7_99
                 
         # Print car user share by zone
-        self.resultdata.print_data(prob,
-                                   "car_use.txt",
-                                   self.zone_data.zone_numbers[self.bounds],
-                                   "car_use")
-        
-        # print car use share by municipality
-        prob_municipality = []
-        for municipality in zone_param.municipalities:
-            i = slice(zone_param.municipalities[municipality][0],
-                      zone_param.municipalities[municipality][1])
-            # comparison data has car user shares of population
-            # over 6 years old (from HEHA)
-            prob_municipality.append(car_users.loc[i].sum() / population_7_99.loc[i].sum())
-        self.resultdata.print_data(prob_municipality,
-                                   "car_use_per_municipality.txt",
-                                   zone_param.municipalities.keys(),
-                                   "car_use")
+        self.resultdata.print_data(
+            prob, "car_use.txt", self.zone_data.zone_numbers[self.bounds],
+            "car_use")
                           
-        # print car use share by area (to get Helsinki CBD vs. Helsinki other)
-        prob_area = []
-        for area in zone_param.areas:
-            i = slice(zone_param.areas[area][0],
-                      zone_param.areas[area][1])
-            # comparison data has car user shares of population
-            # over 6 years old (from HEHA)
-            prob_area.append(car_users.loc[i].sum() / population_7_99.loc[i].sum())
-        self.resultdata.print_data(prob_area,
-                                   "car_use_per_area.txt",
-                                   zone_param.areas.keys(),
-                                   "car_use")
+        # print car use share by municipality and area
+        for area_type in ("municipalities", "areas"):
+            prob_area = []
+            intervals = ZoneInterval(area_type)
+            for area in intervals:
+                i = intervals[area]
+                # comparison data has car user shares of population
+                # over 6 years old (from HEHA)
+                pop = population_7_99.loc[i].sum()
+                if numpy.isnan(pop) or pop == 0:
+                    prob_area.append(0)
+                else:
+                    prob_area.append(car_users.loc[i].sum() / pop)
+            self.resultdata.print_data(
+                prob_area, "car_use_per_{}.txt".format(area_type),
+                intervals.keys(), "car_use")
