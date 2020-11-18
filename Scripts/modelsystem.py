@@ -98,6 +98,8 @@ class ModelSystem:
             If this is the last iteration, 
             secondary destinations are calculated for all modes
         """
+        log.info("Demand calculation started...")
+
         # Mode and destination probability matrices are calculated first,
         # as logsums from probability calculation are used in tour generation.
         self.dm.create_population_segments()
@@ -129,6 +131,7 @@ class ModelSystem:
                 if purpose.dest != "source":
                     for mode in demand:
                         self.dtm.add_demand(demand[mode])
+        log.info("Demand calculation completed")
 
     # possibly merge with init
     def assign_base_demand(self, use_fixed_transit_cost=False, is_end_assignment=False):
@@ -261,6 +264,7 @@ class ModelSystem:
 
         # Calculate and return traffic impedance
         for tp in self.emme_scenarios:
+            log.info("Assigning period " + tp)
             self.dtm.add_vans(tp, self.zdata_forecast.nr_zones)
             impedance[tp] = self.ass_model.assign(
                 tp, self.dtm.demand[tp], iteration)
@@ -420,12 +424,16 @@ class AgentModelSystem(ModelSystem):
             If this is the last iteration, 
             secondary destinations are calculated for all modes
         """
+        log.info("Creating synthetic population")
+        # TODO Split agent creation and car usership
         self.dm.create_population()
+        log.info("Demand calculation started...")
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
                 purpose.init_sums()
             else:
-                purpose_impedance = self.imptrans.transform(purpose, previous_iter_impedance)
+                purpose_impedance = self.imptrans.transform(
+                    purpose, previous_iter_impedance)
                 if purpose.area == "peripheral" or purpose.name == "oop":
                     purpose.calc_prob(purpose_impedance)
                     purpose.gen_model.init_tours()
@@ -437,7 +445,10 @@ class AgentModelSystem(ModelSystem):
                 else:
                     purpose.init_sums()
                     purpose.model.calc_basic_prob(purpose_impedance)
-        purpose_impedance = self.imptrans.transform(self.dm.purpose_dict["hoo"], previous_iter_impedance)
+        purpose_impedance = self.imptrans.transform(
+            self.dm.purpose_dict["hoo"], previous_iter_impedance)
+        log.info("Assigning mode and destination for {} agents".format(
+            len(self.dm.population)))
         for person in self.dm.population:
             person.add_tours(self.dm.purpose_dict)
             for tour in person.tours:
@@ -446,3 +457,4 @@ class AgentModelSystem(ModelSystem):
                 if tour.mode == "car":
                     tour.choose_driver()
                 self.dtm.add_demand(tour)
+        log.info("Demand calculation completed")

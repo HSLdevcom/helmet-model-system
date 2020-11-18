@@ -19,7 +19,7 @@ class EmmeProject:
         logging.getLogger().add_handler(sh)
 
         self.modeller = _m.Modeller(emme_desktop)
-        log.info("Emme started.")
+        log.info("Emme started")
         self.path = os.path.dirname(self.modeller.emmebank.path)
         self.create_matrix = self.modeller.tool(
             "inro.emme.data.matrix.create_matrix")

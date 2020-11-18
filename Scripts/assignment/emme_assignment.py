@@ -642,7 +642,7 @@ class EmmeAssignmentModel(AssignmentModel):
             "aggregation": None,
         }
         self.emme_project.network_calc(netw_spec, scen)
-        log.info("Bike assignment started")
+        log.info("Bike assignment started...")
         self.emme_project.bike_assignment(specification=spec, scenario=scen)
         log.info("Bike assignment performed for scenario " + str(scen_id))
     
@@ -650,7 +650,7 @@ class EmmeAssignmentModel(AssignmentModel):
         """Perform pedestrian assignment for one scenario."""
         emmebank = self.emme_project.modeller.emmebank
         scen = emmebank.scenario(scen_id)
-        log.info("Pedestrian assignment started")
+        log.info("Pedestrian assignment started...")
         self.emme_project.pedestrian_assignment(
             specification=self.walk_spec, scenario=scen)
         log.info("Pedestrian assignment performed for scenario " + str(scen_id))
@@ -741,7 +741,7 @@ class EmmeAssignmentModel(AssignmentModel):
         """Perform transit assignment for one scenario."""
         emmebank = self.emme_project.modeller.emmebank
         scen = emmebank.scenario(scen_id)
-        log.info("Transit assignment started")
+        log.info("Transit assignment started...")
         # Here we assign all transit in one class, multi-class assignment is
         # performed in last iteration (congested assignment)
         spec = TransitSpecification("transit_work", self.demand_mtx, self.result_mtx)
@@ -754,7 +754,7 @@ class EmmeAssignmentModel(AssignmentModel):
         """Perform congested transit assignment for one scenario."""
         emmebank = self.emme_project.modeller.emmebank
         scen = emmebank.scenario(scen_id)
-        log.info("Congested transit assignment started")
+        log.info("Congested transit assignment started...")
         tcs = [TransitSpecification(
             tc, self.demand_mtx, self.result_mtx, is_last_iteration=True
         ) for tc in transit_classes]
