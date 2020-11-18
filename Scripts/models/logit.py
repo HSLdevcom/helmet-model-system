@@ -94,21 +94,17 @@ class LogitModel:
         return dest_exps
 
     def _add_constant(self, utility, b):
-        """Calculates constant term for utility function.
+        """Add constant term to utility.
+
+        If parameter b is a tuple of two terms, they will be added for
+        capital region and surrounding region respectively.
         
         Parameters
         ----------
-        shape : ndarray
-            An example numpy array which tells the function to what shape the
-            result will be broadcasted to.
-        b : float
-            The value of the constant.
-        
-        Returns
-        -------
-        ndarray
-            A numpy array of the same size and type as `shape` but filled with
-            the constant value. The result is to be added to utility.
+        utility : ndarray
+            Numpy array to which the constant b will be added
+        b : float or tuple
+            The value of the constant
         """
         try: # If only one parameter
             utility += b
@@ -122,24 +118,20 @@ class LogitModel:
                 utility[k:, :] += b[1]
     
     def _add_impedance(self, utility, impedance, b):
-        """Calculates simple linear impedance terms for utility function.
+        """Adds simple linear impedances to utility.
+
+        If parameter in b is tuple of two terms, they will be added for
+        capital region and surrounding region respectively.
         
         Parameters
         ----------
-        shape : ndarray
-            An example numpy array which tells the function to what shape the
-            result will be broadcasted to.
+        utility : ndarray
+            Numpy array to which the impedances will be added
         impedance : dict
             A dictionary of time-averaged impedance matrices. Includes keys
             `time`, `cost`, and `dist` of which values are all ndarrays.
-        b : float
+        b : dict
             The parameters for different impedance matrices.
-        
-        Returns
-        -------
-        ndarray
-            A numpy array of the same size and type as `shape` but filled with
-            the impedance terms. The result is to be added to utility.
         """
         for i in b:
             try: # If only one parameter
@@ -151,30 +143,25 @@ class LogitModel:
         return utility
 
     def _add_log_impedance(self, exps, impedance, b):
-        """Calculates log transformations of impedance for utility function.
+        """Adds log transformations of impedance to utility.
         
         This is an optimized way of calculating log terms. Calculates
         impedance1^b1 * ... * impedanceN^bN in the following equation:
         e^(linear_terms + b1*log(impedance1) + ... + bN*log(impedanceN))
         = e^(linear_terms) * impedance1^b1 * ... * impedanceN^bN
 
+        If parameter in b is tuple of two terms, they will be multiplied for
+        capital region and surrounding region respectively.
+
         Parameters
         ----------
-        shape : ndarray
-            An example numpy array which tells the function to what shape the
-            result will be broadcasted to.
+        exps : ndarray
+            Numpy array to which the impedances will be multiplied
         impedance : dict
             A dictionary of time-averaged impedance matrices. Includes keys
             `time`, `cost`, and `dist` of which values are all ndarrays.
-        b : float
-            The parameters for different impedance matrices.
-        
-        Returns
-        -------
-        ndarray
-            A numpy array of the same size and type as `shape` but filled with
-            the impedance terms. The result is to be multiplied with the
-            exponents of utility.
+        b : dict
+            The parameters for different impedance matrices
         """
         for i in b:
             try: # If only one parameter
@@ -186,25 +173,21 @@ class LogitModel:
         return exps
     
     def _add_zone_util(self, utility, b, generation=False):
-        """Calculates simple linear zone terms for utility function.
+        """Adds simple linear zone terms to utility.
+
+        If parameter in b is tuple of two terms, they will be added for
+        capital region and surrounding region respectively.
         
         Parameters
         ----------
-        shape : ndarray
-            An example numpy array which tells the function to what shape the
-            result will be broadcasted to.
-        b : float
+        utility : ndarray
+            Numpy array to which the impedances will be added
+        b : dict
             The parameters for different zone data.
         generation : bool
             Whether the effect of the zone term is added only to the
             geographical area in which this model is used based on the
             `self.bounds` attribute of this class.
-        
-        Returns
-        -------
-        ndarray
-            A numpy array of the same size and type as `shape` but filled with
-            the zone terms. The result is to be added to utility.
         """
         zdata = self.zone_data
         for i in b:
@@ -237,31 +220,26 @@ class LogitModel:
         return utility
 
     def _add_log_zone_util(self, exps, b, generation=False):
-        """Calculates log transformations of zone data for utility function.
+        """Adds log transformations of zone data to utility.
         
         This is an optimized way of calculating log terms. Calculates
         zonedata1^b1 * ... * zonedataN^bN in the following equation:
         e^(linear_terms + b1*log(zonedata1) + ... + bN*log(zonedataN))
         = e^(linear_terms) * zonedata1^b1 * ... * zonedataN^bN
 
+        If parameter in b is tuple of two terms, they will be multiplied for
+        capital region and surrounding region respectively.
+
         Parameters
         ----------
-        shape : ndarray
-            An example numpy array which tells the function to what shape the
-            result will be broadcasted to.
-        b : float
+        exps : ndarray
+            Numpy array to which the impedances will be multiplied
+        b : dict
             The parameters for different zone data.
         generation : bool
             Whether the effect of the zone term is added only to the
             geographical area in which this model is used based on the
             `self.bounds` attribute of this class.
-        
-        Returns
-        -------
-        ndarray
-            A numpy array of the same size and type as `shape` but filled with
-            the zone terms. The result is to be multiplied with the
-            exponents of utility.
         """
         zdata = self.zone_data
         for i in b:
