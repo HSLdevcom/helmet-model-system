@@ -4,6 +4,7 @@ import pandas
 import parameters.zone as param
 from utils.read_csv_file import read_csv_file
 from utils.zone_interval import ZoneIntervals, zone_interval
+import utils.log as log
 
 
 class ZoneData:
@@ -37,7 +38,9 @@ class ZoneData:
         try:
             transit["fare"] = transit["fare"].astype(dtype=float, errors='raise')
         except ValueError:
-            raise ValueError("Zonedata file .tco has fare values not convertible to floats.")
+            msg = "Zonedata file .tco has fare values not convertible to floats."
+            log.error(msg)
+            raise ValueError(msg)
         transit_zone = {}
         transit_zone["fare"] = transit["fare"].to_dict()
         try:
@@ -132,18 +135,29 @@ class ZoneData:
             if not numpy.isfinite(data).all():
                 for (i, val) in data.iteritems():
                     if not numpy.isfinite(val):
-                        raise ValueError("{} for zone {} is not a finite number".format(key, i).capitalize())
+                        msg = "{} for zone {} is not a finite number".format(
+                            key, i).capitalize()
+                        log.error(msg)
+                        raise ValueError(msg)
         except TypeError:
             for (i, val) in data.iteritems():
                 try:
                     float(val)
                 except ValueError:
-                    raise TypeError("{} for zone {} is not a number".format(key, i).capitalize())
-            raise TypeError("{} could not be read".format(key).capitalize())
+                    msg = "{} for zone {} is not a number".format(
+                        key, i).capitalize()
+                    log.error(msg)
+                    raise TypeError(msg)
+            msg = "{} could not be read".format(key).capitalize()
+            log.error(msg)
+            raise TypeError(msg)
         if (data < 0).any():
             for (i, val) in data.iteritems():
                 if val < 0:
-                    raise ValueError("{} ({}) for zone {} is negative".format(key, val, i).capitalize())
+                    msg = "{} ({}) for zone {} is negative".format(
+                        key, val, i).capitalize()
+                    log.error(msg)
+                    raise ValueError(msg)
         self._values[key] = data
 
     def zone_index(self, zone_number):
@@ -163,7 +177,9 @@ class ZoneData:
         if len(match) == 1 and len(match[0]) == 1:
             return match[0][0]
         else:
-            raise IndexError("Found several matching zone numbers {}".format(zone_number))
+            msg = "Found several matching zone numbers {}".format(zone_number)
+            log.error(msg)
+            raise IndexError(msg)
 
     def get_freight_data(self):
         """Get zone data for freight traffic calculation.
@@ -234,5 +250,8 @@ class ShareChecker:
         if (data > 1.005).any():
             for (i, val) in data.iteritems():
                 if val > 1.005:
-                    raise ValueError("{} ({}) for zone {} is larger than one".format(key, val, i).capitalize())
+                    msg = "{} ({}) for zone {} is larger than one".format(
+                        key, val, i).capitalize()
+                    log.error(msg)
+                    raise ValueError(msg)
         self.data[key] = data
