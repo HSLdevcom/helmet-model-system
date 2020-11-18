@@ -431,6 +431,7 @@ class AgentModelSystem(ModelSystem):
             secondary destinations are calculated for all modes
         """
         self.dm.create_population()
+        self.passenger_modes = set()
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
                 purpose.init_sums()
@@ -443,6 +444,7 @@ class AgentModelSystem(ModelSystem):
                     demand = purpose.calc_demand()
                     if purpose.dest != "source":
                         for mode in demand:
+                            self.passenger_modes.add(mode)
                             self.dtm.add_demand(demand[mode])
                 else:
                     purpose.init_sums()
