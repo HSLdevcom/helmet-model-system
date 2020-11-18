@@ -114,7 +114,7 @@ class ModelSystem:
         self.dm.generate_tours()
         
         # Assigning of tours to mode, destination and time period
-        self.passenger_modes = set()
+        self.travel_modes = set()
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
                 purpose_impedance = self.imptrans.transform(
@@ -132,7 +132,7 @@ class ModelSystem:
                 if purpose.dest != "source":
                     for mode in demand:
                         self.dtm.add_demand(demand[mode])
-                        self.passenger_modes.add(mode)
+                        self.travel_modes.add(mode)
 
     # possibly merge with init
     def assign_base_demand(self, use_fixed_transit_cost=False, is_end_assignment=False):
@@ -256,7 +256,7 @@ class ModelSystem:
 
         # Calculate trips and mode shares
         trip_sum = {}
-        for mode in self.passenger_modes:
+        for mode in self.travel_modes:
             trip_sum[mode] = self._sum_trips_per_zone(mode)
         sum_all = sum(trip_sum.values())
         mode_share = {}
@@ -300,9 +300,7 @@ class ModelSystem:
     def _sum_trips_per_zone(self, mode):
         int_demand = numpy.zeros(self.zdata_base.nr_zones)
         for purpose in self.dm.tour_purposes:
-            if mode not in purpose.modes:
-                continue 
-            if purpose.dest != "source":
+            if mode in purpose.modes and purpose.dest != "source":
                 if isinstance(purpose, SecDestPurpose):
                     bounds = next(iter(purpose.sources)).bounds
                 else:
@@ -431,7 +429,7 @@ class AgentModelSystem(ModelSystem):
             secondary destinations are calculated for all modes
         """
         self.dm.create_population()
-        self.passenger_modes = set()
+        self.travel_modes = set()
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
                 purpose.init_sums()
@@ -444,7 +442,7 @@ class AgentModelSystem(ModelSystem):
                     demand = purpose.calc_demand()
                     if purpose.dest != "source":
                         for mode in demand:
-                            self.passenger_modes.add(mode)
+                            self.travel_modes.add(mode)
                             self.dtm.add_demand(demand[mode])
                 else:
                     purpose.init_sums()
