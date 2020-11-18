@@ -42,14 +42,15 @@ class ModelSystem:
                  results_path, assignment_model, name):
         self.logger = Log.get_instance()
         self.ass_model = assignment_model
+        self.zone_numbers = self.ass_model.zone_numbers
         self.emme_scenarios = self.ass_model.emme_scenarios
 
         # Input data
         self.zdata_base = BaseZoneData(
-            base_zone_data_path, assignment_model.zone_numbers)
+            base_zone_data_path, self.zone_numbers)
         self.basematrices = MatrixData(base_matrices_path)
         self.zdata_forecast = ZoneData(
-            zone_data_path, assignment_model.zone_numbers)
+            zone_data_path, self.zone_numbers)
 
         # Set dist unit cost from zonedata
         self.ass_model.dist_unit_cost = self.zdata_forecast.car_dist_cost
@@ -63,7 +64,7 @@ class ModelSystem:
         self.fm = FreightModel(
             self.zdata_base, self.zdata_forecast, self.basematrices)
         self.em = ExternalModel(
-            self.basematrices, self.zdata_forecast, self.ass_model.zone_numbers)
+            self.basematrices, self.zdata_forecast, self.zone_numbers)
         self.dtm = dt.DepartureTimeModel(
             self.ass_model.nr_zones, self.emme_scenarios)
         self.imptrans = ImpedanceTransformer()
@@ -113,6 +114,7 @@ class ModelSystem:
         self.dm.generate_tours()
         
         # Assigning of tours to mode, destination and time period
+        self.travel_modes = set()
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
                 purpose_impedance = self.imptrans.transform(
@@ -130,6 +132,7 @@ class ModelSystem:
                 if purpose.dest != "source":
                     for mode in demand:
                         self.dtm.add_demand(demand[mode])
+                        self.travel_modes.add(mode)
 
     # possibly merge with init
     def assign_base_demand(self, use_fixed_transit_cost=False, is_end_assignment=False):
@@ -241,7 +244,6 @@ class ModelSystem:
         self._add_internal_demand(previous_iter_impedance, iteration=="last")
 
         # Calculate external demand
-        trip_sum = {}
         for mode in param.external_modes:
             if mode == "truck":
                 int_demand = self.trucks.matrix.sum(0) + self.trucks.matrix.sum(1)
@@ -249,15 +251,21 @@ class ModelSystem:
                 int_demand = self.trailer_trucks.matrix.sum(0) + self.trailer_trucks.matrix.sum(1)
             else:
                 int_demand = self._sum_trips_per_zone(mode)
-                trip_sum[mode] = int_demand.sum()
             ext_demand = self.em.calc_external(mode, int_demand)
             self.dtm.add_demand(ext_demand)
+
+        # Calculate trips and mode shares
+        trip_sum = {}
+        for mode in self.travel_modes:
+            trip_sum[mode] = self._sum_trips_per_zone(mode)
         sum_all = sum(trip_sum.values())
-        # ATM, these mode shares are for car and transit
-        # for the whole model area
         mode_share = {}
         for mode in trip_sum:
-            mode_share[mode] = trip_sum[mode] / sum_all
+            self.resultdata.print_data(trip_sum[mode], "origins_demand.txt", 
+                self.zdata_base.zone_numbers, mode)
+            self.resultdata.print_data(trip_sum[mode] / sum_all, "origins_shares.txt", 
+                self.zdata_base.zone_numbers, mode)
+            mode_share[mode] = trip_sum[mode].sum() / sum_all.sum()
         self.mode_share.append(mode_share)
 
         # Calculate and return traffic impedance
@@ -278,22 +286,21 @@ class ModelSystem:
         return impedance
 
     def _save_to_omx(self, impedance, tp):
-        zone_numbers = self.ass_model.zone_numbers
         with self.resultmatrices.open("demand", tp, 'w') as mtx:
-            mtx.mapping = zone_numbers
+            mtx.mapping = self.zone_numbers
             for ass_class in self.dtm.demand[tp]:
                 mtx[ass_class] = self.dtm.demand[tp][ass_class]
             self.logger.info("Saved demand matrices for " + str(tp))
         for mtx_type in impedance:
             with self.resultmatrices.open(mtx_type, tp, 'w') as mtx:
-                mtx.mapping = zone_numbers
+                mtx.mapping = self.zone_numbers
                 for ass_class in impedance[mtx_type]:
                     mtx[ass_class] = impedance[mtx_type][ass_class]
 
     def _sum_trips_per_zone(self, mode):
         int_demand = numpy.zeros(self.zdata_base.nr_zones)
         for purpose in self.dm.tour_purposes:
-            if purpose.dest != "source":
+            if mode in purpose.modes and purpose.dest != "source":
                 if isinstance(purpose, SecDestPurpose):
                     bounds = next(iter(purpose.sources)).bounds
                 else:
@@ -359,9 +366,9 @@ class ModelSystem:
         time_ratio = transit_time / car_time
         self.resultdata.print_data(
             time_ratio, "impedance_ratio.txt",
-            self.ass_model.zone_numbers, "time")
+            self.zone_numbers, "time")
         self.zdata_forecast["time_ratio"] = pandas.Series(
-            numpy.ma.getdata(time_ratio), self.ass_model.zone_numbers)
+            numpy.ma.getdata(time_ratio), self.zone_numbers)
         car_cost = numpy.ma.average(
             impedance["cost"]["car_work"], axis=1,
             weights=self.dtm.demand[tp]["car_work"])
@@ -372,9 +379,9 @@ class ModelSystem:
         cost_ratio = cost_ratio.clip(0.01, None)
         self.resultdata.print_data(
             cost_ratio, "impedance_ratio.txt",
-            self.ass_model.zone_numbers, "cost")
+            self.zone_numbers, "cost")
         self.zdata_forecast["cost_ratio"] = pandas.Series(
-            numpy.ma.getdata(cost_ratio), self.ass_model.zone_numbers)
+            numpy.ma.getdata(cost_ratio), self.zone_numbers)
 
 
 class AgentModelSystem(ModelSystem):
@@ -422,6 +429,7 @@ class AgentModelSystem(ModelSystem):
             secondary destinations are calculated for all modes
         """
         self.dm.create_population()
+        self.travel_modes = set()
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
                 purpose.init_sums()
@@ -434,6 +442,7 @@ class AgentModelSystem(ModelSystem):
                     demand = purpose.calc_demand()
                     if purpose.dest != "source":
                         for mode in demand:
+                            self.travel_modes.add(mode)
                             self.dtm.add_demand(demand[mode])
                 else:
                     purpose.init_sums()
