@@ -1,7 +1,7 @@
 import parameters.zone as param
 
 
-class ZoneInterval:
+class ZoneIntervals:
     """Get interval slices for given zone division type.
 
     Parameters
@@ -20,6 +20,9 @@ class ZoneInterval:
 
     def __iter__(self):
         return self._intervals.iterkeys()
+
+    def __contains__(self, item):
+        return self._intervals.has_key(item)
 
     def keys(self):
         return self._intervals.keys()

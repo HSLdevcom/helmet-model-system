@@ -6,7 +6,7 @@ from parameters.destination_choice import destination_choice, distance_boundary
 from parameters.mode_choice import mode_choice
 from parameters.car import car_usage
 import parameters.tour_generation as generation_params
-from utils.zone_interval import ZoneInterval
+from utils.zone_interval import ZoneIntervals
 
 
 class LogitModel:
@@ -798,7 +798,7 @@ class CarUseModel(LogitModel):
         # print car use share by municipality and area
         for area_type in ("municipalities", "areas"):
             prob_area = []
-            intervals = ZoneInterval(area_type)
+            intervals = ZoneIntervals(area_type)
             for area in intervals:
                 i = intervals[area]
                 # comparison data has car user shares of population

@@ -3,7 +3,7 @@ import pandas
 import math
 
 import parameters.car as param
-from utils.zone_interval import ZoneInterval
+from utils.zone_interval import ZoneIntervals
 
 
 class LinearModel(object):
@@ -138,7 +138,7 @@ class CarDensityModel(LinearModel):
         # print car density by municipality and area
         for area_type in ("municipalities", "areas"):
             aggregation = []
-            intervals = ZoneInterval(area_type)
+            intervals = ZoneIntervals(area_type)
             for area in intervals:
                 i = intervals[area]
                 w = population.loc[i]

@@ -1,7 +1,9 @@
 import numpy
 import pandas
+
 import parameters.zone as param
 from utils.read_csv_file import read_csv_file
+from utils.zone_interval import ZoneIntervals, zone_interval
 
 
 class ZoneData:
@@ -88,16 +90,12 @@ class ZoneData:
         self["tertiary_education"] = schooldata["tertiary"]
         self["zone_area"] = landdata["builtar"]
         self.share["share_detached_houses"] = landdata["detach"]
-        self["cbd"] = pandas.Series(0, self.zone_numbers)
-        self["cbd"].loc[param.areas["helsinki_cbd"][0]:param.areas["helsinki_cbd"][1]] = 1
-        self["helsinki_other"] = pandas.Series(0, self.zone_numbers)
-        self["helsinki_other"].loc[param.areas["helsinki_other"][0]:param.areas["helsinki_other"][1]] = 1
         self["helsinki"] = pandas.Series(0, self.zone_numbers)
-        self["helsinki"].loc[param.municipalities["Helsinki"][0]:param.municipalities["Helsinki"][1]] = 1
-        self["espoo_vant_kau"] = pandas.Series(0, self.zone_numbers)
-        self["espoo_vant_kau"].loc[param.areas["espoo_vant_kau"][0]:param.areas["espoo_vant_kau"][1]] = 1
-        self["surrounding"] = pandas.Series(0, self.zone_numbers)
-        self["surrounding"].loc[param.areas["surrounding"][0]:param.areas["surrounding"][1]] = 1
+        self["helsinki"].loc[zone_interval("municipalities", "Helsinki")] = 1
+        self["cbd"] = self._area_dummy("helsinki_cbd")
+        self["helsinki_other"] = self._area_dummy("helsinki_other")
+        self["espoo_vant_kau"] = self._area_dummy("espoo_vant_kau")
+        self["surrounding"] = self._area_dummy("surrounding")
         self["shops_cbd"] = self["cbd"] * self["shops"]
         self["shops_elsewhere"] = (1-self["cbd"]) * self["shops"]
         # Create diagonal matrix with zone area
@@ -109,11 +107,9 @@ class ZoneData:
         # Create matrix where value is 1 if origin and destination is in
         # same municipality
         home_municipality = pandas.DataFrame(0, idx, idx)
-        municipalities = param.municipalities
-        for municipality in municipalities:
-            l = municipalities[municipality][0]
-            u = municipalities[municipality][1]
-            home_municipality.loc[l:u, l:u] = 1
+        intervals = ZoneIntervals("municipalities")
+        for i in intervals:
+            home_municipality.loc[intervals[i], intervals[i]] = 1
         self["population_own"] = home_municipality.values * pop.values
         self["population_other"] = (1-home_municipality.values) * pop.values
         self["workplaces_own"] = home_municipality.values * wp.values
@@ -122,6 +118,11 @@ class ZoneData:
         self["service_other"] = (1-home_municipality.values) * serv.values
         self["shops_own"] = home_municipality.values * shop.values
         self["shops_other"] = (1-home_municipality.values) * shop.values
+
+    def _area_dummy(self, name):
+        dummy = pandas.Series(0, self.zone_numbers)
+        dummy.loc[zone_interval("areas", name)] = 1
+        return dummy
 
     def __getitem__(self, key):
         return self._values[key]
