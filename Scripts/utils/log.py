@@ -12,69 +12,60 @@ from config import Config
 #   - stdout
 #   - Log file
 #   - EMME 
-class Log:
-    __instance = None
+
+filename = None
+
+def initialize(config):
+    # JSON logger for communicating with UI
+    logger = logging.getLogger()
+    numeric_level = getattr(logging, config.LOG_LEVEL, 20)
+    if config.LOG_FORMAT == 'JSON':
+        jsonFormat = logging.Formatter('%(json)s')
+        streamHandler = logging.StreamHandler(sys.stderr)
+        streamHandler.flush = sys.stderr.flush
+        streamHandler.setFormatter(jsonFormat)
+        streamHandler.setLevel(logging.DEBUG) # always debug to pass everything to UI
+        logger.addHandler(streamHandler)
+    else:
+        logging.basicConfig(
+            level=numeric_level, stream=sys.stdout, 
+            format='%(asctime)s [%(levelname)s] %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S',)
+    # Rotating file logger
+    if config.SCENARIO_NAME is not None:
+        file = config.SCENARIO_NAME + ".log"
+    else:
+        file = Config.DefaultScenario + '.log'
+    global filename
+    filename = os.path.join(sys.path[0], file)
+    fileFormat = logging.Formatter(
+        '%(asctime)s [%(levelname)s] %(message)s', '%Y-%m-%d %H:%M:%S')
+    fileHandler = logging.handlers.TimedRotatingFileHandler(
+        filename, when='H', interval=10, backupCount=7)
+    fileHandler.setFormatter(fileFormat)
+    fileHandler.setLevel(numeric_level)
+    logger.addHandler(fileHandler)
+    logger.setLevel(logging.DEBUG) # this has to match the lowest for different levels to work?
+
+def debug(msg, *args, **kwargs):
+    json = json_entry(msg, "DEBUG", *args, **kwargs)
+    logging.getLogger().debug(msg, *args, extra=json)
+
+def info(msg, *args, **kwargs):
+    json = json_entry(msg, "INFO", *args, **kwargs)
+    logging.getLogger().info(msg, *args, extra=json)
     
-    def __init__(self):
-        self.__logger = logging.getLogger()
+def warn(msg, *args, **kwargs):
+    json = json_entry(msg, "WARN", *args, **kwargs)
+    logging.getLogger().warn(msg, *args, extra=json)
 
-    @staticmethod
-    def get_instance():
-        if Log.__instance is None:
-            Log.__instance = Log()
-        return Log.__instance
+def error(msg, exception=None, *args, **kwargs):
+    print_stacktrace = exception is not None
+    json = json_entry(msg, "ERROR", *args, **kwargs)
+    logging.getLogger().error(msg, exc_info=print_stacktrace, *args, extra=json)
 
-    def initialize(self, config, emme_context=None):
-        # JSON logger for communicating with UI
-        numeric_level = getattr(logging, config.LOG_LEVEL, 20)
-        if config.LOG_FORMAT == 'JSON':
-            jsonFormat = logging.Formatter('%(json)s')
-            streamHandler = logging.StreamHandler(sys.stderr)
-            streamHandler.flush = sys.stderr.flush
-            streamHandler.setFormatter(jsonFormat)
-            streamHandler.setLevel(logging.DEBUG) # always debug to pass everything to UI
-            self.__logger.addHandler(streamHandler)
-        else:
-            logging.basicConfig(level=numeric_level, stream=sys.stdout, format='%(asctime)s [%(levelname)s] %(message)s')
-        # Rotating file logger
-        if config.SCENARIO_NAME is not None:
-            file = config.SCENARIO_NAME + ".log"
-        else:
-            file = Config.DefaultScenario + '.log'
-        self._filename = os.path.join(sys.path[0], file)
-        fileFormat = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
-        fileHandler = logging.handlers.TimedRotatingFileHandler(self._filename, when='H', interval=10, backupCount=7)
-        fileHandler.setFormatter(fileFormat)
-        fileHandler.setLevel(numeric_level)
-        self.__logger.addHandler(fileHandler)
-        self.__logger.setLevel(logging.DEBUG) # this has to match the lowest for different levels to work?
-        return Log.__instance
-
-    def add_stream_handler(self, handler):
-        self.__logger.addHandler(handler)
-
-    def debug(self, msg, *args, **kwargs):
-        json = self.json_entry(msg, "DEBUG", *args, **kwargs)
-        self.__logger.debug(msg, *args, extra=json)
-
-    def info(self, msg, *args, **kwargs):
-        json = self.json_entry(msg, "INFO", *args, **kwargs)
-        self.__logger.info(msg, *args, extra=json)
-        
-    def warn(self, msg, *args, **kwargs):
-        json = self.json_entry(msg, "WARN", *args, **kwargs)
-        self.__logger.warn(msg, *args, extra=json)
-
-    def error(self, msg, exception=None, *args, **kwargs):
-        print_stacktrace = exception is not None
-        json = self.json_entry(msg, "ERROR", *args, **kwargs)
-        self.__logger.error(msg, exc_info=print_stacktrace, *args, extra=json)
-
-    def json_entry(self, msg, level, *args, **kwargs):
-        entry = { "message": msg, "level": level }
-        if (kwargs.get("extra") is not None):
-            entry.update(kwargs.get("extra"))
-        return { "json": json.dumps(entry) }
-
-    def get_filename(self):
-        return self._filename
+def json_entry(msg, level, *args, **kwargs):
+    entry = { "message": msg, "level": level }
+    if (kwargs.get("extra") is not None):
+        entry.update(kwargs.get("extra"))
+    return { "json": json.dumps(entry) }

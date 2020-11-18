@@ -4,7 +4,7 @@ import os
 import numpy
 import pandas
 
-from utils.log import Log
+import utils.log as log
 import assignment.departure_time as dt
 from datahandling.resultdata import ResultsData
 from datahandling.zonedata import ZoneData, BaseZoneData
@@ -40,7 +40,6 @@ class ModelSystem:
 
     def __init__(self, zone_data_path, base_zone_data_path, base_matrices_path,
                  results_path, assignment_model, name):
-        self.logger = Log.get_instance()
         self.ass_model = assignment_model
         self.zone_numbers = self.ass_model.zone_numbers
         self.emme_scenarios = self.ass_model.emme_scenarios
@@ -100,6 +99,8 @@ class ModelSystem:
             If this is the last iteration, 
             secondary destinations are calculated for all modes
         """
+        log.info("Demand calculation started...")
+
         # Mode and destination probability matrices are calculated first,
         # as logsums from probability calculation are used in tour generation.
         self.dm.create_population_segments()
@@ -133,6 +134,7 @@ class ModelSystem:
                     for mode in demand:
                         self.dtm.add_demand(demand[mode])
                         self.travel_modes.add(mode)
+        log.info("Demand calculation completed")
 
     # possibly merge with init
     def assign_base_demand(self, use_fixed_transit_cost=False, is_end_assignment=False):
@@ -169,11 +171,11 @@ class ModelSystem:
         with self.basematrices.open("cost", "peripheral") as peripheral_mtx:
             peripheral_cost = peripheral_mtx["transit"]
         if use_fixed_transit_cost:
-            self.logger.info("Using fixed transit cost matrix")
+            log.info("Using fixed transit cost matrix")
             with self.resultmatrices.open("cost", "aht") as aht_mtx:
                 fixed_cost = aht_mtx["transit_work"]
         else:
-            self.logger.info("Calculating transit cost")
+            log.info("Calculating transit cost")
             fixed_cost = None
         self.ass_model.calc_transit_cost(
             self.zdata_forecast.transit_zone, peripheral_cost, fixed_cost)
@@ -182,7 +184,7 @@ class ModelSystem:
         # for each time period
         demand = self.resultmatrices if is_end_assignment else self.basematrices
         for tp in self.emme_scenarios:
-            self.logger.info("Assigning period " + tp)
+            log.info("Assigning period " + tp)
             with demand.open("demand", tp) as mtx:
                 for ass_class in self.ass_classes:
                     self.dtm.demand[tp][ass_class] = mtx[ass_class]
@@ -270,6 +272,7 @@ class ModelSystem:
 
         # Calculate and return traffic impedance
         for tp in self.emme_scenarios:
+            log.info("Assigning period " + tp)
             self.dtm.add_vans(tp, self.zdata_forecast.nr_zones)
             impedance[tp] = self.ass_model.assign(
                 tp, self.dtm.demand[tp], iteration)
@@ -290,7 +293,7 @@ class ModelSystem:
             mtx.mapping = self.zone_numbers
             for ass_class in self.dtm.demand[tp]:
                 mtx[ass_class] = self.dtm.demand[tp][ass_class]
-            self.logger.info("Saved demand matrices for " + str(tp))
+            log.info("Saved demand matrices for " + str(tp))
         for mtx_type in impedance:
             with self.resultmatrices.open(mtx_type, tp, 'w') as mtx:
                 mtx.mapping = self.zone_numbers
@@ -428,13 +431,17 @@ class AgentModelSystem(ModelSystem):
             If this is the last iteration, 
             secondary destinations are calculated for all modes
         """
+        log.info("Creating synthetic population")
+        # TODO Split agent creation and car usership
         self.dm.create_population()
+        log.info("Demand calculation started...")
         self.travel_modes = set()
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
                 purpose.init_sums()
             else:
-                purpose_impedance = self.imptrans.transform(purpose, previous_iter_impedance)
+                purpose_impedance = self.imptrans.transform(
+                    purpose, previous_iter_impedance)
                 if purpose.area == "peripheral" or purpose.name == "oop":
                     purpose.calc_prob(purpose_impedance)
                     purpose.gen_model.init_tours()
@@ -447,7 +454,10 @@ class AgentModelSystem(ModelSystem):
                 else:
                     purpose.init_sums()
                     purpose.model.calc_basic_prob(purpose_impedance)
-        purpose_impedance = self.imptrans.transform(self.dm.purpose_dict["hoo"], previous_iter_impedance)
+        purpose_impedance = self.imptrans.transform(
+            self.dm.purpose_dict["hoo"], previous_iter_impedance)
+        log.info("Assigning mode and destination for {} agents".format(
+            len(self.dm.population)))
         for person in self.dm.population:
             person.add_tours(self.dm.purpose_dict)
             for tour in person.tours:
@@ -456,3 +466,4 @@ class AgentModelSystem(ModelSystem):
                 if tour.mode == "car":
                     tour.choose_driver()
                 self.dtm.add_demand(tour)
+        log.info("Demand calculation completed")
