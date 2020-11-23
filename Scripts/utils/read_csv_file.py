@@ -2,6 +2,8 @@ import os
 import pandas
 import numpy
 
+import utils.log as log
+
 
 def read_csv_file(data_dir, file_end, zone_numbers=None, dtype=None, squeeze=False):
     """Read (zone) data from space-separated file.
@@ -27,12 +29,17 @@ def read_csv_file(data_dir, file_end, zone_numbers=None, dtype=None, squeeze=Fal
     for file_name in os.listdir(data_dir):
         if file_name.endswith(file_end):
             if file_found:
-                raise NameError("Multiple {} files found in folder {}".format(file_end, data_dir))
+                msg = "Multiple {} files found in folder {}".format(
+                    file_end, data_dir)
+                log.error(msg)
+                raise NameError(msg)
             else:
                 path = os.path.join(data_dir, file_name)
                 file_found = True
     if not file_found:
-        raise NameError("No {} file found in folder {}".format(file_end, data_dir))
+        msg = "No {} file found in folder {}".format(file_end, data_dir)
+        log.error(msg)
+        raise NameError(msg)
     if squeeze:
         header = None
     else:
@@ -41,12 +48,16 @@ def read_csv_file(data_dir, file_end, zone_numbers=None, dtype=None, squeeze=Fal
         path, delim_whitespace=True, squeeze=squeeze, keep_default_na=False,
         na_values="", comment='#', header=header)
     if data.index.is_numeric() and data.index.hasnans:
-        raise IndexError("Row with only spaces or tabs in file {}".format(path))
+        msg = "Row with only spaces or tabs in file {}".format(path)
+        log.error(msg)
+        raise IndexError(msg)
     else:
         for i in data.index:
             try:
                 if numpy.isnan(i):
-                    raise IndexError("Row with only spaces or tabs in file {}".format(path))
+                    msg = "Row with only spaces or tabs in file {}".format(path)
+                    log.error(msg)
+                    raise IndexError(msg)
             except TypeError:
                 # Text indices are ok and should not raise an exception
                 pass
@@ -54,13 +65,21 @@ def read_csv_file(data_dir, file_end, zone_numbers=None, dtype=None, squeeze=Fal
         if data.index.size != zone_numbers.size or (data.index != zone_numbers).any():
             for i in data.index:
                 if int(i) not in zone_numbers:
-                    raise IndexError("Zone number {} from file {} not found in network".format(i, path))
+                    msg = "Zone number {} from file {} not found in network".format(
+                        i, path)
+                    log.error(msg)
+                    raise IndexError(msg)
             for i in zone_numbers:
                 if i not in data.index:
-                    raise IndexError("Zone number {} not found in file {}".format(i, path))
+                    msg = "Zone number {} not found in file {}".format(i, path)
+                    log.error(msg)
+                    raise IndexError(msg)
     if dtype is not None:
         try:
             data = data.astype(dtype=dtype, errors='raise')
         except ValueError:
-            raise ValueError("Zone data file {} has values not convertible to floats.".format(file_end))
+            msg = "Zone data file {} has values not convertible to floats.".format(
+                file_end)
+            log.error(msg)
+            raise ValueError(msg)
     return data

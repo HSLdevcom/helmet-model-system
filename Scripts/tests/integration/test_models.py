@@ -1,5 +1,7 @@
 import unittest
 import numpy
+
+import utils.log as log
 from modelsystem import ModelSystem, AgentModelSystem
 from assignment.mock_assignment import MockAssignmentModel
 from datahandling.matrixdata import MatrixData
@@ -9,11 +11,16 @@ import os
 
 TEST_DATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "test_data")
 
+class Config():
+    LOG_FORMAT = None
+    LOG_LEVEL = "DEBUG"
+    SCENARIO_NAME = "TEST"
 
 class ModelTest(unittest.TestCase):
     
     def test_models(self):
         print("Testing assignment..")
+        log.initialize(Config())
         ass_model = MockAssignmentModel(MatrixData(os.path.join(TEST_DATA_PATH, "Results", "test", "Matrices")))
         zone_data_path = os.path.join(TEST_DATA_PATH, "Scenario_input_data", "2030_test")
         base_zone_data_path = os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata_test")
@@ -37,11 +44,12 @@ class ModelTest(unittest.TestCase):
         self._validate_impedances(impedance["iht"])
 
         # Check that model result does not change
-        self.assertAlmostEquals(model.mode_share[0]["car"], 0.74255610304404629)
+        self.assertAlmostEquals(model.mode_share[0]["car"], 0.45278821438547845)
         
         print("Model system test done")
     
     def test_agent_model(self):
+        log.initialize(Config())
         ass_model = MockAssignmentModel(MatrixData(os.path.join(TEST_DATA_PATH, "Results", "test", "Matrices")))
         zone_data_path = os.path.join(TEST_DATA_PATH, "Scenario_input_data", "2030_test")
         base_zone_data_path = os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata_test")

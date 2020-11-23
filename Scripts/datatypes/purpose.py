@@ -1,11 +1,11 @@
 import numpy
 import pandas
 
-import parameters.zone as param
 from parameters.destination_choice import secondary_destination_threshold
 import models.logit as logit
 import models.generation as generation
 from datatypes.demand import Demand
+from utils.zone_interval import zone_interval
 
 
 class Purpose:
@@ -180,13 +180,11 @@ class TourPurpose(Purpose):
         aggr_mtx = pandas.DataFrame(0, areas, areas)
         tmp_mtx = pandas.DataFrame(0, areas, dest)
         for area in areas:
-            l = param.areas[area][0]
-            u = param.areas[area][1]
-            tmp_mtx.loc[area] = mtx.loc[l:u].sum(0).values
+            i = zone_interval("areas", area)
+            tmp_mtx.loc[area] = mtx.loc[i].sum(0).values
         for area in areas:
-            l = param.areas[area][0]
-            u = param.areas[area][1]
-            aggr_mtx.loc[:, area] = tmp_mtx.loc[:, l:u].sum(1).values
+            i = zone_interval("areas", area)
+            aggr_mtx.loc[:, area] = tmp_mtx.loc[:, i].sum(1).values
         return aggr_mtx
 
     def _count_trip_lengths(self, trips, dist):
