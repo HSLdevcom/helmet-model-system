@@ -15,8 +15,8 @@ def fratar(target_vect, trips, max_iter=10):
     max_iter (optional) : int
         Maximum iterations, default is 10
     
-    Return
-    ------
+    Returns
+    -------
     pandas DataFrame 
         Fratared trip matrix
     """

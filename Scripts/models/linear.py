@@ -3,7 +3,7 @@ import pandas
 import math
 
 import parameters.car as param
-import parameters.zone as zone_param
+from utils.zone_interval import ZoneIntervals
 
 
 class LinearModel(object):
@@ -135,26 +135,18 @@ class CarDensityModel(LinearModel):
             prediction, "car_density.txt",
             self.zone_data.zone_numbers[self.bounds], "car_density")
         
-        # print car density by municipality
-        prediction_municipality = []
-        for municipality in zone_param.municipalities:
-            i = slice(zone_param.municipalities[municipality][0],
-                      zone_param.municipalities[municipality][1])
-            x = car_density.loc[i]
-            w = population.loc[i]
-            prediction_municipality.append((x * w).sum() / w.sum())
-        self.resultdata.print_data(
-            prediction_municipality, "car_density_per_municipality.txt",
-            zone_param.municipalities.keys(), "car_density")
-                          
-        # print car density by area (to get Helsinki CBD vs. Helsinki other)
-        prediction_area = []
-        for area in zone_param.areas:
-            i = slice(zone_param.areas[area][0],
-                      zone_param.areas[area][1])
-            x = car_density.loc[i]
-            w = population.loc[i]
-            prediction_area.append((x * w).sum() / w.sum())
-        self.resultdata.print_data(
-            prediction_area, "car_density_per_area.txt",
-            zone_param.areas.keys(), "car_density")
+        # print car density by municipality and area
+        for area_type in ("municipalities", "areas"):
+            aggregation = []
+            intervals = ZoneIntervals(area_type)
+            for area in intervals:
+                i = intervals[area]
+                w = population.loc[i]
+                if w.size == 0 or w.sum() == 0:
+                    aggregation.append(0)
+                else:
+                    aggregation.append(numpy.average(
+                        car_density.loc[i], weights=w))
+            self.resultdata.print_data(
+                aggregation, "car_density_per_{}.txt".format(area_type),
+                intervals.keys(), "car_density")

@@ -1,5 +1,5 @@
 import os
-from utils.log import Log
+import utils.log as log
 import logging
 import inro.emme.desktop.app as _app
 import inro.modeller as _m
@@ -8,9 +8,7 @@ import inro.modeller as _m
 # Creates and initializes EMME-resources (INRO's own library, from EMME-software's Python site-packages)
 class EmmeProject:
     def __init__(self, filepath):
-        self.logger = Log.get_instance()
-
-        self.logger.info("Starting Emme...")
+        log.info("Starting Emme...")
         emme_desktop = _app.start_dedicated(
             project=filepath, 
             visible=False, 
@@ -18,10 +16,10 @@ class EmmeProject:
         )
         # Add logging to EMME
         sh = logging.StreamHandler(stream=self)
-        self.logger.add_stream_handler(sh)
+        logging.getLogger().addHandler(sh)
 
         self.modeller = _m.Modeller(emme_desktop)
-        self.logger.info("Emme started.")
+        log.info("Emme started")
         self.path = os.path.dirname(self.modeller.emmebank.path)
         self.create_matrix = self.modeller.tool(
             "inro.emme.data.matrix.create_matrix")

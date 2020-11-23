@@ -3,7 +3,7 @@ import os
 import openmatrix as omx
 import numpy
 import pandas
-import parameters as param
+import parameters.assignment as param
 from argparse import ArgumentParser
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -45,7 +45,7 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, results_directory, w
             revenues["transit"][tp] += calc_revenue(
                 ve0[transit_class], ve1[transit_class])
         revenues["car"][tp] = 0
-        for ass_mode in param.assignment_mode:
+        for ass_mode in param.assignment_modes:
             revenues["car"][tp] += calc_revenue(ve0[ass_mode], ve1[ass_mode])
         print "Revenues " + tp + " calculated"
         for transport_class in gains:
