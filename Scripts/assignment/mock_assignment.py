@@ -37,7 +37,7 @@ class MockAssignmentModel(AssignmentModel):
                 mtx[ass_class] = matrices[ass_class]
         self.logger.info("Saved demand matrices for " + str(time_period))
 
-        return {"time": self.get_emmebank_matrices("time", self.time_period),
+        return {"time": self.get_emmebank_matrices("std_time", self.time_period),
                 "cost": self.get_emmebank_matrices("cost", self.time_period),
                 "dist": self.get_emmebank_matrices("dist", self.time_period)}
     
@@ -57,7 +57,7 @@ class MockAssignmentModel(AssignmentModel):
             Subtype (car_work/truck/inv_time/...) : numpy 2-d matrix
                 Matrix of the specified type
         """
-        matrices = dict.fromkeys(self.result_mtx[mtx_type].keys())
+        matrices = dict.fromkeys(self.matrices.list_matrices(mtx_type, time_period))
         with self.matrices.open(mtx_type, time_period) as mtx:
             for mode in matrices:
                 matrices[mode] = mtx[mode]
