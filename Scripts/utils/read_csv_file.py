@@ -38,7 +38,7 @@ def read_csv_file(data_dir, file_end, zone_numbers=None, dtype=None, squeeze=Fal
                 file_found = True
     if not file_found:
         msg = "No {} file found in folder {}".format(file_end, data_dir)
-        log.error(msg)
+        # This error should not be logged, as it is sometimes excepted
         raise NameError(msg)
     if squeeze:
         header = None
@@ -61,7 +61,12 @@ def read_csv_file(data_dir, file_end, zone_numbers=None, dtype=None, squeeze=Fal
             except TypeError:
                 # Text indices are ok and should not raise an exception
                 pass
+    if data.index.has_duplicates:
+        raise IndexError("Index in file {} has duplicates".format(path))
     if zone_numbers is not None:
+        if not data.index.is_monotonic:
+            data.sort_index(inplace=True)
+            log.warn("File {} is not sorted in ascending order".format(path))
         if data.index.size != zone_numbers.size or (data.index != zone_numbers).any():
             for i in data.index:
                 if int(i) not in zone_numbers:
@@ -74,6 +79,9 @@ def read_csv_file(data_dir, file_end, zone_numbers=None, dtype=None, squeeze=Fal
                     msg = "Zone number {} not found in file {}".format(i, path)
                     log.error(msg)
                     raise IndexError(msg)
+            msg = "Zone numbers did not match for file {}".format(path)
+            log.error(msg)
+            raise IndexError(msg)
     if dtype is not None:
         try:
             data = data.astype(dtype=dtype, errors='raise')
