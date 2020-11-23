@@ -16,7 +16,7 @@ class EmmeProject:
         )
         # Add logging to EMME
         sh = logging.StreamHandler(stream=self)
-        logging.getLogger().add_handler(sh)
+        logging.getLogger().addHandler(sh)
 
         self.modeller = _m.Modeller(emme_desktop)
         log.info("Emme started")
