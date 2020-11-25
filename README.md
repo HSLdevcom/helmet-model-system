@@ -1,4 +1,4 @@
-[![Build Status](https://github.com/HSLdevcom/helmet-model-system/workflows/Python%application/badge.svg)
+![Build Status](https://github.com/HSLdevcom/helmet-model-system/workflows/Python%application/badge.svg)
 
 
 # helmet-model-system
