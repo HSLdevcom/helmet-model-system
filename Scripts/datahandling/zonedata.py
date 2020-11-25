@@ -178,7 +178,6 @@ class ZoneData:
             return match[0][0]
         else:
             msg = "Found several matching zone numbers {}".format(zone_number)
-            log.error(msg)
             raise IndexError(msg)
 
     def get_freight_data(self):
