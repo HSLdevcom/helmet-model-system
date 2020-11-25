@@ -4,6 +4,7 @@ import numpy
 import pandas
 from contextlib import contextmanager
 
+import utils.log as log
 from utils.read_csv_file import read_csv_file
 import parameters.assignment as param
 
@@ -35,15 +36,23 @@ class MatrixFile(object):
             path = omx_file.filename
             mtx_numbers = self.zone_numbers
             if (numpy.diff(mtx_numbers) <= 0).any():
-                raise IndexError("Zone numbers not in strictly ascending order in file {}".format(path))
+                msg = "Zone numbers not in strictly ascending order in file {}".format(
+                    path)
+                log.error(msg)
+                raise IndexError(msg)
             if mtx_numbers.size != zone_numbers.size or (mtx_numbers != zone_numbers).any():
                 for i in mtx_numbers:
                     if i not in zone_numbers:
-                        raise IndexError("Zone number {} from file {} not found in network".format(i, path))
+                        msg = "Zone number {} from file {} not found in network".format(
+                            i, path)
+                        log.error(msg)
+                        raise IndexError(msg)
                 for i in zone_numbers:
                     if i not in mtx_numbers:
                         self.missing_zones.append(i)
-                # TODO Print warning
+                log.warn("Zone number(s) {} missing from file {}{}".format(
+                             self.missing_zones, path,
+                             ", adding zero row(s) and column(s)"))
                 self.new_zone_numbers = zone_numbers
             ass_classes = self.matrix_list
             transport_classes = (("truck", "trailer_truck") 
@@ -51,8 +60,10 @@ class MatrixFile(object):
                                  else param.transport_classes)
             for ass_class in transport_classes:
                 if ass_class not in ass_classes:
-                    raise IndexError("File {} does not contain {} matrix.".format(
-                        path, ass_class))
+                    msg = "File {} does not contain {} matrix.".format(
+                        path, ass_class)
+                    log.error(msg)
+                    raise IndexError(msg)
         else:
             self.mapping = zone_numbers
     
@@ -64,14 +75,20 @@ class MatrixFile(object):
         nr_zones = self.zone_numbers.size
         dim = (nr_zones, nr_zones)
         if mtx.shape != dim:
-            raise IndexError("Matrix {} in file {} has dimensions {}, should be {}".format(
-                mode, self._file.filename, mtx.shape, dim))
+            msg = "Matrix {} in file {} has dimensions {}, should be {}".format(
+                mode, self._file.filename, mtx.shape, dim)
+            log.error(msg)
+            raise IndexError(msg)
         if numpy.isnan(mtx).any():
-            raise ValueError("Matrix {} in file {} contains NA values".format(
-                mode, self._file.filename))
+            msg = "Matrix {} in file {} contains NA values".format(
+                mode, self._file.filename)
+            log.error(msg)
+            raise ValueError(msg)
         if (mtx < 0).any():
-            raise ValueError("Matrix {} in file {} contains negative values".format(
-                mode, self._file.filename))
+            msg = "Matrix {} in file {} contains negative values".format(
+                mode, self._file.filename)
+            log.error(msg)
+            raise ValueError(msg)
         if self.missing_zones:
             mtx = pandas.DataFrame(mtx, self.zone_numbers, self.zone_numbers)
             mtx = mtx.reindex(
