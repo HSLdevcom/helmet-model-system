@@ -49,7 +49,11 @@ class EmmeAssignmentModel(AssignmentModel):
     count_zone_boardings : bool (optional)
         Whether assignment is performed only to count fare zone boardings
     """
-    def __init__(self, emme_context, first_scenario_id, demand_mtx=param.emme_demand_mtx, result_mtx=param.emme_result_mtx, save_matrices=False):
+    def __init__(self, emme_context, first_scenario_id,
+                 demand_mtx=param.emme_demand_mtx,
+                 result_mtx=param.emme_result_mtx,
+                 save_matrices=False):
+        self.save_matrices = save_matrices
         self.emme_project = emme_context
         time_periods = {
             "aht": 1,
@@ -779,8 +783,7 @@ class EmmeAssignmentModel(AssignmentModel):
             "transit_work", self.demand_mtx[time_period],
             self.result_mtx[time_period])
         self.emme_project.transit_assignment(
-            specification=spec.transit_spec, scenario=scen, save_strategies=True)
-        self.emme_project.matrix_results(spec.transit_result_spec, scenario=scen)
+            specification=spec.transit_spec, scenario=scen, save_strategies=False)
         log.info("Transit assignment performed for scenario {}".format(
             str(scen_id)))
 
@@ -798,11 +801,14 @@ class EmmeAssignmentModel(AssignmentModel):
             congestion_function=param.trass_func,
             stopping_criteria=param.trass_stop,
             log_worksheets=False, scenario=scen,
-            save_strategies=True)
-        # save matrix results for both classes
-        for name, spec in zip(transit_classes, tcs):
-            self.emme_project.matrix_results(spec.transit_result_spec, scenario=scen, class_name=name)
-            self.emme_project.network_results(spec.ntw_results_spec, scenario=scen, class_name=name)
+            save_strategies=self.save_matrices)
+        if self.save_matrices:
+            # save results for both classes
+            for name, spec in zip(transit_classes, tcs):
+                self.emme_project.matrix_results(
+                    spec.transit_result_spec, scenario=scen, class_name=name)
+                self.emme_project.network_results(
+                    spec.ntw_results_spec, scenario=scen, class_name=name)
         log.info("Congested transit assignment performed for scenario {}".format(
             str(scen_id)))
 
