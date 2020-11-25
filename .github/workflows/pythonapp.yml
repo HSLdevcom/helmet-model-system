@@ -22,7 +22,7 @@ jobs:
         pip install pipenv
         cd Scripts
         cp .env-win .env
-        pipenv --python 2.7.16 install --dev
+        pipenv --python 2.7.18 install --dev
     - name: Test with pytest
       run: |
         pipenv run pytest -s tests
