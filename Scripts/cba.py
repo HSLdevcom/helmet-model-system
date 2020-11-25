@@ -3,14 +3,12 @@ import os
 import openmatrix as omx
 import numpy
 import pandas
-import parameters as param
+import parameters.assignment as param
 from argparse import ArgumentParser
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
-PROJECT_DIR = os.path.join(SCRIPT_DIR, "..")
 
-
-def run_cost_benefit_analysis(scenario_0, scenario_1, year, results_directory):
+def run_cost_benefit_analysis(scenario_0, scenario_1, year, results_directory, workbook):
     """Runs CBA and writes the results to excel file.
 
     Parameters
@@ -25,10 +23,13 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, results_directory):
         The evaluation year (1 or 2)
     results_directory : str
         Path to where "scenario_name/Matrices" result folder exists
+    workbook : openpyxl.WorkBook
+        The excel workbook where to save results
     """
-    excelfile = os.path.join(SCRIPT_DIR, "CBA_kehikko.xlsx")
-    mile_diff = read_miles(scenario_1) - read_miles(scenario_0)
-    transit_mile_diff = read_transit_miles(scenario_1) - read_transit_miles(scenario_0)
+    wb = workbook
+    mile_diff = read_miles(results_directory, scenario_1) - read_miles(results_directory, scenario_0)
+    transit_mile_diff = read_transit_miles(results_directory, scenario_1) - read_transit_miles(results_directory, scenario_0)
+    emme_scenarios = ["aht", "pt", "iht"]
     revenues = {
         "car": {},
         "transit": {},
@@ -36,7 +37,7 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, results_directory):
     gains = dict.fromkeys(param.transport_classes)
     for transport_class in gains:
         gains[transport_class] = {}
-    for tp in param.emme_scenario:
+    for tp in emme_scenarios:
         ve1 = read_scenario(os.path.join(results_directory, scenario_1, "Matrices"), tp)
         ve0 = read_scenario(os.path.join(results_directory, scenario_0, "Matrices"), tp)
         revenues["transit"][tp] = 0
@@ -44,21 +45,20 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, results_directory):
             revenues["transit"][tp] += calc_revenue(
                 ve0[transit_class], ve1[transit_class])
         revenues["car"][tp] = 0
-        for ass_mode in param.assignment_mode:
+        for ass_mode in param.assignment_modes:
             revenues["car"][tp] += calc_revenue(ve0[ass_mode], ve1[ass_mode])
         print "Revenues " + tp + " calculated"
         for transport_class in gains:
             gains[transport_class][tp] = calc_gains(
                 ve0[transport_class], ve1[transport_class])
         print "Gains " + tp + " calculated"
-    wb = load_workbook(excelfile)
     if year == 1:
         write_results_1(wb, mile_diff, transit_mile_diff, revenues, gains)
     elif year == 2:
         write_results_2(wb, mile_diff, transit_mile_diff, revenues, gains)
     else:
         print "Evaluation year must be either 1 or 2"
-    wb.save("..\\Results\\cba_" + scenario_1 + ".xlsx")
+    
 
 
 def read_scenario(path, time_period):
@@ -74,7 +74,7 @@ def read_scenario(path, time_period):
         for mtx_type in files:
             if mtx_type != "demand":
                 mtx_label = transport_class.split('_')[0]
-                if mtx_label == "transit" or mtx_label == "bike":
+                if mtx_label == "bike":
                     ass_class = mtx_label
                 else:
                     ass_class = transport_class
@@ -84,6 +84,15 @@ def read_scenario(path, time_period):
                 matrices[transport_class][mtx_type] = 0
             else:
                 matrices[transport_class][mtx_type] = numpy.array(files[mtx_type][ass_class])
+                if mtx_type == "cost":
+                    if transport_class == "transit_work":
+                        trips_per_month = numpy.full_like(matrices[transport_class][mtx_type], 60)
+                        # Surrounding area has a lower number of trips per month
+                        trips_per_month[901:, :] = 44
+                        trips_per_month = 0.5 * (trips_per_month+trips_per_month.T)
+                        matrices[transport_class][mtx_type] = matrices[transport_class][mtx_type] / trips_per_month
+                    if transport_class == "transit_leisure":
+                        matrices[transport_class][mtx_type] = matrices[transport_class][mtx_type] / 30
     for mtx_type in files:
         files[mtx_type].close()
     print "Files read"
@@ -141,15 +150,15 @@ def calc_gains(ve0, ve1):
     return gains
 
 
-def read_miles(scenario_name):
+def read_miles(results_directory, scenario_name):
     """Read scenario data from files"""
-    file_path = os.path.join(PROJECT_DIR, "Results", scenario_name, "vehicle_kms.txt")
+    file_path = os.path.join(results_directory, scenario_name, "vehicle_kms.txt")
     return pandas.read_csv(file_path, delim_whitespace=True)
 
 
-def read_transit_miles(scenario_name):
+def read_transit_miles(results_directory, scenario_name):
     """Read scenario data from files"""
-    file_path = os.path.join(PROJECT_DIR, "Results", scenario_name, "transit_kms.txt")
+    file_path = os.path.join(results_directory, scenario_name, "transit_kms.txt")
     return pandas.read_csv(file_path, delim_whitespace=True)
 
 
@@ -321,9 +330,29 @@ def write_gains_2(ws, gains):
 if __name__ == "__main__":
     parser = ArgumentParser(epilog="Calculates the Cost-Benefit Analysis between Results of two HELMET-Scenarios, "
                                    "and writes the outcome in CBA_kehikko.xlsx -file (in same folder).")
-    parser.add_argument("baseline_scenario", type=str, help="A 'do-nothing' baseline scenario.")
-    parser.add_argument("projected_scenario", type=str, help="A projected scenario, compared to the baseline scenario.")
-    parser.add_argument("evaluation_year", type=int, choices={1, 2}, help="Evaluation year, either 1 or 2.")
-    parser.add_argument("--results-path", dest="results_path", type=str, required=True, help="Path to Results directory.")
+    parser.add_argument(
+        "baseline_scenario", type=str, help="A 'do-nothing' baseline scenario")
+    parser.add_argument(
+        "projected_scenario", type=str,
+        help="A projected scenario, compared to the baseline scenario")
+    parser.add_argument(
+        "baseline_scenario_2", nargs='?', type=str,
+        help="A 'do-nothing' baseline scenario for second forecast year (optional)")
+    parser.add_argument(
+        "projected_scenario_2", nargs='?', type=str,
+        help="A projected scenario, compared to the baseline scenario for second forecast year (optional)")
+    parser.add_argument(
+        "--results-path", dest="results_path", type=str, required=True,
+        help="Path to Results directory.")
     args = parser.parse_args()
-    run_cost_benefit_analysis(args.baseline_scenario, args.projected_scenario, args.evaluation_year, arg.results_path)
+    wb = load_workbook(os.path.join(SCRIPT_DIR, "CBA_kehikko.xlsx"))
+    run_cost_benefit_analysis(
+        args.baseline_scenario, args.projected_scenario, 1, args.results_path, wb)
+    if args.baseline_scenario_2 is not None and args.baseline_scenario_2 != "undefined":
+        run_cost_benefit_analysis(
+            args.baseline_scenario_2, args.projected_scenario_2, 2, args.results_path, wb)
+    results_filename =  "cba_{}_{}.xlsx".format(
+        os.path.basename(args.projected_scenario),
+        os.path.basename(args.baseline_scenario))
+    wb.save(os.path.join(args.results_path, results_filename))
+    print "CBA results saved to file: {}".format(results_filename)

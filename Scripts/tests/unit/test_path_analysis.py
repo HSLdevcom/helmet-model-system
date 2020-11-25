@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 import unittest
-from datatypes.path_analysis import PathAnalysis
+from assignment.datatypes.path_analysis import PathAnalysis
 
 
 class PathAnalysisTest(unittest.TestCase):

@@ -1,30 +1,34 @@
-import parameters as param
-import models.logit as logit
-import models.generation as generation
-from datatypes.demand import Demand
 import numpy
 import pandas
 
+from parameters.destination_choice import secondary_destination_threshold
+import models.logit as logit
+import models.generation as generation
+from datatypes.demand import Demand
+from utils.zone_interval import zone_interval
+
 
 class Purpose:
-    def __init__(self, specification, zone_data):
-        """Generic container class without methods.
-        Sets the purpose zone bounds.
+    """Generic container class without methods.
+    
+    Sets the purpose zone bounds.
 
-        Parameters
-        ----------
-        specification : dict
-            "name" : str
-                Tour purpose name
-            "orig" : str
-                Origin of the tours
-            "dest" : str
-                Destination of the tours
-            "area" : str
-                Model area
-        zone_data : ZoneData
-            Data used for all demand calculations
-        """
+    Parameters
+    ----------
+    specification : dict
+        "name" : str
+            Tour purpose name
+        "orig" : str
+            Origin of the tours
+        "dest" : str
+            Destination of the tours
+        "area" : str
+            Model area
+    zone_data : ZoneData
+        Data used for all demand calculations
+    """
+
+    def __init__(self, specification, zone_data):
         self.name = specification["name"]
         self.orig = specification["orig"]
         self.dest = specification["dest"]
@@ -53,25 +57,28 @@ class Purpose:
 
 
 class TourPurpose(Purpose):
-    def __init__(self, specification, zone_data, resultdata, is_agent_model):
-        """Standard two-way tour purpose.
+    """Standard two-way tour purpose.
 
-        Parameters
-        ----------
-        specification : dict
-            "name" : str
-                Tour purpose name (hw/oo/hop/sop/...)
-            "orig" : str
-                Origin of the tours (home/source)
-            "dest" : str
-                Destination of the tours (work/other/source/...)
-            "area" : str
-                Model area (metropolitan/peripheral)
-        zone_data : ZoneData
-            Data used for all demand calculations
-        resultdata : ResultData
-            Writer object for result directory
-        """
+    Parameters
+    ----------
+    specification : dict
+        "name" : str
+            Tour purpose name (hw/oo/hop/sop/...)
+        "orig" : str
+            Origin of the tours (home/source)
+        "dest" : str
+            Destination of the tours (work/other/source/...)
+        "area" : str
+            Model area (metropolitan/peripheral)
+    zone_data : ZoneData
+        Data used for all demand calculations
+    resultdata : ResultData
+        Writer object for result directory
+    is_agent_model : bool (optional)
+        Whether the model is used for agent-based simulation
+    """
+
+    def __init__(self, specification, zone_data, resultdata, is_agent_model):
         Purpose.__init__(self, specification, zone_data)
         self.resultdata = resultdata
         if self.orig == "source":
@@ -79,11 +86,14 @@ class TourPurpose(Purpose):
         else:
             self.gen_model = generation.GenerationModel(self, resultdata)
         if self.name == "sop":
-            self.model = logit.OriginModel(zone_data, self, resultdata, is_agent_model)
+            self.model = logit.OriginModel(
+                zone_data, self, resultdata, is_agent_model)
         elif self.name == "so":
-            self.model = logit.DestModeModel(zone_data, self, resultdata, is_agent_model)
+            self.model = logit.DestModeModel(
+                zone_data, self, resultdata, is_agent_model)
         else:
-            self.model = logit.ModeDestModel(zone_data, self, resultdata, is_agent_model)
+            self.model = logit.ModeDestModel(
+                zone_data, self, resultdata, is_agent_model)
         self.modes = self.model.mode_choice_param.keys()
         self.sec_dest_purpose = None
 
@@ -107,8 +117,8 @@ class TourPurpose(Purpose):
     def calc_demand(self):
         """Calculate purpose specific demand matrices.
               
-        Return
-        ------
+        Returns
+        -------
         dict
             Mode (car/transit/bike) : dict
                 Demand matrix for whole day : Demand
@@ -135,21 +145,24 @@ class TourPurpose(Purpose):
                 "{}_{}".format(self.name, mode[0])
             )
             aggregated_demand = self._aggregate(mtx)
-            self.resultdata.print_matrix(aggregated_demand, "aggregated_demand", "{}_{}".format(self.name, mode))
+            self.resultdata.print_matrix(
+                aggregated_demand, "aggregated_demand",
+                "{}_{}".format(self.name, mode))
             own_zone = self.zone_data.get_data("own_zone", self.bounds)
             own_zone_demand = own_zone * mtx
             own_zone_aggregated = self._aggregate(own_zone_demand)
             self.resultdata.print_data(
-                numpy.diag(own_zone_aggregated),
-                "own_zone_demand.txt",
-                own_zone_aggregated.index,
-                "{}_{}".format(self.name, mode[0])
-            )
+                numpy.diag(own_zone_aggregated), "own_zone_demand.txt",
+                own_zone_aggregated.index, "{}_{}".format(self.name, mode[0]))
             demsums[mode] = self.generated_tours[mode].sum()
-        self.resultdata.print_data(attracted_tours, "attraction.txt", self.zone_data.zone_numbers, self.name)
+        self.resultdata.print_data(
+            attracted_tours, "attraction.txt", 
+            self.zone_data.zone_numbers, self.name)
         demand_all = sum(demsums.values())
         mode_shares = {mode: demsums[mode] / demand_all for mode in demsums}
-        self.resultdata.print_data(pandas.Series(mode_shares), "mode_share.txt", demsums.keys(), self.name)
+        self.resultdata.print_data(
+            pandas.Series(mode_shares), "mode_share.txt",
+            demsums.keys(), self.name)
         return demand
     
     def _aggregate(self, mtx):
@@ -167,13 +180,11 @@ class TourPurpose(Purpose):
         aggr_mtx = pandas.DataFrame(0, areas, areas)
         tmp_mtx = pandas.DataFrame(0, areas, dest)
         for area in areas:
-            l = param.areas[area][0]
-            u = param.areas[area][1]
-            tmp_mtx.loc[area] = mtx.loc[l:u].sum(0).values
+            i = zone_interval("areas", area)
+            tmp_mtx.loc[area] = mtx.loc[i].sum(0).values
         for area in areas:
-            l = param.areas[area][0]
-            u = param.areas[area][1]
-            aggr_mtx.loc[:, area] = tmp_mtx.loc[:, l:u].sum(1).values
+            i = zone_interval("areas", area)
+            aggr_mtx.loc[:, area] = tmp_mtx.loc[:, i].sum(1).values
         return aggr_mtx
 
     def _count_trip_lengths(self, trips, dist):
@@ -189,32 +200,39 @@ class TourPurpose(Purpose):
 
 
 class SecDestPurpose(Purpose):
-    def __init__(self, specification, zone_data, resultdata, is_agent_model):
-        """Purpose for secondary destination of tour.
+    """Purpose for secondary destination of tour.
 
-        Parameters
-        ----------
-        specification : dict
-            "name" : str
-                Tour purpose name (hoo)
-            "orig" : str
-                Origin of the tours (home)
-            "dest" : str
-                Destination of the tours (any)
-            "area" : str
-                Model area (metropolitan)
-        zone_data : ZoneData
-            Data used for all demand calculations
-        """
+    Parameters
+    ----------
+    specification : dict
+        "name" : str
+            Tour purpose name (hoo)
+        "orig" : str
+            Origin of the tours (home)
+        "dest" : str
+            Destination of the tours (any)
+        "area" : str
+            Model area (metropolitan)
+    zone_data : ZoneData
+        Data used for all demand calculations
+    resultdata : ResultData
+        Writer object to result directory
+    is_agent_model : bool (optional)
+        Whether the model is used for agent-based simulation
+    """
+
+    def __init__(self, specification, zone_data, resultdata, is_agent_model):
         Purpose.__init__(self, specification, zone_data)
         self.gen_model = generation.SecDestGeneration(self, resultdata)
-        self.model = logit.SecDestModel(zone_data, self, resultdata, is_agent_model=is_agent_model)
+        self.model = logit.SecDestModel(
+            zone_data, self, resultdata, is_agent_model)
         self.modes = self.model.dest_choice_param.keys()
 
     def init_sums(self):
         for mode in self.model.dest_choice_param:
             self.generated_tours[mode] = 0
-            self.attracted_tours[mode] = numpy.zeros_like(self.zone_data.zone_numbers, float)
+            self.attracted_tours[mode] = numpy.zeros_like(
+                self.zone_data.zone_numbers, float)
 
     def generate_tours(self):
         """Generate the source tours without secondary destinations."""
@@ -236,8 +254,8 @@ class SecDestPurpose(Purpose):
         origin : int
             The zone index from which these tours origin
 
-        Return
-        ------
+        Returns
+        -------
         Demand
             Matrix of destination -> secondary_destination pairs
             The origin zone for all of these tours
@@ -245,14 +263,13 @@ class SecDestPurpose(Purpose):
         generation = self.tours[mode][origin, :]
         # All o-d pairs below threshold are neglected,
         # total demand is increased for other pairs.
-        dests = generation > param.secondary_destination_threshold
+        dests = generation > secondary_destination_threshold
         if not dests.any():
             # If no o-d pairs have demand above threshold,
             # the sole destination with largest demand is picked
             dests = generation.argmax()
-            generation_sum = generation.sum()
             generation.fill(0)
-            generation[dests] = generation_sum
+            generation[dests] = generation.sum()
         else:
             generation[dests] *= generation.sum() / generation[dests].sum()
             generation[~dests] = 0
@@ -277,6 +294,7 @@ class SecDestPurpose(Purpose):
     def calc_prob(self, mode, impedance, position):
         """Calculate secondary destination probabilites for tours
         starting and ending in two specific zones.
+
         Method used in agent-based simulation.
         
         Parameters
@@ -291,8 +309,8 @@ class SecDestPurpose(Purpose):
             int
                 Destination zone
 
-        Return
-        ------
+        Returns
+        -------
         numpy 1-d array
             Probability vector for chosing zones as secondary destination
         """

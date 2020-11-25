@@ -1,0 +1,258 @@
+~# *********************************************************************
+~# ***                       4verkkoa_M2019.mac                      ***
+~# ***                                                               ***
+~# ***            WSP, ASu 09.04.2020 (HELMET40-paivitys)            ***
+~# *********************************************************************
+~#  luetaan 
+~#     - kulkutavat (modes)
+~#     - ajoneuvotyypit (vehicles)
+~#     - verkko (nodes ja links)
+~#     - linjasto
+~#     - kaantymiset
+~#     - seka linkkien ruuhkamaksut (e/km)
+~#
+~#  parametrit p1 = vaihtoehdon tunnus (esim. 2030_20170329)
+~#             p2 = alikansio, josta tiedostot luetaan (nykyinen, jos puuttuu)
+~#             p3 pyöräverkon skenaario
+~#             p4 vuorokausiverkko
+~#             p5 aht skenaarion numero
+~#             p6 pt skenaarion numero
+~#             p7 iht skenaarion numero
+~#             p8 skenaarion nimi
+~#
+~#  ajo esim
+~#  ~<4verkkoa_HM40.mac 2016_20191014 sijopankki2016 19 20 21 22 23 V2016
+~#  ~<4verkkoa_HM40.mac 2018_20191014 sijopankki2018 29 30 31 32 33 V2018
+~#  ~<4verkkoa_HM40.mac 2019_20191122 sijopankki2019 39 40 41 42 43 V2019
+~#     
+batchin=
+reports=
+~#
+~# *** PYORAVERKKO
+ s=%3%
+ 1.23
+ 2
+ skenaario %8% pyorailyverkko
+ q
+~# ** poistetaan vanha sisalto
+ 2.12
+ 2     ! poistetaan vanha verkko
+ 1
+ y
+ q
+ 2.01
+ 7     ! poistetaan vanhat kulkutavat
+ y
+ q
+ off=11
+~# ** luetaan kulkutavat
+~! del  d201.in
+~! copy d201_modes_M2016_pyora.in  d201.in 
+ on=11
+ 2.01
+ 1
+~?q=2
+ 2
+ q
+ off=11
+~# ** luetaan verkko
+~! del  d211.in
+~! copy %2%\d211_verkko_%1%.in  d211.in
+~#** ~! copy %2%\d211_pyoraverkko_%t1%.in  d211.in
+ on=11
+ 2.11
+~?q=2
+ 2
+ off=11
+~# tyhjenna ja lue pyoraverkon extra attribuutit
+~#  2.42
+~#  1
+~#  y
+~#  q
+~# ~< extra_attr_pyora.mac
+~# ** luetaan pyoratieluokat (makro poistaa tiedoston d241.in 
+~# ** ja lukee tiedot parametrina annettavasta tiedostosta)
+~< pyoratieluokat_lue.mac %3% %2%\d241_pyoratieluokka_%1%.in
+~#
+~# ** vaihdetaan viivytysfunktioiden numerot pyoraverkolle
+~< vdf_pyora.mac
+~#
+~# *** AUTO- JA JKL-VERKKO
+ s=%5%
+ 1.23
+ 2
+ %1% aht
+ q
+~# ** poistetaan vanha sisalto
+ 2.22
+ 2     ! poistetaan vanha linjasto
+ y
+ q
+ 2.31
+ 1     ! poistetaan vanhat kaantymiset
+ y
+ q
+ 2.12
+ 2     ! poistetaan vanha verkko
+ 1
+ y
+ q
+ 2.02
+ 7     ! poistetaan vanhat ajoneuvotyypit
+ y
+ q
+ 2.01
+ 7     ! poistetaan vanhat kulkutavat
+ y
+ q
+ off=11
+~# ** luetaan kulkutavat
+~! del  d201.in
+~! copy d201_modes_M2016.in  d201.in 
+ on=11
+ 2.01
+ 1
+~?q=2
+ 2
+ q
+ off=11
+~# ** luetaan ajoneuvotyypit
+~! del  d202.in
+~! copy d202_veh_M2016.in   d202.in 
+ on=11
+ 2.02
+ 1
+~?q=2
+ 2
+ q
+ off=11
+~# ** luetaan verkko
+~! del  d211.in
+~! copy %2%\d211_verkko_%1%.in  d211.in
+ on=11
+ 2.11
+~?q=2
+ 2
+ off=11
+~# ** luetaan kaantymiset
+~! del  d231.in
+~! copy %2%\d231_verkko_%1%.in  d231.in 
+ on=11
+ 2.31
+ 2
+~?q=2
+ 2
+ q
+ off=11
+~# ** luetaan linjasto
+~! del  d221.in
+~! copy %2%\d221_linjat_%1%.in  d221.in 
+ on=11
+ 2.21
+~?q=2
+ 2
+~#  2.42
+~#  1
+~#  y
+~#  q
+~# *** tama on parempi tehda skenaarioihin 19 ja 21-23 jo perustettaessa uutta Emme-projektia
+~# ~< extra_attr.mac
+~#
+~# ** muutetaan linkkien attribuutit (vdf, ul1, ul2) linkkityypin perusteella
+~< muuta_linkkien_attribuutit_eikorj.mac
+~#
+~# ** maaritellaan pysahtymiset
+~! copy %2%\hsl_kunnat_%1%.mac  hsl_kunnat.mac
+~< hsl_kunnat.mac
+~< pysakki.mac
+~# ** tarkistetaan extra-attribuutit
+ 2.42
+ 5
+~?q=2
+ 1
+ q
+~#
+~# ** luetaan hinnat (makro poistaa tiedoston d241.in 
+~# ** ja lukee tiedot parametrina annettavasta tiedostosta)
+~< hinnat_lue.mac %5% %2%\d241_hinta_%1%.in
+~#
+~# ** luetaan vuorovalit (makro poistaa tiedoston d241.in 
+~# ** ja lukee tiedot parametrina annettavasta tiedostosta)
+~< vuorovalit_lue.mac %5% %2%\d241_vuorovalit_%1%.in
+~#
+~# ** kopioidaan aht-skenaario pt- ja iht-skenaarioiksi
+ 1.22
+ 2
+ %4%
+ y
+~#
+ 3
+ %5%
+ %4%
+
+ n
+ 2
+ %6%
+ y
+~#
+ 3
+ %5%
+ %6%
+
+ n
+~#
+ 2
+ %7%
+ y
+~#
+ 3
+ %5%
+ %7%
+
+ n
+ q
+ sta
+ s=%4%
+ 1.23
+ 2
+ skenaario %8% vrk
+ q
+~< f_bussi_M2016_3p.mac
+~< f_us2_M2016_4p.mac
+~< f_jkl_M2016_5p.mac
+~< vuorovalit_kopioi.mac %6% @hwpt  hdwy
+~< vuorovalit_kopioi.mac %6% @hinpt @hinta
+~#
+ s=%5%
+ 1.23
+ 2
+ skenaario %8% aht
+ q
+~< f_bussi_M2016_3a.mac
+~< f_us2_M2016_4a.mac
+~< f_jkl_M2016_5a.mac
+~< vuorovalit_kopioi.mac %5% @hwaht hdwy
+~< vuorovalit_kopioi.mac %5% @hinah @hinta
+~#
+ s=%6%
+ 1.23
+ 2
+ skenaario %8% pt
+ q
+~< f_bussi_M2016_3p.mac
+~< f_us2_M2016_4p.mac
+~< f_jkl_M2016_5p.mac
+~< vuorovalit_kopioi.mac %6% @hwpt  hdwy
+~< vuorovalit_kopioi.mac %6% @hinpt @hinta
+~#
+ s=%7%
+ 1.23
+ 2
+ skenaario %8% iht
+ q
+~< f_bussi_M2016_3i.mac
+~< f_us2_M2016_4i.mac
+~< f_jkl_M2016_5i.mac
+~< vuorovalit_kopioi.mac %7% @hwiht hdwy
+~< vuorovalit_kopioi.mac %7% @hinih @hinta
+~/ *** Verkot paivitetty

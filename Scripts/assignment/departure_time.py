@@ -1,32 +1,34 @@
-import logging
 import numpy
-import parameters as param
+
+import utils.log as log
+import parameters.departure_time as param
+from parameters.assignment import transport_classes, assignment_classes
 
 
 class DepartureTimeModel:
-    def __init__(self, nr_zones):
-        """Container for time period and assignment class specific demand.
-        
-        Parameters
-        ----------
-        nr_zones : int
-            Number of zones in assignment model
-        """
+    """Container for time period and assignment class specific demand.
+
+    Parameters
+    ----------
+    nr_zones : int
+        Number of zones in assignment model
+    time_periods : list
+        List of time periods to assign (aht, pt, iht)
+    """
+
+    def __init__(self, nr_zones, time_periods):
         self.nr_zones = nr_zones
-        self.demand = dict.fromkeys(param.emme_scenario)
-        for time_period in self.demand:
-            ass_classes = dict.fromkeys(param.transport_classes)
-            self.demand[time_period] = ass_classes
-            for ass_class in ass_classes:
-                zeros = numpy.zeros((self.nr_zones, self.nr_zones))
-                self.demand[time_period][ass_class] = zeros
-        self.logger = logging.getLogger()
+        self.time_periods = time_periods
+        self.init_demand()
 
     def init_demand(self):
-        """Initialize/reset demand for all time periods (each including transport_classes, each being set to zeros)."""
-        self.demand = dict.fromkeys(param.emme_scenario)
+        """Initialize/reset demand for all time periods.
+
+        Includes all transport_classes, each being set to zero.
+        """
+        self.demand = dict.fromkeys(self.time_periods)
         for time_period in self.demand:
-            ass_classes = dict.fromkeys(param.transport_classes)
+            ass_classes = dict.fromkeys(transport_classes)
             self.demand[time_period] = ass_classes
             for ass_class in ass_classes:
                 zeros = numpy.zeros((self.nr_zones, self.nr_zones))
@@ -42,20 +44,18 @@ class DepartureTimeModel:
         """
         if demand.mode not in ("walk", "car_passenger"):
             if demand.mode in ("car", "transit", "bike"):
-                ass_class = (demand.mode + '_' + param.assignment_class[demand.purpose.name])
+                ass_class = (demand.mode + '_' + assignment_classes[demand.purpose.name])
             else:
                 ass_class = demand.mode
             if len(demand.position) == 2:
                 share = param.demand_share[demand.purpose.name][demand.mode]
-                for time_period in param.emme_scenario:
+                for time_period in self.time_periods:
                     self._add_2d_demand(
                         share[time_period], ass_class, time_period,
                         demand.matrix, demand.position)
-                self.logger.debug("Added demand for {}, {}".format(demand.purpose.name, demand.mode))
             elif len(demand.position) == 3:
-                for time_period in param.emme_scenario:
+                for time_period in self.time_periods:
                     self._add_3d_demand(demand, ass_class, time_period)
-                self.logger.debug("Added demand for {}, {}, {}".format(demand.purpose.name, demand.mode, demand.orig))
             else:
                 raise IndexError("Tuple position has wrong dimensions.")
 
@@ -78,11 +78,8 @@ class DepartureTimeModel:
             share = param.backup_demand_share[time_period]
             large_mtx[r_0:r_n, c_0:c_n] += share[0] * mtx
             large_mtx[c_0:c_n, r_0:r_n] += share[1] * mtx.T
-            self.logger.warn("{}x{} matrix not matching {} demand shares. Resorted to backup demand shares.".format(
-                str(mtx.shape[0]),
-                str(mtx.shape[0]),
-                str(len(demand_share[0]))
-            ))
+            log.warn("{} {} matrix not matching {} demand shares. Resorted to backup demand shares.".format(
+                mtx.shape, ass_class, len(demand_share[0])))
 
     def _add_3d_demand(self, demand, ass_class, time_period):
         """Add three-way demand."""

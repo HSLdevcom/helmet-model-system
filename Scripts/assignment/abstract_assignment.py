@@ -5,41 +5,30 @@ class AssignmentModel:
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def assign(self, time_period, matrices, is_last_iteration=False, is_first_iteration=False):
+    def assign(self, time_period, matrices, iteration=None):
         """Assign cars, bikes and transit for one time period.
+        Get travel impedance matrices for one time period from assignment.
         
         Parameters
         ----------
         time_period : str
             Time period (aht/pt/iht)
         matrices: dict
-            Assignment class (car_work/transit/...): numpy 2-d matrix
-        is_last_iteration: bool
-        is_first_iteration: bool
-        """
-        pass
+            Assignment class (car_work/transit/...) : numpy 2-d matrix
+        iteration: int or str
+            Iteration number (0, 1, 2, ...) or "last"
 
-
-class ImpedanceSource:
-    __metaclass__ = ABCMeta
-
-    MATRIX_TYPE_FREIGHT_KEY = "freight"
-
-    @abstractmethod
-    def mapping(self):
-        """Dictionary of zone numbers and corresponding indices."""
-        pass
-
-    @abstractmethod
-    def get_impedance(self, is_last_iteration=False):
-        """Get travel impedance matrices for one time period.
-        
-        Return
-        ------
+        Returns
+        -------
         dict
             Type (time/cost/dist) : dict
                 Assignment class (car_work/transit/...) : numpy 2-d matrix
         """
+        pass
+
+    @abstractmethod
+    def mapping(self):
+        """Dictionary of zone numbers and corresponding indices."""
         pass
 
     @abstractmethod
@@ -55,5 +44,9 @@ class ImpedanceSource:
         pass
 
     @abstractmethod
-    def print_vehicle_kms(self, resultdatawriter):
+    def aggregate_results(self, resultdatawriter):
+        pass
+    
+    @abstractmethod
+    def prepare_network(self):
         pass
