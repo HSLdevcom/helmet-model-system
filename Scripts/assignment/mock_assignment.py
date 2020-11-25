@@ -32,7 +32,7 @@ class MockAssignmentModel(AssignmentModel):
                 Assignment class (car_work/transit/...) : numpy 2-d matrix
         """
         self.time_period = time_period
-        with self.matrices.open("demand", time_period, 'w') as mtx:
+        with self.matrices.open("demand", time_period, self.zone_numbers, 'w') as mtx:
             for ass_class in matrices:
                 mtx[ass_class] = matrices[ass_class]
         self.logger.info("Saved demand matrices for " + str(time_period))

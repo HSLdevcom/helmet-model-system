@@ -49,10 +49,10 @@ class FreightModel:
         zone_data_forecast = self.zdata_f.get_freight_data()
         production_base = self._generate_trips(zone_data_base, mode)
         production_forecast = self._generate_trips(zone_data_forecast, mode)
-        with self.base_demand.open("freight", "vrk") as mtx:
+        zone_numbers = self.zdata_b.zone_numbers
+        with self.base_demand.open("freight", "vrk", zone_numbers) as mtx:
             # Remove zero values
             base_mtx = mtx[mode].clip(0.000001, None)
-            zone_numbers = mtx.zone_numbers
         production = calibrate(
             base_mtx.sum(1), production_base, production_forecast)
         mtx = pandas.DataFrame(base_mtx, zone_numbers, zone_numbers)
