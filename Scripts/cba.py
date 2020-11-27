@@ -30,48 +30,31 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, results_directory, w
     mile_diff = read_miles(results_directory, scenario_1) - read_miles(results_directory, scenario_0)
     transit_mile_diff = read_transit_miles(results_directory, scenario_1) - read_transit_miles(results_directory, scenario_0)
     emme_scenarios = ["aht", "pt", "iht"]
-    revenues = {
-        "car": {},
-        "transit": {},
-    }
+    ve1 = read_scenarios(os.path.join(results_directory, scenario_1, "Matrices"), emme_scenarios)
+    ve0 = read_scenarios(os.path.join(results_directory, scenario_0, "Matrices"), emme_scenarios)
+    # calculated revenues for 24h
+    revenues = {}
+    revenues["transit"] = calc_revenue(param.transit_classes, emme_scenarios, ve0, ve1)
+    revenues["car"] = calc_revenue(param.assignment_modes, emme_scenarios, ve0, ve1)
+    # gains 24h for all transport classes
     gains = dict.fromkeys(param.transport_classes)
     for transport_class in gains:
-        gains[transport_class] = {}
-    for tp in emme_scenarios:
-        ve1 = read_scenario(os.path.join(results_directory, scenario_1, "Matrices"), tp)
-        ve0 = read_scenario(os.path.join(results_directory, scenario_0, "Matrices"), tp)
-        revenues["transit"][tp] = 0
-        for transit_class in ("transit_work", "transit_leisure"):
-            revenues["transit"][tp] += calc_revenue(
-                ve0[transit_class], ve1[transit_class])
-        revenues["car"][tp] = 0
-        for ass_mode in param.assignment_modes:
-            revenues["car"][tp] += calc_revenue(ve0[ass_mode], ve1[ass_mode])
-        print "Revenues " + tp + " calculated"
-        for transport_class in gains:
-            gains[transport_class][tp] = calc_gains(
-                ve0[transport_class], ve1[transport_class])
-        print "Gains " + tp + " calculated"
+        gains[transport_class] = calc_gains(ve0, ve1, transport_class, emme_scenarios)
+        print "Gains " + transport_class + " calculated"
     if year == 1:
         write_results_1(wb, mile_diff, transit_mile_diff, revenues, gains)
     elif year == 2:
         write_results_2(wb, mile_diff, transit_mile_diff, revenues, gains)
     else:
         print "Evaluation year must be either 1 or 2"
-    
 
-
-def read_scenario(path, time_period):
-    """Read travel cost and demand data for scenario from files"""
+def read_scenarios(path, emme_scenarios):
     files = dict.fromkeys(["demand", "time", "cost", "dist"])
-    for mtx_type in files:
-        file_name = mtx_type + '_' + time_period + ".omx"
-        file_path = os.path.join(path, file_name)
-        files[mtx_type] = omx.open_file(file_path)
-    matrices = {}
-    for transport_class in param.transport_classes:
-        matrices[transport_class] = {}
+    matrices = dict.fromkeys(param.transport_classes)
+    for transport_class in matrices:
+        matrices[transport_class] = dict.fromkeys(files)
         for mtx_type in files:
+            # set ass_class
             if mtx_type != "demand":
                 mtx_label = transport_class.split('_')[0]
                 if mtx_label == "bike":
@@ -80,73 +63,79 @@ def read_scenario(path, time_period):
                     ass_class = transport_class
             else:
                 ass_class = transport_class
-            if mtx_label == "bike" and mtx_type == "cost":
-                matrices[transport_class][mtx_type] = 0
-            else:
-                matrices[transport_class][mtx_type] = numpy.array(files[mtx_type][ass_class])
-                if mtx_type == "cost":
-                    if transport_class == "transit_work":
-                        trips_per_month = numpy.full_like(matrices[transport_class][mtx_type], 60)
-                        # Surrounding area has a lower number of trips per month
-                        trips_per_month[901:, :] = 44
-                        trips_per_month = 0.5 * (trips_per_month+trips_per_month.T)
-                        matrices[transport_class][mtx_type] = matrices[transport_class][mtx_type] / trips_per_month
-                    if transport_class == "transit_leisure":
-                        matrices[transport_class][mtx_type] = matrices[transport_class][mtx_type] / 30
-    for mtx_type in files:
-        files[mtx_type].close()
+            matrices[transport_class][mtx_type] = {}
+            for tp in emme_scenarios:
+                if mtx_label == "bike" and mtx_type == "cost":
+                    matrices[transport_class][mtx_type][tp] = 0
+                else:
+                    matrices[transport_class][mtx_type][tp] = read_scenario(path, mtx_type, ass_class, tp)
+    return matrices 
+
+def read_scenario(path, mtx_type, ass_class, tp):
+    """Read travel cost and demand data for scenario from files"""
+    file_name = mtx_type + '_' + tp + ".omx"
+    file_path = os.path.join(path, file_name)
+    file_data = omx.open_file(file_path)
+    matrix_data = numpy.array(file_data[ass_class])
+    if mtx_type == "cost":
+        if ass_class == "transit_work":
+            trips_per_month = numpy.full_like(matrix_data, 60)
+            # Surrounding area has a lower number of trips per month
+            trips_per_month[901:, :] = 44
+            trips_per_month = 0.5 * (trips_per_month+trips_per_month.T)
+            matrix_data = matrix_data / trips_per_month
+            if ass_class == "transit_leisure":
+                 matrix_data = matrix_data / 30       
+    file_data.close()
     print "Files read"
-    return matrices    
-
-
-def calc_revenue(ve0, ve1):
+    return matrix_data
+       
+def calc_revenue(ass_classes, emme_scenarios, ve0, ve1):
     """Calculate difference in producer revenue between scenarios ve1 and ve0"""
     revenue = 0
-    demand_change = ve1["demand"] - ve0["demand"]
-    cost_change = ve1["cost"] - ve0["cost"]
-    revenue += (ve1["cost"] * demand_change)[demand_change >= 0].sum()
-    revenue += (cost_change * ve0["demand"])[demand_change >= 0].sum()
-    revenue += (ve0["cost"] * demand_change)[demand_change < 0].sum()
-    revenue += (cost_change * ve1["demand"])[demand_change < 0].sum()
+    for ass_class in ass_classes:
+        for tp in emme_scenarios:
+            demand_change = ve1[ass_class]["demand"][tp] - ve0[ass_class]["demand"][tp]
+            cost_change = ve1[ass_class]["cost"][tp] - ve0[ass_class]["cost"][tp]
+            tp_coeff = param.volume_factors[ass_class][tp]
+            revenue += ((ve1[ass_class]["cost"][tp] * demand_change)[demand_change >= 0].sum() * tp_coeff)
+            revenue += ((cost_change * ve0[ass_class]["demand"][tp])[demand_change >= 0].sum() * tp_coeff)
+            revenue += ((ve0[ass_class]["cost"][tp] * demand_change)[demand_change < 0].sum() * tp_coeff)
+            revenue += ((cost_change * ve1[ass_class]["demand"][tp])[demand_change < 0].sum() * tp_coeff)
     return revenue
 
 
-def calc_cost_gains(ve0, ve1):
-    """Calculate difference in consumer surplus between scenarios ve1 and ve0"""
-    gains = {"existing": 0, "additional": 0}
-    gain = ve1["cost"] - ve0["cost"]
-    demand_change = ve1["demand"] - ve0["demand"]
-    gains["existing"] += (ve0["demand"] * gain)[demand_change >= 0].sum()
-    gains["additional"] += 0.5 * (demand_change * gain)[demand_change >= 0].sum()
-    gains["existing"] += (ve1["demand"] * gain)[demand_change < 0].sum()
-    gains["additional"] -= 0.5 * (demand_change * gain)[demand_change < 0].sum()
+def calc_cost_gains(ve0, ve1, emme_scenarios, tp_coeffs):
+    """Calculate difference in consumer surplus between scenarios ve1_tp_tp and ve0_tp"""
+    for tp in emme_scenarios:
+        tp_coeff = tp_coeffs[tp]
+        gains = {"existing": 0, "additional": 0}
+        demand_change = ve1["demand"][tp] - ve0["demand"][tp]
+        gain = ve1["cost"][tp] - ve0["cost"][tp]
+        gains["existing"] += ((ve0["demand"][tp] * gain)[demand_change >= 0].sum() * tp_coeff)
+        gains["additional"] += (0.5 * (demand_change * gain)[demand_change >= 0].sum() * tp_coeff)
+        gains["existing"] += ((ve1["demand"][tp] * gain)[demand_change < 0].sum() * tp_coeff)
+        gains["additional"] -= (0.5 * (demand_change * gain)[demand_change < 0].sum() * tp_coeff)
     return gains
 
 
-def calc_gains(ve0, ve1):
+def calc_gains(ve0, ve1, transport_class, emme_scenarios):
     """Calculate time, distance and cost gains"""
-    gains = {}
-    gains["time"] = calc_cost_gains(
-        {
-            "cost": ve0["time"],
-            "demand": ve0["demand"],
-        },
-        {
-            "cost": ve1["time"],
-            "demand": ve1["demand"],
-        },
-    )
-    gains["dist"] = calc_cost_gains(
-        {
-            "cost": ve0["dist"],
-            "demand": ve0["demand"],
-        },
-        {
-            "cost": ve1["dist"],
-            "demand": ve1["demand"],
-        },
-    )
-    gains["cost"] = calc_cost_gains(ve0, ve1)
+    gains = dict.fromkeys(param.transport_classes)
+    for gain_type in ["cost", "time", "dist"]:
+        class_gains = calc_cost_gains(
+            {
+                "cost": ve0[transport_class][gain_type],
+                "demand": ve0[transport_class]["demand"],
+            },
+            {
+                "cost": ve1[transport_class][gain_type],
+                "demand": ve1[transport_class]["demand"],
+            },
+            emme_scenarios,
+            param.volume_factors[transport_class]
+        )
+        gains[gain_type] = class_gains
     return gains
 
 
@@ -214,35 +203,17 @@ def write_results_1(wb, miles, transit_miles, revenues, gains):
     ws["T10"] = transit_miles["time"]["tram"]
     ws["T11"] = transit_miles["time"]["metro"]
     ws["T12"] = transit_miles["time"]["train"]
-    ws["B43"] = revenues["transit"]["aht"]
-    ws["C43"] = revenues["transit"]["pt"]
-    ws["D43"] = revenues["transit"]["iht"]
+    ws["E43"] = revenues["transit"]
     ws = wb.get_sheet_by_name("Julkistaloudelliset")
-    ws["F8"] = revenues["car"]["aht"]
-    ws["G8"] = revenues["car"]["pt"]
-    ws["H8"] = revenues["car"]["iht"]
-
+    ws["I8"] = revenues["car"]
 
 def write_gains_1(ws, gains):
-    ws["B9"] = gains["aht"]["time"]["existing"]
-    ws["B10"] = gains["aht"]["time"]["additional"]
-    ws["C9"] = gains["pt"]["time"]["existing"]
-    ws["C10"] = gains["pt"]["time"]["additional"]
-    ws["D9"] = gains["iht"]["time"]["existing"]
-    ws["D10"] = gains["iht"]["time"]["additional"]
-    ws["B22"] = gains["aht"]["dist"]["existing"]
-    ws["B23"] = gains["aht"]["dist"]["additional"]
-    ws["C22"] = gains["pt"]["dist"]["existing"]
-    ws["C23"] = gains["pt"]["dist"]["additional"]
-    ws["D22"] = gains["iht"]["dist"]["existing"]
-    ws["D23"] = gains["iht"]["dist"]["additional"]
-    ws["B37"] = gains["aht"]["cost"]["existing"]
-    ws["B38"] = gains["aht"]["cost"]["additional"]
-    ws["C37"] = gains["pt"]["cost"]["existing"]
-    ws["C38"] = gains["pt"]["cost"]["additional"]
-    ws["D37"] = gains["iht"]["cost"]["existing"]
-    ws["D38"] = gains["iht"]["cost"]["additional"]
-
+    ws["E9"] = gains["time"]["existing"]
+    ws["E10"] = gains["time"]["additional"]
+    ws["E22"] = gains["dist"]["existing"]
+    ws["E23"] = gains["dist"]["additional"]
+    ws["E37"] = gains["cost"]["existing"]
+    ws["E38"] = gains["cost"]["additional"]
 
 def write_results_2(wb, miles, transit_miles, revenues, gains):
     """Write results for year 2"""
@@ -297,34 +268,18 @@ def write_results_2(wb, miles, transit_miles, revenues, gains):
     ws["T18"] = transit_miles["time"]["tram"]
     ws["T19"] = transit_miles["time"]["metro"]
     ws["T20"] = transit_miles["time"]["train"]
-    ws["B46"] = revenues["transit"]["aht"]
-    ws["C46"] = revenues["transit"]["pt"]
-    ws["D46"] = revenues["transit"]["iht"]
+    ws["E46"] = revenues["transit"]
     ws = wb.get_sheet_by_name("Julkistaloudelliset")
-    ws["F13"] = revenues["car"]["aht"]
-    ws["G13"] = revenues["car"]["pt"]
-    ws["H13"] = revenues["car"]["iht"]
+    ws["I13"] = revenues["car"]
 
 
 def write_gains_2(ws, gains):
-    ws["B14"] = gains["aht"]["time"]["existing"]
-    ws["B15"] = gains["aht"]["time"]["additional"]
-    ws["C14"] = gains["pt"]["time"]["existing"]
-    ws["C15"] = gains["pt"]["time"]["additional"]
-    ws["D14"] = gains["iht"]["time"]["existing"]
-    ws["D15"] = gains["iht"]["time"]["additional"]
-    ws["B27"] = gains["aht"]["dist"]["existing"]
-    ws["B28"] = gains["aht"]["dist"]["additional"]
-    ws["C27"] = gains["pt"]["dist"]["existing"]
-    ws["C28"] = gains["pt"]["dist"]["additional"]
-    ws["D27"] = gains["iht"]["dist"]["existing"]
-    ws["D28"] = gains["iht"]["dist"]["additional"]
-    ws["B42"] = gains["aht"]["cost"]["existing"]
-    ws["B43"] = gains["aht"]["cost"]["additional"]
-    ws["C42"] = gains["pt"]["cost"]["existing"]
-    ws["C43"] = gains["pt"]["cost"]["additional"]
-    ws["D42"] = gains["iht"]["cost"]["existing"]
-    ws["D43"] = gains["iht"]["cost"]["additional"]
+    ws["E14"] = gains["time"]["existing"]
+    ws["E15"] = gains["time"]["additional"]
+    ws["E27"] = gains["dist"]["existing"]
+    ws["E28"] = gains["dist"]["additional"]
+    ws["E42"] = gains["cost"]["existing"]
+    ws["E43"] = gains["cost"]["additional"]
 
 
 if __name__ == "__main__":
