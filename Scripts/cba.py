@@ -51,7 +51,7 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, results_directory, w
 def read_scenarios(path, emme_scenarios):
     files = dict.fromkeys(["demand", "time", "cost", "dist"])
     matrices = dict.fromkeys(param.transport_classes)
-    for transport_class in matrices:
+    for transport_class in param.transport_classes:
         matrices[transport_class] = dict.fromkeys(files)
         for mtx_type in files:
             # set ass_class
@@ -63,7 +63,7 @@ def read_scenarios(path, emme_scenarios):
                     ass_class = transport_class
             else:
                 ass_class = transport_class
-            matrices[transport_class][mtx_type] = {}
+            matrices[transport_class][mtx_type] = dict.fromkeys(emme_scenarios)
             for tp in emme_scenarios:
                 if mtx_label == "bike" and mtx_type == "cost":
                     matrices[transport_class][mtx_type][tp] = 0
@@ -77,6 +77,7 @@ def read_scenario(path, mtx_type, ass_class, tp):
     file_path = os.path.join(path, file_name)
     file_data = omx.open_file(file_path)
     matrix_data = numpy.array(file_data[ass_class])
+    file_data.close()
     if mtx_type == "cost":
         if ass_class == "transit_work":
             trips_per_month = numpy.full_like(matrix_data, 60)
@@ -84,46 +85,45 @@ def read_scenario(path, mtx_type, ass_class, tp):
             trips_per_month[901:, :] = 44
             trips_per_month = 0.5 * (trips_per_month+trips_per_month.T)
             matrix_data = matrix_data / trips_per_month
-            if ass_class == "transit_leisure":
-                 matrix_data = matrix_data / 30       
-    file_data.close()
-    print "Files read"
+        if ass_class == "transit_leisure":
+            matrix_data = matrix_data / 30       
     return matrix_data
        
 def calc_revenue(ass_classes, emme_scenarios, ve0, ve1):
     """Calculate difference in producer revenue between scenarios ve1 and ve0"""
     revenue = 0
-    for ass_class in ass_classes:
-        for tp in emme_scenarios:
-            demand_change = ve1[ass_class]["demand"][tp] - ve0[ass_class]["demand"][tp]
+    for tp in emme_scenarios:
+        for ass_class in ass_classes:
+            demand_change = (
+                ve1[ass_class]["demand"][tp] - ve0[ass_class]["demand"][tp]) * param.volume_factors[ass_class][tp]
             cost_change = ve1[ass_class]["cost"][tp] - ve0[ass_class]["cost"][tp]
-            tp_coeff = param.volume_factors[ass_class][tp]
-            revenue += ((ve1[ass_class]["cost"][tp] * demand_change)[demand_change >= 0].sum() * tp_coeff)
-            revenue += ((cost_change * ve0[ass_class]["demand"][tp])[demand_change >= 0].sum() * tp_coeff)
-            revenue += ((ve0[ass_class]["cost"][tp] * demand_change)[demand_change < 0].sum() * tp_coeff)
-            revenue += ((cost_change * ve1[ass_class]["demand"][tp])[demand_change < 0].sum() * tp_coeff)
+            revenue += (ve1[ass_class]["cost"][tp] * demand_change)[demand_change >= 0].sum() 
+            revenue += (cost_change * ve0[ass_class]["demand"][tp])[demand_change >= 0].sum()
+            revenue += (ve0[ass_class]["cost"][tp] * demand_change)[demand_change < 0].sum()
+            revenue += (cost_change * ve1[ass_class]["demand"][tp])[demand_change < 0].sum()
     return revenue
 
 
 def calc_cost_gains(ve0, ve1, emme_scenarios, tp_coeffs):
     """Calculate difference in consumer surplus between scenarios ve1_tp_tp and ve0_tp"""
+    gains = {"existing": 0, "additional": 0}
     for tp in emme_scenarios:
         tp_coeff = tp_coeffs[tp]
-        gains = {"existing": 0, "additional": 0}
-        demand_change = ve1["demand"][tp] - ve0["demand"][tp]
+        demand_change = (ve1["demand"][tp] - ve0["demand"][tp]) * tp_coeff
         gain = ve1["cost"][tp] - ve0["cost"][tp]
-        gains["existing"] += ((ve0["demand"][tp] * gain)[demand_change >= 0].sum() * tp_coeff)
-        gains["additional"] += (0.5 * (demand_change * gain)[demand_change >= 0].sum() * tp_coeff)
-        gains["existing"] += ((ve1["demand"][tp] * gain)[demand_change < 0].sum() * tp_coeff)
-        gains["additional"] -= (0.5 * (demand_change * gain)[demand_change < 0].sum() * tp_coeff)
+        gains["existing"] += (ve0["demand"][tp] * tp_coeff * gain)[demand_change >= 0].sum()
+        gains["additional"] += 0.5 * (demand_change * gain)[demand_change >= 0].sum()
+        gains["existing"] += (ve1["demand"][tp] * tp_coeff * gain)[demand_change < 0].sum()
+        gains["additional"] -= 0.5 * (demand_change * gain)[demand_change < 0].sum() 
     return gains
 
 
 def calc_gains(ve0, ve1, transport_class, emme_scenarios):
     """Calculate time, distance and cost gains"""
-    gains = dict.fromkeys(param.transport_classes)
-    for gain_type in ["cost", "time", "dist"]:
-        class_gains = calc_cost_gains(
+    gain_types = ["cost", "time", "dist"]
+    gains = dict.fromkeys(gain_types)
+    for gain_type in gain_types:
+        gains[gain_type] = calc_cost_gains(
             {
                 "cost": ve0[transport_class][gain_type],
                 "demand": ve0[transport_class]["demand"],
@@ -135,7 +135,6 @@ def calc_gains(ve0, ve1, transport_class, emme_scenarios):
             emme_scenarios,
             param.volume_factors[transport_class]
         )
-        gains[gain_type] = class_gains
     return gains
 
 
