@@ -277,9 +277,9 @@ emme_attributes = {
     "@trailer_truck": "LINK",
     "@truck": "LINK",
     "@van": "LINK", 
-    "@transit_vol": "TRANSIT_SEGMENT",
-    "@transit_boa": "TRANSIT_SEGMENT",
-    "@transit_trb": "TRANSIT_SEGMENT",
+    "@transit_vol": "LINK",
+    "@transit_boa": "NODE",
+    "@transit_trb": "NODE",
 }
 bike_attributes = {
     "@bike_aht": "LINK",

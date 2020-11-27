@@ -343,7 +343,33 @@ class EmmeAssignmentModel(AssignmentModel):
             link['@toll_cost'] = toll_cost
             link["@total_cost"] = (toll_cost + dist_cost)
         scen.publish_network(network)
-        
+
+    def transit_results_links_nodes(self, scen_id):
+        """ 
+        Calculate and sum transit results to link and nodes.
+
+        Parameters
+        ----------
+        scen_id : int
+            Scenario id.
+        """
+        emmebank = self.emme_project.modeller.emmebank
+        scen = emmebank.scenario(scen_id)
+        network = scen.get_network()
+        links = {}
+        for link in network.links():
+            links[link.id] = link
+        nodes = {}
+        for node in network.nodes():
+            nodes[node.id] = node
+        for segment in network.transit_segments():
+            for transit_class in param.transit_classes:
+                nodes[segment.i_node.id]["@transit_boa"] += segment["@{}_boa".format(transit_class)]
+                nodes[segment.i_node.id]["@transit_trb"] += segment["@{}_trb".format(transit_class)]
+                if segment.link is not None:
+                    links[segment.link.id]["@transit_vol"] += segment["@{}_vol".format(transit_class)]
+        scen.publish_network(network)
+
     def aggregate_results(self, resultdata):
         """Aggregate results to 24h and print vehicle kms.
 
@@ -359,6 +385,9 @@ class EmmeAssignmentModel(AssignmentModel):
             self.transit_segment_24h(transit_class, "boa")
             self.transit_segment_24h(transit_class, "trb")
         self.bike_link_24h()
+        for tp in self.emme_scenarios:
+            self.transit_results_links_nodes(self.emme_scenarios[tp])
+        self.transit_results_links_nodes(self.day_scenario)
         freight_classes = ["van", "truck", "trailer_truck"]
         vdfs = [1, 2, 3, 4, 5]
         transit_modes = {
