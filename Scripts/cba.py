@@ -119,13 +119,11 @@ class CBA:
 
     def calc_cost_gains(self, ve0, ve1, tp_coeffs):
         """Calculate difference in consumer surplus between scenarios ve1_tp_tp and ve0_tp"""
-        gains = {"existing": 0, "additional": 0}
+        gains = {"existing": numpy.zeros(self.shape), "additional": numpy.zeros(self.shape)}
         for tp in self.emme_scenarios:
             tp_coeff = tp_coeffs[tp]
             demand_change = (ve1["demand"][tp] - ve0["demand"][tp]) * tp_coeff
             gain = ve1["cost"][tp] - ve0["cost"][tp]
-            gains["existing"] += (ve0["demand"][tp] * tp_coeff * gain)[demand_change >= 0].sum()
-            gains["additional"] += 0.5 * (demand_change * gain)[demand_change >= 0].sum()
             gains["existing"] += (ve0["demand"][tp] * tp_coeff * gain) * (demand_change>=0).astype(int)
             gains["additional"] += (0.5 * gain * demand_change) * (demand_change>=0).astype(int)
             gains["existing"] += (ve1["demand"][tp] * tp_coeff * gain) * (demand_change<0).astype(int)
