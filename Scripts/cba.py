@@ -4,6 +4,7 @@ import openmatrix as omx
 import numpy
 import pandas
 import parameters.assignment as param
+from datahandling.resultdata import ResultsData
 from argparse import ArgumentParser
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -36,22 +37,27 @@ class CBA:
             Path to where "scenario_name/Matrices" result folder exists
         """
         # read miles
+        self.resultdata = ResultsData(results_directory)
         self.miles = self.read_miles(
             results_directory, self.scenario_1) - self.read_miles(results_directory, self.scenario_0)
         self.transit_miles = self.read_transit_miles(
             results_directory, self.scenario_1) - self.read_transit_miles(results_directory, self.scenario_0)
+        print "Read miles data"
         # open omx-data
         ve1 = self.read_scenarios(os.path.join(results_directory, self.scenario_1, "Matrices"))
         ve0 = self.read_scenarios(os.path.join(results_directory, self.scenario_0, "Matrices"))
+        print "Read input data"
         # calculate revenues for 24h
         self.revenues = {}
         self.revenues["transit"] = self.calc_revenue(param.transit_classes, ve0, ve1)
         self.revenues["car"] = self.calc_revenue(param.assignment_modes, ve0, ve1)
+        print "Revenues calculated"
         # gains 24h for all transport classes
         self.gains = dict.fromkeys(param.transport_classes)
         for transport_class in param.transport_classes:
             self.gains[transport_class] = self.calc_gains(ve0, ve1, transport_class)
             print "Gains " + transport_class + " calculated"
+        self.resultdata.flush()
 
     def read_scenarios(self, path):
         files = dict.fromkeys(["demand", "time", "cost", "dist"])
@@ -82,6 +88,8 @@ class CBA:
         file_path = os.path.join(path, file_name)
         file_data = omx.open_file(file_path)
         matrix_data = numpy.array(file_data[ass_class])
+        self.zone_numbers = numpy.array(file_data.mapentries("zone_number"))
+        self.shape = numpy.shape(matrix_data)
         file_data.close()
         if mtx_type == "cost":
             if ass_class == "transit_work":
@@ -96,17 +104,17 @@ class CBA:
         
     def calc_revenue(self, ass_classes, ve0, ve1):
         """Calculate difference in producer revenue between scenarios ve1 and ve0"""
-        revenue = 0
+        revenue = numpy.zeros(self.shape)
         for tp in self.emme_scenarios:
             for ass_class in ass_classes:
                 demand_change = (
                     ve1[ass_class]["demand"][tp] - ve0[ass_class]["demand"][tp]) * param.volume_factors[ass_class][tp]
                 cost_change = ve1[ass_class]["cost"][tp] - ve0[ass_class]["cost"][tp]
-                revenue += (ve1[ass_class]["cost"][tp] * demand_change)[demand_change >= 0].sum() 
-                revenue += (cost_change * ve0[ass_class]["demand"][tp])[demand_change >= 0].sum()
-                revenue += (ve0[ass_class]["cost"][tp] * demand_change)[demand_change < 0].sum()
-                revenue += (cost_change * ve1[ass_class]["demand"][tp])[demand_change < 0].sum()
-        return revenue
+                revenue += (ve1[ass_class]["cost"][tp] * demand_change) * (demand_change>=0).astype(int)
+                revenue += (cost_change * ve0[ass_class]["demand"][tp]) * (demand_change>=0).astype(int)
+                revenue += (ve0[ass_class]["cost"][tp] * demand_change) * (demand_change<0).astype(int)
+                revenue += (cost_change * ve1[ass_class]["demand"][tp]) * (demand_change<0).astype(int)
+        return revenue.sum()
 
 
     def calc_cost_gains(self, ve0, ve1, tp_coeffs):
@@ -118,8 +126,10 @@ class CBA:
             gain = ve1["cost"][tp] - ve0["cost"][tp]
             gains["existing"] += (ve0["demand"][tp] * tp_coeff * gain)[demand_change >= 0].sum()
             gains["additional"] += 0.5 * (demand_change * gain)[demand_change >= 0].sum()
-            gains["existing"] += (ve1["demand"][tp] * tp_coeff * gain)[demand_change < 0].sum()
-            gains["additional"] -= 0.5 * (demand_change * gain)[demand_change < 0].sum() 
+            gains["existing"] += (ve0["demand"][tp] * tp_coeff * gain) * (demand_change>=0).astype(int)
+            gains["additional"] += (0.5 * gain * demand_change) * (demand_change>=0).astype(int)
+            gains["existing"] += (ve1["demand"][tp] * tp_coeff * gain) * (demand_change<0).astype(int)
+            gains["additional"] -= (0.5 * gain * demand_change) * (demand_change<0).astype(int)
         return gains
 
 
@@ -139,6 +149,12 @@ class CBA:
                 },
                 param.volume_factors[transport_class]
             )
+        for gain_type in gain_types:
+            for consumer_type in gains[gain_type]:
+                col_name = "{}_{}_{}".format(transport_class, gain_type, consumer_type)
+                col_values = gains[gain_type][consumer_type].sum(1)
+                self.resultdata.print_data(col_values, "cba_gains_origins.txt", self.zone_numbers, col_name)
+                gains[gain_type][consumer_type] = gains[gain_type][consumer_type].sum()
         return gains
 
 
