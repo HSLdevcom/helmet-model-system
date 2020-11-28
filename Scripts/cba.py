@@ -1,8 +1,8 @@
 from openpyxl import load_workbook
 import os
 import openmatrix as omx
-import numpy
-import pandas
+import numpy as np
+import pandas as pd
 import parameters.assignment as param
 from datahandling.resultdata import ResultsData
 from argparse import ArgumentParser
@@ -87,13 +87,13 @@ class CBA:
         file_name = mtx_type + '_' + tp + ".omx"
         file_path = os.path.join(path, file_name)
         file_data = omx.open_file(file_path)
-        matrix_data = numpy.array(file_data[ass_class])
-        self.zone_numbers = numpy.array(file_data.mapentries("zone_number"))
-        self.shape = numpy.shape(matrix_data)
+        matrix_data = np.array(file_data[ass_class])
+        self.zone_numbers = np.array(file_data.mapentries("zone_number"))
+        self.shape = np.shape(matrix_data)
         file_data.close()
         if mtx_type == "cost":
             if ass_class == "transit_work":
-                trips_per_month = numpy.full_like(matrix_data, 60)
+                trips_per_month = np.full_like(matrix_data, 60)
                 # Surrounding area has a lower number of trips per month
                 trips_per_month[901:, :] = 44
                 trips_per_month = 0.5 * (trips_per_month+trips_per_month.T)
@@ -104,7 +104,7 @@ class CBA:
         
     def calc_revenue(self, ass_classes, ve0, ve1):
         """Calculate difference in producer revenue between scenarios ve1 and ve0"""
-        revenue = numpy.zeros(self.shape)
+        revenue = np.zeros(self.shape)
         for tp in self.emme_scenarios:
             for ass_class in ass_classes:
                 demand_change = (
@@ -119,7 +119,7 @@ class CBA:
 
     def calc_cost_gains(self, ve0, ve1, tp_coeffs):
         """Calculate difference in consumer surplus between scenarios ve1_tp_tp and ve0_tp"""
-        gains = {"existing": numpy.zeros(self.shape), "additional": numpy.zeros(self.shape)}
+        gains = {"existing": np.zeros(self.shape), "additional": np.zeros(self.shape)}
         for tp in self.emme_scenarios:
             tp_coeff = tp_coeffs[tp]
             demand_change = (ve1["demand"][tp] - ve0["demand"][tp]) * tp_coeff
@@ -159,13 +159,13 @@ class CBA:
     def read_miles(self, results_directory, scenario_name):
         """Read scenario data from files"""
         file_path = os.path.join(results_directory, scenario_name, "vehicle_kms.txt")
-        return pandas.read_csv(file_path, delim_whitespace=True)
+        return pd.read_csv(file_path, delim_whitespace=True)
 
 
     def read_transit_miles(self, results_directory, scenario_name):
         """Read scenario data from files"""
         file_path = os.path.join(results_directory, scenario_name, "transit_kms.txt")
-        return pandas.read_csv(file_path, delim_whitespace=True)
+        return pd.read_csv(file_path, delim_whitespace=True)
 
 
     def write_results_1(self, wb):
