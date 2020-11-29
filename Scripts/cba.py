@@ -10,7 +10,7 @@ from argparse import ArgumentParser
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 
 class CBA:
-    def __init__(self, scenario_0, scenario_1):
+    def __init__(self, scenario_0, scenario_1, results_directory):
         """Cost-benefit analysis class.
 
         Parameters
@@ -23,41 +23,80 @@ class CBA:
         scenario_1 : str
             Name of project scenario, for which 
             forecast results are available in Results folder
+        results_directory : str
+            Path to where "scenario_name/Matrices" result folder exists
         """
         self.emme_scenarios = ["aht", "pt", "iht"]
         self.scenario_1 = scenario_1 
         self.scenario_0 = scenario_0 
-
-    def run_cost_benefit_analysis(self, results_directory):
-        """Runs CBA and writes the results to excel file.
-
-        Parameters
-        ----------
-        results_directory : str
-            Path to where "scenario_name/Matrices" result folder exists
-        """
-        # read miles
         self.resultdata = ResultsData(results_directory)
+        self.results_scenario_0 = os.path.join(results_directory, self.scenario_0)
+        self.results_scenario_1 = os.path.join(results_directory, self.scenario_1)
+        self.ve0 = self.read_scenarios(os.path.join(self.results_scenario_0, "Matrices"))
+        self.ve1 = self.read_scenarios(os.path.join(self.results_scenario_1, "Matrices"))
+
+
+    def run_cost_benefit_analysis(self):
+        """Runs CBA calculation. """
+        # read miles
         self.miles = self.read_miles(
-            results_directory, self.scenario_1) - self.read_miles(results_directory, self.scenario_0)
+            self.results_scenario_0) - self.read_miles(self.results_scenario_0)
         self.transit_miles = self.read_transit_miles(
-            results_directory, self.scenario_1) - self.read_transit_miles(results_directory, self.scenario_0)
-        print "Read miles data"
-        # open omx-data
-        ve1 = self.read_scenarios(os.path.join(results_directory, self.scenario_1, "Matrices"))
-        ve0 = self.read_scenarios(os.path.join(results_directory, self.scenario_0, "Matrices"))
-        print "Read input data"
+            self.results_scenario_0) - self.read_transit_miles(self.results_scenario_0)
+        print "Miles calculated"
         # calculate revenues for 24h
         self.revenues = {}
-        self.revenues["transit"] = self.calc_revenue(param.transit_classes, ve0, ve1)
-        self.revenues["car"] = self.calc_revenue(param.assignment_modes, ve0, ve1)
+        self.revenues["transit"] = self.calc_revenue(param.transit_classes)
+        self.revenues["car"] = self.calc_revenue(param.assignment_modes)
         print "Revenues calculated"
         # gains 24h for all transport classes
         self.gains = dict.fromkeys(param.transport_classes)
         for transport_class in param.transport_classes:
-            self.gains[transport_class] = self.calc_gains(ve0, ve1, transport_class)
+            self.gains[transport_class] = self.calc_gains(transport_class)
             print "Gains " + transport_class + " calculated"
         self.resultdata.flush()
+
+
+    def print_destination_costs(self, transport_class, cost_type, time_period, dest_zone_ids = [1082]):
+        """Print destination costs to file.
+
+        Parameters
+        ----------
+        transport_class : str
+            Trasnport class for analysis.
+        cost_type : str
+            Cost type (time, cost, dist) for analysis
+        time_period : str
+            Time period to use (aht, pt, iht)
+        dest_zone_ids : str
+            List of destination to calc cost/times/dists. Defaults
+            to zone that HSL headquarters is in.
+        """
+        transport_classes = self.ve1.keys()
+        cost_types = self.ve1[transport_class].keys()
+        time_periods = self.ve1[transport_class][cost_type].keys()
+        if transport_class not in transport_classes:
+            raise KeyError("Transport class has to be one of {}".format(", ".join(transport_classes)))
+        if cost_type not in cost_types:
+            raise KeyError("Cost type has to be one of {}".format(", ".join(cost_types)))
+        if time_period not in time_periods:
+            raise KeyError("Time period has to be one of {}".format(", ".join(time_periods)))
+
+        for dest_id in dest_zone_ids:
+            i = np.where(self.zone_numbers == dest_id)[0]
+            if not i.size:
+                raise KeyError("Zone id {} not found in matrices".format(dest_id))
+            elif len(i) > 1:
+                raise KeyError("Zone id {} has multiple matches in matrices".format(dest_id))
+            else:
+                ve1 = self.ve1[transport_class][cost_type][time_period][:,i[0]]
+                ve0 = self.ve0[transport_class][cost_type][time_period][:,i[0]]
+                fname = "d{}_{}_{}_{}.txt".format(cost_type, transport_class, self.scenario_1, self.scenario_0)
+                self.resultdata.print_data(ve1, fname, self.zone_numbers, "ve1_d{}".format(dest_id))
+                self.resultdata.print_data(ve0, fname, self.zone_numbers, "ve0_d{}".format(dest_id))
+                self.resultdata.print_data(ve1 - ve0, fname, self.zone_numbers, "ve1_ve0_d{}".format(dest_id))
+        self.resultdata.flush()
+
 
     def read_scenarios(self, path):
         files = dict.fromkeys(["demand", "time", "cost", "dist"])
@@ -80,7 +119,9 @@ class CBA:
                         matrices[transport_class][mtx_type][tp] = 0
                     else:
                         matrices[transport_class][mtx_type][tp] = self.read_scenario(path, mtx_type, ass_class, tp)
+                    print "Read matrices for {}, {}, {}".format(transport_class, mtx_type, tp) 
         return matrices 
+
 
     def read_scenario(self, path, mtx_type, ass_class, tp):
         """Read travel cost and demand data for scenario from files"""
@@ -101,19 +142,20 @@ class CBA:
             if ass_class == "transit_leisure":
                 matrix_data = matrix_data / 30       
         return matrix_data
-        
-    def calc_revenue(self, ass_classes, ve0, ve1):
+
+
+    def calc_revenue(self, ass_classes):
         """Calculate difference in producer revenue between scenarios ve1 and ve0"""
         revenue = np.zeros(self.shape)
         for tp in self.emme_scenarios:
             for ass_class in ass_classes:
                 demand_change = (
-                    ve1[ass_class]["demand"][tp] - ve0[ass_class]["demand"][tp]) * param.volume_factors[ass_class][tp]
-                cost_change = ve1[ass_class]["cost"][tp] - ve0[ass_class]["cost"][tp]
-                revenue += (ve1[ass_class]["cost"][tp] * demand_change) * (demand_change>=0).astype(int)
-                revenue += (cost_change * ve0[ass_class]["demand"][tp]) * (demand_change>=0).astype(int)
-                revenue += (ve0[ass_class]["cost"][tp] * demand_change) * (demand_change<0).astype(int)
-                revenue += (cost_change * ve1[ass_class]["demand"][tp]) * (demand_change<0).astype(int)
+                    self.ve1[ass_class]["demand"][tp] - self.ve0[ass_class]["demand"][tp]) * param.volume_factors[ass_class][tp]
+                cost_change = self.ve1[ass_class]["cost"][tp] - self.ve0[ass_class]["cost"][tp]
+                revenue += (self.ve1[ass_class]["cost"][tp] * demand_change) * (demand_change>=0).astype(int)
+                revenue += (cost_change * self.ve0[ass_class]["demand"][tp]) * (demand_change>=0).astype(int)
+                revenue += (self.ve0[ass_class]["cost"][tp] * demand_change) * (demand_change<0).astype(int)
+                revenue += (cost_change * self.ve1[ass_class]["demand"][tp]) * (demand_change<0).astype(int)
         return revenue.sum()
 
 
@@ -131,19 +173,19 @@ class CBA:
         return gains
 
 
-    def calc_gains(self, ve0, ve1, transport_class):
+    def calc_gains(self, transport_class):
         """Calculate time, distance and cost gains"""
         gain_types = ["cost", "time", "dist"]
         gains = dict.fromkeys(gain_types)
         for gain_type in gain_types:
             gains[gain_type] = self.calc_cost_gains(
                 {
-                    "cost": ve0[transport_class][gain_type],
-                    "demand": ve0[transport_class]["demand"],
+                    "cost": self.ve0[transport_class][gain_type],
+                    "demand": self.ve0[transport_class]["demand"],
                 },
                 {
-                    "cost": ve1[transport_class][gain_type],
-                    "demand": ve1[transport_class]["demand"],
+                    "cost": self.ve1[transport_class][gain_type],
+                    "demand": self.ve1[transport_class]["demand"],
                 },
                 param.volume_factors[transport_class]
             )
@@ -151,20 +193,21 @@ class CBA:
             for consumer_type in gains[gain_type]:
                 col_name = "{}_{}_{}".format(transport_class, gain_type, consumer_type)
                 col_values = gains[gain_type][consumer_type].sum(1)
-                self.resultdata.print_data(col_values, "cba_gains_origins.txt", self.zone_numbers, col_name)
+                fname = "gains_origs_{}_{}.txt".format(self.scenario_1, self.scenario_0)
+                self.resultdata.print_data(col_values, fname, self.zone_numbers, col_name)
                 gains[gain_type][consumer_type] = gains[gain_type][consumer_type].sum()
         return gains
 
 
-    def read_miles(self, results_directory, scenario_name):
+    def read_miles(self, results_scenario):
         """Read scenario data from files"""
-        file_path = os.path.join(results_directory, scenario_name, "vehicle_kms.txt")
+        file_path = os.path.join(results_scenario, "vehicle_kms.txt")
         return pd.read_csv(file_path, delim_whitespace=True)
 
 
-    def read_transit_miles(self, results_directory, scenario_name):
+    def read_transit_miles(self, results_scenario):
         """Read scenario data from files"""
-        file_path = os.path.join(results_directory, scenario_name, "transit_kms.txt")
+        file_path = os.path.join(results_scenario, "transit_kms.txt")
         return pd.read_csv(file_path, delim_whitespace=True)
 
 
@@ -318,12 +361,12 @@ if __name__ == "__main__":
         help="Path to Results directory.")
     args = parser.parse_args()
     wb = load_workbook(os.path.join(SCRIPT_DIR, "CBA_kehikko.xlsx"))
-    cba1 = CBA(args.baseline_scenario, args.projected_scenario)
-    cba1.run_cost_benefit_analysis(args.results_path)
+    cba1 = CBA(args.baseline_scenario, args.projected_scenario, args.results_path)
+    cba1.run_cost_benefit_analysis()
     cba1.write_results_1(wb)
     if args.baseline_scenario_2 is not None and args.baseline_scenario_2 != "undefined":
-        cba2 = CBA(args.baseline_scenario_2, args.projected_scenario_2)
-        cba2.run_cost_benefit_analysis(args.results_path)
+        cba2 = CBA(args.baseline_scenario_2, args.projected_scenario_2, args.results_path)
+        cba2.run_cost_benefit_analysis()
         cba2.write_results_2(wb)
     results_filename =  "cba_{}_{}.xlsx".format(
         os.path.basename(args.projected_scenario),
