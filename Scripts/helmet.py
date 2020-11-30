@@ -51,9 +51,16 @@ def main(args):
             raise NameError(".emp project file not found in given '{}' location.".format(emme_project_path))
         log.info("Initializing Emme..")
         from assignment.emme_bindings.emme_project import EmmeProject
-        ass_model = EmmeAssignmentModel(EmmeProject(emme_project_path), first_scenario_id=args.first_scenario_id)
-    # Initialize model system (wrapping Assignment-model, and providing Demand-calculations as Python modules)
-    model = ModelSystem(forecast_zonedata_path, base_zonedata_path, base_matrices_path, results_path, ass_model, name)
+        ass_model = EmmeAssignmentModel(
+            EmmeProject(emme_project_path),
+            first_scenario_id=args.first_scenario_id,
+            save_matrices=args.save_matrices,
+            first_matrix_id=args.first_matrix_id)
+    # Initialize model system (wrapping Assignment-model,
+    # and providing demand calculations as Python modules)
+    model = ModelSystem(
+        forecast_zonedata_path, base_zonedata_path, base_matrices_path,
+        results_path, ass_model, name)
     log_extra["status"]["results"] = model.mode_share
 
     # Run traffic assignment simulation for N iterations, on last iteration model-system will save the results

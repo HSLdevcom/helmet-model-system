@@ -27,7 +27,7 @@ class EmmeAssignmentModel(AssignmentModel):
         22 (midday scenario) and 23 (afternoon scenario).
         If first scenario is set something else (e.g. 5), then following 
         scenarios are also adjusted (6, 7, 8, 9).
-    demand_mtx : dict
+    demand_mtx : dict (optional)
         key : str
             Assignment class (transit_work/transit_leisure)
         value : dict
@@ -35,7 +35,7 @@ class EmmeAssignmentModel(AssignmentModel):
                 Emme matrix id
             description : dict
                 Matrix description
-    result_mtx : dict
+    result_mtx : dict (optional)
         key : str
             Impedance type (time/cost/dist)
         value : dict
@@ -46,21 +46,27 @@ class EmmeAssignmentModel(AssignmentModel):
                     Emme matrix id
                 description : dict
                     Matrix description
-    count_zone_boardings : bool (optional)
-        Whether assignment is performed only to count fare zone boardings
+    save_matrices : bool (optional)
+        Whether matrices and transit strategies will be saved in
+        Emme format for all time periods.
+        If false, Emme matrix ids 0-99 will be used for all time periods.
+    first_matrix_id : int (optional)
+        Where to save matrices (if saved),
+        300 matrix ids will be reserved, starting from first_matrix_id.
+        Default is 100(-399).
     """
     def __init__(self, emme_context, first_scenario_id,
                  demand_mtx=param.emme_demand_mtx,
                  result_mtx=param.emme_result_mtx,
-                 save_matrices=False):
+                 save_matrices=False, first_matrix_id=100):
         self.save_matrices = save_matrices
         self.emme_project = emme_context
         time_periods = {
-            "aht": 1,
-            "pt": 2,
-            "iht": 3,
+            "aht": 0,
+            "pt": 1,
+            "iht": 2,
         }
-        self.emme_scenarios = {tp: first_scenario_id + time_periods[tp] + 1
+        self.emme_scenarios = {tp: first_scenario_id + time_periods[tp] + 2
             for tp in time_periods}
         if save_matrices:
             # Create separate emme matrices for time periods
@@ -72,14 +78,16 @@ class EmmeAssignmentModel(AssignmentModel):
             self.result_mtx = {tp: result_mtx for tp in time_periods}
             # The matrices need to be created in Emme for only one time period
             time_periods = {"aht": 0}
+            first_matrix_id = 0
         for tp in time_periods:
             if save_matrices:
                 tag = tp
             else:
                 tag = ""
+            id_hundred = 100*time_periods[tp] + first_matrix_id
             for ass_class in self.demand_mtx[tp]:
                 mtx = self.demand_mtx[tp][ass_class]
-                mtx["id"] = "mf{}".format(100*time_periods[tp] + mtx["id"])
+                mtx["id"] = "mf{}".format(id_hundred + mtx["id"])
                 self.emme_project.create_matrix(
                     matrix_id=mtx["id"],
                     matrix_name="demand_{}_{}".format(ass_class, tag),
@@ -89,7 +97,7 @@ class EmmeAssignmentModel(AssignmentModel):
                 mtx = self.result_mtx[tp][mtx_type]
                 for ass_class in mtx:
                     mtx[ass_class]["id"] = "mf{}".format(
-                        100*time_periods[tp] + mtx[ass_class]["id"])
+                        id_hundred + mtx[ass_class]["id"])
                     self.emme_project.create_matrix(
                         matrix_id=mtx[ass_class]["id"],
                         matrix_name="{}_{}_{}".format(mtx_type, ass_class, tag),
