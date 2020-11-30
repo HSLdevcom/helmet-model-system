@@ -518,18 +518,6 @@ emme_result_mtx = {
             "id": 63,
             "description": "transit trip number of boardings",
         },
-        "bike_separate_dist": {
-            "id": 64,
-            "description": "separate bike way distance",
-        },
-        "bike_streetside_dist": {
-            "id": 65,
-            "description": "street-side bike way distance",
-        },
-        "bike_mixed_dist": {
-            "id": 66,
-            "description": "bike distance in mixed traffic",
-        },
-    }
+    },
 }
 background_traffic = "ul3"
