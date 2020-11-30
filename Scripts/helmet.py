@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 import sys
 import os
+from glob import glob
 
 from utils.config import Config
 import utils.log as log
@@ -76,6 +77,19 @@ def main(args):
             break
         if i == iterations:
             log_extra["status"]['state'] = 'finished'
+    # delete emme strategy files for scenarios 
+    if args.del_strat_files:
+        dbase_path = "{}/database".format(os.path.dirname(emme_project_path))
+        scenario_ids = range(args.first_scenario_id, args.first_scenario_id+5)
+        for s in scenario_ids:
+            strategy_files = glob("{}/STRAT_s{}*".format(dbase_path, s))
+            strategy_files = strategy_files + glob("{}/STRATS_s{}/*".format(dbase_path, s))
+            for f in strategy_files:
+                try:
+                    os.remove(f)
+                    log.info("Removed file {}".format(f))
+                except:
+                    log.info("Not able to remove file {}.".format(f))
     log.info("Simulation ended.", extra=log_extra)
 
 
@@ -103,6 +117,13 @@ if __name__ == "__main__":
         action="store_true",
         default=(not config.USE_EMME),
         help="Using this flag runs with MockAssignmentModel instead of EmmeAssignmentModel, not requiring EMME.",
+    )
+    parser.add_argument(
+        "--del-strat-files",
+        dest="del_strat_files",
+        action="store_true",
+        default=config.DEL_STRAT,
+        help="Using this flag deletes strategy files from Emme-project Database folder.",
     )
     parser.add_argument(
         "--scenario-name",
@@ -167,6 +188,7 @@ if __name__ == "__main__":
     log.debug('forecast_data_path=' + args.forecast_data_path)
     log.debug('iterations=' + str(args.iterations))
     log.debug('use_fixed_transit_cost=' + str(args.use_fixed_transit_cost))
+    log.debug('delete strategy files=' + str(args.del_strat_files))
     log.debug('first_scenario_id=' + str(args.first_scenario_id))
     log.debug('scenario_name=' + args.scenario_name)
 

@@ -49,6 +49,12 @@ class Config:
     def USE_EMME(self, value): self.__set_value("USE_EMME", value)
 
     @property
+    def DEL_STRAT(self): return self.__get_value("DEL_STRAT")
+
+    @DEL_STRAT.setter
+    def DEL_STRAT(self, value): self.__set_value("DEL_STRAT", value)
+
+    @property
     def LOG_LEVEL(self): return self.__get_value("LOG_LEVEL")
 
     @LOG_LEVEL.setter
