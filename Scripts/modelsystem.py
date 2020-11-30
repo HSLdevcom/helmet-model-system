@@ -169,7 +169,7 @@ class ModelSystem:
             peripheral_cost = numpy.array(peripheral_mtx._file["transit"])
         if use_fixed_transit_cost:
             log.info("Using fixed transit cost matrix")
-            with self.resultmatrices.open("cost", "aht", self.ass_model.zone_numbers) as aht_mtx:
+            with self.resultmatrices.open("cost", "aht") as aht_mtx:
                 fixed_cost = aht_mtx["transit_work"]
         else:
             log.info("Calculating transit cost")
