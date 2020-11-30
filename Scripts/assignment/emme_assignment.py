@@ -60,31 +60,41 @@ class EmmeAssignmentModel(AssignmentModel):
                  result_mtx=param.emme_result_mtx,
                  save_matrices=False, first_matrix_id=100):
         self.save_matrices = save_matrices
+        self.first_matrix_id = first_matrix_id
         self.emme_project = emme_context
-        time_periods = {
+        self.time_periods = {
             "aht": 0,
             "pt": 1,
             "iht": 2,
         }
-        self.emme_scenarios = {tp: first_scenario_id + time_periods[tp] + 2
-            for tp in time_periods}
+        self.emme_scenarios = {tp: first_scenario_id + self.time_periods[tp] + 2
+            for tp in self.time_periods}
         if save_matrices:
             # Create separate emme matrices for time periods
-            self.demand_mtx = {tp: copy.deepcopy(demand_mtx) for tp in time_periods}
-            self.result_mtx = {tp: copy.deepcopy(result_mtx) for tp in time_periods}
+            self.demand_mtx = {tp: copy.deepcopy(demand_mtx)
+                for tp in self.time_periods}
+            self.result_mtx = {tp: copy.deepcopy(result_mtx)
+                for tp in self.time_periods}
         else:
             # Refer to the same matrices for all time periods
-            self.demand_mtx = {tp: demand_mtx for tp in time_periods}
-            self.result_mtx = {tp: result_mtx for tp in time_periods}
+            self.demand_mtx = {tp: demand_mtx for tp in self.time_periods}
+            self.result_mtx = {tp: result_mtx for tp in self.time_periods}
             # The matrices need to be created in Emme for only one time period
-            time_periods = {"aht": 0}
-            first_matrix_id = 0
-        for tp in time_periods:
-            if save_matrices:
+            self.time_periods = {"aht": 0}
+            self.first_matrix_id = 0
+        # default value for dist, modelsystem sets new from zonedata
+        self.dist_unit_cost = param.dist_unit_cost
+        self.bike_scenario = first_scenario_id
+        self.day_scenario = first_scenario_id+1
+
+    def prepare_network(self):
+        """Create matrices, extra attributes and calc background variables."""
+        for tp in self.time_periods:
+            if self.save_matrices:
                 tag = tp
             else:
                 tag = ""
-            id_hundred = 100*time_periods[tp] + first_matrix_id
+            id_hundred = 100*self.time_periods[tp] + self.first_matrix_id
             for ass_class in self.demand_mtx[tp]:
                 mtx = self.demand_mtx[tp][ass_class]
                 mtx["id"] = "mf{}".format(id_hundred + mtx["id"])
@@ -104,13 +114,6 @@ class EmmeAssignmentModel(AssignmentModel):
                         matrix_description="{} {}".format(
                             mtx[ass_class]["description"], tag),
                         default_value=999999, overwrite=True)
-        # default value for dist, modelsystem sets new from zonedata
-        self.dist_unit_cost = param.dist_unit_cost
-        self.bike_scenario = first_scenario_id
-        self.day_scenario = first_scenario_id+1
-
-    def prepare_network(self):
-        """Create extra attributes and calc background variables for assignment."""
         self.create_attributes(self.bike_scenario, param.bike_attributes)
         self.create_attributes(self.day_scenario, param.emme_attributes)
         for tp in self.emme_scenarios:
