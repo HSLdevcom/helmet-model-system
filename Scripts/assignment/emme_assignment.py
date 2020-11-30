@@ -356,18 +356,12 @@ class EmmeAssignmentModel(AssignmentModel):
         emmebank = self.emme_project.modeller.emmebank
         scen = emmebank.scenario(scen_id)
         network = scen.get_network()
-        links = {}
-        for link in network.links():
-            links[link.id] = link
-        nodes = {}
-        for node in network.nodes():
-            nodes[node.id] = node
         for segment in network.transit_segments():
             for transit_class in param.transit_classes:
-                nodes[segment.i_node.id]["@transit_boa"] += segment["@{}_boa".format(transit_class)]
-                nodes[segment.i_node.id]["@transit_trb"] += segment["@{}_trb".format(transit_class)]
+                segment.i_node["@transit_boa"] += segment["@{}_boa".format(transit_class)]
+                segment.i_node["@transit_trb"] += segment["@{}_trb".format(transit_class)]
                 if segment.link is not None:
-                    links[segment.link.id]["@transit_vol"] += segment["@{}_vol".format(transit_class)]
+                    segment.link["@transit_vol"] += segment["@{}_vol".format(transit_class)]
         scen.publish_network(network)
 
     def aggregate_results(self, resultdata):
