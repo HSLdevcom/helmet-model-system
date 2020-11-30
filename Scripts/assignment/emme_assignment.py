@@ -297,9 +297,8 @@ class EmmeAssignmentModel(AssignmentModel):
     @property
     def zone_numbers(self):
         """Numpy array of all zone numbers.""" 
-        emmebank = self.emme_project.modeller.emmebank
-        scen = emmebank.scenario(self.emme_scenarios["aht"])
-        return scen.zone_numbers
+        return numpy.array(self.emme_project.modeller.emmebank.scenario(
+            self.emme_scenarios["aht"]).zone_numbers)
 
     @property
     def mapping(self):
