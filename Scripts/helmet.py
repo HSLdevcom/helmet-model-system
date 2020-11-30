@@ -144,7 +144,7 @@ if __name__ == "__main__":
         dest="scenario_name",
         type=str,
         default=config.SCENARIO_NAME,
-        help="Name of traffic assignment (HELMET) scenario. Influences result folder name and log file name."),
+        help="Name of HELMET scenario. Influences result folder name and log file name."),
     parser.add_argument(
         "--results-path",
         dest="results_path",
@@ -164,6 +164,12 @@ if __name__ == "__main__":
         type=int,
         default=config.FIRST_SCENARIO_ID,
         help="First (biking) scenario ID within EMME project (.emp)."),
+    parser.add_argument(
+        "--first-matrix-id",
+        dest="first_matrix_id",
+        type=int,
+        default=config.FIRST_MATRIX_ID,
+        help="First matrix ID within EMME project (.emp). Used only if --save-emme-matrices."),
     parser.add_argument(
         "--baseline-data-path",
         dest="baseline_data_path",

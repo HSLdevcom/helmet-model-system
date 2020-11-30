@@ -107,3 +107,9 @@ class Config:
 
     @FIRST_SCENARIO_ID.setter
     def FIRST_SCENARIO_ID(self, value): self.__set_value("FIRST_SCENARIO_ID", value)
+
+    @property
+    def FIRST_MATRIX_ID(self): return self.__get_value("FIRST_MATRIX_ID")
+
+    @FIRST_MATRIX_ID.setter
+    def FIRST_MATRIX_ID(self, value): self.__set_value("FIRST_MATRIX_ID", value)
