@@ -126,10 +126,17 @@ if __name__ == "__main__":
         help="Using this flag runs with MockAssignmentModel instead of EmmeAssignmentModel, not requiring EMME.",
     )
     parser.add_argument(
+        "--save-emme-matrices",
+        dest="save_matrices",
+        action="store_true",
+        default=config.SAVE_MATRICES_IN_EMME,
+        help="Using this flag saves additional matrices and strategy files to Emme-project Database folder.",
+    )
+    parser.add_argument(
         "--del-strat-files",
         dest="del_strat_files",
         action="store_true",
-        default=config.DEL_STRAT,
+        default=config.DELETE_STRATEGY_FILES,
         help="Using this flag deletes strategy files from Emme-project Database folder.",
     )
     parser.add_argument(
@@ -195,7 +202,8 @@ if __name__ == "__main__":
     log.debug('forecast_data_path=' + args.forecast_data_path)
     log.debug('iterations=' + str(args.iterations))
     log.debug('use_fixed_transit_cost=' + str(args.use_fixed_transit_cost))
-    log.debug('delete strategy files=' + str(args.del_strat_files))
+    log.debug('save_matrices=' + str(args.save_matrices))
+    log.debug('del_strat_files=' + str(args.del_strat_files))
     log.debug('first_scenario_id=' + str(args.first_scenario_id))
     log.debug('scenario_name=' + args.scenario_name)
 
