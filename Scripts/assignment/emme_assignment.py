@@ -243,7 +243,8 @@ class EmmeAssignmentModel(AssignmentModel):
 
     def _set_matrix(self, mtx_label, matrix, time_period):
         if numpy.isnan(matrix).any():
-            msg = "NAs in Numpy-demand matrix. Would cause infinite loop in Emme-assignment."
+            msg = "NAs in demand matrix {}. Would cause infinite loop in Emme assignment.".format(
+                mtx_label)
             log.error(msg)
             raise ValueError(msg)
         else:
@@ -567,9 +568,10 @@ class EmmeAssignmentModel(AssignmentModel):
         l, u = zn.slice_locs(bounds[0], bounds[1])
         cost[l:u, :u] = peripheral_cost
         cost[:u, l:u] = peripheral_cost.T
-        for transit_class in param.transit_classes:
-            idx = self.result_mtx[tp]["cost"][transit_class]["id"]
-            emmebank.matrix(idx).set_numpy_data(cost)
+        for tp in self.time_periods:
+            for transit_class in param.transit_classes:
+                idx = self.result_mtx[tp]["cost"][transit_class]["id"]
+                emmebank.matrix(idx).set_numpy_data(cost)
         # Reset boarding penalties
         self._calc_boarding_penalties(scen_id)
 
@@ -689,6 +691,14 @@ class EmmeAssignmentModel(AssignmentModel):
         self.emme_project.network_calc(netw_spec, scen)
         log.info("Bike assignment started...")
         self.emme_project.bike_assignment(specification=spec, scenario=scen)
+        if self.save_matrices:
+            for tp in self.emme_scenarios:
+                if self.emme_scenarios[tp] != scen_id:
+                    self._copy_matrix(
+                        spec["classes"][0]["results"]["od_travel_times"]["shortest_paths"],
+                        "time", "bike",tp)
+                    self._copy_matrix(
+                        length_mat_id, "dist", "bike", tp)
         log.info("Bike assignment performed for scenario " + str(scen_id))
     
     def _assign_pedestrians(self, scen_id):
@@ -698,7 +708,24 @@ class EmmeAssignmentModel(AssignmentModel):
         log.info("Pedestrian assignment started...")
         self.emme_project.pedestrian_assignment(
             specification=self.walk_spec, scenario=scen)
+        if self.save_matrices:
+            for tp in self.emme_scenarios:
+                if self.emme_scenarios[tp] != scen_id:
+                    self._copy_matrix(
+                        self.walk_spec["od_results"]["transit_times"],
+                        "time", "walk", tp)
+                    self._copy_matrix(
+                        self.walk_spec["strategy_analysis"]["results"]["od_values"],
+                        "dist", "walk", tp)
         log.info("Pedestrian assignment performed for scenario " + str(scen_id))
+
+    def _copy_matrix(self, from_mtx, mtx_type, ass_class, time_period):
+        self.emme_project.copy_matrix(
+            from_mtx, self.result_mtx[time_period][mtx_type][ass_class]["id"],
+            "{}_{}_{}".format(mtx_type, ass_class, time_period),
+            "{} {}".format(
+                self.result_mtx[time_period][mtx_type][ass_class]["description"],
+                time_period))
 
     def _calc_boarding_penalties(self, scen_id, extra_penalty=0, is_last_iteration=False):
         """Calculate boarding penalties for transit assignment."""
