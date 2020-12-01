@@ -793,7 +793,8 @@ class EmmeAssignmentModel(AssignmentModel):
             "transit_work", self.demand_mtx[time_period],
             self.result_mtx[time_period])
         self.emme_project.transit_assignment(
-            specification=spec.transit_spec, scenario=scen, save_strategies=False)
+            specification=spec.transit_spec, scenario=scen, save_strategies=True)
+        self.emme_project.matrix_results(spec.transit_result_spec, scenario=scen)
         log.info("Transit assignment performed for scenario {}".format(
             str(scen_id)))
 
@@ -811,14 +812,13 @@ class EmmeAssignmentModel(AssignmentModel):
             congestion_function=param.trass_func,
             stopping_criteria=param.trass_stop,
             log_worksheets=False, scenario=scen,
-            save_strategies=self.save_matrices)
-        if self.save_matrices:
-            # save results for both classes
-            for name, spec in zip(transit_classes, tcs):
-                self.emme_project.matrix_results(
-                    spec.transit_result_spec, scenario=scen, class_name=name)
-                self.emme_project.network_results(
-                    spec.ntw_results_spec, scenario=scen, class_name=name)
+            save_strategies=True)
+        # save results for both classes
+        for name, spec in zip(transit_classes, tcs):
+            self.emme_project.matrix_results(
+                spec.transit_result_spec, scenario=scen, class_name=name)
+            self.emme_project.network_results(
+                spec.ntw_results_spec, scenario=scen, class_name=name)
         log.info("Congested transit assignment performed for scenario {}".format(
             str(scen_id)))
 

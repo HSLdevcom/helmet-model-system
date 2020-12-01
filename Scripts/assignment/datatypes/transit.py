@@ -84,9 +84,6 @@ class TransitSpecification:
                 "consider_total_impedance": False
             },
             "journey_levels": None,
-            "od_results": {
-                "total_impedance": self.result_mtx["time"][ass_class]["id"],
-            },
             "performance_settings": param.performance_settings,
         }
 
