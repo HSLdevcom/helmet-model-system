@@ -1,6 +1,7 @@
 import numpy
 import pandas
 
+import utils.log as log
 import parameters.zone as param
 from datatypes.purpose import TourPurpose, SecDestPurpose
 from models import logit
@@ -96,6 +97,17 @@ class DemandModel:
                 share = self.zone_data[key][idx]
                 weights.append(share)
                 weights[0] -= share
+            weights[0] = max(weights[0], 0)
+            if sum(weights) > 1:
+                if sum(weights) > 1.005:
+                    msg = "Sum of age group shares for zone {} is {}".format(
+                        idx, sum(weights))
+                    log.error(msg)
+                    raise ValueError(msg)
+                else:
+                    weights = numpy.array(weights)
+                    rebalance = 1 / sum(weights)
+                    weights = rebalance * weights
             for _ in xrange(0, int(self.zone_data["population"][idx])):
                 a = numpy.arange(-1, len(self.age_groups))
                 group = numpy.random.choice(a=a, p=weights)
