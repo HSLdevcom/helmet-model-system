@@ -40,9 +40,9 @@ class CBA:
         """Runs CBA calculation. """
         # read miles
         self.miles = self.read_miles(
-            self.results_scenario_0) - self.read_miles(self.results_scenario_0)
+            self.results_scenario_1) - self.read_miles(self.results_scenario_0)
         self.transit_miles = self.read_transit_miles(
-            self.results_scenario_0) - self.read_transit_miles(self.results_scenario_0)
+            self.results_scenario_1) - self.read_transit_miles(self.results_scenario_0)
         print "Miles calculated"
         # calculate revenues for 24h
         self.revenues = {}
