@@ -1,3 +1,6 @@
+# Share of demand that will be simulated in agent model
+agent_demand_fraction = 0.1
+
 ### DEMAND MODEL REFERENCES ###
 
 tour_purposes = (
