@@ -513,9 +513,10 @@ class EmmeAssignmentModel(AssignmentModel):
         tp = "aht"
         if default_cost is not None:
             # Use fixed cost matrix
-            for transit_class in param.transit_classes:
-                idx = self.result_mtx[tp]["cost"][transit_class]["id"]
-                emmebank.matrix(idx).set_numpy_data(default_cost)
+            for tp in self.time_periods:
+                for transit_class in param.transit_classes:
+                    idx = self.result_mtx[tp]["cost"][transit_class]["id"]
+                    emmebank.matrix(idx).set_numpy_data(default_cost)
             return
 
         scen_id = self.emme_scenarios[tp]
