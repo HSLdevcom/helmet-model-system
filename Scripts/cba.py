@@ -27,8 +27,8 @@ class CBA:
             Path to where "scenario_name/Matrices" result folder exists
         """
         self.emme_scenarios = ["aht", "pt", "iht"]
-        self.scenario_1 = scenario_1 
-        self.scenario_0 = scenario_0 
+        self.scenario_1 = os.path.basename(scenario_1)
+        self.scenario_0 = os.path.basename(scenario_0)
         self.resultdata = ResultsData(results_directory)
         self.results_scenario_0 = os.path.join(results_directory, self.scenario_0)
         self.results_scenario_1 = os.path.join(results_directory, self.scenario_1)
