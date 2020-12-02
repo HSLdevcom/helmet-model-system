@@ -23,6 +23,8 @@ class EmmeProject:
         self.path = os.path.dirname(self.modeller.emmebank.path)
         self.create_matrix = self.modeller.tool(
             "inro.emme.data.matrix.create_matrix")
+        self.copy_matrix = self.modeller.tool(
+            "inro.emme.data.matrix.copy_matrix")
         self.network_calc = self.modeller.tool(
             "inro.emme.network_calculation.network_calculator")
         self.process_functions = self.modeller.tool(
