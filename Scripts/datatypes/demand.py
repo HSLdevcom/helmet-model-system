@@ -23,6 +23,7 @@ class Demand:
         else:
             self.matrix = matrix
         self.orig = origin
+        self.dest = None # Destination will by default be whole model area
 
     @property
     def position(self):

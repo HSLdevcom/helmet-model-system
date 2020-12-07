@@ -16,6 +16,7 @@ from datatypes.purpose import SecDestPurpose
 from transform.impedance_transformer import ImpedanceTransformer
 from models.linear import CarDensityModel
 import parameters.assignment as param
+import parameters.zone as zone_param
 
 
 class ModelSystem:
@@ -452,8 +453,8 @@ class AgentModelSystem(ModelSystem):
                     purpose.model.calc_basic_prob(purpose_impedance)
         purpose_impedance = self.imptrans.transform(
             self.dm.purpose_dict["hoo"], previous_iter_impedance)
-        log.info("Assigning mode and destination for {} agents".format(
-            len(self.dm.population)))
+        log.info("Assigning mode and destination for {} agents ({} % of total population)".format(
+            len(self.dm.population), int(zone_param.agent_demand_fraction*100)))
         for person in self.dm.population:
             person.add_tours(self.dm.purpose_dict)
             for tour in person.tours:

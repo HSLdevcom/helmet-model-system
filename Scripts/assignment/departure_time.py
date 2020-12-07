@@ -63,13 +63,8 @@ class DepartureTimeModel:
         """Slice demand, include transpose and add for one time period."""
         r_0 = mtx_pos[0]
         c_0 = mtx_pos[1]
-        try:  # Addition of matrix
-            r_n = r_0 + mtx.shape[0]
-            c_n = c_0 + mtx.shape[1]
-        except AttributeError:  # Addition of agent
-            r_n = r_0 + 1
-            c_n = c_0 + 1
-            mtx = numpy.asarray([mtx])
+        r_n = r_0 + mtx.shape[0]
+        c_n = c_0 + mtx.shape[1]
         large_mtx = self.demand[time_period][ass_class]
         try:
             large_mtx[r_0:r_n, c_0:c_n] += demand_share[0] * mtx
@@ -88,18 +83,15 @@ class DepartureTimeModel:
         o = demand.position[0]
         d1 = demand.position[1]
         d2 = demand.position[2]
-        try:  # Addition of matrix
-            colsum = mtx.sum(0)[:, numpy.newaxis]
-            share = param.demand_share[demand.purpose.name][demand.mode][tp]
-            self._add_2d_demand(share[0], ass_class, tp, mtx, (d1, d2))
-            self._add_2d_demand(share[1], ass_class, tp, colsum, (d2, o))
-        except AttributeError:  # Addition of agent
-            share = param.demand_share[demand.purpose.name][demand.mode][tp]
+        share = param.demand_share[demand.purpose.name][demand.mode][tp]
+        if demand.dest is not None:
+            # For agent simulation
             self._add_2d_demand(share, ass_class, tp, mtx, (o, d1))
             sec_purpose_name = demand.purpose.sec_dest_purpose.name
             share = param.demand_share[sec_purpose_name][demand.mode][tp]
-            self._add_2d_demand(share[0], ass_class, tp, mtx, (d1, d2))
-            self._add_2d_demand(share[1], ass_class, tp, mtx, (d2, o))
+        colsum = mtx.sum(0)[:, numpy.newaxis]
+        self._add_2d_demand(share[0], ass_class, tp, mtx, (d1, d2))
+        self._add_2d_demand(share[1], ass_class, tp, colsum, (d2, o))
     
     def add_vans(self, time_period, nr_zones):
         """Add vans as a share of private car trips for one time period.

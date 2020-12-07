@@ -2,6 +2,7 @@ import numpy
 import random
 
 import parameters.car as param
+import parameters.zone as zone_param
 
 
 class Tour:
@@ -14,13 +15,14 @@ class Tour:
     origin : int or Tour
         Origin zone number or origin tour (if non-home tour)
     """
+    # Expansion factor used on demand in departure time model
+    matrix = numpy.array([[1 / zone_param.agent_demand_fraction]])
 
     def __init__(self, purpose, origin):
         self.purpose = purpose
         self.orig = origin
         self.dest = None
         self.sec_dest = None
-        self.matrix = 1  # So far, one person per tour
         try:
             self.sec_dest_prob = purpose.sec_dest_purpose.gen_model.param[purpose.name]
         except AttributeError:
