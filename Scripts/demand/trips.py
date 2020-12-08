@@ -54,6 +54,8 @@ class DemandModel:
         self.cm = logit.CarUseModel(
             zone_data, bounds, self.age_groups, self.resultdata)
         self.gm = logit.TourCombinationModel(self.zone_data)
+        if is_agent_model:
+            self.create_population()
 
     def create_population_segments(self):
         """Create population segments.
@@ -88,7 +90,6 @@ class DemandModel:
         list
             Person
         """
-        self.cm.calc_basic_prob()
         self.population = []
         zones = self.zone_data.zone_numbers[:self.zone_data.first_peripheral_zone]
         for idx in zones:

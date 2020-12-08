@@ -30,8 +30,11 @@ class Person:
         self.sex = random.random() < 0.5
         self.tours = []
         self.generation_model = generation_model
-        car_use_prob = car_use_model.calc_individual_prob(
-            self.age_group, self.gender, zone)
+        self._cm = car_use_model
+
+    def decide_car_use(self):
+        car_use_prob = self._cm.calc_individual_prob(
+            self.age_group, self.gender, self.zone)
         self.is_car_user = random.random() < car_use_prob
     
     @property

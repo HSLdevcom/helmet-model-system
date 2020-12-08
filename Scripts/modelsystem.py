@@ -408,6 +408,7 @@ class AgentModelSystem(ModelSystem):
     """
 
     def _init_demand_model(self):
+        log.info("Creating synthetic population")
         return DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=True)
 
     def _add_internal_demand(self, previous_iter_impedance, is_last_iteration):
@@ -428,10 +429,10 @@ class AgentModelSystem(ModelSystem):
             If this is the last iteration, 
             secondary destinations are calculated for all modes
         """
-        log.info("Creating synthetic population")
-        # TODO Split agent creation and car usership
-        self.dm.create_population()
         log.info("Demand calculation started...")
+        self.dm.cm.calc_basic_prob()
+        for person in self.dm.population:
+            person.decide_car_use()
         self.travel_modes = set()
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
