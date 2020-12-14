@@ -68,10 +68,11 @@ class Tour:
 
         Assumes tour purpose model has already calculated probability matrices.
         """
-        probs = self.purpose.model.dest_prob[self.mode][:, self.position[0]]
-        self.dest = numpy.random.choice(
-            a=self.purpose.zone_data.zone_numbers, p=probs)
-        self.purpose.attracted_tours[self.mode][self.position[1]] += 1
+        dest_idx = numpy.searchsorted(
+            self.purpose.model.cumul_dest_prob[self.mode][:, self.position[0]],
+            random.random())
+        self.dest = self.purpose.zone_data.zone_numbers[dest_idx]
+        self.purpose.attracted_tours[self.mode][dest_idx] += 1
 
     def choose_secondary_destination(self, impedance):
         """Choose secondary destination for the tour.

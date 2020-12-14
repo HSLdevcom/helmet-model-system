@@ -414,12 +414,13 @@ class ModeDestModel(LogitModel):
     def _calc_prob(self, mode_expsum):
         prob = {}
         self.mode_prob = {}
-        self.dest_prob = {}
+        self.cumul_dest_prob = {}
         for mode in self.mode_choice_param:
             self.mode_prob[mode] = self.mode_exps[mode] / mode_expsum
             dest_expsum = self.dest_expsums[mode]["logsum"]
-            self.dest_prob[mode] = self.dest_exps[mode].T / dest_expsum
-            prob[mode] = self.mode_prob[mode] * self.dest_prob[mode]
+            dest_prob = self.dest_exps[mode].T / dest_expsum
+            prob[mode] = self.mode_prob[mode] * dest_prob
+            self.cumul_dest_prob[mode] = dest_prob.cumsum(axis=0)
         return prob
 
 
