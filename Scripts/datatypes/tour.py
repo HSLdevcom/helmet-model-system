@@ -46,7 +46,7 @@ class Tour:
             position.append(zone_data.zone_index(self.dest))
         if self.sec_dest is not None:
             position.append(zone_data.zone_index(self.sec_dest))
-        return position
+        return tuple(position)
 
     def choose_mode(self, is_car_user):
         """Choose tour travel mode.
@@ -63,7 +63,7 @@ class Tour:
         self.mode = numpy.random.choice(a=self.purpose.modes, p=probs)
         self.purpose.generated_tours[self.mode][self.position[0]] += 1
 
-    def choose_destination(self):
+    def choose_destination(self, sec_dest_tours):
         """Choose primary destination for the tour.
 
         Assumes tour purpose model has already calculated probability matrices.
@@ -73,17 +73,6 @@ class Tour:
             random.random())
         self.dest = self.purpose.zone_data.zone_numbers[dest_idx]
         self.purpose.attracted_tours[self.mode][dest_idx] += 1
-
-    def choose_secondary_destination(self, impedance):
-        """Choose secondary destination for the tour.
-
-        Parameters
-        ----------
-        impedance : dict
-            Mode (car/transit/bike/walk) : dict
-                Type (time/cost/dist) : numpy.ndarray
-                    2d matrix with purpose impedance
-        """
         purpose = self.purpose.sec_dest_purpose
         try:
             if (self.position[0] < purpose.bounds.stop
@@ -95,13 +84,25 @@ class Tour:
             is_in_area = False
         if (self.mode != "walk" and is_in_area
                 and random.random() < self.sec_dest_prob):
-            probs = purpose.calc_prob(
-                self.mode, impedance[self.mode], self.position)
-            self.sec_dest = numpy.random.choice(
-                a=purpose.zone_numbers, p=probs)
-            purpose.attracted_tours[self.mode][self.position[2]] += 1
-        else:
-            self.sec_dest = None
+            try:
+                sec_dest_tours[self.mode][self.position].append(self)
+            except KeyError:
+                sec_dest_tours[self.mode][self.position] = [self]
+
+    def choose_secondary_destination(self, probs):
+        """Choose secondary destination for the tour.
+
+        Parameters
+        ----------
+        impedance : dict
+            Mode (car/transit/bike/walk) : dict
+                Type (time/cost/dist) : numpy.ndarray
+                    2d matrix with purpose impedance
+        """
+        purpose = self.purpose.sec_dest_purpose
+        self.sec_dest = numpy.random.choice(
+            a=purpose.zone_numbers, p=probs)
+        purpose.attracted_tours[self.mode][self.position[2]] += 1
     
     def choose_driver(self):
         """Choose if tour is as car driver or car passenger."""

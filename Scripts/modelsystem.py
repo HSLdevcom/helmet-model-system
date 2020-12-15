@@ -456,16 +456,25 @@ class AgentModelSystem(ModelSystem):
             self.dm.purpose_dict["hoo"], previous_iter_impedance)
         log.info("Assigning mode and destination for {} agents ({} % of total population)".format(
             len(self.dm.population), int(zone_param.agent_demand_fraction*100)))
+        sec_dest_tours = {
+            "car": {},
+            "transit": {},
+            "bike": {},
+        }
         for person in self.dm.population:
             person.add_tours(self.dm.purpose_dict)
             for tour in person.tours:
                 tour.choose_mode(person.is_car_user)
-                tour.choose_destination()
+                tour.choose_destination(sec_dest_tours)
         log.info("Primary destinations assigned")
-        for person in self.dm.population:
-            for tour in person.tours:
-                tour.choose_secondary_destination(purpose_impedance)
-                if tour.mode == "car":
-                    tour.choose_driver()
-                self.dtm.add_demand(tour)
+        purpose = self.dm.purpose_dict["hoo"]
+        for mode in sec_dest_tours:
+            for od_pair in sec_dest_tours[mode]:
+                probs = purpose.calc_prob(
+                    mode, purpose_impedance[mode], od_pair)
+                for tour in sec_dest_tours[mode][od_pair]:
+                    tour.choose_secondary_destination(probs)
+                    if tour.mode == "car":
+                        tour.choose_driver()
+                    self.dtm.add_demand(tour)
         log.info("Demand calculation completed")
