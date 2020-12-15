@@ -461,7 +461,7 @@ class AgentModelSystem(ModelSystem):
             for tour in person.tours:
                 tour.choose_mode(person.is_car_user)
                 tour.choose_destination()
-        log.info("Primary destination assigned")
+        log.info("Primary destinations assigned")
         for person in self.dm.population:
             for tour in person.tours:
                 tour.choose_secondary_destination(purpose_impedance)

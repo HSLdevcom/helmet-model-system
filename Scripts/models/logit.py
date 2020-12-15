@@ -35,18 +35,6 @@ class LogitModel:
         self.mode_choice_param = mode_choice[purpose.name]
         if is_agent_model:
             self.dtype = float
-            self.car_use_dummy = {}
-            if self.mode_choice_param is not None:
-                for mode in self.mode_choice_param:
-                    b = self.mode_choice_param[mode]["individual_dummy"]
-                    if "car_users" in b:
-                        try:
-                            self.car_use_dummy[mode] = math.exp(b["car_users"])
-                        except TypeError:
-                            self.car_use_dummy[mode] = (
-                                math.exp(b["car_users"][0]),
-                                math.exp(b["car_users"][1]),
-                            )
         else:
             self.dtype = None
 
@@ -395,14 +383,14 @@ class ModeDestModel(LogitModel):
         for mode in self.mode_choice_param:
             mode_exps[mode] = self.mode_exps[mode][zone]
             b = self.mode_choice_param[mode]["individual_dummy"]
-            if is_car_user and (mode in self.car_use_dummy):
+            if is_car_user and "car_users" in b:
                 try:
-                    mode_exps[mode] *= self.car_use_dummy[mode]
+                    mode_exps[mode] *= math.exp(b["car_users"])
                 except TypeError:
                     if zone < self.zone_data.first_surrounding_zone:
-                        mode_exps[mode] *= self.car_use_dummy[mode][0]
+                        mode_exps[mode] *= math.exp(b["car_users"][0])
                     else:
-                        mode_exps[mode] *= self.car_use_dummy[mode][1]
+                        mode_exps[mode] *= math.exp(b["car_users"][1])
             mode_expsum += mode_exps[mode]
         probs = []
         for mode in self.purpose.modes:
