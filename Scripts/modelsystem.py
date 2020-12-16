@@ -474,7 +474,9 @@ class AgentModelSystem(ModelSystem):
                     mode, purpose_impedance[mode], od_pair)
                 for tour in sec_dest_tours[mode][od_pair]:
                     tour.choose_secondary_destination(probs)
-                    if tour.mode == "car":
-                        tour.choose_driver()
-                    self.dtm.add_demand(tour)
+        for person in self.dm.population:
+            for tour in person.tours:
+                if tour.mode == "car":
+                    tour.choose_driver()
+                self.dtm.add_demand(tour)
         log.info("Demand calculation completed")

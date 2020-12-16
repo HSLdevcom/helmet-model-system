@@ -67,6 +67,13 @@ class Tour:
         """Choose primary destination for the tour.
 
         Assumes tour purpose model has already calculated probability matrices.
+
+        Parameters
+        ----------
+        sec_dest_tours : dict
+            Mode (car/transit/bike/walk) : dict
+               Dictionary for inserting tours with secondary destination,
+               key is `self.position`
         """
         dest_idx = numpy.searchsorted(
             self.purpose.model.cumul_dest_prob[self.mode][:, self.position[0]],
@@ -94,10 +101,8 @@ class Tour:
 
         Parameters
         ----------
-        impedance : dict
-            Mode (car/transit/bike/walk) : dict
-                Type (time/cost/dist) : numpy.ndarray
-                    2d matrix with purpose impedance
+        probs : numpy.ndarray
+            1d array with probabilities for destinations
         """
         purpose = self.purpose.sec_dest_purpose
         self.sec_dest = numpy.random.choice(
