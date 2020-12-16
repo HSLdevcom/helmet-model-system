@@ -5,7 +5,7 @@ import parameters.car as param
 import parameters.zone as zone_param
 
 
-class Tour:
+class Tour(object):
     """Tour definition for agent-based simulation.
     
     Parameters
@@ -21,32 +21,63 @@ class Tour:
     def __init__(self, purpose, origin):
         self.purpose = purpose
         self.orig = origin
-        self.dest = None
-        self.sec_dest = None
         try:
             self.sec_dest_prob = purpose.sec_dest_purpose.gen_model.param[purpose.name]
         except AttributeError:
             self.sec_dest_prob = 0
-    
+
     @property
-    def position(self):
-        """Index position in matrix where to insert the demand.
-        
-        Returns
-        -------
-        tuple of ints
-            (origin, destination, (secondary destination))
-        """
+    def orig(self):
+        return self.purpose.zone_data.zone_numbers[self.position[0]]
+
+    @orig.setter
+    def orig(self, origin):
         zone_data = self.purpose.zone_data
         try:
-            position = [zone_data.zone_index(self.orig)]
+            self.position = (zone_data.zone_index(origin),)
         except IndexError:
-            position = [zone_data.zone_index(self.orig.dest)]
-        if self.dest is not None:
-            position.append(zone_data.zone_index(self.dest))
-        if self.sec_dest is not None:
-            position.append(zone_data.zone_index(self.sec_dest))
-        return tuple(position)
+            self._source = origin
+
+    @property
+    def dest(self):
+        if len(self.position) > 1:
+            return self.purpose.zone_data.zone_numbers[self.position[1]]
+        else:
+            return None
+
+    @dest.setter
+    def dest(self, destination):
+        self.position = (
+            self.position[0],
+            self.purpose.zone_data.zone_index(destination)
+        )
+
+    @property
+    def sec_dest(self):
+        if len(self.position) > 2:
+            return self.purpose.zone_data.zone_numbers[self.position[2]]
+        else:
+            return None
+
+    @sec_dest.setter
+    def sec_dest(self, destination):
+        self.position = (
+            self.position[0],
+            self.position[1],
+            self.purpose.zone_data.zone_index(destination)
+        )
+
+    @property
+    def position(self):
+        try:
+            return self._position
+        except AttributeError:
+            self.orig = self._source.dest
+            return self.position
+
+    @position.setter
+    def position(self, position):
+        self._position = position
 
     def choose_mode(self, is_car_user):
         """Choose tour travel mode.
