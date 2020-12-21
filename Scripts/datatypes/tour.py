@@ -132,7 +132,7 @@ class Tour(object):
         except AttributeError:
             is_in_area = False
         if (self.mode != "walk" and is_in_area
-                and random.random() < self.sec_dest_prob):
+                and random.random() < self.sec_dest_prob[self.mode]):
             try:
                 sec_dest_tours[self.mode][self.position].append(self)
             except KeyError:
