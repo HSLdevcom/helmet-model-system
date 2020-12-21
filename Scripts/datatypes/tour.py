@@ -32,11 +32,12 @@ class Tour(object):
 
     @orig.setter
     def orig(self, origin):
-        zone_data = self.purpose.zone_data
         try:
-            self.position = (zone_data.zone_index(origin),)
+            self._position = (self.purpose.zone_data.zone_index(origin),)
         except IndexError:
+            # If this is non-home tour, origin refers to home-based tour
             self._source = origin
+            self._non_home_position = ()
 
     @property
     def dest(self):
@@ -69,15 +70,25 @@ class Tour(object):
 
     @property
     def position(self):
+        """Index position in matrix where to insert the demand.
+
+        Returns
+        -------
+        tuple of ints
+            (origin, destination, (secondary destination))
+        """
         try:
             return self._position
         except AttributeError:
-            self.orig = self._source.dest
-            return self.position
+            return self._source.position[:1] + self._non_home_position
 
     @position.setter
     def position(self, position):
-        self._position = position
+        try:
+            _ = self._position[0]
+            self._position = position
+        except AttributeError:
+            self._non_home_position = position[1:]
 
     def choose_mode(self, is_car_user):
         """Choose tour travel mode.
@@ -109,7 +120,7 @@ class Tour(object):
         dest_idx = numpy.searchsorted(
             self.purpose.model.cumul_dest_prob[self.mode][:, self.position[0]],
             random.random())
-        self.dest = self.purpose.zone_data.zone_numbers[dest_idx]
+        self.position = (self.position[0], dest_idx)
         self.purpose.attracted_tours[self.mode][dest_idx] += 1
         purpose = self.purpose.sec_dest_purpose
         try:
