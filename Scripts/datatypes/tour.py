@@ -34,7 +34,7 @@ class Tour(object):
     def orig(self, origin):
         try:
             self._position = (self.purpose.zone_data.zone_index(origin),)
-        except IndexError:
+        except KeyError:
             # If this is non-home tour, origin refers to home-based tour
             self._source = origin
             self._non_home_position = ()
