@@ -471,7 +471,7 @@ class AgentModelSystem(ModelSystem):
         for mode in sec_dest_tours:
             for od_pair in sec_dest_tours[mode]:
                 probs = purpose.calc_prob(
-                    mode, purpose_impedance[mode], od_pair)
+                    mode, purpose_impedance[mode], od_pair).cumsum()
                 for tour in sec_dest_tours[mode][od_pair]:
                     tour.choose_secondary_destination(probs)
         for person in self.dm.population:

@@ -138,18 +138,17 @@ class Tour(object):
             except KeyError:
                 sec_dest_tours[self.mode][self.position] = [self]
 
-    def choose_secondary_destination(self, probs):
+    def choose_secondary_destination(self, cumulative_probs):
         """Choose secondary destination for the tour.
 
         Parameters
         ----------
-        probs : numpy.ndarray
-            1d array with probabilities for destinations
+        cumulative_probs : numpy.ndarray
+            1d array with cumulative probabilities for destinations
         """
-        purpose = self.purpose.sec_dest_purpose
-        self.sec_dest = numpy.random.choice(
-            a=purpose.zone_numbers, p=probs)
-        purpose.attracted_tours[self.mode][self.position[2]] += 1
+        dest_idx = numpy.searchsorted(cumulative_probs, random.random())
+        self.position = (self.position[0], self.position[1], dest_idx)
+        self.purpose.sec_dest_purpose.attracted_tours[self.mode][dest_idx] += 1
     
     def choose_driver(self):
         """Choose if tour is as car driver or car passenger."""
