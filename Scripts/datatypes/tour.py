@@ -27,6 +27,15 @@ class Tour(object):
             self.sec_dest_prob = 0
 
     @property
+    def mode(self):
+        try:
+            return self.purpose.modes[self._mode_idx]
+        except TypeError:
+            # car_passenger mode is not included in `self.purpose.modes`,
+            # so it is hardcoded into `self._mode_idx`
+            return self._mode_idx
+
+    @property
     def orig(self):
         return self.purpose.zone_data.zone_numbers[self.position[0]]
 
@@ -100,9 +109,10 @@ class Tour(object):
         is_car_user : bool
             Whether the person is car user or not
         """
-        model = self.purpose.model
-        probs = model.calc_individual_mode_prob(is_car_user, self.position[0])
-        self.mode = numpy.random.choice(a=self.purpose.modes, p=probs)
+        self._mode_idx = numpy.searchsorted(
+            self.purpose.model.calc_individual_mode_prob(
+                is_car_user, self.position[0]).cumsum(),
+            random.random())
         self.purpose.generated_tours[self.mode][self.position[0]] += 1
 
     def choose_destination(self, sec_dest_tours):
@@ -154,4 +164,4 @@ class Tour(object):
         """Choose if tour is as car driver or car passenger."""
         # TODO Differentiate car users and others
         if random.random() > param.car_driver_share[self.purpose.name]:
-            self.mode = "car_passenger"
+            self._mode_idx = "car_passenger"

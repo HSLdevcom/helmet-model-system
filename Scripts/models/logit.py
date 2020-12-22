@@ -380,7 +380,8 @@ class ModeDestModel(LogitModel):
         """
         mode_exps = {}
         mode_expsum = 0
-        for mode in self.mode_choice_param:
+        modes = self.purpose.modes
+        for mode in modes:
             mode_exps[mode] = self.mode_exps[mode][zone]
             b = self.mode_choice_param[mode]["individual_dummy"]
             if is_car_user and "car_users" in b:
@@ -392,9 +393,9 @@ class ModeDestModel(LogitModel):
                     else:
                         mode_exps[mode] *= math.exp(b["car_users"][1])
             mode_expsum += mode_exps[mode]
-        probs = []
-        for mode in self.purpose.modes:
-            probs.append(mode_exps[mode] / mode_expsum)
+        probs = numpy.empty(len(modes))
+        for i, mode in enumerate(modes):
+            probs[i] = mode_exps[mode] / mode_expsum
         return probs
 
     def _calc_utils(self, impedance):
