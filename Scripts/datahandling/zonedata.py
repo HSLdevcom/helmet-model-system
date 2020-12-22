@@ -21,7 +21,7 @@ class ZoneData:
         first_extra = numpy.where(zone_numbers > peripheral[1])[0][0]
         self.zone_numbers = zone_numbers[:first_extra]
         self.mapping = {self.zone_numbers[i]: i
-            for i in xrange(len(self.zone_numbers))}
+            for i in xrange(self.zone_numbers.size)}
         first_surrounding = numpy.where(self.zone_numbers >= surrounding[0])[0][0]
         self.first_surrounding_zone = first_surrounding
         first_peripheral = numpy.where(self.zone_numbers >= peripheral[0])[0][0]
