@@ -31,12 +31,7 @@ class Tour(object):
 
     @property
     def mode(self):
-        try:
             return self.purpose.modes[self._mode_idx]
-        except TypeError:
-            # car_passenger mode is not included in `self.purpose.modes`,
-            # so it is hardcoded into `self._mode_idx`
-            return self._mode_idx
 
     @property
     def is_car_passenger(self):
