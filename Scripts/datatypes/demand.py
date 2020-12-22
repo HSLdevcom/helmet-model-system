@@ -2,6 +2,9 @@ import parameters.car as param
 
 
 class Demand:
+    # Only used for sister class Tour
+    is_car_passenger = False
+
     def __init__(self, purpose, mode, matrix, origin=None):
         """Demand matrix for whole day
         

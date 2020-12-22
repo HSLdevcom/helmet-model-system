@@ -25,6 +25,9 @@ class Tour(object):
             self.sec_dest_prob = purpose.sec_dest_purpose.gen_model.param[purpose.name]
         except AttributeError:
             self.sec_dest_prob = 0
+        self._is_car_passenger = (True
+            if random.random() > param.car_driver_share[self.purpose.name]
+            else False)
 
     @property
     def mode(self):
@@ -34,6 +37,10 @@ class Tour(object):
             # car_passenger mode is not included in `self.purpose.modes`,
             # so it is hardcoded into `self._mode_idx`
             return self._mode_idx
+
+    @property
+    def is_car_passenger(self):
+        return self.mode == "car" and self._is_car_passenger
 
     @property
     def orig(self):
@@ -156,9 +163,3 @@ class Tour(object):
         dest_idx = numpy.searchsorted(cumulative_probs, random.random())
         self.position = (self.position[0], self.position[1], dest_idx)
         self.purpose.sec_dest_purpose.attracted_tours[self.mode][dest_idx] += 1
-    
-    def choose_driver(self):
-        """Choose if tour is as car driver or car passenger."""
-        # TODO Differentiate car users and others
-        if random.random() > param.car_driver_share[self.purpose.name]:
-            self._mode_idx = "car_passenger"

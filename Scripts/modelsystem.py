@@ -474,7 +474,5 @@ class AgentModelSystem(ModelSystem):
                     tour.choose_secondary_destination(probs)
         for person in self.dm.population:
             for tour in person.tours:
-                if tour.mode == "car":
-                    tour.choose_driver()
                 self.dtm.add_demand(tour)
         log.info("Demand calculation completed")
