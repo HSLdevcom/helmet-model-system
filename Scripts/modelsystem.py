@@ -3,6 +3,7 @@ import multiprocessing
 import os
 import numpy
 import pandas
+from collections import defaultdict
 
 import utils.log as log
 import assignment.departure_time as dt
@@ -452,25 +453,22 @@ class AgentModelSystem(ModelSystem):
                 else:
                     purpose.init_sums()
                     purpose.model.calc_basic_prob(purpose_impedance)
-        purpose_impedance = self.imptrans.transform(
-            self.dm.purpose_dict["hoo"], previous_iter_impedance)
         log.info("Assigning mode and destination for {} agents ({} % of total population)".format(
             len(self.dm.population), int(zone_param.agent_demand_fraction*100)))
-        sec_dest_tours = {
-            "car": {},
-            "transit": {},
-            "bike": {},
-        }
+        sec_dest_purpose = self.dm.purpose_dict["hoo"]
+        sec_dest_tours = {mode: defaultdict(list)
+            for mode in sec_dest_purpose.modes}
         for person in self.dm.population:
             person.add_tours(self.dm.purpose_dict)
             for tour in person.tours:
                 tour.choose_mode(person.is_car_user)
                 tour.choose_destination(sec_dest_tours)
         log.info("Primary destinations assigned")
-        purpose = self.dm.purpose_dict["hoo"]
+        purpose_impedance = self.imptrans.transform(
+            sec_dest_purpose, previous_iter_impedance)
         for mode in sec_dest_tours:
             for od_pair in sec_dest_tours[mode]:
-                probs = purpose.calc_prob(
+                probs = sec_dest_purpose.calc_prob(
                     mode, purpose_impedance[mode], od_pair).cumsum()
                 for tour in sec_dest_tours[mode][od_pair]:
                     tour.choose_secondary_destination(probs)
