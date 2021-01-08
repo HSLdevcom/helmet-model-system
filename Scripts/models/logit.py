@@ -548,6 +548,9 @@ class TourCombinationModel:
         self.param = generation_params.tour_combinations
         self.conditions = generation_params.tour_conditions
         self.increases = generation_params.tour_number_increase
+        self.tour_combinations = []
+        for nr_tours in self.param:
+            self.tour_combinations += self.param[nr_tours].keys()
     
     def calc_prob(self, age_group, is_car_user, zones):
         """Calculate choice probabilities for each tour combination.

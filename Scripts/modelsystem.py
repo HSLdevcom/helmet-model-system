@@ -453,13 +453,14 @@ class AgentModelSystem(ModelSystem):
                 else:
                     purpose.init_sums()
                     purpose.model.calc_basic_prob(purpose_impedance)
+        tour_probs = self.dm.generate_tour_probs()
         log.info("Assigning mode and destination for {} agents ({} % of total population)".format(
             len(self.dm.population), int(zone_param.agent_demand_fraction*100)))
         sec_dest_purpose = self.dm.purpose_dict["hoo"]
         sec_dest_tours = {mode: defaultdict(list)
             for mode in sec_dest_purpose.modes}
         for person in self.dm.population:
-            person.add_tours(self.dm.purpose_dict)
+            person.add_tours(self.dm.purpose_dict, tour_probs)
             for tour in person.tours:
                 tour.choose_mode(person.is_car_user)
                 tour.choose_destination(sec_dest_tours)

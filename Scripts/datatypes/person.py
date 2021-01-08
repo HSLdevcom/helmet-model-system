@@ -51,7 +51,7 @@ class Person:
         else:
             return "male"
 
-    def add_tours(self, purposes):
+    def add_tours(self, purposes, tour_probs):
         """Initilize tour list and add new tours.
 
         Parameters
@@ -61,12 +61,18 @@ class Person:
                 Tour purpose name (hw/ho/...)
             value : datatypes.purpose.TourPurpose
                 The tour purpose object
+        tour_probs : dict
+            Age (age_7-17/...) : dict
+                Car user (car_user/no_car) : pandas Series
+                    Matrix with cumulative tour combination probabilities
+                    for all zones
         """
         self.tours = []
-        prob = self.generation_model.calc_prob(
-            self.age_group, self.is_car_user, self.zone)
-        tour_combination = numpy.random.choice(a=prob.keys(), p=prob.values())
-        for key in tour_combination:
+        zone_idx = self.generation_model.zone_data.zone_index(self.zone)
+        tour_comb_idx = numpy.searchsorted(
+            tour_probs[self.age_group][self.is_car_user][zone_idx, :],
+            random.random())
+        for key in self.generation_model.tour_combinations[tour_comb_idx]:
             tour = Tour(purposes[key], self.zone)
             self.tours.append(tour)
             if key == "hw":

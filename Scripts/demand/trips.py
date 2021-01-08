@@ -148,3 +148,33 @@ class DemandModel:
             result_data[age] = nr_tours_sums.sort_index()
         self.resultdata.print_matrix(result_data, "generation", "tour_combinations")
 
+    def generate_tour_probs(self):
+        """Generate matrices of cumulative tour combination probabilities.
+
+        Used in agent-based simulation.
+
+        Returns
+        -------
+        dict
+            Age (age_7-17/...) : dict
+                Car user (car_user/no_car) : pandas Series
+                    Matrix with cumulative tour combination probabilities
+                    for all zones
+        """
+        probs = {}
+        for age_group in self.age_groups:
+            age = "age_" + str(age_group[0]) + "-" + str(age_group[1])
+            probs[age] = (
+                self._get_probs(age, is_car_user=False),
+                self._get_probs(age, is_car_user=True),
+            )
+        return probs
+
+    def _get_probs(self, age, is_car_user):
+        prob_dict = self.gm.calc_prob(
+            age, is_car_user, slice(0, self.zone_data.first_peripheral_zone))
+        probs = numpy.empty(
+            [self.zone_data.first_peripheral_zone, len(self.gm.tour_combinations)])
+        for i, tour_combination in enumerate(self.gm.tour_combinations):
+            probs[:, i] = prob_dict[tour_combination]
+        return probs.cumsum(axis=1)
