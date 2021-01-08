@@ -5,6 +5,8 @@ import numpy
 import pandas
 
 import utils.log as log
+from utils.read_csv_file import read_csv_file
+from utils.zone_interval import zone_interval
 import assignment.departure_time as dt
 from datahandling.resultdata import ResultsData
 from datahandling.zonedata import ZoneData, BaseZoneData
@@ -165,8 +167,17 @@ class ModelSystem:
         with self.basematrices.open("demand", "aht", self.ass_model.zone_numbers) as mtx:
             base_demand = {ass_class: mtx[ass_class] for ass_class in param.transport_classes}
         self.ass_model.assign("aht", base_demand, iteration="init")
-        with self.basematrices.open("cost", "peripheral") as peripheral_mtx:
-            peripheral_cost = numpy.array(peripheral_mtx._file["transit"])
+        peripheral_cost = read_csv_file(
+            self.basematrices.path, "cost_peripheral.txt")
+        mtx = pandas.DataFrame(
+            0,
+            self.zdata_base.zone_numbers[self.zdata_base.first_peripheral_zone:],
+            self.zdata_base.zone_numbers)
+        for peripheral_municipality in peripheral_cost.index:
+            i = zone_interval("municipalities", peripheral_municipality)
+            for municipality in peripheral_cost.columns:
+                j = zone_interval("municipalities", municipality)
+                mtx.loc[i, j] = peripheral_cost.loc[peripheral_municipality, municipality]
         if use_fixed_transit_cost:
             log.info("Using fixed transit cost matrix")
             with self.resultmatrices.open("cost", "aht") as aht_mtx:
@@ -175,7 +186,7 @@ class ModelSystem:
             log.info("Calculating transit cost")
             fixed_cost = None
         self.ass_model.calc_transit_cost(
-            self.zdata_forecast.transit_zone, peripheral_cost, fixed_cost)
+            self.zdata_forecast.transit_zone, peripheral_cost.values, fixed_cost)
 
         # Perform traffic assignment and get result impedance, 
         # for each time period
