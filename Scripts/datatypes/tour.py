@@ -90,7 +90,8 @@ class Tour:
                 is_in_area = False
         except AttributeError:
             is_in_area = False
-        if self.mode != "walk" and is_in_area and random.random() < self.sec_dest_prob:
+        if (self.mode != "walk" and is_in_area
+                and random.random() < self.sec_dest_prob[self.mode]):
             probs = sec_dest_purpose.calc_prob(
                 self.mode, impedance[self.mode], self.position)
             self.sec_dest = numpy.random.choice(
