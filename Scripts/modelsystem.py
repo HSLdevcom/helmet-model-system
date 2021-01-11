@@ -165,8 +165,6 @@ class ModelSystem:
         with self.basematrices.open("demand", "aht", self.ass_model.zone_numbers) as mtx:
             base_demand = {ass_class: mtx[ass_class] for ass_class in param.transport_classes}
         self.ass_model.assign("aht", base_demand, iteration="init")
-        with self.basematrices.open("cost", "peripheral") as peripheral_mtx:
-            peripheral_cost = numpy.array(peripheral_mtx._file["transit"])
         if use_fixed_transit_cost:
             log.info("Using fixed transit cost matrix")
             with self.resultmatrices.open("cost", "aht") as aht_mtx:
@@ -175,7 +173,9 @@ class ModelSystem:
             log.info("Calculating transit cost")
             fixed_cost = None
         self.ass_model.calc_transit_cost(
-            self.zdata_forecast.transit_zone, peripheral_cost, fixed_cost)
+            self.zdata_forecast.transit_zone,
+            self.basematrices.peripheral_transit_cost(self.zdata_base),
+            fixed_cost)
 
         # Perform traffic assignment and get result impedance, 
         # for each time period
