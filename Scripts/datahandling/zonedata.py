@@ -19,11 +19,12 @@ class ZoneData:
         peripheral = param.areas["peripheral"]
         external = param.areas["external"]
         first_extra = numpy.where(zone_numbers > peripheral[1])[0][0]
-        idx = zone_numbers[:first_extra]
-        self.zone_numbers = idx
-        first_surrounding = numpy.where(idx >= surrounding[0])[0][0]
+        self.zone_numbers = zone_numbers[:first_extra]
+        self.mapping = {self.zone_numbers[i]: i
+            for i in xrange(self.zone_numbers.size)}
+        first_surrounding = numpy.where(self.zone_numbers >= surrounding[0])[0][0]
         self.first_surrounding_zone = first_surrounding
-        first_peripheral = numpy.where(idx >= peripheral[0])[0][0]
+        first_peripheral = numpy.where(self.zone_numbers >= peripheral[0])[0][0]
         self.first_peripheral_zone = first_peripheral
         first_external = numpy.where(zone_numbers >= external[0])[0][0]
         self.first_external_zone = first_external
@@ -109,7 +110,8 @@ class ZoneData:
         self["own_zone_area_sqrt"] = numpy.sqrt(self["own_zone_area"])
         # Create matrix where value is 1 if origin and destination is in
         # same municipality
-        home_municipality = pandas.DataFrame(0, idx, idx)
+        home_municipality = pandas.DataFrame(
+            0, self.zone_numbers, self.zone_numbers)
         intervals = ZoneIntervals("municipalities")
         for i in intervals:
             home_municipality.loc[intervals[i], intervals[i]] = 1
@@ -173,12 +175,7 @@ class ZoneData:
         int
             Index of zone number
         """
-        match = numpy.where(self.zone_numbers == zone_number)
-        if len(match) == 1 and len(match[0]) == 1:
-            return match[0][0]
-        else:
-            msg = "Found several matching zone numbers {}".format(zone_number)
-            raise IndexError(msg)
+        return self.mapping[zone_number]
 
     def get_freight_data(self):
         """Get zone data for freight traffic calculation.

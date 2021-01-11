@@ -18,6 +18,7 @@ class DepartureTimeTest(unittest.TestCase):
         dem = Demand()
         pur = Purpose()
         dem.purpose = pur
+        dem.is_car_passenger = False
 
         dem.purpose.name = "hoo"
         dem.mode = "car"

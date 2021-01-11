@@ -380,7 +380,8 @@ class ModeDestModel(LogitModel):
         """
         mode_exps = {}
         mode_expsum = 0
-        for mode in self.mode_choice_param:
+        modes = self.purpose.modes
+        for mode in modes:
             mode_exps[mode] = self.mode_exps[mode][zone]
             b = self.mode_choice_param[mode]["individual_dummy"]
             if is_car_user and "car_users" in b:
@@ -392,9 +393,9 @@ class ModeDestModel(LogitModel):
                     else:
                         mode_exps[mode] *= math.exp(b["car_users"][1])
             mode_expsum += mode_exps[mode]
-        probs = []
-        for mode in self.purpose.modes:
-            probs.append(mode_exps[mode] / mode_expsum)
+        probs = numpy.empty(len(modes))
+        for i, mode in enumerate(modes):
+            probs[i] = mode_exps[mode] / mode_expsum
         return probs
 
     def _calc_utils(self, impedance):
@@ -414,12 +415,13 @@ class ModeDestModel(LogitModel):
     def _calc_prob(self, mode_expsum):
         prob = {}
         self.mode_prob = {}
-        self.dest_prob = {}
+        self.cumul_dest_prob = {}
         for mode in self.mode_choice_param:
             self.mode_prob[mode] = self.mode_exps[mode] / mode_expsum
             dest_expsum = self.dest_expsums[mode]["logsum"]
-            self.dest_prob[mode] = self.dest_exps[mode].T / dest_expsum
-            prob[mode] = self.mode_prob[mode] * self.dest_prob[mode]
+            dest_prob = self.dest_exps[mode].T / dest_expsum
+            prob[mode] = self.mode_prob[mode] * dest_prob
+            self.cumul_dest_prob[mode] = dest_prob.cumsum(axis=0)
         return prob
 
 
@@ -546,6 +548,9 @@ class TourCombinationModel:
         self.param = generation_params.tour_combinations
         self.conditions = generation_params.tour_conditions
         self.increases = generation_params.tour_number_increase
+        self.tour_combinations = []
+        for nr_tours in self.param:
+            self.tour_combinations += self.param[nr_tours].keys()
     
     def calc_prob(self, age_group, is_car_user, zones):
         """Calculate choice probabilities for each tour combination.
