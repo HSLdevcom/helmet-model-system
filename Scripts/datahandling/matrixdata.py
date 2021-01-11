@@ -6,6 +6,7 @@ from contextlib import contextmanager
 
 import utils.log as log
 from utils.read_csv_file import read_csv_file
+from utils.zone_interval import zone_interval
 import parameters.assignment as param
 
 
@@ -24,6 +25,18 @@ class MatrixData:
 
     def get_external(self, transport_mode):
         return read_csv_file(self.path, "external_"+transport_mode+".txt")
+
+    def peripheral_transit_cost(self, zonedata):
+        aggr_mtx = read_csv_file(self.path, "cost_peripheral.txt")
+        mtx = pandas.DataFrame(
+            0, zonedata.zone_numbers[zonedata.first_peripheral_zone:],
+            zonedata.zone_numbers)
+        for periph_municipality in aggr_mtx.index:
+            i = zone_interval("municipalities", periph_municipality)
+            for municipality in aggr_mtx.columns:
+                j = zone_interval("municipalities", municipality)
+                mtx.loc[i, j] = aggr_mtx.loc[periph_municipality, municipality]
+        return mtx.values
 
 
 class MatrixFile(object):
