@@ -27,16 +27,25 @@ class MatrixData:
         return read_csv_file(self.path, "external_"+transport_mode+".txt")
 
     def peripheral_transit_cost(self, zonedata):
-        aggr_mtx = read_csv_file(self.path, "cost_peripheral.txt")
-        mtx = pandas.DataFrame(
-            0, zonedata.zone_numbers[zonedata.first_peripheral_zone:],
-            zonedata.zone_numbers)
-        for periph_municipality in aggr_mtx.index:
-            i = zone_interval("municipalities", periph_municipality)
-            for municipality in aggr_mtx.columns:
-                j = zone_interval("municipalities", municipality)
-                mtx.loc[i, j] = aggr_mtx.loc[periph_municipality, municipality]
-        return mtx.values
+        filename = "transit_cost_peripheral.txt"
+        try:
+            aggr_mtx = read_csv_file(self.path, filename)
+            log.info("Using aggregated transit cost data {}".format(filename))
+            mtx = pandas.DataFrame(
+                0, zonedata.zone_numbers[zonedata.first_peripheral_zone:],
+                zonedata.zone_numbers)
+            for periph_municipality in aggr_mtx.index:
+                i = zone_interval("municipalities", periph_municipality)
+                for municipality in aggr_mtx.columns:
+                    j = zone_interval("municipalities", municipality)
+                    mtx.loc[i, j] = aggr_mtx.loc[periph_municipality, municipality]
+            return mtx.values
+        except NameError:
+            log.warn("Aggregated data {} missing".format(filename))
+            log.info("Using disaggregated transit cost data cost_peripheral.omx")
+            with self.open("cost", "peripheral") as peripheral_mtx:
+                peripheral_cost = numpy.array(peripheral_mtx._file["transit"])
+            return peripheral_cost
 
 
 class MatrixFile(object):
