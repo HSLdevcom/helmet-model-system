@@ -559,8 +559,8 @@ class EmmeAssignmentModel(AssignmentModel):
         for centroid in network.centroids():
             # Add transit zone of destination to visited
             has_visited[centroid.label][:, mapping[centroid.number]] = True
-        maxprice = 999
-        cost = numpy.full_like(nr_visits, maxprice)
+        maxfare = 999
+        cost = numpy.full_like(nr_visits, maxfare)
         mtx = next(iter(has_visited.values()))
         for zone_combination in fares["fare"]:
             goes_outside = numpy.full_like(mtx, False)
@@ -582,16 +582,16 @@ class EmmeAssignmentModel(AssignmentModel):
             zone_price = fares["fare"][zone_combination]
             # If OD-flow matches several combinations, pick cheapest
             cost[is_inside] = numpy.minimum(cost[is_inside], zone_price)
-        # Calculate distance-based cost from inv-distance
-        dist = self.get_matrix("dist", "transit_work", tp)
-        dist_cost = fares["start_fare"] + fares["dist_fare"]*dist
-        cost[cost==maxprice] = dist_cost[cost==maxprice]
         # Replace fare for peripheral zones with fixed matrix
         bounds = zone_param.areas["peripheral"]
         zn = pandas.Index(self.zone_numbers)
         l, u = zn.slice_locs(bounds[0], bounds[1])
         cost[l:u, :u] = peripheral_cost
         cost[:u, l:u] = peripheral_cost.T
+        # Calculate distance-based cost from inv-distance
+        dist = self.get_matrix("dist", "transit_work", tp)
+        dist_cost = fares["start_fare"] + fares["dist_fare"]*dist
+        cost[cost>=maxfare] = dist_cost[cost>=maxfare]
         for tp in self.time_periods:
             for transit_class in param.transit_classes:
                 idx = self.result_mtx[tp]["cost"][transit_class]["id"]
