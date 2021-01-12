@@ -28,6 +28,10 @@ class Tour(object):
         self._is_car_passenger = (True
             if random.random() > param.car_driver_share[self.purpose.name]
             else False)
+        self._mode_draw = random.random()
+        self._dest_draw = random.random()
+        self._sec_dest_gen_draw = random.random()
+        self._sec_dest_draw = random.random()
 
     @property
     def mode(self):
@@ -114,7 +118,7 @@ class Tour(object):
         self._mode_idx = numpy.searchsorted(
             self.purpose.model.calc_individual_mode_prob(
                 is_car_user, self.position[0]).cumsum(),
-            random.random())
+            self._mode_draw)
         self.purpose.generated_tours[self.mode][self.position[0]] += 1
 
     def choose_destination(self, sec_dest_tours):
@@ -131,7 +135,7 @@ class Tour(object):
         """
         dest_idx = numpy.searchsorted(
             self.purpose.model.cumul_dest_prob[self.mode][:, self.position[0]],
-            random.random())
+            self._dest_draw)
         self.position = (self.position[0], dest_idx)
         self.purpose.attracted_tours[self.mode][dest_idx] += 1
         purpose = self.purpose.sec_dest_purpose
@@ -144,7 +148,7 @@ class Tour(object):
         except AttributeError:
             is_in_area = False
         if (self.mode != "walk" and is_in_area
-                and random.random() < self.sec_dest_prob[self.mode]):
+                and self._sec_dest_gen_draw < self.sec_dest_prob[self.mode]):
             sec_dest_tours[self.mode][self.position].append(self)
 
     def choose_secondary_destination(self, cumulative_probs):
@@ -155,6 +159,6 @@ class Tour(object):
         cumulative_probs : numpy.ndarray
             1d array with cumulative probabilities for destinations
         """
-        dest_idx = numpy.searchsorted(cumulative_probs, random.random())
+        dest_idx = numpy.searchsorted(cumulative_probs, self._sec_dest_draw)
         self.position = (self.position[0], self.position[1], dest_idx)
         self.purpose.sec_dest_purpose.attracted_tours[self.mode][dest_idx] += 1
