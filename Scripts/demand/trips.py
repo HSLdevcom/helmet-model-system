@@ -156,8 +156,8 @@ class DemandModel:
         Returns
         -------
         dict
-            Age (age_7-17/...) : dict
-                Car user (car_user/no_car) : pandas Series
+            Age (age_7-17/...) : tuple
+                Is car user (False/True) : numpy.array
                     Matrix with cumulative tour combination probabilities
                     for all zones
         """

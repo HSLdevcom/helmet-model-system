@@ -31,11 +31,13 @@ class Person:
         self.tours = []
         self.generation_model = generation_model
         self._cm = car_use_model
+        self._car_use_draw = random.random()
+        self._tour_combination_draw = random.random()
 
     def decide_car_use(self):
         car_use_prob = self._cm.calc_individual_prob(
             self.age_group, self.gender, self.zone)
-        self.is_car_user = random.random() < car_use_prob
+        self.is_car_user = self._car_use_draw < car_use_prob
     
     @property
     def gender(self):
@@ -62,17 +64,35 @@ class Person:
             value : datatypes.purpose.TourPurpose
                 The tour purpose object
         tour_probs : dict
-            Age (age_7-17/...) : dict
-                Car user (car_user/no_car) : pandas Series
+            Age (age_7-17/...) : tuple
+                Is car user (False/True) : numpy.array
                     Matrix with cumulative tour combination probabilities
                     for all zones
         """
-        self.tours = []
         zone_idx = self.generation_model.zone_data.zone_index(self.zone)
         tour_comb_idx = numpy.searchsorted(
             tour_probs[self.age_group][self.is_car_user][zone_idx, :],
-            random.random())
-        for key in self.generation_model.tour_combinations[tour_comb_idx]:
+            self._tour_combination_draw)
+        new_tours = list(self.generation_model.tour_combinations[tour_comb_idx])
+        old_tours = self.tours
+        self.tours = []
+        for tour in old_tours:
+            try:
+                # Try to recycle old tour
+                new_tours.remove(tour.purpose.name)
+                self.tours.append(tour)
+            except ValueError:
+                # If name of old tour in not fould in list of new tours
+                try:
+                    # If old tour is not home-based, and its source tour
+                    # was already recycled, it should be recycled as well
+                    if tour._source is self.tours[-1]:
+                        self.tours.append(tour)
+                except AttributeError:
+                    # Throw away old tour
+                    pass
+        # Tours that were not recycled, will be created
+        for key in new_tours:
             tour = Tour(purposes[key], self.zone)
             self.tours.append(tour)
             if key == "hw":
