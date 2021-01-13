@@ -4,9 +4,9 @@ import os
 from utils.config import Config
 import utils.log as log
 from assignment.emme_assignment import EmmeAssignmentModel
+from assignment.mock_assignment import MockAssignmentModel
 from datahandling.matrixdata import MatrixData
 from datahandling.zonedata import ZoneData
-from assignment.emme_bindings.emme_project import EmmeProject
 import parameters.assignment as param
 
 
@@ -54,14 +54,24 @@ def main(args):
             base_matrices_path)
         log.error(msg)
         raise ValueError(msg)
-    if not os.path.isfile(emme_paths[0]):
-        msg = ".emp project file not found in given '{}' location.".format(
-            emme_paths[0])
-        log.error(msg)
-        raise ValueError(msg)
+    if args.do_not_use_emme:
+        mock_result_path = os.path.join(args.results_path, args.scenario_name, "Matrices")
+        if not os.path.exists(mock_result_path):
+            msg = "Mock Results directory {} does not exist.".format(
+                mock_result_path)
+            log.error(msg)
+            raise NameError(msg)
+        assignment_model = MockAssignmentModel(MatrixData(mock_result_path))
+    else:
+        if not os.path.isfile(emme_paths[0]):
+            msg = ".emp project file not found in given '{}' location.".format(
+                emme_paths[0])
+            log.error(msg)
+            raise ValueError(msg)
+        from assignment.emme_bindings.emme_project import EmmeProject
+        assignment_model = EmmeAssignmentModel(
+            EmmeProject(emme_paths[0]), first_scenario_id=first_scenario_ids[0])
     # Check base zonedata
-    assignment_model = EmmeAssignmentModel(
-        EmmeProject(emme_paths[0]), first_scenario_id=first_scenario_ids[0])
     base_zonedata = ZoneData(base_zonedata_path, assignment_model.zone_numbers)
     # Check base matrices
     matrixdata = MatrixData(base_matrices_path)
@@ -112,6 +122,25 @@ if __name__ == "__main__":
         choices={"TEXT", "JSON"},
         default=config.LOG_FORMAT,
     )
+    parser.add_argument(
+        "--do-not-use-emme",
+        dest="do_not_use_emme",
+        action="store_true",
+        default=(not config.USE_EMME),
+        help="Using this flag runs with MockAssignmentModel instead of EmmeAssignmentModel, not requiring EMME.",
+    )
+    parser.add_argument(
+        "--scenario-name",
+        dest="scenario_name",
+        type=str,
+        default=config.SCENARIO_NAME,
+        help="Name of HELMET scenario. Influences result folder name and log file name."),
+    parser.add_argument(
+        "--results-path",
+        dest="results_path",
+        type=str,
+        default=config.RESULTS_PATH,
+        help="Path to folder where result data is saved to."),
     # Base input (across all scenarios)
     parser.add_argument(
         "--baseline-data-path",
