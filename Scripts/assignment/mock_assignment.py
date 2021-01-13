@@ -29,7 +29,7 @@ class MockAssignmentModel(AssignmentModel):
         -------
         dict
             Type (time/cost/dist) : dict
-                Assignment class (car_work/transit/...) : numpy 2-d matrix
+                Assignment class (car_work/transit_leisure/...) : numpy 2-d matrix
         """
         self.time_period = time_period
         with self.matrices.open("demand", time_period, 'w') as mtx:
@@ -37,9 +37,11 @@ class MockAssignmentModel(AssignmentModel):
                 mtx[ass_class] = matrices[ass_class]
         self.logger.info("Saved demand matrices for " + str(time_period))
 
-        return {"time": self.get_emmebank_matrices("std_time", self.time_period),
-                "cost": self.get_emmebank_matrices("cost", self.time_period),
-                "dist": self.get_emmebank_matrices("dist", self.time_period)}
+        matrices = {mtx_type: self.get_emmebank_matrices(mtx_type, self.time_period)
+            for mtx_type in ("time", "cost", "dist")}
+        matrices["time"]["transit_work"] = matrices["time"]["transit_uncongested"]
+        matrices["time"]["transit_leisure"] = matrices["time"]["transit_uncongested"]
+        return matrices
     
     def get_emmebank_matrices(self, mtx_type, time_period=None):
         """Get all matrices of specified type.
