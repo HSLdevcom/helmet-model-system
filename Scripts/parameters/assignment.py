@@ -482,7 +482,7 @@ emme_result_mtx = {
             "id": 55,
             "description": "transit boarding time",
         },
-        "transit_work_unweighted_time": {
+        "transit_work_total_time": {
             "id": 56,
             "description": "transit unweighted travel time",
         },
@@ -514,7 +514,7 @@ emme_result_mtx = {
             "id": 65,
             "description": "transit boarding time",
         },
-        "transit_leisure_unweighted_time": {
+        "transit_leisure_total_time": {
             "id": 66,
             "description": "transit unweighted travel time",
         },
