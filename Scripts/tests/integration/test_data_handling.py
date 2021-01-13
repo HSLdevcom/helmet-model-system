@@ -24,13 +24,13 @@ class MatrixDataTest(unittest.TestCase):
     
     def test_constructor(self):
         log.initialize(Config())
-        m = MatrixData(os.path.join(TEST_DATA_PATH, "Base_input_data", "base_matrices_test"))
+        m = MatrixData(os.path.join(TEST_DATA_PATH, "Base_input_data", "base_matrices"))
         # Verify that the base folder exists
         self.assertTrue(os.path.isdir(m.path))
 
     def test_matrix_operations(self):
         log.initialize(Config())
-        m = MatrixData(os.path.join(TEST_DATA_PATH, "Base_input_data", "base_matrices_test"))
+        m = MatrixData(os.path.join(TEST_DATA_PATH, "Base_input_data", "base_matrices"))
         # TODO now MockAssignmentModel writes the demand-matrices in it's tests, think about this.. 
         MATRIX_TYPES = ["demand"]
         for matrix_type in MATRIX_TYPES:
@@ -51,13 +51,13 @@ class ZoneDataTest(unittest.TestCase):
     FREIGHT_DATA_INDEXES = [5, 6, 7, 2792, 16001, 17000]
 
     def _get_freight_data_2016(self):
-        zdata = ZoneData(os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata_test"), ZONE_INDEXES)
+        zdata = ZoneData(os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata"), ZONE_INDEXES)
         df = zdata.get_freight_data()
         self.assertIsNotNone(df)
         return df
 
     def test_csv_file_read(self):
-        zdata2016 = ZoneData(os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata_test"), ZONE_INDEXES)
+        zdata2016 = ZoneData(os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata"), ZONE_INDEXES)
         self.assertIsNotNone(zdata2016["population"])
         self.assertIsNotNone(zdata2016["workplaces"])
 
