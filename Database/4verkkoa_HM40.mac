@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ~# *********************************************************************
 ~# ***                       4verkkoa_M2019.mac                      ***
 ~# ***                                                               ***
@@ -256,3 +257,356 @@ reports=
 ~< vuorovalit_kopioi.mac %7% @hwiht hdwy
 ~< vuorovalit_kopioi.mac %7% @hinih @hinta
 ~/ *** Verkot paivitetty
+=======
+~# *********************************************************************
+~# ***                       4verkkoa_M2019.mac                      ***
+~# ***                                                               ***
+~# ***            WSP, ASu 09.04.2020 (HELMET40-paivitys)            ***
+~# *********************************************************************
+~#  luetaan 
+~#     - kulkutavat (modes)
+~#     - ajoneuvotyypit (vehicles)
+~#     - verkko (nodes ja links)
+~#     - linjasto
+~#     - kaantymiset
+~#     - seka linkkien ruuhkamaksut (e/km)
+~#
+~#  parametrit p1 = tiedostojen nimissa oleva versiotunnus (esim. 2030_ve0_20190329)
+~#             p2 = alikansio, josta tiedostot luetaan (nykyinen, jos puuttuu)
+~#             p3 = pyoraverkon skenaarion numero
+~#             p4 = vuorokausiskenaarion numero
+~#             p5 = aht-skenaarion numero
+~#             p6 = pt-skenaarion numero
+~#             p7 = iht-skenaarion numero
+~#             p8 = skenaarioiden nimiin tuleva tunnus
+~#
+~#  ajo esim
+~#  ~<4verkkoa_HM40.mac 2016_20191014 sijopankki2016 19 20 21 22 23 V2016
+~#  ~<4verkkoa_HM40.mac 2018_20191014 sijopankki2018 29 30 31 32 33 V2018
+~#  ~<4verkkoa_HM40.mac 2019_20191122 sijopankki2019 39 40 41 42 43 V2019
+~#
+~#  muutokset (TE 3.12.2020)
+~#     Jos kutsussa ei anneta parametreja, ne kysytaan alussa interaktiivisesti.
+~#     Lisatty tarkistusmakron kutsuja
+~#     VRK-skenaariolle ei ajeta eriseen f-makroja, vaan se kopioidaan PT-skenaariosta
+~#  
+~# *** KYSYTAAN KUTSUSTA PUUTTUVAT PARAMETRIT   
+~t1=%1%
+~?t1=
+~t1=~*Mika on tiedostojen nimissa oleva versiotunnus (esim. 2030_ve0_20190329)? 
+~?t1=
+~$ARGU_VIRHE
+~#     
+~t8=%8%
+~?t8=
+~t8=~*Mika tunnus tulee skenaarioiden nimiin (oletus %t1%)? 
+~?t8=
+~t8=%t1%
+~#
+~t2=%2%
+~?t2=
+~t2=~*Mista alikansiosta tiedostot luetaan (esim. .\sijopankki2030\, oletus nykyinen)? 
+~?t2=
+~t2=.\
+~#
+~t3=%3%
+~?t3=
+~t3=~*Mika on PYORAskenaarion numero (oletus 19)? 
+~?t3=
+~t3=19
+~x=%t3%
+~#
+~x+1
+~t4=%4%
+~?t4=
+~t4=~*Mika on VRK-skenaarion numero (oletus %x%)? 
+~?t4=
+~t4=%x%
+~#
+~x+1
+~t5=%5%
+~?t5=
+~t5=~*Mika on AHT-skenaarion numero (oletus %x%)? 
+~?t5=
+~t5=%x%
+~#
+~x+1
+~t6=%6%
+~?t6=
+~t6=~*Mika on PAIVAskenaarion numero (oletus %x%)? 
+~?t6=
+~t6=%x%
+~#
+~x+1
+~t7=%7%
+~?t7=
+~t7=~*Mika on IHT-skenaarion numero (oletus %x%)? 
+~?t7=
+~t7=%x%
+~#
+batchin=
+reports=
+~#
+~# *** PYORAVERKKO
+ s=%t3%
+ 1.23
+ 2
+ skenaario %t8% pyorailyverkko
+ q
+~# ** poistetaan vanha sisalto
+ 2.12
+ 2     ! poistetaan vanha verkko
+ 1
+ y
+ q
+ 2.01
+ 7     ! poistetaan vanhat kulkutavat
+ y
+ q
+ off=11
+~# ** luetaan kulkutavat
+~! del  d201.in
+~! copy d201_modes_M2016_pyora.in  d201.in 
+ on=11
+ 2.01
+ 1
+~?q=2
+ 2
+ q
+ off=11
+~# ** luetaan verkko
+~! del  d211.in
+~! copy %t2%\d211_verkko_%t1%.in  d211.in
+~#** ~! copy %t2%\d211_pyoraverkko_%t1%.in  d211.in
+ on=11
+ 2.11
+~?q=2
+ 2
+ off=11
+~# tyhjenna ja lue pyoraverkon extra attribuutit
+~# TE 13.10.2020 muutettu kommentiksi, koska extra-attribuutit maaritellaan jo projektia perustettaessa
+~# 2.42
+~# 1
+~# y
+~# q
+~# ~< extra_attr_pyora.mac
+~# ** luetaan pyoratieluokat (makro poistaa tiedoston d241.in 
+~# ** ja lukee tiedot parametrina annettavasta tiedostosta)
+~< pyoratieluokat_lue.mac %t3% %t2%\d241_pyoratieluokka_%t1%.in
+~#
+~# ** vaihdetaan viivytysfunktioiden numerot pyoraverkolle
+~< vdf_pyora.mac
+~#
+~# *** AUTO- JA JKL-VERKKO
+ s=%t5%
+ 1.23
+ 2
+ %t1% aht
+ q
+~# ** poistetaan vanha sisalto
+ 2.22
+ 2     ! poistetaan vanha linjasto
+ y
+ q
+ 2.31
+ 1     ! poistetaan vanhat kaantymiset
+ y
+ q
+ 2.12
+ 2     ! poistetaan vanha verkko
+ 1
+ y
+ q
+ 2.02
+ 7     ! poistetaan vanhat ajoneuvotyypit
+ y
+ q
+ 2.01
+ 7     ! poistetaan vanhat kulkutavat
+ y
+ q
+ off=11
+~# ** luetaan kulkutavat
+~! del  d201.in
+~! copy d201_modes_M2016.in  d201.in 
+ on=11
+ 2.01
+ 1
+~?q=2
+ 2
+ q
+ off=11
+~# ** luetaan ajoneuvotyypit
+~! del  d202.in
+~! copy d202_veh_M2016.in   d202.in 
+ on=11
+ 2.02
+ 1
+~?q=2
+ 2
+ q
+ off=11
+~# ** luetaan verkko
+~! del  d211.in
+~! copy %t2%\d211_verkko_%t1%.in  d211.in
+ on=11
+ 2.11
+~?q=2
+ 2
+ off=11
+~# ** luetaan kaantymiset
+~! del  d231.in
+~! copy %t2%\d231_verkko_%t1%.in  d231.in 
+ on=11
+ 2.31
+ 2
+~?q=2
+ 2
+ q
+ off=11
+~# ** luetaan linjasto
+~! del  d221.in
+~! copy %t2%\d221_linjat_%t1%.in  d221.in 
+ on=11
+ 2.21
+~?q=2
+ 2
+~# ** muutetaan linkkien attribuutit (vdf, ul1, ul2) linkkityypin perusteella
+~< muuta_linkkien_attribuutit_eikorj.mac
+~# TE 13.10.2020 muutettu kommentiksi, koska extra-attribuutit maaritellaan jo projektia perustettaessa
+~# 2.42
+~# 1
+~# y
+~# q
+~# ~< extra_attr.mac
+~#
+~# ** maaritellaan pysahtymiset
+~! copy %t2%\hsl_kunnat_%t1%.mac  hsl_kunnat.mac
+~< hsl_kunnat.mac
+~< pysakki.mac
+~# ** tarkistetaan extra-attribuutit
+ 2.42
+ 5
+~?q=2
+ 1
+ q
+~#
+~# ** luetaan hinnat (makro poistaa tiedoston d241.in 
+~# ** ja lukee tiedot parametrina annettavasta tiedostosta)
+~< hinnat_lue.mac %t5% %t2%\d241_hinta_%t1%.in
+~#
+~# ** luetaan vuorovalit (makro poistaa tiedoston d241.in 
+~# ** ja lukee tiedot parametrina annettavasta tiedostosta)
+~< vuorovalit_lue.mac %t5% %t2%\d241_vuorovalit_%t1%.in
+~#
+~# ** kopioidaan aht-skenaario pt- ja iht-skenaarioiksi
+ 1.22
+ 2
+ %t6%
+ y
+~#
+ 3
+ %t5%
+ %t6%
+
+ n
+~#
+ 2
+ %t7%
+ y
+~#
+ 3
+ %t5%
+ %t7%
+
+ n
+ q
+~#
+~t9=4verkkoa_HM40.txt
+~! copy  %t9%  4verkkoa_HM40_old.txt
+~! del   %t9%
+ reports=%t9%
+~! ECHO *** Tarkistuksia muodostettuihin liikennejarjestelmakuvauksiin %t1% *** >> %t9%
+~! date /t >> %t9%
+~! time /t >> %t9%
+ reports=
+~#
+ sta
+ s=%t5%
+ 1.23
+ 2
+ skenaario %t8% aht
+ q
+~< f_bussi_M2016_3a.mac
+~< f_us2_M2016_4a.mac
+~< f_jkl_M2016_5a.mac
+~< vuorovalit_kopioi.mac %t5% @hwaht hdwy
+~< vuorovalit_kopioi.mac %t5% @hinah @hinta
+~< tarkista_verkko.mac %t9% AHT
+~#
+ s=%t6%
+ 1.23
+ 2
+ skenaario %t8% pt
+ q
+~< f_bussi_M2016_3p.mac
+~< f_us2_M2016_4p.mac
+~< f_jkl_M2016_5p.mac
+~< vuorovalit_kopioi.mac %t6% @hwpt  hdwy
+~< vuorovalit_kopioi.mac %t6% @hinpt @hinta
+~< tarkista_verkko.mac %t9% PT
+~#
+ s=%t7%
+ 1.23
+ 2
+ skenaario %t8% iht
+ q
+~< f_bussi_M2016_3i.mac
+~< f_us2_M2016_4i.mac
+~< f_jkl_M2016_5i.mac
+~< vuorovalit_kopioi.mac %t7% @hwiht hdwy
+~< vuorovalit_kopioi.mac %t7% @hinih @hinta
+~< tarkista_verkko.mac %t9% IHT
+~#
+ s=%t3%
+~< tarkista_verkko.mac %t9% PP
+~#
+~! copy 4verkkoa_HM40.txt  4verkkoa_HM40_%t1%.txt
+~#
+~# ** kopioidaan pt-skenaario vrk-skenaarioksi
+ 1.22
+ 2
+ %t4%
+ y
+~#
+ 3
+ %t6%
+ %t4%
+
+ n
+ q
+~#
+ s=%t4%
+ 1.23
+ 2
+ skenaario %t8% vrk
+ q
+~$LOPPU
+~#
+~:ARGU_VIRHE
+~/ *** Anna argumenttina 
+~/     1) tiedostojen nimissa oleva versiotunnus (esim. 2030_ve0_20190329)
+~/     2) alikansio, josta tiedostot luetaan (esim. .\sijopankki2030\, oletus nykyinen)
+~/     3) pyoraverkon skenaarion numero s (oletus s=19)
+~/     4) vuorokausiskenaarion numero (oletus s+1)
+~/     5) aht-skenaarion numero (oletus s+2)
+~/     6) pt-skenaarion numero  (oletus s+3)
+~/     7) iht-skenaarion numero (oletus s+4)
+~/     8) skenaarioiden nimiin tuleva tunnus (oletus sama kuin 1)
+~#
+~:LOPPU
+
+~/ *** 4verkkoa_HM40_TE.mac %t1% %t2% %t3% %t4% %t5% %t6% %t7% %t8% ajettu ja verkot paivitetty
+~/ *** Tarkistusten tuloksia on tiedostossa %t9%
+
+>>>>>>> 9b3abc3... new versions of input macros
