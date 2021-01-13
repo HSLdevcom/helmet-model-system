@@ -59,10 +59,8 @@ class MockAssignmentModel(AssignmentModel):
             Subtype (car_work/truck/inv_time/...) : numpy 2-d matrix
                 Matrix of the specified type
         """
-        matrices = dict.fromkeys(self.matrices.list_matrices(mtx_type, time_period))
         with self.matrices.open(mtx_type, time_period) as mtx:
-            for mode in matrices:
-                matrices[mode] = mtx[mode]
+            matrices = {mode: mtx[mode] for mode in mtx.matrix_list}
         return matrices
     
     @property
