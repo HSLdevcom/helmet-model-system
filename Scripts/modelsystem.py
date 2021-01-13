@@ -68,11 +68,8 @@ class ModelSystem:
             self.ass_model.nr_zones, self.emme_scenarios)
         self.imptrans = ImpedanceTransformer()
         bounds = slice(0, self.zdata_forecast.nr_zones)
-        self.cdm = CarDensityModel(self.zdata_base, self.zdata_forecast, bounds, self.resultdata)
-        # TODO: Should be better defined as parameter when we don't  
-        # have different transit matrices as input data. 
-        # Could use this list_matrices as input validation.
-        self.ass_classes = self.basematrices.list_matrices("demand", "aht")
+        self.cdm = CarDensityModel(
+            self.zdata_base, self.zdata_forecast, bounds, self.resultdata)
         self.mode_share = []
         self.trucks = self.fm.calc_freight_traffic("truck")
         self.trailer_trucks = self.fm.calc_freight_traffic("trailer_truck")
@@ -165,11 +162,9 @@ class ModelSystem:
         self.ass_model.prepare_network()
 
         # Calculate transit cost matrix, and save it to emmebank
-        with self.basematrices.open("demand", "aht") as mtx:
-            base_demand = {ass_class: mtx[ass_class] for ass_class in self.ass_classes}
+        with self.basematrices.open("demand", "aht", self.ass_model.zone_numbers) as mtx:
+            base_demand = {ass_class: mtx[ass_class] for ass_class in param.transport_classes}
         self.ass_model.assign("aht", base_demand, iteration="init")
-        with self.basematrices.open("cost", "peripheral") as peripheral_mtx:
-            peripheral_cost = peripheral_mtx["transit"]
         if use_fixed_transit_cost:
             log.info("Using fixed transit cost matrix")
             with self.resultmatrices.open("cost", "aht") as aht_mtx:
@@ -178,15 +173,17 @@ class ModelSystem:
             log.info("Calculating transit cost")
             fixed_cost = None
         self.ass_model.calc_transit_cost(
-            self.zdata_forecast.transit_zone, peripheral_cost, fixed_cost)
+            self.zdata_forecast.transit_zone,
+            self.basematrices.peripheral_transit_cost(self.zdata_base),
+            fixed_cost)
 
         # Perform traffic assignment and get result impedance, 
         # for each time period
         demand = self.resultmatrices if is_end_assignment else self.basematrices
         for tp in self.emme_scenarios:
             log.info("Assigning period " + tp)
-            with demand.open("demand", tp) as mtx:
-                for ass_class in self.ass_classes:
+            with demand.open("demand", tp, self.ass_model.zone_numbers) as mtx:
+                for ass_class in param.transport_classes:
                     self.dtm.demand[tp][ass_class] = mtx[ass_class]
             impedance[tp] = self.ass_model.assign(
                 tp, self.dtm.demand[tp], 
@@ -290,14 +287,13 @@ class ModelSystem:
         return impedance
 
     def _save_to_omx(self, impedance, tp):
-        with self.resultmatrices.open("demand", tp, 'w') as mtx:
-            mtx.mapping = self.zone_numbers
+        zone_numbers = self.ass_model.zone_numbers
+        with self.resultmatrices.open("demand", tp, zone_numbers, 'w') as mtx:
             for ass_class in self.dtm.demand[tp]:
                 mtx[ass_class] = self.dtm.demand[tp][ass_class]
             log.info("Saved demand matrices for " + str(tp))
         for mtx_type in impedance:
-            with self.resultmatrices.open(mtx_type, tp, 'w') as mtx:
-                mtx.mapping = self.zone_numbers
+            with self.resultmatrices.open(mtx_type, tp, zone_numbers, 'w') as mtx:
                 for ass_class in impedance[mtx_type]:
                     mtx[ass_class] = impedance[mtx_type][ass_class]
 

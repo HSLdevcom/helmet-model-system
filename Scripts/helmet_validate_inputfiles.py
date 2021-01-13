@@ -7,6 +7,7 @@ from assignment.emme_assignment import EmmeAssignmentModel
 from datahandling.matrixdata import MatrixData
 from datahandling.zonedata import ZoneData
 from assignment.emme_bindings.emme_project import EmmeProject
+import parameters.assignment as param
 
 
 def main(args):
@@ -62,8 +63,12 @@ def main(args):
     assignment_model = EmmeAssignmentModel(
         EmmeProject(emme_paths[0]), first_scenario_id=first_scenario_ids[0])
     base_zonedata = ZoneData(base_zonedata_path, assignment_model.zone_numbers)
-    # Check base matrices TODO by @zptro
-    # matrixdata = MatrixData(base_matrices_path)
+    # Check base matrices
+    matrixdata = MatrixData(base_matrices_path)
+    for tp in assignment_model.emme_scenarios:
+        with matrixdata.open("demand", tp, assignment_model.zone_numbers) as mtx:
+            for ass_class in param.transport_classes:
+                a = mtx[ass_class]
 
     # Check scenario based input data
     log.info("Checking base zonedata & scenario-based input data...")

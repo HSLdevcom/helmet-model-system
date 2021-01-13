@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/HSLdevcom/helmet-model-system.svg?branch=master)](https://travis-ci.com/HSLdevcom/helmet-model-system)
+![Master](https://github.com/HSLdevcom/helmet-model-system/workflows/Python%application/badge.svg?branch=master)
 
 # helmet-model-system
 

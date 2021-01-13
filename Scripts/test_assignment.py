@@ -41,23 +41,26 @@ class EmmeAssignmentTest:
         travel_cost = {}
         for tp in ("aht", "pt", "iht"):
             travel_cost[tp] = self.ass_model.assign(tp, demand, iteration="init")
-        costs_files = MatrixData(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "Matrices", "2016_test"))
+        costs_files = MatrixData(os.path.join(
+            os.path.dirname(os.path.realpath(__file__)),
+            "..", "Matrices", "2016_test"))
         for time_period in travel_cost:
             for mtx_type in travel_cost[time_period]:
                 zone_numbers = self.ass_model.zone_numbers
-                with costs_files.open(mtx_type, time_period, 'w') as mtx:
-                    mtx.mapping = zone_numbers
+                with costs_files.open(mtx_type, time_period, zone_numbers, 'w') as mtx:
                     for ass_class in travel_cost[time_period][mtx_type]:
                         cost_data = travel_cost[time_period][mtx_type][ass_class]
                         mtx[ass_class] = cost_data
 
     def test_transit_cost(self):
         ZONE_INDEXES = numpy.array([5, 6, 7, 2792, 16001, 17000, 31000, 31501])
-        zdata = ZoneData(os.path.join(os.path.dirname(os.path.realpath(__file__)), "tests", "test_data", "Scenario_input_data", "2030_test"), ZONE_INDEXES)
+        zdata = ZoneData(os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), "tests", "test_data",
+            "Scenario_input_data", "2030_test"), ZONE_INDEXES)
         peripheral_cost = numpy.ones((2, 6))
         self.ass_model.calc_transit_cost(zdata.transit_zone, peripheral_cost)
 
 
 em = EmmeAssignmentTest()
-em.test_assignment()
 em.test_transit_cost()
+em.test_assignment()
