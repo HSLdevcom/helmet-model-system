@@ -262,10 +262,12 @@ class ModelSystem:
         sum_all = sum(trip_sum.values())
         mode_share = {}
         for mode in trip_sum:
-            self.resultdata.print_data(trip_sum[mode], "origins_demand.txt", 
-                self.zdata_base.zone_numbers, mode)
-            self.resultdata.print_data(trip_sum[mode] / sum_all, "origins_shares.txt", 
-                self.zdata_base.zone_numbers, mode)
+            self.resultdata.print_data(
+                pandas.Series(trip_sum[mode], self.zdata_base.zone_numbers),
+                "origins_demand.txt", mode)
+            self.resultdata.print_data(
+                pandas.Series(trip_sum[mode] / sum_all, self.zdata_base.zone_numbers),
+                "origins_shares.txt", mode)
             mode_share[mode] = trip_sum[mode].sum() / sum_all.sum()
         self.mode_share.append(mode_share)
 
@@ -366,8 +368,8 @@ class ModelSystem:
             weights=self.dtm.demand[tp]["transit_work"])
         time_ratio = transit_time / car_time
         self.resultdata.print_data(
-            time_ratio, "impedance_ratio.txt",
-            self.zone_numbers, "time")
+            pandas.Series(time_ratio, self.zone_numbers),
+            "impedance_ratio.txt", "time")
         self.zdata_forecast["time_ratio"] = pandas.Series(
             numpy.ma.getdata(time_ratio), self.zone_numbers)
         car_cost = numpy.ma.average(
@@ -379,8 +381,8 @@ class ModelSystem:
         cost_ratio = transit_cost / 44. / car_cost
         cost_ratio = cost_ratio.clip(0.01, None)
         self.resultdata.print_data(
-            cost_ratio, "impedance_ratio.txt",
-            self.zone_numbers, "cost")
+            pandas.Series(cost_ratio, self.zone_numbers),
+            "impedance_ratio.txt", "cost")
         self.zdata_forecast["cost_ratio"] = pandas.Series(
             numpy.ma.getdata(cost_ratio), self.zone_numbers)
 
@@ -473,6 +475,8 @@ class AgentModelSystem(ModelSystem):
                     mode, purpose_impedance[mode], od_pair).cumsum()
                 for tour in sec_dest_tours[mode][od_pair]:
                     tour.choose_secondary_destination(probs)
+        for purpose in self.dm.tour_purposes:
+            purpose.print_data()
         for person in self.dm.population:
             for tour in person.tours:
                 self.dtm.add_demand(tour)

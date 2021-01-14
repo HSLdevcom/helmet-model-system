@@ -28,7 +28,7 @@ class Purpose:
         Data used for all demand calculations
     """
 
-    def __init__(self, specification, zone_data):
+    def __init__(self, specification, zone_data, resultdata=None):
         self.name = specification["name"]
         self.orig = specification["orig"]
         self.dest = specification["dest"]
@@ -48,12 +48,30 @@ class Purpose:
             u = None
         self.bounds = slice(l, u)
         self.zone_data = zone_data
+        self.resultdata = resultdata
+        self.model = None
+        self.modes = []
         self.generated_tours = {}
         self.attracted_tours = {}
 
     @property
     def zone_numbers(self):
         return self.zone_data.zone_numbers[self.bounds]
+
+    def print_data(self):
+        attracted_tours = 0
+        demsums = {}
+        for mode in self.modes:
+            attracted_tours += self.attracted_tours[mode]
+            demsums[mode] = self.generated_tours[mode].sum()
+        self.resultdata.print_data(
+            pandas.Series(attracted_tours, self.zone_data.zone_numbers),
+            "attraction.txt", self.name)
+        demand_all = float(sum(demsums.values()))
+        mode_shares = {mode: demsums[mode] / demand_all for mode in demsums}
+        self.resultdata.print_data(
+            pandas.Series(mode_shares, demsums.keys()),
+            "mode_share.txt", self.name)
 
 
 class TourPurpose(Purpose):
@@ -79,8 +97,7 @@ class TourPurpose(Purpose):
     """
 
     def __init__(self, specification, zone_data, resultdata, is_agent_model):
-        Purpose.__init__(self, specification, zone_data)
-        self.resultdata = resultdata
+        Purpose.__init__(self, specification, zone_data, resultdata)
         if self.orig == "source":
             self.gen_model = generation.NonHomeGeneration(self, resultdata)
         else:
@@ -125,9 +142,7 @@ class TourPurpose(Purpose):
         """
         tours = self.gen_model.get_tours()
         demand = {}
-        demsums = {}
-        attracted_tours = 0
-        for mode in self.model.mode_choice_param:
+        for mode in self.modes:
             mtx = (self.prob.pop(mode) * tours).T
             try:
                 self.sec_dest_purpose.gen_model.add_tours(mtx, mode, self)
@@ -136,35 +151,23 @@ class TourPurpose(Purpose):
             demand[mode] = Demand(self, mode, mtx)
             self.attracted_tours[mode] = mtx.sum(0)
             self.generated_tours[mode] = mtx.sum(1)
-            attracted_tours += self.attracted_tours[mode]
             trip_lengths = self._count_trip_lengths(mtx, self.dist)
             self.resultdata.print_data(
-                trip_lengths,
-                "trip_lengths.txt",
-                trip_lengths.index,
-                "{}_{}".format(self.name, mode[0])
-            )
+                trip_lengths, "trip_lengths.txt",
+                "{}_{}".format(self.name, mode[0]))
             aggregated_demand = self._aggregate(mtx)
             self.resultdata.print_matrix(
                 aggregated_demand, "aggregated_demand",
                 "{}_{}".format(self.name, mode))
             own_zone = self.zone_data.get_data("own_zone", self.bounds)
             own_zone_demand = own_zone * mtx
-            own_zone_aggregated = self._aggregate(own_zone_demand)
+            own_zone_aggr = self._aggregate(own_zone_demand)
             self.resultdata.print_data(
-                numpy.diag(own_zone_aggregated), "own_zone_demand.txt",
-                own_zone_aggregated.index, "{}_{}".format(self.name, mode[0]))
-            demsums[mode] = self.generated_tours[mode].sum()
-        self.resultdata.print_data(
-            attracted_tours, "attraction.txt", 
-            self.zone_data.zone_numbers, self.name)
-        demand_all = sum(demsums.values())
-        mode_shares = {mode: demsums[mode] / demand_all for mode in demsums}
-        self.resultdata.print_data(
-            pandas.Series(mode_shares), "mode_share.txt",
-            demsums.keys(), self.name)
+                pandas.Series(numpy.diag(own_zone_aggr), own_zone_aggr.index),
+                "own_zone_demand.txt", "{}_{}".format(self.name, mode[0]))
+        self.print_data()
         return demand
-    
+
     def _aggregate(self, mtx):
         """Aggregate matrix to larger areas."""
         dest = self.zone_data.zone_numbers
@@ -222,7 +225,7 @@ class SecDestPurpose(Purpose):
     """
 
     def __init__(self, specification, zone_data, resultdata, is_agent_model):
-        Purpose.__init__(self, specification, zone_data)
+        Purpose.__init__(self, specification, zone_data, resultdata)
         self.gen_model = generation.SecDestGeneration(self, resultdata)
         self.model = logit.SecDestModel(
             zone_data, self, resultdata, is_agent_model)
@@ -230,7 +233,7 @@ class SecDestPurpose(Purpose):
 
     def init_sums(self):
         for mode in self.model.dest_choice_param:
-            self.generated_tours[mode] = 0
+            self.generated_tours[mode] = numpy.zeros_like(self.zone_numbers)
             self.attracted_tours[mode] = numpy.zeros_like(
                 self.zone_data.zone_numbers, float)
 

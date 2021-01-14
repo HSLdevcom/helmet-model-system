@@ -131,9 +131,7 @@ class CarDensityModel(LinearModel):
         car_density = prediction
                 
         # Print car density by zone
-        self.resultdata.print_data(
-            prediction, "car_density.txt",
-            self.zone_data.zone_numbers[self.bounds], "car_density")
+        self.resultdata.print_data(prediction, "car_density.txt", "car_density")
         
         # print car density by municipality and area
         for area_type in ("municipalities", "areas"):
@@ -148,5 +146,5 @@ class CarDensityModel(LinearModel):
                     aggregation.append(numpy.average(
                         car_density.loc[i], weights=w))
             self.resultdata.print_data(
-                aggregation, "car_density_per_{}.txt".format(area_type),
-                intervals.keys(), "car_density")
+                pandas.Series(aggregation, intervals.keys()),
+                "car_density_per_{}.txt".format(area_type), "car_density")

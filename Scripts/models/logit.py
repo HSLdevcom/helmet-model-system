@@ -325,7 +325,7 @@ class ModeDestModel(LogitModel):
         logsum = numpy.log(mode_expsum)
         self.resultdata.print_data(
             pandas.Series(logsum, self.purpose.zone_numbers),
-            "accessibility.txt", self.zone_data.zone_numbers, self.purpose.name)
+            "accessibility.txt", self.purpose.name)
         return self._calc_prob(mode_expsum)
     
     def calc_individual_prob(self, mod_mode, dummy):
@@ -407,9 +407,7 @@ class ModeDestModel(LogitModel):
             logsum = pandas.Series(numpy.log(expsum), self.purpose.zone_numbers)
             label = self.purpose.name + "_" + mode[0]
             self.zone_data._values[label] = logsum
-            self.resultdata.print_data(
-                logsum, "accessibility.txt",
-                self.zone_data.zone_numbers, label)
+            self.resultdata.print_data(logsum, "accessibility.txt", label)
         return self._calc_mode_util(self.dest_expsums)
 
     def _calc_prob(self, mode_expsum):
@@ -774,9 +772,7 @@ class CarUseModel(LogitModel):
         car_users = prob * population_7_99
                 
         # Print car user share by zone
-        self.resultdata.print_data(
-            prob, "car_use.txt", self.zone_data.zone_numbers[self.bounds],
-            "car_use")
+        self.resultdata.print_data(prob, "car_use.txt", "car_use")
                           
         # print car use share by municipality and area
         for area_type in ("municipalities", "areas"):
@@ -792,5 +788,5 @@ class CarUseModel(LogitModel):
                 else:
                     prob_area.append(car_users.loc[i].sum() / pop)
             self.resultdata.print_data(
-                prob_area, "car_use_per_{}.txt".format(area_type),
-                intervals.keys(), "car_use")
+                pandas.Series(prob_area, intervals.keys()),
+                "car_use_per_{}.txt".format(area_type), "car_use")
