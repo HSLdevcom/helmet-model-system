@@ -90,39 +90,39 @@ class DemandModel:
         list
             Person
         """
-        population = []
+        self.population = [[] for _ in xrange(nr_threads)]
         zones = self.zone_data.zone_numbers[:self.zone_data.first_peripheral_zone]
-        for idx in zones:
+        for i, zone_number in enumerate(zones):
             weights = [1]
             for age_group in self.age_groups:
                 key = "share_age_" + str(age_group[0]) + "-" + str(age_group[1])
-                share = self.zone_data[key][idx]
+                share = self.zone_data[key][zone_number]
                 weights.append(share)
                 weights[0] -= share
             weights[0] = max(weights[0], 0)
             if sum(weights) > 1:
                 if sum(weights) > 1.005:
                     msg = "Sum of age group shares for zone {} is {}".format(
-                        idx, sum(weights))
+                        zone_number, sum(weights))
                     log.error(msg)
                     raise ValueError(msg)
                 else:
                     weights = numpy.array(weights)
                     rebalance = 1 / sum(weights)
                     weights = rebalance * weights
-            for _ in xrange(0, int(self.zone_data["population"][idx])):
+            thread = i % nr_threads
+            for _ in xrange(0, int(self.zone_data["population"][zone_number])):
                 if random.random() < param.agent_demand_fraction:
                     a = numpy.arange(-1, len(self.age_groups))
                     group = numpy.random.choice(a=a, p=weights)
                     if group != -1:
                         # Group -1 is under-7-year-olds and they have weights[0]
                         person = Person(
-                            idx, self.age_groups[group], self.gm, self.cm)
-                        population.append(person)
-        l = len(population)
-        self.population = [population[i*l // nr_threads:(i+1)*l // nr_threads]
-            for i in xrange(nr_threads)]
-        self.population_size = l
+                            zone_number, self.age_groups[group], self.gm, self.cm)
+                        self.population[thread].append(person)
+        self.population_size = 0
+        for persons in self.population:
+            self.population_size += len(persons)
 
     def generate_tours(self):
         """Generate vector of tours for each tour purpose.
