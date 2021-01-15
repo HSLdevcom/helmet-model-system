@@ -322,7 +322,7 @@ class ModelSystem:
             nr_threads = 1
         bounds = next(iter(purpose.sources)).bounds
         split = (bounds.stop-bounds.start) // nr_threads
-        for i in xrange(0, nr_threads):
+        for i in xrange(nr_threads):
             # Take a chunk of destinations, for which this thread
             # will calculate secondary destinations
             start = bounds.start + i*split
@@ -413,7 +413,14 @@ class AgentModelSystem(ModelSystem):
 
     def _init_demand_model(self):
         log.info("Creating synthetic population")
-        return DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=True)
+        nr_threads = param.performance_settings["number_of_processors"]
+        if nr_threads == "max":
+            nr_threads = multiprocessing.cpu_count()
+        elif nr_threads <= 0:
+            nr_threads = 1
+        return DemandModel(
+            self.zdata_forecast, self.resultdata, is_agent_model=True,
+            nr_threads=nr_threads)
 
     def _add_internal_demand(self, previous_iter_impedance, is_last_iteration):
         """Produce tours and add fractions of them
@@ -435,8 +442,6 @@ class AgentModelSystem(ModelSystem):
         """
         log.info("Demand calculation started...")
         self.dm.cm.calc_basic_prob()
-        for person in self.dm.population:
-            person.decide_car_use()
         self.travel_modes = set()
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
@@ -457,28 +462,40 @@ class AgentModelSystem(ModelSystem):
                     purpose.init_sums()
                     purpose.model.calc_basic_prob(purpose_impedance)
         tour_probs = self.dm.generate_tour_probs()
+        purpose_impedance = self.imptrans.transform(
+            self.dm.purpose_dict["hoo"], previous_iter_impedance)
         log.info("Assigning mode and destination for {} agents ({} % of total population)".format(
-            len(self.dm.population), int(zone_param.agent_demand_fraction*100)))
+            self.dm.population_size, int(zone_param.agent_demand_fraction*100)))
+        threads = []
+        for persons in self.dm.population:
+            thread = threading.Thread(
+                target=self._distribute_tours,
+                args=(persons, purpose_impedance, tour_probs))
+            threads.append(thread)
+            thread.start()
+        for thread in threads:
+            thread.join()
+        for purpose in self.dm.tour_purposes:
+            purpose.print_data()
+        for persons in self.dm.population:
+            for person in persons:
+                for tour in person.tours:
+                    self.dtm.add_demand(tour)
+        log.info("Demand calculation completed")
+
+    def _distribute_tours(self, persons, impedance, tour_probs):
         sec_dest_purpose = self.dm.purpose_dict["hoo"]
         sec_dest_tours = {mode: defaultdict(list)
             for mode in sec_dest_purpose.modes}
-        for person in self.dm.population:
+        for person in persons:
+            person.decide_car_use()
             person.add_tours(self.dm.purpose_dict, tour_probs)
             for tour in person.tours:
                 tour.choose_mode(person.is_car_user)
                 tour.choose_destination(sec_dest_tours)
-        log.info("Primary destinations assigned")
-        purpose_impedance = self.imptrans.transform(
-            sec_dest_purpose, previous_iter_impedance)
         for mode in sec_dest_tours:
             for od_pair in sec_dest_tours[mode]:
                 probs = sec_dest_purpose.calc_prob(
-                    mode, purpose_impedance[mode], od_pair).cumsum()
+                    mode, impedance[mode], od_pair).cumsum()
                 for tour in sec_dest_tours[mode][od_pair]:
                     tour.choose_secondary_destination(probs)
-        for purpose in self.dm.tour_purposes:
-            purpose.print_data()
-        for person in self.dm.population:
-            for tour in person.tours:
-                self.dtm.add_demand(tour)
-        log.info("Demand calculation completed")

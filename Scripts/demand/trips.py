@@ -22,7 +22,7 @@ class DemandModel:
         Whether the model is used for agent-based simulation
     """
     
-    def __init__(self, zone_data, resultdata, is_agent_model=False):
+    def __init__(self, zone_data, resultdata, is_agent_model=False, nr_threads=1):
         self.resultdata = resultdata
         self.zone_data = zone_data
         self.tour_purposes = []
@@ -55,7 +55,7 @@ class DemandModel:
             zone_data, bounds, self.age_groups, self.resultdata)
         self.gm = logit.TourCombinationModel(self.zone_data)
         if is_agent_model:
-            self.create_population()
+            self.create_population(nr_threads)
 
     def create_population_segments(self):
         """Create population segments.
@@ -82,7 +82,7 @@ class DemandModel:
             self.segments[age]["car_users"] = car_share * age_share * pop
             self.segments[age]["no_car"] = (1-car_share) * age_share * pop
 
-    def create_population(self):
+    def create_population(self, nr_threads):
         """Create population for agent-based simulation.
         
         Returns
@@ -90,7 +90,7 @@ class DemandModel:
         list
             Person
         """
-        self.population = []
+        population = []
         zones = self.zone_data.zone_numbers[:self.zone_data.first_peripheral_zone]
         for idx in zones:
             weights = [1]
@@ -118,7 +118,11 @@ class DemandModel:
                         # Group -1 is under-7-year-olds and they have weights[0]
                         person = Person(
                             idx, self.age_groups[group], self.gm, self.cm)
-                        self.population.append(person)
+                        population.append(person)
+        l = len(population)
+        self.population = [population[i*l // nr_threads:(i+1)*l // nr_threads]
+            for i in xrange(nr_threads)]
+        self.population_size = l
 
     def generate_tours(self):
         """Generate vector of tours for each tour purpose.
