@@ -1,6 +1,7 @@
 {
     "LOG_LEVEL": "INFO",
     "LOG_FORMAT": "TEXT",
+    "RUN_AGENT_SIMULATION": false,
     "USE_EMME": true,
     "SAVE_MATRICES_IN_EMME": true,
     "DELETE_STRATEGY_FILES": true,

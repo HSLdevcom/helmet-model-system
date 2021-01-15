@@ -7,7 +7,7 @@ from utils.config import Config
 import utils.log as log
 from assignment.emme_assignment import EmmeAssignmentModel
 from assignment.mock_assignment import MockAssignmentModel
-from modelsystem import ModelSystem
+from modelsystem import ModelSystem, AgentModelSystem
 from datahandling.matrixdata import MatrixData
 
 
@@ -59,9 +59,14 @@ def main(args):
             first_matrix_id=args.first_matrix_id)
     # Initialize model system (wrapping Assignment-model,
     # and providing demand calculations as Python modules)
-    model = ModelSystem(
-        forecast_zonedata_path, base_zonedata_path, base_matrices_path,
-        results_path, ass_model, name)
+    if args.is_agent_model:
+        model = AgentModelSystem(
+            forecast_zonedata_path, base_zonedata_path, base_matrices_path,
+            results_path, ass_model, name)
+    else:
+        model = ModelSystem(
+            forecast_zonedata_path, base_zonedata_path, base_matrices_path,
+            results_path, ass_model, name)
     log_extra["status"]["results"] = model.mode_share
 
     # Run traffic assignment simulation for N iterations, on last iteration model-system will save the results
@@ -118,6 +123,13 @@ if __name__ == "__main__":
         default=config.LOG_FORMAT,
     )
     # HELMET scenario metadata
+    parser.add_argument(
+        "--run-agent-simulation",
+        dest="is_agent_model",
+        action="store_true",
+        default=(not config.RUN_AGENT_SIMULATION),
+        help="Using this flag runs agent simulations instead of aggregate model.",
+    )
     parser.add_argument(
         "--do-not-use-emme",
         dest="do_not_use_emme",
