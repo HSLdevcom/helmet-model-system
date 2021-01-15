@@ -344,6 +344,7 @@ class ModelSystem:
             for tp in dtm.demand:
                 for ass_class in dtm.demand[tp]:
                     self.dtm.demand[tp][ass_class] += dtm.demand[tp][ass_class]
+        purpose.print_data()
 
     def _distribute_tours(self, container, purpose, mode, impedance, dests):
         for i in dests:
