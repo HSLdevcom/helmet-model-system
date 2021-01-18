@@ -127,7 +127,7 @@ if __name__ == "__main__":
         "--run-agent-simulation",
         dest="is_agent_model",
         action="store_true",
-        default=(not config.RUN_AGENT_SIMULATION),
+        default=config.RUN_AGENT_SIMULATION,
         help="Using this flag runs agent simulations instead of aggregate model.",
     )
     parser.add_argument(
