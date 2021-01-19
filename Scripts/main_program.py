@@ -36,7 +36,7 @@ def main_program(self, scen_id, folder, version):
     scen_id = scen_list[2]
     _batmet.initiallze_network(self, scen_id, bike=False)
     _batmet.read_network(self, scen_id, folder, version, bike=False)
-    _modbus.bus(self, scen_id)
+    _modbus.bus_stops(self, scen_id)
     
     _batmet.delete_scenario(self, scen_list[3], scen_list[2])
     _batmet.copy_scenario(self, scen_list[2], scen_list[3])
