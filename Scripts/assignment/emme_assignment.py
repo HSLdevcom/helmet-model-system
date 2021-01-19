@@ -473,14 +473,11 @@ class EmmeAssignmentModel(AssignmentModel):
                                             * segment["@base_timtr"])
         for ass_class in kms:
             resultdata.print_data(
-                kms[ass_class].values(), "vehicle_kms.txt",
-                kms[ass_class].keys(), ass_class)
+                pandas.Series(kms[ass_class]), "vehicle_kms.txt", ass_class)
         resultdata.print_data(
-            transit_dists.values(), "transit_kms.txt",
-            transit_dists.keys(), "dist")
+            pandas.Series(transit_dists), "transit_kms.txt", "dist")
         resultdata.print_data(
-            transit_times.values(), "transit_kms.txt",
-            transit_times.keys(), "time")
+            pandas.Series(transit_times), "transit_kms.txt", "time")
 
     def calc_transit_cost(self, fares, peripheral_cost, default_cost=None):
         """Calculate transit zone cost matrix.
