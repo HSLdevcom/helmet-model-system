@@ -246,3 +246,10 @@ impedance_share = {
         },
     },
 }
+
+### IMPEDANCE TRANSFORMATION REFERENCES ###
+
+divided_classes = (
+    "car",
+    "transit",
+)

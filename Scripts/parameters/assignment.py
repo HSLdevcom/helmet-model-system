@@ -219,6 +219,7 @@ assignment_classes = {
     "oo": "leisure",
     "hwp": "work",
     "hop": "leisure",
+    "sop": "leisure",
     "oop": "leisure",
     "external": "leisure",
 }

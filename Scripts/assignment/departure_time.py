@@ -43,8 +43,9 @@ class DepartureTimeModel:
             Travel demand matrix or number of travellers
         """
         if demand.mode != "walk" and not demand.is_car_passenger:
-            if demand.mode in ("car", "transit", "bike"):
-                ass_class = (demand.mode + '_' + assignment_classes[demand.purpose.name])
+            if demand.mode in param.divided_classes:
+                ass_class = "{}_{}".format(
+                    demand.mode, assignment_classes[demand.purpose.name])
             else:
                 ass_class = demand.mode
             if len(demand.position) == 2:
