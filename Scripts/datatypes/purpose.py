@@ -270,25 +270,15 @@ class SecDestPurpose(Purpose):
         if not dests.any():
             # If no o-d pairs have demand above threshold,
             # the sole destination with largest demand is picked
-            dests = generation.argmax()
+            dests = [generation.argmax()]
             generation.fill(0)
             generation[dests] = generation.sum()
         else:
             generation[dests] *= generation.sum() / generation[dests].sum()
             generation[~dests] = 0
-        dest_imp = {}
-        for mtx_type in impedance:
-            try:
-                dest_imp[mtx_type] = ( impedance[mtx_type][dests, :]
-                                     + impedance[mtx_type][:, origin]
-                                     - impedance[mtx_type][dests, origin][:, numpy.newaxis])
-            except IndexError:
-                dest_imp[mtx_type] = ( impedance[mtx_type][dests, :]
-                                     + impedance[mtx_type][:, origin]
-                                     - impedance[mtx_type][dests, origin])
         # TODO Make origin distinction between impedance matrix and lookup
         # In peripheral area these would not be the same
-        prob = self.model.calc_prob(mode, dest_imp, origin, dests)
+        prob = self.calc_prob(mode, impedance, origin, dests)
         demand = numpy.zeros_like(impedance["time"])
         demand[dests, :] = (prob * generation[dests]).T
         self.attracted_tours[mode][self.bounds] += demand.sum(0)

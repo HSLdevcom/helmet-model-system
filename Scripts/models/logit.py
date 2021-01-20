@@ -515,12 +515,7 @@ class SecDestModel(LogitModel):
                 Choice probabilities
         """
         dest_exps = self._calc_sec_dest_util(mode, impedance, origin, destination)
-        try:
-            expsum = dest_exps.sum(1)
-        except ValueError:
-            expsum = dest_exps.sum()
-        prob = dest_exps.T / expsum
-        return prob
+        return dest_exps.T / dest_exps.sum(1)
 
 
 class OriginModel(DestModeModel):
