@@ -294,11 +294,10 @@ class SecDestPurpose(Purpose):
         self.attracted_tours[mode][self.bounds] += demand.sum(0)
         return Demand(self, mode, demand, origin)
 
-    def calc_prob(self, mode, impedance, position):
-        """Calculate secondary destination probabilites for tours
-        starting and ending in two specific zones.
-
-        Method used in agent-based simulation.
+    def calc_prob(self, mode, impedance, orig, dests):
+        """Calculate secondary destination probabilites.
+        
+        For tours starting in specific zone and ending in some zones.
         
         Parameters
         ----------
@@ -306,22 +305,19 @@ class SecDestPurpose(Purpose):
             Mode (car/transit/bike)
         impedance : dict
             Type (time/cost/dist) : numpy 2d matrix
-        position : tuple
-            int
-                Origin zone
-            int
-                Destination zone
+        orig : int
+            Origin zone index
+        dests : list or boolean array
+            Destination zone indices
 
         Returns
         -------
-        numpy 1-d array
-            Probability vector for chosing zones as secondary destination
+        numpy.ndarray
+            Probability matrix for chosing zones as secondary destination
         """
-        orig = position[0]
-        dest = position[1]
         dest_imp = {}
         for mtx_type in impedance:
-            dest_imp[mtx_type] = ( impedance[mtx_type][dest, :]
-                                 + impedance[mtx_type][:, orig]
-                                 - impedance[mtx_type][dest, orig])
-        return self.model.calc_prob(mode, dest_imp, orig, dest)
+            dest_imp[mtx_type] = (impedance[mtx_type][dests, :]
+                                  + impedance[mtx_type][:, orig]
+                                  - impedance[mtx_type][dests, orig][:, numpy.newaxis])
+        return self.model.calc_prob(mode, dest_imp, orig, dests)

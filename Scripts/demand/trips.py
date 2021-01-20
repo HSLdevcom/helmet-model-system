@@ -22,7 +22,7 @@ class DemandModel:
         Whether the model is used for agent-based simulation
     """
     
-    def __init__(self, zone_data, resultdata, is_agent_model=False, nr_threads=1):
+    def __init__(self, zone_data, resultdata, is_agent_model=False):
         self.resultdata = resultdata
         self.zone_data = zone_data
         self.tour_purposes = []
@@ -55,7 +55,7 @@ class DemandModel:
             zone_data, bounds, self.age_groups, self.resultdata)
         self.gm = logit.TourCombinationModel(self.zone_data)
         if is_agent_model:
-            self.create_population(nr_threads)
+            self.create_population()
 
     def create_population_segments(self):
         """Create population segments.
@@ -82,7 +82,7 @@ class DemandModel:
             self.segments[age]["car_users"] = car_share * age_share * pop
             self.segments[age]["no_car"] = (1-car_share) * age_share * pop
 
-    def create_population(self, nr_threads):
+    def create_population(self):
         """Create population for agent-based simulation.
         
         Returns
@@ -90,9 +90,9 @@ class DemandModel:
         list
             Person
         """
-        self.population = [[] for _ in xrange(nr_threads)]
+        self.population = []
         zones = self.zone_data.zone_numbers[:self.zone_data.first_peripheral_zone]
-        for i, zone_number in enumerate(zones):
+        for zone_number in zones:
             weights = [1]
             for age_group in self.age_groups:
                 key = "share_age_" + str(age_group[0]) + "-" + str(age_group[1])
@@ -110,7 +110,6 @@ class DemandModel:
                     weights = numpy.array(weights)
                     rebalance = 1 / sum(weights)
                     weights = rebalance * weights
-            thread = i % nr_threads
             for _ in xrange(0, int(self.zone_data["population"][zone_number])):
                 if random.random() < param.agent_demand_fraction:
                     a = numpy.arange(-1, len(self.age_groups))
@@ -119,10 +118,7 @@ class DemandModel:
                         # Group -1 is under-7-year-olds and they have weights[0]
                         person = Person(
                             zone_number, self.age_groups[group], self.gm, self.cm)
-                        self.population[thread].append(person)
-        self.population_size = 0
-        for persons in self.population:
-            self.population_size += len(persons)
+                        self.population.append(person)
 
     def generate_tours(self):
         """Generate vector of tours for each tour purpose.

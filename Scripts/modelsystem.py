@@ -413,14 +413,7 @@ class AgentModelSystem(ModelSystem):
 
     def _init_demand_model(self):
         log.info("Creating synthetic population")
-        nr_threads = param.performance_settings["number_of_processors"]
-        if nr_threads == "max":
-            nr_threads = multiprocessing.cpu_count()
-        elif nr_threads <= 0:
-            nr_threads = 1
-        return DemandModel(
-            self.zdata_forecast, self.resultdata, is_agent_model=True,
-            nr_threads=nr_threads)
+        return DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=True)
 
     def _add_internal_demand(self, previous_iter_impedance, is_last_iteration):
         """Produce tours and add fractions of them
@@ -462,40 +455,51 @@ class AgentModelSystem(ModelSystem):
                     purpose.init_sums()
                     purpose.model.calc_basic_prob(purpose_impedance)
         tour_probs = self.dm.generate_tour_probs()
-        purpose_impedance = self.imptrans.transform(
-            self.dm.purpose_dict["hoo"], previous_iter_impedance)
         log.info("Assigning mode and destination for {} agents ({} % of total population)".format(
-            self.dm.population_size, int(zone_param.agent_demand_fraction*100)))
-        threads = []
-        for persons in self.dm.population:
-            thread = threading.Thread(
-                target=self._distribute_tours,
-                args=(persons, purpose_impedance, tour_probs))
-            threads.append(thread)
-            thread.start()
-        for thread in threads:
-            thread.join()
-        for purpose in self.dm.tour_purposes:
-            purpose.print_data()
-        for persons in self.dm.population:
-            for person in persons:
-                for tour in person.tours:
-                    self.dtm.add_demand(tour)
-        log.info("Demand calculation completed")
-
-    def _distribute_tours(self, persons, impedance, tour_probs):
-        sec_dest_purpose = self.dm.purpose_dict["hoo"]
-        sec_dest_tours = {mode: defaultdict(list)
-            for mode in sec_dest_purpose.modes}
-        for person in persons:
+            len(self.dm.population), int(zone_param.agent_demand_fraction*100)))
+        purpose = self.dm.purpose_dict["hoo"]
+        sec_dest_tours = {mode: [defaultdict(list) for _ in purpose.zone_numbers]
+            for mode in purpose.modes}
+        for person in self.dm.population:
             person.decide_car_use()
             person.add_tours(self.dm.purpose_dict, tour_probs)
             for tour in person.tours:
                 tour.choose_mode(person.is_car_user)
                 tour.choose_destination(sec_dest_tours)
+        log.info("Primary destinations assigned")
+        purpose_impedance = self.imptrans.transform(
+            self.dm.purpose_dict["hoo"], previous_iter_impedance)
+        nr_threads = param.performance_settings["number_of_processors"]
+        if nr_threads == "max":
+            nr_threads = multiprocessing.cpu_count()
+        elif nr_threads <= 0:
+            nr_threads = 1
         for mode in sec_dest_tours:
-            for od_pair in sec_dest_tours[mode]:
+            threads = []
+            for i in xrange(nr_threads):
+                origs = xrange(i, len(sec_dest_tours[mode]), nr_threads)
+                thread = threading.Thread(
+                    target=self._distribute_tours,
+                    args=(
+                        mode, origs, sec_dest_tours[mode],
+                        purpose_impedance[mode], tour_probs))
+                threads.append(thread)
+                thread.start()
+            for thread in threads:
+                thread.join()
+        for purpose in self.dm.tour_purposes:
+            purpose.print_data()
+        for person in self.dm.population:
+            for tour in person.tours:
+                self.dtm.add_demand(tour)
+        log.info("Demand calculation completed")
+
+    def _distribute_tours(self, mode, origs, sec_dest_tours, impedance, tour_probs):
+        sec_dest_purpose = self.dm.purpose_dict["hoo"]
+        for orig in origs:
+                dests = list(sec_dest_tours[orig])
                 probs = sec_dest_purpose.calc_prob(
-                    mode, impedance[mode], od_pair).cumsum()
-                for tour in sec_dest_tours[mode][od_pair]:
-                    tour.choose_secondary_destination(probs)
+                    mode, impedance, orig, dests).cumsum(axis=0)
+                for j, dest in enumerate(dests):
+                    for tour in sec_dest_tours[orig][dest]:
+                        tour.choose_secondary_destination(probs[:, j])

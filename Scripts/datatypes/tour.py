@@ -133,15 +133,16 @@ class Tour(object):
                Dictionary for inserting tours with secondary destination,
                key is `self.position`
         """
+        orig_idx = self.position[0]
         dest_idx = numpy.searchsorted(
-            self.purpose.model.cumul_dest_prob[self.mode][:, self.position[0]],
+            self.purpose.model.cumul_dest_prob[self.mode][:, orig_idx],
             self._dest_draw)
-        self.position = (self.position[0], dest_idx)
+        self.position = (orig_idx, dest_idx)
         self.purpose.attracted_tours[self.mode][dest_idx] += 1
         purpose = self.purpose.sec_dest_purpose
         try:
-            if (self.position[0] < purpose.bounds.stop
-                    and self.position[1] < purpose.bounds.stop):
+            if (orig_idx < purpose.bounds.stop
+                    and dest_idx < purpose.bounds.stop):
                 is_in_area = True
             else:
                 is_in_area = False
@@ -149,7 +150,7 @@ class Tour(object):
             is_in_area = False
         if (self.mode != "walk" and is_in_area
                 and self._sec_dest_gen_draw < self.sec_dest_prob[self.mode]):
-            sec_dest_tours[self.mode][self.position].append(self)
+            sec_dest_tours[self.mode][orig_idx][dest_idx].append(self)
 
     def choose_secondary_destination(self, cumulative_probs):
         """Choose secondary destination for the tour.
