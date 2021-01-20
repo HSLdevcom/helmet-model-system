@@ -322,15 +322,15 @@ class ModelSystem:
             nr_threads = 1
         bounds = next(iter(purpose.sources)).bounds
         for i in xrange(nr_threads):
-            # Take a range of destinations, for which this thread
+            # Take a range of origins, for which this thread
             # will calculate secondary destinations
-            dests = xrange(bounds.start + i, bounds.stop, nr_threads)
+            origs = xrange(bounds.start + i, bounds.stop, nr_threads)
             # Results will be saved in a temp dtm, to avoid memory clashes
             dtm = dt.DepartureTimeModel(self.ass_model.nr_zones, self.emme_scenarios)
             demand.append(dtm)
             thread = threading.Thread(
                 target=self._distribute_tours,
-                args=(dtm, purpose, mode, impedance, dests))
+                args=(dtm, purpose, mode, impedance, origs))
             threads.append(thread)
             thread.start()
         for thread in threads:
@@ -341,9 +341,9 @@ class ModelSystem:
                     self.dtm.demand[tp][ass_class] += dtm.demand[tp][ass_class]
         purpose.print_data()
 
-    def _distribute_tours(self, container, purpose, mode, impedance, dests):
-        for i in dests:
-            demand = purpose.distribute_tours(mode, impedance[mode], i)
+    def _distribute_tours(self, container, purpose, mode, impedance, origs):
+        for orig in origs:
+            demand = purpose.distribute_tours(mode, impedance[mode], orig)
             container.add_demand(demand)
 
     def _update_ratios(self, impedance, tp):
