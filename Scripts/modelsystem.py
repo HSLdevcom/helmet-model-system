@@ -321,15 +321,10 @@ class ModelSystem:
         elif nr_threads <= 0:
             nr_threads = 1
         bounds = next(iter(purpose.sources)).bounds
-        split = (bounds.stop-bounds.start) // nr_threads
         for i in xrange(nr_threads):
-            # Take a chunk of destinations, for which this thread
+            # Take a range of destinations, for which this thread
             # will calculate secondary destinations
-            start = bounds.start + i*split
-            if i+1 < nr_threads:
-                dests = xrange(start, start + split)
-            else:
-                dests = xrange(start, bounds.stop)
+            dests = xrange(bounds.start + i, bounds.stop, nr_threads)
             # Results will be saved in a temp dtm, to avoid memory clashes
             dtm = dt.DepartureTimeModel(self.ass_model.nr_zones, self.emme_scenarios)
             demand.append(dtm)
@@ -468,16 +463,17 @@ class AgentModelSystem(ModelSystem):
                 tour.choose_destination(sec_dest_tours)
         log.info("Primary destinations assigned")
         purpose_impedance = self.imptrans.transform(
-            self.dm.purpose_dict["hoo"], previous_iter_impedance)
+            purpose, previous_iter_impedance)
         nr_threads = param.performance_settings["number_of_processors"]
         if nr_threads == "max":
             nr_threads = multiprocessing.cpu_count()
         elif nr_threads <= 0:
             nr_threads = 1
+        bounds = next(iter(purpose.sources)).bounds
         for mode in sec_dest_tours:
             threads = []
             for i in xrange(nr_threads):
-                origs = xrange(i, len(sec_dest_tours[mode]), nr_threads)
+                origs = xrange(bounds.start + i, bounds.stop, nr_threads)
                 thread = threading.Thread(
                     target=self._distribute_tours,
                     args=(
