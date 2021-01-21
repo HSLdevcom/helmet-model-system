@@ -171,10 +171,10 @@ class DemandModel:
         return probs
 
     def _get_probs(self, age, is_car_user):
-        prob_dict = self.gm.calc_prob(
-            age, is_car_user, slice(0, self.zone_data.first_peripheral_zone))
+        bounds = slice(0, self.zone_data.first_peripheral_zone)
+        prob_dict = self.gm.calc_prob(age, is_car_user, bounds)
         probs = numpy.empty(
-            [self.zone_data.first_peripheral_zone, len(self.gm.tour_combinations)])
+            [bounds.stop - bounds.start, len(self.gm.tour_combinations)])
         for i, tour_combination in enumerate(self.gm.tour_combinations):
             probs[:, i] = prob_dict[tour_combination]
         return probs.cumsum(axis=1)

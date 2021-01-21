@@ -208,15 +208,13 @@ class LogitModel:
         return utility
     
     def _add_sec_zone_util(self, utility, b, orig=None, dest=None):
-        zdata = self.zone_data
         for i in b:
-            data = zdata.get_data(i, self.bounds, generation=True)
+            data = self.zone_data.get_data(i, self.bounds, generation=True)
             try: # If only one parameter
                 utility += b[i] * data
             except ValueError: # Separate params for orig and dest
-                u = self.zone_data.first_peripheral_zone
-                utility += b[i][0] * data[orig, :u]
-                utility += b[i][1] * data[dest, :u]
+                utility += b[i][0] * data[orig, self.bounds]
+                utility += b[i][1] * data[dest, self.bounds]
         return utility
 
     def _add_log_zone_util(self, exps, b, generation=False):

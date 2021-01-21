@@ -244,7 +244,7 @@ class SecDestPurpose(Purpose):
         for mode in self.model.dest_choice_param:
             self.tours[mode] = self.gen_model.get_tours(mode)
 
-    def distribute_tours(self, mode, impedance, origin):
+    def distribute_tours(self, mode, impedance, orig, orig_offset=0):
         """Decide the secondary destinations for all tours (generated 
         earlier) starting from one specific zone.
         
@@ -254,8 +254,10 @@ class SecDestPurpose(Purpose):
             Mode (car/transit/bike)
         impedance : dict
             Type (time/cost/dist) : numpy 2d matrix
-        origin : int
-            The zone index from which these tours origin
+        orig : int
+            The relative zone index from which these tours origin
+        orig_offset : int (optional)
+            Absolute zone index of orig is orig_offset + orig
 
         Returns
         -------
@@ -263,7 +265,7 @@ class SecDestPurpose(Purpose):
             Matrix of destination -> secondary_destination pairs
             The origin zone for all of these tours
         """
-        generation = self.tours[mode][origin, :]
+        generation = self.tours[mode][orig, :]
         # All o-d pairs below threshold are neglected,
         # total demand is increased for other pairs.
         dests = generation > secondary_destination_threshold
@@ -276,13 +278,11 @@ class SecDestPurpose(Purpose):
         else:
             generation[dests] *= generation.sum() / generation[dests].sum()
             generation[~dests] = 0
-        # TODO Make origin distinction between impedance matrix and lookup
-        # In peripheral area these would not be the same
-        prob = self.calc_prob(mode, impedance, origin, dests)
+        prob = self.calc_prob(mode, impedance, orig, dests)
         demand = numpy.zeros_like(impedance["time"])
         demand[dests, :] = (prob * generation[dests]).T
         self.attracted_tours[mode][self.bounds] += demand.sum(0)
-        return Demand(self, mode, demand, origin)
+        return Demand(self, mode, demand, orig_offset + orig)
 
     def calc_prob(self, mode, impedance, orig, dests):
         """Calculate secondary destination probabilites.

@@ -133,16 +133,16 @@ class Tour(object):
                Dictionary for inserting tours with secondary destination,
                key is `self.position`
         """
-        orig_idx = self.position[0]
+        orig_idx = self.position[0] - self.purpose.bounds.start
         dest_idx = numpy.searchsorted(
             self.purpose.model.cumul_dest_prob[self.mode][:, orig_idx],
             self._dest_draw)
-        self.position = (orig_idx, dest_idx)
+        self.position = (self.position[0], dest_idx)
         self.purpose.attracted_tours[self.mode][dest_idx] += 1
-        purpose = self.purpose.sec_dest_purpose
+        bounds = self.purpose.sec_dest_purpose.bounds
         try:
-            if (orig_idx < purpose.bounds.stop
-                    and dest_idx < purpose.bounds.stop):
+            if (bounds.start <= self.position[0] < bounds.stop
+                    and bounds.start <= dest_idx < bounds.stop):
                 is_in_area = True
             else:
                 is_in_area = False
@@ -150,6 +150,8 @@ class Tour(object):
             is_in_area = False
         if (self.mode != "walk" and is_in_area
                 and self._sec_dest_gen_draw < self.sec_dest_prob[self.mode]):
+            orig_idx = self.position[0] - bounds.start
+            dest_idx =- bounds.start
             sec_dest_tours[self.mode][orig_idx][dest_idx].append(self)
 
     def choose_secondary_destination(self, cumulative_probs):
@@ -160,6 +162,7 @@ class Tour(object):
         cumulative_probs : numpy.ndarray
             1d array with cumulative probabilities for destinations
         """
-        dest_idx = numpy.searchsorted(cumulative_probs, self._sec_dest_draw)
+        dest_idx = (self.purpose.sec_dest_purpose.bounds.start
+                    + numpy.searchsorted(cumulative_probs, self._sec_dest_draw))
         self.position = (self.position[0], self.position[1], dest_idx)
         self.purpose.sec_dest_purpose.attracted_tours[self.mode][dest_idx] += 1

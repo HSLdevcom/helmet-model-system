@@ -324,7 +324,7 @@ class ModelSystem:
         for i in xrange(nr_threads):
             # Take a range of origins, for which this thread
             # will calculate secondary destinations
-            origs = xrange(bounds.start + i, bounds.stop, nr_threads)
+            origs = xrange(i, bounds.stop - bounds.start, nr_threads)
             # Results will be saved in a temp dtm, to avoid memory clashes
             dtm = dt.DepartureTimeModel(self.ass_model.nr_zones, self.emme_scenarios)
             demand.append(dtm)
@@ -473,7 +473,7 @@ class AgentModelSystem(ModelSystem):
         for mode in sec_dest_tours:
             threads = []
             for i in xrange(nr_threads):
-                origs = xrange(bounds.start + i, bounds.stop, nr_threads)
+                origs = xrange(i, bounds.stop - bounds.start, nr_threads)
                 thread = threading.Thread(
                     target=self._distribute_tours,
                     args=(

@@ -33,7 +33,8 @@ class Demand:
         """tuple: (origin, destination, (secondary destination))
         Position where to insert the demand
         """
+        start = self.purpose.bounds.start
         if self.orig is None:
-            return (self.purpose.bounds.start, 0)
+            return (start, 0)
         else:
-            return (self.orig, 0, 0)
+            return (self.orig, start, start)
