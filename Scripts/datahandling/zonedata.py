@@ -8,9 +8,6 @@ import utils.log as log
 
 
 class ZoneData:
-    CAPITAL_REGION = 0
-    SURROUNDING_AREA = 1
-    
     def __init__(self, data_dir, zone_numbers):
         self._values = {}
         self.share = ShareChecker(self)
@@ -195,7 +192,7 @@ class ZoneData:
         data = {k: self._values[k] for k in freight_variables}
         return pandas.DataFrame(data)
 
-    def get_data(self, key, bounds, generation=False, part=None):
+    def get_data(self, key, bounds, generation=False):
         """Get data of correct shape for zones included in purpose.
         
         Parameters
@@ -207,27 +204,18 @@ class ZoneData:
         generation : bool, optional
             If set to True, returns data only for zones in purpose,
             otherwise returns data for all zones
-        part : int, optional
-            0 if capital region, 1 if surrounding area
         
         Returns
         -------
         pandas Series or numpy 2-d matrix
         """
-        l = bounds.start
-        u = bounds.stop
-        if part is not None:  # Return values for partial area only
-            if part == self.CAPITAL_REGION:
-                u = self.first_surrounding_zone
-            else:
-                l = self.first_surrounding_zone
         if self._values[key].ndim == 1: # If not a compound (i.e., matrix)
             if generation:  # Return values for purpose zones
-                return self._values[key][l:u].values
+                return self._values[key][bounds].values
             else:  # Return values for all zones
                 return self._values[key].values
         else:  # Return matrix (purpose zones -> all zones)
-            return self._values[key][l:u, :]
+            return self._values[key][bounds, :]
 
 
 class BaseZoneData(ZoneData):

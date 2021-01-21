@@ -28,6 +28,8 @@ class LogitModel:
         self.resultdata = resultdata
         self.purpose = purpose
         self.bounds = purpose.bounds
+        self.lbounds = purpose.lbounds
+        self.ubounds = purpose.ubounds
         self.zone_data = zone_data
         self.dest_exps = {}
         self.mode_exps = {}
@@ -109,13 +111,12 @@ class LogitModel:
         try: # If only one parameter
             utility += b
         except ValueError: # Separate params for cap region and surrounding
-            k = self.zone_data.first_surrounding_zone
             if utility.ndim == 1: # 1-d array calculation
-                utility[:k] += b[0]
-                utility[k:] += b[1]
+                utility[self.lbounds] += b[0]
+                utility[self.ubounds] += b[1]
             else: # 2-d matrix calculation
-                utility[:k, :] += b[0]
-                utility[k:, :] += b[1]
+                utility[self.lbounds, :] += b[0]
+                utility[self.ubounds, :] += b[1]
     
     def _add_impedance(self, utility, impedance, b):
         """Adds simple linear impedances to utility.
@@ -137,9 +138,8 @@ class LogitModel:
             try: # If only one parameter
                 utility += b[i] * impedance[i]
             except ValueError: # Separate params for cap region and surrounding
-                k = self.zone_data.first_surrounding_zone
-                utility[:k, :] += b[i][0] * impedance[i][:k, :]
-                utility[k:, :] += b[i][1] * impedance[i][k:, :]
+                utility[self.lbounds, :] += b[i][0] * impedance[i][self.lbounds, :]
+                utility[self.ubounds, :] += b[i][1] * impedance[i][self.ubounds, :]
         return utility
 
     def _add_log_impedance(self, exps, impedance, b):
@@ -167,9 +167,10 @@ class LogitModel:
             try: # If only one parameter
                 exps *= numpy.power(impedance[i] + 1, b[i])
             except ValueError: # Separate params for cap region and surrounding
-                k = self.zone_data.first_surrounding_zone
-                exps[:k, :] *= numpy.power(impedance[i][:k, :] + 1, b[i][0])
-                exps[k:, :] *= numpy.power(impedance[i][k:, :] + 1, b[i][1])
+                exps[self.lbounds, :] *= numpy.power(
+                    impedance[i][self.lbounds, :] + 1, b[i][0])
+                exps[self.ubounds, :] *= numpy.power(
+                    impedance[i][self.ubounds, :] + 1, b[i][1])
         return exps
     
     def _add_zone_util(self, utility, b, generation=False):
@@ -194,17 +195,14 @@ class LogitModel:
             try: # If only one parameter
                 utility += b[i] * zdata.get_data(i, self.bounds, generation)
             except ValueError: # Separate params for cap region and surrounding
-                k = self.zone_data.first_surrounding_zone
-                data_capital_region = zdata.get_data(
-                    i, self.bounds, generation, zdata.CAPITAL_REGION)
-                data_surrounding = zdata.get_data(
-                    i, self.bounds, generation, zdata.SURROUNDING_AREA)
+                data_cap_region = zdata.get_data(i, self.lbounds, generation)
+                data_surrounding = zdata.get_data(i, self.ubounds, generation)
                 if utility.ndim == 1: # 1-d array calculation
-                    utility[:k] += b[i][0] * data_capital_region
-                    utility[k:] += b[i][1] * data_surrounding
+                    utility[self.lbounds] += b[i][0] * data_cap_region
+                    utility[self.ubounds] += b[i][1] * data_surrounding
                 else: # 2-d matrix calculation
-                    utility[:k, :] += b[i][0] * data_capital_region
-                    utility[k:, :] += b[i][1] * data_surrounding
+                    utility[self.lbounds, :] += b[i][0] * data_cap_region
+                    utility[self.ubounds, :] += b[i][1] * data_surrounding
         return utility
     
     def _add_sec_zone_util(self, utility, b, orig=None, dest=None):

@@ -36,17 +36,23 @@ class Purpose:
         self.sources = []
         if self.area == "metropolitan":
             l = 0
+            m = zone_data.first_surrounding_zone
             u = zone_data.first_peripheral_zone
         if self.area == "peripheral":
             l = zone_data.first_peripheral_zone
+            m = None
             u = zone_data.nr_zones
         if self.area == "all":
             l = 0
+            m = zone_data.first_surrounding_zone
             u = zone_data.nr_zones
         if self.area == "external":
             l = zone_data.first_external_zone
+            m = None
             u = None
         self.bounds = slice(l, u)
+        self.lbounds = slice(l, m)
+        self.ubounds = slice(m, u)
         self.zone_data = zone_data
         self.resultdata = resultdata
         self.model = None
