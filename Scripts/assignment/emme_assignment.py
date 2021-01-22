@@ -89,16 +89,18 @@ class EmmeAssignmentModel(AssignmentModel):
             else:
                 tag = ""
             id_hundred = 100*self.time_periods[tp] + self.first_matrix_id
-            for ass_class in self.assignment_periods[tp].demand_mtx:
-                mtx = self.assignment_periods[tp].demand_mtx[ass_class]
+            demand_mtx = self.assignment_periods[self.time_periods[tp]].demand_mtx
+            for ass_class in demand_mtx:
+                mtx = demand_mtx[ass_class]
                 mtx["id"] = "mf{}".format(id_hundred + mtx["id"])
                 self.emme_project.create_matrix(
                     matrix_id=mtx["id"],
                     matrix_name="demand_{}_{}".format(ass_class, tag),
                     matrix_description="{} {}".format(mtx["description"], tag),
                     default_value=0, overwrite=True)
-            for mtx_type in self.assignment_periods[tp].result_mtx:
-                mtx = self.assignment_periods[tp].result_mtx[mtx_type]
+            result_mtx = self.assignment_periods[self.time_periods[tp]].result_mtx
+            for mtx_type in result_mtx:
+                mtx = result_mtx[mtx_type]
                 for ass_class in mtx:
                     mtx[ass_class]["id"] = "mf{}".format(
                         id_hundred + mtx[ass_class]["id"])
@@ -110,8 +112,8 @@ class EmmeAssignmentModel(AssignmentModel):
                         default_value=999999, overwrite=True)
         self.create_attributes(self.bike_scenario, param.bike_attributes)
         self.create_attributes(self.day_scenario, param.emme_attributes)
-        for tp in self.assignment_periods:
-            self.assignment_periods[tp].prepare()
+        for ap in self.assignment_periods:
+            ap.prepare()
 
     @property
     def zone_numbers(self):
@@ -274,6 +276,14 @@ class EmmeAssignmentModel(AssignmentModel):
             for transit_class in param.transit_classes:
                 idx = self.assignment_periods[self.time_periods[tp]].result_mtx["cost"][transit_class]["id"]
                 emmebank.matrix(idx).set_numpy_data(cost)
+
+    def _copy_matrix(self, from_mtx, mtx_type, ass_class, assignment_period):
+        self.emme_project.copy_matrix(
+            from_mtx, assignment_period.result_mtx[mtx_type][ass_class]["id"],
+            "{}_{}_{}".format(mtx_type, ass_class, assignment_period.name),
+            "{} {}".format(
+                assignment_period.result_mtx[mtx_type][ass_class]["description"],
+                assignment_period.name))
 
     def auto_link_24h(self, attr):
         """ 
