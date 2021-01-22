@@ -28,7 +28,8 @@ class ModelTest(unittest.TestCase):
         results_path = os.path.join(TEST_DATA_PATH, "Results")
         model = ModelSystem(zone_data_path, base_zone_data_path, base_matrices_path, results_path, ass_model, "test")
         impedance = model.assign_base_demand()
-        for tp in ass_model.emme_scenarios:
+        for ap in ass_model.assignment_periods:
+            tp = ap.name
             print("Validating impedance")
             self.assertEqual(3, len(impedance[tp]))
             self.assertIsNotNone(impedance[tp]["time"])
@@ -38,7 +39,7 @@ class ModelTest(unittest.TestCase):
         print("Adding demand and assigning")
         impedance = model.run_iteration(impedance)
 
-        self.assertEquals(len(ass_model.emme_scenarios), len(impedance))
+        self.assertEquals(len(ass_model.assignment_periods), len(impedance))
         self._validate_impedances(impedance["aht"])
         self._validate_impedances(impedance["pt"])
         self._validate_impedances(impedance["iht"])
