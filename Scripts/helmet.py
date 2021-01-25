@@ -199,7 +199,7 @@ if __name__ == "__main__":
         dest="iterations",
         type=int,
         default=config.ITERATION_COUNT,
-        help="Number of traffic assignment iterations to run (each re-using previously calculated impedance)"),
+        help="Number of demand model iterations to run (each using re-calculated impedance from traffic and transit assignment)."),
     parser.add_argument(
         "--use-fixed-transit-cost",
         dest="use_fixed_transit_cost",

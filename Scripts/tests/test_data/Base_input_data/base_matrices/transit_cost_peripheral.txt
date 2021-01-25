@@ -1,0 +1,3 @@
+		Helsinki	Espoo	Salo	Raasepori
+Salo		1		1	1	1
+Raasepori	1		1	1	1

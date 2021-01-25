@@ -112,6 +112,7 @@ class TransitSpecification:
             mtx_results_spec = {
                 "type": "EXTENDED_TRANSIT_MATRIX_RESULTS",
                 "total_impedance": self.result_mtx["time"][ass_class]["id"],
+                "total_travel_time": self.result_mtx["trip_part"][ass_class + "_total_time"]["id"],
                 "actual_first_waiting_times": self.result_mtx["trip_part"][ass_class + "_fw_time"]["id"],
                 "actual_total_waiting_times": self.result_mtx["trip_part"][ass_class + "_tw_time"]["id"],
                 "by_mode_subset": {

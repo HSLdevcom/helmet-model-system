@@ -167,8 +167,6 @@ class ModelSystem:
         with self.basematrices.open("demand", "aht", self.ass_model.zone_numbers) as mtx:
             base_demand = {ass_class: mtx[ass_class] for ass_class in param.transport_classes}
         self.ass_model.assign("aht", base_demand, iteration="init")
-        with self.basematrices.open("cost", "peripheral") as peripheral_mtx:
-            peripheral_cost = numpy.array(peripheral_mtx._file["transit"])
         if use_fixed_transit_cost:
             log.info("Using fixed transit cost matrix")
             with self.resultmatrices.open("cost", "aht") as aht_mtx:
@@ -177,7 +175,9 @@ class ModelSystem:
             log.info("Calculating transit cost")
             fixed_cost = None
         self.ass_model.calc_transit_cost(
-            self.zdata_forecast.transit_zone, peripheral_cost, fixed_cost)
+            self.zdata_forecast.transit_zone,
+            self.basematrices.peripheral_transit_cost(self.zdata_base),
+            fixed_cost)
 
         # Perform traffic assignment and get result impedance, 
         # for each time period
@@ -270,7 +270,9 @@ class ModelSystem:
                 "origins_shares.txt", mode)
             mode_share[mode] = trip_sum[mode].sum() / sum_all.sum()
         self.mode_share.append(mode_share)
-
+        # Save demand matrices to files
+        for tp in self.emme_scenarios:
+            self._save_demand_to_omx(tp)
         # Calculate and return traffic impedance
         for tp in self.emme_scenarios:
             log.info("Assigning period " + tp)
@@ -280,6 +282,7 @@ class ModelSystem:
             if tp == "aht":
                 self._update_ratios(impedance[tp], tp)
             if iteration=="last":
+                impedance[tp]["time"]["transit_uncongested"] = previous_iter_impedance[tp]["time"]["transit_work"]
                 self._save_to_omx(impedance[tp], tp)
         if iteration=="last":
             self.ass_model.aggregate_results(self.resultdata)
@@ -289,12 +292,15 @@ class ModelSystem:
         self.resultdata.flush()
         return impedance
 
-    def _save_to_omx(self, impedance, tp):
+    def _save_demand_to_omx(self, tp):
         zone_numbers = self.ass_model.zone_numbers
         with self.resultmatrices.open("demand", tp, zone_numbers, 'w') as mtx:
             for ass_class in self.dtm.demand[tp]:
                 mtx[ass_class] = self.dtm.demand[tp][ass_class]
             log.info("Saved demand matrices for " + str(tp))
+
+    def _save_to_omx(self, impedance, tp):
+        zone_numbers = self.ass_model.zone_numbers
         for mtx_type in impedance:
             with self.resultmatrices.open(mtx_type, tp, zone_numbers, 'w') as mtx:
                 for ass_class in impedance[mtx_type]:
