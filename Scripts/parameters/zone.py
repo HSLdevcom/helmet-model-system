@@ -1,5 +1,5 @@
 # Share of demand that will be simulated in agent model
-agent_demand_fraction = 0.1
+agent_demand_fraction = 1.0
 
 ### DEMAND MODEL REFERENCES ###
 
