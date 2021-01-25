@@ -88,7 +88,7 @@ class Person:
                     # was already recycled, it should be recycled as well
                     if tour._source is self.tours[-1]:
                         self.tours.append(tour)
-                except AttributeError:
+                except (AttributeError, IndexError):
                     # Throw away old tour
                     pass
         # Tours that were not recycled, will be created
