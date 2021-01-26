@@ -39,6 +39,9 @@ class MockAssignmentModel(AssignmentModel):
     def prepare_network(self):
         pass
 
+    def init_assign(self, demand):
+        pass
+
 
 class MockPeriod:
     def __init__(self, name, matrices):

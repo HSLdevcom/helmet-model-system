@@ -12,16 +12,15 @@ from datatypes.path_analysis import PathAnalysis
 
 
 class AssignmentPeriod:
-    def __init__(self, name, assignment_model, emme_scenario, emme_context,
+    def __init__(self, name, emme_scenario, bike_scenario, emme_context,
                  demand_mtx=param.emme_demand_mtx,
-                 result_mtx=param.emme_result_mtx,
-                 save_matrices=False):
+                 result_mtx=param.emme_result_mtx, save_matrices=False):
         self.name = name
-        self.assignment_model = assignment_model
         self.emme_scenario = emme_context.modeller.emmebank.scenario(
             emme_scenario)
+        self.bike_scenario = emme_context.modeller.emmebank.scenario(
+            bike_scenario)
         self.emme_project = emme_context
-        self.save_matrices = save_matrices
         if save_matrices:
             self.demand_mtx = copy.deepcopy(demand_mtx)
             self.result_mtx = copy.deepcopy(result_mtx)
@@ -123,7 +122,7 @@ class AssignmentPeriod:
                 mtxs["cost"][ass_cl] += self.dist_unit_cost * mtxs["dist"][ass_cl]
         return mtxs
 
-    def calc_transit_cost(self, fares, peripheral_cost):
+    def calc_transit_cost(self, fares, peripheral_cost, mapping):
         """Calculate transit zone cost matrix.
         
         Perform multiple transit assignments.
@@ -147,12 +146,13 @@ class AssignmentPeriod:
                     Transit fare or name of municipality
         peripheral_cost : numpy 2-d matrix
             Fixed cost matrix for peripheral zones
+        mapping : dict
+            Dictionary of zone numbers and corresponding indices
         """
         # Move transfer penalty to boarding penalties,
         # a side effect is that it then also affects first boarding
         self._calc_boarding_penalties(5)
         has_visited = {}
-        mapping = self.assignment_model.mapping
         network = self.emme_scenario.get_network()
         transit_zones = set()
         for node in network.nodes():
@@ -200,8 +200,9 @@ class AssignmentPeriod:
             is_inside = ~goes_outside
             if zone_combination in fares["exclusive"]:
                 # Calculate fares exclusive for municipality citizens
-                zn = self.assignment_model.zone_numbers
-                exclusion = pandas.DataFrame(is_inside, zn, zn)
+                exclusion = pandas.DataFrame(
+                    is_inside, self.emme_scenario.zone_numbers,
+                    self.emme_scenario.zone_numbers)
                 municipality = fares["exclusive"][zone_combination]
                 inclusion = zone_param.municipalities[municipality]
                 exclusion.loc[:inclusion[0]-1] = False
@@ -212,7 +213,7 @@ class AssignmentPeriod:
             cost[is_inside] = numpy.minimum(cost[is_inside], zone_price)
         # Replace fare for peripheral zones with fixed matrix
         bounds = zone_param.areas["peripheral"]
-        zn = pandas.Index(self.assignment_model.zone_numbers)
+        zn = pandas.Index(self.emme_scenario.zone_numbers)
         l, u = zn.slice_locs(bounds[0], bounds[1])
         cost[l:u, :u] = peripheral_cost
         cost[:u, l:u] = peripheral_cost.T
@@ -284,7 +285,7 @@ class AssignmentPeriod:
         """
         matrices = dict.fromkeys(self.result_mtx[mtx_type].keys())
         if not is_last_iteration:
-            for key in ("van", "truck", "trailer_truck"):
+            for key in param.freight_classes:
                 del matrices[key]
         for subtype in matrices:
             matrices[subtype] = self.get_matrix(mtx_type, subtype)
@@ -462,7 +463,7 @@ class AssignmentPeriod:
 
     def _assign_bikes(self, length_mat_id, length_for_links):
         """Perform bike traffic assignment for one scenario."""
-        scen = self.assignment_model.bike_scenario
+        scen = self.bike_scenario
         function_file = os.path.join(self.emme_project.path, param.func_bike)  # TODO refactor paths out from here
         self.emme_project.process_functions(function_file)
         spec = self.bike_spec
@@ -493,14 +494,6 @@ class AssignmentPeriod:
         log.info("Bike assignment started...")
         self.emme_project.bike_assignment(
             specification=spec, scenario=scen)
-        if self.save_matrices:
-            for ap in self.assignment_model.assignment_periods:
-                if ap.name != self.name:
-                    self.assignment_model._copy_matrix(
-                        spec["classes"][0]["results"]["od_travel_times"]["shortest_paths"],
-                        "time", "bike", ap)
-                    self.assignment_model._copy_matrix(
-                        length_mat_id, "dist", "bike", ap)
         log.info("Bike assignment performed for scenario " + str(scen.id))
 
     def _assign_pedestrians(self):
@@ -508,15 +501,6 @@ class AssignmentPeriod:
         log.info("Pedestrian assignment started...")
         self.emme_project.pedestrian_assignment(
             specification=self.walk_spec, scenario=self.emme_scenario)
-        if self.save_matrices:
-            for ap in self.assignment_model.assignment_periods:
-                if ap.name != self.name:
-                    self.assignment_model._copy_matrix(
-                        self.walk_spec["od_results"]["transit_times"],
-                        "time", "walk", ap)
-                    self.assignment_model._copy_matrix(
-                        self.walk_spec["strategy_analysis"]["results"]["od_values"],
-                        "dist", "walk", ap)
         log.info("Pedestrian assignment performed for scenario " + str(self.emme_scenario.id)) 
 
     def _calc_extra_wait_time(self):
@@ -583,8 +567,7 @@ class AssignmentPeriod:
         log.info("Transit assignment started...")
         # Here we assign all transit in one class, multi-class assignment is
         # performed in last iteration (congested assignment)
-        spec = TransitSpecification(
-            "transit_work", self.demand_mtx, self.result_mtx)
+        spec = self._transit_specs["transit_work"]
         self.emme_project.transit_assignment(
             specification=spec.transit_spec, scenario=self.emme_scenario,
             save_strategies=True)
