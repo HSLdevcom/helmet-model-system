@@ -56,9 +56,9 @@ class EmmeAssignmentModel(AssignmentModel):
         self.time_periods = ["aht", "pt", "iht"]
         self.assignment_periods = [AssignmentPeriod(
                 tp, first_scenario_id + i + 2, first_scenario_id,
-                emme_context, save_matrices=True)
+                emme_context, save_matrices=save_matrices)
             for i, tp in enumerate(self.time_periods)]
-        if save_matrices:
+        if not save_matrices:
             # The matrices need to be created in Emme for only one time period
             self.time_periods = ["aht"]
             self.first_matrix_id = 0
@@ -84,7 +84,7 @@ class EmmeAssignmentModel(AssignmentModel):
                     matrix_name="demand_{}_{}".format(ass_class, tag),
                     matrix_description="{} {}".format(mtx["description"], tag),
                     default_value=0, overwrite=True)
-            result_mtx = self.assignment_periods[id_hundred].result_mtx
+            result_mtx = self.assignment_periods[i].result_mtx
             for mtx_type in result_mtx:
                 mtx = result_mtx[mtx_type]
                 for ass_class in mtx:
@@ -265,10 +265,12 @@ class EmmeAssignmentModel(AssignmentModel):
                 fares, peripheral_cost, self.mapping)
         else:
             cost = default_cost
-        for tp in self.time_periods:
+        for ap in self.assignment_periods:
             for transit_class in param.transit_classes:
-                idx = self.assignment_periods[self.time_periods[tp]].result_mtx["cost"][transit_class]["id"]
+                idx = ap.result_mtx["cost"][transit_class]["id"]
                 emmebank.matrix(idx).set_numpy_data(cost)
+            if not self.save_matrices:
+                break
 
     def _copy_matrix(self, mtx_type, ass_class, ass_period_1, ass_period_2):
         from_mtx = ass_period_1.result_mtx[mtx_type][ass_class]
