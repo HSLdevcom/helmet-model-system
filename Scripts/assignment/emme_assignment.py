@@ -51,17 +51,12 @@ class EmmeAssignmentModel(AssignmentModel):
     def __init__(self, emme_context, first_scenario_id,
                  save_matrices=False, first_matrix_id=100):
         self.save_matrices = save_matrices
-        self.first_matrix_id = first_matrix_id
+        self.first_matrix_id = first_matrix_id if save_matrices else 0
         self.emme_project = emme_context
-        self.time_periods = ["aht", "pt", "iht"]
         self.assignment_periods = [AssignmentPeriod(
                 tp, first_scenario_id + i + 2, first_scenario_id,
                 emme_context, save_matrices=save_matrices)
-            for i, tp in enumerate(self.time_periods)]
-        if not save_matrices:
-            # The matrices need to be created in Emme for only one time period
-            self.time_periods = ["aht"]
-            self.first_matrix_id = 0
+            for i, tp in enumerate(["aht", "pt", "iht"])]
         # default value for dist, modelsystem sets new from zonedata
         self.dist_unit_cost = param.dist_unit_cost
         self.day_scenario = self.emme_project.modeller.emmebank.scenario(
@@ -69,24 +64,19 @@ class EmmeAssignmentModel(AssignmentModel):
 
     def prepare_network(self):
         """Create matrices, extra attributes and calc background variables."""
-        for i, tp in enumerate(self.time_periods):
-            if self.save_matrices:
-                tag = tp
-            else:
-                tag = ""
+        for i, ap in enumerate(self.assignment_periods):
+            tag = ap.name if self.save_matrices else ""
             id_hundred = 100*i + self.first_matrix_id
-            demand_mtx = self.assignment_periods[i].demand_mtx
-            for ass_class in demand_mtx:
-                mtx = demand_mtx[ass_class]
+            for ass_class in ap.demand_mtx:
+                mtx = ap.demand_mtx[ass_class]
                 mtx["id"] = "mf{}".format(id_hundred + mtx["id"])
                 self.emme_project.create_matrix(
                     matrix_id=mtx["id"],
                     matrix_name="demand_{}_{}".format(ass_class, tag),
                     matrix_description="{} {}".format(mtx["description"], tag),
                     default_value=0, overwrite=True)
-            result_mtx = self.assignment_periods[i].result_mtx
-            for mtx_type in result_mtx:
-                mtx = result_mtx[mtx_type]
+            for mtx_type in ap.result_mtx:
+                mtx = ap.result_mtx[mtx_type]
                 for ass_class in mtx:
                     mtx[ass_class]["id"] = "mf{}".format(
                         id_hundred + mtx[ass_class]["id"])
@@ -96,6 +86,8 @@ class EmmeAssignmentModel(AssignmentModel):
                         matrix_description="{} {}".format(
                             mtx[ass_class]["description"], tag),
                         default_value=999999, overwrite=True)
+            if not self.save_matrices:
+                break
         self.create_attributes(
             self.assignment_periods[0].bike_scenario, param.bike_attributes)
         self.create_attributes(self.day_scenario, param.emme_attributes)
