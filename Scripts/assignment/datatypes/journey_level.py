@@ -2,7 +2,7 @@ import parameters.assignment as param
 
 
 class JourneyLevel:
-    def __init__(self, boarded, ass_class, count_zone_boardings=False, is_last_iteration=False):
+    def __init__(self, boarded, ass_class, count_zone_boardings=False):
         # Definition of transition rules: all modes are allowed
         transitions = []
         for mode in param.transit_modes:
@@ -27,16 +27,10 @@ class JourneyLevel:
         if boarded:
             self.spec["description"] = "Boarded at least once"
             self.spec["destinations_reachable"] = True
-            if is_last_iteration:
-                self.spec["boarding_cost"]["global"] = {
-                    "penalty": param.transfer_penalty[ass_class],
-                    "perception_factor": 1,
-                }
-            else:
-                self.spec["boarding_cost"]["global"] = {
-                    "penalty": param.transfer_penalty["transit"],
-                    "perception_factor": 1,
-                }
+            self.spec["boarding_cost"]["global"] = {
+                "penalty": param.transfer_penalty["transit"],
+                "perception_factor": 1,
+            }
         else:
             self.spec["description"] = "Not boarded yet"
             self.spec["destinations_reachable"] = False

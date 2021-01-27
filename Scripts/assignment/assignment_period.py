@@ -92,7 +92,7 @@ class AssignmentPeriod:
             self._assign_cars(param.stopping_criteria_fine)
             self._calc_boarding_penalties(is_last_iteration=True)
             self._calc_extra_wait_time()
-            self._assign_congested_transit(param.transit_classes)
+            self._assign_congested_transit()
             self._assign_bikes(self.result_mtx["dist"]["bike"]["id"], "all")
         else:
             raise ValueError("Iteration number not valid")
@@ -575,24 +575,26 @@ class AssignmentPeriod:
         log.info("Transit assignment performed for scenario {}".format(
             str(self.emme_scenario.id)))
 
-    def _assign_congested_transit(self, transit_classes):
+    def _assign_congested_transit(self):
         """Perform congested transit assignment for one scenario."""
         log.info("Congested transit assignment started...")
-        tcs = [TransitSpecification(
-            tc, self.demand_mtx, self.result_mtx,
-            is_last_iteration=True) for tc in transit_classes]
+        specs = self._transit_specs
+        for tc in specs:
+            specs[tc].transit_spec["journey_levels"][1]["boarding_cost"]["global"]["penalty"] = param.transfer_penalty[tc]
         self.emme_project.congested_assignment(
-            transit_assignment_spec=[spec.transit_spec for spec in tcs],
-            class_names=transit_classes,
+            transit_assignment_spec=[specs[tc].transit_spec for tc in specs],
+            class_names=specs.keys(),
             congestion_function=param.trass_func,
             stopping_criteria=param.trass_stop,
             log_worksheets=False, scenario=self.emme_scenario,
             save_strategies=True)
         # save results for both classes
-        for name, spec in zip(transit_classes, tcs):
+        for tc in specs:
             self.emme_project.matrix_results(
-                spec.transit_result_spec, scenario=self.emme_scenario, class_name=name)
+                specs[tc].transit_result_spec, scenario=self.emme_scenario,
+                class_name=tc)
             self.emme_project.network_results(
-                spec.ntw_results_spec, scenario=self.emme_scenario, class_name=name)
+                specs[tc].ntw_results_spec, scenario=self.emme_scenario,
+                class_name=tc)
         log.info("Congested transit assignment performed for scenario {}".format(
             str(self.emme_scenario.id)))
