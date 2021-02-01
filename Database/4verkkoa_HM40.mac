@@ -346,7 +346,5 @@ reports=
 ~#
 ~:LOPPU
 
-~/ *** 4verkkoa_HM40_TE.mac %t1% %t2% %t3% %t4% %t5% %t6% %t7% %t8% ajettu ja verkot paivitetty
+~/ *** 4verkkoa_HM40.mac %t1% %t2% %t3% %t4% %t5% %t6% %t7% %t8% ajettu ja verkot paivitetty
 ~/ *** Tarkistusten tuloksia on tiedostossa %t9%
-
->>>>>>> 9b3abc3... new versions of input macros
