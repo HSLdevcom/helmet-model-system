@@ -89,7 +89,7 @@ def main(args):
         dbase_path = os.path.join(os.path.dirname(emme_project_path), "database")
         filepath = os.path.join(dbase_path, "STRAT_s{}*")
         dirpath = os.path.join(dbase_path, "STRATS_s{}", "*")
-        scenario_ids = range(args.first_scenario_id, args.first_scenario_id+4)
+        scenario_ids = range(args.first_scenario_id, args.first_scenario_id+5)
         for s in scenario_ids:
             strategy_files = glob(filepath.format(s)) + glob(dirpath.format(s))
             for f in strategy_files:
