@@ -179,40 +179,34 @@ class EmmeAssignmentModel(AssignmentModel):
             "tram": "tp",
             "other": ""
         }
-        kms = dict.fromkeys(param.freight_classes + ["car"])
-        for ass_class in kms:
-            kms[ass_class] = dict.fromkeys(vdfs, 0)
+        kms = {ass_class: dict.fromkeys(vdfs, 0)
+            for ass_class in param.link_volumes}
+        network = self.day_scenario.get_network()
+        for link in network.links():
+            if link.volume_delay_func <= 5:
+                vdf = link.volume_delay_func
+            else:
+                # Links with bus lane
+                vdf = link.volume_delay_func - 5
+            if vdf in vdfs:
+                for ass_class in kms:
+                    kms[ass_class][vdf] += (link[param.link_volumes[ass_class]]
+                                            * link.length)
         transit_dists = dict.fromkeys(transit_modes, 0)
         transit_times = dict.fromkeys(transit_modes, 0)
         for ap in self.assignment_periods:
             network = ap.emme_scenario.get_network()
-            for link in network.links():
-                if link.volume_delay_func <= 5:
-                    vdf = link.volume_delay_func
-                else:
-                    # Links with bus lane
-                    vdf = link.volume_delay_func - 5
-                if vdf in vdfs:
-                    car_vol = link.auto_volume
-                    for ass_class in param.freight_classes:
-                        kms[ass_class][vdf] += (param.volume_factors[ass_class][ap.name]
-                                                * link[param.link_volumes[ass_class]]
-                                                * link.length)
-                        car_vol -= link[param.link_volumes[ass_class]]
-                    kms["car"][vdf] += (param.volume_factors["car"][ap.name]
-                                        * car_vol * link.length)
             for line in network.transit_lines():
                 mode = "other"
                 for modes in transit_modes:
                     if line.mode.id in transit_modes[modes]:
                         mode = modes
                 for segment in line.segments():
-                    transit_dists[mode] += (param.volume_factors["bus"][ap.name]
-                                            * (60 / segment.line.headway)
-                                            * segment.link.length)
-                    transit_times[mode] += (param.volume_factors["bus"][ap.name]
-                                            * (60 / segment.line.headway)
-                                            * segment["@base_timtr"])
+                    if 0 < segment.line.headway < 900:
+                        freq = (param.volume_factors["bus"][ap.name]
+                                * (60 / segment.line.headway))
+                        transit_dists[mode] += freq * segment.link.length
+                        transit_times[mode] += freq * segment["@base_timtr"]
         for ass_class in kms:
             resultdata.print_data(
                 kms[ass_class].values(), "vehicle_kms.txt",
