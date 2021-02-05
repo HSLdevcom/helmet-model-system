@@ -91,6 +91,7 @@ class ZoneData:
         self["tertiary_education"] = schooldata["tertiary"]
         self["zone_area"] = landdata["builtar"]
         self.share["share_detached_houses"] = landdata["detach"]
+        self["perc_detached_houses_sqrt"] = (100*landdata["detach"]) ** 0.5
         self["helsinki"] = pandas.Series(0, self.zone_numbers)
         self["helsinki"].loc[zone_interval("municipalities", "Helsinki")] = 1
         self["cbd"] = self._area_dummy("helsinki_cbd")

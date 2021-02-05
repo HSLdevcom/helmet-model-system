@@ -58,6 +58,7 @@ class ModelTest(unittest.TestCase):
         model = AgentModelSystem(zone_data_path, base_zone_data_path, base_matrices_path, results_path, ass_model, "test")
         impedance = model.assign_base_demand()
         impedance = model.run_iteration(impedance)
+        impedance = model.run_iteration(impedance, "last")
 
     def _validate_impedances(self, impedances):
         self.assertIsNotNone(impedances)

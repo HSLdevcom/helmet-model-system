@@ -117,7 +117,8 @@ class DemandModel:
                     if group != -1:
                         # Group -1 is under-7-year-olds and they have weights[0]
                         person = Person(
-                            zone_number, self.age_groups[group], self.gm, self.cm)
+                            zone_number, self.age_groups[group], self.gm,
+                            self.cm, self.zone_data)
                         self.population.append(person)
 
     def generate_tours(self):

@@ -46,3 +46,11 @@ def zone_interval(division_type, name):
     return slice(
         param.__dict__[division_type][name][0],
         param.__dict__[division_type][name][1])
+
+
+class Municipality:
+    def __init__(self, municipality):
+        self.interval = param.municipalities[municipality]
+
+    def __contains__(self, zone):
+        return self.interval[0] <= zone <= self.interval[1]
