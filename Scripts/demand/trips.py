@@ -5,7 +5,7 @@ import random
 import utils.log as log
 import parameters.zone as param
 from datatypes.purpose import TourPurpose, SecDestPurpose
-from models import logit
+from models import logit, linear
 from datatypes.person import Person
 
 
@@ -90,8 +90,11 @@ class DemandModel:
         list
             Person
         """
+        bounds = slice(0, self.zone_data.first_peripheral_zone)
+        self.incmod = linear.IncomeModel(
+            self.zone_data, bounds, self.age_groups, self.resultdata)
         self.population = []
-        zones = self.zone_data.zone_numbers[:self.zone_data.first_peripheral_zone]
+        zones = self.zone_data.zone_numbers[bounds]
         for zone_number in zones:
             weights = [1]
             for age_group in self.age_groups:
@@ -118,7 +121,7 @@ class DemandModel:
                         # Group -1 is under-7-year-olds and they have weights[0]
                         person = Person(
                             zone_number, self.age_groups[group], self.gm,
-                            self.cm, self.zone_data)
+                            self.cm, self.incmod)
                         self.population.append(person)
 
     def generate_tours(self):

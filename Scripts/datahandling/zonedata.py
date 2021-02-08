@@ -92,12 +92,11 @@ class ZoneData:
         self["zone_area"] = landdata["builtar"]
         self.share["share_detached_houses"] = landdata["detach"]
         self["perc_detached_houses_sqrt"] = (100*landdata["detach"]) ** 0.5
-        self["helsinki"] = pandas.Series(0, self.zone_numbers)
-        self["helsinki"].loc[zone_interval("municipalities", "Helsinki")] = 1
-        self["cbd"] = self._area_dummy("helsinki_cbd")
-        self["helsinki_other"] = self._area_dummy("helsinki_other")
-        self["espoo_vant_kau"] = self._area_dummy("espoo_vant_kau")
-        self["surrounding"] = self._area_dummy("surrounding")
+        self["helsinki"] = self.dummy("municipalities", "Helsinki")
+        self["cbd"] = self.dummy("areas", "helsinki_cbd")
+        self["helsinki_other"] = self.dummy("areas", "helsinki_other")
+        self["espoo_vant_kau"] = self.dummy("areas", "espoo_vant_kau")
+        self["surrounding"] = self.dummy("areas", "surrounding")
         self["shops_cbd"] = self["cbd"] * self["shops"]
         self["shops_elsewhere"] = (1-self["cbd"]) * self["shops"]
         # Create diagonal matrix with zone area
@@ -122,9 +121,9 @@ class ZoneData:
         self["shops_own"] = home_municipality.values * shop.values
         self["shops_other"] = (1-home_municipality.values) * shop.values
 
-    def _area_dummy(self, name):
-        dummy = pandas.Series(0, self.zone_numbers)
-        dummy.loc[zone_interval("areas", name)] = 1
+    def dummy(self, division_type, name, bounds=slice(None)):
+        dummy = pandas.Series(0, self.zone_numbers[bounds])
+        dummy.loc[zone_interval(division_type, name)] = 1
         return dummy
 
     def __getitem__(self, key):
