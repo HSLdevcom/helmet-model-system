@@ -2,7 +2,6 @@ import numpy
 import random
 
 from datatypes.tour import Tour
-from utils.zone_interval import Municipality
 from parameters.income import income as param
 
 
