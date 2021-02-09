@@ -9,9 +9,10 @@ import parameters.zone as zone_param
 from datatypes.car_specification import CarSpecification
 from datatypes.transit import TransitSpecification
 from datatypes.path_analysis import PathAnalysis
+from abstract_assignment import Period
 
 
-class AssignmentPeriod:
+class AssignmentPeriod(Period):
     def __init__(self, name, emme_scenario, bike_scenario, emme_context,
                  demand_mtx=param.emme_demand_mtx,
                  result_mtx=param.emme_result_mtx, save_matrices=False):
@@ -66,7 +67,7 @@ class AssignmentPeriod:
                 Assignment class (car_work/transit/...) : numpy 2-d matrix
         """
         log.info("Assignment starts...")
-        self.set_emmebank_matrices(matrices, iteration=="last")
+        self._set_emmebank_matrices(matrices, iteration=="last")
         if iteration=="init":
             self._assign_pedestrians()
             self._assign_bikes(self.result_mtx["dist"]["bike"]["id"], "all")
@@ -98,7 +99,7 @@ class AssignmentPeriod:
             raise ValueError("Iteration number not valid")
 
         impedance_types = ("time", "dist", "cost")
-        mtxs = {imp_type: self.get_emmebank_matrices(imp_type, iteration=="last")
+        mtxs = {imp_type: self._get_emmebank_matrices(imp_type, iteration=="last")
             for imp_type in impedance_types}
         # fix the emme path analysis results (dist and cost zero if path not found)
         for mtx_type in mtxs:
@@ -179,7 +180,7 @@ class AssignmentPeriod:
                 save_strategies=True)
             self.emme_project.matrix_results(
                 spec.transit_result_spec, self.emme_scenario)
-            nr_visits = self.get_matrix(
+            nr_visits = self._get_matrix(
                 "trip_part", "transit_work_board_cost")
             # If the number of visits is less than 1, there seems to
             # be an easy way to avoid visiting this transit zone
@@ -218,14 +219,14 @@ class AssignmentPeriod:
         cost[l:u, :u] = peripheral_cost
         cost[:u, l:u] = peripheral_cost.T
         # Calculate distance-based cost from inv-distance
-        dist = self.get_matrix("dist", "transit_work")
+        dist = self._get_matrix("dist", "transit_work")
         dist_cost = fares["start_fare"] + fares["dist_fare"]*dist
         cost[cost>=maxfare] = dist_cost[cost>=maxfare]
         # Reset boarding penalties
         self._calc_boarding_penalties()
         return cost
 
-    def set_emmebank_matrices(self, matrices, is_last_iteration):
+    def _set_emmebank_matrices(self, matrices, is_last_iteration):
         """Set matrices in emmebank.
 
         Bike matrices are added together, so that only one matrix is to be
@@ -266,7 +267,7 @@ class AssignmentPeriod:
             self.emme_project.modeller.emmebank.matrix(
                 self.demand_mtx[mtx_label]["id"]).set_numpy_data(matrix)
 
-    def get_emmebank_matrices(self, mtx_type, is_last_iteration=False):
+    def _get_emmebank_matrices(self, mtx_type, is_last_iteration=False):
         """Get all matrices of specified type.
 
         Parameters
@@ -288,10 +289,10 @@ class AssignmentPeriod:
             for key in param.freight_classes:
                 del matrices[key]
         for subtype in matrices:
-            matrices[subtype] = self.get_matrix(mtx_type, subtype)
+            matrices[subtype] = self._get_matrix(mtx_type, subtype)
         return matrices
 
-    def get_matrix(self, assignment_result_type, subtype):
+    def _get_matrix(self, assignment_result_type, subtype):
         """Get matrix with type pair (e.g., demand, car_work).
 
         Parameters
@@ -311,7 +312,7 @@ class AssignmentPeriod:
 
     def _damp(self, travel_time, fw_mtx_name):
         """Reduce the impact from first waiting time on total travel time."""
-        fwt = self.get_matrix("trip_part", fw_mtx_name)
+        fwt = self._get_matrix("trip_part", fw_mtx_name)
         wt_weight = param.waiting_time_perception_factor
         # Calculate transit travel time where first waiting time is damped
         dtt = travel_time + wt_weight*((5./3.*fwt)**0.8 - fwt)
@@ -322,9 +323,9 @@ class AssignmentPeriod:
         # Traffic assignment produces a generalized cost matrix.
         # To get travel time, monetary cost is removed from generalized cost.
         vot_inv = param.vot_inv[param.vot_classes[ass_class]]
-        gcost = self.get_matrix("gen_cost", ass_class)
-        tcost = self.get_matrix("cost", ass_class)
-        tdist = self.get_matrix("dist", ass_class)
+        gcost = self._get_matrix("gen_cost", ass_class)
+        tcost = self._get_matrix("cost", ass_class)
+        tdist = self._get_matrix("dist", ass_class)
         return gcost - vot_inv *(tcost + self.dist_unit_cost*tdist)
 
     def _calc_background_traffic(self, include_trucks=False):

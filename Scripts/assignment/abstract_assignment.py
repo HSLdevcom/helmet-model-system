@@ -12,7 +12,11 @@ class AssignmentModel:
     @abstractmethod
     def zone_numbers(self):
         pass
-    
+
+    @abstractmethod
+    def nr_zones(self):
+        pass
+
     @abstractmethod
     def calc_transit_cost(self, fares, peripheral_cost, default_cost=None):
         pass
@@ -23,4 +27,15 @@ class AssignmentModel:
     
     @abstractmethod
     def prepare_network(self):
+        pass
+
+    @abstractmethod
+    def init_assign(self, demand):
+        pass
+
+class Period:
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def assign(self):
         pass
