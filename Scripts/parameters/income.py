@@ -1,4 +1,4 @@
-income = {
+log_income = {
     "constant": 6.52186,
     "zone": {
         "perc_detached_houses_sqrt": 0.16309,
@@ -21,3 +21,4 @@ income = {
         "Hyvinkaa": -0.13207,
     },
 }
+standard_deviation = 0.39038262

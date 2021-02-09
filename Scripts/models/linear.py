@@ -154,7 +154,7 @@ class IncomeModel(LinearModel):
     """
     def __init__(self, zone_data, bounds, age_groups, resultdata):
         LinearModel.__init__(self, zone_data, bounds, resultdata)
-        self.param = parameters.income.income
+        self.param = parameters.income.log_income
         for age_group in self.param["age_dummies"]:
             age_interval = age_group.split('_')[1]
             if tuple(map(int, age_interval.split('-'))) not in age_groups:
