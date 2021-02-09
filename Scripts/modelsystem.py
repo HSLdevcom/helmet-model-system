@@ -266,9 +266,10 @@ class ModelSystem:
                 self.zdata_base.zone_numbers, mode)
             mode_share[mode] = trip_sum[mode].sum() / sum_all.sum()
         self.mode_share.append(mode_share)
-        # Save demand matrices to files
-        for tp in self.emme_scenarios:
-            self._save_demand_to_omx(tp)
+        if iteration=="last":
+            # Save demand matrices to files
+            for tp in self.emme_scenarios:
+                self._save_demand_to_omx(tp)
         # Calculate and return traffic impedance
         for tp in self.emme_scenarios:
             log.info("Assigning period " + tp)
