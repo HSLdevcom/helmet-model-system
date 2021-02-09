@@ -476,7 +476,8 @@ class AgentModelSystem(ModelSystem):
         elif nr_threads <= 0:
             nr_threads = 1
         bounds = next(iter(purpose.sources)).bounds
-        for mode in sec_dest_tours:
+        modes = purpose.modes if is_last_iteration else ["car"]
+        for mode in modes:
             threads = []
             for i in xrange(nr_threads):
                 origs = xrange(i, bounds.stop - bounds.start, nr_threads)
