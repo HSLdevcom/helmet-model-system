@@ -6,6 +6,7 @@ import models.logit as logit
 import models.generation as generation
 from datatypes.demand import Demand
 from utils.zone_interval import zone_interval
+from datatypes.histogram import TourLengthHistogram
 
 
 class Purpose:
@@ -118,7 +119,15 @@ class TourPurpose(Purpose):
             self.model = logit.ModeDestModel(
                 zone_data, self, resultdata, is_agent_model)
         self.modes = self.model.mode_choice_param.keys()
+        self.histograms = {mode: TourLengthHistogram() for mode in self.modes}
         self.sec_dest_purpose = None
+
+    def print_data(self):
+        Purpose.print_data(self)
+        for mode in self.histograms:
+            self.resultdata.print_data(
+                self.histograms[mode].histogram, "trip_lengths.txt",
+                "{}_{}".format(self.name, mode[0]))
 
     def init_sums(self):
         for mode in self.modes:
@@ -135,6 +144,20 @@ class TourPurpose(Purpose):
                 Type (time/cost/dist) : numpy 2d matrix
         """
         self.prob = self.model.calc_prob(impedance)
+        self.dist = impedance["car"]["dist"]
+
+    def calc_basic_prob(self, impedance):
+        """Calculate mode and destination probabilities.
+
+        Individual dummy variables are not included.
+
+        Parameters
+        ----------
+        impedance : dict
+            Mode (car/transit/bike/walk) : dict
+                Type (time/cost/dist) : numpy 2d matrix
+        """
+        self.model.calc_basic_prob(impedance)
         self.dist = impedance["car"]["dist"]
 
     def calc_demand(self):
@@ -157,10 +180,7 @@ class TourPurpose(Purpose):
             demand[mode] = Demand(self, mode, mtx)
             self.attracted_tours[mode] = mtx.sum(0)
             self.generated_tours[mode] = mtx.sum(1)
-            trip_lengths = self._count_trip_lengths(mtx, self.dist)
-            self.resultdata.print_data(
-                trip_lengths, "trip_lengths.txt",
-                "{}_{}".format(self.name, mode[0]))
+            self.histograms[mode].count_tour_dists(mtx, self.dist)
             aggregated_demand = self._aggregate(mtx)
             self.resultdata.print_matrix(
                 aggregated_demand, "aggregated_demand",
