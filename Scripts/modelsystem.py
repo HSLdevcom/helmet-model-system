@@ -453,6 +453,7 @@ class AgentModelSystem(ModelSystem):
                             self.travel_modes.add(mode)
                             self.dtm.add_demand(demand[mode])
                 else:
+                    self.travel_modes.update(purpose.modes)
                     purpose.init_sums()
                     purpose.model.calc_basic_prob(purpose_impedance)
         tour_probs = self.dm.generate_tour_probs()
