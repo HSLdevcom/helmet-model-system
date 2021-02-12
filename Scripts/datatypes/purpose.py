@@ -5,7 +5,7 @@ from parameters.destination_choice import secondary_destination_threshold
 import models.logit as logit
 import models.generation as generation
 from datatypes.demand import Demand
-from utils.zone_interval import zone_interval
+from utils.zone_interval import zone_interval, Aggregator
 from datatypes.histogram import TourLengthHistogram
 
 
@@ -120,6 +120,9 @@ class TourPurpose(Purpose):
                 zone_data, self, resultdata, is_agent_model)
         self.modes = self.model.mode_choice_param.keys()
         self.histograms = {mode: TourLengthHistogram() for mode in self.modes}
+        dests = self.zone_data.zone_numbers
+        origs = self.zone_numbers
+        self.aggregates = {mode: Aggregator(origs, dests) for mode in self.modes}
         self.sec_dest_purpose = None
 
     def print_data(self):
@@ -128,12 +131,16 @@ class TourPurpose(Purpose):
             self.resultdata.print_data(
                 self.histograms[mode].histogram, "trip_lengths.txt",
                 "{}_{}".format(self.name, mode[0]))
+            self.resultdata.print_matrix(
+                self.aggregates[mode].matrix, "aggregated_demand",
+                "{}_{}".format(self.name, mode))
 
     def init_sums(self):
         for mode in self.modes:
             self.generated_tours[mode] = numpy.zeros_like(self.zone_numbers)
             self.attracted_tours[mode] = numpy.zeros_like(self.zone_data.zone_numbers)
             self.histograms[mode].__init__()
+            self.aggregates[mode].init()
 
     def calc_prob(self, impedance):
         """Calculate mode and destination probabilities.
@@ -182,10 +189,7 @@ class TourPurpose(Purpose):
             self.attracted_tours[mode] = mtx.sum(0)
             self.generated_tours[mode] = mtx.sum(1)
             self.histograms[mode].count_tour_dists(mtx, self.dist)
-            aggregated_demand = self._aggregate(mtx)
-            self.resultdata.print_matrix(
-                aggregated_demand, "aggregated_demand",
-                "{}_{}".format(self.name, mode))
+            self.aggregates[mode].aggregate(mtx)
             own_zone = self.zone_data.get_data("own_zone", self.bounds)
             own_zone_demand = own_zone * mtx
             own_zone_aggr = self._aggregate(own_zone_demand)

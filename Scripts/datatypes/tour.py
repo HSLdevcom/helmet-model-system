@@ -141,6 +141,7 @@ class Tour(object):
         self.purpose.attracted_tours[self.mode][dest_idx] += 1
         self.purpose.histograms[self.mode].add(
             self.purpose.dist[orig_idx, dest_idx])
+        self.purpose.aggregates[self.mode].add(self.orig, self.dest)
         bounds = self.purpose.sec_dest_purpose.bounds
         try:
             if (bounds.start <= self.position[0] < bounds.stop
