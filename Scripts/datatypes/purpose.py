@@ -217,17 +217,6 @@ class TourPurpose(Purpose):
             aggr_mtx.loc[:, area] = tmp_mtx.loc[:, i].sum(1).values
         return aggr_mtx
 
-    def _count_trip_lengths(self, trips, dist):
-        intervals = ("0-1", "1-3", "3-5", "5-10", "10-20", "20-30",
-                     "30-40", "40-inf")
-        trip_lengths = pandas.Series(index=intervals)
-        for tl in trip_lengths.index:
-            bounds = tl.split("-")
-            l = float(bounds[0])
-            u = float(bounds[1])
-            trip_lengths[tl] = trips[(dist>=l) & (dist<u)].sum()
-        return trip_lengths
-
 
 class SecDestPurpose(Purpose):
     """Purpose for secondary destination of tour.
