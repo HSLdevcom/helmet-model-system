@@ -54,7 +54,7 @@ class CBA:
         for transport_class in param.transport_classes:
             self.gains[transport_class] = self.calc_gains(transport_class)
             print "Gains " + transport_class + " calculated"
-        self.resultdata.flush()
+        self.write_results()
 
 
     def print_destination_costs(self, transport_class, cost_type, time_period, dest_zone_ids = [1082]):
@@ -146,16 +146,23 @@ class CBA:
 
     def calc_revenue(self, ass_classes):
         """Calculate difference in producer revenue between scenarios ve1 and ve0"""
+        demand = np.zeros(self.shape)
         revenue = np.zeros(self.shape)
-        for tp in self.emme_scenarios:
-            for ass_class in ass_classes:
+        for ass_class in ass_classes:
+            for tp in self.emme_scenarios:
                 demand_change = (
                     self.ve1[ass_class]["demand"][tp] - self.ve0[ass_class]["demand"][tp]) * param.volume_factors[ass_class][tp]
+                demand += demand_change
                 cost_change = self.ve1[ass_class]["cost"][tp] - self.ve0[ass_class]["cost"][tp]
                 revenue += (self.ve1[ass_class]["cost"][tp] * demand_change) * (demand_change>=0).astype(int)
                 revenue += (cost_change * self.ve0[ass_class]["demand"][tp]) * (demand_change>=0).astype(int)
                 revenue += (self.ve0[ass_class]["cost"][tp] * demand_change) * (demand_change<0).astype(int)
                 revenue += (cost_change * self.ve1[ass_class]["demand"][tp]) * (demand_change<0).astype(int)
+            # write to file
+            vals = [demand.sum(), revenue.sum()]
+            idx = ["demand_change", "revenue_change"]
+            fname = "revenue_{}_{}.txt".format(self.scenario_1, self.scenario_0)
+            self.resultdata.print_data(vals, fname, idx, ass_class)
         return revenue.sum()
 
 
@@ -189,8 +196,11 @@ class CBA:
                 },
                 param.volume_factors[transport_class]
             )
+
+        # print gains to file
         for gain_type in gain_types:
             for consumer_type in gains[gain_type]:
+                # by origins
                 col_name = "{}_{}_{}".format(transport_class, gain_type, consumer_type)
                 col_values = gains[gain_type][consumer_type].sum(1)
                 fname = "gains_origs_{}_{}.txt".format(self.scenario_1, self.scenario_0)
@@ -211,135 +221,28 @@ class CBA:
         return pd.read_csv(file_path, delim_whitespace=True)
 
 
-    def write_results_1(self, wb):
-        """Write results for year 1"""
-        ws = wb.get_sheet_by_name("ha_tyo")
-        self.write_gains_1(ws, "car_work")
-        ws = wb.get_sheet_by_name("ha_muu")
-        self.write_gains_1(ws, "car_leisure")
-        ws = wb.get_sheet_by_name("jl_tyo")
-        self.write_gains_1(ws, "transit_work")
-        ws = wb.get_sheet_by_name("jl_muu")
-        self.write_gains_1(ws, "transit_leisure")
-        ws = wb.get_sheet_by_name("pp_tyo")
-        self.write_gains_1(ws, "bike_work")
-        ws = wb.get_sheet_by_name("pp_muu")
-        self.write_gains_1(ws, "bike_leisure")
-        ws = wb.get_sheet_by_name("ka")
-        self.write_gains_1(ws, "truck")
-        ws = wb.get_sheet_by_name("yhd")
-        self.write_gains_1(ws, "trailer_truck")
-        ws = wb.get_sheet_by_name("pa")
-        self.write_gains_1(ws, "van")
-        ws = wb.get_sheet_by_name("Ulkoisvaikutukset")
-        ws["C8"] = self.miles["car"][1]
-        ws["D8"] = self.miles["car"][2]
-        ws["E8"] = self.miles["car"][3]
-        ws["F8"] = self.miles["car"][4]
-        ws["G8"] = self.miles["car"][5]
-        ws["C9"] = self.miles["van"][1]
-        ws["D9"] = self.miles["van"][2]
-        ws["E9"] = self.miles["van"][3]
-        ws["F9"] = self.miles["van"][4]
-        ws["G9"] = self.miles["van"][5]
-        ws["C10"] = self.miles["truck"][1]
-        ws["D10"] = self.miles["truck"][2]
-        ws["E10"] = self.miles["truck"][3]
-        ws["F10"] = self.miles["truck"][4]
-        ws["G10"] = self.miles["truck"][5]
-        ws["C11"] = self.miles["trailer_truck"][1]
-        ws["D11"] = self.miles["trailer_truck"][2]
-        ws["E11"] = self.miles["trailer_truck"][3]
-        ws["F11"] = self.miles["trailer_truck"][4]
-        ws["G11"] = self.miles["trailer_truck"][5]
-        ws = wb.get_sheet_by_name("Tuottajahyodyt")
-        ws["S8"] = self.transit_miles["dist"]["bus"]
-        ws["S9"] = self.transit_miles["dist"]["trunk"]
-        ws["S10"] = self.transit_miles["dist"]["tram"]
-        ws["S11"] = self.transit_miles["dist"]["metro"]
-        ws["S12"] = self.transit_miles["dist"]["train"]
-        ws["T8"] = self.transit_miles["time"]["bus"]
-        ws["T9"] = self.transit_miles["time"]["trunk"]
-        ws["T10"] = self.transit_miles["time"]["tram"]
-        ws["T11"] = self.transit_miles["time"]["metro"]
-        ws["T12"] = self.transit_miles["time"]["train"]
-        ws["E43"] = self.revenues["transit"]
-        ws = wb.get_sheet_by_name("Julkistaloudelliset")
-        ws["I8"] = self.revenues["car"]
-
-    def write_gains_1(self, ws, ass_class):
-        ws["E9"] = self.gains[ass_class]["time"]["existing"]
-        ws["E10"] = self.gains[ass_class]["time"]["additional"]
-        ws["E22"] = self.gains[ass_class]["dist"]["existing"]
-        ws["E23"] = self.gains[ass_class]["dist"]["additional"]
-        ws["E37"] = self.gains[ass_class]["cost"]["existing"]
-        ws["E38"] = self.gains[ass_class]["cost"]["additional"]
-
-    def write_results_2(self, wb):
-        """Write results for year 2"""
-        ws = wb.get_sheet_by_name("ha_tyo")
-        self.write_gains_2(ws, "car_work")
-        ws = wb.get_sheet_by_name("ha_muu")
-        self.write_gains_2(ws, "car_leisure")
-        ws = wb.get_sheet_by_name("jl_tyo")
-        self.write_gains_2(ws, "transit_work")
-        ws = wb.get_sheet_by_name("jl_muu")
-        self.write_gains_2(ws, "transit_leisure")
-        ws = wb.get_sheet_by_name("pp_tyo")
-        self.write_gains_2(ws, "bike_work")
-        ws = wb.get_sheet_by_name("pp_muu")
-        self.write_gains_2(ws, "bike_leisure")
-        ws = wb.get_sheet_by_name("ka")
-        self.write_gains_2(ws, "truck")
-        ws = wb.get_sheet_by_name("yhd")
-        self.write_gains_2(ws, "trailer_truck")
-        ws = wb.get_sheet_by_name("pa")
-        self.write_gains_2(ws, "van")
-        ws = wb.get_sheet_by_name("Ulkoisvaikutukset")
-        ws["L8"] = self.miles["car"][1]
-        ws["M8"] = self.miles["car"][2]
-        ws["N8"] = self.miles["car"][3]
-        ws["O8"] = self.miles["car"][4]
-        ws["P8"] = self.miles["car"][5]
-        ws["L9"] = self.miles["van"][1]
-        ws["M9"] = self.miles["van"][2]
-        ws["N9"] = self.miles["van"][3]
-        ws["O9"] = self.miles["van"][4]
-        ws["P9"] = self.miles["van"][5]
-        ws["L10"] = self.miles["truck"][1]
-        ws["M10"] = self.miles["truck"][2]
-        ws["N10"] = self.miles["truck"][3]
-        ws["O10"] = self.miles["truck"][4]
-        ws["P10"] = self.miles["truck"][5]
-        ws["L11"] = self.miles["trailer_truck"][1]
-        ws["M11"] = self.miles["trailer_truck"][2]
-        ws["N11"] = self.miles["trailer_truck"][3]
-        ws["O11"] = self.miles["trailer_truck"][4]
-        ws["P11"] = self.miles["trailer_truck"][5]
-        ws = wb.get_sheet_by_name("Kayttajahyodyt")
-        ws = wb.get_sheet_by_name("Tuottajahyodyt")
-        ws["S16"] = self.transit_miles["dist"]["bus"]
-        ws["S17"] = self.transit_miles["dist"]["trunk"]
-        ws["S18"] = self.transit_miles["dist"]["tram"]
-        ws["S19"] = self.transit_miles["dist"]["metro"]
-        ws["S20"] = self.transit_miles["dist"]["train"]
-        ws["T16"] = self.transit_miles["time"]["bus"]
-        ws["T17"] = self.transit_miles["time"]["trunk"]
-        ws["T18"] = self.transit_miles["time"]["tram"]
-        ws["T19"] = self.transit_miles["time"]["metro"]
-        ws["T20"] = self.transit_miles["time"]["train"]
-        ws["E46"] = self.revenues["transit"]
-        ws = wb.get_sheet_by_name("Julkistaloudelliset")
-        ws["I13"] = self.revenues["car"]
-
-
-    def write_gains_2(self, ws, ass_class):
-        ws["E14"] = self.gains[ass_class]["time"]["existing"]
-        ws["E15"] = self.gains[ass_class]["time"]["additional"]
-        ws["E27"] = self.gains[ass_class]["dist"]["existing"]
-        ws["E28"] = self.gains[ass_class]["dist"]["additional"]
-        ws["E42"] = self.gains[ass_class]["cost"]["existing"]
-        ws["E43"] = self.gains[ass_class]["cost"]["additional"]
+    def write_results(self):
+        # print miles differences
+        self.miles = self.miles.transpose()
+        for rc in self.miles:
+            col_name = "class_{}".format(rc)
+            vals = self.miles[rc]
+            index_vals = self.miles.index
+            fname = "miles_change_{}_{}.txt".format(self.scenario_1, self.scenario_0)
+            self.resultdata.print_data(vals, fname, index_vals, col_name)
+            print("Miles printed for {}.".format(col_name))
+        # print aggregated gains
+        for transport_class in self.gains:
+            gains_types = self.gains[transport_class]
+            idx = []
+            vals = []
+            for gain_type in gains_types:
+                for consumer_type in gains_types[gain_type]:
+                    idx.append("{}_{}".format(gain_type, consumer_type))
+                    vals.append(gains_types[gain_type][consumer_type])
+            fname = "gains_sum_{}_{}.txt".format(self.scenario_1, self.scenario_0)
+            self.resultdata.print_data(vals, fname, idx, transport_class)
+        self.resultdata.flush()
 
 
 if __name__ == "__main__":
@@ -360,16 +263,8 @@ if __name__ == "__main__":
         "--results-path", dest="results_path", type=str, required=True,
         help="Path to Results directory.")
     args = parser.parse_args()
-    wb = load_workbook(os.path.join(SCRIPT_DIR, "CBA_kehikko.xlsx"))
     cba1 = CBA(args.baseline_scenario, args.projected_scenario, args.results_path)
     cba1.run_cost_benefit_analysis()
-    cba1.write_results_1(wb)
     if args.baseline_scenario_2 is not None and args.baseline_scenario_2 != "undefined":
         cba2 = CBA(args.baseline_scenario_2, args.projected_scenario_2, args.results_path)
         cba2.run_cost_benefit_analysis()
-        cba2.write_results_2(wb)
-    results_filename =  "cba_{}_{}.xlsx".format(
-        os.path.basename(args.projected_scenario),
-        os.path.basename(args.baseline_scenario))
-    wb.save(os.path.join(args.results_path, results_filename))
-    print "CBA results saved to file: {}".format(results_filename)
