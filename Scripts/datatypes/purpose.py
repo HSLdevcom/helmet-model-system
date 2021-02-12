@@ -133,6 +133,7 @@ class TourPurpose(Purpose):
         for mode in self.modes:
             self.generated_tours[mode] = numpy.zeros_like(self.zone_numbers)
             self.attracted_tours[mode] = numpy.zeros_like(self.zone_data.zone_numbers)
+            self.histograms[mode].__init__()
 
     def calc_prob(self, impedance):
         """Calculate mode and destination probabilities.

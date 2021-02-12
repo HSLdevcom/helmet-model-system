@@ -105,12 +105,6 @@ class Tour(object):
         except AttributeError:
             self._non_home_position = position[1:]
 
-    @property
-    def dist(self):
-        row = self.position[0] - self.purpose.bounds.start
-        col = self.position[1]
-        return self.purpose.dist[row, col]
-
     def choose_mode(self, is_car_user):
         """Choose tour travel mode.
 
@@ -145,7 +139,8 @@ class Tour(object):
             self._dest_draw)
         self.position = (self.position[0], dest_idx)
         self.purpose.attracted_tours[self.mode][dest_idx] += 1
-        self.purpose.histograms[self.mode].add(self.dist)
+        self.purpose.histograms[self.mode].add(
+            self.purpose.dist[orig_idx, dest_idx])
         bounds = self.purpose.sec_dest_purpose.bounds
         try:
             if (bounds.start <= self.position[0] < bounds.stop
