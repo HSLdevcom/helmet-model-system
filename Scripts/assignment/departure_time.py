@@ -12,13 +12,11 @@ class DepartureTimeModel:
     ----------
     nr_zones : int
         Number of zones in assignment model
-    time_periods : list
-        List of time periods to assign (aht, pt, iht)
     """
 
-    def __init__(self, nr_zones, time_periods):
+    def __init__(self, nr_zones):
         self.nr_zones = nr_zones
-        self.time_periods = time_periods
+        self.time_periods = list(param.backup_demand_share)
         self.init_demand()
 
     def init_demand(self):

@@ -208,6 +208,11 @@ transit_classes = (
     "transit_work",
     "transit_leisure",
 )
+freight_classes = (
+    "van",
+    "truck",
+    "trailer_truck",
+)
 assignment_classes = {
     "hw": "work",
     "hc": "leisure",

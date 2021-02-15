@@ -75,8 +75,8 @@ def main(args):
     base_zonedata = ZoneData(base_zonedata_path, assignment_model.zone_numbers)
     # Check base matrices
     matrixdata = MatrixData(base_matrices_path)
-    for tp in assignment_model.emme_scenarios:
-        with matrixdata.open("demand", tp, assignment_model.zone_numbers) as mtx:
+    for ap in assignment_model.assignment_periods:
+        with matrixdata.open("demand", ap.name, assignment_model.zone_numbers) as mtx:
             for ass_class in param.transport_classes:
                 a = mtx[ass_class]
 
