@@ -183,11 +183,11 @@ def write_results_1(wb, miles, transit_miles, revenues, gains):
     ws = wb.get_sheet_by_name("pa")
     write_gains_1(ws, gains["van"])
     ws = wb.get_sheet_by_name("Ulkoisvaikutukset")
-    ws["I19"] = miles["car"][1]
-    ws["J19"] = miles["car"][2]
-    ws["K19"] = miles["car"][3]
-    ws["L19"] = miles["car"][4]
-    ws["M19"] = miles["car"][5]
+    ws["I19"] = miles["car_work"][1] + miles["car_leisure"][1]
+    ws["J19"] = miles["car_work"][2] + miles["car_leisure"][2]
+    ws["K19"] = miles["car_work"][3] + miles["car_leisure"][3]
+    ws["L19"] = miles["car_work"][4] + miles["car_leisure"][4]
+    ws["M19"] = miles["car_work"][5] + miles["car_leisure"][5]
     ws["I20"] = miles["van"][1]
     ws["J20"] = miles["van"][2]
     ws["K20"] = miles["van"][3]
@@ -265,11 +265,11 @@ def write_results_2(wb, miles, transit_miles, revenues, gains):
     ws = wb.get_sheet_by_name("pa")
     write_gains_2(ws, gains["van"])
     ws = wb.get_sheet_by_name("Ulkoisvaikutukset")
-    ws["I32"] = miles["car"][1]
-    ws["J32"] = miles["car"][2]
-    ws["K32"] = miles["car"][3]
-    ws["L32"] = miles["car"][4]
-    ws["M32"] = miles["car"][5]
+    ws["I32"] = miles["car_work"][1] + miles["car_leisure"][1]
+    ws["J32"] = miles["car_work"][2] + miles["car_leisure"][2]
+    ws["K32"] = miles["car_work"][3] + miles["car_leisure"][3]
+    ws["L32"] = miles["car_work"][4] + miles["car_leisure"][4]
+    ws["M32"] = miles["car_work"][5] + miles["car_leisure"][5]
     ws["I33"] = miles["van"][1]
     ws["J33"] = miles["van"][2]
     ws["K33"] = miles["van"][3]
