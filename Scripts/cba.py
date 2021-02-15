@@ -46,8 +46,8 @@ class CBA:
         print "Miles calculated"
         # calculate revenues for 24h
         self.revenues = {}
-        self.revenues["transit"] = self.calc_revenue(param.transit_classes)
-        self.revenues["car"] = self.calc_revenue(param.assignment_modes)
+        self.calc_revenue(param.transit_classes)
+        self.calc_revenue(param.assignment_modes)
         print "Revenues calculated"
         # gains 24h for all transport classes
         self.gains = dict.fromkeys(param.transport_classes)
@@ -146,9 +146,9 @@ class CBA:
 
     def calc_revenue(self, ass_classes):
         """Calculate difference in producer revenue between scenarios ve1 and ve0"""
-        demand = np.zeros(self.shape)
-        revenue = np.zeros(self.shape)
         for ass_class in ass_classes:
+            demand = np.zeros(self.shape)
+            revenue = np.zeros(self.shape)
             for tp in self.emme_scenarios:
                 demand_change = (
                     self.ve1[ass_class]["demand"][tp] - self.ve0[ass_class]["demand"][tp]) * param.volume_factors[ass_class][tp]
