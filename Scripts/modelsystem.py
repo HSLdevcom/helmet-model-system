@@ -369,6 +369,7 @@ class ModelSystem:
             impedance["time"]["transit_work"], axis=1,
             weights=self.dtm.demand[tp]["transit_work"])
         time_ratio = transit_time / car_time
+        time_ratio = time_ratio.clip(0.01, None)
         self.resultdata.print_data(
             pandas.Series(time_ratio, self.zone_numbers),
             "impedance_ratio.txt", "time")
@@ -496,6 +497,10 @@ class AgentModelSystem(ModelSystem):
         for person in self.dm.population:
             for tour in person.tours:
                 self.dtm.add_demand(tour)
+        if is_last_iteration:
+            self.dm.incmod.predict()
+            for person in self.dm.population:
+                person.calc_income()
         log.info("Demand calculation completed")
 
     def _distribute_tours(self, mode, origs, sec_dest_tours, impedance, tour_probs):

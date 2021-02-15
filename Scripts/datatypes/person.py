@@ -2,6 +2,8 @@ import numpy
 import random
 
 from datatypes.tour import Tour
+from parameters.income import log_income as param
+from parameters.income import standard_deviation
 
 
 class Person:
@@ -23,7 +25,7 @@ class Person:
     FEMALE = 0
     MALE = 1
     
-    def __init__(self, zone, age_group, generation_model, car_use_model):
+    def __init__(self, zone, age_group, generation_model, car_use_model, income_model):
         self.zone = zone
         self.age = random.randint(age_group[0], age_group[1])
         self.age_group = "age_" + str(age_group[0]) + "-" + str(age_group[1])
@@ -31,6 +33,7 @@ class Person:
         self.tours = []
         self.generation_model = generation_model
         self._cm = car_use_model
+        self._im = income_model
         self._car_use_draw = random.random()
         self._tour_combination_draw = random.random()
 
@@ -38,7 +41,21 @@ class Person:
         car_use_prob = self._cm.calc_individual_prob(
             self.age_group, self.gender, self.zone)
         self.is_car_user = self._car_use_draw < car_use_prob
-    
+
+    def calc_income(self):
+        if self.age < 17:
+            self.income = 0
+        else:
+            log_income = self._im.log_income[self.zone]
+            if self.is_car_user:
+                log_income += param["car_users"]
+            if self.gender in param:
+                log_income += param[self.gender]
+            if self.age_group in param["age_dummies"]:
+                log_income += param["age_dummies"][self.age_group]
+            log_income += random.gauss(0, standard_deviation)
+            self.income = numpy.exp(log_income)
+
     @property
     def gender(self):
         """Returns the person's gender.
@@ -48,10 +65,7 @@ class Person:
         str
             Gender (male/female)
         """
-        if self.sex == Person.FEMALE:
-            return "female"
-        else:
-            return "male"
+        return "female" if self.sex == Person.FEMALE else "male"
 
     def add_tours(self, purposes, tour_probs):
         """Initilize tour list and add new tours.
