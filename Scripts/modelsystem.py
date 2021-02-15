@@ -369,6 +369,7 @@ class ModelSystem:
             impedance["time"]["transit_work"], axis=1,
             weights=self.dtm.demand[tp]["transit_work"])
         time_ratio = transit_time / car_time
+        time_ratio = time_ratio.clip(0.01, None)
         self.resultdata.print_data(
             pandas.Series(time_ratio, self.zone_numbers),
             "impedance_ratio.txt", "time")
