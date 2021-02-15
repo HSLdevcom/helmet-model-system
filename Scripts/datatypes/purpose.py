@@ -5,7 +5,8 @@ from parameters.destination_choice import secondary_destination_threshold
 import models.logit as logit
 import models.generation as generation
 from datatypes.demand import Demand
-from utils.zone_interval import zone_interval
+from utils.zone_interval import zone_interval, Aggregator
+from datatypes.histogram import TourLengthHistogram
 
 
 class Purpose:
@@ -118,12 +119,28 @@ class TourPurpose(Purpose):
             self.model = logit.ModeDestModel(
                 zone_data, self, resultdata, is_agent_model)
         self.modes = self.model.mode_choice_param.keys()
+        self.histograms = {mode: TourLengthHistogram() for mode in self.modes}
+        dests = self.zone_data.zone_numbers
+        origs = self.zone_numbers
+        self.aggregates = {mode: Aggregator(origs, dests) for mode in self.modes}
         self.sec_dest_purpose = None
+
+    def print_data(self):
+        Purpose.print_data(self)
+        for mode in self.histograms:
+            self.resultdata.print_data(
+                self.histograms[mode].histogram, "trip_lengths.txt",
+                "{}_{}".format(self.name, mode[0]))
+            self.resultdata.print_matrix(
+                self.aggregates[mode].matrix, "aggregated_demand",
+                "{}_{}".format(self.name, mode))
 
     def init_sums(self):
         for mode in self.modes:
             self.generated_tours[mode] = numpy.zeros_like(self.zone_numbers)
             self.attracted_tours[mode] = numpy.zeros_like(self.zone_data.zone_numbers)
+            self.histograms[mode].__init__()
+            self.aggregates[mode].init()
 
     def calc_prob(self, impedance):
         """Calculate mode and destination probabilities.
@@ -135,6 +152,20 @@ class TourPurpose(Purpose):
                 Type (time/cost/dist) : numpy 2d matrix
         """
         self.prob = self.model.calc_prob(impedance)
+        self.dist = impedance["car"]["dist"]
+
+    def calc_basic_prob(self, impedance):
+        """Calculate mode and destination probabilities.
+
+        Individual dummy variables are not included.
+
+        Parameters
+        ----------
+        impedance : dict
+            Mode (car/transit/bike/walk) : dict
+                Type (time/cost/dist) : numpy 2d matrix
+        """
+        self.model.calc_basic_prob(impedance)
         self.dist = impedance["car"]["dist"]
 
     def calc_demand(self):
@@ -157,14 +188,8 @@ class TourPurpose(Purpose):
             demand[mode] = Demand(self, mode, mtx)
             self.attracted_tours[mode] = mtx.sum(0)
             self.generated_tours[mode] = mtx.sum(1)
-            trip_lengths = self._count_trip_lengths(mtx, self.dist)
-            self.resultdata.print_data(
-                trip_lengths, "trip_lengths.txt",
-                "{}_{}".format(self.name, mode[0]))
-            aggregated_demand = self._aggregate(mtx)
-            self.resultdata.print_matrix(
-                aggregated_demand, "aggregated_demand",
-                "{}_{}".format(self.name, mode))
+            self.histograms[mode].count_tour_dists(mtx, self.dist)
+            self.aggregates[mode].aggregate(mtx)
             own_zone = self.zone_data.get_data("own_zone", self.bounds)
             own_zone_demand = own_zone * mtx
             own_zone_aggr = self._aggregate(own_zone_demand)
@@ -195,17 +220,6 @@ class TourPurpose(Purpose):
             i = zone_interval("areas", area)
             aggr_mtx.loc[:, area] = tmp_mtx.loc[:, i].sum(1).values
         return aggr_mtx
-
-    def _count_trip_lengths(self, trips, dist):
-        intervals = ("0-1", "1-3", "3-5", "5-10", "10-20", "20-30",
-                     "30-40", "40-inf")
-        trip_lengths = pandas.Series(index=intervals)
-        for tl in trip_lengths.index:
-            bounds = tl.split("-")
-            l = float(bounds[0])
-            u = float(bounds[1])
-            trip_lengths[tl] = trips[(dist>=l) & (dist<u)].sum()
-        return trip_lengths
 
 
 class SecDestPurpose(Purpose):

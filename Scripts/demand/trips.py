@@ -113,16 +113,17 @@ class DemandModel:
                     weights = numpy.array(weights)
                     rebalance = 1 / sum(weights)
                     weights = rebalance * weights
-            for _ in xrange(0, int(self.zone_data["population"][zone_number])):
-                if random.random() < param.agent_demand_fraction:
-                    a = numpy.arange(-1, len(self.age_groups))
-                    group = numpy.random.choice(a=a, p=weights)
-                    if group != -1:
-                        # Group -1 is under-7-year-olds and they have weights[0]
-                        person = Person(
-                            zone_number, self.age_groups[group], self.gm,
-                            self.cm, self.incmod)
-                        self.population.append(person)
+            zone_pop = int(round(self.zone_data["population"][zone_number]
+                                 * param.agent_demand_fraction))
+            for _ in xrange(zone_pop):
+                a = numpy.arange(-1, len(self.age_groups))
+                group = numpy.random.choice(a=a, p=weights)
+                if group != -1:
+                    # Group -1 is under-7-year-olds and they have weights[0]
+                    person = Person(
+                        zone_number, self.age_groups[group], self.gm,
+                        self.cm, self.incmod)
+                    self.population.append(person)
 
     def generate_tours(self):
         """Generate vector of tours for each tour purpose.

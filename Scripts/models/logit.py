@@ -359,7 +359,7 @@ class ModeDestModel(LogitModel):
         """Calculate individual choice probabilities with individual dummies.
         
         Calculate mode choice probabilities for individual
-        agent with individual dummy variable included.
+        agent with individual dummy variable "car_users" included.
         
         Parameters
         ----------

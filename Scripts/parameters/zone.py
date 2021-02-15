@@ -131,3 +131,4 @@ municipalities = {
     "Lapinjarvi": (29500, 29999),
     "Loviisa": (30000, 30999),
 }
+tour_length_intervals = (0, 1, 3, 5, 10, 20, 30, 40, float("inf"))

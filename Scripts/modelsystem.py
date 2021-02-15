@@ -453,8 +453,9 @@ class AgentModelSystem(ModelSystem):
                             self.travel_modes.add(mode)
                             self.dtm.add_demand(demand[mode])
                 else:
+                    self.travel_modes.update(purpose.modes)
                     purpose.init_sums()
-                    purpose.model.calc_basic_prob(purpose_impedance)
+                    purpose.calc_basic_prob(purpose_impedance)
         tour_probs = self.dm.generate_tour_probs()
         log.info("Assigning mode and destination for {} agents ({} % of total population)".format(
             len(self.dm.population), int(zone_param.agent_demand_fraction*100)))
@@ -476,7 +477,8 @@ class AgentModelSystem(ModelSystem):
         elif nr_threads <= 0:
             nr_threads = 1
         bounds = next(iter(purpose.sources)).bounds
-        for mode in sec_dest_tours:
+        modes = purpose.modes if is_last_iteration else ["car"]
+        for mode in modes:
             threads = []
             for i in xrange(nr_threads):
                 origs = xrange(i, bounds.stop - bounds.start, nr_threads)
