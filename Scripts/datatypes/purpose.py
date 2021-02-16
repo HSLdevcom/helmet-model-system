@@ -5,7 +5,7 @@ from parameters.destination_choice import secondary_destination_threshold
 import models.logit as logit
 import models.generation as generation
 from datatypes.demand import Demand
-from utils.zone_interval import zone_interval, Aggregator
+from utils.zone_interval import MatrixAggregator, ArrayAggregator
 from datatypes.histogram import TourLengthHistogram
 
 
@@ -120,9 +120,9 @@ class TourPurpose(Purpose):
                 zone_data, self, resultdata, is_agent_model)
         self.modes = self.model.mode_choice_param.keys()
         self.histograms = {mode: TourLengthHistogram() for mode in self.modes}
-        dests = self.zone_data.zone_numbers
-        origs = self.zone_numbers
-        self.aggregates = {mode: Aggregator(origs, dests) for mode in self.modes}
+        self.aggregates = {mode: MatrixAggregator() for mode in self.modes}
+        self.own_zone_aggregates = {mode: ArrayAggregator()
+            for mode in self.modes}
         self.sec_dest_purpose = None
 
     def print_data(self):
@@ -134,13 +134,17 @@ class TourPurpose(Purpose):
             self.resultdata.print_matrix(
                 self.aggregates[mode].matrix, "aggregated_demand",
                 "{}_{}".format(self.name, mode))
+            self.resultdata.print_data(
+                self.own_zone_aggregates[mode].array,
+                "own_zone_demand.txt", "{}_{}".format(self.name, mode[0]))
 
     def init_sums(self):
         for mode in self.modes:
             self.generated_tours[mode] = numpy.zeros_like(self.zone_numbers)
             self.attracted_tours[mode] = numpy.zeros_like(self.zone_data.zone_numbers)
             self.histograms[mode].__init__()
-            self.aggregates[mode].init()
+            self.aggregates[mode].__init__()
+            self.own_zone_aggregates[mode].__init__()
 
     def calc_prob(self, impedance):
         """Calculate mode and destination probabilities.
@@ -189,37 +193,12 @@ class TourPurpose(Purpose):
             self.attracted_tours[mode] = mtx.sum(0)
             self.generated_tours[mode] = mtx.sum(1)
             self.histograms[mode].count_tour_dists(mtx, self.dist)
-            self.aggregates[mode].aggregate(mtx)
-            own_zone = self.zone_data.get_data("own_zone", self.bounds)
-            own_zone_demand = own_zone * mtx
-            own_zone_aggr = self._aggregate(own_zone_demand)
-            self.resultdata.print_data(
-                pandas.Series(numpy.diag(own_zone_aggr), own_zone_aggr.index),
-                "own_zone_demand.txt", "{}_{}".format(self.name, mode[0]))
+            self.aggregates[mode].aggregate(pandas.DataFrame(
+                mtx, self.zone_numbers, self.zone_data.zone_numbers))
+            self.own_zone_aggregates[mode].aggregate(pandas.Series(
+                numpy.diag(mtx), self.zone_numbers))
         self.print_data()
         return demand
-
-    def _aggregate(self, mtx):
-        """Aggregate matrix to larger areas."""
-        dest = self.zone_data.zone_numbers
-        orig = self.zone_numbers
-        mtx = pandas.DataFrame(mtx, orig, dest)
-        areas = (
-            "helsinki_cbd",
-            "helsinki_other",
-            "espoo_vant_kau",
-            "surrounding",
-            "peripheral",
-        )
-        aggr_mtx = pandas.DataFrame(0, areas, areas)
-        tmp_mtx = pandas.DataFrame(0, areas, dest)
-        for area in areas:
-            i = zone_interval("areas", area)
-            tmp_mtx.loc[area] = mtx.loc[i].sum(0).values
-        for area in areas:
-            i = zone_interval("areas", area)
-            aggr_mtx.loc[:, area] = tmp_mtx.loc[:, i].sum(1).values
-        return aggr_mtx
 
 
 class SecDestPurpose(Purpose):

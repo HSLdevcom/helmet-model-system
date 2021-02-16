@@ -3,12 +3,12 @@
 import numpy
 import pandas
 import unittest
-from utils.zone_interval import Aggregator
+from utils.zone_interval import MatrixAggregator
 
 
 class AreaFindTest(unittest.TestCase):
     def test_find_area(self):
-        a = Aggregator(None, None)
+        a = MatrixAggregator()
         orig = 1007
         self.assertEquals(a.find_area(orig), "helsinki_other")
         dest = 17601

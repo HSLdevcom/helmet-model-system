@@ -133,18 +133,21 @@ class Tour(object):
                Dictionary for inserting tours with secondary destination,
                key is `self.position`
         """
-        orig_idx = self.position[0] - self.purpose.bounds.start
+        orig_idx = self.position[0]
+        orig_rel_idx = orig_idx - self.purpose.bounds.start
         dest_idx = numpy.searchsorted(
-            self.purpose.model.cumul_dest_prob[self.mode][:, orig_idx],
+            self.purpose.model.cumul_dest_prob[self.mode][:, orig_rel_idx],
             self._dest_draw)
-        self.position = (self.position[0], dest_idx)
+        self.position = (orig_idx, dest_idx)
         self.purpose.attracted_tours[self.mode][dest_idx] += 1
         self.purpose.histograms[self.mode].add(
-            self.purpose.dist[orig_idx, dest_idx])
+            self.purpose.dist[orig_rel_idx, dest_idx])
         self.purpose.aggregates[self.mode].add(self.orig, self.dest)
+        if orig_idx == dest_idx:
+            self.purpose.own_zone_aggregates[self.mode].add(self.orig)
         bounds = self.purpose.sec_dest_purpose.bounds
         try:
-            if (bounds.start <= self.position[0] < bounds.stop
+            if (bounds.start <= orig_idx < bounds.stop
                     and bounds.start <= dest_idx < bounds.stop):
                 is_in_area = True
             else:
@@ -153,9 +156,9 @@ class Tour(object):
             is_in_area = False
         if (self.mode != "walk" and is_in_area
                 and self._sec_dest_gen_draw < self.sec_dest_prob[self.mode]):
-            orig_idx = self.position[0] - bounds.start
+            orig_rel_idx = orig_idx - bounds.start
             dest_idx =- bounds.start
-            sec_dest_tours[self.mode][orig_idx][dest_idx].append(self)
+            sec_dest_tours[self.mode][orig_rel_idx][dest_idx].append(self)
 
     def choose_secondary_destination(self, cumulative_probs):
         """Choose secondary destination for the tour.
