@@ -56,6 +56,12 @@ tour_purposes = (
         "source": ("hw", "hc", "hu", "hs", "ho", "wo", "oo",),
         "area": "metropolitan",
     },
+    {  # Only for calculation of work-force accessibility, not assigned
+        "name": "wh",
+        "orig": "work",
+        "dest": "source",
+        "area": "metropolitan",
+    },
     {
         "name": "hwp",
         "orig": "home",

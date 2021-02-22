@@ -444,7 +444,8 @@ class AgentModelSystem(ModelSystem):
             else:
                 purpose_impedance = self.imptrans.transform(
                     purpose, previous_iter_impedance)
-                if purpose.area == "peripheral" or purpose.name == "oop":
+                if (purpose.area == "peripheral" or purpose.dest == "source"
+                        or purpose.name == "oop"):
                     purpose.calc_prob(purpose_impedance)
                     purpose.gen_model.init_tours()
                     purpose.gen_model.add_tours()
