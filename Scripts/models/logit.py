@@ -41,7 +41,11 @@ class LogitModel:
             self.dtype = None
 
     def _calc_mode_util(self, impedance):
-        expsum = numpy.zeros_like(next(iter(impedance["car"].values())), self.dtype)
+        expsum = numpy.zeros_like(
+            next(iter(impedance["car"].values())), self.dtype)
+        is_1d = expsum.ndim == 1
+        if is_1d:
+            sust_sum = numpy.zeros_like(expsum)
         for mode in self.mode_choice_param:
             b = self.mode_choice_param[mode]
             utility = numpy.zeros_like(expsum)
@@ -54,6 +58,14 @@ class LogitModel:
             self._add_log_impedance(exps, impedance[mode], b["log"])
             self.mode_exps[mode] = exps
             expsum += exps
+            if is_1d and mode != "car":
+                sust_sum += exps
+        if is_1d:
+            logsum = numpy.log(sust_sum)
+            self.purpose.sustainable_logsum = logsum
+            self.resultdata.print_data(
+                pandas.Series(logsum, self.purpose.zone_numbers),
+                "sustainable_accessibility.txt", self.purpose.name)
         return expsum
     
     def _calc_dest_util(self, mode, impedance):
@@ -318,9 +330,8 @@ class ModeDestModel(LogitModel):
                 Choice probabilities
         """
         mode_expsum = self._calc_utils(impedance)
-        logsum = numpy.log(mode_expsum)
         self.resultdata.print_data(
-            pandas.Series(logsum, self.purpose.zone_numbers),
+            pandas.Series(numpy.log(mode_expsum), self.purpose.zone_numbers),
             "accessibility.txt", self.purpose.name)
         return self._calc_prob(mode_expsum)
     

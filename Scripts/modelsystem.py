@@ -243,6 +243,27 @@ class ModelSystem:
         # Calculate internal demand
         self._add_internal_demand(previous_iter_impedance, iteration=="last")
 
+        # Calculate SAVU zones
+        sust_logsum = 0
+        tours = 0
+        for purpose in self.dm.tour_purposes:
+            if (purpose.area == "metropolitan" and purpose.orig == "home"
+                    and purpose.dest != "source"
+                    and not isinstance(purpose, SecDestPurpose)):
+                zone_numbers = purpose.zone_numbers
+                purpose_tours = sum(purpose.generated_tours.values())
+                sust_logsum += purpose_tours * purpose.sustainable_logsum
+                tours += purpose_tours
+        sust_logsum = numpy.divide(
+            sust_logsum, tours,
+            out=numpy.full_like(sust_logsum, -float("inf")), where=tours!=0)
+        savu_intervals = numpy.array(zone_param.SAVU_intervals)
+        # The SAVU accessibility intervals are in descending order,
+        # so to be able to use numpy.searchsorted we need to negate them
+        savu = numpy.searchsorted(-savu_intervals, -sust_logsum) + 1
+        self.resultdata.print_data(
+            pandas.Series(savu, zone_numbers), "savu.txt", "savu_zone")
+
         # Calculate external demand
         for mode in param.external_modes:
             if mode == "truck":
