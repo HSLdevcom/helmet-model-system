@@ -333,6 +333,12 @@ class ModeDestModel(LogitModel):
         self.resultdata.print_data(
             pandas.Series(numpy.log(mode_expsum), self.purpose.zone_numbers),
             "accessibility.txt", self.purpose.name)
+        if self.purpose.name == "wh":
+            # Transform into person equivalents
+            workforce = mode_expsum**(1/self.mode_choice_param["car"]["log"]["logsum"])
+            self.resultdata.print_data(
+                pandas.Series(workforce, self.purpose.zone_numbers),
+                "workforce_accessibility.txt", self.purpose.name)
         return self._calc_prob(mode_expsum)
     
     def calc_individual_prob(self, mod_mode, dummy):
