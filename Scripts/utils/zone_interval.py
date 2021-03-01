@@ -15,6 +15,10 @@ class ZoneIntervals:
 
     def __init__(self, division_type):
         self._intervals = param.__dict__[division_type]
+        if division_type == "areas":
+            self.keys = param.area_aggregation
+        else:
+            self.keys = self._intervals.keys()
 
     def __getitem__(self, name):
         return slice(
@@ -22,13 +26,35 @@ class ZoneIntervals:
             self._intervals[name][1])
 
     def __iter__(self):
-        return self._intervals.iterkeys()
+        return self.keys.__iter__()
 
     def __contains__(self, item):
         return self._intervals.has_key(item)
 
-    def keys(self):
-        return self._intervals.keys()
+    def averages(self, array, weights):
+        """Get weighted area averages.
+
+        Parameters
+        ----------
+        array : pandas.Series
+            Array to average over areas
+        weights : pandas.Series
+            Array of weights
+
+        Returns
+        -------
+        pandas.Series
+            Aggregated array
+        """
+        aggregation = pandas.Series(index=self.keys)
+        for area in self:
+            i = self[area]
+            w = weights.loc[i]
+            if w.size == 0 or w.sum() == 0:
+                aggregation[area] = 0
+            else:
+                aggregation[area] = numpy.average(array.loc[i], weights=w)
+        return aggregation
 
 
 def zone_interval(division_type, name):
@@ -51,21 +77,23 @@ def zone_interval(division_type, name):
         param.__dict__[division_type][name][1])
 
 
-class AreaAggregator:
-    areas = param.area_aggregation
-    borders = numpy.array([param.areas[area][1] for area in areas])
+class AreaAggregator(ZoneIntervals):
+    def __init__(self):
+        ZoneIntervals.__init__(self, "areas")
+        self.borders = numpy.array([self._intervals[area][1] for area in self])
 
     def find_index(self, zone):
         # We could also have an area mapping dict
         return numpy.searchsorted(self.borders, zone)
 
     def find_area(self, zone):
-        return self.areas[self.find_index(zone)]
+        return self.keys[self.find_index(zone)]
 
 
 class MatrixAggregator(AreaAggregator):
     def __init__(self):
-        self.matrix = pandas.DataFrame(0, self.areas, self.areas)
+        AreaAggregator.__init__(self)
+        self.matrix = pandas.DataFrame(0, self.keys, self.keys)
 
     def add(self, orig, dest):
         """Add individual tour to aggregated matrix.
@@ -87,18 +115,17 @@ class MatrixAggregator(AreaAggregator):
         matrix : pandas.DataFrame
             Disaggregated matrix with zone indices and columns
         """
-        tmp_mtx = pandas.DataFrame(0, self.areas, matrix.columns)
-        for area in self.areas:
-            i = zone_interval("areas", area)
-            tmp_mtx.loc[area] = matrix.loc[i].sum(0).values
-        for area in self.areas:
-            i = zone_interval("areas", area)
-            self.matrix.loc[:, area] = tmp_mtx.loc[:, i].sum(1).values
+        tmp_mtx = pandas.DataFrame(0, self.keys, matrix.columns)
+        for area in self:
+            tmp_mtx.loc[area] = matrix.loc[self[area]].sum(0).values
+        for area in self:
+            self.matrix.loc[:, area] = tmp_mtx.loc[:, self[area]].sum(1).values
 
 
 class ArrayAggregator(AreaAggregator):
     def __init__(self):
-        self.array = pandas.Series(0, self.areas)
+        AreaAggregator.__init__(self)
+        self.array = pandas.Series(0, self.keys)
 
     def add(self, zone):
         """Add individual tour to aggregated array.
@@ -118,6 +145,5 @@ class ArrayAggregator(AreaAggregator):
         array : pandas.Series
             Disaggregated array with zone indices
         """
-        for area in self.areas:
-            i = zone_interval("areas", area)
-            self.array.loc[area] = array.loc[i].sum()
+        for area in self:
+            self.array.loc[area] = array.loc[self[area]].sum()
