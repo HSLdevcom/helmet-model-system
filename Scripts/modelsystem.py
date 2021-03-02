@@ -252,15 +252,12 @@ class ModelSystem:
                     and not isinstance(purpose, SecDestPurpose)):
                 zone_numbers = purpose.zone_numbers
                 purpose_tours = sum(purpose.generated_tours.values())
-                sust_logsum += purpose_tours * purpose.sustainable_logsum
+                sust_logsum += purpose_tours * purpose.sustainable_accessibility
                 tours += purpose_tours
         sust_logsum = numpy.divide(
             sust_logsum, tours,
-            out=numpy.full_like(sust_logsum, -float("inf")), where=tours!=0)
-        savu_intervals = numpy.array(zone_param.SAVU_intervals)
-        # The SAVU accessibility intervals are in descending order,
-        # so to be able to use numpy.searchsorted we need to negate them
-        savu = numpy.searchsorted(-savu_intervals, -sust_logsum) + 1
+            out=numpy.full_like(sust_logsum, float("inf")), where=tours!=0)
+        savu = numpy.searchsorted(zone_param.savu_intervals, sust_logsum) + 1
         self.resultdata.print_data(
             pandas.Series(savu, zone_numbers), "savu.txt", "savu_zone")
 

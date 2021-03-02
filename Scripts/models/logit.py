@@ -45,7 +45,7 @@ class LogitModel:
             next(iter(impedance["car"].values())), self.dtype)
         is_1d = expsum.ndim == 1
         if is_1d:
-            sust_sum = numpy.zeros_like(expsum)
+            sustainable_sum = numpy.zeros_like(expsum)
         for mode in self.mode_choice_param:
             b = self.mode_choice_param[mode]
             utility = numpy.zeros_like(expsum)
@@ -59,13 +59,27 @@ class LogitModel:
             self.mode_exps[mode] = exps
             expsum += exps
             if is_1d and mode != "car":
-                sust_sum += exps
+                sustainable_sum += exps
         if is_1d:
-            logsum = numpy.log(sust_sum)
-            self.purpose.sustainable_logsum = logsum
+            logsum = numpy.log(sustainable_sum)
             self.resultdata.print_data(
                 pandas.Series(logsum, self.purpose.zone_numbers),
                 "sustainable_accessibility.txt", self.purpose.name)
+            try:
+                b = self.dest_choice_param["car"]["impedance"]["cost"]
+            except KeyError:
+                # School tours do not have a constant cost parameter
+                # Use value of time conversion from CBA guidelines instead
+                b = -0.31690253
+            try:
+                # Convert utility into euros
+                money_utility = 1 / b
+            except TypeError:
+                # Separate params for cap region and surrounding
+                money_utility = numpy.zeros_like(logsum)
+                money_utility[self.lbounds] = 1 / b[0]
+                money_utility[self.ubounds] = 1 / b[1]
+            self.purpose.sustainable_accessibility = money_utility * logsum
         return expsum
     
     def _calc_dest_util(self, mode, impedance):

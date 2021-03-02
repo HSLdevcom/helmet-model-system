@@ -144,5 +144,5 @@ area_aggregation = (
         "surrounding",
         "peripheral",
     )
-SAVU_intervals = [6, 5, 4, 3, 2, 1, -9999] # TODO Calculate intervals
+savu_intervals = (-60, -50, -40, -30, -20, -10, 9999) # TODO Calculate intervals
 tour_length_intervals = (0, 1, 3, 5, 10, 20, 30, 40, float("inf"))
