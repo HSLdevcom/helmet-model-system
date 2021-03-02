@@ -302,15 +302,6 @@ bike_attributes = {
     "@bike_day": "LINK",
 }
 transit_assignment_modes = transit_modes + aux_modes
-# Link attribute for volumes
-link_volumes = {
-    "car_work": "@car_work",
-    "car_leisure": "@car_leisure",
-    "trailer_truck": "@trailer_truck",
-    "truck": "@truck",
-    "van": "@van",
-    "bus": "@bus"
-    }
 # Emme matrix IDs
 emme_demand_mtx = {
     "car_work": {

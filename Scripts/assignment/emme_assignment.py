@@ -152,8 +152,7 @@ class EmmeAssignmentModel(AssignmentModel):
                 vdf = link.volume_delay_func - 5
             if vdf in vdfs:
                 for ass_class in kms:
-                    kms[ass_class][vdf] += (link[param.link_volumes[ass_class]]
-                                            * link.length)
+                    kms[ass_class][vdf] += link['@'+ass_class] * link.length
         transit_modes = param.transit_mode_aggregates
         transit_dists = dict.fromkeys(transit_modes, 0)
         transit_times = dict.fromkeys(transit_modes, 0)
