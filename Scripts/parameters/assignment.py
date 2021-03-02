@@ -235,6 +235,7 @@ assignment_modes = {
     "truck": 'k',
     "van": 'v',
 }
+volume_delays_funcs = (1, 2, 3, 4, 5)
 vot_classes = {
     "car_work": "work",
     "car_leisure": "leisure",
@@ -243,6 +244,14 @@ vot_classes = {
     "van": "business",
 }
 bike_mode = 'f'
+transit_mode_aggregates = {
+    "bus": "bde",
+    "trunk": "g",
+    "metro": "m",
+    "train": "rj",
+    "tram": "tp",
+    "other": ""
+}
 transit_modes = [
     'b',
     'd',

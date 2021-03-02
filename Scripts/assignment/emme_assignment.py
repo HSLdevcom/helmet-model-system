@@ -140,15 +140,7 @@ class EmmeAssignmentModel(AssignmentModel):
         for ap in self.assignment_periods:
             self._transit_results_links_nodes(ap.emme_scenario)
         self._transit_results_links_nodes(self.day_scenario)
-        vdfs = [1, 2, 3, 4, 5]
-        transit_modes = {
-            "bus": "bde",
-            "trunk": "g",
-            "metro": "m",
-            "train": "rj",
-            "tram": "tp",
-            "other": ""
-        }
+        vdfs = param.volume_delays_funcs
         kms = {ass_class: dict.fromkeys(vdfs, 0)
             for ass_class in param.link_volumes}
         network = self.day_scenario.get_network()
@@ -162,6 +154,7 @@ class EmmeAssignmentModel(AssignmentModel):
                 for ass_class in kms:
                     kms[ass_class][vdf] += (link[param.link_volumes[ass_class]]
                                             * link.length)
+        transit_modes = param.transit_mode_aggregates
         transit_dists = dict.fromkeys(transit_modes, 0)
         transit_times = dict.fromkeys(transit_modes, 0)
         for ap in self.assignment_periods:
