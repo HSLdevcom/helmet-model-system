@@ -487,7 +487,7 @@ class AgentModelSystem(ModelSystem):
                     target=self._distribute_tours,
                     args=(
                         mode, origs, sec_dest_tours[mode],
-                        purpose_impedance[mode], tour_probs))
+                        purpose_impedance[mode]))
                 threads.append(thread)
                 thread.start()
             for thread in threads:
@@ -503,7 +503,7 @@ class AgentModelSystem(ModelSystem):
                 person.calc_income()
         log.info("Demand calculation completed")
 
-    def _distribute_tours(self, mode, origs, sec_dest_tours, impedance, tour_probs):
+    def _distribute_tours(self, mode, origs, sec_dest_tours, impedance):
         sec_dest_purpose = self.dm.purpose_dict["hoo"]
         for orig in origs:
                 dests = list(sec_dest_tours[orig])
