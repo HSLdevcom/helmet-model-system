@@ -130,7 +130,8 @@ class EmmeAssignmentModel(AssignmentModel):
         resultdata : datahandling.resultdata.Resultdata
             Result data container to print to
         """
-        for ass_class in param.link_volumes:
+        ass_classes = list(param.assignment_modes) + ["bus"]
+        for ass_class in ass_classes:
             self._auto_link_24h(ass_class)
         for transit_class in param.transit_classes:
             self._transit_segment_24h(transit_class, "vol")
@@ -141,8 +142,7 @@ class EmmeAssignmentModel(AssignmentModel):
             self._transit_results_links_nodes(ap.emme_scenario)
         self._transit_results_links_nodes(self.day_scenario)
         vdfs = param.volume_delays_funcs
-        kms = {ass_class: dict.fromkeys(vdfs, 0)
-            for ass_class in param.link_volumes}
+        kms = {ass_class: dict.fromkeys(vdfs, 0) for ass_class in ass_classes}
         network = self.day_scenario.get_network()
         for link in network.links():
             if link.volume_delay_func <= 5:
@@ -266,7 +266,7 @@ class EmmeAssignmentModel(AssignmentModel):
         attr : str
             Attribute name thatis usually part of Parameters: link_volumes.
         """
-        extra_attr = param.link_volumes[attr]
+        extra_attr = '@' + attr
         # get attr from different time periods to dictionary
         links_attr = {}
         for ap in self.assignment_periods:
@@ -274,8 +274,6 @@ class EmmeAssignmentModel(AssignmentModel):
             network = ap.emme_scenario.get_network()
             for link in network.links():
                 links_attr[ap.name][link.id] = link[extra_attr]
-        # create attr to save volume
-        extra_attr_day = str(param.link_volumes[attr])
         network = self.day_scenario.get_network()
         # save link volumes to result network
         for link in network.links():
@@ -283,7 +281,7 @@ class EmmeAssignmentModel(AssignmentModel):
             for tp in links_attr:
                 if link.id in links_attr[tp]:
                     day_attr += links_attr[tp][link.id] * param.volume_factors[attr][tp]
-            link[extra_attr_day] = day_attr
+            link[extra_attr] = day_attr
         self.day_scenario.publish_network(network)
         log.info("Auto attribute {} aggregated to 24h (scenario {})".format(
             extra_attr, self.day_scenario.id))
