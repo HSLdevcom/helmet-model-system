@@ -2,6 +2,7 @@ import numpy
 
 import utils.log as log
 import parameters.assignment as param
+import parameters.zone as zone_param
 from abstract_assignment import AssignmentModel
 from assignment_period import AssignmentPeriod
 
@@ -143,6 +144,8 @@ class EmmeAssignmentModel(AssignmentModel):
         self._transit_results_links_nodes(self.day_scenario)
         vdfs = param.volume_delays_funcs
         kms = {ass_class: dict.fromkeys(vdfs, 0) for ass_class in ass_classes}
+        areas = zone_param.areas
+        area_kms = {ass_class: dict.fromkeys(areas, 0) for ass_class in ass_classes}
         network = self.day_scenario.get_network()
         for link in network.links():
             if link.volume_delay_func <= 5:
@@ -153,6 +156,20 @@ class EmmeAssignmentModel(AssignmentModel):
             if vdf in vdfs:
                 for ass_class in kms:
                     kms[ass_class][vdf] += link['@'+ass_class] * link.length
+            try:
+                municipality = zone_param.kela_codes[int(link.i_node.data3)]
+                if municipality == "Helsinki" and link.i_node.label != 'A':
+                    first_zone_id = 1000
+                else:
+                    first_zone_id = zone_param.municipalities[municipality][0]
+            except KeyError:
+                log.warn("Municipality KELA code not found for node {}".format(
+                    link.i_node.id))
+                first_zone_id = -1
+            for area in areas:
+                if areas[area][0] <= first_zone_id <= areas[area][1]:
+                    area_kms[ass_class][area] += link['@'+ass_class] * link.length
+                    break
         transit_modes = param.transit_mode_aggregates
         transit_dists = dict.fromkeys(transit_modes, 0)
         transit_times = dict.fromkeys(transit_modes, 0)
