@@ -1,6 +1,8 @@
 import numpy
+from math import log10
 
 import utils.log as log
+from utils.zone_interval import belongs_to_area
 import parameters.assignment as param
 import parameters.zone as zone_param
 from abstract_assignment import AssignmentModel
@@ -144,8 +146,8 @@ class EmmeAssignmentModel(AssignmentModel):
         self._transit_results_links_nodes(self.day_scenario)
         vdfs = param.volume_delays_funcs
         kms = {ass_class: dict.fromkeys(vdfs, 0) for ass_class in ass_classes}
-        areas = zone_param.areas
-        area_kms = {ass_class: dict.fromkeys(areas, 0) for ass_class in ass_classes}
+        area_kms = {ass_class: dict.fromkeys(zone_param.areas, 0)
+            for ass_class in ass_classes}
         network = self.day_scenario.get_network()
         for link in network.links():
             if link.volume_delay_func <= 5:
@@ -156,20 +158,9 @@ class EmmeAssignmentModel(AssignmentModel):
             if vdf in vdfs:
                 for ass_class in kms:
                     kms[ass_class][vdf] += link['@'+ass_class] * link.length
-            try:
-                municipality = zone_param.kela_codes[int(link.i_node.data3)]
-                if municipality == "Helsinki" and link.i_node.label != 'A':
-                    first_zone_id = 1000
-                else:
-                    first_zone_id = zone_param.municipalities[municipality][0]
-            except KeyError:
-                log.warn("Municipality KELA code not found for node {}".format(
-                    link.i_node.id))
-                first_zone_id = -1
-            for area in areas:
-                if areas[area][0] <= first_zone_id <= areas[area][1]:
-                    area_kms[ass_class][area] += link['@'+ass_class] * link.length
-                    break
+            area = belongs_to_area(link.i_node)
+            if area in area_kms:
+                area_kms[ass_class][area] += link['@'+ass_class] * link.length
         transit_modes = param.transit_mode_aggregates
         transit_dists = dict.fromkeys(transit_modes, 0)
         transit_times = dict.fromkeys(transit_modes, 0)
@@ -196,6 +187,7 @@ class EmmeAssignmentModel(AssignmentModel):
         resultdata.print_data(
             transit_times.values(), "transit_kms.txt",
             transit_times.keys(), "time")
+        noise_areas = self._calc_noise()
 
     def calc_transit_cost(self, fares, peripheral_cost, default_cost=None):
         """Calculate transit zone cost matrix.
@@ -256,6 +248,65 @@ class EmmeAssignmentModel(AssignmentModel):
                 overwrite = True,
                 scenario = scenario)
             log.debug("Created attr {} for scen {}".format(extr.name, scenario.id))
+
+    def _calc_noise(self):
+        noise_areas = dict.fromkeys(zone_param.areas, 0)
+        network = self.assignment_periods[0].emme_scenario.get_network()
+        for link in network.links():
+            # Aggregate traffic
+            light_modes = ("@car_work", "@car_leisure", "@van")
+            traffic = sum([link[mode] for mode in light_modes])
+            rlink = link.reverse_link
+            if rlink is None:
+                reverse_traffic = 0
+            else:
+                reverse_traffic = sum([rlink[mode] for mode in light_modes])
+            cross_traffic = 0.85 * 10 * (traffic+reverse_traffic)
+            heavy = link["@truck"] + link["@trailer_truck"]
+            traffic = max(traffic, 0.01)
+            heavy_share = heavy / (traffic+heavy)
+
+            # Calculate speed
+            if reverse_traffic > 0:
+                speed = 60 * 2 * link.length / (link.auto_time+rlink.auto_time)
+            else:
+                speed = 60 * (0.3*link.length/link.auto_time + 0.7*link.data2)
+            speed = max(speed, 50)
+
+            # Calculate start noise
+            if speed <= 90:
+                heavy_correction = (10*log10((1-heavy_share)
+                                    + 500*heavy_share/speed))
+            else:
+                heavy_correction = (10*log10((1-heavy_share)
+                                    + 5.6*heavy_share*(90/speed)**3))
+            start_noise = (68 + 30*log10(speed/50)
+                           + 10*log10(cross_traffic/15/1000)
+                           + heavy_correction)
+
+            # Calculate noise zone width
+            if start_noise < 55:
+                zone_width = 5
+            elif start_noise < 65:
+                zone_width = 10 + 31/10*(start_noise-55)
+            elif start_noise < 68:
+                zone_width = 41 + 16/3*(start_noise-65)
+            elif start_noise < 71:
+                zone_width = 57 + 21/3*(start_noise-68)
+            elif start_noise < 74:
+                zone_width = 78 + 31/3*(start_noise-71)
+            elif start_noise < 77:
+                zone_width = 109 + 44/3*(start_noise-74)
+            elif start_noise < 80:
+                zone_width = 153 + 66/3*(start_noise-77)
+            else:
+                zone_width = 225
+
+            # Calculate noise zone area and aggregate to area level
+            area = belongs_to_area(link.i_node)
+            if area in noise_areas:
+                noise_areas[area] += zone_width * link.length
+        return noise_areas
 
     def _transit_results_links_nodes(self, scenario):
         """ 

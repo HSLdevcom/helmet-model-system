@@ -1,4 +1,5 @@
 import parameters.zone as param
+import utils.log as log
 
 
 class ZoneIntervals:
@@ -46,3 +47,30 @@ def zone_interval(division_type, name):
     return slice(
         param.__dict__[division_type][name][0],
         param.__dict__[division_type][name][1])
+
+def belongs_to_area(node):
+    """Get name of area to which node belongs to.
+
+    Parameters
+    ----------
+    node : inro.emme.network.node.Node
+        Node in Emme network with municipality KELA code in `ui3`
+
+    Returns
+    -------
+    str
+        Name of area (helsinki_cbd/helsinki_other/espoo_vant_kau/...)
+    """
+    try:
+        municipality = param.kela_codes[int(node.data3)]
+        if municipality == "Helsinki" and node.label != 'A':
+            first_zone_id = 1000
+        else:
+            first_zone_id = param.municipalities[municipality][0]
+    except KeyError:
+        log.warn("Municipality KELA code not found for node {}".format(node.id))
+        first_zone_id = -1
+    areas = param.areas
+    for area in areas:
+        if areas[area][0] <= first_zone_id <= areas[area][1]:
+            return area
