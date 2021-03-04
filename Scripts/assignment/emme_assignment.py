@@ -340,24 +340,24 @@ class EmmeAssignmentModel(AssignmentModel):
         """ 
         Sums and expands bike volumes from different scenarios to one result scenario.
         """
-        attr = "bike"
+        attr = "@bike_{}"
         # get attr from different time periods to dictionary
-        links_attr = {}
+        networks = {}
         for ap in self.assignment_periods:
-            extra_attr = "@{}_{}".format(attr, ap.name)
-            links_attr[ap.name] = {}
-            network = ap.bike_scenario.get_network()
-            for link in network.links():
-                links_attr[ap.name][link.id] = link[extra_attr]
+            networks[ap.name] = ap.bike_scenario.get_network()
         # save link volumes to result network
+        day_scenario = self.assignment_periods[0].bike_scenario
+        network = day_scenario.get_network()
         for link in network.links():
             day_attr = 0
-            for tp in links_attr:
-                if link.id in links_attr[tp]:
-                    day_attr += links_attr[tp][link.id] * param.volume_factors[attr][tp]
-            extra_attr = "@{}_{}".format(attr, "day")
-            link[extra_attr] = day_attr
-        bike_scenario = self.assignment_periods[0].bike_scenario
-        bike_scenario.publish_network(network)
+            for tp in networks:
+                try:
+                    tp_link = networks[tp].link(link.i_node, link.j_node)
+                    day_attr += (tp_link[attr.format(tp)]
+                                 * param.volume_factors["bike"][tp])
+                except (AttributeError, TypeError):
+                    pass
+            link[attr.format("day")] = day_attr
+        day_scenario.publish_network(network)
         log.info("Bike attribute {} aggregated to 24h (scenario {})".format(
-            extra_attr, bike_scenario.id))
+            attr.format("day"), day_scenario.id))
