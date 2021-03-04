@@ -285,19 +285,20 @@ class EmmeAssignmentModel(AssignmentModel):
         """
         extra_attr = '@' + attr
         # get attr from different time periods to dictionary
-        links_attr = {}
+        networks = {}
         for ap in self.assignment_periods:
-            links_attr[ap.name] = {}
-            network = ap.emme_scenario.get_network()
-            for link in network.links():
-                links_attr[ap.name][link.id] = link[extra_attr]
+            networks[ap.name] = ap.emme_scenario.get_network()
         network = self.day_scenario.get_network()
         # save link volumes to result network
         for link in network.links():
             day_attr = 0
-            for tp in links_attr:
-                if link.id in links_attr[tp]:
-                    day_attr += links_attr[tp][link.id] * param.volume_factors[attr][tp]
+            for tp in networks:
+                try:
+                    tp_link = networks[tp].link(link.i_node, link.j_node)
+                    day_attr += (tp_link[extra_attr]
+                                 * param.volume_factors[attr][tp])
+                except (AttributeError, TypeError):
+                    pass
             link[extra_attr] = day_attr
         self.day_scenario.publish_network(network)
         log.info("Auto attribute {} aggregated to 24h (scenario {})".format(
@@ -326,7 +327,8 @@ class EmmeAssignmentModel(AssignmentModel):
                 try:
                     tp_segment = networks[tp].transit_line(
                         segment.line.id).segment(segment.number)
-                    day_attr += tp_segment[extra_attr] * param.volume_factors[transit_class][tp]
+                    day_attr += (tp_segment[extra_attr]
+                                 * param.volume_factors[transit_class][tp])
                 except (AttributeError, TypeError):
                     pass
             segment[extra_attr] = day_attr
