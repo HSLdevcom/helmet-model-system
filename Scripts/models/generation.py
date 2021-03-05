@@ -42,7 +42,6 @@ class GenerationModel:
         numpy.ndarray
             Vector of tour numbers per zone
         """
-        self.resultdata.print_data(self.tours, "tours.txt", self.purpose.name)
         return self.tours.values
 
 
@@ -75,9 +74,6 @@ class NonHomeGeneration(GenerationModel):
             b = self.param[source.name]
             for mode in source.attracted_tours:
                 tours += b * source.attracted_tours[mode]
-        self.resultdata.print_data(
-            pandas.Series(tours, self.purpose.zone_numbers),
-            "tours.txt", self.purpose.name)
         return tours
 
 
