@@ -4,6 +4,7 @@ import random
 from datatypes.tour import Tour
 from parameters.income import log_income as param
 from parameters.income import standard_deviation
+from parameters.zone import areas, municipalities
 
 
 class Person:
@@ -32,6 +33,8 @@ class Person:
         self.sex = random.random() < 0.5
         self.tours = []
         self.generation_model = generation_model
+        self.tour_utils = 0
+        self.tour_utils_car = 0
         self._cm = car_use_model
         self._im = income_model
         self._car_use_draw = random.random()
@@ -55,6 +58,24 @@ class Person:
                 log_income += param["age_dummies"][self.age_group]
             log_income += random.gauss(0, standard_deviation)
             self.income = numpy.exp(log_income)
+
+    @property
+    def area(self):
+        result = None
+        for area in areas:
+            if  areas[area][0] <= self.zone < areas[area][1]:
+                result = area
+                break
+        return result
+
+    @property
+    def municipality(self):
+        result = None
+        for mp in municipalities:
+            if  municipalities[mp][0] <= self.zone < municipalities[mp][1]:
+                result = mp
+                break
+        return result
 
     @property
     def gender(self):

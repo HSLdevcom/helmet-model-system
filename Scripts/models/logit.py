@@ -392,7 +392,7 @@ class ModeDestModel(LogitModel):
         probs = numpy.empty(len(modes))
         for i, mode in enumerate(modes):
             probs[i] = mode_exps[mode] / mode_expsum
-        return probs
+        return probs, mode_expsum, mode_exps["car"]
 
     def _calc_utils(self, impedance):
         self.dest_expsums = {}

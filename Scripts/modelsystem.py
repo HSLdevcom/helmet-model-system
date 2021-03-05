@@ -497,10 +497,28 @@ class AgentModelSystem(ModelSystem):
         for person in self.dm.population:
             for tour in person.tours:
                 self.dtm.add_demand(tour)
+        log.info("Secondary destinations assigned")
         if is_last_iteration:
             self.dm.incmod.predict()
+            result_dict = {
+                "zone": [], "area": [], "municipality": [], 
+                "income": [], "age_group": [], "gender": [], 
+                "nr_tours": [], "tour_utils": [], "tour_utils_car": [],}
             for person in self.dm.population:
                 person.calc_income()
+                for tour in person.tours:
+                    person.tour_utils += tour.util
+                    person.tour_utils_car += tour.util_car
+                for attr in result_dict.keys():
+                    if attr == "nr_tours":
+                        result_dict["nr_tours"].append(len(person.tours))
+                    else:
+                        result_dict[attr].append(getattr(person, attr))
+            results = pandas.DataFrame(result_dict)
+            results["tour_utils_other"] = results["tour_utils"] - results["tour_utils_car"]
+            for attr in results.columns:
+                self.resultdata.print_data(
+                    pandas.Series(results[attr]), "agents.txt", attr)            
         log.info("Demand calculation completed")
 
     def _distribute_tours(self, mode, origs, sec_dest_tours, impedance, tour_probs):

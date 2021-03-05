@@ -115,11 +115,14 @@ class Tour(object):
         is_car_user : bool
             Whether the person is car user or not
         """
+        mode_probs, expsum, expsum_car = self.purpose.model.calc_individual_mode_prob(
+                is_car_user, self.position[0])
+        # dont save demand when descaling
         self._mode_idx = numpy.searchsorted(
-            self.purpose.model.calc_individual_mode_prob(
-                is_car_user, self.position[0]).cumsum(),
-            self._mode_draw)
+            mode_probs.cumsum(), self._mode_draw)
         self.purpose.generated_tours[self.mode][self.position[0]] += 1
+        self.util = numpy.log(expsum)
+        self.util_car = numpy.log(expsum_car)
 
     def choose_destination(self, sec_dest_tours):
         """Choose primary destination for the tour.
