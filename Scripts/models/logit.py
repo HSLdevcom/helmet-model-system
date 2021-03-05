@@ -79,6 +79,7 @@ class LogitModel:
                 money_utility = numpy.zeros_like(logsum)
                 money_utility[self.lbounds] = 1 / b[0]
                 money_utility[self.ubounds] = 1 / b[1]
+            money_utility /= self.mode_choice_param["car"]["log"]["logsum"]
             self.purpose.sustainable_accessibility = money_utility * logsum
         return expsum
     
