@@ -18,6 +18,7 @@ from transform.impedance_transformer import ImpedanceTransformer
 from models.linear import CarDensityModel
 import parameters.assignment as param
 import parameters.zone as zone_param
+import parameters.tour_generation as gen_param
 
 
 class ModelSystem:
@@ -245,18 +246,16 @@ class ModelSystem:
 
         # Calculate SAVU zones
         sust_logsum = 0
-        tours = 0
+        tour_sum = 0
         for purpose in self.dm.tour_purposes:
             if (purpose.area == "metropolitan" and purpose.orig == "home"
                     and purpose.dest != "source"
                     and not isinstance(purpose, SecDestPurpose)):
                 zone_numbers = purpose.zone_numbers
-                purpose_tours = sum(purpose.generated_tours.values())
-                sust_logsum += purpose_tours * purpose.sustainable_accessibility
-                tours += purpose_tours
-        sust_logsum = numpy.divide(
-            sust_logsum, tours,
-            out=numpy.full_like(sust_logsum, float("inf")), where=tours!=0)
+                weight = gen_param.tour_generation[purpose.name]["population"]
+                sust_logsum += weight * purpose.sustainable_accessibility
+                tour_sum += weight
+        sust_logsum = sust_logsum / tour_sum
         savu = numpy.searchsorted(zone_param.savu_intervals, sust_logsum) + 1
         self.resultdata.print_data(
             pandas.Series(savu, zone_numbers), "savu.txt", "savu_zone")
