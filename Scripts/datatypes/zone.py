@@ -12,7 +12,9 @@ class Zone:
         for area in areas:
             if areas[area][0] <= number < areas[area][1]:
                 self.area = area
+                break
         self.municipality = None
         for mp in municipalities:
             if  municipalities[mp][0] <= number < municipalities[mp][1]:
                 self.municipality = mp
+                break
