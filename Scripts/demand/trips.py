@@ -95,6 +95,7 @@ class DemandModel:
             self.zone_data, bounds, self.age_groups, self.resultdata)
         self.population = []
         zones = self.zone_data.zone_numbers[bounds]
+        self.zone_population = pandas.Series(0, zones)
         for zone_number in zones:
             weights = [1]
             for age_group in self.age_groups:
@@ -124,6 +125,7 @@ class DemandModel:
                         zone_number, self.age_groups[group], self.gm,
                         self.cm, self.incmod)
                     self.population.append(person)
+                    self.zone_population[zone_number] += 1
 
     def generate_tours(self):
         """Generate vector of tours for each tour purpose.
@@ -151,7 +153,8 @@ class DemandModel:
                     self.purpose_dict[purpose].gen_model.tours += nr_tours
                 nr_tours_sums["-".join(combination)] = nr_tours.sum()
             result_data[age] = nr_tours_sums.sort_index()
-        self.resultdata.print_matrix(result_data, "generation", "tour_combinations")
+        self.resultdata.print_matrix(
+            result_data, "tour_combinations", "tour_combinations")
 
     def generate_tour_probs(self):
         """Generate matrices of cumulative tour combination probabilities.

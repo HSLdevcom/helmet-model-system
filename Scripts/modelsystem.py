@@ -268,25 +268,26 @@ class ModelSystem:
             ext_demand = self.em.calc_external(mode, int_demand)
             self.dtm.add_demand(ext_demand)
 
-        # Calculate trips and mode shares
-        trip_sum = {}
-        for mode in self.travel_modes:
-            trip_sum[mode] = self._sum_trips_per_zone(mode)
+        # Calculate tour sums and mode shares
+        trip_sum = {mode: self._sum_trips_per_zone(mode, include_dests=False)
+            for mode in self.travel_modes}
         sum_all = sum(trip_sum.values())
-        mode_share = {}
+        mode_shares = {}
         for mode in trip_sum:
             self.resultdata.print_data(
                 pandas.Series(trip_sum[mode], self.zdata_base.zone_numbers),
                 "origins_demand.txt", mode)
             self.resultdata.print_data(
-                pandas.Series(trip_sum[mode] / sum_all, self.zdata_base.zone_numbers),
+                pandas.Series(trip_sum[mode] / sum_all,
+                    self.zdata_base.zone_numbers),
                 "origins_shares.txt", mode)
-            mode_share[mode] = trip_sum[mode].sum() / sum_all.sum()
-        self.mode_share.append(mode_share)
+            mode_shares[mode] = trip_sum[mode].sum() / sum_all.sum()
+        self.mode_share.append(mode_shares)
         if iteration=="last":
             # Save demand matrices to files
             for ap in self.ass_model.assignment_periods:
                 self._save_demand_to_omx(ap.name)
+
         # Calculate and return traffic impedance
         for ap in self.ass_model.assignment_periods:
             tp = ap.name
@@ -320,16 +321,16 @@ class ModelSystem:
                 for ass_class in impedance[mtx_type]:
                     mtx[ass_class] = impedance[mtx_type][ass_class]
 
-    def _sum_trips_per_zone(self, mode):
+    def _sum_trips_per_zone(self, mode, include_dests=True):
         int_demand = numpy.zeros(self.zdata_base.nr_zones)
         for purpose in self.dm.tour_purposes:
             if mode in purpose.modes and purpose.dest != "source":
-                if isinstance(purpose, SecDestPurpose):
-                    bounds = next(iter(purpose.sources)).bounds
-                else:
-                    bounds = purpose.bounds
+                bounds = (next(iter(purpose.sources)).bounds
+                    if isinstance(purpose, SecDestPurpose)
+                    else purpose.bounds)
                 int_demand[bounds] += purpose.generated_tours[mode]
-                int_demand += purpose.attracted_tours[mode]
+                if include_dests:
+                    int_demand += purpose.attracted_tours[mode]
         return int_demand
 
     def _distribute_sec_dests(self, purpose, mode, impedance):
@@ -478,12 +479,17 @@ class AgentModelSystem(ModelSystem):
         purpose = self.dm.purpose_dict["hoo"]
         sec_dest_tours = {mode: [defaultdict(list) for _ in purpose.zone_numbers]
             for mode in purpose.modes}
+        car_users = pandas.Series(
+            0, self.zdata_forecast.zone_numbers[self.dm.cm.bounds])
         for person in self.dm.population:
             person.decide_car_use()
+            car_users[person.zone] += person.is_car_user
             person.add_tours(self.dm.purpose_dict, tour_probs)
             for tour in person.tours:
                 tour.choose_mode(person.is_car_user)
                 tour.choose_destination(sec_dest_tours)
+        self.dm.cm.print_results(
+            car_users / self.dm.zone_population, self.dm.zone_population)
         log.info("Primary destinations assigned")
         purpose_impedance = self.imptrans.transform(
             purpose, previous_iter_impedance)
@@ -502,7 +508,7 @@ class AgentModelSystem(ModelSystem):
                     target=self._distribute_tours,
                     args=(
                         mode, origs, sec_dest_tours[mode],
-                        purpose_impedance[mode], tour_probs))
+                        purpose_impedance[mode]))
                 threads.append(thread)
                 thread.start()
             for thread in threads:
@@ -518,7 +524,7 @@ class AgentModelSystem(ModelSystem):
                 person.calc_income()
         log.info("Demand calculation completed")
 
-    def _distribute_tours(self, mode, origs, sec_dest_tours, impedance, tour_probs):
+    def _distribute_tours(self, mode, origs, sec_dest_tours, impedance):
         sec_dest_purpose = self.dm.purpose_dict["hoo"]
         for orig in origs:
                 dests = list(sec_dest_tours[orig])

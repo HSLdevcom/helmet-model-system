@@ -66,18 +66,21 @@ class Purpose:
         return self.zone_data.zone_numbers[self.bounds]
 
     def print_data(self):
-        attracted_tours = 0
-        demsums = {}
-        for mode in self.modes:
-            attracted_tours += self.attracted_tours[mode]
-            demsums[mode] = self.generated_tours[mode].sum()
         self.resultdata.print_data(
-            pandas.Series(attracted_tours, self.zone_data.zone_numbers),
+            pandas.Series(
+                sum(self.generated_tours.values()), self.zone_numbers),
+            "generation.txt", self.name)
+        self.resultdata.print_data(
+            pandas.Series(
+                sum(self.attracted_tours.values()),
+                self.zone_data.zone_numbers),
             "attraction.txt", self.name)
+        demsums = {mode: self.generated_tours[mode].sum()
+            for mode in self.modes}
         demand_all = float(sum(demsums.values()))
         mode_shares = {mode: demsums[mode] / demand_all for mode in demsums}
         self.resultdata.print_data(
-            pandas.Series(mode_shares, demsums.keys()),
+            pandas.Series(mode_shares),
             "mode_share.txt", self.name)
 
 

@@ -792,14 +792,15 @@ class CarUseModel(LogitModel):
         prob = exp / (exp+1)
         return prob
 
-    def print_results(self, prob):
+    def print_results(self, prob, population_7_99=None):
         """ Print results, mainly for calibration purposes"""
         # Print car user share by zone
         self.resultdata.print_data(prob, "car_use.txt", "car_use")
-        # Comparison data has car user shares of population
-        # over 6 years old (from HEHA)
-        population_7_99 = (self.zone_data["population"][self.bounds]
-                           * self.zone_data["share_age_7-99"])
+        if population_7_99 is None:
+            # Comparison data has car user shares of population
+            # over 6 years old (from HEHA)
+            population_7_99 = (self.zone_data["population"][self.bounds]
+                               * self.zone_data["share_age_7-99"])
         # print car use share by municipality and area
         for area_type in ("municipalities", "areas"):
             prob_area = ZoneIntervals(area_type).averages(prob, population_7_99)
