@@ -755,11 +755,12 @@ class CarUseModel(LogitModel):
         prob = exp / (exp+1)
         return prob
 
-    def print_results(self, prob):
+    def print_results(self, prob, population_7_99=None):
         """ Print results, mainly for calibration purposes"""
-        population = self.zone_data["population"]
-        population_7_99 = ( population[:self.zone_data.first_peripheral_zone]
-                          * self.zone_data["share_age_7-99"] )
+        if population_7_99 is None:
+            population = self.zone_data["population"]
+            population_7_99 = ( population[:self.zone_data.first_peripheral_zone]
+                            * self.zone_data["share_age_7-99"] )
         car_users = prob * population_7_99
                 
         # Print car user share by zone

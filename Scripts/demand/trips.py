@@ -95,6 +95,7 @@ class DemandModel:
             self.zone_data, bounds, self.age_groups, self.resultdata)
         self.population = []
         zones = self.zone_data.zone_numbers[bounds]
+        self.zone_population = pandas.Series(0, zones)
         for zone_number in zones:
             weights = [1]
             for age_group in self.age_groups:
@@ -124,6 +125,7 @@ class DemandModel:
                         zone_number, self.age_groups[group], self.gm,
                         self.cm, self.incmod)
                     self.population.append(person)
+                    self.zone_population[zone_number] += 1
 
     def generate_tours(self):
         """Generate vector of tours for each tour purpose.

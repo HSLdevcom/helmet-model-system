@@ -464,12 +464,17 @@ class AgentModelSystem(ModelSystem):
         purpose = self.dm.purpose_dict["hoo"]
         sec_dest_tours = {mode: [defaultdict(list) for _ in purpose.zone_numbers]
             for mode in purpose.modes}
+        car_users = pandas.Series(
+            0, self.zdata_forecast.zone_numbers[self.dm.cm.bounds])
         for person in self.dm.population:
             person.decide_car_use()
+            car_users[person.zone] += person.is_car_user
             person.add_tours(self.dm.purpose_dict, tour_probs)
             for tour in person.tours:
                 tour.choose_mode(person.is_car_user)
                 tour.choose_destination(sec_dest_tours)
+        self.dm.cm.print_results(
+            car_users / self.dm.zone_population, self.dm.zone_population)
         log.info("Primary destinations assigned")
         purpose_impedance = self.imptrans.transform(
             purpose, previous_iter_impedance)
