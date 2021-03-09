@@ -121,7 +121,7 @@ class CarDensityModel(LinearModel):
         for area_type in ("municipalities", "areas"):
             aggregation = ZoneIntervals(area_type).averages(prediction, population)
             self.resultdata.print_data(
-                aggregation, "car_density_per_{}.txt".format(area_type),
+                aggregation, "car_density_{}.txt".format(area_type),
                 "car_density")
 
 

@@ -805,4 +805,4 @@ class CarUseModel(LogitModel):
         for area_type in ("municipalities", "areas"):
             prob_area = ZoneIntervals(area_type).averages(prob, population_7_99)
             self.resultdata.print_data(
-                prob_area, "car_use_per_{}.txt".format(area_type), "car_use")
+                prob_area, "car_use_{}.txt".format(area_type), "car_use")
