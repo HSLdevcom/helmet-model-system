@@ -19,7 +19,6 @@ class Tour(object):
     matrix = numpy.array([[1 / zone_param.agent_demand_fraction]])
 
     def __init__(self, purpose, origin):
-        random.seed(zone_param.tour_seed)
         self.purpose = purpose
         self.orig = origin
         try:

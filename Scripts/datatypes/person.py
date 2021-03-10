@@ -4,7 +4,7 @@ import random
 from datatypes.tour import Tour
 from parameters.income import log_income as param
 from parameters.income import standard_deviation
-from parameters.zone import areas, municipalities, population_seed, tour_seed
+from parameters.zone import areas, municipalities
 
 class Person:
     """Container for person attributes.
@@ -33,12 +33,10 @@ class Person:
         self.tour_utils_car = 0
         self._cm = car_use_model
         self._im = income_model
-        random.seed(population_seed)
         self.age = random.randint(age_group[0], age_group[1])
         self.age_group = "age_" + str(age_group[0]) + "-" + str(age_group[1])
         self.sex = random.random() < 0.5
         self._car_use_draw = random.random()
-        random.seed(tour_seed)
         self._tour_combination_draw = random.random()
 
     def decide_car_use(self):
@@ -47,7 +45,6 @@ class Person:
         self.is_car_user = self._car_use_draw < car_use_prob
 
     def calc_income(self):
-        random.seed(population_seed)
         if self.age < 17:
             self.income = 0
         else:
@@ -106,7 +103,6 @@ class Person:
                     Matrix with cumulative tour combination probabilities
                     for all zones
         """
-        random.seed(tour_seed)
         zone_idx = self.generation_model.zone_data.zone_index(self.zone)
         tour_comb_idx = numpy.searchsorted(
             tour_probs[self.age_group][self.is_car_user][zone_idx, :],
