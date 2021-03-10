@@ -279,7 +279,7 @@ class ModelSystem:
             for mode in self.travel_modes}
         sum_all = sum(trip_sum.values())
         mode_shares = {}
-        ar = ArrayAggregator()
+        ar = ArrayAggregator(sum_all.index)
         for mode in trip_sum:
             self.resultdata.print_data(
                 trip_sum[mode], "origins_demand.txt", mode)
