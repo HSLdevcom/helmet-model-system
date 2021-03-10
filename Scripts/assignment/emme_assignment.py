@@ -251,7 +251,8 @@ class EmmeAssignmentModel(AssignmentModel):
 
     def _calc_noise(self):
         noise_areas = dict.fromkeys(zone_param.areas, 0)
-        network = self.assignment_periods[0].emme_scenario.get_network()
+        network = self.day_scenario.get_network()
+        morning_network = self.assignment_periods[0].emme_scenario.get_network()
         for link in network.links():
             # Aggregate traffic
             light_modes = ("@car_work", "@car_leisure", "@van")
@@ -261,12 +262,14 @@ class EmmeAssignmentModel(AssignmentModel):
                 reverse_traffic = 0
             else:
                 reverse_traffic = sum([rlink[mode] for mode in light_modes])
-            cross_traffic = 0.85 * 10 * (traffic+reverse_traffic)
+            cross_traffic = 0.85 * 0.9 * (traffic+reverse_traffic)
             heavy = link["@truck"] + link["@trailer_truck"]
             traffic = max(traffic, 0.01)
             heavy_share = heavy / (traffic+heavy)
 
             # Calculate speed
+            link = morning_network.link(link.i_node, link.j_node)
+            rlink = link.reverse_link
             if reverse_traffic > 0:
                 speed = 60 * 2 * link.length / (link.auto_time+rlink.auto_time)
             else:
