@@ -123,8 +123,9 @@ class TourPurpose(Purpose):
                 zone_data, self, resultdata, is_agent_model)
         self.modes = self.model.mode_choice_param.keys()
         self.histograms = {mode: TourLengthHistogram() for mode in self.modes}
-        self.aggregates = {mode: MatrixAggregator() for mode in self.modes}
-        self.own_zone_aggregates = {mode: ArrayAggregator()
+        self.aggregates = {mode: MatrixAggregator(zone_data.zone_numbers)
+            for mode in self.modes}
+        self.own_zone_aggregates = {mode: ArrayAggregator(zone_data.zone_numbers)
             for mode in self.modes}
         self.sec_dest_purpose = None
 
@@ -146,8 +147,8 @@ class TourPurpose(Purpose):
             self.generated_tours[mode] = numpy.zeros_like(self.zone_numbers)
             self.attracted_tours[mode] = numpy.zeros_like(self.zone_data.zone_numbers)
             self.histograms[mode].__init__()
-            self.aggregates[mode].__init__()
-            self.own_zone_aggregates[mode].__init__()
+            self.aggregates[mode].init_matrix()
+            self.own_zone_aggregates[mode].init_array()
 
     def calc_prob(self, impedance):
         """Calculate mode and destination probabilities.
