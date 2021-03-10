@@ -90,6 +90,7 @@ class DemandModel:
         list
             Person
         """
+        random.seed(param.population_seed)
         bounds = slice(0, self.zone_data.first_peripheral_zone)
         self.incmod = linear.IncomeModel(
             self.zone_data, bounds, self.age_groups, self.resultdata)

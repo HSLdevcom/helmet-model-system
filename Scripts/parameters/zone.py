@@ -1,6 +1,11 @@
 # Share of demand that will be simulated in agent model
 agent_demand_fraction = 1.0
 
+# Random seeds for population attributes and tour attributes
+# None sets different seeds for all model runs
+population_seed = 31
+tour_seed = None
+
 ### DEMAND MODEL REFERENCES ###
 
 tour_purposes = (
