@@ -39,8 +39,8 @@ class EmmeAssignmentTest:
             "van": car_matrix,
         }
         travel_cost = {}
-        for tp in ("aht", "pt", "iht"):
-            travel_cost[tp] = self.ass_model.assign(tp, demand, iteration="init")
+        for ap in self.ass_model.assignment_periods:
+            travel_cost[ap.name] = ap.assign(demand, iteration="init")
         costs_files = MatrixData(os.path.join(
             os.path.dirname(os.path.realpath(__file__)),
             "..", "Matrices", "2016_test"))

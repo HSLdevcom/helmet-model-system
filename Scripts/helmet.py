@@ -91,17 +91,18 @@ def main(args):
             log_extra["status"]['state'] = 'finished'
     # delete emme strategy files for scenarios 
     if args.del_strat_files:
-        dbase_path = "{}/database".format(os.path.dirname(emme_project_path))
+        dbase_path = os.path.join(os.path.dirname(emme_project_path), "database")
+        filepath = os.path.join(dbase_path, "STRAT_s{}*")
+        dirpath = os.path.join(dbase_path, "STRATS_s{}", "*")
         scenario_ids = range(args.first_scenario_id, args.first_scenario_id+5)
         for s in scenario_ids:
-            strategy_files = glob("{}/STRAT_s{}*".format(dbase_path, s))
-            strategy_files = strategy_files + glob("{}/STRATS_s{}/*".format(dbase_path, s))
+            strategy_files = glob(filepath.format(s)) + glob(dirpath.format(s))
             for f in strategy_files:
                 try:
                     os.remove(f)
-                    log.info("Removed file {}".format(f))
                 except:
                     log.info("Not able to remove file {}.".format(f))
+        log.info("Removed strategy files in {}".format(dbase_path))
     log.info("Simulation ended.", extra=log_extra)
 
 

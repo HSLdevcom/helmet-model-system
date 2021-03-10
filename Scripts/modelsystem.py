@@ -44,7 +44,6 @@ class ModelSystem:
                  results_path, assignment_model, name):
         self.ass_model = assignment_model
         self.zone_numbers = self.ass_model.zone_numbers
-        self.emme_scenarios = self.ass_model.emme_scenarios
 
         # Input data
         self.zdata_base = BaseZoneData(
@@ -66,8 +65,7 @@ class ModelSystem:
             self.zdata_base, self.zdata_forecast, self.basematrices)
         self.em = ExternalModel(
             self.basematrices, self.zdata_forecast, self.zone_numbers)
-        self.dtm = dt.DepartureTimeModel(
-            self.ass_model.nr_zones, self.emme_scenarios)
+        self.dtm = dt.DepartureTimeModel(self.ass_model.nr_zones)
         self.imptrans = ImpedanceTransformer()
         bounds = slice(0, self.zdata_forecast.nr_zones)
         self.cdm = CarDensityModel(
@@ -166,7 +164,7 @@ class ModelSystem:
         # Calculate transit cost matrix, and save it to emmebank
         with self.basematrices.open("demand", "aht", self.ass_model.zone_numbers) as mtx:
             base_demand = {ass_class: mtx[ass_class] for ass_class in param.transport_classes}
-        self.ass_model.assign("aht", base_demand, iteration="init")
+        self.ass_model.init_assign(base_demand)
         if use_fixed_transit_cost:
             log.info("Using fixed transit cost matrix")
             with self.resultmatrices.open("cost", "aht") as aht_mtx:
@@ -182,13 +180,14 @@ class ModelSystem:
         # Perform traffic assignment and get result impedance, 
         # for each time period
         demand = self.resultmatrices if is_end_assignment else self.basematrices
-        for tp in self.emme_scenarios:
+        for ap in self.ass_model.assignment_periods:
+            tp = ap.name
             log.info("Assigning period " + tp)
             with demand.open("demand", tp, self.ass_model.zone_numbers) as mtx:
                 for ass_class in param.transport_classes:
                     self.dtm.demand[tp][ass_class] = mtx[ass_class]
-            impedance[tp] = self.ass_model.assign(
-                tp, self.dtm.demand[tp], 
+            impedance[tp] = ap.assign(
+                self.dtm.demand[tp],
                 iteration=("last" if is_end_assignment else 0))
             if tp == "aht":
                 self._update_ratios(impedance[tp], tp)
@@ -270,15 +269,16 @@ class ModelSystem:
                 "origins_shares.txt", mode)
             mode_share[mode] = trip_sum[mode].sum() / sum_all.sum()
         self.mode_share.append(mode_share)
-        # Save demand matrices to files
-        for tp in self.emme_scenarios:
-            self._save_demand_to_omx(tp)
+        if iteration=="last":
+            # Save demand matrices to files
+            for ap in self.ass_model.assignment_periods:
+                self._save_demand_to_omx(ap.name)
         # Calculate and return traffic impedance
-        for tp in self.emme_scenarios:
+        for ap in self.ass_model.assignment_periods:
+            tp = ap.name
             log.info("Assigning period " + tp)
             self.dtm.add_vans(tp, self.zdata_forecast.nr_zones)
-            impedance[tp] = self.ass_model.assign(
-                tp, self.dtm.demand[tp], iteration)
+            impedance[tp] = ap.assign(self.dtm.demand[tp], iteration)
             if tp == "aht":
                 self._update_ratios(impedance[tp], tp)
             if iteration=="last":
@@ -332,7 +332,7 @@ class ModelSystem:
             # will calculate secondary destinations
             origs = xrange(i, bounds.stop - bounds.start, nr_threads)
             # Results will be saved in a temp dtm, to avoid memory clashes
-            dtm = dt.DepartureTimeModel(self.ass_model.nr_zones, self.emme_scenarios)
+            dtm = dt.DepartureTimeModel(self.ass_model.nr_zones)
             demand.append(dtm)
             thread = threading.Thread(
                 target=self._distribute_tours,
