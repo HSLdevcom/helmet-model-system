@@ -6,6 +6,7 @@ import pandas
 from collections import defaultdict
 
 import utils.log as log
+from utils.zone_interval import ArrayAggregator
 import assignment.departure_time as dt
 from datahandling.resultdata import ResultsData
 from datahandling.zonedata import ZoneData, BaseZoneData
@@ -260,9 +261,14 @@ class ModelSystem:
         # Calculate external demand
         for mode in param.external_modes:
             if mode == "truck":
-                int_demand = self.trucks.matrix.sum(0) + self.trucks.matrix.sum(1)
+                int_demand = pandas.Series(
+                    self.trucks.matrix.sum(0) + self.trucks.matrix.sum(1),
+                    self.zdata_base.zone_numbers)
             elif mode == "trailer_truck":
-                int_demand = self.trailer_trucks.matrix.sum(0) + self.trailer_trucks.matrix.sum(1)
+                int_demand = pandas.Series(
+                    (self.trailer_trucks.matrix.sum(0)
+                     + self.trailer_trucks.matrix.sum(1)),
+                    self.zdata_base.zone_numbers)
             else:
                 int_demand = self._sum_trips_per_zone(mode)
             ext_demand = self.em.calc_external(mode, int_demand)
@@ -273,14 +279,14 @@ class ModelSystem:
             for mode in self.travel_modes}
         sum_all = sum(trip_sum.values())
         mode_shares = {}
+        ar = ArrayAggregator()
         for mode in trip_sum:
             self.resultdata.print_data(
-                pandas.Series(trip_sum[mode], self.zdata_base.zone_numbers),
-                "origins_demand.txt", mode)
+                trip_sum[mode], "origins_demand.txt", mode)
             self.resultdata.print_data(
-                pandas.Series(trip_sum[mode] / sum_all,
-                    self.zdata_base.zone_numbers),
-                "origins_shares.txt", mode)
+                ar.aggregate(trip_sum[mode]), "origin_demand_areas.txt", mode)
+            self.resultdata.print_data(
+                trip_sum[mode] / sum_all, "origins_shares.txt", mode)
             mode_shares[mode] = trip_sum[mode].sum() / sum_all.sum()
         self.mode_share.append(mode_shares)
         if iteration=="last":
@@ -322,7 +328,7 @@ class ModelSystem:
                     mtx[ass_class] = impedance[mtx_type][ass_class]
 
     def _sum_trips_per_zone(self, mode, include_dests=True):
-        int_demand = numpy.zeros(self.zdata_base.nr_zones)
+        int_demand = pandas.Series(0, self.zdata_base.zone_numbers)
         for purpose in self.dm.tour_purposes:
             if mode in purpose.modes and purpose.dest != "source":
                 bounds = (next(iter(purpose.sources)).bounds

@@ -21,7 +21,6 @@ class ExternalModel:
 
     def __init__(self, base_demand, zone_data, zone_numbers):
         self.base_demand = base_demand
-        self.internal_zones = zone_data.zone_numbers
         self.all_zone_numbers = zone_numbers
         self.growth = zone_data.externalgrowth
         spec = {
@@ -39,7 +38,7 @@ class ExternalModel:
         ----------
         mode : str
             Travel mode (car/transit/truck/trailer_truck)
-        internal_trips : numpy.ndarray
+        internal_trips : pandas.Series
             Sums of all (intra-area) trips to and frome zones
         
         Return
@@ -49,7 +48,6 @@ class ExternalModel:
         """
         base_mtx = self.base_demand.get_external(mode)
         mtx = pandas.DataFrame(0, self.all_zone_numbers, self.growth.index)
-        internal_trips = pandas.Series(internal_trips, self.internal_zones)
         municipalities = ZoneIntervals("municipalities")
         # Base matrix is aggregated to municipality level,
         # so we need to disaggregate it

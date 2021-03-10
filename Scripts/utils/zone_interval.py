@@ -127,6 +127,7 @@ class MatrixAggregator(AreaAggregator):
         matrix : pandas.DataFrame
             Disaggregated matrix with zone indices and columns
         """
+        self.init_matrix()
         tmp_mtx = pandas.DataFrame(0, self.keys, matrix.columns)
         for area in self:
             i = self._get_slice(area, matrix.index)
@@ -134,6 +135,7 @@ class MatrixAggregator(AreaAggregator):
         for area in self:
             i = self._get_slice(area, matrix.columns)
             self.matrix.loc[:, area] = tmp_mtx.loc[:, i].sum(1).values
+        return self.matrix
 
 
 class ArrayAggregator(AreaAggregator):
@@ -162,9 +164,11 @@ class ArrayAggregator(AreaAggregator):
         array : pandas.Series
             Disaggregated array with zone indices
         """
+        self.init_array()
         for area in self:
             i = self._get_slice(area, array.index)
             self.array.loc[area] = array.loc[i].sum()
+        return self.array
 
 
 def is_in(interval, zone_number):
