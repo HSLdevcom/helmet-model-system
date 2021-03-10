@@ -3,8 +3,10 @@ import multiprocessing
 import os
 import numpy
 import pandas
+from collections import defaultdict
 
 import utils.log as log
+from utils.zone_interval import ArrayAggregator
 import assignment.departure_time as dt
 from datahandling.resultdata import ResultsData
 from datahandling.zonedata import ZoneData, BaseZoneData
@@ -16,6 +18,7 @@ from datatypes.purpose import SecDestPurpose
 from transform.impedance_transformer import ImpedanceTransformer
 from models.linear import CarDensityModel
 import parameters.assignment as param
+import parameters.zone as zone_param
 
 
 class ModelSystem:
@@ -244,31 +247,39 @@ class ModelSystem:
         # Calculate external demand
         for mode in param.external_modes:
             if mode == "truck":
-                int_demand = self.trucks.matrix.sum(0) + self.trucks.matrix.sum(1)
+                int_demand = pandas.Series(
+                    self.trucks.matrix.sum(0) + self.trucks.matrix.sum(1),
+                    self.zdata_base.zone_numbers)
             elif mode == "trailer_truck":
-                int_demand = self.trailer_trucks.matrix.sum(0) + self.trailer_trucks.matrix.sum(1)
+                int_demand = pandas.Series(
+                    (self.trailer_trucks.matrix.sum(0)
+                     + self.trailer_trucks.matrix.sum(1)),
+                    self.zdata_base.zone_numbers)
             else:
                 int_demand = self._sum_trips_per_zone(mode)
             ext_demand = self.em.calc_external(mode, int_demand)
             self.dtm.add_demand(ext_demand)
 
-        # Calculate trips and mode shares
-        trip_sum = {}
-        for mode in self.travel_modes:
-            trip_sum[mode] = self._sum_trips_per_zone(mode)
+        # Calculate tour sums and mode shares
+        trip_sum = {mode: self._sum_trips_per_zone(mode, include_dests=False)
+            for mode in self.travel_modes}
         sum_all = sum(trip_sum.values())
-        mode_share = {}
+        mode_shares = {}
+        ar = ArrayAggregator()
         for mode in trip_sum:
-            self.resultdata.print_data(trip_sum[mode], "origins_demand.txt", 
-                self.zdata_base.zone_numbers, mode)
-            self.resultdata.print_data(trip_sum[mode] / sum_all, "origins_shares.txt", 
-                self.zdata_base.zone_numbers, mode)
-            mode_share[mode] = trip_sum[mode].sum() / sum_all.sum()
-        self.mode_share.append(mode_share)
+            self.resultdata.print_data(
+                trip_sum[mode], "origins_demand.txt", mode)
+            self.resultdata.print_data(
+                ar.aggregate(trip_sum[mode]), "origin_demand_areas.txt", mode)
+            self.resultdata.print_data(
+                trip_sum[mode] / sum_all, "origins_shares.txt", mode)
+            mode_shares[mode] = trip_sum[mode].sum() / sum_all.sum()
+        self.mode_share.append(mode_shares)
         if iteration=="last":
             # Save demand matrices to files
             for ap in self.ass_model.assignment_periods:
                 self._save_demand_to_omx(ap.name)
+
         # Calculate and return traffic impedance
         for ap in self.ass_model.assignment_periods:
             tp = ap.name
@@ -302,16 +313,16 @@ class ModelSystem:
                 for ass_class in impedance[mtx_type]:
                     mtx[ass_class] = impedance[mtx_type][ass_class]
 
-    def _sum_trips_per_zone(self, mode):
-        int_demand = numpy.zeros(self.zdata_base.nr_zones)
+    def _sum_trips_per_zone(self, mode, include_dests=True):
+        int_demand = pandas.Series(0, self.zdata_base.zone_numbers)
         for purpose in self.dm.tour_purposes:
             if mode in purpose.modes and purpose.dest != "source":
-                if isinstance(purpose, SecDestPurpose):
-                    bounds = next(iter(purpose.sources)).bounds
-                else:
-                    bounds = purpose.bounds
+                bounds = (next(iter(purpose.sources)).bounds
+                    if isinstance(purpose, SecDestPurpose)
+                    else purpose.bounds)
                 int_demand[bounds] += purpose.generated_tours[mode]
-                int_demand += purpose.attracted_tours[mode]
+                if include_dests:
+                    int_demand += purpose.attracted_tours[mode]
         return int_demand
 
     def _distribute_sec_dests(self, purpose, mode, impedance):
@@ -323,21 +334,16 @@ class ModelSystem:
         elif nr_threads <= 0:
             nr_threads = 1
         bounds = next(iter(purpose.sources)).bounds
-        split = (bounds.stop-bounds.start) // nr_threads
-        for i in xrange(0, nr_threads):
-            # Take a chunk of destinations, for which this thread
+        for i in xrange(nr_threads):
+            # Take a range of origins, for which this thread
             # will calculate secondary destinations
-            start = bounds.start + i*split
-            if i+1 < nr_threads:
-                dests = xrange(start, start + split)
-            else:
-                dests = xrange(start, bounds.stop)
+            origs = xrange(i, bounds.stop - bounds.start, nr_threads)
             # Results will be saved in a temp dtm, to avoid memory clashes
             dtm = dt.DepartureTimeModel(self.ass_model.nr_zones)
             demand.append(dtm)
             thread = threading.Thread(
                 target=self._distribute_tours,
-                args=(dtm, purpose, mode, impedance, dests))
+                args=(dtm, purpose, mode, impedance, origs))
             threads.append(thread)
             thread.start()
         for thread in threads:
@@ -346,10 +352,11 @@ class ModelSystem:
             for tp in dtm.demand:
                 for ass_class in dtm.demand[tp]:
                     self.dtm.demand[tp][ass_class] += dtm.demand[tp][ass_class]
+        purpose.print_data()
 
-    def _distribute_tours(self, container, purpose, mode, impedance, dests):
-        for i in dests:
-            demand = purpose.distribute_tours(mode, impedance[mode], i)
+    def _distribute_tours(self, container, purpose, mode, impedance, origs):
+        for orig in origs:
+            demand = purpose.distribute_tours(mode, impedance[mode], orig)
             container.add_demand(demand)
 
     def _update_ratios(self, impedance, tp):
@@ -369,9 +376,10 @@ class ModelSystem:
             impedance["time"]["transit_work"], axis=1,
             weights=self.dtm.demand[tp]["transit_work"])
         time_ratio = transit_time / car_time
+        time_ratio = time_ratio.clip(0.01, None)
         self.resultdata.print_data(
-            time_ratio, "impedance_ratio.txt",
-            self.zone_numbers, "time")
+            pandas.Series(time_ratio, self.zone_numbers),
+            "impedance_ratio.txt", "time")
         self.zdata_forecast["time_ratio"] = pandas.Series(
             numpy.ma.getdata(time_ratio), self.zone_numbers)
         car_cost = numpy.ma.average(
@@ -383,8 +391,8 @@ class ModelSystem:
         cost_ratio = transit_cost / 44. / car_cost
         cost_ratio = cost_ratio.clip(0.01, None)
         self.resultdata.print_data(
-            cost_ratio, "impedance_ratio.txt",
-            self.zone_numbers, "cost")
+            pandas.Series(cost_ratio, self.zone_numbers),
+            "impedance_ratio.txt", "cost")
         self.zdata_forecast["cost_ratio"] = pandas.Series(
             numpy.ma.getdata(cost_ratio), self.zone_numbers)
 
@@ -413,6 +421,7 @@ class AgentModelSystem(ModelSystem):
     """
 
     def _init_demand_model(self):
+        log.info("Creating synthetic population")
         return DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=True)
 
     def _add_internal_demand(self, previous_iter_impedance, is_last_iteration):
@@ -433,10 +442,8 @@ class AgentModelSystem(ModelSystem):
             If this is the last iteration, 
             secondary destinations are calculated for all modes
         """
-        log.info("Creating synthetic population")
-        # TODO Split agent creation and car usership
-        self.dm.create_population()
         log.info("Demand calculation started...")
+        self.dm.cm.calc_basic_prob()
         self.travel_modes = set()
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
@@ -454,18 +461,66 @@ class AgentModelSystem(ModelSystem):
                             self.travel_modes.add(mode)
                             self.dtm.add_demand(demand[mode])
                 else:
+                    self.travel_modes.update(purpose.modes)
                     purpose.init_sums()
-                    purpose.model.calc_basic_prob(purpose_impedance)
-        purpose_impedance = self.imptrans.transform(
-            self.dm.purpose_dict["hoo"], previous_iter_impedance)
-        log.info("Assigning mode and destination for {} agents".format(
-            len(self.dm.population)))
+                    purpose.calc_basic_prob(purpose_impedance)
+        tour_probs = self.dm.generate_tour_probs()
+        log.info("Assigning mode and destination for {} agents ({} % of total population)".format(
+            len(self.dm.population), int(zone_param.agent_demand_fraction*100)))
+        purpose = self.dm.purpose_dict["hoo"]
+        sec_dest_tours = {mode: [defaultdict(list) for _ in purpose.zone_numbers]
+            for mode in purpose.modes}
+        car_users = pandas.Series(
+            0, self.zdata_forecast.zone_numbers[self.dm.cm.bounds])
         for person in self.dm.population:
-            person.add_tours(self.dm.purpose_dict)
+            person.decide_car_use()
+            car_users[person.zone] += person.is_car_user
+            person.add_tours(self.dm.purpose_dict, tour_probs)
             for tour in person.tours:
                 tour.choose_mode(person.is_car_user)
-                tour.choose_destination(purpose_impedance)
-                if tour.mode == "car":
-                    tour.choose_driver()
+                tour.choose_destination(sec_dest_tours)
+        self.dm.cm.print_results(
+            car_users / self.dm.zone_population, self.dm.zone_population)
+        log.info("Primary destinations assigned")
+        purpose_impedance = self.imptrans.transform(
+            purpose, previous_iter_impedance)
+        nr_threads = param.performance_settings["number_of_processors"]
+        if nr_threads == "max":
+            nr_threads = multiprocessing.cpu_count()
+        elif nr_threads <= 0:
+            nr_threads = 1
+        bounds = next(iter(purpose.sources)).bounds
+        modes = purpose.modes if is_last_iteration else ["car"]
+        for mode in modes:
+            threads = []
+            for i in xrange(nr_threads):
+                origs = xrange(i, bounds.stop - bounds.start, nr_threads)
+                thread = threading.Thread(
+                    target=self._distribute_tours,
+                    args=(
+                        mode, origs, sec_dest_tours[mode],
+                        purpose_impedance[mode]))
+                threads.append(thread)
+                thread.start()
+            for thread in threads:
+                thread.join()
+        for purpose in self.dm.tour_purposes:
+            purpose.print_data()
+        for person in self.dm.population:
+            for tour in person.tours:
                 self.dtm.add_demand(tour)
+        if is_last_iteration:
+            self.dm.incmod.predict()
+            for person in self.dm.population:
+                person.calc_income()
         log.info("Demand calculation completed")
+
+    def _distribute_tours(self, mode, origs, sec_dest_tours, impedance):
+        sec_dest_purpose = self.dm.purpose_dict["hoo"]
+        for orig in origs:
+                dests = list(sec_dest_tours[orig])
+                probs = sec_dest_purpose.calc_prob(
+                    mode, impedance, orig, dests).cumsum(axis=0)
+                for j, dest in enumerate(dests):
+                    for tour in sec_dest_tours[orig][dest]:
+                        tour.choose_secondary_destination(probs[:, j])

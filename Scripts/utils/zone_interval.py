@@ -1,3 +1,6 @@
+import numpy
+import pandas
+
 import parameters.zone as param
 
 
@@ -46,3 +49,79 @@ def zone_interval(division_type, name):
     return slice(
         param.__dict__[division_type][name][0],
         param.__dict__[division_type][name][1])
+
+
+class AreaAggregator:
+    areas = param.area_aggregation
+    borders = numpy.array([param.areas[area][1] for area in areas])
+
+    def find_index(self, zone):
+        # We could also have an area mapping dict
+        return numpy.searchsorted(self.borders, zone)
+
+    def find_area(self, zone):
+        return self.areas[self.find_index(zone)]
+
+
+class MatrixAggregator(AreaAggregator):
+    def __init__(self):
+        self.matrix = pandas.DataFrame(0, self.areas, self.areas)
+
+    def add(self, orig, dest):
+        """Add individual tour to aggregated matrix.
+
+        Parameters
+        ----------
+        orig : int
+            Tour origin zone number
+        dest : int
+            Tour destination zone number
+        """
+        self.matrix.iat[self.find_index(orig), self.find_index(dest)] += 1
+
+    def aggregate(self, matrix):
+        """Aggregate (tour demand) matrix to larger areas.
+
+        Parameters
+        ----------
+        matrix : pandas.DataFrame
+            Disaggregated matrix with zone indices and columns
+        """
+        self.matrix = pandas.DataFrame(0, self.areas, self.areas)
+        tmp_mtx = pandas.DataFrame(0, self.areas, matrix.columns)
+        for area in self.areas:
+            i = zone_interval("areas", area)
+            tmp_mtx.loc[area] = matrix.loc[i].sum(0).values
+        for area in self.areas:
+            i = zone_interval("areas", area)
+            self.matrix.loc[:, area] = tmp_mtx.loc[:, i].sum(1).values
+        return self.matrix
+
+
+class ArrayAggregator(AreaAggregator):
+    def __init__(self):
+        self.array = pandas.Series(0, self.areas)
+
+    def add(self, zone):
+        """Add individual tour to aggregated array.
+
+        Parameters
+        ----------
+        zone : int
+            Zone number
+        """
+        self.array.iat[self.find_index(zone)] += 1
+
+    def aggregate(self, array):
+        """Aggregate (tour demand) array to larger areas.
+
+        Parameters
+        ----------
+        array : pandas.Series
+            Disaggregated array with zone indices
+        """
+        self.array = pandas.Series(0, self.areas)
+        for area in self.areas:
+            i = zone_interval("areas", area)
+            self.array.loc[area] = array.loc[i].sum()
+        return self.array

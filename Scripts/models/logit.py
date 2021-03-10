@@ -28,6 +28,8 @@ class LogitModel:
         self.resultdata = resultdata
         self.purpose = purpose
         self.bounds = purpose.bounds
+        self.lbounds = purpose.lbounds
+        self.ubounds = purpose.ubounds
         self.zone_data = zone_data
         self.dest_exps = {}
         self.mode_exps = {}
@@ -109,13 +111,12 @@ class LogitModel:
         try: # If only one parameter
             utility += b
         except ValueError: # Separate params for cap region and surrounding
-            k = self.zone_data.first_surrounding_zone
             if utility.ndim == 1: # 1-d array calculation
-                utility[:k] += b[0]
-                utility[k:] += b[1]
+                utility[self.lbounds] += b[0]
+                utility[self.ubounds] += b[1]
             else: # 2-d matrix calculation
-                utility[:k, :] += b[0]
-                utility[k:, :] += b[1]
+                utility[self.lbounds, :] += b[0]
+                utility[self.ubounds, :] += b[1]
     
     def _add_impedance(self, utility, impedance, b):
         """Adds simple linear impedances to utility.
@@ -137,9 +138,8 @@ class LogitModel:
             try: # If only one parameter
                 utility += b[i] * impedance[i]
             except ValueError: # Separate params for cap region and surrounding
-                k = self.zone_data.first_surrounding_zone
-                utility[:k, :] += b[i][0] * impedance[i][:k, :]
-                utility[k:, :] += b[i][1] * impedance[i][k:, :]
+                utility[self.lbounds, :] += b[i][0] * impedance[i][self.lbounds, :]
+                utility[self.ubounds, :] += b[i][1] * impedance[i][self.ubounds, :]
         return utility
 
     def _add_log_impedance(self, exps, impedance, b):
@@ -167,9 +167,10 @@ class LogitModel:
             try: # If only one parameter
                 exps *= numpy.power(impedance[i] + 1, b[i])
             except ValueError: # Separate params for cap region and surrounding
-                k = self.zone_data.first_surrounding_zone
-                exps[:k, :] *= numpy.power(impedance[i][:k, :] + 1, b[i][0])
-                exps[k:, :] *= numpy.power(impedance[i][k:, :] + 1, b[i][1])
+                exps[self.lbounds, :] *= numpy.power(
+                    impedance[i][self.lbounds, :] + 1, b[i][0])
+                exps[self.ubounds, :] *= numpy.power(
+                    impedance[i][self.ubounds, :] + 1, b[i][1])
         return exps
     
     def _add_zone_util(self, utility, b, generation=False):
@@ -194,29 +195,24 @@ class LogitModel:
             try: # If only one parameter
                 utility += b[i] * zdata.get_data(i, self.bounds, generation)
             except ValueError: # Separate params for cap region and surrounding
-                k = self.zone_data.first_surrounding_zone
-                data_capital_region = zdata.get_data(
-                    i, self.bounds, generation, zdata.CAPITAL_REGION)
-                data_surrounding = zdata.get_data(
-                    i, self.bounds, generation, zdata.SURROUNDING_AREA)
+                data_cap_region = zdata.get_data(i, self.lbounds, generation)
+                data_surrounding = zdata.get_data(i, self.ubounds, generation)
                 if utility.ndim == 1: # 1-d array calculation
-                    utility[:k] += b[i][0] * data_capital_region
-                    utility[k:] += b[i][1] * data_surrounding
+                    utility[self.lbounds] += b[i][0] * data_cap_region
+                    utility[self.ubounds] += b[i][1] * data_surrounding
                 else: # 2-d matrix calculation
-                    utility[:k, :] += b[i][0] * data_capital_region
-                    utility[k:, :] += b[i][1] * data_surrounding
+                    utility[self.lbounds, :] += b[i][0] * data_cap_region
+                    utility[self.ubounds, :] += b[i][1] * data_surrounding
         return utility
     
     def _add_sec_zone_util(self, utility, b, orig=None, dest=None):
-        zdata = self.zone_data
         for i in b:
-            data = zdata.get_data(i, self.bounds, generation=True)
+            data = self.zone_data.get_data(i, self.bounds, generation=True)
             try: # If only one parameter
                 utility += b[i] * data
             except ValueError: # Separate params for orig and dest
-                u = self.zone_data.first_peripheral_zone
-                utility += b[i][0] * data[orig, :u]
-                utility += b[i][1] * data[dest, :u]
+                utility += b[i][0] * data[orig, self.bounds]
+                utility += b[i][1] * data[dest, self.bounds]
         return utility
 
     def _add_log_zone_util(self, exps, b, generation=False):
@@ -325,7 +321,7 @@ class ModeDestModel(LogitModel):
         logsum = numpy.log(mode_expsum)
         self.resultdata.print_data(
             pandas.Series(logsum, self.purpose.zone_numbers),
-            "accessibility.txt", self.zone_data.zone_numbers, self.purpose.name)
+            "accessibility.txt", self.purpose.name)
         return self._calc_prob(mode_expsum)
     
     def calc_individual_prob(self, mod_mode, dummy):
@@ -363,7 +359,7 @@ class ModeDestModel(LogitModel):
         """Calculate individual choice probabilities with individual dummies.
         
         Calculate mode choice probabilities for individual
-        agent with individual dummy variable included.
+        agent with individual dummy variable "car_users" included.
         
         Parameters
         ----------
@@ -380,7 +376,8 @@ class ModeDestModel(LogitModel):
         """
         mode_exps = {}
         mode_expsum = 0
-        for mode in self.mode_choice_param:
+        modes = self.purpose.modes
+        for mode in modes:
             mode_exps[mode] = self.mode_exps[mode][zone]
             b = self.mode_choice_param[mode]["individual_dummy"]
             if is_car_user and "car_users" in b:
@@ -392,9 +389,9 @@ class ModeDestModel(LogitModel):
                     else:
                         mode_exps[mode] *= math.exp(b["car_users"][1])
             mode_expsum += mode_exps[mode]
-        probs = []
-        for mode in self.purpose.modes:
-            probs.append(mode_exps[mode] / mode_expsum)
+        probs = numpy.empty(len(modes))
+        for i, mode in enumerate(modes):
+            probs[i] = mode_exps[mode] / mode_expsum
         return probs
 
     def _calc_utils(self, impedance):
@@ -406,20 +403,19 @@ class ModeDestModel(LogitModel):
             logsum = pandas.Series(numpy.log(expsum), self.purpose.zone_numbers)
             label = self.purpose.name + "_" + mode[0]
             self.zone_data._values[label] = logsum
-            self.resultdata.print_data(
-                logsum, "accessibility.txt",
-                self.zone_data.zone_numbers, label)
+            self.resultdata.print_data(logsum, "accessibility.txt", label)
         return self._calc_mode_util(self.dest_expsums)
 
     def _calc_prob(self, mode_expsum):
         prob = {}
         self.mode_prob = {}
-        self.dest_prob = {}
+        self.cumul_dest_prob = {}
         for mode in self.mode_choice_param:
             self.mode_prob[mode] = self.mode_exps[mode] / mode_expsum
             dest_expsum = self.dest_expsums[mode]["logsum"]
-            self.dest_prob[mode] = self.dest_exps[mode].T / dest_expsum
-            prob[mode] = self.mode_prob[mode] * self.dest_prob[mode]
+            dest_prob = self.dest_exps[mode].T / dest_expsum
+            prob[mode] = self.mode_prob[mode] * dest_prob
+            self.cumul_dest_prob[mode] = dest_prob.cumsum(axis=0)
         return prob
 
 
@@ -515,12 +511,7 @@ class SecDestModel(LogitModel):
                 Choice probabilities
         """
         dest_exps = self._calc_sec_dest_util(mode, impedance, origin, destination)
-        try:
-            expsum = dest_exps.sum(1)
-        except ValueError:
-            expsum = dest_exps.sum()
-        prob = dest_exps.T / expsum
-        return prob
+        return dest_exps.T / dest_exps.sum(1)
 
 
 class OriginModel(DestModeModel):
@@ -546,6 +537,9 @@ class TourCombinationModel:
         self.param = generation_params.tour_combinations
         self.conditions = generation_params.tour_conditions
         self.increases = generation_params.tour_number_increase
+        self.tour_combinations = []
+        for nr_tours in self.param:
+            self.tour_combinations += self.param[nr_tours].keys()
     
     def calc_prob(self, age_group, is_car_user, zones):
         """Calculate choice probabilities for each tour combination.
@@ -761,17 +755,16 @@ class CarUseModel(LogitModel):
         prob = exp / (exp+1)
         return prob
 
-    def print_results(self, prob):
+    def print_results(self, prob, population_7_99=None):
         """ Print results, mainly for calibration purposes"""
-        population = self.zone_data["population"]
-        population_7_99 = ( population[:self.zone_data.first_peripheral_zone]
-                          * self.zone_data["share_age_7-99"] )
+        if population_7_99 is None:
+            population = self.zone_data["population"]
+            population_7_99 = ( population[:self.zone_data.first_peripheral_zone]
+                            * self.zone_data["share_age_7-99"] )
         car_users = prob * population_7_99
                 
         # Print car user share by zone
-        self.resultdata.print_data(
-            prob, "car_use.txt", self.zone_data.zone_numbers[self.bounds],
-            "car_use")
+        self.resultdata.print_data(prob, "car_use.txt", "car_use")
                           
         # print car use share by municipality and area
         for area_type in ("municipalities", "areas"):
@@ -787,5 +780,5 @@ class CarUseModel(LogitModel):
                 else:
                     prob_area.append(car_users.loc[i].sum() / pop)
             self.resultdata.print_data(
-                prob_area, "car_use_per_{}.txt".format(area_type),
-                intervals.keys(), "car_use")
+                pandas.Series(prob_area, intervals.keys()),
+                "car_use_per_{}.txt".format(area_type), "car_use")

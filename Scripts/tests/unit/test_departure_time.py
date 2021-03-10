@@ -17,17 +17,20 @@ class DepartureTimeTest(unittest.TestCase):
         dem = Demand()
         pur = Purpose()
         dem.purpose = pur
+        dem.is_car_passenger = False
 
         dem.purpose.name = "hoo"
         dem.mode = "car"
         dem.matrix = mtx
         dem.orig = 1
+        dem.dest = None
         dem.position = (1, 0, 0)
         dtm.add_demand(dem)
 
         dem.purpose.name = "hw"
         dem.mode = "bike"
-        dem.matrix = 3
+        dem.dest = 2
+        dem.matrix = numpy.array([[3]])
         dem.position = (1, 2)
         dtm.add_demand(dem)
 
@@ -35,7 +38,7 @@ class DepartureTimeTest(unittest.TestCase):
         dem.purpose.sec_dest_purpose = Purpose()
         dem.purpose.sec_dest_purpose.name = "hoo"
         dem.mode = "transit"
-        dem.matrix = 3
+        dem.matrix = numpy.array([[3]])
         dem.position = (1, 2, 0)
         dtm.add_demand(dem)
 

@@ -45,7 +45,7 @@ class ModelTest(unittest.TestCase):
         self._validate_impedances(impedance["iht"])
 
         # Check that model result does not change
-        self.assertAlmostEquals(model.mode_share[0]["car"], 0.4649292858019789)
+        self.assertAlmostEquals(model.mode_share[0]["car"], 0.45456324656078317)
         
         print("Model system test done")
     
@@ -59,6 +59,7 @@ class ModelTest(unittest.TestCase):
         model = AgentModelSystem(zone_data_path, base_zone_data_path, base_matrices_path, results_path, ass_model, "test")
         impedance = model.assign_base_demand()
         impedance = model.run_iteration(impedance)
+        impedance = model.run_iteration(impedance, "last")
 
     def _validate_impedances(self, impedances):
         self.assertIsNotNone(impedances)

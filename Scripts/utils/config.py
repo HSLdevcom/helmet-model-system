@@ -43,6 +43,12 @@ class Config:
     def ITERATION_COUNT(self, value): self.__set_value("ITERATION_COUNT", value)
 
     @property
+    def RUN_AGENT_SIMULATION(self): return self.__get_value("RUN_AGENT_SIMULATION")
+
+    @RUN_AGENT_SIMULATION.setter
+    def RUN_AGENT_SIMULATION(self, value): self.__set_value("RUN_AGENT_SIMULATION", value)
+
+    @property
     def USE_EMME(self): return self.__get_value("USE_EMME")
 
     @USE_EMME.setter

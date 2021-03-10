@@ -1,3 +1,6 @@
+# Share of demand that will be simulated in agent model
+agent_demand_fraction = 1.0
+
 ### DEMAND MODEL REFERENCES ###
 
 tour_purposes = (
@@ -128,3 +131,11 @@ municipalities = {
     "Lapinjarvi": (29500, 29999),
     "Loviisa": (30000, 30999),
 }
+area_aggregation = (
+        "helsinki_cbd",
+        "helsinki_other",
+        "espoo_vant_kau",
+        "surrounding",
+        "peripheral",
+    )
+tour_length_intervals = (0, 1, 3, 5, 10, 20, 30, 40, float("inf"))
