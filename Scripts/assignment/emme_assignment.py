@@ -145,9 +145,11 @@ class EmmeAssignmentModel(AssignmentModel):
             self._transit_results_links_nodes(ap.emme_scenario)
         self._transit_results_links_nodes(self.day_scenario)
         vdfs = param.volume_delays_funcs
-        kms = {ass_class: dict.fromkeys(vdfs, 0) for ass_class in ass_classes}
+        vdf_kms = {ass_class: dict.fromkeys(vdfs, 0) for ass_class in ass_classes}
         area_kms = {ass_class: dict.fromkeys(zone_param.areas, 0)
             for ass_class in ass_classes}
+        vdf_area_kms = {vdf: dict.fromkeys(zone_param.areas, 0)
+            for vdf in vdfs}
         network = self.day_scenario.get_network()
         for link in network.links():
             if link.volume_delay_func <= 5:
@@ -156,11 +158,15 @@ class EmmeAssignmentModel(AssignmentModel):
                 # Links with bus lane
                 vdf = link.volume_delay_func - 5
             if vdf in vdfs:
-                for ass_class in kms:
-                    kms[ass_class][vdf] += link['@'+ass_class] * link.length
+                for ass_class in vdf_kms:
+                    vdf_kms[ass_class][vdf] += link['@'+ass_class] * link.length
             area = belongs_to_area(link.i_node)
             if area in area_kms:
-                area_kms[ass_class][area] += link['@'+ass_class] * link.length
+                for ass_class in area_kms:
+                    area_kms[ass_class][area] += link['@'+ass_class] * link.length
+            if vdf in vdfs and area in vdf_area_kms[vdf]:
+                for ass_class in ass_classes:
+                    vdf_area_kms[vdf][area] += link['@'+ass_class] * link.length
         transit_modes = param.transit_mode_aggregates
         transit_dists = dict.fromkeys(transit_modes, 0)
         transit_times = dict.fromkeys(transit_modes, 0)
@@ -177,10 +183,18 @@ class EmmeAssignmentModel(AssignmentModel):
                                 * (60 / segment.line.headway))
                         transit_dists[mode] += freq * segment.link.length
                         transit_times[mode] += freq * segment["@base_timtr"]
-        for ass_class in kms:
+        for ass_class in vdf_kms:
             resultdata.print_data(
-                kms[ass_class].values(), "vehicle_kms.txt",
-                kms[ass_class].keys(), ass_class)
+                vdf_kms[ass_class].values(), "vehicle_kms_vdfs.txt",
+                vdf_kms[ass_class].keys(), ass_class)
+        for ass_class in area_kms:
+            resultdata.print_data(
+                area_kms[ass_class].values(), "vehicle_kms_areas.txt",
+                area_kms[ass_class].keys(), ass_class)
+        for vdf in vdf_area_kms:
+            resultdata.print_data(
+                vdf_area_kms[vdf].values(), "vehicle_kms_vdfs_areas.txt",
+                vdf_area_kms[vdf].keys(), vdf)
         resultdata.print_data(
             transit_dists.values(), "transit_kms.txt",
             transit_dists.keys(), "dist")
@@ -188,6 +202,9 @@ class EmmeAssignmentModel(AssignmentModel):
             transit_times.values(), "transit_kms.txt",
             transit_times.keys(), "time")
         noise_areas = self._calc_noise()
+        resultdata.print_data(
+            noise_areas.values(), "noise_areas.txt",
+            noise_areas.keys(), "area")
 
     def calc_transit_cost(self, fares, peripheral_cost, default_cost=None):
         """Calculate transit zone cost matrix.
