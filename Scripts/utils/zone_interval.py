@@ -97,6 +97,7 @@ class AreaAggregator(ZoneIntervals):
             for area in self:
                 if is_in(self._intervals[area], zone_number):
                     self.mapping[zone_number] = area
+                    break
 
 
 class MatrixAggregator(AreaAggregator):
