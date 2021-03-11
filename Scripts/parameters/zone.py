@@ -56,6 +56,12 @@ tour_purposes = (
         "source": ("hw", "hc", "hu", "hs", "ho", "wo", "oo",),
         "area": "metropolitan",
     },
+    {  # Only for calculation of work-force accessibility, not assigned
+        "name": "wh",
+        "orig": "work",
+        "dest": "source",
+        "area": "metropolitan",
+    },
     {
         "name": "hwp",
         "orig": "home",
@@ -87,6 +93,17 @@ areas = {
     "helsinki_other": (1000, 1999),
     "espoo_vant_kau": (2000, 5999),
     "surrounding": (6000, 15999),
+    "surround_train": (
+        (6000, 6999),
+        (10000, 11999),
+        (13000, 14999),
+        (15500, 15999),
+    ),
+    "surround_other": (
+        (7000, 9999),
+        (12000, 12999),
+        (15000, 15499),
+    ),
     "peripheral": (16000, 30999),
     "external": (31031, None),
 }
@@ -135,7 +152,9 @@ area_aggregation = (
         "helsinki_cbd",
         "helsinki_other",
         "espoo_vant_kau",
-        "surrounding",
+        "surround_train",
+        "surround_other",
         "peripheral",
     )
+savu_intervals = (-175.2, -171.3, -166.56, -130.1, -123.15, -118.13, 9999)
 tour_length_intervals = (0, 1, 3, 5, 10, 20, 30, 40, float("inf"))

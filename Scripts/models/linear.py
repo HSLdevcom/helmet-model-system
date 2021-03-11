@@ -114,25 +114,15 @@ class CarDensityModel(LinearModel):
         """ Print results, mainly for calibration purposes"""
         # Print car density by zone
         self.resultdata.print_data(prediction, "car_density.txt", "car_density")
-
         # In validation data, car density is calculated for the whole
         # population from ages 0 to 999.
         population = self.zone_data["population"][self.bounds]
         # print car density by municipality and area
         for area_type in ("municipalities", "areas"):
-            aggregation = []
-            intervals = ZoneIntervals(area_type)
-            for area in intervals:
-                i = intervals[area]
-                w = population.loc[i]
-                if w.size == 0 or w.sum() == 0:
-                    aggregation.append(0)
-                else:
-                    aggregation.append(numpy.average(
-                        prediction.loc[i], weights=w))
+            aggregation = ZoneIntervals(area_type).averages(prediction, population)
             self.resultdata.print_data(
-                pandas.Series(aggregation, intervals.keys()),
-                "car_density_per_{}.txt".format(area_type), "car_density")
+                aggregation, "car_density_{}.txt".format(area_type),
+                "car_density")
 
 
 class IncomeModel(LinearModel):

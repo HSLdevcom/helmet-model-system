@@ -41,7 +41,11 @@ class LogitModel:
             self.dtype = None
 
     def _calc_mode_util(self, impedance):
-        expsum = numpy.zeros_like(next(iter(impedance["car"].values())), self.dtype)
+        expsum = numpy.zeros_like(
+            next(iter(impedance["car"].values())), self.dtype)
+        is_1d = expsum.ndim == 1
+        if is_1d:
+            sustainable_sum = numpy.zeros_like(expsum)
         for mode in self.mode_choice_param:
             b = self.mode_choice_param[mode]
             utility = numpy.zeros_like(expsum)
@@ -54,6 +58,29 @@ class LogitModel:
             self._add_log_impedance(exps, impedance[mode], b["log"])
             self.mode_exps[mode] = exps
             expsum += exps
+            if is_1d and mode != "car":
+                sustainable_sum += exps
+        if is_1d:
+            logsum = numpy.log(sustainable_sum)
+            self.resultdata.print_data(
+                pandas.Series(logsum, self.purpose.zone_numbers),
+                "sustainable_accessibility.txt", self.purpose.name)
+            try:
+                b = self.dest_choice_param["car"]["impedance"]["cost"]
+            except KeyError:
+                # School tours do not have a constant cost parameter
+                # Use value of time conversion from CBA guidelines instead
+                b = -0.31690253
+            try:
+                # Convert utility into euros
+                money_utility = 1 / b
+            except TypeError:
+                # Separate params for cap region and surrounding
+                money_utility = numpy.zeros_like(logsum)
+                money_utility[self.lbounds] = 1 / b[0]
+                money_utility[self.ubounds] = 1 / b[1]
+            money_utility /= self.mode_choice_param["car"]["log"]["logsum"]
+            self.purpose.sustainable_accessibility = money_utility * logsum
         return expsum
     
     def _calc_dest_util(self, mode, impedance):
@@ -318,10 +345,20 @@ class ModeDestModel(LogitModel):
                 Choice probabilities
         """
         mode_expsum = self._calc_utils(impedance)
-        logsum = numpy.log(mode_expsum)
         self.resultdata.print_data(
-            pandas.Series(logsum, self.purpose.zone_numbers),
+            pandas.Series(numpy.log(mode_expsum), self.purpose.zone_numbers),
             "accessibility.txt", self.purpose.name)
+        if self.purpose.name == "wh":
+            # Transform into person equivalents
+            workforce = pandas.Series(
+                mode_expsum**(1/self.mode_choice_param["car"]["log"]["logsum"]),
+                self.purpose.zone_numbers)
+            self.resultdata.print_data(
+                workforce, "workforce_accessibility.txt", self.purpose.name)
+            workplaces = self.zone_data["workplaces"][self.bounds]
+            self.resultdata.print_data(
+                ZoneIntervals("areas").averages(workforce, workplaces),
+                "workforce_accessibility_per_area.txt", self.purpose.name)
         return self._calc_prob(mode_expsum)
     
     def calc_individual_prob(self, mod_mode, dummy):
@@ -757,28 +794,15 @@ class CarUseModel(LogitModel):
 
     def print_results(self, prob, population_7_99=None):
         """ Print results, mainly for calibration purposes"""
-        if population_7_99 is None:
-            population = self.zone_data["population"]
-            population_7_99 = ( population[:self.zone_data.first_peripheral_zone]
-                            * self.zone_data["share_age_7-99"] )
-        car_users = prob * population_7_99
-                
         # Print car user share by zone
         self.resultdata.print_data(prob, "car_use.txt", "car_use")
-                          
+        if population_7_99 is None:
+            # Comparison data has car user shares of population
+            # over 6 years old (from HEHA)
+            population_7_99 = (self.zone_data["population"][self.bounds]
+                               * self.zone_data["share_age_7-99"])
         # print car use share by municipality and area
         for area_type in ("municipalities", "areas"):
-            prob_area = []
-            intervals = ZoneIntervals(area_type)
-            for area in intervals:
-                i = intervals[area]
-                # comparison data has car user shares of population
-                # over 6 years old (from HEHA)
-                pop = population_7_99.loc[i].sum()
-                if numpy.isnan(pop) or pop == 0:
-                    prob_area.append(0)
-                else:
-                    prob_area.append(car_users.loc[i].sum() / pop)
+            prob_area = ZoneIntervals(area_type).averages(prob, population_7_99)
             self.resultdata.print_data(
-                pandas.Series(prob_area, intervals.keys()),
-                "car_use_per_{}.txt".format(area_type), "car_use")
+                prob_area, "car_use_{}.txt".format(area_type), "car_use")

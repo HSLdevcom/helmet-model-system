@@ -222,6 +222,7 @@ assignment_classes = {
     "hoo": "work",
     "wo": "work",
     "oo": "leisure",
+    "wh": "work",
     "hwp": "work",
     "hop": "leisure",
     "sop": "leisure",

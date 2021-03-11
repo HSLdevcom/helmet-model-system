@@ -366,6 +366,52 @@ mode_choice = {
             "individual_dummy": {},
         },
     },
+    "wh": {
+        "car": {
+            "constant": (0.830938747727 * (0 + 0.278), 
+                         0.830938747727 * (0 + 0.251)),
+            "generation": {},
+            "attraction": {},
+            "impedance": {},
+            "log": {
+                "logsum": 0.830938747727,
+            },
+            "individual_dummy": {},
+        },
+        "transit": {
+            "constant": (0.830938747727 * (3.35620148087 - 0.107), 
+                         0.830938747727 * (3.35324641782 - 0.527)),
+            "generation": {},
+            "attraction": {},
+            "impedance": {},
+            "log": {
+                "logsum": 0.830938747727,
+            },
+            "individual_dummy": {},
+        },
+        "bike": {
+            "constant": (0.830938747727 * (3.80657808148 - 0.017), 
+                         0.830938747727 * (4.31992749379 + 0.033)),
+            "generation": {},
+            "attraction": {},
+            "impedance": {},
+            "log": {
+                "logsum": 0.830938747727,
+            },
+            "individual_dummy": {},
+        },
+        "walk": {
+            "constant": (0.830938747727 * (6.19979345573 + 0.040),
+                         0.830938747727 * (6.52578316385 - 0.421)),
+            "generation": {},
+            "attraction": {},
+            "impedance": {},
+            "log": {
+                "logsum": 0.830938747727,
+            },
+            "individual_dummy": {},
+        },
+    },
     "hwp": {
         "car": {
             "constant": (0 + 0.024),

@@ -19,6 +19,7 @@ from transform.impedance_transformer import ImpedanceTransformer
 from models.linear import CarDensityModel
 import parameters.assignment as param
 import parameters.zone as zone_param
+import parameters.tour_generation as gen_param
 
 
 class ModelSystem:
@@ -244,6 +245,19 @@ class ModelSystem:
         # Calculate internal demand
         self._add_internal_demand(previous_iter_impedance, iteration=="last")
 
+        # Calculate SAVU zones
+        sust_logsum = 0
+        for purpose in self.dm.tour_purposes:
+            if (purpose.area == "metropolitan" and purpose.orig == "home"
+                    and purpose.dest != "source"
+                    and not isinstance(purpose, SecDestPurpose)):
+                zone_numbers = purpose.zone_numbers
+                weight = gen_param.tour_generation[purpose.name]["population"]
+                sust_logsum += weight * purpose.sustainable_accessibility
+        savu = numpy.searchsorted(zone_param.savu_intervals, sust_logsum) + 1
+        self.resultdata.print_data(
+            pandas.Series(savu, zone_numbers), "savu.txt", "savu_zone")
+
         # Calculate external demand
         for mode in param.external_modes:
             if mode == "truck":
@@ -265,7 +279,7 @@ class ModelSystem:
             for mode in self.travel_modes}
         sum_all = sum(trip_sum.values())
         mode_shares = {}
-        ar = ArrayAggregator()
+        ar = ArrayAggregator(sum_all.index)
         for mode in trip_sum:
             self.resultdata.print_data(
                 trip_sum[mode], "origins_demand.txt", mode)
@@ -451,7 +465,8 @@ class AgentModelSystem(ModelSystem):
             else:
                 purpose_impedance = self.imptrans.transform(
                     purpose, previous_iter_impedance)
-                if purpose.area == "peripheral" or purpose.name == "oop":
+                if (purpose.area == "peripheral" or purpose.dest == "source"
+                        or purpose.name == "oop"):
                     purpose.calc_prob(purpose_impedance)
                     purpose.gen_model.init_tours()
                     purpose.gen_model.add_tours()
