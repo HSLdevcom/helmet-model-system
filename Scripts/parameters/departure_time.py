@@ -329,3 +329,11 @@ backup_demand_share = {
     "pt": (0.05, 0.05),
     "iht": (0.045, 0.055),
 }
+
+### DEMAND TRANSFORMATION REFERENCES ###
+
+divided_classes = (
+    "car",
+    "transit",
+    "bike",
+)

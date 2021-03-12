@@ -599,6 +599,62 @@ destination_choice = {
             },
         },
     },
+    "wh": {
+        "car": {
+            "attraction": {},
+            "impedance": {
+                "time": (-0.0132535252, -0.0180517183),
+                "cost": (-0.1004054942, -0.136755441374),
+            },
+            "log": {
+                "size": 1.00000000000, # L_S_M
+            },
+            "size": {
+                "population_own": numpy.exp(0.314367891487),
+                "population_other": 1,
+            },
+        },
+        "transit": {
+            "attraction": {},
+            "impedance": {
+                "time": -0.0101838292646,
+                "cost": ((-0.100405494227) / 60.0, -0.136755441374 / 44.0),
+            },
+            "log": {
+                "size": 1.00000000000, # L_S_M
+            },
+            "size": {
+                "population_own": numpy.exp(0.314367891487),
+                "population_other": 1,
+            },
+        },
+        "bike": {
+            "attraction": {},
+            "impedance": {},
+            "log": {
+                "dist": (-1.11623384398, -1.3592708114),
+                "size": 1.00000000000, # L_S_M
+            },
+            "size": {
+                "population_own": numpy.exp(0.314367891487),
+                "population_other": 1,
+            },
+        },
+        "walk": {
+            "attraction": {
+                "own_zone_area_sqrt": (-2.15046600566, -2.08475720417),
+            },
+            "impedance": {},
+            "log": {
+                "dist": -2.66277304293,
+                "size": 1.00000000000, # L_S_M
+            },
+            "size": {
+                "population_own": numpy.exp(0.314367891487),
+                "population_other": 1,
+            },
+        },
+    },
     "hwp": {
         "car": {
             "attraction": {

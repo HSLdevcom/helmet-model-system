@@ -36,23 +36,25 @@ class ResultsData:
                 os.path.join(self.path, "{}.xlsx".format(filename)))
         self._xlsx_buffer = {}
 
-    def print_data(self, data, filename, zone_numbers, colname):
+    def print_data(self, data, filename, colname):
         """Save data to DataFrame buffer (printed to text file when flushing).
 
         Parameters
         ----------
-        data : pandas Series
+        data : pandas.Series
             Data to add as a new column to DataFrame
         filename : str
             Name of file where data is pushed (can contain other data)
-        zone_numbers : ndarray
-            Numbers that will be used as index for DataFrame
         colname : str
             Desired name of this column
         """
         if filename not in self._df_buffer:
-            self._df_buffer[filename] = pandas.DataFrame(index=zone_numbers)
-        self._df_buffer[filename][colname] = data
+            self._df_buffer[filename] = pandas.DataFrame(data, columns=[colname])
+        else:
+            df = self._df_buffer[filename]
+            self._df_buffer[filename] = df.reindex(
+                df.index.union(data.index), copy=False)
+            self._df_buffer[filename][colname] = data
 
     def print_matrix(self, data, filename, sheetname):
         """Save 2-d matrix data to buffer (printed to file when flushing).

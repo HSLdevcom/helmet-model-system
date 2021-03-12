@@ -2,6 +2,9 @@ import parameters.car as param
 
 
 class Demand:
+    # Only used for sister class Tour
+    is_car_passenger = False
+
     def __init__(self, purpose, mode, matrix, origin=None):
         """Demand matrix for whole day
         
@@ -23,13 +26,15 @@ class Demand:
         else:
             self.matrix = matrix
         self.orig = origin
+        self.dest = None # Destination will by default be whole model area
 
     @property
     def position(self):
         """tuple: (origin, destination, (secondary destination))
         Position where to insert the demand
         """
+        start = self.purpose.bounds.start
         if self.orig is None:
-            return (self.purpose.bounds.start, 0)
+            return (start, 0)
         else:
-            return (self.orig, 0, 0)
+            return (self.orig, start, start)

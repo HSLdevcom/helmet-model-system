@@ -193,26 +193,20 @@ class EmmeAssignmentModel(AssignmentModel):
                         transit_times[mode] += freq * segment["@base_timtr"]
         for ass_class in vdf_kms:
             resultdata.print_data(
-                vdf_kms[ass_class].values(), "vehicle_kms_vdfs.txt",
-                vdf_kms[ass_class].keys(), ass_class)
+                pandas.Series(vdf_kms[ass_class]), "vehicle_kms_vdfs.txt", ass_class)
         for ass_class in area_kms:
             resultdata.print_data(
-                area_kms[ass_class].values(), "vehicle_kms_areas.txt",
-                area_kms[ass_class].keys(), ass_class)
+                pandas.Series(area_kms[ass_class]), "vehicle_kms_areas.txt", ass_class)
         for vdf in vdf_area_kms:
             resultdata.print_data(
-                vdf_area_kms[vdf].values(), "vehicle_kms_vdfs_areas.txt",
-                vdf_area_kms[vdf].keys(), vdf)
+                pandas.Series(vdf_area_kms[vdf]), "vehicle_kms_vdfs_areas.txt", vdf)
         resultdata.print_data(
-            transit_dists.values(), "transit_kms.txt",
-            transit_dists.keys(), "dist")
+            pandas.Series(transit_dists), "transit_kms.txt", "dist")
         resultdata.print_data(
-            transit_times.values(), "transit_kms.txt",
-            transit_times.keys(), "time")
+            pandas.Series(transit_times), "transit_kms.txt", "time")
         noise_areas = self._calc_noise()
         resultdata.print_data(
-            noise_areas.values(), "noise_areas.txt",
-            noise_areas.keys(), "area")
+            pandas.Series(noise_areas), "noise_areas.txt", "area")
 
     def calc_transit_cost(self, fares, peripheral_cost, default_cost=None):
         """Calculate transit zone cost matrix.

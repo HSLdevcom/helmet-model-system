@@ -8,9 +8,6 @@ import utils.log as log
 
 
 class ZoneData:
-    CAPITAL_REGION = 0
-    SURROUNDING_AREA = 1
-    
     def __init__(self, data_dir, zone_numbers):
         self._values = {}
         self.share = ShareChecker(self)
@@ -18,14 +15,15 @@ class ZoneData:
         surrounding = param.areas["surrounding"]
         peripheral = param.areas["peripheral"]
         external = param.areas["external"]
-        first_extra = numpy.where(zone_numbers > peripheral[1])[0][0]
-        idx = zone_numbers[:first_extra]
-        self.zone_numbers = idx
-        first_surrounding = numpy.where(idx >= surrounding[0])[0][0]
+        first_extra = numpy.searchsorted(zone_numbers, peripheral[1], "right")
+        self.zone_numbers = zone_numbers[:first_extra]
+        self.mapping = {self.zone_numbers[i]: i
+            for i in xrange(self.zone_numbers.size)}
+        first_surrounding = numpy.searchsorted(self.zone_numbers, surrounding[0])
         self.first_surrounding_zone = first_surrounding
-        first_peripheral = numpy.where(idx >= peripheral[0])[0][0]
+        first_peripheral = numpy.searchsorted(self.zone_numbers, peripheral[0])
         self.first_peripheral_zone = first_peripheral
-        first_external = numpy.where(zone_numbers >= external[0])[0][0]
+        first_external = numpy.searchsorted(zone_numbers, external[0])
         self.first_external_zone = first_external
         external_zones = zone_numbers[first_external:]
         popdata = read_csv_file(data_dir, ".pop", self.zone_numbers, float)
@@ -93,12 +91,12 @@ class ZoneData:
         self["tertiary_education"] = schooldata["tertiary"]
         self["zone_area"] = landdata["builtar"]
         self.share["share_detached_houses"] = landdata["detach"]
-        self["helsinki"] = pandas.Series(0, self.zone_numbers)
-        self["helsinki"].loc[zone_interval("municipalities", "Helsinki")] = 1
-        self["cbd"] = self._area_dummy("helsinki_cbd")
-        self["helsinki_other"] = self._area_dummy("helsinki_other")
-        self["espoo_vant_kau"] = self._area_dummy("espoo_vant_kau")
-        self["surrounding"] = self._area_dummy("surrounding")
+        self["perc_detached_houses_sqrt"] = (100*landdata["detach"]) ** 0.5
+        self["helsinki"] = self.dummy("municipalities", "Helsinki")
+        self["cbd"] = self.dummy("areas", "helsinki_cbd")
+        self["helsinki_other"] = self.dummy("areas", "helsinki_other")
+        self["espoo_vant_kau"] = self.dummy("areas", "espoo_vant_kau")
+        self["surrounding"] = self.dummy("areas", "surrounding")
         self["shops_cbd"] = self["cbd"] * self["shops"]
         self["shops_elsewhere"] = (1-self["cbd"]) * self["shops"]
         # Create diagonal matrix with zone area
@@ -109,7 +107,8 @@ class ZoneData:
         self["own_zone_area_sqrt"] = numpy.sqrt(self["own_zone_area"])
         # Create matrix where value is 1 if origin and destination is in
         # same municipality
-        home_municipality = pandas.DataFrame(0, idx, idx)
+        home_municipality = pandas.DataFrame(
+            0, self.zone_numbers, self.zone_numbers)
         intervals = ZoneIntervals("municipalities")
         for i in intervals:
             home_municipality.loc[intervals[i], intervals[i]] = 1
@@ -122,9 +121,9 @@ class ZoneData:
         self["shops_own"] = home_municipality.values * shop.values
         self["shops_other"] = (1-home_municipality.values) * shop.values
 
-    def _area_dummy(self, name):
-        dummy = pandas.Series(0, self.zone_numbers)
-        dummy.loc[zone_interval("areas", name)] = 1
+    def dummy(self, division_type, name, bounds=slice(None)):
+        dummy = pandas.Series(0, self.zone_numbers[bounds])
+        dummy.loc[zone_interval(division_type, name)] = 1
         return dummy
 
     def __getitem__(self, key):
@@ -173,12 +172,7 @@ class ZoneData:
         int
             Index of zone number
         """
-        match = numpy.where(self.zone_numbers == zone_number)
-        if len(match) == 1 and len(match[0]) == 1:
-            return match[0][0]
-        else:
-            msg = "Found several matching zone numbers {}".format(zone_number)
-            raise IndexError(msg)
+        return self.mapping[zone_number]
 
     def get_freight_data(self):
         """Get zone data for freight traffic calculation.
@@ -198,7 +192,7 @@ class ZoneData:
         data = {k: self._values[k] for k in freight_variables}
         return pandas.DataFrame(data)
 
-    def get_data(self, key, bounds, generation=False, part=None):
+    def get_data(self, key, bounds, generation=False):
         """Get data of correct shape for zones included in purpose.
         
         Parameters
@@ -210,27 +204,18 @@ class ZoneData:
         generation : bool, optional
             If set to True, returns data only for zones in purpose,
             otherwise returns data for all zones
-        part : int, optional
-            0 if capital region, 1 if surrounding area
         
         Returns
         -------
         pandas Series or numpy 2-d matrix
         """
-        l = bounds.start
-        u = bounds.stop
-        if part is not None:  # Return values for partial area only
-            if part == self.CAPITAL_REGION:
-                u = self.first_surrounding_zone
-            else:
-                l = self.first_surrounding_zone
         if self._values[key].ndim == 1: # If not a compound (i.e., matrix)
             if generation:  # Return values for purpose zones
-                return self._values[key][l:u].values
+                return self._values[key][bounds].values
             else:  # Return values for all zones
                 return self._values[key].values
         else:  # Return matrix (purpose zones -> all zones)
-            return self._values[key][l:u, :]
+            return self._values[key][bounds, :]
 
 
 class BaseZoneData(ZoneData):
