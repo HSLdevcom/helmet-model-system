@@ -146,10 +146,11 @@ class EmmeAssignmentModel(AssignmentModel):
             self._transit_results_links_nodes(ap.emme_scenario)
         self._transit_results_links_nodes(self.day_scenario)
         vdfs = param.volume_delays_funcs
-        vdf_kms = {ass_class: dict.fromkeys(vdfs, 0) for ass_class in ass_classes}
-        area_kms = {ass_class: dict.fromkeys(zone_param.areas, 0)
+        vdf_kms = {ass_class: pandas.Series(0, vdfs)
             for ass_class in ass_classes}
-        vdf_area_kms = {vdf: dict.fromkeys(zone_param.areas, 0)
+        area_kms = {ass_class: pandas.Series(0, zone_param.areas)
+            for ass_class in ass_classes}
+        vdf_area_kms = {vdf: pandas.Series(0, zone_param.areas)
             for vdf in vdfs}
         network = self.day_scenario.get_network()
         for link in network.links():
@@ -168,16 +169,26 @@ class EmmeAssignmentModel(AssignmentModel):
             if vdf in vdfs and area in vdf_area_kms[vdf]:
                 for ass_class in ass_classes:
                     vdf_area_kms[vdf][area] += link['@'+ass_class] * link.length
-        stations = pandas.Series(0, list(param.station_ids))
+        for ass_class in vdf_kms:
+            resultdata.print_data(
+                vdf_kms[ass_class], "vehicle_kms_vdfs.txt", ass_class)
+        for ass_class in area_kms:
+            resultdata.print_data(
+                area_kms[ass_class], "vehicle_kms_areas.txt", ass_class)
+        for vdf in vdf_area_kms:
+            resultdata.print_data(
+                vdf_area_kms[vdf], "vehicle_kms_vdfs_areas.txt", vdf)
+        stations = pandas.Series(0, param.station_ids)
         for node in network.regular_nodes():
             for mode in param.station_ids:
                 if (node.data2 == param.station_ids[mode]
                         and node["@transit_boa"] > 0):
                     stations[mode] += 1
                     break
+        resultdata.print_data(stations, "transit_stations.txt", "number")
         transit_modes = param.transit_mode_aggregates
-        transit_dists = dict.fromkeys(transit_modes, 0)
-        transit_times = dict.fromkeys(transit_modes, 0)
+        transit_dists = pandas.Series(0, transit_modes)
+        transit_times = pandas.Series(0, transit_modes)
         for ap in self.assignment_periods:
             network = ap.emme_scenario.get_network()
             for line in network.transit_lines():
@@ -185,28 +196,16 @@ class EmmeAssignmentModel(AssignmentModel):
                 for modes in transit_modes:
                     if line.mode.id in transit_modes[modes]:
                         mode = modes
+                        break
                 for segment in line.segments():
                     if 0 < segment.line.headway < 900:
                         freq = (param.volume_factors["bus"][ap.name]
                                 * (60 / segment.line.headway))
                         transit_dists[mode] += freq * segment.link.length
                         transit_times[mode] += freq * segment["@base_timtr"]
-        for ass_class in vdf_kms:
-            resultdata.print_data(
-                pandas.Series(vdf_kms[ass_class]), "vehicle_kms_vdfs.txt", ass_class)
-        for ass_class in area_kms:
-            resultdata.print_data(
-                pandas.Series(area_kms[ass_class]), "vehicle_kms_areas.txt", ass_class)
-        for vdf in vdf_area_kms:
-            resultdata.print_data(
-                pandas.Series(vdf_area_kms[vdf]), "vehicle_kms_vdfs_areas.txt", vdf)
-        resultdata.print_data(
-            pandas.Series(transit_dists), "transit_kms.txt", "dist")
-        resultdata.print_data(
-            pandas.Series(transit_times), "transit_kms.txt", "time")
-        noise_areas = self._calc_noise()
-        resultdata.print_data(
-            pandas.Series(noise_areas), "noise_areas.txt", "area")
+        resultdata.print_data(transit_dists, "transit_kms.txt", "dist")
+        resultdata.print_data(transit_times, "transit_kms.txt", "time")
+        resultdata.print_data(self._calc_noise(), "noise_areas.txt", "area")
 
     def calc_transit_cost(self, fares, peripheral_cost, default_cost=None):
         """Calculate transit zone cost matrix.
@@ -269,7 +268,7 @@ class EmmeAssignmentModel(AssignmentModel):
             log.debug("Created attr {} for scen {}".format(extr.name, scenario.id))
 
     def _calc_noise(self):
-        noise_areas = dict.fromkeys(zone_param.areas, 0)
+        noise_areas = pandas.Series(0, zone_param.areas)
         network = self.day_scenario.get_network()
         morning_network = self.assignment_periods[0].emme_scenario.get_network()
         for link in network.links():
