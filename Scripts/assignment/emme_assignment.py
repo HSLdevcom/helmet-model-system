@@ -1,4 +1,5 @@
 import numpy
+import pandas
 from math import log10
 
 import utils.log as log
@@ -167,6 +168,13 @@ class EmmeAssignmentModel(AssignmentModel):
             if vdf in vdfs and area in vdf_area_kms[vdf]:
                 for ass_class in ass_classes:
                     vdf_area_kms[vdf][area] += link['@'+ass_class] * link.length
+        stations = pandas.Series(0, list(param.station_ids))
+        for node in network.regular_nodes():
+            for mode in param.station_ids:
+                if (node.data2 == param.station_ids[mode]
+                        and node["@transit_boa"] > 0):
+                    stations[mode] += 1
+                    break
         transit_modes = param.transit_mode_aggregates
         transit_dists = dict.fromkeys(transit_modes, 0)
         transit_times = dict.fromkeys(transit_modes, 0)

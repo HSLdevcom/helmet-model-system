@@ -534,3 +534,7 @@ emme_result_mtx = {
     },
 }
 background_traffic = "ul3"
+station_ids = {
+    "metro": 13,
+    "train": 14,
+}
