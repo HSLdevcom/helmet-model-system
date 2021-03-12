@@ -134,6 +134,7 @@ class EmmeAssignmentModel(AssignmentModel):
         resultdata : datahandling.resultdata.Resultdata
             Result data container to print to
         """
+        # Aggregate results to 24h
         ass_classes = list(param.assignment_modes) + ["bus"]
         for ass_class in ass_classes:
             self._auto_link_24h(ass_class)
@@ -145,6 +146,8 @@ class EmmeAssignmentModel(AssignmentModel):
         for ap in self.assignment_periods:
             self._transit_results_links_nodes(ap.emme_scenario)
         self._transit_results_links_nodes(self.day_scenario)
+
+        # Aggregate and print vehicle kms
         vdfs = param.volume_delays_funcs
         vdf_kms = {ass_class: pandas.Series(0, vdfs)
             for ass_class in ass_classes}
@@ -178,6 +181,8 @@ class EmmeAssignmentModel(AssignmentModel):
         for vdf in vdf_area_kms:
             resultdata.print_data(
                 vdf_area_kms[vdf], "vehicle_kms_vdfs_areas.txt", vdf)
+
+        # Aggregate and print station numbers
         stations = pandas.Series(0, param.station_ids)
         for node in network.regular_nodes():
             for mode in param.station_ids:
@@ -186,6 +191,8 @@ class EmmeAssignmentModel(AssignmentModel):
                     stations[mode] += 1
                     break
         resultdata.print_data(stations, "transit_stations.txt", "number")
+
+        # Aggregate and print transit vehicle kms
         transit_modes = param.transit_mode_aggregates
         transit_dists = pandas.Series(0, transit_modes)
         transit_times = pandas.Series(0, transit_modes)
@@ -205,6 +212,8 @@ class EmmeAssignmentModel(AssignmentModel):
                         transit_times[mode] += freq * segment["@base_timtr"]
         resultdata.print_data(transit_dists, "transit_kms.txt", "dist")
         resultdata.print_data(transit_times, "transit_kms.txt", "time")
+
+        # Aggregate and print noise areas
         resultdata.print_data(self._calc_noise(), "noise_areas.txt", "area")
 
     def calc_transit_cost(self, fares, peripheral_cost, default_cost=None):
