@@ -24,25 +24,6 @@ class EmmeAssignmentModel(AssignmentModel):
         22 (midday scenario) and 23 (afternoon scenario).
         If first scenario is set something else (e.g. 5), then following 
         scenarios are also adjusted (6, 7, 8, 9).
-    demand_mtx : dict (optional)
-        key : str
-            Assignment class (transit_work/transit_leisure)
-        value : dict
-            id : str
-                Emme matrix id
-            description : dict
-                Matrix description
-    result_mtx : dict (optional)
-        key : str
-            Impedance type (time/cost/dist)
-        value : dict
-            key : str
-                Assignment class (transit_work/transit_leisure)
-            value : dict
-                id : str
-                    Emme matrix id
-                description : dict
-                    Matrix description
     save_matrices : bool (optional)
         Whether matrices and transit strategies will be saved in
         Emme format for all time periods.
@@ -151,9 +132,9 @@ class EmmeAssignmentModel(AssignmentModel):
         vdfs = param.volume_delays_funcs
         vdf_kms = {ass_class: pandas.Series(0, vdfs)
             for ass_class in ass_classes}
-        area_kms = {ass_class: pandas.Series(0, zone_param.areas)
+        area_kms = {ass_class: pandas.Series(0, zone_param.area_aggregation)
             for ass_class in ass_classes}
-        vdf_area_kms = {vdf: pandas.Series(0, zone_param.areas)
+        vdf_area_kms = {vdf: pandas.Series(0, zone_param.area_aggregation)
             for vdf in vdfs}
         network = self.day_scenario.get_network()
         for link in network.links():
@@ -182,7 +163,7 @@ class EmmeAssignmentModel(AssignmentModel):
             resultdata.print_data(
                 vdf_area_kms[vdf], "vehicle_kms_vdfs_areas.txt", vdf)
 
-        # Aggregate and print station numbers
+        # Aggregate and print numbers of stations
         stations = pandas.Series(0, param.station_ids)
         for node in network.regular_nodes():
             for mode in param.station_ids:
@@ -212,9 +193,6 @@ class EmmeAssignmentModel(AssignmentModel):
                         transit_times[mode] += freq * segment["@base_timtr"]
         resultdata.print_data(transit_dists, "transit_kms.txt", "dist")
         resultdata.print_data(transit_times, "transit_kms.txt", "time")
-
-        # Aggregate and print noise areas
-        resultdata.print_data(self._calc_noise(), "noise_areas.txt", "area")
 
     def calc_transit_cost(self, fares, peripheral_cost, default_cost=None):
         """Calculate transit zone cost matrix.
@@ -276,8 +254,8 @@ class EmmeAssignmentModel(AssignmentModel):
                 scenario = scenario)
             log.debug("Created attr {} for scen {}".format(extr.name, scenario.id))
 
-    def _calc_noise(self):
-        noise_areas = pandas.Series(0, zone_param.areas)
+    def calc_noise(self):
+        noise_areas = pandas.Series(0, zone_param.area_aggregation)
         network = self.day_scenario.get_network()
         morning_network = self.assignment_periods[0].emme_scenario.get_network()
         for link in network.links():

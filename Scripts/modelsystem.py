@@ -307,6 +307,12 @@ class ModelSystem:
                 self._save_to_omx(impedance[tp], tp)
         if iteration=="last":
             self.ass_model.aggregate_results(self.resultdata)
+            noise_areas = self.ass_model.calc_noise()
+            self.resultdata.print_data(noise_areas, "noise_areas.txt", "area")
+            pop = ar.aggregate(self.zdata_forecast["population"])
+            conversion = pandas.Series(zone_param.pop_share_per_noise_area)
+            noise_pop = conversion * noise_areas * pop
+            self.resultdata.print_data(noise_pop, "noise_areas.txt", "population")
 
         # Reset time-period specific demand matrices (DTM), and empty result buffer
         self.dtm.init_demand()

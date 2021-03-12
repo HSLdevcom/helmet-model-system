@@ -190,12 +190,20 @@ kela_codes = {
     927: "Vihti",
 }
 area_aggregation = (
-        "helsinki_cbd",
-        "helsinki_other",
-        "espoo_vant_kau",
-        "surround_train",
-        "surround_other",
-        "peripheral",
-    )
+    "helsinki_cbd",
+    "helsinki_other",
+    "espoo_vant_kau",
+    "surround_train",
+    "surround_other",
+    "peripheral",
+)
 savu_intervals = (-175.2, -171.3, -166.56, -130.1, -123.15, -118.13, 9999)
 tour_length_intervals = (0, 1, 3, 5, 10, 20, 30, 40, float("inf"))
+pop_share_per_noise_area = {
+    "helsinki_cbd": 0.028816313,
+    "helsinki_other": 0.005536503,
+    "espoo_vant_kau": 0.002148004,
+    "surround_train": 0.0019966,
+    "surround_other": 0.001407824,
+    "peripheral": 0,  # Not calculated
+}
