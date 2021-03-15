@@ -186,6 +186,10 @@ volume_factors = {
         "iht": 1 / 0.497,
     },
 }
+# Factor for converting weekday traffic into yearly day average
+years_average_day_factor = 0.85
+# Factor for converting day traffic into 7:00-22:00 traffic
+share_7_22_of_day = 0.9
 
 ### ASSIGNMENT REFERENCES ###
 

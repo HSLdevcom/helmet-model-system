@@ -199,6 +199,8 @@ area_aggregation = (
 )
 savu_intervals = (-175.2, -171.3, -166.56, -130.1, -123.15, -118.13, 9999)
 tour_length_intervals = (0, 1, 3, 5, 10, 20, 30, 40, float("inf"))
+# Population in noise zones as share of total area population as
+# function only of zone area, calculated by Ramboll Feb 2021
 pop_share_per_noise_area = {
     "helsinki_cbd": 0.028816313,
     "helsinki_other": 0.005536503,
