@@ -197,6 +197,8 @@ class ModelSystem:
                 self._save_to_omx(impedance[tp], tp)
         if is_end_assignment:
             self.ass_model.aggregate_results(self.resultdata)
+            self._calculate_noise_areas()
+            self.resultdata.flush()
         self.dtm.init_demand()
         return impedance
 
@@ -307,12 +309,7 @@ class ModelSystem:
                 self._save_to_omx(impedance[tp], tp)
         if iteration=="last":
             self.ass_model.aggregate_results(self.resultdata)
-            noise_areas = self.ass_model.calc_noise()
-            self.resultdata.print_data(noise_areas, "noise_areas.txt", "area")
-            pop = ar.aggregate(self.zdata_forecast["population"])
-            conversion = pandas.Series(zone_param.pop_share_per_noise_area)
-            noise_pop = conversion * noise_areas * pop
-            self.resultdata.print_data(noise_pop, "noise_areas.txt", "population")
+            self._calculate_noise_areas()
 
         # Reset time-period specific demand matrices (DTM), and empty result buffer
         self.dtm.init_demand()
@@ -332,6 +329,15 @@ class ModelSystem:
             with self.resultmatrices.open(mtx_type, tp, zone_numbers, 'w') as mtx:
                 for ass_class in impedance[mtx_type]:
                     mtx[ass_class] = impedance[mtx_type][ass_class]
+
+    def _calculate_noise_areas(self):
+        noise_areas = self.ass_model.calc_noise()
+        self.resultdata.print_data(noise_areas, "noise_areas.txt", "area")
+        ar = ArrayAggregator(self.zdata_forecast.zone_numbers)
+        pop = ar.aggregate(self.zdata_forecast["population"])
+        conversion = pandas.Series(zone_param.pop_share_per_noise_area)
+        noise_pop = conversion * noise_areas * pop
+        self.resultdata.print_data(noise_pop, "noise_areas.txt", "population")
 
     def _sum_trips_per_zone(self, mode, include_dests=True):
         int_demand = pandas.Series(0, self.zdata_base.zone_numbers)
