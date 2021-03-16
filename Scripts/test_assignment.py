@@ -46,6 +46,7 @@ class EmmeAssignmentTest:
             os.path.dirname(os.path.realpath(__file__)),
             "..", "Results", "2016_test"))
         self.ass_model.aggregate_results(resultdata)
+        self.ass_model.calc_noise()
         resultdata.flush()
         costs_files = MatrixData(os.path.join(
             os.path.dirname(os.path.realpath(__file__)),

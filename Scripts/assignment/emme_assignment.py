@@ -302,22 +302,10 @@ class EmmeAssignmentModel(AssignmentModel):
                            + heavy_correction)
 
             # Calculate noise zone width
-            if start_noise < 55:
-                zone_width = 5
-            elif start_noise < 65:
-                zone_width = 10 + 31/10*(start_noise-55)
-            elif start_noise < 68:
-                zone_width = 41 + 16/3*(start_noise-65)
-            elif start_noise < 71:
-                zone_width = 57 + 21/3*(start_noise-68)
-            elif start_noise < 74:
-                zone_width = 78 + 31/3*(start_noise-71)
-            elif start_noise < 77:
-                zone_width = 109 + 44/3*(start_noise-74)
-            elif start_noise < 80:
-                zone_width = 153 + 66/3*(start_noise-77)
-            else:
-                zone_width = 225
+            for i, f in enumerate(param.noise_zone_width):
+                if start_noise < param.noise_zone_width[i + 1]["threshold"]:
+                    zone_width = f["function"](start_noise - f["threshold"])
+                    break
 
             # Calculate noise zone area and aggregate to area level
             area = belongs_to_area(link.i_node)
