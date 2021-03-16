@@ -255,6 +255,13 @@ class EmmeAssignmentModel(AssignmentModel):
             log.debug("Created attr {} for scen {}".format(extr.name, scenario.id))
 
     def calc_noise(self):
+        """Calculate noise according to Road Traffic Noise Nordic 1996.
+
+        Returns
+        -------
+        pandas.Series
+            Area (m2) of noise polluted zone, aggregated to area level
+        """
         noise_areas = pandas.Series(0, zone_param.area_aggregation)
         network = self.day_scenario.get_network()
         morning_network = self.assignment_periods[0].emme_scenario.get_network()
