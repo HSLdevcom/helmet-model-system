@@ -192,14 +192,14 @@ years_average_day_factor = 0.85
 share_7_22_of_day = 0.9
 # Noice zone width as function of start noise
 noise_zone_width = [
-    {"threshold": 80, "function": lambda x: 225},
-    {"threshold": 77, "function": lambda x: 153 + 66/3*x},
-    {"threshold": 74, "function": lambda x: 109 + 44/3*x},
-    {"threshold": 71, "function": lambda x: 78 + 31/3*x},
-    {"threshold": 68, "function": lambda x: 57 + 21/3*x},
-    {"threshold": 65, "function": lambda x: 41 + 16/3*x},
-    {"threshold": 55, "function": lambda x: 10 + 31/10*x},
-    {"threshold": 0, "function": lambda x: 5},
+    {(0, 55): lambda x: 5},
+    {(55, 65): lambda x: 10 + 31./10*x},
+    {(65, 68): lambda x: 41 + 16./3*x},
+    {(68, 71): lambda x: 57 + 21./3*x},
+    {(71, 74): lambda x: 78 + 31./3*x},
+    {(74, 77): lambda x: 109 + 44./3*x},
+    {(77, 80): lambda x: 153 + 66./3*x},
+    {(80, float("inf")): lambda x: 225},
 ]
 
 ### ASSIGNMENT REFERENCES ###

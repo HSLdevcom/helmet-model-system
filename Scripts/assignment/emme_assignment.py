@@ -302,9 +302,10 @@ class EmmeAssignmentModel(AssignmentModel):
                            + heavy_correction)
 
             # Calculate noise zone width
-            for i in param.noise_zone_width:
-                if start_noise >= i["threshold"]:
-                    zone_width = i["function"](start_noise - i["threshold"])
+            func = param.noise_zone_width
+            for interval in func:
+                if interval[0] <= start_noise < interval[1]:
+                    zone_width = func[interval](start_noise - interval[0])
                     break
 
             # Calculate noise zone area and aggregate to area level
