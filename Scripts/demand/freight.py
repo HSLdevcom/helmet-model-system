@@ -63,7 +63,7 @@ class FreightModel:
         threshold = param.vector_calibration_threshold
         cond = production_forecast < threshold*production_base
         last1000 = zone_numbers[-1] // 1000
-        for i in xrange(0, last1000):
+        for i in range(0, last1000):
             l = i * 1000
             u = l + 999
             # sum1000 is a vector with the same length as one side of mtx,

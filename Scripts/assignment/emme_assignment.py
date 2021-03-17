@@ -2,8 +2,8 @@ import numpy
 
 import utils.log as log
 import parameters.assignment as param
-from abstract_assignment import AssignmentModel
-from assignment_period import AssignmentPeriod
+from assignment.abstract_assignment import AssignmentModel
+from assignment.assignment_period import AssignmentPeriod
 
 
 class EmmeAssignmentModel(AssignmentModel):

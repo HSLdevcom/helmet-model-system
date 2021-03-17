@@ -32,7 +32,7 @@ class ZoneIntervals:
         return self.keys.__iter__()
 
     def __contains__(self, item):
-        return self._intervals.has_key(item)
+        return item in self._intervals
 
     def _get_slice(self, name, index):
         try:
@@ -176,7 +176,7 @@ def is_in(interval, zone_number):
     try:
         if interval[0] <= zone_number < interval[1]:
             return True
-    except ValueError:
+    except (TypeError, ValueError):
         for interval2 in interval:
             if is_in(interval2, zone_number):
                 return True

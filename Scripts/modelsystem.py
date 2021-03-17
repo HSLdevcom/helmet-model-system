@@ -348,10 +348,10 @@ class ModelSystem:
         elif nr_threads <= 0:
             nr_threads = 1
         bounds = next(iter(purpose.sources)).bounds
-        for i in xrange(nr_threads):
+        for i in range(nr_threads):
             # Take a range of origins, for which this thread
             # will calculate secondary destinations
-            origs = xrange(i, bounds.stop - bounds.start, nr_threads)
+            origs = range(i, bounds.stop - bounds.start, nr_threads)
             # Results will be saved in a temp dtm, to avoid memory clashes
             dtm = dt.DepartureTimeModel(self.ass_model.nr_zones)
             demand.append(dtm)
@@ -508,8 +508,8 @@ class AgentModelSystem(ModelSystem):
         modes = purpose.modes if is_last_iteration else ["car"]
         for mode in modes:
             threads = []
-            for i in xrange(nr_threads):
-                origs = xrange(i, bounds.stop - bounds.start, nr_threads)
+            for i in range(nr_threads):
+                origs = range(i, bounds.stop - bounds.start, nr_threads)
                 thread = threading.Thread(
                     target=self._distribute_tours,
                     args=(

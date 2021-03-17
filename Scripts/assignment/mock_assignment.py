@@ -1,6 +1,6 @@
 import utils.log as log
 import parameters.assignment as param
-from abstract_assignment import AssignmentModel, Period
+from assignment.abstract_assignment import AssignmentModel, Period
 
 
 class MockAssignmentModel(AssignmentModel):
