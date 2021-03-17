@@ -48,7 +48,7 @@ class MatrixData:
             return peripheral_cost
 
 
-class MatrixFile(object):
+class MatrixFile:
     def __init__(self, omx_file, zone_numbers):
         self._file = omx_file
         self.missing_zones = []

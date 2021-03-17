@@ -6,10 +6,10 @@ import copy
 import utils.log as log
 import parameters.assignment as param
 import parameters.zone as zone_param
-from datatypes.car_specification import CarSpecification
-from datatypes.transit import TransitSpecification
-from datatypes.path_analysis import PathAnalysis
-from abstract_assignment import Period
+from assignment.datatypes.car_specification import CarSpecification
+from assignment.datatypes.transit import TransitSpecification
+from assignment.datatypes.path_analysis import PathAnalysis
+from assignment.abstract_assignment import Period
 
 
 class AssignmentPeriod(Period):
