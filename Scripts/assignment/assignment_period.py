@@ -98,9 +98,8 @@ class AssignmentPeriod(Period):
         else:
             raise ValueError("Iteration number not valid")
 
-        impedance_types = ("time", "dist", "cost")
         mtxs = {imp_type: self._get_emmebank_matrices(imp_type, iteration=="last")
-            for imp_type in impedance_types}
+            for imp_type in ("time", "cost", "dist")}
         # fix the emme path analysis results (dist and cost zero if path not found)
         for mtx_type in mtxs:
             for mtx_class in mtxs[mtx_type]:
