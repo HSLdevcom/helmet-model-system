@@ -41,9 +41,9 @@ def is_in(interval, zone_number):
     bool
         True if zone number is in interval
     """
-    try:
+    if isinstance(interval[0], int):
         return interval[0] <= zone_number <= interval[1]
-    except ValueError:
+    else:
         for sub_interval in interval:
             if is_in(sub_interval, zone_number):
                 return True

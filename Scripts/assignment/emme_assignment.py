@@ -130,12 +130,12 @@ class EmmeAssignmentModel(AssignmentModel):
 
         # Aggregate and print vehicle kms
         vdfs = param.volume_delays_funcs
-        vdf_kms = {ass_class: pandas.Series(0, vdfs)
+        vdf_kms = {ass_class: pandas.Series(0.0, vdfs)
             for ass_class in ass_classes}
-        area_kms = {ass_class: pandas.Series(0, zone_param.area_aggregation)
+        areas = zone_param.area_aggregation
+        area_kms = {ass_class: pandas.Series(0.0, areas)
             for ass_class in ass_classes}
-        vdf_area_kms = {vdf: pandas.Series(0, zone_param.area_aggregation)
-            for vdf in vdfs}
+        vdf_area_kms = {vdf: pandas.Series(0.0, areas) for vdf in vdfs}
         network = self.day_scenario.get_network()
         for link in network.links():
             if link.volume_delay_func <= 5:
@@ -147,7 +147,7 @@ class EmmeAssignmentModel(AssignmentModel):
                 for ass_class in vdf_kms:
                     vdf_kms[ass_class][vdf] += link['@'+ass_class] * link.length
             area = belongs_to_area(link.i_node)
-            if area in area_kms:
+            if area in areas:
                 for ass_class in area_kms:
                     area_kms[ass_class][area] += link['@'+ass_class] * link.length
             if vdf in vdfs and area in vdf_area_kms[vdf]:
@@ -175,8 +175,8 @@ class EmmeAssignmentModel(AssignmentModel):
 
         # Aggregate and print transit vehicle kms
         transit_modes = param.transit_mode_aggregates
-        transit_dists = pandas.Series(0, transit_modes)
-        transit_times = pandas.Series(0, transit_modes)
+        transit_dists = pandas.Series(0.0, transit_modes)
+        transit_times = pandas.Series(0.0, transit_modes)
         for ap in self.assignment_periods:
             network = ap.emme_scenario.get_network()
             for line in network.transit_lines():
@@ -260,9 +260,9 @@ class EmmeAssignmentModel(AssignmentModel):
         Returns
         -------
         pandas.Series
-            Area (m2) of noise polluted zone, aggregated to area level
+            Area (km2) of noise polluted zone, aggregated to area level
         """
-        noise_areas = pandas.Series(0, zone_param.area_aggregation)
+        noise_areas = pandas.Series(0.0, zone_param.area_aggregation)
         network = self.day_scenario.get_network()
         morning_network = self.assignment_periods[0].emme_scenario.get_network()
         for link in network.links():
@@ -287,8 +287,8 @@ class EmmeAssignmentModel(AssignmentModel):
             if reverse_traffic > 0:
                 speed = 60 * 2 * link.length / (link.auto_time+rlink.auto_time)
             else:
-                speed = 60 * (0.3*link.length/link.auto_time + 0.7*link.data2)
-            speed = max(speed, 50)
+                speed = 0.3*(60*link.length/link.auto_time) + 0.7*link.data2
+            speed = max(speed, 50.0)
 
             # Calculate start noise
             if speed <= 90:
@@ -297,9 +297,10 @@ class EmmeAssignmentModel(AssignmentModel):
             else:
                 heavy_correction = (10*log10((1-heavy_share)
                                     + 5.6*heavy_share*(90/speed)**3))
-            start_noise = (68 + 30*log10(speed/50)
+            start_noise = ((68 + 30*log10(speed/50)
                            + 10*log10(cross_traffic/15/1000)
                            + heavy_correction)
+                if cross_traffic > 0 else 0)
 
             # Calculate noise zone width
             func = param.noise_zone_width
@@ -311,7 +312,7 @@ class EmmeAssignmentModel(AssignmentModel):
             # Calculate noise zone area and aggregate to area level
             area = belongs_to_area(link.i_node)
             if area in noise_areas:
-                noise_areas[area] += zone_width * link.length
+                noise_areas[area] += 0.001 * zone_width * link.length
         return noise_areas
 
     def _transit_results_links_nodes(self, scenario):
