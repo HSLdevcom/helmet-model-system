@@ -12,7 +12,7 @@ class Tour(object):
     ----------
     purpose : datatypes.purpose.TourPurpose
         Travel purpose (hw/hs/ho/...)
-    origin : int or Tour
+    origin : Zone or Tour
         Origin zone number or origin tour (if non-home tour)
     """
     # Expansion factor used on demand in departure time model
@@ -48,8 +48,8 @@ class Tour(object):
     @orig.setter
     def orig(self, origin):
         try:
-            self._position = (self.purpose.zone_data.zone_index(origin),)
-        except KeyError:
+            self._position = (origin.index,)
+        except AttributeError:
             # If this is non-home tour, origin refers to home-based tour
             self._source = origin
             self._non_home_position = ()
@@ -65,7 +65,7 @@ class Tour(object):
     def dest(self, destination):
         self.position = (
             self.position[0],
-            self.purpose.zone_data.zone_index(destination)
+            destination.index
         )
 
     @property
@@ -80,7 +80,7 @@ class Tour(object):
         self.position = (
             self.position[0],
             self.position[1],
-            self.purpose.zone_data.zone_index(destination)
+            destination.index
         )
 
     @property
@@ -99,9 +99,10 @@ class Tour(object):
 
     @position.setter
     def position(self, position):
-        if hasattr(self, "_position"):
+        try:
+            _ = self._position[0]
             self._position = position
-        else:
+        except AttributeError:
             self._non_home_position = position[1:]
 
     def choose_mode(self, is_car_user):

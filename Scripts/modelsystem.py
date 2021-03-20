@@ -492,7 +492,7 @@ class AgentModelSystem(ModelSystem):
             0, self.zdata_forecast.zone_numbers[self.dm.cm.bounds])
         for person in self.dm.population:
             person.decide_car_use()
-            car_users[person.zone] += person.is_car_user
+            car_users[person.zone.number] += person.is_car_user
             person.add_tours(self.dm.purpose_dict, tour_probs)
             for tour in person.tours:
                 tour.choose_mode(person.is_car_user)

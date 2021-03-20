@@ -11,8 +11,8 @@ class Person:
     
     Parameters
     ----------
-    zone : int
-        Zone number, where person resides
+    zone : datatypes.zone.Zone
+        Zone where person resides
     age_group : tuple
         int
             Age interval to which the person belongs
@@ -39,14 +39,14 @@ class Person:
 
     def decide_car_use(self):
         car_use_prob = self._cm.calc_individual_prob(
-            self.age_group, self.gender, self.zone)
+            self.age_group, self.gender, self.zone.number)
         self.is_car_user = self._car_use_draw < car_use_prob
 
     def calc_income(self):
         if self.age < 17:
             self.income = 0
         else:
-            log_income = self._im.log_income[self.zone]
+            log_income = self._im.log_income[self.zone.number]
             if self.is_car_user:
                 log_income += param["car_users"]
             if self.gender in param:
@@ -83,9 +83,8 @@ class Person:
                     Matrix with cumulative tour combination probabilities
                     for all zones
         """
-        zone_idx = self.generation_model.zone_data.zone_index(self.zone)
         tour_comb_idx = numpy.searchsorted(
-            tour_probs[self.age_group][self.is_car_user][zone_idx, :],
+            tour_probs[self.age_group][self.is_car_user][self.zone.index, :],
             self._tour_combination_draw)
         new_tours = list(self.generation_model.tour_combinations[tour_comb_idx])
         old_tours = self.tours
