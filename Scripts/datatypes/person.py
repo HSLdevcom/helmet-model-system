@@ -36,6 +36,9 @@ class Person:
         self._im = income_model
         self._car_use_draw = random.random()
         self._tour_combination_draw = random.random()
+        self.total_access = 0
+        self.sustainable_access = 0
+        self.car_access = 0
 
     def decide_car_use(self):
         car_use_prob = self._cm.calc_individual_prob(

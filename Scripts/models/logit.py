@@ -413,6 +413,8 @@ class ModeDestModel(LogitModel):
         """
         mode_exps = {}
         mode_expsum = 0
+        car_expsum = 0
+        sust_expsum = 0
         modes = self.purpose.modes
         for mode in modes:
             mode_exps[mode] = self.mode_exps[mode][zone]
@@ -426,10 +428,37 @@ class ModeDestModel(LogitModel):
                     else:
                         mode_exps[mode] *= math.exp(b["car_users"][1])
             mode_expsum += mode_exps[mode]
+            if mode == "car":
+                car_expsum += mode_exps[mode]
+            else:
+                sust_expsum += mode_exps[mode]
         probs = numpy.empty(len(modes))
         for i, mode in enumerate(modes):
             probs[i] = mode_exps[mode] / mode_expsum
-        return probs
+        # utils to money
+        logsum = numpy.log(mode_expsum)
+        sust_logsum = numpy.log(sust_expsum)
+        car_logsum = numpy.log(car_expsum)
+        try:
+            b = self.dest_choice_param["car"]["impedance"]["cost"]
+        except KeyError:
+            # School tours do not have a constant cost parameter
+            # Use value of time conversion from CBA guidelines instead
+            b = -0.31690253
+        if isinstance(b, tuple):
+            # Separate params for cap region and surrounding
+            # Choose based location
+            if self.lbounds.stop < zone:
+                money_utility = 1 / b[0]
+            else:
+                money_utility = 1 / b[1]
+        else:
+            money_utility = 1 / b
+        money_utility /= self.mode_choice_param["car"]["log"]["logsum"]
+        total = -money_utility * logsum
+        sust = -money_utility * sust_logsum
+        car = -money_utility * car_logsum
+        return probs, total, sust, car
 
     def _calc_utils(self, impedance):
         self.dest_expsums = {}

@@ -528,12 +528,36 @@ class AgentModelSystem(ModelSystem):
             for tour in person.tours:
                 self.dtm.add_demand(tour)
         if is_last_iteration:
-            random.seed(zone_param.population_draw)
-            self.dm.incmod.predict()
-            for person in self.dm.population:
-                person.calc_income()
-            random.seed(None)
+            self._agent_results()
         log.info("Demand calculation completed")
+
+    def _agent_results(self):
+        random.seed(zone_param.population_draw)
+        self.dm.incmod.predict()
+        result_dict = {
+            "number": [], "area": [], "municipality": [], 
+            "income": [], "age_group": [], "gender": [], "nr_tours": [], 
+            "total_access": [], "sustainable_access": [], "car_access": [],}
+        for person in self.dm.population:
+            person.calc_income()
+            for tour in person.tours:
+                person.total_access += tour.total_accessibility
+                person.sustainable_access += tour.sustainable_accessibility
+                person.car_access += tour.car_accessibility
+            for attr in result_dict.keys():
+                if attr == "nr_tours":
+                    result_dict["nr_tours"].append(len(person.tours))
+                elif attr in ["number", "area", "municipality"]:
+                    zone = person.zone
+                    result_dict[attr].append(getattr(zone, attr))
+                else:
+                    result_dict[attr].append(getattr(person, attr))
+        results = pandas.DataFrame(result_dict)
+        for attr in results.columns:
+            self.resultdata.print_data(
+                pandas.Series(results[attr]), "agents.txt", attr)
+        random.seed(None)   
+        log.info("Results printed to file agents.txt") 
 
     def _distribute_tours(self, mode, origs, sec_dest_tours, impedance):
         sec_dest_purpose = self.dm.purpose_dict["hoo"]
