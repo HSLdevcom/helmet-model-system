@@ -1,6 +1,5 @@
 import numpy
 import pandas
-import random
 
 import utils.log as log
 import parameters.zone as param
@@ -90,6 +89,7 @@ class DemandModel:
         list
             Person
         """
+        numpy.random.seed(param.population_draw)
         bounds = slice(0, self.zone_data.first_peripheral_zone)
         self.incmod = linear.IncomeModel(
             self.zone_data, bounds, self.age_groups, self.resultdata)
@@ -126,6 +126,7 @@ class DemandModel:
                         self.cm, self.incmod)
                     self.population.append(person)
                     self.zone_population[zone_number] += 1
+        numpy.random.seed(None)
 
     def generate_tours(self):
         """Generate vector of tours for each tour purpose.

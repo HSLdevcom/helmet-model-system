@@ -1,6 +1,11 @@
 # Share of demand that will be simulated in agent model
 agent_demand_fraction = 1.0
 
+# Seed number for population attributes:
+# int = fixed seed and same population for each run
+# None = different population for each run
+population_draw = 31
+
 ### DEMAND MODEL REFERENCES ###
 
 tour_purposes = (

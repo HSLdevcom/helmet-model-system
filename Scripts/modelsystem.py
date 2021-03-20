@@ -3,6 +3,7 @@ import multiprocessing
 import os
 import numpy
 import pandas
+import random
 from collections import defaultdict
 
 import utils.log as log
@@ -436,6 +437,7 @@ class AgentModelSystem(ModelSystem):
 
     def _init_demand_model(self):
         log.info("Creating synthetic population")
+        random.seed(zone_param.population_draw)
         return DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=True)
 
     def _add_internal_demand(self, previous_iter_impedance, is_last_iteration):
@@ -457,6 +459,7 @@ class AgentModelSystem(ModelSystem):
             secondary destinations are calculated for all modes
         """
         log.info("Demand calculation started...")
+        random.seed(None)
         self.dm.cm.calc_basic_prob()
         self.travel_modes = set()
         for purpose in self.dm.tour_purposes:
@@ -525,9 +528,11 @@ class AgentModelSystem(ModelSystem):
             for tour in person.tours:
                 self.dtm.add_demand(tour)
         if is_last_iteration:
+            random.seed(zone_param.population_draw)
             self.dm.incmod.predict()
             for person in self.dm.population:
                 person.calc_income()
+            random.seed(None)
         log.info("Demand calculation completed")
 
     def _distribute_tours(self, mode, origs, sec_dest_tours, impedance):
