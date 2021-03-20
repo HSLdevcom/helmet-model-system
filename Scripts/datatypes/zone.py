@@ -10,9 +10,16 @@ class Zone:
         Zone.counter += 1
         self.area = None
         for area in areas:
-            if areas[area][0] <= number < areas[area][1]:
-                self.area = area
-                break
+            if isinstance(areas[area][0], tuple):
+                for interval in areas[area]:
+                    if interval[0] <= number < interval[1]:
+                        self.area = area
+                        break
+            else:
+                if areas[area][0] <= number < areas[area][1]:
+                    self.area = area
+                    break
+                
         self.municipality = None
         for mp in municipalities:
             if  municipalities[mp][0] <= number < municipalities[mp][1]:
