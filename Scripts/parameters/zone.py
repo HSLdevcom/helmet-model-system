@@ -148,13 +148,64 @@ municipalities = {
     "Lapinjarvi": (29500, 29999),
     "Loviisa": (30000, 30999),
 }
+kela_codes = {
+    18: "Askola",
+    49: "Espoo",
+    78: "Hanko",
+    82: "Hattula",
+    86: "Hausjarvi",
+    91: "Helsinki",
+    98: "Hollola",
+    106: "Hyvinkaa",
+    109: "Hameenlinna",
+    149: "Inkoo",
+    165: "Janakkala",
+    186: "Jarvenpaa",
+    224: "Karkkila",
+    235: "Kauniainen",
+    245: "Kerava",
+    257: "Kirkkonummi",
+    316: "Karkola",
+    398: "Lahti",
+    407: "Lapinjarvi",
+    444: "Lohja",
+    433: "Loppi",
+    434: "Loviisa",
+    504: "Myrskyla",
+    505: "Mantsala",
+    543: "Nurmijarvi",
+    560: "Orimattila",
+    611: "Pornainen",
+    638: "Porvoo",
+    616: "Pukkila",
+    710: "Raasepori",
+    694: "Riihimaki",
+    734: "Salo",
+    753: "Sipoo",
+    755: "Siuntio",
+    761: "Somero",
+    834: "Tammela",
+    858: "Tuusula",
+    92: "Vantaa",
+    927: "Vihti",
+}
 area_aggregation = (
-        "helsinki_cbd",
-        "helsinki_other",
-        "espoo_vant_kau",
-        "surround_train",
-        "surround_other",
-        "peripheral",
-    )
+    "helsinki_cbd",
+    "helsinki_other",
+    "espoo_vant_kau",
+    "surround_train",
+    "surround_other",
+    "peripheral",
+)
 savu_intervals = (-175.2, -171.3, -166.56, -130.1, -123.15, -118.13, 9999)
 tour_length_intervals = (0, 1, 3, 5, 10, 20, 30, 40, float("inf"))
+# Population in noise zones as share of total area population as
+# function only of zone area, calculated by Ramboll Feb 2021
+pop_share_per_noise_area = {
+    "helsinki_cbd": 0.028816313,
+    "helsinki_other": 0.005536503,
+    "espoo_vant_kau": 0.002148004,
+    "surround_train": 0.0019966,
+    "surround_other": 0.001407824,
+    "peripheral": 0,  # Not calculated
+}

@@ -98,19 +98,17 @@ class AssignmentPeriod(Period):
         else:
             raise ValueError("Iteration number not valid")
 
-        impedance_types = ("time", "dist", "cost")
         mtxs = {imp_type: self._get_emmebank_matrices(imp_type, iteration=="last")
-            for imp_type in impedance_types}
+            for imp_type in ("time", "cost", "dist")}
         # fix the emme path analysis results (dist and cost zero if path not found)
         for mtx_type in mtxs:
             for mtx_class in mtxs[mtx_type]:
                 mtxs[mtx_type][mtx_class][ mtxs["time"][mtx_class] > 999999 ] = 999999
         # adjust impedance
         mtxs["time"]["bike"] = mtxs["time"]["bike"].clip(None, 9999.)
-        mtxs["time"]["car_work"] = self._extract_timecost_from_gcost(
-            "car_work")
-        mtxs["time"]["car_leisure"] = self._extract_timecost_from_gcost(
-            "car_leisure")
+        for ass_class in ("car_work", "car_leisure"):
+            mtxs["time"][ass_class] = self._extract_timecost_from_gcost(
+                ass_class)
         mtxs["time"]["transit_work"] = self._damp(
             mtxs["time"]["transit_work"], "transit_work_fw_time")
         if iteration=="last":
@@ -257,15 +255,18 @@ class AssignmentPeriod(Period):
             else:
                 self._set_matrix(mtx, matrices[mtx])
 
-    def _set_matrix(self, mtx_label, matrix):
+    def _set_matrix(self, mtx_label, matrix, result_type=None):
         if numpy.isnan(matrix).any():
-            msg = "NAs in demand matrix {}. Would cause infinite loop in Emme assignment.".format(
-                mtx_label)
+            msg = ("NAs in demand matrix {}. ".format(mtx_label)
+                   + "Would cause infinite loop in Emme assignment.")
             log.error(msg)
             raise ValueError(msg)
-        else:
+        elif result_type is None:
             self.emme_project.modeller.emmebank.matrix(
                 self.demand_mtx[mtx_label]["id"]).set_numpy_data(matrix)
+        else:
+            self.emme_project.modeller.emmebank.matrix(
+                self.result_mtx[result_type][mtx_label]["id"]).set_numpy_data(matrix)
 
     def _get_emmebank_matrices(self, mtx_type, is_last_iteration=False):
         """Get all matrices of specified type.
@@ -324,9 +325,11 @@ class AssignmentPeriod(Period):
         # To get travel time, monetary cost is removed from generalized cost.
         vot_inv = param.vot_inv[param.vot_classes[ass_class]]
         gcost = self._get_matrix("gen_cost", ass_class)
-        tcost = self._get_matrix("cost", ass_class)
-        tdist = self._get_matrix("dist", ass_class)
-        return gcost - vot_inv *(tcost + self.dist_unit_cost*tdist)
+        cost = self._get_matrix("cost", ass_class)
+        dist = self._get_matrix("dist", ass_class)
+        time = gcost - vot_inv*(cost + self.dist_unit_cost*dist)
+        self._set_matrix(ass_class, time, "time")
+        return time
 
     def _calc_background_traffic(self, include_trucks=False):
         """Calculate background traffic (buses)."""

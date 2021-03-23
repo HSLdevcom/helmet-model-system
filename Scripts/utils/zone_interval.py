@@ -2,6 +2,79 @@ import numpy
 import pandas
 
 import parameters.zone as param
+import utils.log as log
+
+
+def zone_interval(division_type, name):
+    """Get interval for given zone division type.
+
+    Parameters
+    ----------
+    division_type : str
+        Type of zone division (municipalities/areas)
+    name : str
+        Name of the municipality or area
+
+    Returns
+    -------
+    slice
+        (first zone number, last zone number)
+    """
+    return slice(*param.__dict__[division_type][name])
+
+
+def is_in(interval, zone_number):
+    """Decide whether zone number is in zone number interval.
+
+    If interval consists of several sub-intervals, we check recursively
+    whether zone number is in any of these sub-intervals.
+
+    Parameters
+    ----------
+    interval : tuple
+        Either (start, end) tuple or tuple of (start, end) tuples
+    zone_number : int
+        Zone number
+
+    Returns
+    -------
+    bool
+        True if zone number is in interval
+    """
+    try:
+        return interval[0] <= zone_number <= interval[1]
+    except TypeError:
+        for sub_interval in interval:
+            if is_in(sub_interval, zone_number):
+                return True
+    return False
+
+
+def belongs_to_area(node):
+    """Get name of area to which node belongs to.
+
+    Parameters
+    ----------
+    node : inro.emme.network.node.Node
+        Node in Emme network with municipality KELA code in `ui3`
+
+    Returns
+    -------
+    str
+        Name of area (helsinki_cbd/helsinki_other/espoo_vant_kau/...)
+    """
+    try:
+        municipality = param.kela_codes[int(node.data3)]
+        if municipality == "Helsinki" and node.label != 'A':
+            first_zone_id = 1000
+        else:
+            first_zone_id = param.municipalities[municipality][0]
+    except KeyError:
+        log.warn("Municipality KELA code not found for node {}".format(node.id))
+        first_zone_id = -1
+    for area in param.area_aggregation:
+        if is_in(param.areas[area], first_zone_id):
+            return area
 
 
 class ZoneIntervals:
@@ -69,24 +142,6 @@ class ZoneIntervals:
             else:
                 aggregation[area] = numpy.average(array.loc[i], weights=w)
         return aggregation
-
-
-def zone_interval(division_type, name):
-    """Get interval for given zone division type.
-
-    Parameters
-    ----------
-    division_type : str
-        Type of zone division (municipalities/areas)
-    name : str
-        Name of the municipality or area
-
-    Returns
-    -------
-    slice
-        (first zone number, last zone number)
-    """
-    return slice(*param.__dict__[division_type][name])
 
 
 class AreaAggregator(ZoneIntervals):
@@ -170,14 +225,3 @@ class ArrayAggregator(AreaAggregator):
             i = self._get_slice(area, array.index)
             self.array.loc[area] = array.loc[i].sum()
         return self.array
-
-
-def is_in(interval, zone_number):
-    try:
-        if interval[0] <= zone_number < interval[1]:
-            return True
-    except (TypeError, ValueError):
-        for interval2 in interval:
-            if is_in(interval2, zone_number):
-                return True
-    return False

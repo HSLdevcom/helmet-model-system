@@ -1,5 +1,9 @@
+import pandas
+
+
 import utils.log as log
 import parameters.assignment as param
+import parameters.zone as zone_param
 from assignment.abstract_assignment import AssignmentModel, Period
 
 
@@ -35,6 +39,9 @@ class MockAssignmentModel(AssignmentModel):
 
     def aggregate_results(self, resultdata):
         pass
+
+    def calc_noise(self):
+        return pandas.Series(0, zone_param.area_aggregation)
 
     def prepare_network(self):
         pass
@@ -76,12 +83,15 @@ class MockPeriod(Period):
             for ass_class in matrices:
                 mtx[ass_class] = matrices[ass_class]
         log.info("Saved demand matrices for " + str(self.name))
-
-        matrices = {mtx_type: self._get_matrices(mtx_type)
+        mtxs = {mtx_type: self._get_matrices(mtx_type)
             for mtx_type in ("time", "cost", "dist")}
-        matrices["time"]["transit_work"] = matrices["time"]["transit_uncongested"]
-        matrices["time"]["transit_leisure"] = matrices["time"]["transit_uncongested"]
-        return matrices
+        for ass_cl in ("transit_work", "transit_leisure"):
+            mtxs["time"][ass_cl] = mtxs["time"]["transit_uncongested"]
+        if iteration != "last":
+            for ass_cl in ("car_work", "car_leisure"):
+                mtxs["cost"][ass_cl] += (param.dist_unit_cost
+                                         * mtxs["dist"][ass_cl])
+        return mtxs
     
     def _get_matrices(self, mtx_type):
         """Get all matrices of specified type.

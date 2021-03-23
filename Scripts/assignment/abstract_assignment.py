@@ -24,7 +24,11 @@ class AssignmentModel:
     @abstractmethod
     def aggregate_results(self, resultdatawriter):
         pass
-    
+
+    @abstractmethod
+    def calc_noise(self):
+        pass
+
     @abstractmethod
     def prepare_network(self):
         pass
