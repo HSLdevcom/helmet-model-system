@@ -15,6 +15,7 @@ openmatrix = "*"
 numpy = "*"
 numexpr = "*"
 tables = "*"
+shapely = "*"
 
 [requires]
 python_version = "3.8"
