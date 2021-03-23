@@ -47,17 +47,17 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, results_directory, w
         revenues["car"][tp] = 0
         for ass_mode in param.assignment_modes:
             revenues["car"][tp] += calc_revenue(ve0[ass_mode], ve1[ass_mode])
-        print "Revenues " + tp + " calculated"
+        print ("Revenues " + tp + " calculated")
         for transport_class in gains:
             gains[transport_class][tp] = calc_gains(
                 ve0[transport_class], ve1[transport_class])
-        print "Gains " + tp + " calculated"
+        print ("Gains " + tp + " calculated")
     if year == 1:
         write_results_1(wb, mile_diff, transit_mile_diff, revenues, gains)
     elif year == 2:
         write_results_2(wb, mile_diff, transit_mile_diff, revenues, gains)
     else:
-        print "Evaluation year must be either 1 or 2"
+        print ("Evaluation year must be either 1 or 2")
     
 
 
@@ -95,7 +95,7 @@ def read_scenario(path, time_period):
                         matrices[transport_class][mtx_type] = matrices[transport_class][mtx_type] / 30
     for mtx_type in files:
         files[mtx_type].close()
-    print "Files read"
+    print ("Files read")
     return matrices    
 
 
@@ -355,4 +355,4 @@ if __name__ == "__main__":
         os.path.basename(args.projected_scenario),
         os.path.basename(args.baseline_scenario))
     wb.save(os.path.join(args.results_path, results_filename))
-    print "CBA results saved to file: {}".format(results_filename)
+    print ("CBA results saved to file: {}".format(results_filename))

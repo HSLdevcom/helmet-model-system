@@ -116,7 +116,7 @@ class DemandModel:
                     weights = rebalance * weights
             zone_pop = int(round(self.zone_data["population"][zone_number]
                                  * param.agent_demand_fraction))
-            for _ in xrange(zone_pop):
+            for _ in range(zone_pop):
                 a = numpy.arange(-1, len(self.age_groups))
                 group = numpy.random.choice(a=a, p=weights)
                 if group != -1:

@@ -41,9 +41,9 @@ def is_in(interval, zone_number):
     bool
         True if zone number is in interval
     """
-    if isinstance(interval[0], int):
+    try:
         return interval[0] <= zone_number <= interval[1]
-    else:
+    except TypeError:
         for sub_interval in interval:
             if is_in(sub_interval, zone_number):
                 return True
@@ -105,7 +105,7 @@ class ZoneIntervals:
         return self.keys.__iter__()
 
     def __contains__(self, item):
-        return self._intervals.has_key(item)
+        return item in self._intervals
 
     def _get_slice(self, name, index):
         try:

@@ -1,6 +1,6 @@
 import parameters.assignment as param
-from path_analysis import PathAnalysis
-from journey_level import JourneyLevel
+from assignment.datatypes.path_analysis import PathAnalysis
+from assignment.datatypes.journey_level import JourneyLevel
 
 
 class TransitSpecification:
