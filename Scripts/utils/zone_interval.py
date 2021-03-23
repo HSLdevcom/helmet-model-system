@@ -43,7 +43,7 @@ def is_in(interval, zone_number):
     """
     try:
         return interval[0] <= zone_number <= interval[1]
-    except TypeError:
+    except (TypeError, ValueError):
         for sub_interval in interval:
             if is_in(sub_interval, zone_number):
                 return True
