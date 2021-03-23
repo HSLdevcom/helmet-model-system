@@ -1,6 +1,5 @@
 import numpy
 import pandas
-from shapely.geometry import Point, Polygon
 
 import parameters.zone as param
 import utils.log as log
@@ -51,9 +50,6 @@ def is_in(interval, zone_number):
     return False
 
 
-cbd = Polygon(param.helsinki_cbd)
-
-
 def belongs_to_area(node):
     """Get name of area to which node belongs to.
 
@@ -69,7 +65,7 @@ def belongs_to_area(node):
     """
     try:
         municipality = param.kela_codes[int(node.data3)]
-        if municipality == "Helsinki" and not Point(node.x, node.y).within(cbd):
+        if municipality == "Helsinki" and node.label != 'A':
             first_zone_id = 1000
         else:
             first_zone_id = param.municipalities[municipality][0]

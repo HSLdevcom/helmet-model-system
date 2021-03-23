@@ -19,8 +19,7 @@ class AreaFindTest(unittest.TestCase):
     def test_belongs_to_area(self):
         class Node:
             id = "test"
-            x = 25497000
-            y = 6673000
+            label = 'A'
         node = Node()
         node.data3 = 91
         area = belongs_to_area(node)
