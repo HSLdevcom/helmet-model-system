@@ -1,7 +1,11 @@
 import numpy
+import pandas
+from math import log10
 
 import utils.log as log
+from utils.zone_interval import belongs_to_area
 import parameters.assignment as param
+import parameters.zone as zone_param
 from abstract_assignment import AssignmentModel
 from assignment_period import AssignmentPeriod
 
@@ -20,25 +24,6 @@ class EmmeAssignmentModel(AssignmentModel):
         22 (midday scenario) and 23 (afternoon scenario).
         If first scenario is set something else (e.g. 5), then following 
         scenarios are also adjusted (6, 7, 8, 9).
-    demand_mtx : dict (optional)
-        key : str
-            Assignment class (transit_work/transit_leisure)
-        value : dict
-            id : str
-                Emme matrix id
-            description : dict
-                Matrix description
-    result_mtx : dict (optional)
-        key : str
-            Impedance type (time/cost/dist)
-        value : dict
-            key : str
-                Assignment class (transit_work/transit_leisure)
-            value : dict
-                id : str
-                    Emme matrix id
-                description : dict
-                    Matrix description
     save_matrices : bool (optional)
         Whether matrices and transit strategies will be saved in
         Emme format for all time periods.
@@ -130,7 +115,9 @@ class EmmeAssignmentModel(AssignmentModel):
         resultdata : datahandling.resultdata.Resultdata
             Result data container to print to
         """
-        for ass_class in param.link_volumes:
+        # Aggregate results to 24h
+        ass_classes = list(param.assignment_modes) + ["bus"]
+        for ass_class in ass_classes:
             self._auto_link_24h(ass_class)
         for transit_class in param.transit_classes:
             self._transit_segment_24h(transit_class, "vol")
@@ -140,17 +127,15 @@ class EmmeAssignmentModel(AssignmentModel):
         for ap in self.assignment_periods:
             self._transit_results_links_nodes(ap.emme_scenario)
         self._transit_results_links_nodes(self.day_scenario)
-        vdfs = [1, 2, 3, 4, 5]
-        transit_modes = {
-            "bus": "bde",
-            "trunk": "g",
-            "metro": "m",
-            "train": "rj",
-            "tram": "tp",
-            "other": ""
-        }
-        kms = {ass_class: dict.fromkeys(vdfs, 0)
-            for ass_class in param.link_volumes}
+
+        # Aggregate and print vehicle kms
+        vdfs = param.volume_delays_funcs
+        vdf_kms = {ass_class: pandas.Series(0.0, vdfs)
+            for ass_class in ass_classes}
+        areas = zone_param.area_aggregation
+        area_kms = {ass_class: pandas.Series(0.0, areas)
+            for ass_class in ass_classes}
+        vdf_area_kms = {vdf: pandas.Series(0.0, areas) for vdf in vdfs}
         network = self.day_scenario.get_network()
         for link in network.links():
             if link.volume_delay_func <= 5:
@@ -159,11 +144,39 @@ class EmmeAssignmentModel(AssignmentModel):
                 # Links with bus lane
                 vdf = link.volume_delay_func - 5
             if vdf in vdfs:
-                for ass_class in kms:
-                    kms[ass_class][vdf] += (link[param.link_volumes[ass_class]]
-                                            * link.length)
-        transit_dists = dict.fromkeys(transit_modes, 0)
-        transit_times = dict.fromkeys(transit_modes, 0)
+                for ass_class in vdf_kms:
+                    vdf_kms[ass_class][vdf] += link['@'+ass_class] * link.length
+            area = belongs_to_area(link.i_node)
+            if area in areas:
+                for ass_class in area_kms:
+                    area_kms[ass_class][area] += link['@'+ass_class] * link.length
+            if vdf in vdfs and area in vdf_area_kms[vdf]:
+                for ass_class in ass_classes:
+                    vdf_area_kms[vdf][area] += link['@'+ass_class] * link.length
+        for ass_class in vdf_kms:
+            resultdata.print_data(
+                vdf_kms[ass_class], "vehicle_kms_vdfs.txt", ass_class)
+        for ass_class in area_kms:
+            resultdata.print_data(
+                area_kms[ass_class], "vehicle_kms_areas.txt", ass_class)
+        for vdf in vdf_area_kms:
+            resultdata.print_data(
+                vdf_area_kms[vdf], "vehicle_kms_vdfs_areas.txt", vdf)
+
+        # Aggregate and print numbers of stations
+        stations = pandas.Series(0, param.station_ids)
+        for node in network.regular_nodes():
+            for mode in param.station_ids:
+                if (node.data2 == param.station_ids[mode]
+                        and node["@transit_boa"] > 0):
+                    stations[mode] += 1
+                    break
+        resultdata.print_data(stations, "transit_stations.txt", "number")
+
+        # Aggregate and print transit vehicle kms
+        transit_modes = param.transit_mode_aggregates
+        transit_dists = pandas.Series(0.0, transit_modes)
+        transit_times = pandas.Series(0.0, transit_modes)
         for ap in self.assignment_periods:
             network = ap.emme_scenario.get_network()
             for line in network.transit_lines():
@@ -171,19 +184,15 @@ class EmmeAssignmentModel(AssignmentModel):
                 for modes in transit_modes:
                     if line.mode.id in transit_modes[modes]:
                         mode = modes
+                        break
                 for segment in line.segments():
                     if 0 < segment.line.headway < 900:
                         freq = (param.volume_factors["bus"][ap.name]
                                 * (60 / segment.line.headway))
                         transit_dists[mode] += freq * segment.link.length
                         transit_times[mode] += freq * segment["@base_timtr"]
-        for ass_class in kms:
-            resultdata.print_data(
-                pandas.Series(kms[ass_class]), "vehicle_kms.txt", ass_class)
-        resultdata.print_data(
-            pandas.Series(transit_dists), "transit_kms.txt", "dist")
-        resultdata.print_data(
-            pandas.Series(transit_times), "transit_kms.txt", "time")
+        resultdata.print_data(transit_dists, "transit_kms.txt", "dist")
+        resultdata.print_data(transit_times, "transit_kms.txt", "time")
 
     def calc_transit_cost(self, fares, peripheral_cost, default_cost=None):
         """Calculate transit zone cost matrix.
@@ -245,6 +254,67 @@ class EmmeAssignmentModel(AssignmentModel):
                 scenario = scenario)
             log.debug("Created attr {} for scen {}".format(extr.name, scenario.id))
 
+    def calc_noise(self):
+        """Calculate noise according to Road Traffic Noise Nordic 1996.
+
+        Returns
+        -------
+        pandas.Series
+            Area (km2) of noise polluted zone, aggregated to area level
+        """
+        noise_areas = pandas.Series(0.0, zone_param.area_aggregation)
+        network = self.day_scenario.get_network()
+        morning_network = self.assignment_periods[0].emme_scenario.get_network()
+        for link in network.links():
+            # Aggregate traffic
+            light_modes = ("@car_work", "@car_leisure", "@van")
+            traffic = sum([link[mode] for mode in light_modes])
+            rlink = link.reverse_link
+            if rlink is None:
+                reverse_traffic = 0
+            else:
+                reverse_traffic = sum([rlink[mode] for mode in light_modes])
+            cross_traffic = (param.years_average_day_factor
+                             * param.share_7_22_of_day
+                             * (traffic+reverse_traffic))
+            heavy = link["@truck"] + link["@trailer_truck"]
+            traffic = max(traffic, 0.01)
+            heavy_share = heavy / (traffic+heavy)
+
+            # Calculate speed
+            link = morning_network.link(link.i_node, link.j_node)
+            rlink = link.reverse_link
+            if reverse_traffic > 0:
+                speed = 60 * 2 * link.length / (link.auto_time+rlink.auto_time)
+            else:
+                speed = 0.3*(60*link.length/link.auto_time) + 0.7*link.data2
+            speed = max(speed, 50.0)
+
+            # Calculate start noise
+            if speed <= 90:
+                heavy_correction = (10*log10((1-heavy_share)
+                                    + 500*heavy_share/speed))
+            else:
+                heavy_correction = (10*log10((1-heavy_share)
+                                    + 5.6*heavy_share*(90/speed)**3))
+            start_noise = ((68 + 30*log10(speed/50)
+                           + 10*log10(cross_traffic/15/1000)
+                           + heavy_correction)
+                if cross_traffic > 0 else 0)
+
+            # Calculate noise zone width
+            func = param.noise_zone_width
+            for interval in func:
+                if interval[0] <= start_noise < interval[1]:
+                    zone_width = func[interval](start_noise - interval[0])
+                    break
+
+            # Calculate noise zone area and aggregate to area level
+            area = belongs_to_area(link.i_node)
+            if area in noise_areas:
+                noise_areas[area] += 0.001 * zone_width * link.length
+        return noise_areas
+
     def _transit_results_links_nodes(self, scenario):
         """ 
         Calculate and sum transit results to link and nodes.
@@ -271,24 +341,23 @@ class EmmeAssignmentModel(AssignmentModel):
         attr : str
             Attribute name thatis usually part of Parameters: link_volumes.
         """
-        extra_attr = param.link_volumes[attr]
+        extra_attr = '@' + attr
         # get attr from different time periods to dictionary
-        links_attr = {}
+        networks = {}
         for ap in self.assignment_periods:
-            links_attr[ap.name] = {}
-            network = ap.emme_scenario.get_network()
-            for link in network.links():
-                links_attr[ap.name][link.id] = link[extra_attr]
-        # create attr to save volume
-        extra_attr_day = str(param.link_volumes[attr])
+            networks[ap.name] = ap.emme_scenario.get_network()
         network = self.day_scenario.get_network()
         # save link volumes to result network
         for link in network.links():
             day_attr = 0
-            for tp in links_attr:
-                if link.id in links_attr[tp]:
-                    day_attr += links_attr[tp][link.id] * param.volume_factors[attr][tp]
-            link[extra_attr_day] = day_attr
+            for tp in networks:
+                try:
+                    tp_link = networks[tp].link(link.i_node, link.j_node)
+                    day_attr += (tp_link[extra_attr]
+                                 * param.volume_factors[attr][tp])
+                except (AttributeError, TypeError):
+                    pass
+            link[extra_attr] = day_attr
         self.day_scenario.publish_network(network)
         log.info("Auto attribute {} aggregated to 24h (scenario {})".format(
             extra_attr, self.day_scenario.id))
@@ -316,7 +385,8 @@ class EmmeAssignmentModel(AssignmentModel):
                 try:
                     tp_segment = networks[tp].transit_line(
                         segment.line.id).segment(segment.number)
-                    day_attr += tp_segment[extra_attr] * param.volume_factors[transit_class][tp]
+                    day_attr += (tp_segment[extra_attr]
+                                 * param.volume_factors[transit_class][tp])
                 except (AttributeError, TypeError):
                     pass
             segment[extra_attr] = day_attr
@@ -328,24 +398,24 @@ class EmmeAssignmentModel(AssignmentModel):
         """ 
         Sums and expands bike volumes from different scenarios to one result scenario.
         """
-        attr = "bike"
+        attr = "@bike_{}"
         # get attr from different time periods to dictionary
-        links_attr = {}
+        networks = {}
         for ap in self.assignment_periods:
-            extra_attr = "@{}_{}".format(attr, ap.name)
-            links_attr[ap.name] = {}
-            network = ap.bike_scenario.get_network()
-            for link in network.links():
-                links_attr[ap.name][link.id] = link[extra_attr]
+            networks[ap.name] = ap.bike_scenario.get_network()
         # save link volumes to result network
+        day_scenario = self.assignment_periods[0].bike_scenario
+        network = day_scenario.get_network()
         for link in network.links():
             day_attr = 0
-            for tp in links_attr:
-                if link.id in links_attr[tp]:
-                    day_attr += links_attr[tp][link.id] * param.volume_factors[attr][tp]
-            extra_attr = "@{}_{}".format(attr, "day")
-            link[extra_attr] = day_attr
-        bike_scenario = self.assignment_periods[0].bike_scenario
-        bike_scenario.publish_network(network)
+            for tp in networks:
+                try:
+                    tp_link = networks[tp].link(link.i_node, link.j_node)
+                    day_attr += (tp_link[attr.format(tp)]
+                                 * param.volume_factors["bike"][tp])
+                except (AttributeError, TypeError):
+                    pass
+            link[attr.format("day")] = day_attr
+        day_scenario.publish_network(network)
         log.info("Bike attribute {} aggregated to 24h (scenario {})".format(
-            extra_attr, bike_scenario.id))
+            attr.format("day"), day_scenario.id))
