@@ -165,7 +165,7 @@ class AssignmentPeriod(Period):
         if transit_zones > zones_in_zonedata:
             log.warn("All Emme-node labels do not have transit costs specified.")
         spec = TransitSpecification(
-            "transit_work", self.demand_mtx, self.result_mtx,
+            "transit_work", "@hw"+self.name, self.demand_mtx, self.result_mtx,
             count_zone_boardings=True)
         for transit_zone in transit_zones:
             # Set tag to 1 for nodes in transit zone and 0 elsewhere
@@ -359,10 +359,11 @@ class AssignmentPeriod(Period):
         log.info("Calculates road charges for scenario {}".format(self.emme_scenario.id))
         network = self.emme_scenario.get_network()
         for link in network.links():
-            toll_cost = link.length * link["@hinta"] # km * e/km = eur
-            dist_cost = self.dist_unit_cost * link.length # (eur/km) * km = eur
+            # Dist-based toll is stored in @hinxx where xx is ah, pt, ih
+            toll_cost = link.length * link["@hin"+self.name[:2]]
+            dist_cost = self.dist_unit_cost * link.length
             link['@toll_cost'] = toll_cost
-            link["@total_cost"] = (toll_cost + dist_cost)
+            link["@total_cost"] = toll_cost + dist_cost
         self.emme_scenario.publish_network(network)
 
     def _calc_boarding_penalties(self, extra_penalty=0, is_last_iteration=False):
@@ -387,7 +388,7 @@ class AssignmentPeriod(Period):
     def _specify(self):
         self._car_spec = CarSpecification(self.demand_mtx, self.result_mtx)
         self._transit_specs = {tc: TransitSpecification(
-                tc, self.demand_mtx, self.result_mtx)
+                tc, "@hw"+self.name, self.demand_mtx, self.result_mtx)
             for tc in param.transit_classes}
         self.bike_spec = {
             "type": "STANDARD_TRAFFIC_ASSIGNMENT",
