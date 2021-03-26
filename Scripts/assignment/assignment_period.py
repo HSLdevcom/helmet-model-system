@@ -224,6 +224,80 @@ class AssignmentPeriod(Period):
         self._calc_boarding_penalties()
         return cost
 
+    def _set_car_vdfs(self):
+        network = self.emme_scenario.get_network()
+
+        # TODO Move to parameters module
+        from collections import namedtuple
+        RoadClass = namedtuple(
+            "RoadClass",
+            "volume_delay_func, lane_capacity, free_flow_speed, bus_delay")
+        roadclasses = {
+            21: RoadClass(1, 2100, 113, 0.265),
+            22: RoadClass(1, 1900, 113, 0.265),
+        }
+        bus_lanes = [
+            [],
+            [],
+            ["aht", "iht"],
+            ["aht", "pt", "iht"],
+            ["aht"],
+            ["iht"],
+            ["aht", "pt", "iht"],
+        ]
+        tram_funcs = {
+            "aht": 3,
+            "pt": 4,
+            "iht": 5,
+        }
+
+        for link in network.links():
+            linktype = link.type % 100
+            if 21 <= linktype < 43:
+                roadclass = roadclasses[linktype]
+                link.volume_delay_func = roadclass.volume_delay_func
+                link.data1 = roadclass.lane_capacity
+                link.data2 = roadclass.free_flow_speed
+                # TODO Check two-lane with bus lane
+            elif 90 <= linktype <= 95:
+                link.volume_delay_func = linktype - 90
+                for linktype in range(21, 43):
+                    roadclass = roadclasses[linktype]
+                    if (link.volume_delay_func == roadclass.volume_delay_func
+                            and link.data2 > roadclass.free_flow_speed-1)
+                        break
+            elif linktype in (98, 99):
+                link.volume_delay_func = 99
+                # TODO Check connectors
+            else:
+                link.volume_delay_func = 0
+            mode = next(iter(link.modes)).id
+            if mode in "afcvkybgde":
+                # Road
+                if self.name in bus_lanes[link.type // 100]:
+                    # Bus lane
+                    link.volume_delay_func += 5
+                    speed = max(roadclass.free_flow_speed, 30)
+                    bus_delay = 90 / speed
+                    for segment in link.segments():
+                        segment.data2 = bus_delay
+                        segment.transit_time_func = 2
+                else:
+                    # No bus lane
+                    for segment in link.segments():
+                        segment.data2 = roadclass.bus_delay
+                        segment.transit_time_func = 1
+            elif mode in "rjm":
+                # Rail
+                for segment in link.segments():
+                    segment.transit_time_func = 6
+            elif mode in "tp":
+                # Tramway
+                func = tram_funcs[self.name]
+                for segment in link.segments():
+                    segment.transit_time_func = func
+            # TODO What about mode w?
+
     def _set_emmebank_matrices(self, matrices, is_last_iteration):
         """Set matrices in emmebank.
 
