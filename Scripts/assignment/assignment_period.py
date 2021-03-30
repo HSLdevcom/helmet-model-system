@@ -44,6 +44,7 @@ class AssignmentPeriod(Period):
             log.debug("Created attr {} for scen {}".format(
                 extr.name, self.emme_scenario))
         self._set_car_transit_vdfs()
+        self._set_bike_vdfs()
         self._calc_road_cost()
         self._calc_boarding_penalties()
         self._calc_background_traffic()
@@ -290,6 +291,55 @@ class AssignmentPeriod(Period):
                 for segment in link.segments():
                     segment.transit_time_func = func
         self.emme_scenario.publish_network(network)
+
+    def _set_bike_vdfs(self):
+        network = self.bike_scenario.get_network()
+        l = min(param.roadclasses)
+        u = max(param.roadclasses) + 1
+        for link in network.links():
+            linktype = link.type % 100
+            if l <= linktype < u:
+                vdf = param.roadclasses[linktype].volume_delay_func
+            elif 90 <= linktype <= 95:
+                vdf = linktype - 90
+            else:
+                vdf = 0
+            # TODO Fix highway bike path number?
+            pathclass = link["@pyoratieluokka"]
+            if pathclass == 4:
+                # BAANA
+                link.volume_delay_func = 70
+            elif pathclass == 3:
+                # Separate bike path
+                link.volume_delay_func = 71
+            elif pathclass == 2:
+                # Road-side bike path
+                if vdf == 2:
+                    # Highway
+                    link.volume_delay_func = 72
+                elif vdf in (3, 4):
+                    # Arterial road
+                    link.volume_delay_func = 73
+                else:
+                    # Collector or local street
+                    link.volume_delay_func = 74
+            elif pathclass == 1:
+                # Bike lane
+                link.volume_delay_func = 75
+            elif pathclass == 0:
+                # Mixed traffic
+                if vdf == 2:
+                    # Highway
+                    link.volume_delay_func = 76
+                elif 33 <= linktype <= 40 or linktype in (93, 94):
+                    # Arterial or collector road
+                    link.volume_delay_func = 77
+                else:
+                    # Local street
+                    link.volume_delay_func = 78
+            else:
+                link.volume_delay_func = 99
+        self.bike_scenario.publish_network(network)
 
     def _set_emmebank_matrices(self, matrices, is_last_iteration):
         """Set matrices in emmebank.
