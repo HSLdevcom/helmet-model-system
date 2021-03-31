@@ -462,9 +462,16 @@ class AssignmentPeriod(Period):
         log.info("Car assignment started...")
         car_spec = self._car_spec.spec(lightweight)
         car_spec["stopping_criteria"] = stopping_criteria
-        self.emme_project.car_assignment(car_spec, self.emme_scenario)
+        assign_report = self.emme_project.car_assignment(car_spec, self.emme_scenario)
         log.info("Car assignment performed for scenario " + str(self.emme_scenario.id))
-
+        log.info("Stopping criteria: {}, iteration {} / {}".format(
+            assign_report["stopping_criterion"],
+            assign_report["iterations"][-1]["number"],
+            stopping_criteria["max_iterations"]
+            ))
+        if assign_report["stopping_criterion"] == "MAX_ITERATIONS":
+            log.warn("Car assignment not fully converged.")
+    
     def _assign_bikes(self, length_mat_id, length_for_links):
         """Perform bike traffic assignment for one scenario."""
         scen = self.bike_scenario
@@ -585,7 +592,7 @@ class AssignmentPeriod(Period):
         specs = self._transit_specs
         for tc in specs:
             specs[tc].transit_spec["journey_levels"][1]["boarding_cost"]["global"]["penalty"] = param.transfer_penalty[tc]
-        self.emme_project.congested_assignment(
+        assign_report = self.emme_project.congested_assignment(
             transit_assignment_spec=[specs[tc].transit_spec for tc in specs],
             class_names=specs.keys(),
             congestion_function=param.trass_func,
@@ -602,3 +609,10 @@ class AssignmentPeriod(Period):
                 class_name=tc)
         log.info("Congested transit assignment performed for scenario {}".format(
             str(self.emme_scenario.id)))
+        log.info("Stopping criteria: {}, iteration {} / {}".format(
+            assign_report["stopping_criteria"],
+            assign_report["iterations"][-1]["number"],
+            param.trass_stop["max_iterations"]
+            ))
+        if assign_report["stopping_criteria"] == "MAX_ITERATIONS":
+            log.warn("Congested transit assignment not fully converged.")
