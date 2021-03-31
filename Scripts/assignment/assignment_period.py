@@ -41,8 +41,8 @@ class AssignmentPeriod(Period):
                 extra_attribute_default_value=0,
                 overwrite=True,
                 scenario=self.emme_scenario)
-            log.debug("Created attr {} for scen {}".format(
-                extr.name, self.emme_scenario))
+        log.debug("Created extra attributes for scenario {}".format(
+            self.emme_scenario))
         self._calc_road_cost()
         self._calc_boarding_penalties()
         self._calc_background_traffic()
