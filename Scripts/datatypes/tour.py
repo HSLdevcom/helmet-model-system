@@ -99,10 +99,9 @@ class Tour(object):
 
     @position.setter
     def position(self, position):
-        try:
-            _ = self._position[0]
+        if hasattr(self, "_position"):
             self._position = position
-        except AttributeError:
+        else:
             self._non_home_position = position[1:]
 
     def choose_mode(self, is_car_user):
