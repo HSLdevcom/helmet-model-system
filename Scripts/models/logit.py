@@ -65,12 +65,7 @@ class LogitModel:
             self.resultdata.print_data(
                 pandas.Series(logsum, self.purpose.zone_numbers),
                 "sustainable_accessibility.txt", self.purpose.name)
-            try:
-                b = self.dest_choice_param["car"]["impedance"]["cost"]
-            except KeyError:
-                # School tours do not have a constant cost parameter
-                # Use value of time conversion from CBA guidelines instead
-                b = -0.31690253
+            b = self._get_cost_util_coefficient()
             try:
                 # Convert utility into euros
                 money_utility = 1 / b
@@ -270,6 +265,14 @@ class LogitModel:
                 zdata.get_data(i, self.bounds, generation) + 1, b[i])
         return exps
 
+    def _get_cost_util_coefficient(self):
+        try:
+            b = self.dest_choice_param["car"]["impedance"]["cost"]
+        except KeyError:
+            # School tours do not have a constant cost parameter
+            # Use value of time conversion from CBA guidelines instead
+            b = -0.31690253
+        return b
 
 class ModeDestModel(LogitModel):
     """Nested logit model with mode choice in upper level.
@@ -449,12 +452,7 @@ class ModeDestModel(LogitModel):
         logsum = numpy.log(mode_expsum)
         sust_logsum = numpy.log(sust_expsum)
         car_logsum = numpy.log(car_expsum)
-        try:
-            b = self.dest_choice_param["car"]["impedance"]["cost"]
-        except KeyError:
-            # School tours do not have a constant cost parameter
-            # Use value of time conversion from CBA guidelines instead
-            b = -0.31690253
+        b = self._get_cost_util_coefficient()
         if isinstance(b, tuple):
             # Separate params for cap region and surrounding
             # Choose based location
