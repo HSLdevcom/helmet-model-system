@@ -96,7 +96,7 @@ class DemandModel:
         self.population = []
         zones = self.zone_data.zone_numbers[bounds]
         self.zone_population = pandas.Series(0, zones)
-        for zone_number in self.zone_data.zone_numbers[bounds]:
+        for zone_number in zones:
             weights = [1]
             for age_group in self.age_groups:
                 key = "share_age_" + str(age_group[0]) + "-" + str(age_group[1])
