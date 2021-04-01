@@ -13,7 +13,6 @@ class Zone:
         for area in areas:
             if is_in(areas[area], number):
                 self.area = area
-                print(area)
                 break
                 
         self.municipality = None
