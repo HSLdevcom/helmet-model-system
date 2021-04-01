@@ -1,4 +1,5 @@
 from parameters.zone import areas, municipalities
+from utils.zone_interval import is_in
 
 
 class Zone:
@@ -10,18 +11,13 @@ class Zone:
         Zone.counter += 1
         self.area = None
         for area in areas:
-            if isinstance(areas[area][0], tuple):
-                for interval in areas[area]:
-                    if interval[0] <= number < interval[1]:
-                        self.area = area
-                        break
-            else:
-                if areas[area][0] <= number < areas[area][1]:
-                    self.area = area
-                    break
+            if is_in(areas[area], number):
+                self.area = area
+                print(area)
+                break
                 
         self.municipality = None
         for mp in municipalities:
-            if  municipalities[mp][0] <= number < municipalities[mp][1]:
+            if is_in(municipalities[mp], number):
                 self.municipality = mp
                 break
