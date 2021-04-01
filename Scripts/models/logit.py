@@ -397,6 +397,9 @@ class ModeDestModel(LogitModel):
         
         Calculate mode choice probabilities for individual
         agent with individual dummy variable "car_users" included.
+
+        Additionally save and rescale logsum values for agent based accessibility 
+        analysis.
         
         Parameters
         ----------
@@ -407,9 +410,16 @@ class ModeDestModel(LogitModel):
         
         Returns
         -------
-        list
+        tuple
+            list
+                float
+                    Choice probabilities for purpose modes
             float
-                Choice probabilities for purpose modes
+                Total accessibility for individual (eur)
+            float
+                Sustainable modes accessibility for individual (eur)
+            float
+                Car accessibility for individual (eur)
         """
         mode_exps = {}
         mode_expsum = 0
