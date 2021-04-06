@@ -241,7 +241,7 @@ class AssignmentPeriod(Period):
                 link.volume_delay_func = roadclass.volume_delay_func
                 link.data1 = roadclass.lane_capacity
                 link.data2 = roadclass.free_flow_speed
-            elif 90 <= linktype <= 95:
+            elif linktype in param.custom_roadtypes:
                 # Custom car link
                 link.volume_delay_func = linktype - 90
                 for linktype in range(l, u):
@@ -290,18 +290,12 @@ class AssignmentPeriod(Period):
 
     def _set_bike_vdfs(self):
         network = self.bike_scenario.get_network()
-        l = min(param.roadclasses)
-        u = max(param.roadclasses) + 1
         for link in network.links():
             linktype = link.type % 100
-            if l <= linktype < u:
+            if linktype in param.roadclasses:
                 roadtype = param.roadclasses[linktype].type
-            elif linktype == 91:
-                roadtype = "motorway"
-            elif linktype == 92:
-                roadtype = "highway"
-            elif linktype in (93, 94):
-                roadtype = "arterial"
+            elif linktype in param.custom_roadtypes:
+                roadtype = param.custom_roadtypes[linktype]
             else:
                 roadtype = None
             if (roadtype == "motorway" and network.mode('f') in link.modes

@@ -32,6 +32,13 @@ roadclasses = {
     41: RoadClass("local", "any", 5, 600, 30, 1.000),
     42: RoadClass("local", "any", 5, 500, 23, 1.304),
 }
+custom_roadtypes = {
+    91: "motorway",
+    92: "highway",
+    93: "arterial",
+    94: "arterial",
+    95: "local",
+}
 bikepath_vdfs = (
     {  # 0 - Mixed traffic
         None: 78,
