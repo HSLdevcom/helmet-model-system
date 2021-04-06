@@ -43,7 +43,7 @@ class AssignmentPeriod(Period):
                 scenario=self.emme_scenario)
             log.debug("Created attr {} for scen {}".format(
                 extr.name, self.emme_scenario))
-        self._set_car_transit_vdfs()
+        self._set_car_and_transit_vdfs()
         self._set_bike_vdfs()
         self._calc_road_cost()
         self._calc_boarding_penalties()
@@ -226,7 +226,7 @@ class AssignmentPeriod(Period):
         self._calc_boarding_penalties()
         return cost
 
-    def _set_car_transit_vdfs(self):
+    def _set_car_and_transit_vdfs(self):
         network = self.emme_scenario.get_network()
         l = min(param.roadclasses)
         u = max(param.roadclasses) + 1
@@ -300,6 +300,7 @@ class AssignmentPeriod(Period):
                 roadtype = None
             if (roadtype == "motorway" and network.mode('f') in link.modes
                     and link["@pyoratieluokka"] == 0):
+                # Force bikes on motorways onto separate bikepaths
                 link["@pyoratieluokka"] = 3
             try:
                 pathclass = param.bikepath_vdfs[link["@pyoratieluokka"]]
