@@ -227,6 +227,8 @@ class AssignmentPeriod(Period):
         return cost
 
     def _set_car_and_transit_vdfs(self):
+        log.info("Sets car and transit functions for scenario {}".format(
+            self.emme_scenario.id))
         network = self.emme_scenario.get_network()
         l = min(param.roadclasses)
         u = max(param.roadclasses) + 1
@@ -273,12 +275,20 @@ class AssignmentPeriod(Period):
                                 link.data1 = roadclass.lane_capacity
                             link.volume_delay_func += 5
                             func = funcs["buslane"]
-                            bus_delay = (param.buslane_delay
-                                         / max(roadclass.free_flow_speed, 30))
+                            try:
+                                bus_delay = (param.buslane_delay
+                                             / max(roadclass.free_flow_speed, 30))
+                            except UnboundLocalError:
+                                log.warn("Bus mode on link {}, type {}".format(
+                                    link.id, link.type))
                         else:
                             # No bus lane
                             func = funcs["no_buslane"]
-                            bus_delay = roadclass.bus_delay
+                            try:
+                                bus_delay = roadclass.bus_delay
+                            except UnboundLocalError:
+                                log.warn("Bus mode on link {}, type {}".format(
+                                    link.id, link.type))
                         for segment in link.segments():
                             segment.data2 = bus_delay
                     else:
@@ -289,6 +299,8 @@ class AssignmentPeriod(Period):
         self.emme_scenario.publish_network(network)
 
     def _set_bike_vdfs(self):
+        log.info("Sets bike functions for scenario {}".format(
+            self.bike_scenario.id))
         network = self.bike_scenario.get_network()
         for link in network.links():
             linktype = link.type % 100
@@ -303,7 +315,7 @@ class AssignmentPeriod(Period):
                 # Force bikes on motorways onto separate bikepaths
                 link["@pyoratieluokka"] = 3
             try:
-                pathclass = param.bikepath_vdfs[link["@pyoratieluokka"]]
+                pathclass = param.bikepath_vdfs[int(link["@pyoratieluokka"])]
                 if roadtype in pathclass:
                     link.volume_delay_func = pathclass[roadtype]
                 else:
