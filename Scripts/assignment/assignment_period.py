@@ -43,8 +43,6 @@ class AssignmentPeriod(Period):
                 scenario=self.emme_scenario)
             log.debug("Created attr {} for scen {}".format(
                 extr.name, self.emme_scenario))
-        self._set_car_and_transit_vdfs()
-        self._set_bike_vdfs()
         self._calc_road_cost()
         self._calc_boarding_penalties()
         self._calc_background_traffic()
@@ -72,7 +70,9 @@ class AssignmentPeriod(Period):
         self._set_emmebank_matrices(matrices, iteration=="last")
         if iteration=="init":
             self._assign_pedestrians()
+            self._set_bike_vdfs()
             self._assign_bikes(self.result_mtx["dist"]["bike"]["id"], "all")
+            self._set_car_and_transit_vdfs()
             self._assign_cars(param.stopping_criteria_coarse)
             self._calc_extra_wait_time()
             self._assign_transit()
@@ -96,6 +96,7 @@ class AssignmentPeriod(Period):
             self._calc_boarding_penalties(is_last_iteration=True)
             self._calc_extra_wait_time()
             self._assign_congested_transit()
+            self._set_bike_vdfs()
             self._assign_bikes(self.result_mtx["dist"]["bike"]["id"], "all")
         else:
             raise ValueError("Iteration number not valid")
