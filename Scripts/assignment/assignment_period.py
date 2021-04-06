@@ -230,7 +230,7 @@ class AssignmentPeriod(Period):
         network = self.emme_scenario.get_network()
         l = min(param.roadclasses)
         u = max(param.roadclasses) + 1
-        transit_modesets = {modes: {network.mode(m) for m in modes}
+        transit_modesets = {modes[0]: {network.mode(m) for m in modes[1]}
             for modes in param.transit_delay_funcs}
         for link in network.links():
             # Car volume delay function definition
@@ -258,38 +258,34 @@ class AssignmentPeriod(Period):
                 link.volume_delay_func = 0
 
             # Transit function definition
-            # If clauses check that intersection is not empty,
-            # hence that at least one of the modes is active on the link
-            if transit_modesets["bgde"] & link.modes:
-                # Bus
-                if link.type // 100 in param.bus_lane_link_codes[self.name]:
-                    # Bus lane
-                    if link.num_lanes == 3 and linktype in (22, 24, 26, 28, 30):
-                        roadclass = param.roadclasses[linktype - 1]
-                        link.data1 = roadclass.lane_capacity
-                    link.volume_delay_func += 5
-                    bus_delay = (param.buslane_delay
-                                 / max(roadclass.free_flow_speed, 30))
-                    func = param.transit_delay_funcs["bgde"]["buslane"]
-                    for segment in link.segments():
-                        segment.data2 = bus_delay
-                        segment.transit_time_func = func
-                else:
-                    # No bus lane
-                    func = param.transit_delay_funcs["bgde"]["no_buslane"]
-                    for segment in link.segments():
-                        segment.data2 = roadclass.bus_delay
-                        segment.transit_time_func = func
-            elif transit_modesets["rjmw"] & link.modes:
-                # Rail
-                func = param.transit_delay_funcs["rjmw"]
-                for segment in link.segments():
-                    segment.transit_time_func = func
-            elif transit_modesets["tp"] & link.modes:
-                # Lightrail
-                func = param.transit_delay_funcs["tp"][self.name]
-                for segment in link.segments():
-                    segment.transit_time_func = func
+            for modeset in param.transit_delay_funcs:
+                # Check that intersection is not empty,
+                # hence that mode is active on link
+                if transit_modesets[modeset[0]] & link.modes:
+                    funcs = param.transit_delay_funcs[modeset]
+                    if modeset[0] == "bus":
+                        buslane_code = link.type // 100
+                        if buslane_code in param.bus_lane_link_codes[self.name]:
+                            # Bus lane
+                            if (link.num_lanes == 3
+                                    and roadclass.num_lanes == ">=3"):
+                                roadclass = param.roadclasses[linktype - 1]
+                                link.data1 = roadclass.lane_capacity
+                            link.volume_delay_func += 5
+                            func = funcs["buslane"]
+                            bus_delay = (param.buslane_delay
+                                         / max(roadclass.free_flow_speed, 30))
+                        else:
+                            # No bus lane
+                            func = funcs["no_buslane"]
+                            bus_delay = roadclass.bus_delay
+                        for segment in link.segments():
+                            segment.data2 = bus_delay
+                    else:
+                        func = funcs[self.name]
+                    break
+            for segment in link.segments():
+                segment.transit_time_func = func
         self.emme_scenario.publish_network(network)
 
     def _set_bike_vdfs(self):

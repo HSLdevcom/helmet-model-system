@@ -3,31 +3,34 @@
 from collections import namedtuple
 RoadClass = namedtuple(
     "RoadClass",
-    "type, volume_delay_func, lane_capacity, free_flow_speed, bus_delay")
+    (
+        "type", "num_lanes", "volume_delay_func", "lane_capacity",
+        "free_flow_speed", "bus_delay",
+    ))
 # Code derived from three-digit link type xyz, where yz is the road class code
 roadclasses = {
-    21: RoadClass("motorway", 1, 2100, 113, 0.265),
-    22: RoadClass("motorway", 1, 1900, 113, 0.265),
-    23: RoadClass("motorway", 1, 2000, 97, 0.309),
-    24: RoadClass("motorway", 1, 1800, 97, 0.309),
-    25: RoadClass("motorway", 1, 2000, 81, 0.370),
-    26: RoadClass("motorway", 1, 1800, 81, 0.370),
-    27: RoadClass("highway", 2, 1900, 97, 0.309),
-    28: RoadClass("highway", 2, 1800, 97, 0.309),
-    29: RoadClass("highway", 2, 1850, 81, 0.370),
-    30: RoadClass("highway", 2, 1800, 81, 0.370),
-    31: RoadClass("highway", 2, 1600, 73, 0.411),
-    32: RoadClass("highway", 2, 1600, 63, 0.556),
-    33: RoadClass("arterial", 3, 1450, 61, 0.492),
-    34: RoadClass("arterial", 3, 1250, 54, 0.556),
-    35: RoadClass("arterial", 4, 1150, 48, 0.625),
-    36: RoadClass("arterial", 4, 1000, 44, 0.682),
-    37: RoadClass("arterial", 4, 1000, 41, 0.732),
-    38: RoadClass("collector", 5, 900, 41, 0.732),
-    39: RoadClass("collector", 5, 750, 36, 0.833),
-    40: RoadClass("collector", 5, 900, 36, 0.833),
-    41: RoadClass("local", 5, 600, 30, 1.000),
-    42: RoadClass("local", 5, 500, 23, 1.304),
+    21: RoadClass("motorway", "<3", 1, 2100, 113, 0.265),
+    22: RoadClass("motorway", ">=3", 1, 1900, 113, 0.265),
+    23: RoadClass("motorway", "<3", 1, 2000, 97, 0.309),
+    24: RoadClass("motorway", ">=3", 1, 1800, 97, 0.309),
+    25: RoadClass("motorway", "<3", 1, 2000, 81, 0.370),
+    26: RoadClass("motorway", ">=3", 1, 1800, 81, 0.370),
+    27: RoadClass("highway", "<3", 2, 1900, 97, 0.309),
+    28: RoadClass("highway", ">=3", 2, 1800, 97, 0.309),
+    29: RoadClass("highway", "<3", 2, 1850, 81, 0.370),
+    30: RoadClass("highway", ">=3", 2, 1800, 81, 0.370),
+    31: RoadClass("highway", "any", 2, 1600, 73, 0.411),
+    32: RoadClass("highway", "any", 2, 1600, 63, 0.556),
+    33: RoadClass("arterial", "any", 3, 1450, 61, 0.492),
+    34: RoadClass("arterial", "any", 3, 1250, 54, 0.556),
+    35: RoadClass("arterial", "any", 4, 1150, 48, 0.625),
+    36: RoadClass("arterial", "any", 4, 1000, 44, 0.682),
+    37: RoadClass("arterial", "any", 4, 1000, 41, 0.732),
+    38: RoadClass("collector", "any", 5, 900, 41, 0.732),
+    39: RoadClass("collector", "any", 5, 750, 36, 0.833),
+    40: RoadClass("collector", "any", 5, 900, 36, 0.833),
+    41: RoadClass("local", "any", 5, 600, 30, 1.000),
+    42: RoadClass("local", "any", 5, 500, 23, 1.304),
 }
 bikepath_vdfs = (
     {  # 0 - Mixed traffic
@@ -60,16 +63,20 @@ bus_lane_link_codes = {
 }
 # Transit delay function ids
 transit_delay_funcs = {
-    "bgde": {
+    ("bus", "bgde"): {
         "no_buslane": 1,
         "buslane": 2,
     },
-    "tp": {
+    ("lightrail", "tp"): {
         "aht": 3,
         "pt": 4,
         "iht": 5,
     },
-    "rjmw": 6,
+    ("rail", "rjmw"): {
+        "aht": 6,
+        "pt": 6,
+        "iht": 6,
+    },
 }
 # Bus lane delay equivalent to 1.5 km per link
 buslane_delay = 60 * 1.5
