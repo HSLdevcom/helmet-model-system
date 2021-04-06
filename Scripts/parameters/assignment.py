@@ -3,32 +3,54 @@
 from collections import namedtuple
 RoadClass = namedtuple(
     "RoadClass",
-    "volume_delay_func, lane_capacity, free_flow_speed, bus_delay")
+    "type, volume_delay_func, lane_capacity, free_flow_speed, bus_delay")
 # Code derived from three-digit link type xyz, where yz is the road class code
 roadclasses = {
-    21: RoadClass(1, 2100, 113, 0.265),
-    22: RoadClass(1, 1900, 113, 0.265),
-    23: RoadClass(1, 2000, 97, 0.309),
-    24: RoadClass(1, 1800, 97, 0.309),
-    25: RoadClass(1, 2000, 81, 0.370),
-    26: RoadClass(1, 1800, 81, 0.370),
-    27: RoadClass(2, 1900, 97, 0.309),
-    28: RoadClass(2, 1800, 97, 0.309),
-    29: RoadClass(2, 1850, 81, 0.370),
-    30: RoadClass(2, 1800, 81, 0.370),
-    31: RoadClass(2, 1600, 73, 0.411),
-    32: RoadClass(2, 1600, 63, 0.556),
-    33: RoadClass(3, 1450, 61, 0.492),
-    34: RoadClass(3, 1250, 54, 0.556),
-    35: RoadClass(4, 1150, 48, 0.625),
-    36: RoadClass(4, 1000, 44, 0.682),
-    37: RoadClass(4, 1000, 41, 0.732),
-    38: RoadClass(5, 900, 41, 0.732),
-    39: RoadClass(5, 750, 36, 0.833),
-    40: RoadClass(5, 900, 36, 0.833),
-    41: RoadClass(5, 600, 30, 1.000),
-    42: RoadClass(5, 500, 23, 1.304),
+    21: RoadClass("motorway", 1, 2100, 113, 0.265),
+    22: RoadClass("motorway", 1, 1900, 113, 0.265),
+    23: RoadClass("motorway", 1, 2000, 97, 0.309),
+    24: RoadClass("motorway", 1, 1800, 97, 0.309),
+    25: RoadClass("motorway", 1, 2000, 81, 0.370),
+    26: RoadClass("motorway", 1, 1800, 81, 0.370),
+    27: RoadClass("highway", 2, 1900, 97, 0.309),
+    28: RoadClass("highway", 2, 1800, 97, 0.309),
+    29: RoadClass("highway", 2, 1850, 81, 0.370),
+    30: RoadClass("highway", 2, 1800, 81, 0.370),
+    31: RoadClass("highway", 2, 1600, 73, 0.411),
+    32: RoadClass("highway", 2, 1600, 63, 0.556),
+    33: RoadClass("arterial", 3, 1450, 61, 0.492),
+    34: RoadClass("arterial", 3, 1250, 54, 0.556),
+    35: RoadClass("arterial", 4, 1150, 48, 0.625),
+    36: RoadClass("arterial", 4, 1000, 44, 0.682),
+    37: RoadClass("arterial", 4, 1000, 41, 0.732),
+    38: RoadClass("collector", 5, 900, 41, 0.732),
+    39: RoadClass("collector", 5, 750, 36, 0.833),
+    40: RoadClass("collector", 5, 900, 36, 0.833),
+    41: RoadClass("local", 5, 600, 30, 1.000),
+    42: RoadClass("local", 5, 500, 23, 1.304),
 }
+bikepath_vdfs = (
+    {  # 0 - Mixed traffic
+        None: 78,
+        "collector": 77,
+        "arterial": 77,
+        "highway": 76,
+    },
+    {  # 1 - Bike lane
+        None: 75,
+    },
+    {  # 2 - Road-side bike path
+        None: 74,
+        "arterial": 73,
+        "highway": 72,
+    },
+    {  # 3 - Separate bike path
+        None: 71
+    },
+    {  # 4 - BAANA
+        None: 70,
+    }
+)
 # Code derived from three-digit link type xyz, where x is the bus lane code,
 # 2 means that bus lane is active during aht and iht periods, etc.
 bus_lane_link_codes = {
