@@ -291,6 +291,8 @@ class ModelSystem:
                 trip_sum[mode] / sum_all, "origins_shares.txt", mode)
             mode_shares[mode] = trip_sum[mode].sum() / sum_all.sum()
         self.mode_share.append(mode_shares)
+
+        # Add vans and save demand matrices
         for ap in self.ass_model.assignment_periods:
             self.dtm.add_vans(ap.name, self.zdata_forecast.nr_zones)
             if iteration=="last":
