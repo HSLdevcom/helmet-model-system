@@ -25,13 +25,9 @@ class ResultsData:
             self._line_buffer[filename].close()
         self._line_buffer = {}
         for filename in self._df_buffer:
-            df = self._df_buffer[filename]
-            df.index = df.index.astype(str, copy=False)
-            # Pad index according to its longest item
-            df.index = df.index.str.pad(len(max(df.index, key=len)))
-            df.to_csv(
+            self._df_buffer[filename].to_csv(
                 os.path.join(self.path, filename),
-                sep='\t', na_rep=12*' ', float_format="%12.7g")
+                sep='\t', float_format="%1.5f")
         self._df_buffer = {}
         for filename in self._xlsx_buffer:
             self._xlsx_buffer[filename].save(
@@ -50,7 +46,6 @@ class ResultsData:
         colname : str
             Desired name of this column
         """
-        colname = colname.rjust(12)
         if filename not in self._df_buffer:
             self._df_buffer[filename] = pandas.DataFrame(data, columns=[colname])
         else:
@@ -92,7 +87,7 @@ class ResultsData:
             # If no Workbook module available (= _use_txt), save data to csv
             data.to_csv(
                 os.path.join(self.path, "{}_{}.txt".format(filename, sheetname)),
-                sep='\t', float_format="%12.7g")
+                sep='\t', float_format="%8.1f")
         else:
             # Get/create new worksheet
             if filename in self._xlsx_buffer:
