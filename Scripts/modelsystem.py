@@ -291,14 +291,15 @@ class ModelSystem:
                 trip_sum[mode] / sum_all, "origins_shares.txt", mode)
             mode_shares[mode] = trip_sum[mode].sum() / sum_all.sum()
         self.mode_share.append(mode_shares)
+        for ap in self.ass_model.assignment_periods:
+            self.dtm.add_vans(ap.name, self.zdata_forecast.nr_zones)
+            if iteration=="last":
+                self._save_demand_to_omx(ap.name)
 
         # Calculate and return traffic impedance
         for ap in self.ass_model.assignment_periods:
             tp = ap.name
             log.info("Assigning period " + tp)
-            self.dtm.add_vans(tp, self.zdata_forecast.nr_zones)
-            if iteration=="last":
-                self._save_demand_to_omx(ap.name)
             impedance[tp] = ap.assign(self.dtm.demand[tp], iteration)
             if tp == "aht":
                 self._update_ratios(impedance[tp], tp)
