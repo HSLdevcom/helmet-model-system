@@ -9,8 +9,21 @@ class MockProject:
     def create_matrix(*args, **kwargs):
         pass
 
-    def create_extra_attribute(*args, **kwargs):
-        pass
+    def create_extra_attribute(self, extra_attribute_type,
+                               extra_attribute_name,
+                               extra_attribute_description,
+                               extra_attribute_default_value,
+                               overwrite, scenario):
+        network = scenario.get_network()
+        if extra_attribute_type == "NODE":
+            attr_dict = Node._extra_attr_template
+        elif extra_attribute_type == "LINK":
+            attr_dict = Link._extra_attr_template
+        elif extra_attribute_type == "TRANSIT_LINE":
+            attr_dict = TransitLine._extra_attr_template
+        elif extra_attribute_type == "TRANSIT_SEGMENT":
+            attr_dict = TransitSegment._extra_attr_template
+        attr_dict[extra_attribute_name] = extra_attribute_default_value
 
 
 class EmmeBank:
@@ -38,15 +51,10 @@ class Scenario:
 
 class Network:
     def __init__(self):
-        self._modes = {id: Mode(id) for id in ('c', 'b')}
-        self._nodes = {id: Node(id) for id in range(1, 5)}
+        self._modes = {}
+        self._nodes = {}
         self._links = {}
-        link = (1, 2)
-        self._links[link] = Link(*link)
-        self._transit_lines = {id: TransitLine(id, self.mode('b'))
-            for id in range(1, 4)}
-        line = self.transit_line(1)
-        line._segments.append(TransitSegment(line, self.link(*link)))
+        self._transit_lines = {}
 
     def mode(self, id):
         return self._modes[id]
@@ -75,39 +83,45 @@ class Mode:
         self.id = id
 
 
-class Node:
-    def __init__(self, id):
-        self.id = id
-
-
-class Link:
-    def __init__(self, i_node, j_node):
-        self.i_node = i_node
-        self.j_node = j_node
-        self.length = 3.5
-        self.volume_delay_func = 1
-        self._extra_attr = {
-            "@truck": 5.0,
-            "@trailer_truck": 3.0,
-            "@hinta": 0.0,
-        }
-        self._segments = []
-
+class NetworkObject:
     def __getitem__(self, key):
         return self._extra_attr[key]
 
     def __setitem__(self, key, value):
         self._extra_attr[key] = value
 
+
+class Node(NetworkObject):
+    _extra_attr_template = {}
+
+    def __init__(self, id):
+        self.id = id
+        self._extra_attr = self._extra_attr_template.copy()
+
+
+class Link(NetworkObject):
+    _extra_attr_template = {}
+
+    def __init__(self, i_node, j_node, length):
+        self.i_node = i_node
+        self.j_node = j_node
+        self.length = length
+        self.volume_delay_func = 0
+        self._extra_attr = self._extra_attr_template.copy()
+        self["@hinta"] = 0.0
+        self._segments = []
+
     def segments(self):
         return iter(self._segments)
 
 
-class TransitLine:
-    def __init__(self, id, mode):
+class TransitLine(NetworkObject):
+    _extra_attr_template = {}
+
+    def __init__(self, id, mode, headway):
         self.id = id
         self.mode = mode
-        self.headway = 5
+        self.headway = headway
         self.data3 = 0
         self._segments = []
 
@@ -119,6 +133,8 @@ class TransitLine:
 
 
 class TransitSegment:
+    _extra_attr_template = {}
+
     def __init__(self, line, link):
         self.line = line
         self.link = link
