@@ -3,10 +3,9 @@ from collections import namedtuple
 
 class MockProject:
     def __init__(self):
-        Modeller = namedtuple("Modeller", "emmebank")
         self.modeller = Modeller(EmmeBank())
 
-    def create_matrix(*args, **kwargs):
+    def create_matrix(self, *args, **kwargs):
         pass
 
     def create_extra_attribute(self, extra_attribute_type,
@@ -14,32 +13,27 @@ class MockProject:
                                extra_attribute_description,
                                extra_attribute_default_value,
                                overwrite, scenario):
-        network = scenario.get_network()
-        if extra_attribute_type == "NODE":
-            attr_dict = Node._extra_attr_template
-        elif extra_attribute_type == "LINK":
-            attr_dict = Link._extra_attr_template
-        elif extra_attribute_type == "TRANSIT_LINE":
-            attr_dict = TransitLine._extra_attr_template
-        elif extra_attribute_type == "TRANSIT_SEGMENT":
-            attr_dict = TransitSegment._extra_attr_template
-        attr_dict[extra_attribute_name] = extra_attribute_default_value
+        extra_attr = scenario.get_network()._extra_attr[extra_attribute_type]
+        extra_attr[extra_attribute_name] = extra_attribute_default_value
+
+
+Modeller = namedtuple("Modeller", "emmebank")
 
 
 class EmmeBank:
     def __init__(self):
-        self._scenarios = {id: Scenario(id) for id in range(19, 24)}
+        self._scenarios = {idx: Scenario(idx) for idx in range(19, 24)}
 
-    def scenario(self, id):
-        return self._scenarios[id]
+    def scenario(self, idx):
+        return self._scenarios[idx]
 
     def scenarios(self):
         return iter(self._scenarios.values())
 
 
 class Scenario:
-    def __init__(self, id):
-        self.id = id
+    def __init__(self, idx):
+        self.id = idx
         self._network = Network()
 
     def get_network(self):
@@ -55,15 +49,21 @@ class Network:
         self._nodes = {}
         self._links = {}
         self._transit_lines = {}
+        self._extra_attr = {
+            "NODE": {},
+            "LINK": {},
+            "TRANSIT_LINE": {},
+            "TRANSIT_SEGMENT": {},
+        }
 
-    def mode(self, id):
-        return self._modes[id]
+    def mode(self, idx):
+        return self._modes[idx]
 
     def modes(self):
         return iter(self._modes.values())
 
-    def node(self, id):
-        return self._nodes[id]
+    def node(self, idx):
+        return self._nodes[idx]
 
     def link(self, i_node_id, j_node_id):
         return self._links[(i_node_id, j_node_id)]
@@ -71,19 +71,22 @@ class Network:
     def links(self):
         return iter(self._links.values())
 
-    def transit_line(self, id):
-        return self._transit_lines[id]
+    def transit_line(self, idx):
+        return self._transit_lines[idx]
 
     def transit_lines(self):
         return iter(self._transit_lines.values())
 
 
 class Mode:
-    def __init__(self, id):
-        self.id = id
+    def __init__(self, idx):
+        self.id = idx
 
 
 class NetworkObject:
+    def __init__(self):
+        self._extra_attr = {}
+
     def __getitem__(self, key):
         return self._extra_attr[key]
 
@@ -92,22 +95,20 @@ class NetworkObject:
 
 
 class Node(NetworkObject):
-    _extra_attr_template = {}
-
-    def __init__(self, id):
-        self.id = id
-        self._extra_attr = self._extra_attr_template.copy()
+    def __init__(self, idx, network):
+        self.id = idx
+        self.network = network
+        self._extra_attr = network._extra_attr["NODE"].copy()
 
 
 class Link(NetworkObject):
-    _extra_attr_template = {}
-
-    def __init__(self, i_node, j_node, length):
+    def __init__(self, i_node, j_node, network, length):
         self.i_node = i_node
         self.j_node = j_node
+        self.network = network
         self.length = length
         self.volume_delay_func = 0
-        self._extra_attr = self._extra_attr_template.copy()
+        self._extra_attr = network._extra_attr["LINK"].copy()
         self["@hinta"] = 0.0
         self._segments = []
 
@@ -116,26 +117,26 @@ class Link(NetworkObject):
 
 
 class TransitLine(NetworkObject):
-    _extra_attr_template = {}
-
-    def __init__(self, id, mode, headway):
-        self.id = id
+    def __init__(self, idx, network, mode, headway):
+        self.id = idx
+        self.network = network
         self.mode = mode
         self.headway = headway
         self.data3 = 0
+        self._extra_attr = network._extra_attr["TRANSIT_LINE"].copy()
         self._segments = []
 
-    def segment(self, id):
-        return self._segments[id]
+    def segment(self, idx):
+        return self._segments[idx]
 
     def segments(self):
         return iter(self._segments)
 
 
 class TransitSegment:
-    _extra_attr_template = {}
-
-    def __init__(self, line, link):
+    def __init__(self, network, line, link):
+        self.network = network
         self.line = line
         self.link = link
+        self._extra_attr = network._extra_attr["TRANSIT_SEGMENT"].copy()
         link._segments.append(self)

@@ -12,18 +12,18 @@ class EmmeAssignmentTest(unittest.TestCase):
         context = mock.MockProject()
         for scenario in context.modeller.emmebank.scenarios():
             network = scenario.get_network()
-            for id in ('c', 'b'):
-                network._modes[id] = mock.Mode(id)
-            for id in range(1, 5):
-                network._nodes[id] = mock.Node(id)
+            for idx in ('c', 'b'):
+                network._modes[idx] = mock.Mode(idx)
+            for idx in range(1, 5):
+                network._nodes[idx] = mock.Node(idx, network)
             for link in ((1, 2), (2, 3), (3, 4)):
-                network._links[link] = mock.Link(*link, length=3.5)
-            for id in range(1, 4):
-                network._transit_lines[id] = mock.TransitLine(
-                    id, network.mode('b'), headway=5)
+                network._links[link] = mock.Link(*link, network=network, length=3.5)
+            for idx in range(1, 4):
+                network._transit_lines[idx] = mock.TransitLine(
+                    idx, network, network.mode('b'), headway=5)
             line = network.transit_line(1)
             line._segments.append(
-                mock.TransitSegment(line, network.link(1, 2)))
+                mock.TransitSegment(network, line, network.link(1, 2)))
 
         ass_model = EmmeAssignmentModel(context, 19)
         ass_model.prepare_network()
