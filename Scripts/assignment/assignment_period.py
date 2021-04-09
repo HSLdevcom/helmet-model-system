@@ -583,8 +583,23 @@ class AssignmentPeriod(Period):
             specification=spec.transit_spec, scenario=self.emme_scenario,
             save_strategies=True)
         self.emme_project.matrix_results(spec.transit_result_spec, scenario=self.emme_scenario)
+        self._save_uncongested_volumes()
         log.info("Transit assignment performed for scenario {}".format(
             str(self.emme_scenario.id)))
+
+    def _save_uncongested_volumes(self):
+        """ Save uncongested volumes. """ 
+        network = self.emme_scenario.get_network()
+        for link in network.links():
+            link["@transit_uncongested"] = 0
+        for segment in network.transit_segments():
+            try:
+                if segment.link is not None:
+                    segment.link["@transit_uncongested"] += segment.transit_volume
+            except (AttributeError, TypeError):
+                pass
+        self.emme_scenario.publish_network(network)
+        log.info("Saved uncongested transit assignment volumes to @transit_uncongested")
 
     def _assign_congested_transit(self):
         """Perform congested transit assignment for one scenario."""

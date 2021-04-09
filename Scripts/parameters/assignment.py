@@ -311,6 +311,7 @@ emme_attributes = {
     "@transit_vol": "LINK",
     "@transit_boa": "NODE",
     "@transit_trb": "NODE",
+    "@transit_uncongested": "LINK",
 }
 bike_attributes = {
     "@bike_aht": "LINK",
