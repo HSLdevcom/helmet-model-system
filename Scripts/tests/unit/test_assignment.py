@@ -2,18 +2,21 @@
 # -*- coding: utf-8 -*-
 import unittest
 import numpy
+import os
 
-import assignment.emme_bindings.mock_project as mock
+from assignment.emme_bindings.mock_project import MockProject
 from assignment.emme_assignment import EmmeAssignmentModel
+from datahandling.resultdata import ResultsData
 
 
 class EmmeAssignmentTest(unittest.TestCase):
     def test_assignment(self):
-        context = mock.MockProject()
+        context = MockProject()
         for scenario in context.modeller.emmebank.scenarios():
             network = scenario.get_network()
             for idx in ('c', 'b'):
-                network._modes[idx] = mock.Mode(idx)
+                network.create_mode(idx)
+            network.create_transit_vehicle(0, 'b')
             for idx in (101, 4003, 16001, 16002):
                 network.create_node(idx, is_centroid=True)
                 network.node(idx).label = 'A'
@@ -21,13 +24,12 @@ class EmmeAssignmentTest(unittest.TestCase):
                 network.create_node(idx)
                 network.node(idx).label = 'A'
             for link in ((1, 2), (2, 3), (3, 4)):
-                network._links[link] = mock.Link(network, *link, length=3.5)
-            for idx in range(1, 4):
-                network._transit_lines[idx] = mock.TransitLine(
-                    network, idx, network.mode('b'), headway=5)
-            mock.TransitSegment(
-                network, network.transit_line(1), network.link(1, 2))
-
+                network.create_link(*link)
+                network.link(*link).length = 3.5
+            network.create_transit_line("1", 0, [1, 2])
+            network.transit_line("1").headway = 5
+            network.create_transit_line("2", 0, [2, 3])
+            network.transit_line("2").headway = 10
         ass_model = EmmeAssignmentModel(context, 19)
         ass_model.prepare_network()
         fares = {
@@ -40,3 +42,22 @@ class EmmeAssignmentTest(unittest.TestCase):
         }
         peripheral_cost = numpy.arange(8).reshape((2, 4))
         ass_model.calc_transit_cost(fares, peripheral_cost)
+        nr_zones = ass_model.nr_zones
+        car_matrix = numpy.arange(nr_zones**2).reshape(nr_zones, nr_zones)
+        demand = {
+            "car_work": car_matrix,
+            "car_leisure": car_matrix,
+            "transit_work": car_matrix,
+            "transit_leisure": car_matrix,
+            "bike": car_matrix,
+            "trailer_truck": car_matrix,
+            "truck": car_matrix,
+            "van": car_matrix,
+        }
+        ass_model.init_assign(demand)
+        resultdata = ResultsData(os.path.join(
+            os.path.dirname(os.path.realpath(__file__)),
+            "..", "test_data", "Results", "2016_test"))
+        ass_model.aggregate_results(resultdata)
+        ass_model.calc_noise()
+        resultdata.flush()
