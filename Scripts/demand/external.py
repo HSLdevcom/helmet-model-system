@@ -54,13 +54,13 @@ class ExternalModel:
         for target, base_vector in base_mtx.iterrows():
             if target in municipalities:
                 i = municipalities[target]
-                zone_trips = internal_trips.loc[i]
+                zone_trips = internal_trips.loc[i].to_numpy()
                 zone_weights = zone_trips / zone_trips.sum()
                 # Disaggregate base matrix to zone level and 
                 # multiply by growth factors
-                mtx.loc[i] = (self.growth[mode].values
+                mtx.loc[i] = (self.growth[mode].to_numpy()
                               * zone_weights[:, numpy.newaxis]
-                              * base_vector.values)
+                              * base_vector.to_numpy())
             else:  # External-external trips
-                mtx.loc[int(target)] = self.growth[mode] * base_vector.values
-        return Demand(self.purpose, mode, mtx.values.T)
+                mtx.loc[int(target)] = self.growth[mode] * base_vector.to_numpy()
+        return Demand(self.purpose, mode, mtx.to_numpy().T)

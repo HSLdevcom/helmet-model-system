@@ -1,5 +1,5 @@
 import parameters.assignment as param
-from path_analysis import PathAnalysis
+from assignment.datatypes.path_analysis import PathAnalysis
 
 
 class Car:

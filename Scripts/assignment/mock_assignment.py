@@ -4,7 +4,7 @@ import pandas
 import utils.log as log
 import parameters.assignment as param
 import parameters.zone as zone_param
-from abstract_assignment import AssignmentModel, Period
+from assignment.abstract_assignment import AssignmentModel, Period
 
 
 class MockAssignmentModel(AssignmentModel):
