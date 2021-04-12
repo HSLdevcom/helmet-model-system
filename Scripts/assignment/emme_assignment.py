@@ -252,7 +252,8 @@ class EmmeAssignmentModel(AssignmentModel):
                 extra_attribute_default_value = 0,
                 overwrite = True,
                 scenario = scenario)
-            log.debug("Created attr {} for scen {}".format(extr.name, scenario.id))
+        log.debug("Created extra attributes for scenario {}".format(
+            scenario.id))
 
     def calc_noise(self):
         """Calculate noise according to Road Traffic Noise Nordic 1996.
