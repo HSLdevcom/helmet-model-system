@@ -30,7 +30,7 @@ class EmmeAssignmentTest(unittest.TestCase):
             line.headway = 5
             line = network.create_transit_line("2", 0, [2, 3])
             line.headway = 10
-        ass_model = EmmeAssignmentModel(context, 19)
+        ass_model = EmmeAssignmentModel(context, 19, save_matrices=True)
         ass_model.prepare_network()
         fares = {
             "fare": {

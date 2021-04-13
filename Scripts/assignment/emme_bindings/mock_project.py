@@ -37,8 +37,12 @@ class MockProject:
                 scenario.extra_attribute(extra_attribute_name).initialize(
                     extra_attribute_default_value)
 
-    def copy_matrix(self, *args, **kwargs):
-        pass
+    def copy_matrix(self, from_matrix, matrix_id, matrix_name,
+                    matrix_description):
+        self.create_matrix(matrix_id, matrix_name, matrix_description)
+        eb = self.modeller.emmebank
+        eb.matrix(matrix_id).set_numpy_data(
+            eb.matrix(from_matrix).get_numpy_data())
 
     def network_calc(self, *args, **kwargs):
         pass
