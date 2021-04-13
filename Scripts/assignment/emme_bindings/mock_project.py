@@ -15,17 +15,27 @@ class MockProject:
         self.modeller = Modeller(EmmeBank())
 
     def create_matrix(self, matrix_id, matrix_name, matrix_description,
-                      default_value, overwrite):
-        self.modeller.emmebank.create_matrix(matrix_id, default_value)
+                      default_value=0, overwrite=False):
+        try:
+            self.modeller.emmebank.create_matrix(matrix_id, default_value)
+        except ExistenceError:
+            if overwrite:
+                self.modeller.emmebank.matrix(matrix_id).set_numpy_data(
+                    default_value)
 
     def create_extra_attribute(self, extra_attribute_type,
                                extra_attribute_name,
                                extra_attribute_description,
-                               extra_attribute_default_value,
-                               overwrite, scenario):
-        scenario.create_extra_attribute(
-            extra_attribute_type, extra_attribute_name,
-            extra_attribute_default_value)
+                               extra_attribute_default_value=0,
+                               overwrite=False, scenario=None):
+        try:
+            scenario.create_extra_attribute(
+                extra_attribute_type, extra_attribute_name,
+                extra_attribute_default_value)
+        except ExistenceError:
+            if overwrite:
+                scenario.extra_attribute(extra_attribute_name).initialize(
+                    extra_attribute_default_value)
 
     def copy_matrix(self, *args, **kwargs):
         pass
@@ -84,8 +94,13 @@ class EmmeBank:
         return self._matrices[idx]
 
     def create_matrix(self, idx, default_value=0.0):
-        self._matrices[idx] = Matrix(
-            idx, len(next(self.scenarios()).zone_numbers), default_value)
+        if idx in self._matrices:
+            raise ExistenceError("Matrix already exists: {}".format(idx))
+        else:
+            matrix = Matrix(
+                idx, len(next(self.scenarios()).zone_numbers), default_value)
+            self._matrices[idx] = matrix
+            return matrix
 
 
 class Scenario:
@@ -97,17 +112,42 @@ class Scenario:
     def zone_numbers(self):
         return sorted(self._network._centroids)
 
+    def extra_attribute(self, idx):
+        network = self.get_network()
+        for attr_type in network._extra_attr:
+            if idx in network._extra_attr[attr_type]:
+                return network._extra_attr[attr_type][idx]
+
     def create_extra_attribute(self, attr_type, idx, default_value=0):
         network = self.get_network()
-        network._extra_attr[attr_type][idx] = default_value
-        for obj in network._objects[attr_type]():
-            obj._extra_attr[idx] = default_value
+        if idx in network._extra_attr[attr_type]:
+            raise ExistenceError("Extra attribute already exists: {}".format(
+                idx))
+        else:
+            network._extra_attr[attr_type][idx] = ExtraAttribute(
+                idx, attr_type, default_value, self)
+            for obj in network._objects[attr_type]():
+                obj._extra_attr[idx] = default_value
 
     def get_network(self):
         return self._network
 
     def publish_network(self, network):
         self._network = network
+
+
+class ExtraAttribute:
+    def __init__(self, name, attr_type, default_value, scenario):
+        self.name = name
+        self.type = attr_type
+        self.default_value = default_value
+        self.scenario = scenario
+
+    def initialize(value=0):
+        self.default_value = value
+        network = self.scenario.get_network()
+        for obj in network._objects[self.type]():
+            obj._extra_attr[idx] = value
 
 
 class Matrix:
@@ -141,7 +181,8 @@ class Network:
         self._extra_attr = {attr_type: {} for attr_type in self._objects}
 
     def mode(self, idx):
-        return self._modes[idx]
+        if idx in self._modes:
+            return self._modes[idx]
 
     def modes(self):
         return iter(self._modes.values())
@@ -152,7 +193,8 @@ class Network:
         return mode
 
     def node(self, idx):
-        return self._nodes[idx]
+        if idx in self._nodes:
+            return self._nodes[idx]
 
     def nodes(self):
         return iter(self._nodes.values())
@@ -173,7 +215,9 @@ class Network:
         return node
 
     def link(self, i_node_id, j_node_id):
-        return self._links["{}-{}".format(i_node_id, j_node_id)]
+        idx = "{}-{}".format(i_node_id, j_node_id)
+        if idx in self._links:
+            return self._links[idx]
 
     def links(self):
         return iter(self._links.values())
@@ -185,7 +229,8 @@ class Network:
         return link
 
     def transit_vehicle(self, idx):
-        return self._vehicles[idx]
+        if idx in self._vehicles:
+            return self._vehicles[idx]
 
     def create_transit_vehicle(self, idx, mode_id):
         vehicle = TransitVehicle(idx, self.mode(mode_id))
@@ -193,7 +238,8 @@ class Network:
         return vehicle
 
     def transit_line(self, idx):
-        return self._lines[idx]
+        if idx in self._lines:
+            return self._lines[idx]
 
     def transit_lines(self):
         return iter(self._lines.values())
@@ -267,7 +313,9 @@ class Node(NetworkObject):
         self.data1 = 0.0
         self.data2 = 0.0
         self.data3 = 0.0
-        self._extra_attr = network._extra_attr["NODE"].copy()
+        extra_attr = network._extra_attr["NODE"]
+        self._extra_attr = {idx: extra_attr[idx].default_value
+            for idx in extra_attr}
 
     @property
     def id(self):
@@ -288,7 +336,9 @@ class Link(NetworkObject):
         self.data2 = 0.0
         self.data3 = 0.0
         self.auto_time = 0.1
-        self._extra_attr = network._extra_attr["LINK"].copy()
+        extra_attr = network._extra_attr["LINK"]
+        self._extra_attr = {idx: extra_attr[idx].default_value
+            for idx in extra_attr}
         self._extra_attr["@hinta"] = 0.0
         self._extra_attr["@hinah"] = 0.0
         self._extra_attr["@hinpt"] = 0.0
@@ -320,7 +370,9 @@ class TransitLine(NetworkObject):
         self.data1 = 0.0
         self.data2 = 0.0
         self.data3 = 0.0
-        self._extra_attr = network._extra_attr["TRANSIT_LINE"].copy()
+        extra_attr = network._extra_attr["TRANSIT_LINE"]
+        self._extra_attr = {idx: extra_attr[idx].default_value
+            for idx in extra_attr}
         self._extra_attr["@hwaht"] = 0.01
         self._extra_attr["@hwpt"] = 0.01
         self._extra_attr["@hwiht"] = 0.01
@@ -346,7 +398,9 @@ class TransitSegment(NetworkObject):
         self.data1 = 0.0
         self.data2 = 0.0
         self.data3 = 0.0
-        self._extra_attr = network._extra_attr["TRANSIT_SEGMENT"].copy()
+        extra_attr = network._extra_attr["TRANSIT_SEGMENT"]
+        self._extra_attr = {idx: extra_attr[idx].default_value
+            for idx in extra_attr}
         self._extra_attr["@base_timtr"] = 0.0
 
     @property
@@ -360,3 +414,6 @@ class TransitSegment(NetworkObject):
     @property
     def j_node(self):
         return self.link.j_node
+
+class ExistenceError(Exception):
+    pass
