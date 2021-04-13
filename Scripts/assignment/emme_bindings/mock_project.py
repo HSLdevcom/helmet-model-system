@@ -280,7 +280,9 @@ class Link(NetworkObject):
         self.i_node = i_node
         self.j_node = j_node
         self.modes = frozenset(modes)
-        self.length = 0
+        self.length = 0.0
+        self.type = 1
+        self.num_lanes = 1
         self.volume_delay_func = 0
         self.data1 = 0.0
         self.data2 = 0.0
@@ -288,6 +290,10 @@ class Link(NetworkObject):
         self.auto_time = 0.1
         self._extra_attr = network._extra_attr["LINK"].copy()
         self._extra_attr["@hinta"] = 0.0
+        self._extra_attr["@hinah"] = 0.0
+        self._extra_attr["@hinpt"] = 0.0
+        self._extra_attr["@hinih"] = 0.0
+        self._extra_attr["@pyoratieluokka"] = 0.0
         self._segments = []
 
     @property
@@ -310,9 +316,14 @@ class TransitLine(NetworkObject):
         self.network = network
         self.id = idx
         self.vehicle = vehicle
-        self.headway = 9999
+        self.headway = 0.01
+        self.data1 = 0.0
+        self.data2 = 0.0
         self.data3 = 0.0
         self._extra_attr = network._extra_attr["TRANSIT_LINE"].copy()
+        self._extra_attr["@hwaht"] = 0.01
+        self._extra_attr["@hwpt"] = 0.01
+        self._extra_attr["@hwiht"] = 0.01
         self._segments = []
 
     @property
@@ -332,6 +343,9 @@ class TransitSegment(NetworkObject):
         self.line = line
         self.link = link
         self.transit_time_func = 0
+        self.data1 = 0.0
+        self.data2 = 0.0
+        self.data3 = 0.0
         self._extra_attr = network._extra_attr["TRANSIT_SEGMENT"].copy()
         self._extra_attr["@base_timtr"] = 0.0
 
