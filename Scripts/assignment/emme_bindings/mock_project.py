@@ -3,6 +3,12 @@ from collections import namedtuple
 
 
 class MockProject:
+    """Mock-up version of `EmmeProject`.
+
+    Emulates key features of EMME API, so that `EmmeAssignmentModel`
+    and `AssignmentPeriod` can be unit tested without EMME binding.
+    """
+
     path = "c:\\xxx\\yyy"
 
     def __init__(self):
@@ -10,9 +16,7 @@ class MockProject:
 
     def create_matrix(self, matrix_id, matrix_name, matrix_description,
                       default_value, overwrite):
-        dimension = len(next(self.modeller.emmebank.scenarios()).zone_numbers)
-        self.modeller.emmebank._matrices[matrix_id] = Matrix(
-            matrix_id, dimension, default_value)
+        self.modeller.emmebank.create_matrix(matrix_id, default_value)
 
     def create_extra_attribute(self, extra_attribute_type,
                                extra_attribute_name,
@@ -23,32 +27,32 @@ class MockProject:
             extra_attribute_type, extra_attribute_name,
             extra_attribute_default_value)
 
-    def copy_matrix(*args, **kwargs):
+    def copy_matrix(self, *args, **kwargs):
         pass
 
-    def network_calc(*args, **kwargs):
+    def network_calc(self, *args, **kwargs):
         pass
 
-    def process_functions(*args, **kwargs):
+    def process_functions(self, *args, **kwargs):
         pass
 
-    def car_assignment(*args, **kwargs):
+    def car_assignment(self, *args, **kwargs):
         report = {
             "stopping_criterion": "MAX_ITERATIONS",
             "iterations": [{"number": 1}],
         }
         return report
 
-    def bike_assignment(*args, **kwargs):
+    def bike_assignment(self, *args, **kwargs):
         pass
 
-    def pedestrian_assignment(*args, **kwargs):
+    def pedestrian_assignment(self, *args, **kwargs):
         pass
 
-    def transit_assignment(*args, **kwargs):
+    def transit_assignment(self, *args, **kwargs):
         pass
 
-    def congested_assignment(*args, **kwargs):
+    def congested_assignment(self, *args, **kwargs):
         report = {
             "stopping_criterion": "MAX_ITERATIONS",
             "iterations": [{"number": 1}],
@@ -78,6 +82,10 @@ class EmmeBank:
 
     def matrix(self, idx):
         return self._matrices[idx]
+
+    def create_matrix(self, idx, default_value=0.0):
+        self._matrices[idx] = Matrix(
+            idx, len(next(self.scenarios()).zone_numbers), default_value)
 
 
 class Scenario:
@@ -135,11 +143,13 @@ class Network:
     def mode(self, idx):
         return self._modes[idx]
 
-    def create_mode(self, idx):
-        self._modes[idx] = Mode(idx)
-
     def modes(self):
         return iter(self._modes.values())
+
+    def create_mode(self, idx):
+        mode = Mode(idx)
+        self._modes[idx] = mode
+        return mode
 
     def node(self, idx):
         return self._nodes[idx]
@@ -160,25 +170,27 @@ class Network:
             self._centroids[idx] = node
         else:
             self._regular_nodes[idx] = node
+        return node
 
     def link(self, i_node_id, j_node_id):
-        idx = "{}-{}".format(i_node_id, j_node_id)
-        return self._links[idx]
+        return self._links["{}-{}".format(i_node_id, j_node_id)]
 
     def links(self):
         return iter(self._links.values())
 
-    def create_link(self, i_node_id, j_node_id):
-        # TODO Add modes
-        idx = "{}-{}".format(i_node_id, j_node_id)
-        self._links[idx] = Link(
-            self, self.node(i_node_id), self.node(j_node_id))
+    def create_link(self, i_node_id, j_node_id, modes):
+        modes = [self.mode(str(mode)) for mode in modes]
+        link = Link(self, self.node(i_node_id), self.node(j_node_id), modes)
+        self._links["{}-{}".format(i_node_id, j_node_id)] = link
+        return link
 
     def transit_vehicle(self, idx):
         return self._vehicles[idx]
 
     def create_transit_vehicle(self, idx, mode_id):
-        self._vehicles[idx] = TransitVehicle(idx, self.mode(mode_id))
+        vehicle = TransitVehicle(idx, self.mode(mode_id))
+        self._vehicles[idx] = vehicle
+        return vehicle
 
     def transit_line(self, idx):
         return self._lines[idx]
@@ -199,11 +211,15 @@ class Network:
             self._segments.append(segment)
             line._segments.append(segment)
             link._segments.append(segment)
+        return line
 
 
 class Mode:
     def __init__(self, idx):
         self.id = idx
+
+    def __str__(self):
+        return self.id
 
 
 class TransitVehicle:
@@ -214,6 +230,9 @@ class TransitVehicle:
     @property
     def id(self):
         return str(self.number)
+
+    def __str__(self):
+        return self.id
 
 
 class NetworkObject:
@@ -256,10 +275,11 @@ class Node(NetworkObject):
 
 
 class Link(NetworkObject):
-    def __init__(self, network, i_node, j_node):
+    def __init__(self, network, i_node, j_node, modes):
         self.network = network
         self.i_node = i_node
         self.j_node = j_node
+        self.modes = frozenset(modes)
         self.length = 0
         self.volume_delay_func = 0
         self.data1 = 0.0

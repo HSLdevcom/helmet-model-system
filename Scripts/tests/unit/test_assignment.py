@@ -18,18 +18,18 @@ class EmmeAssignmentTest(unittest.TestCase):
                 network.create_mode(idx)
             network.create_transit_vehicle(0, 'b')
             for idx in (101, 4003, 16001, 16002):
-                network.create_node(idx, is_centroid=True)
-                network.node(idx).label = 'A'
+                node = network.create_node(idx, is_centroid=True)
+                node.label = 'A'
             for idx in range(1, 5):
-                network.create_node(idx)
-                network.node(idx).label = 'A'
-            for link in ((1, 2), (2, 3), (3, 4)):
-                network.create_link(*link)
-                network.link(*link).length = 3.5
-            network.create_transit_line("1", 0, [1, 2])
-            network.transit_line("1").headway = 5
-            network.create_transit_line("2", 0, [2, 3])
-            network.transit_line("2").headway = 10
+                node = network.create_node(idx)
+                node.label = 'A'
+            for od in ((1, 2), (2, 3), (3, 4)):
+                link = network.create_link(*od, modes=['c', 'b'])
+                link.length = 3.5
+            line = network.create_transit_line("1", 0, [1, 2])
+            line.headway = 5
+            line = network.create_transit_line("2", 0, [2, 3])
+            line.headway = 10
         ass_model = EmmeAssignmentModel(context, 19)
         ass_model.prepare_network()
         fares = {
