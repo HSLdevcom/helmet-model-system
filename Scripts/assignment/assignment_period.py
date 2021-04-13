@@ -95,6 +95,7 @@ class AssignmentPeriod(Period):
             self._assign_cars(param.stopping_criteria_fine)
             self._calc_boarding_penalties(is_last_iteration=True)
             self._calc_extra_wait_time()
+            self._assign_transit()
             self._assign_congested_transit()
             self._set_bike_vdfs()
             self._assign_bikes(self.result_mtx["dist"]["bike"]["id"], "all")
