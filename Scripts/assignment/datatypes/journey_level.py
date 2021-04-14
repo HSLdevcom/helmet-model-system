@@ -2,7 +2,7 @@ import parameters.assignment as param
 
 
 class JourneyLevel:
-    def __init__(self, boarded, ass_class, count_zone_boardings=False):
+    def __init__(self, ass_class, headway_attribute, boarded, count_zone_boardings=False):
         # Definition of transition rules: all modes are allowed
         transitions = []
         for mode in param.transit_modes:
@@ -13,13 +13,11 @@ class JourneyLevel:
         self.spec = {
             "transition_rules": transitions,
             "boarding_time": None,
-            "boarding_cost": dict.fromkeys(["global", 
-                                            "at_nodes", 
-                                            "on_lines", 
-                                            "on_segments"]),
+            "boarding_cost": dict.fromkeys([
+                "global", "at_nodes", "on_lines", "on_segments"]),
             "waiting_time": {
                 "headway_fraction": param.standard_headway_fraction,
-                "effective_headways": "hdw",
+                "effective_headways": headway_attribute,
                 "spread_factor": 1,
                 "perception_factor": param.waiting_time_perception_factor,
             },

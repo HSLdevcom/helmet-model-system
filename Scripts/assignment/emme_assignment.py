@@ -73,11 +73,9 @@ class EmmeAssignmentModel(AssignmentModel):
                         default_value=999999, overwrite=True)
             if not self.save_matrices:
                 break
-        self._create_attributes(
-            self.assignment_periods[0].bike_scenario, param.bike_attributes)
-        self._create_attributes(self.day_scenario, param.emme_attributes)
+        self._create_attributes(self.day_scenario, self._extra)
         for ap in self.assignment_periods:
-            ap.prepare()
+            ap.prepare(self._create_attributes(ap.emme_scenario, ap._extra))
 
     def init_assign(self, demand):
         ap0 = self.assignment_periods[0]
@@ -116,17 +114,18 @@ class EmmeAssignmentModel(AssignmentModel):
             Result data container to print to
         """
         # Aggregate results to 24h
-        ass_classes = list(param.assignment_modes) + ["bus"]
+        for ap in self.assignment_periods:
+            ap.transit_results_links_nodes()
+        for transit_class in param.transit_classes:
+            for res in param.segment_results:
+                self._transit_segment_24h(
+                    transit_class, param.segment_results[res])
+            if res != "transit_volumes":
+                self._node_24h(
+                    transit_class, "node_"+param.segment_results[res])
+        ass_classes = list(param.emme_demand_mtx) + ["bus"]
         for ass_class in ass_classes:
             self._auto_link_24h(ass_class)
-        for transit_class in param.transit_classes:
-            self._transit_segment_24h(transit_class, "vol")
-            self._transit_segment_24h(transit_class, "boa")
-            self._transit_segment_24h(transit_class, "trb")
-        self._bike_link_24h()
-        for ap in self.assignment_periods:
-            self._transit_results_links_nodes(ap.emme_scenario)
-        self._transit_results_links_nodes(self.day_scenario)
 
         # Aggregate and print vehicle kms
         vdfs = param.volume_delays_funcs
@@ -143,20 +142,18 @@ class EmmeAssignmentModel(AssignmentModel):
             else:
                 # Links with bus lane
                 vdf = link.volume_delay_func - 5
-            if vdf in vdfs:
-                for ass_class in vdf_kms:
-                    vdf_kms[ass_class][vdf] += link['@'+ass_class] * link.length
             area = belongs_to_area(link.i_node)
-            if area in areas:
-                for ass_class in area_kms:
-                    area_kms[ass_class][area] += link['@'+ass_class] * link.length
-            if vdf in vdfs and area in vdf_area_kms[vdf]:
-                for ass_class in ass_classes:
-                    vdf_area_kms[vdf][area] += link['@'+ass_class] * link.length
-        for ass_class in vdf_kms:
+            for ass_class in ass_classes:
+                veh_kms = link[self._extra(ass_class)] * link.length
+                if vdf in vdfs:
+                    vdf_kms[ass_class][vdf] += veh_kms
+                if area in areas:
+                    area_kms[ass_class][area] += veh_kms
+                if vdf in vdfs and area in vdf_area_kms[vdf]:
+                    vdf_area_kms[vdf][area] += veh_kms
+        for ass_class in ass_classes:
             resultdata.print_data(
                 vdf_kms[ass_class], "vehicle_kms_vdfs.txt", ass_class)
-        for ass_class in area_kms:
             resultdata.print_data(
                 area_kms[ass_class], "vehicle_kms_areas.txt", ass_class)
         for vdf in vdf_area_kms:
@@ -168,7 +165,7 @@ class EmmeAssignmentModel(AssignmentModel):
         for node in network.regular_nodes():
             for mode in param.station_ids:
                 if (node.data2 == param.station_ids[mode]
-                        and node["@transit_boa"] > 0):
+                        and node[self._extra("transit_boa")] > 0):
                     stations[mode] += 1
                     break
         resultdata.print_data(stations, "transit_stations.txt", "number")
@@ -186,10 +183,11 @@ class EmmeAssignmentModel(AssignmentModel):
                         mode = modes
                         break
                 for segment in line.segments():
-                    if 0 < segment.line.headway < 900:
+                    if 0 < segment.line["@hw"+ap.name] < 900:
                         freq = (param.volume_factors["bus"][ap.name]
-                                * (60 / segment.line.headway))
+                                * (60 / segment.line["@hw"+ap.name]))
                         transit_dists[mode] += freq * segment.link.length
+                        # TODO Move @base_timtr to time-period specific attribute
                         transit_times[mode] += freq * segment["@base_timtr"]
         resultdata.print_data(transit_dists, "transit_kms.txt", "dist")
         resultdata.print_data(transit_times, "transit_kms.txt", "time")
@@ -241,19 +239,37 @@ class EmmeAssignmentModel(AssignmentModel):
             from_mtx["id"], to_mtx["id"],
             "{}_{}_{}".format(mtx_type, ass_class, ass_period_2.name),
             "{} {}".format(to_mtx["description"], ass_period_2.name))
-        
-    def _create_attributes(self, scenario, attributes):
+
+    def _extra(self, attr):
+        return "@{}_{}".format(attr, "vrk")
+
+    def _create_attributes(self, scenario, extra):
         """Create attributes needed in assignment."""
-        for attr in attributes.keys():
-            extr = self.emme_project.create_extra_attribute(
-                extra_attribute_type = attributes[attr],
-                extra_attribute_name = attr,
-                extra_attribute_description = "HM40 results attr",
-                extra_attribute_default_value = 0,
-                overwrite = True,
-                scenario = scenario)
+        for ass_class in param.emme_demand_mtx:
+            self.emme_project.create_extra_attribute(
+                "LINK", extra(ass_class), ass_class + " volume",
+                overwrite=True, scenario=scenario)
+        for attr in ("total_cost", "toll_cost"):
+            self.emme_project.create_extra_attribute(
+                "LINK", extra(attr), attr,
+                overwrite=True, scenario=scenario)
+        seg_results = {res: extra("{}_"+param.segment_results[res])
+            for res in param.segment_results}
+        for res in seg_results:
+            for tc in param.transit_classes:
+                self.emme_project.create_extra_attribute(
+                    "TRANSIT_SEGMENT", seg_results[res].format(tc),
+                    tc+" "+res, overwrite=True, scenario=scenario)
+                if res != "transit_volumes":
+                    self.emme_project.create_extra_attribute(
+                        "NODE", seg_results[res].format(tc+"_node"),
+                        tc+" "+res, overwrite=True, scenario=scenario)
+        self.emme_project.create_extra_attribute(
+            "TRANSIT_SEGMENT", param.extra_waiting_time["penalty"],
+            "wait time st.dev.", overwrite=True, scenario=scenario)
         log.debug("Created extra attributes for scenario {}".format(
-            scenario.id))
+            scenario))
+        return seg_results
 
     def calc_noise(self):
         """Calculate noise according to Road Traffic Noise Nordic 1996.
@@ -268,7 +284,11 @@ class EmmeAssignmentModel(AssignmentModel):
         morning_network = self.assignment_periods[0].emme_scenario.get_network()
         for link in network.links():
             # Aggregate traffic
-            light_modes = ("@car_work", "@car_leisure", "@van")
+            light_modes = (
+                self._extra("car_work"),
+                self._extra("car_leisure"),
+                self._extra("van"),
+            )
             traffic = sum([link[mode] for mode in light_modes])
             rlink = link.reverse_link
             if rlink is None:
@@ -278,7 +298,8 @@ class EmmeAssignmentModel(AssignmentModel):
             cross_traffic = (param.years_average_day_factor
                              * param.share_7_22_of_day
                              * (traffic+reverse_traffic))
-            heavy = link["@truck"] + link["@trailer_truck"]
+            heavy = (link[self._extra("truck")]
+                     + link[self._extra("trailer_truck")])
             traffic = max(traffic, 0.01)
             heavy_share = heavy / (traffic+heavy)
 
@@ -316,33 +337,16 @@ class EmmeAssignmentModel(AssignmentModel):
                 noise_areas[area] += 0.001 * zone_width * link.length
         return noise_areas
 
-    def _transit_results_links_nodes(self, scenario):
+    def _auto_link_24h(self, attr):
         """ 
-        Calculate and sum transit results to link and nodes.
+        Sums and expands link volumes to 24h.
 
         Parameters
         ----------
-        scen_id : int
-            Scenario id.
-        """
-        network = scenario.get_network()
-        for segment in network.transit_segments():
-            for transit_class in param.transit_classes:
-                segment.i_node["@transit_boa"] += segment["@{}_boa".format(transit_class)]
-                segment.i_node["@transit_trb"] += segment["@{}_trb".format(transit_class)]
-                if segment.link is not None:
-                    segment.link["@transit_vol"] += segment["@{}_vol".format(transit_class)]
-        scenario.publish_network(network)
-
-    def _auto_link_24h(self, attr):
-        """ 
-        Sums and expands link volumes from different scenarios to one result scenario.
-         Parameters
-        ----------
         attr : str
-            Attribute name thatis usually part of Parameters: link_volumes.
+            Attribute name that is usually key in param.emme_demand_mtx
         """
-        extra_attr = '@' + attr
+        extra_attr = "@{}_{}".format(attr, "{}")
         # get attr from different time periods to dictionary
         networks = {}
         for ap in self.assignment_periods:
@@ -354,14 +358,44 @@ class EmmeAssignmentModel(AssignmentModel):
             for tp in networks:
                 try:
                     tp_link = networks[tp].link(link.i_node, link.j_node)
-                    day_attr += (tp_link[extra_attr]
+                    day_attr += (tp_link[extra_attr.format(tp)]
                                  * param.volume_factors[attr][tp])
                 except (AttributeError, TypeError):
                     pass
-            link[extra_attr] = day_attr
+            link[extra_attr.format("day")] = day_attr
         self.day_scenario.publish_network(network)
-        log.info("Auto attribute {} aggregated to 24h (scenario {})".format(
-            extra_attr, self.day_scenario.id))
+        log.info("Link attribute {} aggregated to 24h (scenario {})".format(
+            extra_attr.format("day"), self.day_scenario.id))
+
+    def _node_24h(self, transit_class, attr):
+        """ 
+        Sums and expands node attributes to 24h.
+
+        Parameters
+        ----------
+        attr : str
+            Attribute name
+        """
+        extra_attr = "@{}_{}_{}".format(transit_class, attr, "{}")
+        # get attr from different time periods to dictionary
+        networks = {}
+        for ap in self.assignment_periods:
+            networks[ap.name] = ap.emme_scenario.get_network()
+        network = self.day_scenario.get_network()
+        # save link volumes to result network
+        for node in network.nodes():
+            day_attr = 0
+            for tp in networks:
+                try:
+                    tp_node = networks[tp].node(node.id)
+                    day_attr += (tp_node[extra_attr.format(tp)]
+                                 * param.volume_factors[attr][tp])
+                except (AttributeError, TypeError):
+                    pass
+            node[extra_attr.format("day")] = day_attr
+        self.day_scenario.publish_network(network)
+        log.info("Node attribute {} aggregated to 24h (scenario {})".format(
+            extra_attr.format("day"), self.day_scenario.id))
 
     def _transit_segment_24h(self, transit_class, attr):
         """ 
@@ -377,7 +411,7 @@ class EmmeAssignmentModel(AssignmentModel):
         networks = {}
         for ap in self.assignment_periods:
             networks[ap.name] = ap.emme_scenario.get_network()
-        extra_attr = "@{}_{}".format(transit_class, attr)
+        extra_attr = "@{}_{}_{}".format(transit_class, attr, "{}")
         # save link volumes to result network
         network = self.day_scenario.get_network()
         for segment in network.transit_segments():
@@ -386,37 +420,11 @@ class EmmeAssignmentModel(AssignmentModel):
                 try:
                     tp_segment = networks[tp].transit_line(
                         segment.line.id).segment(segment.number)
-                    day_attr += (tp_segment[extra_attr]
+                    day_attr += (tp_segment[extra_attr.format(tp)]
                                  * param.volume_factors[transit_class][tp])
                 except (AttributeError, TypeError):
                     pass
-            segment[extra_attr] = day_attr
+            segment[extra_attr.format("day")] = day_attr
         self.day_scenario.publish_network(network)
         log.info("Transit attribute {} aggregated to 24h (scenario {})".format(
-            extra_attr, self.day_scenario.id))
-    
-    def _bike_link_24h(self):
-        """ 
-        Sums and expands bike volumes from different scenarios to one result scenario.
-        """
-        attr = "@bike_{}"
-        # get attr from different time periods to dictionary
-        networks = {}
-        for ap in self.assignment_periods:
-            networks[ap.name] = ap.bike_scenario.get_network()
-        # save link volumes to result network
-        day_scenario = self.assignment_periods[0].bike_scenario
-        network = day_scenario.get_network()
-        for link in network.links():
-            day_attr = 0
-            for tp in networks:
-                try:
-                    tp_link = networks[tp].link(link.i_node, link.j_node)
-                    day_attr += (tp_link[attr.format(tp)]
-                                 * param.volume_factors["bike"][tp])
-                except (AttributeError, TypeError):
-                    pass
-            link[attr.format("day")] = day_attr
-        day_scenario.publish_network(network)
-        log.info("Bike attribute {} aggregated to 24h (scenario {})".format(
-            attr.format("day"), day_scenario.id))
+            extra_attr.format("day"), self.day_scenario.id))

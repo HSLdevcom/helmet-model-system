@@ -27,15 +27,15 @@ class CarSpecification:
                 description : dict
                     Matrix description
     """
-    def __init__(self, demand_mtx, result_mtx):
-        self.car_work = Car("car_work", demand_mtx, result_mtx)
-        self.car_leisure = Car("car_leisure", demand_mtx, result_mtx)
-        self.van = Car("van", demand_mtx, result_mtx)
+    def __init__(self, extra, demand_mtx, result_mtx):
+        self.car_work = Car("car_work", extra, demand_mtx, result_mtx)
+        self.car_leisure = Car("car_leisure", extra, demand_mtx, result_mtx)
+        self.van = Car("van", extra, demand_mtx, result_mtx)
         self.truck = Car(
-            "truck", demand_mtx, result_mtx, 
+            "truck", extra, demand_mtx, result_mtx,
             value_of_time_inv=0.2,link_costs="length")
         self.trailer_truck = Car(
-            "trailer_truck", demand_mtx, result_mtx,
+            "trailer_truck", extra, demand_mtx, result_mtx,
             value_of_time_inv=0.2, link_costs="length")
         self._spec = {
             "type": "SOLA_TRAFFIC_ASSIGNMENT",
