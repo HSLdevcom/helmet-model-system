@@ -33,10 +33,11 @@ class AssignmentPeriod(Period):
         return "@{}_{}".format(attr, self.name)
 
     def prepare(self, segment_results):
+        self._segment_results = segment_results
         self._calc_road_cost()
         self._calc_boarding_penalties()
         self._calc_background_traffic()
-        self._specify(segment_results)
+        self._specify()
 
     def assign(self, matrices, iteration):
         """Assign cars, bikes and transit for one time period.
@@ -158,8 +159,8 @@ class AssignmentPeriod(Period):
         if transit_zones > zones_in_zonedata:
             log.warn("All Emme-node labels do not have transit costs specified.")
         spec = TransitSpecification(
-            "transit_work", "@hw"+self.name, self.demand_mtx, self.result_mtx,
-            count_zone_boardings=True)
+            "transit_work", self._segment_results, "@hw"+self.name,
+            self.demand_mtx, self.result_mtx, count_zone_boardings=True)
         for transit_zone in transit_zones:
             # Set tag to 1 for nodes in transit zone and 0 elsewhere
             for node in network.nodes():
@@ -226,9 +227,9 @@ class AssignmentPeriod(Period):
             for tc in param.transit_classes:
                 for s in ("boa", "trb"):
                     a = self._extra("{}_" + s)
-                    segment.i_node[a.format(tc+"_node")] += segment[a.format(tc)]
+                    segment.i_node[a.format(tc[:10]+'n')] += segment[a.format(tc[:11])]
                 if segment.link is not None:
-                    segment.link[self._extra(tc)] += segment[self._extra(tc+"_vol")]
+                    segment.link[self._extra(tc)] += segment[self._extra(tc[:11]+"_vol")]
         self.emme_scenario.publish_network(network)
 
     def _set_car_and_transit_vdfs(self):
@@ -301,6 +302,11 @@ class AssignmentPeriod(Period):
                     break
             for segment in link.segments():
                 segment.transit_time_func = func
+            # TODO Change letters
+            if network.mode('s') in link.modes:
+                link.modes |= {network.mode('c')}
+            elif network.mode('c') in link.modes:
+                link.modes -= {network.mode('c')}
         self.emme_scenario.publish_network(network)
 
     def _set_bike_vdfs(self):
@@ -327,6 +333,11 @@ class AssignmentPeriod(Period):
                     link.volume_delay_func = pathclass[None]
             except KeyError:
                 link.volume_delay_func = 99
+            # TODO Change letters
+            if network.mode('f') in link.modes:
+                link.modes |= {network.mode('c')}
+            elif network.mode('c') in link.modes:
+                link.modes -= {network.mode('c')}
         self.emme_scenario.publish_network(network)
 
     def _set_emmebank_matrices(self, matrices, is_last_iteration):
@@ -490,18 +501,18 @@ class AssignmentPeriod(Period):
             log.warn("No boarding penalty found for transit modes " + missing_penalties)
         self.emme_scenario.publish_network(network)
 
-    def _specify(self, segment_results):
+    def _specify(self):
         self._car_spec = CarSpecification(
             self._extra, self.demand_mtx, self.result_mtx)
         self._transit_specs = {tc: TransitSpecification(
-                tc, segment_results, "@hw"+self.name, self.demand_mtx,
+                tc, self._segment_results, "@hw"+self.name, self.demand_mtx,
                 self.result_mtx)
             for tc in param.transit_classes}
         self.bike_spec = {
             "type": "STANDARD_TRAFFIC_ASSIGNMENT",
             "classes": [
                 {
-                    "mode": param.bike_mode,
+                    "mode": param.car_mode,
                     "demand": self.demand_mtx["bike"]["id"],
                     "results": {
                         "od_travel_times": {

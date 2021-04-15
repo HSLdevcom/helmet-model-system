@@ -4,7 +4,7 @@ from assignment.datatypes.path_analysis import PathAnalysis
 
 class Car:
     def __init__(self, ass_class, extra, demand_mtx, result_mtx,
-                value_of_time_inv=None, link_costs="total_cost"):
+                link_costs, value_of_time_inv=None):
         od_travel_times = result_mtx["gen_cost"][ass_class]["id"]
         if value_of_time_inv is None:
             value_of_time_inv = param.vot_inv[param.vot_classes[ass_class]]
@@ -12,7 +12,7 @@ class Car:
             "mode": param.assignment_modes[ass_class],
             "demand": demand_mtx[ass_class]["id"],
             "generalized_cost": {
-                "link_costs": extra(link_costs),
+                "link_costs": link_costs,
                 "perception_factor": value_of_time_inv,
             },
             "results": {

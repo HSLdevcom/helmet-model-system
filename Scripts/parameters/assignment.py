@@ -347,7 +347,6 @@ vot_classes = {
     "truck": "business",
     "van": "business",
 }
-bike_mode = 'f'
 transit_mode_aggregates = {
     "bus": "bde",
     "trunk": "g",

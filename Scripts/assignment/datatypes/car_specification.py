@@ -28,12 +28,18 @@ class CarSpecification:
                     Matrix description
     """
     def __init__(self, extra, demand_mtx, result_mtx):
-        self.car_work = Car("car_work", extra, demand_mtx, result_mtx)
-        self.car_leisure = Car("car_leisure", extra, demand_mtx, result_mtx)
-        self.van = Car("van", extra, demand_mtx, result_mtx)
+        self.car_work = Car(
+            "car_work", extra, demand_mtx, result_mtx,
+            link_costs=extra("total_cost"))
+        self.car_leisure = Car(
+            "car_leisure", extra, demand_mtx, result_mtx,
+            link_costs=extra("total_cost"))
+        self.van = Car(
+            "van", extra, demand_mtx, result_mtx,
+            link_costs=extra("total_cost"))
         self.truck = Car(
             "truck", extra, demand_mtx, result_mtx,
-            value_of_time_inv=0.2,link_costs="length")
+            value_of_time_inv=0.2, link_costs="length")
         self.trailer_truck = Car(
             "trailer_truck", extra, demand_mtx, result_mtx,
             value_of_time_inv=0.2, link_costs="length")

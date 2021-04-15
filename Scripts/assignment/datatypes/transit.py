@@ -90,7 +90,7 @@ class TransitSpecification:
         }
         self.ntw_results_spec = {
             "type": "EXTENDED_TRANSIT_NETWORK_RESULTS",
-            "on_segments": {res: segment_results[res].format(ac)
+            "on_segments": {res: segment_results[res].format(ac[:11])
                 for res in segment_results},
             }
         subres = result_mtx["trip_part"]
