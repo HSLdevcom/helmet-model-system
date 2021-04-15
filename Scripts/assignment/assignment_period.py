@@ -95,7 +95,6 @@ class AssignmentPeriod(Period):
             self._assign_cars(param.stopping_criteria_fine)
             self._calc_boarding_penalties(is_last_iteration=True)
             self._calc_extra_wait_time()
-            self._assign_transit()
             self._assign_congested_transit()
             self._set_bike_vdfs()
             self._assign_bikes(self.result_mtx["dist"]["bike"]["id"], "all")
@@ -686,12 +685,15 @@ class AssignmentPeriod(Period):
             specification=spec.transit_spec, scenario=self.emme_scenario,
             save_strategies=True)
         self.emme_project.matrix_results(spec.transit_result_spec, scenario=self.emme_scenario)
-        self._save_uncongested_volumes()
         log.info("Transit assignment performed for scenario {}".format(
             str(self.emme_scenario.id)))
 
-    def _save_uncongested_volumes(self):
+    def _save_uncongested_volumes(self, specs):
         """ Save uncongested volumes. """ 
+        for i, tc in enumerate(specs):
+            self.emme_project.transit_assignment(
+                specification=specs[tc].transit_spec, scenario=self.emme_scenario,
+                save_strategies=False, add_volumes=(i > 0))
         network = self.emme_scenario.get_network()
         for link in network.links():
             link["@transit_uncongested"] = 0
@@ -710,6 +712,7 @@ class AssignmentPeriod(Period):
         specs = self._transit_specs
         for tc in specs:
             specs[tc].transit_spec["journey_levels"][1]["boarding_cost"]["global"]["penalty"] = param.transfer_penalty[tc]
+        self._save_uncongested_volumes(specs)
         assign_report = self.emme_project.congested_assignment(
             transit_assignment_spec=[specs[tc].transit_spec for tc in specs],
             class_names=specs.keys(),
