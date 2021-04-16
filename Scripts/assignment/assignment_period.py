@@ -29,7 +29,19 @@ class AssignmentPeriod(Period):
             self.result_mtx = result_mtx
         self.dist_unit_cost = param.dist_unit_cost
 
-    def _extra(self, attr):
+    def extra(self, attr):
+        """Add prefix "@" and time-period suffix.
+
+        Parameters
+        ----------
+        attr : str
+            Attribute string to modify
+
+        Returns
+        -------
+        str
+            Modified string
+        """
         return "@{}_{}".format(attr, self.name)
 
     def prepare(self, segment_results):
@@ -226,10 +238,10 @@ class AssignmentPeriod(Period):
         for segment in network.transit_segments():
             for tc in param.transit_classes:
                 for s in ("boa", "trb"):
-                    a = self._extra("{}_" + s)
+                    a = self.extra("{}_" + s)
                     segment.i_node[a.format(tc[:10]+'n')] += segment[a.format(tc[:11])]
                 if segment.link is not None:
-                    segment.link[self._extra(tc)] += segment[self._extra(tc[:11]+"_vol")]
+                    segment.link[self.extra(tc)] += segment[self.extra(tc[:11]+"_vol")]
         self.emme_scenario.publish_network(network)
 
     def _set_car_and_transit_vdfs(self):
@@ -459,14 +471,14 @@ class AssignmentPeriod(Period):
                 segment_hdw = segment.line["@hw"+self.name]
                 if 0 < segment_hdw < 900:
                     segment_freq += 60 / segment_hdw
-            link[self._extra("bus")] = segment_freq
+            link[self.extra("bus")] = segment_freq
             if link.volume_delay_func in [1,2,3,4,5]:
                 # If no bus lane
                 link[background_traffic] = segment_freq
             else:
                 link[background_traffic] = 0
             if include_trucks:
-                for ass_class in (self._extra("truck"), self._extra("trailer_truck")):
+                for ass_class in (self.extra("truck"), self.extra("trailer_truck")):
                     link[background_traffic] += link[ass_class]
         self.emme_scenario.publish_network(network)
 
@@ -478,8 +490,8 @@ class AssignmentPeriod(Period):
             # Dist-based toll is stored in @hinxx where xx is ah, pt, ih
             toll_cost = link.length * link["@hin"+self.name[:2]]
             dist_cost = self.dist_unit_cost * link.length
-            link[self._extra("toll_cost")] = toll_cost
-            link[self._extra("total_cost")] = toll_cost + dist_cost
+            link[self.extra("toll_cost")] = toll_cost
+            link[self.extra("total_cost")] = toll_cost + dist_cost
         self.emme_scenario.publish_network(network)
 
     def _calc_boarding_penalties(self, extra_penalty=0, is_last_iteration=False):
@@ -503,7 +515,7 @@ class AssignmentPeriod(Period):
 
     def _specify(self):
         self._car_spec = CarSpecification(
-            self._extra, self.demand_mtx, self.result_mtx)
+            self.extra, self.demand_mtx, self.result_mtx)
         self._transit_specs = {tc: TransitSpecification(
                 tc, self._segment_results, "@hw"+self.name, self.demand_mtx,
                 self.result_mtx)
@@ -597,7 +609,7 @@ class AssignmentPeriod(Period):
         function_file = os.path.join(self.emme_project.path, param.func_bike)  # TODO refactor paths out from here
         self.emme_project.process_functions(function_file)
         spec = self.bike_spec
-        spec["classes"][0]["results"]["link_volumes"] = self._extra("bike")
+        spec["classes"][0]["results"]["link_volumes"] = self.extra("bike")
         spec["classes"][0]["analysis"]["results"]["od_values"] = length_mat_id
         # Reset ul3 to zero
         netw_spec = {

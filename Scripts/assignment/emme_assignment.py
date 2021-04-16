@@ -75,7 +75,7 @@ class EmmeAssignmentModel(AssignmentModel):
                 break
         self._create_attributes(self.day_scenario, self._extra)
         for ap in self.assignment_periods:
-            ap.prepare(self._create_attributes(ap.emme_scenario, ap._extra))
+            ap.prepare(self._create_attributes(ap.emme_scenario, ap.extra))
 
     def init_assign(self, demand):
         ap0 = self.assignment_periods[0]
@@ -125,7 +125,7 @@ class EmmeAssignmentModel(AssignmentModel):
                     transit_class, param.segment_results[res])
         ass_classes = list(param.emme_demand_mtx) + ["bus"]
         for ass_class in ass_classes:
-            self._auto_link_24h(ass_class)
+            self._link_24h(ass_class)
 
         # Aggregate and print vehicle kms
         vdfs = param.volume_delays_funcs
@@ -241,10 +241,32 @@ class EmmeAssignmentModel(AssignmentModel):
             "{} {}".format(to_mtx["description"], ass_period_2.name))
 
     def _extra(self, attr):
+        """Add prefix "@" and suffix "_vrk".
+
+        Parameters
+        ----------
+        attr : str
+            Attribute string to modify
+
+        Returns
+        -------
+        str
+            Modified string
+        """
         return "@{}_{}".format(attr, "vrk")
 
     def _create_attributes(self, scenario, extra):
-        """Create attributes needed in assignment."""
+        """Create extra attributes needed in assignment.
+
+        Parameters
+        ----------
+        scenario : inro.modeller.emmebank.scenario
+            Emme scenario to create attributes for
+        extra : function
+            Small helper function which modifies string
+            (e.g., self._extra)
+        """
+        # Create link attributes
         for ass_class in list(param.emme_demand_mtx) + ["bus"]:
             self.emme_project.create_extra_attribute(
                 "LINK", extra(ass_class), ass_class + " volume",
@@ -253,6 +275,7 @@ class EmmeAssignmentModel(AssignmentModel):
             self.emme_project.create_extra_attribute(
                 "LINK", extra(attr), attr,
                 overwrite=True, scenario=scenario)
+        # Create node and transit segment attributes
         seg_results = {res: extra("{}_"+param.segment_results[res])
             for res in param.segment_results}
         for res in seg_results:
@@ -337,7 +360,7 @@ class EmmeAssignmentModel(AssignmentModel):
                 noise_areas[area] += 0.001 * zone_width * link.length
         return noise_areas
 
-    def _auto_link_24h(self, attr):
+    def _link_24h(self, attr):
         """ 
         Sums and expands link volumes to 24h.
 
@@ -346,26 +369,25 @@ class EmmeAssignmentModel(AssignmentModel):
         attr : str
             Attribute name that is usually key in param.emme_demand_mtx
         """
-        extra_attr = "@{}_{}".format(attr, "{}")
-        # get attr from different time periods to dictionary
-        networks = {}
-        for ap in self.assignment_periods:
-            networks[ap.name] = ap.emme_scenario.get_network()
+        networks = {ap.name: ap.emme_scenario.get_network()
+            for ap in self.assignment_periods}
+        extras = {ap.name: ap.extra(attr) for ap in self.assignment_periods}
         network = self.day_scenario.get_network()
+        extra = self._extra(attr)
         # save link volumes to result network
         for link in network.links():
             day_attr = 0
             for tp in networks:
                 try:
                     tp_link = networks[tp].link(link.i_node, link.j_node)
-                    day_attr += (tp_link[extra_attr.format(tp)]
+                    day_attr += (tp_link[extras[tp]]
                                  * param.volume_factors[attr][tp])
                 except (AttributeError, TypeError):
                     pass
-            link[extra_attr.format("vrk")] = day_attr
+            link[extra] = day_attr
         self.day_scenario.publish_network(network)
         log.info("Link attribute {} aggregated to 24h (scenario {})".format(
-            extra_attr.format("vrk"), self.day_scenario.id))
+            extra, self.day_scenario.id))
 
     def _node_24h(self, transit_class, attr):
         """ 
@@ -373,29 +395,31 @@ class EmmeAssignmentModel(AssignmentModel):
 
         Parameters
         ----------
+        transit_class : str
+            Transit class (transit_work/transit_leisure)
         attr : str
-            Attribute name
+            Attribute name that is usually in param.segment_results
         """
-        extra_attr = "@{}_{}_{}".format(transit_class[:10]+'n', attr, "{}")
-        # get attr from different time periods to dictionary
-        networks = {}
-        for ap in self.assignment_periods:
-            networks[ap.name] = ap.emme_scenario.get_network()
+        attr = transit_class[:10] + 'n_' + attr
+        networks = {ap.name: ap.emme_scenario.get_network()
+            for ap in self.assignment_periods}
+        extras = {ap.name: ap.extra(attr) for ap in self.assignment_periods}
         network = self.day_scenario.get_network()
-        # save link volumes to result network
+        extra = self._extra(attr)
+        # save node volumes to result network
         for node in network.nodes():
             day_attr = 0
             for tp in networks:
                 try:
                     tp_node = networks[tp].node(node.id)
-                    day_attr += (tp_node[extra_attr.format(tp)]
+                    day_attr += (tp_node[extras[tp]]
                                  * param.volume_factors[transit_class][tp])
                 except (AttributeError, TypeError):
                     pass
-            node[extra_attr.format("vrk")] = day_attr
+            node[extra] = day_attr
         self.day_scenario.publish_network(network)
         log.info("Node attribute {} aggregated to 24h (scenario {})".format(
-            extra_attr.format("vrk"), self.day_scenario.id))
+            extra, self.day_scenario.id))
 
     def _transit_segment_24h(self, transit_class, attr):
         """ 
@@ -406,25 +430,26 @@ class EmmeAssignmentModel(AssignmentModel):
         transit_class : str
             Transit class (transit_work/transit_leisure)
         attr : str
-            Attribute name that is usually part of parameters.link_volumes
+            Attribute name that is usually in param.segment_results
         """
-        networks = {}
-        for ap in self.assignment_periods:
-            networks[ap.name] = ap.emme_scenario.get_network()
-        extra_attr = "@{}_{}_{}".format(transit_class[:11], attr, "{}")
-        # save link volumes to result network
+        attr = transit_class[:11] + '_' + attr
+        networks = {ap.name: ap.emme_scenario.get_network()
+            for ap in self.assignment_periods}
+        extras = {ap.name: ap.extra(attr) for ap in self.assignment_periods}
         network = self.day_scenario.get_network()
+        extra = self._extra(attr)
+        # save segment volumes to result network
         for segment in network.transit_segments():
             day_attr = 0
             for tp in networks:
                 try:
                     tp_segment = networks[tp].transit_line(
                         segment.line.id).segment(segment.number)
-                    day_attr += (tp_segment[extra_attr.format(tp)]
+                    day_attr += (tp_segment[extras[tp]]
                                  * param.volume_factors[transit_class][tp])
                 except (AttributeError, TypeError):
                     pass
-            segment[extra_attr.format("vrk")] = day_attr
+            segment[extra] = day_attr
         self.day_scenario.publish_network(network)
         log.info("Transit attribute {} aggregated to 24h (scenario {})".format(
-            extra_attr.format("vrk"), self.day_scenario.id))
+            extra, self.day_scenario.id))
