@@ -119,7 +119,7 @@ class Person:
                     non_home_tour = Tour(purposes["oo"], tour)
                     self.tours.append(non_home_tour)
 
-    def write_file(self, resultdata):
+    def write_file(self, resultdata, filename):
         """ Write person data to file.
 
         Parameters
@@ -145,4 +145,4 @@ class Person:
         accessdata = "{:d}\t{:.1f}\t{:.1f}\t{:.1f}".format(
             nr_tours, total_access, sustainable_access, car_access)
         resultdata.print_line("\t".join(
-            [persondata, zonedata, accessdata]), "agents.txt")
+            [persondata, zonedata, accessdata]), filename)
