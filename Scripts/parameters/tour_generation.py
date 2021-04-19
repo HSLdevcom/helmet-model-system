@@ -9,12 +9,16 @@ tour_number_increase = {
     3: 1.05446538,
     4: 1.2455917 + 0.1043963,
 }
+MUULITAR_CONSTANT_ZERO = 0.0
+MUULITAR_CONSTANT_HW = -0.3
+MUULITAR_CONSTANT_HO = 0.38
+MUULITAR_CONSTANT_HU = -0.08
 # Tour combinations (calibrated)
 tour_combinations = {
 # utility function 1
     0: {
         () : {
-            "constant":   0.000000000,
+            "constant":   0.000000000 + MUULITAR_CONSTANT_ZERO,
             "individual_dummy": {
                 "age_50-64": -0.305509545 ,
                 "age_65-99":  0.597976527
@@ -25,7 +29,7 @@ tour_combinations = {
     },
     1: {
         ("hw",) : {
-            "constant":   0.000000000 + 0.0210,
+            "constant":   0.000000000 + 0.0210 + MUULITAR_CONSTANT_HW,
             "individual_dummy": {
                 "age_18-29":  2.306249018 + 0.1065,
                 "age_30-49":  2.977241136 - 0.3498,
@@ -48,7 +52,7 @@ tour_combinations = {
         },
 # utility function 4
         ("hu",) : {
-            "constant":   0.000000000 + 0.3000,
+            "constant":   0.000000000 + 0.3000 + MUULITAR_CONSTANT_HU,
             "individual_dummy": {
                 "age_18-29":  0.000000000 + 0.0653,
                 "age_30-49": -1.586979829 - 0.0192,
@@ -76,7 +80,7 @@ tour_combinations = {
         },
 # utility function 6
         ("ho",) : {
-            "constant":   0.811674639,
+            "constant":   0.811674639 + MUULITAR_CONSTANT_HO,
             "individual_dummy": {
                 "age_7-17":   0.000000000 - 0.1096,
                 "age_18-29":  0.000000000 + 0.0679,
@@ -92,7 +96,7 @@ tour_combinations = {
     },
     2: {
         ("hw", "hw") : {
-            "constant":  -6.702389265,
+            "constant":  -6.702389265 + MUULITAR_CONSTANT_HW,
             "individual_dummy": {
                 "age_18-29":  2.306249018 - 1.0022,
                 "age_30-49":  2.977241136 + 0.3275,
@@ -106,7 +110,7 @@ tour_combinations = {
         },
 # utility function 8
         ("hw", "hu") : {
-            "constant":  -8.418852173 + 0.2000,
+            "constant":  -8.418852173 + 0.2000 + MUULITAR_CONSTANT_HW,
             "individual_dummy": {
                 "age_18-29":  2.306249018 - 0.4439,
                 "age_30-49": -1.586979829 +  2.977241136 + 0.4961,
@@ -121,7 +125,7 @@ tour_combinations = {
         },
 # utility function 9
         ("hw", "hs") : {
-            "constant":  -5.468303413,
+            "constant":  -5.468303413 + MUULITAR_CONSTANT_HW,
             "individual_dummy": {
                 "age_18-29":  0.632156675 +  2.306249018 - 0.1900,
                 "age_30-49":  1.106558979 +  2.977241136 + 0.0878,
@@ -135,7 +139,7 @@ tour_combinations = {
         },
 # utility function 10
         ("hw", "ho") : {
-            "constant":  -3.969665707,
+            "constant":  -3.969665707 + MUULITAR_CONSTANT_HW,
             "individual_dummy": {
                 "age_18-29":  2.306249018 + 0.0229,
                 "age_30-49":  2.977241136 + 0.0059,
@@ -182,7 +186,7 @@ tour_combinations = {
         },
 # utility function 14
         ("hu", "hs") : {
-            "constant":  -5.264912587 + 0.0736,
+            "constant":  -5.264912587 + 0.0736 + MUULITAR_CONSTANT_HU,
             "individual_dummy": {
                 "age_18-29":  0.632156675 - 0.0197,
                 "age_30-49":  1.106558979  -1.586979829 - 0.6757,
@@ -197,7 +201,7 @@ tour_combinations = {
         },
 # utility function 15
         ("hu", "ho") : {
-            "constant":  -4.133565561 + 0.0834,
+            "constant":  -4.133565561 + 0.0834 + MUULITAR_CONSTANT_HU,
             "individual_dummy": {
                 "age_18-29":  0.000000000 + 0.2038,
                 "age_30-49": -1.586979829 - 0.8545,
@@ -226,7 +230,7 @@ tour_combinations = {
         },
 # utility function 17
         ("hs", "ho") : {
-            "constant":  -3.615413138,
+            "constant":  -3.615413138 + MUULITAR_CONSTANT_HO,
             "individual_dummy": {
                 "age_7-17":   0.000000000 + 0.1376,
                 "age_18-29":  0.632156675 + 0.0695,
@@ -241,7 +245,7 @@ tour_combinations = {
         },
 # utility function 18
         ("ho", "ho") : {
-            "constant":  -2.954069138,
+            "constant":  -2.954069138 + MUULITAR_CONSTANT_HO,
             "individual_dummy": {
                 "age_7-17":   0.000000000 + 0.5035,
                 "age_18-29":  0.000000000 - 0.1393,
@@ -258,7 +262,7 @@ tour_combinations = {
     },
     3: {
         ("hw", "hw", "ho") : {
-            "constant":  -7.640316015,
+            "constant":  -7.640316015 + MUULITAR_CONSTANT_HW,
             "individual_dummy": {
                 "age_18-29":  2.306249018 ,
                 "age_30-49":  2.977241136 - 0.4304,
@@ -270,7 +274,7 @@ tour_combinations = {
         },
 # utility function 20
         ("hw", "hs", "hs") : {
-            "constant":  -6.996908123,
+            "constant":  -6.996908123 + MUULITAR_CONSTANT_HW,
             "individual_dummy": {
                 "age_18-29":  0.632156675 +  2.306249018 - 0.7910,
                 "age_30-49":  1.106558979 +  2.977241136 + 0.4528,
@@ -282,7 +286,7 @@ tour_combinations = {
         },
 # utility function 21
         ("hw", "hs", "ho") : {
-            "constant":  -6.280857590,
+            "constant":  -6.280857590 + MUULITAR_CONSTANT_HW,
             "individual_dummy": {
                 "age_18-29":  0.632156675 +  2.306249018 + 0.2580,
                 "age_30-49":  1.106558979 +  2.977241136 + 0.1582,
@@ -294,7 +298,7 @@ tour_combinations = {
         },
 # utility function 22
         ("hw", "ho", "ho") : {
-            "constant":  -5.143814369,
+            "constant":  -5.143814369 + MUULITAR_CONSTANT_HW,
             "individual_dummy": {
                 "age_18-29":  2.306249018 - 0.2782,
                 "age_30-49":  2.977241136 + 0.3222,
@@ -331,7 +335,7 @@ tour_combinations = {
         },
 # utility function 25
         ("hu", "hs", "ho") : {
-            "constant": -11.751808160,
+            "constant": -11.751808160 + MUULITAR_CONSTANT_HU,
             "individual_dummy": {
                 "age_18-29":  0.632156675 + 0.1437,
                 "age_30-49":  1.106558979  -1.586979829 + 0.8652,
@@ -346,7 +350,7 @@ tour_combinations = {
         },
 # utility function 26
         ("hu", "ho", "ho") : {
-            "constant": -11.342729830,
+            "constant": -11.342729830 + MUULITAR_CONSTANT_HU,
             "individual_dummy": {
                 "age_18-29": -0.000000000 + 0.1541,
                 "age_30-49": -1.586979829 + 0.5275,
@@ -375,7 +379,7 @@ tour_combinations = {
         },
 # utility function 28
         ("hs", "hs", "ho") : {
-            "constant":  -4.709369964,
+            "constant":  -4.709369964 + MUULITAR_CONSTANT_HO,
             "individual_dummy": {
                 "age_18-29":  0.632156675 - 0.7508,
                 "age_30-49":  1.106558979 + 0.5842,
@@ -389,7 +393,7 @@ tour_combinations = {
         },
 # utility function 29
         ("hs", "ho", "ho") : {
-            "constant":  -4.115616267,
+            "constant":  -4.115616267 + MUULITAR_CONSTANT_HO,
             "individual_dummy": {
                 "age_18-29":  0.632156675 - 0.1442,
                 "age_30-49":  1.106558979 ,
@@ -403,7 +407,7 @@ tour_combinations = {
         },
 # utility function 30
         ("ho", "ho", "ho") : {
-            "constant":  -4.110394781,
+            "constant":  -4.110394781 + MUULITAR_CONSTANT_HO,
             "individual_dummy": {
                 "age_30-49":  0.000000000 - 0.1750,
                 "age_50-64":  0.000000000 + 0.1126,
@@ -418,7 +422,7 @@ tour_combinations = {
     },
     4: {
         ("hw", "hs", "hs", "ho") : {
-            "constant":  -8.782904966,
+            "constant":  -8.782904966 + MUULITAR_CONSTANT_HW,
             "individual_dummy": {
                 "age_18-29":  0.632156675 +  2.306249018 ,
                 "age_30-49":  1.106558979 +  2.977241136 + 0.2190,
@@ -432,7 +436,7 @@ tour_combinations = {
         },
 # utility function 32
         ("hw", "hs", "ho", "ho") : {
-            "constant":  -7.819600775,
+            "constant":  -7.819600775 + MUULITAR_CONSTANT_HW,
             "individual_dummy": {
                 "age_18-29":  0.632156675 +  2.306249018 + 0.5615,
                 "age_30-49":  1.106558979 +  2.977241136 + 0.2939,
@@ -446,7 +450,7 @@ tour_combinations = {
         },
 # utility function 33
         ("hw", "ho", "ho", "ho") : {
-            "constant":  -6.323991971,
+            "constant":  -6.323991971 + MUULITAR_CONSTANT_HW,
             "individual_dummy": {
                 "age_18-29":  2.306249018 + 0.3338,
                 "age_30-49":  2.977241136 ,
@@ -474,7 +478,7 @@ tour_combinations = {
         },
 # utility function 35
         ("hs", "hs", "hs", "ho") : {
-            "constant":  -6.280534875,
+            "constant":  -6.280534875 + MUULITAR_CONSTANT_HO,
             "individual_dummy": {
                 "age_18-29":  0.632156675 - 1.3263,
                 "age_30-49":  1.106558979 + 0.9876,
@@ -488,7 +492,7 @@ tour_combinations = {
         },
 # utility function 36
         ("hs", "hs", "ho", "ho") : {
-            "constant":  -5.728407971,
+            "constant":  -5.728407971 + MUULITAR_CONSTANT_HO,
             "individual_dummy": {
                 "age_18-29":  0.632156675 - 0.8239,
                 "age_30-49":  1.106558979 + 0.4522,
@@ -502,7 +506,7 @@ tour_combinations = {
         },
 # utility function 37
         ("hs", "ho", "ho", "ho") : {
-            "constant":  -5.167664200,
+            "constant":  -5.167664200 + MUULITAR_CONSTANT_HO,
             "individual_dummy": {
                 "age_18-29":  0.632156675 - 0.8511,
                 "age_30-49":  1.106558979 + 0.7283,
@@ -516,7 +520,7 @@ tour_combinations = {
         },
 # utility function 38
         ("ho", "ho", "ho", "ho") : {
-            "constant":  -4.892323651,
+            "constant":  -4.892323651 + MUULITAR_CONSTANT_HO,
             "individual_dummy": {
                 "age_18-29":  0.000000000 - 2.0113,
                 "age_30-49":  0.000000000 + 0.2214,
