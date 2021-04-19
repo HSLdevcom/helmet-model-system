@@ -1,4 +1,4 @@
-from parameters.zone import areas, municipalities
+from parameters.zone import areas, area_aggregation, municipalities
 from utils.zone_interval import is_in
 
 
@@ -10,7 +10,7 @@ class Zone:
         self.index = Zone.counter
         Zone.counter += 1
         self.area = None
-        for area in areas:
+        for area in area_aggregation:
             if is_in(areas[area], number):
                 self.area = area
                 break
