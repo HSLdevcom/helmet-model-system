@@ -532,7 +532,7 @@ class AgentModelSystem(ModelSystem):
             self.dm.incmod.predict()
             random.seed(None) 
             line = "\t".join([
-                "age", "gender", "car_user", "income",
+                "person_id", "age", "gender", "car_user", "income",
                 "number", "area", "municipality", "nr_tours",
                 "total_access", "sustainable_access", "car_access"
                 ])

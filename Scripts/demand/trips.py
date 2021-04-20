@@ -96,6 +96,7 @@ class DemandModel:
         self.population = []
         zones = self.zone_data.zone_numbers[bounds]
         self.zone_population = pandas.Series(0, zones)
+        person_id = 0
         for zone_number in zones:
             weights = [1]
             for age_group in self.age_groups:
@@ -122,11 +123,12 @@ class DemandModel:
                 if group != -1:
                     # Group -1 is under-7-year-olds and they have weights[0]
                     person = Person(
-                        self.zone_data.zones[zone_number],
+                        person_id, self.zone_data.zones[zone_number],
                         self.age_groups[group], self.gm,
                         self.cm, self.incmod)
                     self.population.append(person)
                     self.zone_population[zone_number] += 1
+                    person_id += 1
         numpy.random.seed(None)
 
     def generate_tours(self):

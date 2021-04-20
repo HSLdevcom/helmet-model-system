@@ -25,7 +25,9 @@ class Person:
     FEMALE = 0
     MALE = 1
     
-    def __init__(self, zone, age_group, generation_model, car_use_model, income_model):
+    def __init__(self, person_id, zone, age_group, 
+                 generation_model, car_use_model, income_model):
+        self.id = person_id
         self.zone = zone
         self.age = random.randint(age_group[0], age_group[1])
         self.age_group = "age_" + str(age_group[0]) + "-" + str(age_group[1])
@@ -138,8 +140,8 @@ class Person:
             sustainable_access += tour.sustainable_accessibility
             car_access += tour.car_accessibility
         # print to file
-        persondata = "{:s}\t{:s}\t{!s}\t".format(
-            self.age_group, self.gender, self.is_car_user, self.income)
+        persondata = "{:d}\t{:s}\t{:s}\t{!s}\t".format(
+            self.id, self.age_group, self.gender, self.is_car_user, self.income)
         zonedata = "{:d}\t{:s}\t{:s}".format(
             self.zone.number, self.zone.area, self.zone.municipality)
         accessdata = "{:d}\t{:.1f}\t{:.1f}\t{:.1f}".format(
