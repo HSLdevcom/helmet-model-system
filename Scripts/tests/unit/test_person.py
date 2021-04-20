@@ -29,7 +29,7 @@ class PersonTest(unittest.TestCase):
         class Zone:
             number = 101
             index = 0
-        p = Person(Zone(), (18, 29), GenMod(), None, ZoneData())
+        p = Person(0, Zone(), (18, 29), GenMod(), None, ZoneData())
         p.is_car_user = True
         purposes = {
             "hw": Purpose("hw"),
