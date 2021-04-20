@@ -140,7 +140,7 @@ class Person:
             sustainable_access += tour.sustainable_accessibility
             car_access += tour.car_accessibility
         # print to file
-        persondata = "{:d}\t{:s}\t{:s}\t{!s}\t".format(
+        persondata = "{:d}\t{:s}\t{:s}\t{!s}\t{:.0f}".format(
             self.id, self.age_group, self.gender, self.is_car_user, self.income)
         zonedata = "{:d}\t{:s}\t{:s}".format(
             self.zone.number, self.zone.area, self.zone.municipality)
