@@ -90,15 +90,14 @@ class TransitSpecification:
         }
         self.ntw_results_spec = {
             "type": "EXTENDED_TRANSIT_NETWORK_RESULTS",
-            "on_segments": {res: segment_results[res].format(ac[:11])
-                for res in segment_results},
+            "on_segments": segment_results,
             }
         subres = result_mtx["trip_part"]
         if count_zone_boardings:
             jlevel1 = JourneyLevel(
-                ac, headway_attribute, boarded=False, count_zone_boardings=True)
+                headway_attribute, boarded=False, count_zone_boardings=True)
             jlevel2 = JourneyLevel(
-                ac, headway_attribute, boarded=True, count_zone_boardings=True)
+                headway_attribute, boarded=True, count_zone_boardings=True)
             mtx_results_spec = {
                 "type": "EXTENDED_TRANSIT_MATRIX_RESULTS",
                 "by_mode_subset": {
@@ -108,8 +107,8 @@ class TransitSpecification:
                 },
             }
         else:
-            jlevel1 = JourneyLevel(ac, headway_attribute, boarded=False)
-            jlevel2 = JourneyLevel(ac, headway_attribute, boarded=True)
+            jlevel1 = JourneyLevel(headway_attribute, boarded=False)
+            jlevel2 = JourneyLevel(headway_attribute, boarded=True)
             mtx_results_spec = {
                 "type": "EXTENDED_TRANSIT_MATRIX_RESULTS",
                 "total_impedance": result_mtx["time"][ac]["id"],

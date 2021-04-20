@@ -2,7 +2,7 @@ import parameters.assignment as param
 
 
 class JourneyLevel:
-    def __init__(self, ass_class, headway_attribute, boarded, count_zone_boardings=False):
+    def __init__(self, headway_attribute, boarded, count_zone_boardings=False):
         # Definition of transition rules: all modes are allowed
         transitions = []
         for mode in param.transit_modes:

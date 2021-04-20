@@ -171,8 +171,9 @@ class AssignmentPeriod(Period):
         if transit_zones > zones_in_zonedata:
             log.warn("All Emme-node labels do not have transit costs specified.")
         spec = TransitSpecification(
-            "transit_work", self._segment_results, "@hw"+self.name,
-            self.demand_mtx, self.result_mtx, count_zone_boardings=True)
+            "transit_work", self._segment_results["transit_work"],
+            "@hw"+self.name, self.demand_mtx, self.result_mtx,
+            count_zone_boardings=True)
         for transit_zone in transit_zones:
             # Set tag to 1 for nodes in transit zone and 0 elsewhere
             for node in network.nodes():
@@ -517,8 +518,8 @@ class AssignmentPeriod(Period):
         self._car_spec = CarSpecification(
             self.extra, self.demand_mtx, self.result_mtx)
         self._transit_specs = {tc: TransitSpecification(
-                tc, self._segment_results, "@hw"+self.name, self.demand_mtx,
-                self.result_mtx)
+                tc, self._segment_results[tc], "@hw"+self.name,
+                self.demand_mtx, self.result_mtx)
             for tc in param.transit_classes}
         self.bike_spec = {
             "type": "STANDARD_TRAFFIC_ASSIGNMENT",
