@@ -528,36 +528,21 @@ class AgentModelSystem(ModelSystem):
             for tour in person.tours:
                 self.dtm.add_demand(tour)
         if is_last_iteration:
-            self._agent_results()
-        log.info("Demand calculation completed")
-
-    def _agent_results(self):
-        random.seed(zone_param.population_draw)
-        self.dm.incmod.predict()
-        result_dict = {
-            "number": [], "area": [], "municipality": [], 
-            "income": [], "age_group": [], "gender": [], "nr_tours": [], 
-            "total_access": [], "sustainable_access": [], "car_access": [],}
-        for person in self.dm.population:
-            person.calc_income()
-            for tour in person.tours:
-                person.total_access += tour.total_accessibility
-                person.sustainable_access += tour.sustainable_accessibility
-                person.car_access += tour.car_accessibility
-            for attr in result_dict.keys():
-                if attr == "nr_tours":
-                    result_dict["nr_tours"].append(len(person.tours))
-                elif attr in ["number", "area", "municipality"]:
-                    zone = person.zone
-                    result_dict[attr].append(getattr(zone, attr))
-                else:
-                    result_dict[attr].append(getattr(person, attr))
-        results = pandas.DataFrame(result_dict)
-        for attr in results.columns:
-            self.resultdata.print_data(
-                pandas.Series(results[attr]), "agents.txt", attr)
-        random.seed(None)   
-        log.info("Results printed to file agents.txt") 
+            random.seed(zone_param.population_draw)
+            self.dm.incmod.predict()
+            random.seed(None) 
+            line = "\t".join([
+                "age", "gender", "car_user", "income",
+                "number", "area", "municipality", "nr_tours",
+                "total_access", "sustainable_access", "car_access"
+                ])
+            fname = "agents"
+            self.resultdata.print_line(line, fname)
+            for person in self.dm.population:
+                person.calc_income()
+                person.write_file(self.resultdata, fname)
+            log.info("Results printed to file ".format(fname)) 
+        log.info("Demand calculation completed")        
 
     def _distribute_tours(self, mode, origs, sec_dest_tours, impedance):
         sec_dest_purpose = self.dm.purpose_dict["hoo"]
