@@ -42,18 +42,17 @@ class TransitSpecification:
     is_last_iteration : bool (optional)
         If this is the last iteration, some other assignment parameters can be defined
     """
-    def __init__(self, assignment_class, segment_results, headway_attribute,
+    def __init__(self, ass_class, segment_results, headway_attribute,
             demand_mtx, result_mtx, count_zone_boardings=False):
         no_penalty = dict.fromkeys(["at_nodes", "on_lines", "on_segments"])
         no_penalty["global"] = {
             "penalty": 0, 
             "perception_factor": 1,
         }
-        ac = assignment_class
         self.transit_spec = {
             "type": "EXTENDED_TRANSIT_ASSIGNMENT",
             "modes": param.transit_assignment_modes,
-            "demand": demand_mtx[ac]["id"],
+            "demand": demand_mtx[ass_class]["id"],
             "waiting_time": {
                 "headway_fraction": param.standard_headway_fraction,
                 "effective_headways": headway_attribute,
@@ -103,7 +102,7 @@ class TransitSpecification:
                 "by_mode_subset": {
                     "modes": param.transit_modes,
                     "distance": result_mtx["dist"][ac]["id"],
-                    "actual_total_boarding_costs": subres[ac+"_board_cost"]["id"],
+                    "actual_total_boarding_costs": result_mtx["trip_part"][ass_class + "_board_cost"]["id"],
                 },
             }
         else:
@@ -111,17 +110,17 @@ class TransitSpecification:
             jlevel2 = JourneyLevel(headway_attribute, boarded=True)
             mtx_results_spec = {
                 "type": "EXTENDED_TRANSIT_MATRIX_RESULTS",
-                "total_impedance": result_mtx["time"][ac]["id"],
-                "total_travel_time": subres[ac + "_total_time"]["id"],
-                "actual_first_waiting_times": subres[ac+"_fw_time"]["id"],
-                "actual_total_waiting_times": subres[ac+"_tw_time"]["id"],
+                "total_impedance": result_mtx["time"][ass_class]["id"],
+                "total_travel_time": result_mtx["trip_part"][ass_class + "_total_time"]["id"],
+                "actual_first_waiting_times": result_mtx["trip_part"][ass_class + "_fw_time"]["id"],
+                "actual_total_waiting_times": result_mtx["trip_part"][ass_class + "_tw_time"]["id"],
                 "by_mode_subset": {
                     "modes": param.transit_assignment_modes,
-                    "distance": result_mtx["dist"][ac]["id"],
-                    "avg_boardings": subres[ac + "_num_board"]["id"],
-                    "actual_total_boarding_times": subres[ac+"_board_time"]["id"],
-                    "actual_in_vehicle_times": subres[ac+"_inv_time"]["id"],
-                    "actual_aux_transit_times": subres[ac+"_aux_time"]["id"],
+                    "distance": result_mtx["dist"][ass_class]["id"],
+                    "avg_boardings": result_mtx["trip_part"][ass_class + "_num_board"]["id"],
+                    "actual_total_boarding_times": result_mtx["trip_part"][ass_class + "_board_time"]["id"],
+                    "actual_in_vehicle_times": result_mtx["trip_part"][ass_class + "_inv_time"]["id"],
+                    "actual_aux_transit_times": result_mtx["trip_part"][ass_class + "_aux_time"]["id"],
                 },
             }
 
