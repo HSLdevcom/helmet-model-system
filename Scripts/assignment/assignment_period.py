@@ -45,6 +45,22 @@ class AssignmentPeriod(Period):
         return "@{}_{}".format(attr, self.name)
 
     def prepare(self, segment_results):
+        """Prepare network for assignment.
+
+        Calculate road toll cost, set boarding penalties,
+        and add buses to background traffic.
+
+        Parameters
+        ----------
+        segment_results : dict
+            key : str
+                Transit class (transit_work/transit_leisure)
+            value : dict
+                key : str
+                    Segment result (transit_volumes/...)
+                value : str
+                    Extra attribute name (@transit_work_vol_aht/...)
+        """
         self._segment_results = segment_results
         self._calc_road_cost()
         self._calc_boarding_penalties()
