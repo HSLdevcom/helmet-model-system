@@ -595,6 +595,10 @@ class AssignmentPeriod(Period):
         car_spec = self._car_spec.spec(lightweight)
         car_spec["stopping_criteria"] = stopping_criteria
         assign_report = self.emme_project.car_assignment(car_spec, self.emme_scenario)
+        self.emme_project.copy_attribute(
+            "timau", self.extra("car_time"),
+            from_scenario=self.emme_scenario,
+            to_scenario=self.emme_scenario)
         log.info("Car assignment performed for scenario " + str(self.emme_scenario.id))
         log.info("Stopping criteria: {}, iteration {} / {}".format(
             assign_report["stopping_criterion"],
@@ -739,6 +743,11 @@ class AssignmentPeriod(Period):
             self.emme_project.network_results(
                 specs[tc].ntw_results_spec, scenario=self.emme_scenario,
                 class_name=tc)
+        base_timtr = param.uncongested_transit_time
+        self.emme_project.copy_attribute(
+            '@'+base_timtr, self.extra(base_timtr),
+            from_scenario=self.emme_scenario,
+            to_scenario=self.emme_scenario)
         log.info("Congested transit assignment performed for scenario {}".format(
             str(self.emme_scenario.id)))
         log.info("Stopping criteria: {}, iteration {} / {}".format(

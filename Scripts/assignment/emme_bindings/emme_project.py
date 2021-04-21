@@ -25,6 +25,8 @@ class EmmeProject:
             "inro.emme.data.matrix.create_matrix")
         self.copy_matrix = self.modeller.tool(
             "inro.emme.data.matrix.copy_matrix")
+        self.copy_attribute = self.modeller.tool(
+            "inro.emme.data.network.copy_attribute")
         self.network_calc = self.modeller.tool(
             "inro.emme.network_calculation.network_calculator")
         self.process_functions = self.modeller.tool(
@@ -45,8 +47,6 @@ class EmmeProject:
             "inro.emme.transit_assignment.extended.network_results")
         self.create_extra_attribute = self.modeller.tool(
             "inro.emme.data.extra_attribute.create_extra_attribute")
-        self.network_results = self.modeller.tool(
-            "inro.emme.transit_assignment.extended.network_results")
     
     def write(self, message):
         """Write to logbook."""

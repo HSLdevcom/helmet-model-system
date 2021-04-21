@@ -383,6 +383,8 @@ segment_results = {
     "total_boardings": "boa",
     "transfer_boardings": "trb",
 }
+# Hard-coded in Emme congested transit assignment
+uncongested_transit_time = "base_timtr"
 # Emme matrix IDs
 emme_demand_mtx = {
     "car_work": {

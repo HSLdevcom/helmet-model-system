@@ -271,7 +271,7 @@ class EmmeAssignmentModel(AssignmentModel):
             self.emme_project.create_extra_attribute(
                 "LINK", extra(ass_class), ass_class + " volume",
                 overwrite=True, scenario=scenario)
-        for attr in ("total_cost", "toll_cost"):
+        for attr in ("total_cost", "toll_cost", "car_time"):
             self.emme_project.create_extra_attribute(
                 "LINK", extra(attr), attr,
                 overwrite=True, scenario=scenario)
@@ -292,6 +292,12 @@ class EmmeAssignmentModel(AssignmentModel):
         self.emme_project.create_extra_attribute(
             "TRANSIT_SEGMENT", param.extra_waiting_time["penalty"],
             "wait time st.dev.", overwrite=True, scenario=scenario)
+        self.emme_project.create_extra_attribute(
+            "TRANSIT_SEGMENT", "@" + param.uncongested_transit_time,
+            "uncongested transit time", overwrite=True, scenario=scenario)
+        self.emme_project.create_extra_attribute(
+            "TRANSIT_SEGMENT", extra(param.uncongested_transit_time),
+            "uncongested transit time", overwrite=True, scenario=scenario)
         log.debug("Created extra attributes for scenario {}".format(
             scenario))
         return seg_results
