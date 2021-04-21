@@ -91,7 +91,6 @@ class TransitSpecification:
             "type": "EXTENDED_TRANSIT_NETWORK_RESULTS",
             "on_segments": segment_results,
             }
-        subres = result_mtx["trip_part"]
         if count_zone_boardings:
             jlevel1 = JourneyLevel(
                 headway_attribute, boarded=False, count_zone_boardings=True)
@@ -101,7 +100,7 @@ class TransitSpecification:
                 "type": "EXTENDED_TRANSIT_MATRIX_RESULTS",
                 "by_mode_subset": {
                     "modes": param.transit_modes,
-                    "distance": result_mtx["dist"][ac]["id"],
+                    "distance": result_mtx["dist"][ass_class]["id"],
                     "actual_total_boarding_costs": result_mtx["trip_part"][ass_class + "_board_cost"]["id"],
                 },
             }
