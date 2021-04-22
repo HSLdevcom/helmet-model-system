@@ -172,25 +172,26 @@ class EmmeAssignmentModel(AssignmentModel):
 
         # Aggregate and print transit vehicle kms
         transit_modes = param.transit_mode_aggregates
-        transit_dists = pandas.Series(0.0, transit_modes)
-        transit_times = pandas.Series(0.0, transit_modes)
+        dists = pandas.Series(0.0, transit_modes)
+        times = pandas.Series(0.0, transit_modes)
         for ap in self.assignment_periods:
             network = ap.emme_scenario.get_network()
+            volume_factor = param.volume_factors["bus"][ap.name]
             for line in network.transit_lines():
                 mode = "other"
                 for modes in transit_modes:
                     if line.mode.id in transit_modes[modes]:
                         mode = modes
                         break
-                for segment in line.segments():
-                    if 0 < segment.line["@hw"+ap.name] < 900:
-                        freq = (param.volume_factors["bus"][ap.name]
-                                * (60 / segment.line["@hw"+ap.name]))
-                        transit_dists[mode] += freq * segment.link.length
-                        # TODO Move @base_timtr to time-period specific attribute
-                        transit_times[mode] += freq * segment["@base_timtr"]
-        resultdata.print_data(transit_dists, "transit_kms.txt", "dist")
-        resultdata.print_data(transit_times, "transit_kms.txt", "time")
+                headway = line[ap.extra("hw")]
+                if 0 < headway < 900:
+                    departures = volume_factor * 60/headway
+                    for segment in line.segments():
+                        dists[mode] += departures * segment.link.length
+                        times[mode] += (departures
+                                        * segment[ap.extra("base_timtr")])
+        resultdata.print_data(dists, "transit_kms.txt", "dist")
+        resultdata.print_data(times, "transit_kms.txt", "time")
 
     def calc_transit_cost(self, fares, peripheral_cost, default_cost=None):
         """Calculate transit zone cost matrix.

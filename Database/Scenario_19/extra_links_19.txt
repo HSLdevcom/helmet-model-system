@@ -1,10 +1,10 @@
 t extra_attributes
-@hinah LINK 0.0 ''
-@hinih LINK 0.0 ''
-@hinpt LINK 0.0 ''
+@hinta_aht LINK 0.0 ''
+@hinta_iht LINK 0.0 ''
+@hinta_pt LINK 0.0 ''
 @pyoratieluokka LINK 0.0 'pyoratieluokka'
 end extra_attributes
-   inode    jnode    @hinah    @hinih    @hinpt @pyoratieluokka
+   inode    jnode @hinta_aht @hinta_iht @hinta_pt @pyoratieluokka
        5        2         0         0         0         0
        6        1         0         0         0         0
        7        1         0         0         0         0

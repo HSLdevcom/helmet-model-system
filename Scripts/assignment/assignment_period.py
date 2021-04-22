@@ -188,7 +188,7 @@ class AssignmentPeriod(Period):
             log.warn("All Emme-node labels do not have transit costs specified.")
         spec = TransitSpecification(
             "transit_work", self._segment_results["transit_work"],
-            "@hw"+self.name, self.demand_mtx, self.result_mtx,
+            self.extra("hw"), self.demand_mtx, self.result_mtx,
             count_zone_boardings=True)
         for transit_zone in transit_zones:
             # Set tag to 1 for nodes in transit zone and 0 elsewhere
@@ -484,7 +484,7 @@ class AssignmentPeriod(Period):
         for link in network.links():
             freq = 0
             for segment in link.segments():
-                segment_hdw = segment.line["@hw"+self.name]
+                segment_hdw = segment.line[self.extra("hw")]
                 if 0 < segment_hdw < 900:
                     freq += 60 / segment_hdw
             link[self.extra("bus")] = freq
@@ -503,8 +503,7 @@ class AssignmentPeriod(Period):
         log.info("Calculates road charges for scenario {}".format(self.emme_scenario.id))
         network = self.emme_scenario.get_network()
         for link in network.links():
-            # Dist-based toll is stored in @hinxx where xx is ah, pt, ih
-            toll_cost = link.length * link["@hin"+self.name[:2]]
+            toll_cost = link.length * link[self.extra("hinta")]
             dist_cost = self.dist_unit_cost * link.length
             link[self.extra("toll_cost")] = toll_cost
             link[self.extra("total_cost")] = toll_cost + dist_cost
@@ -533,7 +532,7 @@ class AssignmentPeriod(Period):
         self._car_spec = CarSpecification(
             self.extra, self.demand_mtx, self.result_mtx)
         self._transit_specs = {tc: TransitSpecification(
-                tc, self._segment_results[tc], "@hw"+self.name,
+                tc, self._segment_results[tc], self.extra("hw"),
                 self.demand_mtx, self.result_mtx)
             for tc in param.transit_classes}
         self.bike_spec = {
