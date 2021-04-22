@@ -331,11 +331,10 @@ class AssignmentPeriod(Period):
                     break
             for segment in link.segments():
                 segment.transit_time_func = func
-            # TODO Change letters
-            if network.mode('s') in link.modes:
-                link.modes |= {network.mode('c')}
-            elif network.mode('c') in link.modes:
-                link.modes -= {network.mode('c')}
+            if network.mode('c') in link.modes:
+                link.modes |= {network.mode('h')}
+            elif network.mode('h') in link.modes:
+                link.modes -= {network.mode('h')}
         self.emme_scenario.publish_network(network)
 
     def _set_bike_vdfs(self):
@@ -362,11 +361,10 @@ class AssignmentPeriod(Period):
                     link.volume_delay_func = pathclass[None]
             except KeyError:
                 link.volume_delay_func = 99
-            # TODO Change letters
             if network.mode('f') in link.modes:
-                link.modes |= {network.mode('c')}
-            elif network.mode('c') in link.modes:
-                link.modes -= {network.mode('c')}
+                link.modes |= {network.mode('h')}
+            elif network.mode('h') in link.modes:
+                link.modes -= {network.mode('h')}
         self.emme_scenario.publish_network(network)
 
     def _set_emmebank_matrices(self, matrices, is_last_iteration):
@@ -611,12 +609,15 @@ class AssignmentPeriod(Period):
         log.info("Car assignment started...")
         car_spec = self._car_spec.spec(lightweight)
         car_spec["stopping_criteria"] = stopping_criteria
-        assign_report = self.emme_project.car_assignment(car_spec, self.emme_scenario)
+        assign_report = self.emme_project.car_assignment(
+            car_spec, self.emme_scenario)
         self.emme_project.copy_attribute(
-            "timau", self.extra("car_time"),
+            from_attribute_name="timau",
+            to_attribute_name=self.extra("car_time"),
             from_scenario=self.emme_scenario,
             to_scenario=self.emme_scenario)
-        log.info("Car assignment performed for scenario " + str(self.emme_scenario.id))
+        log.info("Car assignment performed for scenario {}".format(
+            self.emme_scenario.id))
         log.info("Stopping criteria: {}, iteration {} / {}".format(
             assign_report["stopping_criterion"],
             assign_report["iterations"][-1]["number"],

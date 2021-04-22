@@ -1,0 +1,8 @@
+t extra_attributes
+@hwaht TRANSIT_LINE 0.0 ''
+@hwiht TRANSIT_LINE 0.0 ''
+@hwpt TRANSIT_LINE 0.0 ''
+end extra_attributes
+    line    @hwaht    @hwiht     @hwpt
+'11    '        10        10        10
+'12    '        10        10        10

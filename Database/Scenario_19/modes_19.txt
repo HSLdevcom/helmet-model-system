@@ -1,0 +1,24 @@
+c Modeller - Mode Transaction
+c Date: 2021-04-22 09:33:28
+c Project:        HELMEL_KEHI_30                                              
+c Scenario 19:    bike
+t modes
+c id description mode_type colour cost_time_coeff cost_distance_coeff energy_time_coeff energy_distance_coeff speed_factor
+a h 'Paamuoto' 1   1   0.00   0.00   0.00   0.00
+a c 'Auto'     4   1
+a v 'Pakettiaut' 4   1
+a k 'Kuorma-aut' 4   1
+a y 'KA peravau' 4   1
+a b 'HSL-bussi' 2   1
+a g 'HSL-runkob' 2   1
+a d 'Muu bussi' 2   1
+a e 'Pikavuoro' 2   1
+a m 'Metro'    2   1
+a r 'HSL-juna' 2   1
+a j 'Muu juna' 2   1
+a t 'Ratikka'  2   1
+a p 'Pikaratikk' 2   1
+a w 'Vesiliiken' 2   1
+a a 'Kavely'   3   1   0.00   0.00   0.00   0.00          5.0
+a s 'Ulkokavely' 3   1   0.00   0.00   0.00   0.00          5.0
+a f 'Polkupyora' 3   1   0.00   0.00   0.00   0.00         17.0

@@ -1,0 +1,31 @@
+t extra_attributes
+@hinah LINK 0.0 ''
+@hinih LINK 0.0 ''
+@hinpt LINK 0.0 ''
+@pyoratieluokka LINK 0.0 'pyoratieluokka'
+end extra_attributes
+   inode    jnode    @hinah    @hinih    @hinpt @pyoratieluokka
+       5        2         0         0         0         0
+       6        1         0         0         0         0
+       7        1         0         0         0         0
+    2792        4         0         0         0         0
+   16001        4         0         0         0         0
+   17000        4         0         0         0         0
+   31001        3         0         0         0         0
+   31501        2         0         0         0         0
+       1        6         0         0         0         0
+       1        7         0         0         0         0
+       1        2         0         0         0         0
+       1        4         0         0         0         0
+       2        5         0         0         0         0
+       2    31501         0         0         0         0
+       2        3         0         0         0         0
+       3    31001         0         0         0         0
+       3        2         0         0         0         0
+       3        4         0         0         0         0
+       4     2792         0         0         0         0
+       4    16001         0         0         0         0
+       4    17000         0         0         0         0
+       4        1         0         0         0         0
+       4        2         0         0         0         0
+       4        3         0         0         0         0
