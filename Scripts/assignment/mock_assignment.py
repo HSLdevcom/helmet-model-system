@@ -1,5 +1,9 @@
+import pandas
+
+
 import utils.log as log
 import parameters.assignment as param
+import parameters.zone as zone_param
 from abstract_assignment import AssignmentModel, Period
 
 
@@ -35,6 +39,9 @@ class MockAssignmentModel(AssignmentModel):
 
     def aggregate_results(self, resultdata):
         pass
+
+    def calc_noise(self):
+        return pandas.Series(0, zone_param.area_aggregation)
 
     def prepare_network(self):
         pass

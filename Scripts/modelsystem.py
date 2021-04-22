@@ -198,6 +198,8 @@ class ModelSystem:
                 self._save_to_omx(impedance[tp], tp)
         if is_end_assignment:
             self.ass_model.aggregate_results(self.resultdata)
+            self._calculate_noise_areas()
+            self.resultdata.flush()
         self.dtm.init_demand()
         return impedance
 
@@ -290,16 +292,17 @@ class ModelSystem:
                 trip_sum[mode] / sum_all, "origins_shares.txt", mode)
             mode_shares[mode] = trip_sum[mode].sum() / sum_all.sum()
         self.mode_share.append(mode_shares)
-        if iteration=="last":
-            # Save demand matrices to files
-            for ap in self.ass_model.assignment_periods:
+
+        # Add vans and save demand matrices
+        for ap in self.ass_model.assignment_periods:
+            self.dtm.add_vans(ap.name, self.zdata_forecast.nr_zones)
+            if iteration=="last":
                 self._save_demand_to_omx(ap.name)
 
         # Calculate and return traffic impedance
         for ap in self.ass_model.assignment_periods:
             tp = ap.name
             log.info("Assigning period " + tp)
-            self.dtm.add_vans(tp, self.zdata_forecast.nr_zones)
             impedance[tp] = ap.assign(self.dtm.demand[tp], iteration)
             if tp == "aht":
                 self._update_ratios(impedance[tp], tp)
@@ -308,6 +311,7 @@ class ModelSystem:
                 self._save_to_omx(impedance[tp], tp)
         if iteration=="last":
             self.ass_model.aggregate_results(self.resultdata)
+            self._calculate_noise_areas()
 
         # Reset time-period specific demand matrices (DTM), and empty result buffer
         self.dtm.init_demand()
@@ -327,6 +331,15 @@ class ModelSystem:
             with self.resultmatrices.open(mtx_type, tp, zone_numbers, 'w') as mtx:
                 for ass_class in impedance[mtx_type]:
                     mtx[ass_class] = impedance[mtx_type][ass_class]
+
+    def _calculate_noise_areas(self):
+        noise_areas = self.ass_model.calc_noise()
+        self.resultdata.print_data(noise_areas, "noise_areas.txt", "area")
+        ar = ArrayAggregator(self.zdata_forecast.zone_numbers)
+        pop = ar.aggregate(self.zdata_forecast["population"])
+        conversion = pandas.Series(zone_param.pop_share_per_noise_area)
+        noise_pop = conversion * noise_areas * pop
+        self.resultdata.print_data(noise_pop, "noise_areas.txt", "population")
 
     def _sum_trips_per_zone(self, mode, include_dests=True):
         int_demand = pandas.Series(0, self.zdata_base.zone_numbers)

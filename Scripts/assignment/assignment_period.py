@@ -41,8 +41,8 @@ class AssignmentPeriod(Period):
                 extra_attribute_default_value=0,
                 overwrite=True,
                 scenario=self.emme_scenario)
-            log.debug("Created attr {} for scen {}".format(
-                extr.name, self.emme_scenario))
+        log.debug("Created extra attributes for scenario {}".format(
+            self.emme_scenario))
         self._calc_road_cost()
         self._calc_boarding_penalties()
         self._calc_background_traffic()
@@ -106,10 +106,9 @@ class AssignmentPeriod(Period):
                 mtxs[mtx_type][mtx_class][ mtxs["time"][mtx_class] > 999999 ] = 999999
         # adjust impedance
         mtxs["time"]["bike"] = mtxs["time"]["bike"].clip(None, 9999.)
-        mtxs["time"]["car_work"] = self._extract_timecost_from_gcost(
-            "car_work")
-        mtxs["time"]["car_leisure"] = self._extract_timecost_from_gcost(
-            "car_leisure")
+        for ass_class in ("car_work", "car_leisure"):
+            mtxs["time"][ass_class] = self._extract_timecost_from_gcost(
+                ass_class)
         mtxs["time"]["transit_work"] = self._damp(
             mtxs["time"]["transit_work"], "transit_work_fw_time")
         if iteration=="last":
@@ -256,15 +255,18 @@ class AssignmentPeriod(Period):
             else:
                 self._set_matrix(mtx, matrices[mtx])
 
-    def _set_matrix(self, mtx_label, matrix):
+    def _set_matrix(self, mtx_label, matrix, result_type=None):
         if numpy.isnan(matrix).any():
-            msg = "NAs in demand matrix {}. Would cause infinite loop in Emme assignment.".format(
-                mtx_label)
+            msg = ("NAs in demand matrix {}. ".format(mtx_label)
+                   + "Would cause infinite loop in Emme assignment.")
             log.error(msg)
             raise ValueError(msg)
-        else:
+        elif result_type is None:
             self.emme_project.modeller.emmebank.matrix(
                 self.demand_mtx[mtx_label]["id"]).set_numpy_data(matrix)
+        else:
+            self.emme_project.modeller.emmebank.matrix(
+                self.result_mtx[result_type][mtx_label]["id"]).set_numpy_data(matrix)
 
     def _get_emmebank_matrices(self, mtx_type, is_last_iteration=False):
         """Get all matrices of specified type.
@@ -323,9 +325,11 @@ class AssignmentPeriod(Period):
         # To get travel time, monetary cost is removed from generalized cost.
         vot_inv = param.vot_inv[param.vot_classes[ass_class]]
         gcost = self._get_matrix("gen_cost", ass_class)
-        tcost = self._get_matrix("cost", ass_class)
-        tdist = self._get_matrix("dist", ass_class)
-        return gcost - vot_inv *(tcost + self.dist_unit_cost*tdist)
+        cost = self._get_matrix("cost", ass_class)
+        dist = self._get_matrix("dist", ass_class)
+        time = gcost - vot_inv*(cost + self.dist_unit_cost*dist)
+        self._set_matrix(ass_class, time, "time")
+        return time
 
     def _calc_background_traffic(self, include_trucks=False):
         """Calculate background traffic (buses)."""
@@ -458,9 +462,16 @@ class AssignmentPeriod(Period):
         log.info("Car assignment started...")
         car_spec = self._car_spec.spec(lightweight)
         car_spec["stopping_criteria"] = stopping_criteria
-        self.emme_project.car_assignment(car_spec, self.emme_scenario)
+        assign_report = self.emme_project.car_assignment(car_spec, self.emme_scenario)
         log.info("Car assignment performed for scenario " + str(self.emme_scenario.id))
-
+        log.info("Stopping criteria: {}, iteration {} / {}".format(
+            assign_report["stopping_criterion"],
+            assign_report["iterations"][-1]["number"],
+            stopping_criteria["max_iterations"]
+            ))
+        if assign_report["stopping_criterion"] == "MAX_ITERATIONS":
+            log.warn("Car assignment not fully converged.")
+    
     def _assign_bikes(self, length_mat_id, length_for_links):
         """Perform bike traffic assignment for one scenario."""
         scen = self.bike_scenario
@@ -581,7 +592,7 @@ class AssignmentPeriod(Period):
         specs = self._transit_specs
         for tc in specs:
             specs[tc].transit_spec["journey_levels"][1]["boarding_cost"]["global"]["penalty"] = param.transfer_penalty[tc]
-        self.emme_project.congested_assignment(
+        assign_report = self.emme_project.congested_assignment(
             transit_assignment_spec=[specs[tc].transit_spec for tc in specs],
             class_names=specs.keys(),
             congestion_function=param.trass_func,
@@ -598,3 +609,10 @@ class AssignmentPeriod(Period):
                 class_name=tc)
         log.info("Congested transit assignment performed for scenario {}".format(
             str(self.emme_scenario.id)))
+        log.info("Stopping criteria: {}, iteration {} / {}".format(
+            assign_report["stopping_criteria"],
+            assign_report["iterations"][-1]["number"],
+            param.trass_stop["max_iterations"]
+            ))
+        if assign_report["stopping_criteria"] == "MAX_ITERATIONS":
+            log.warn("Congested transit assignment not fully converged.")

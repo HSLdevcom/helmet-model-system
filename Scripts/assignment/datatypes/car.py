@@ -16,7 +16,7 @@ class Car:
                 "perception_factor": value_of_time_inv,
             },
             "results": {
-                "link_volumes": param.link_volumes[ass_class],
+                "link_volumes": '@' + ass_class,
                 "od_travel_times": {
                     "shortest_paths": od_travel_times
                 }

@@ -186,6 +186,21 @@ volume_factors = {
         "iht": 1 / 0.497,
     },
 }
+# Factor for converting weekday traffic into yearly day average
+years_average_day_factor = 0.85
+# Factor for converting day traffic into 7:00-22:00 traffic
+share_7_22_of_day = 0.9
+# Noice zone width as function of start noise
+noise_zone_width = {
+    (0, 55): lambda x: 5,
+    (55, 65): lambda x: 10 + 31./10*x,
+    (65, 68): lambda x: 41 + 16./3*x,
+    (68, 71): lambda x: 57 + 21./3*x,
+    (71, 74): lambda x: 78 + 31./3*x,
+    (74, 77): lambda x: 109 + 44./3*x,
+    (77, 80): lambda x: 153 + 66./3*x,
+    (80, float("inf")): lambda x: 225,
+}
 
 ### ASSIGNMENT REFERENCES ###
 
@@ -237,6 +252,7 @@ assignment_modes = {
     "truck": 'k',
     "van": 'v',
 }
+volume_delays_funcs = (1, 2, 3, 4, 5)
 vot_classes = {
     "car_work": "work",
     "car_leisure": "leisure",
@@ -245,6 +261,14 @@ vot_classes = {
     "van": "business",
 }
 bike_mode = 'f'
+transit_mode_aggregates = {
+    "bus": "bde",
+    "trunk": "g",
+    "metro": "m",
+    "train": "rj",
+    "tram": "tp",
+    "other": ""
+}
 transit_modes = [
     'b',
     'd',
@@ -295,15 +319,6 @@ bike_attributes = {
     "@bike_day": "LINK",
 }
 transit_assignment_modes = transit_modes + aux_modes
-# Link attribute for volumes
-link_volumes = {
-    "car_work": "@car_work",
-    "car_leisure": "@car_leisure",
-    "trailer_truck": "@trailer_truck",
-    "truck": "@truck",
-    "van": "@van",
-    "bus": "@bus"
-    }
 # Emme matrix IDs
 emme_demand_mtx = {
     "car_work": {
@@ -536,3 +551,7 @@ emme_result_mtx = {
     },
 }
 background_traffic = "ul3"
+station_ids = {
+    "metro": 13,
+    "train": 14,
+}
