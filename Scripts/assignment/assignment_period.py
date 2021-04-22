@@ -252,13 +252,16 @@ class AssignmentPeriod(Period):
         Calculate and sum transit results to link and nodes.
         """
         network = self.emme_scenario.get_network()
-        for segment in network.transit_segments():
-            for tc in param.transit_classes:
-                for s in ("boa", "trb"):
-                    a = self.extra("{}_" + s)
-                    segment.i_node[a.format(tc[:10]+'n')] += segment[a.format(tc[:11])]
-                if segment.link is not None:
-                    segment.link[self.extra(tc)] += segment[self.extra(tc[:11]+"_vol")]
+        segres = self._segment_results
+        for tc in segres:
+            for res in segres[tc]:
+                nodeattr = self.extra(tc[:10]+"n_"+param.segment_results[res])
+                for segment in network.transit_segments():
+                    if res == "transit_volumes":
+                        if segment.link is not None:
+                            segment.link[self.extra(tc)] += segment[segres[tc][res]]
+                    else:
+                        segment.i_node[nodeattr] += segment[segres[tc][res]]
         self.emme_scenario.publish_network(network)
 
     def _set_car_and_transit_vdfs(self):
