@@ -277,17 +277,17 @@ class EmmeAssignmentModel(AssignmentModel):
                 overwrite=True, scenario=scenario)
         # Create node and transit segment attributes
         attr = param.segment_results
-        seg_results = {tc: {res: self.extra(tc[:11]+"_"+attr[res])
+        seg_results = {tc: {res: extra(tc[:11]+"_"+attr[res])
                 for res in param.segment_results}
             for tc in param.transit_classes}
-        for res in seg_results:
-            for tc in param.transit_classes:
+        for tc in param.transit_classes:
+            for res in param.segment_results:
                 self.emme_project.create_extra_attribute(
                     "TRANSIT_SEGMENT", seg_results[tc][res],
                     tc+" "+res, overwrite=True, scenario=scenario)
                 if res != "transit_volumes":
                     self.emme_project.create_extra_attribute(
-                        "NODE", self.extra(tc[:10]+"n_"+attr[res]),
+                        "NODE", extra(tc[:10]+"n_"+attr[res]),
                         tc+" "+res, overwrite=True, scenario=scenario)
         self.emme_project.create_extra_attribute(
             "TRANSIT_SEGMENT", param.extra_waiting_time["penalty"],
