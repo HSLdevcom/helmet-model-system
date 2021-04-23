@@ -413,16 +413,15 @@ class ModeDestModel(LogitModel):
         
         Returns
         -------
-        tuple
-            list
-                float
-                    Choice probabilities for purpose modes
+        list
             float
-                Total accessibility for individual (eur)
-            float
-                Sustainable modes accessibility for individual (eur)
-            float
-                Car accessibility for individual (eur)
+                Choice probabilities for purpose modes
+        float
+            Total accessibility for individual (eur)
+        float
+            Sustainable modes accessibility for individual (eur)
+        float
+            Car accessibility for individual (eur)
         """
         mode_exps = {}
         mode_expsum = 0
@@ -453,15 +452,16 @@ class ModeDestModel(LogitModel):
         sust_logsum = numpy.log(sust_expsum)
         car_logsum = numpy.log(car_expsum)
         b = self._get_cost_util_coefficient()
-        if isinstance(b, tuple):
+        try:
+            # Convert utility into euros
+            money_utility = 1 / b
+        except TypeError:
             # Separate params for cap region and surrounding
             # Choose based location
             if self.lbounds.stop < zone:
                 money_utility = 1 / b[0]
             else:
                 money_utility = 1 / b[1]
-        else:
-            money_utility = 1 / b
         money_utility /= self.mode_choice_param["car"]["log"]["logsum"]
         total = -money_utility * logsum
         sust = -money_utility * sust_logsum

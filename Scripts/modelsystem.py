@@ -554,8 +554,8 @@ class AgentModelSystem(ModelSystem):
             for person in self.dm.population:
                 person.calc_income()
                 person.write_file(self.resultdata, fname)
-            log.info("Results printed to file ".format(fname)) 
-        log.info("Demand calculation completed")        
+            log.info("Results printed to file ".format(fname))
+        log.info("Demand calculation completed")
 
     def _distribute_tours(self, mode, origs, sec_dest_tours, impedance):
         sec_dest_purpose = self.dm.purpose_dict["hoo"]

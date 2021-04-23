@@ -132,12 +132,10 @@ class Person:
             Writer object to result directory
         """
         # sum accessibility of all tours
-        nr_tours = 0
         total_access = 0
         sustainable_access = 0
         car_access = 0
         for tour in self.tours:
-            nr_tours += 1
             total_access += tour.total_accessibility
             sustainable_access += tour.sustainable_accessibility
             car_access += tour.car_accessibility
@@ -147,6 +145,6 @@ class Person:
         zonedata = "{:d}\t{:s}\t{:s}".format(
             self.zone.number, self.zone.area, self.zone.municipality)
         accessdata = "{:d}\t{:.1f}\t{:.1f}\t{:.1f}".format(
-            nr_tours, total_access, sustainable_access, car_access)
+            len(self.tours), total_access, sustainable_access, car_access)
         resultdata.print_line("\t".join(
             [persondata, zonedata, accessdata]), filename)
