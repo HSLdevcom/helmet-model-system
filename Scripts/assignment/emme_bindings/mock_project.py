@@ -374,6 +374,14 @@ class TransitLine(NetworkObject):
         self._segments = []
 
     @property
+    def id(self):
+        return self._id
+
+    @id.setter
+    def id(self, idx):
+        self._id = idx
+
+    @property
     def mode(self):
         return self.vehicle.mode
 
