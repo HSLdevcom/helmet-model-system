@@ -25,6 +25,7 @@ class EmmeAssignmentTest(unittest.TestCase):
                 node.label = 'A'
             for od in ((1, 2), (2, 3), (3, 4)):
                 link = network.create_link(*od, modes=['c', 'b'])
+                link.type = 138
                 link.length = 3.5
             line = network.create_transit_line("1", 0, [1, 2])
             line.headway = 5
