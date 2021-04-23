@@ -22,12 +22,14 @@ class Person:
         Model used to decide if car user
     """
 
+    ID = 0
     FEMALE = 0
     MALE = 1
     
-    def __init__(self, person_id, zone, age_group, 
+    def __init__(self, zone, age_group, 
                  generation_model, car_use_model, income_model):
-        self.id = person_id
+        self.id = Person.ID
+        Person.ID += 1
         self.zone = zone
         self.age = random.randint(age_group[0], age_group[1])
         self.age_group = "age_" + str(age_group[0]) + "-" + str(age_group[1])
