@@ -25,6 +25,10 @@ class Person:
     ID = 0
     FEMALE = 0
     MALE = 1
+    person_attr = ["id", "age_group", "gender", "is_car_user", "income", "nr_tours"]
+    zone_attr =  ["number", "area", "municipality"]
+    tour_attr = ["total_access", "sustainable_access", "car_access"]
+    attr = person_attr + zone_attr + tour_attr
     
     def __init__(self, zone, age_group, 
                  generation_model, car_use_model, income_model):
@@ -122,29 +126,23 @@ class Person:
                 if random.random() < non_home_prob:
                     non_home_tour = Tour(purposes["oo"], tour)
                     self.tours.append(non_home_tour)
+        self.nr_tours = len(self.tours)
 
-    def write_file(self, resultdata, filename):
-        """ Write person data to file.
+    def __str__(self):
+        """ Return person attributes as string.
 
-        Parameters
+        Returns
         ----------
-        resultdata : ResultData
-            Writer object to result directory
+        str
+            Person object attributes.
         """
         # sum accessibility of all tours
-        total_access = 0
-        sustainable_access = 0
-        car_access = 0
+        tour_attributes = dict.fromkeys(Person.tour_attr, 0)
         for tour in self.tours:
-            total_access += tour.total_accessibility
-            sustainable_access += tour.sustainable_accessibility
-            car_access += tour.car_accessibility
+            for attr in tour_attributes:
+                tour_attributes[attr] += getattr(tour, attr)
         # print to file
-        persondata = "{:d}\t{:s}\t{:s}\t{!s}\t{:.0f}".format(
-            self.id, self.age_group, self.gender, self.is_car_user, self.income)
-        zonedata = "{:d}\t{:s}\t{:s}".format(
-            self.zone.number, self.zone.area, self.zone.municipality)
-        accessdata = "{:d}\t{:.1f}\t{:.1f}\t{:.1f}".format(
-            len(self.tours), total_access, sustainable_access, car_access)
-        resultdata.print_line("\t".join(
-            [persondata, zonedata, accessdata]), filename)
+        persondata = [str(getattr(self, attr)) for attr in Person.person_attr]
+        zonedata = [str(getattr(self.zone, attr)) for attr in Person.zone_attr]
+        tourdata = [str(tour_attributes[attr]) for attr in tour_attributes]
+        return "\t".join(persondata + zonedata + tourdata)

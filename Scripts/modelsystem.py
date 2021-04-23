@@ -543,17 +543,13 @@ class AgentModelSystem(ModelSystem):
         if is_last_iteration:
             random.seed(zone_param.population_draw)
             self.dm.incmod.predict()
-            random.seed(None) 
-            line = "\t".join([
-                "person_id", "age_group", "gender", "car_user", "income",
-                "number", "area", "municipality", "nr_tours",
-                "total_access", "sustainable_access", "car_access"
-                ])
+            random.seed(None)
             fname = "agents"
-            self.resultdata.print_line(line, fname)
+            header = "\t".join(self.dm.population[0].attr)
+            self.resultdata.print_line(header, fname)
             for person in self.dm.population:
                 person.calc_income()
-                person.write_file(self.resultdata, fname)
+                self.resultdata.print_line(person.__str__(), fname)
             log.info("Results printed to file ".format(fname))
         log.info("Demand calculation completed")
 

@@ -118,9 +118,9 @@ class Tour(object):
                 is_car_user, self.position[0])
         self._mode_idx = numpy.searchsorted(probs.cumsum(), self._mode_draw)
         self.purpose.generated_tours[self.mode][self.position[0]] += 1
-        self.total_accessibility = total
-        self.sustainable_accessibility = sust
-        self.car_accessibility = car
+        self.total_access = total
+        self.sustainable_access = sust
+        self.car_access = car
 
     def choose_destination(self, sec_dest_tours):
         """Choose primary destination for the tour.
