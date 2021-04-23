@@ -286,9 +286,17 @@ class TransitVehicle:
 
 
 class NetworkObject:
-    def __init__(self):
-        self._extra_attr = {}
-        self.id = None
+    def __init__(self, network, extra_attr):
+        self.network = network
+        self._extra_attr = {idx: extra_attr[idx].default_value
+            for idx in extra_attr}
+        self.data1 = 0.0
+        self.data2 = 0.0
+        self.data3 = 0.0
+
+    @property
+    def id(self):
+        return None
 
     def __getitem__(self, key):
         if key in self._extra_attr:
@@ -310,16 +318,10 @@ class NetworkObject:
 
 class Node(NetworkObject):
     def __init__(self, network, idx, is_centroid=False):
-        self.network = network
+        NetworkObject.__init__(self, network, network._extra_attr["NODE"])
         self.is_centroid = is_centroid
         self.number = idx
         self.label = ""
-        self.data1 = 0.0
-        self.data2 = 0.0
-        self.data3 = 0.0
-        extra_attr = network._extra_attr["NODE"]
-        self._extra_attr = {idx: extra_attr[idx].default_value
-            for idx in extra_attr}
 
     @property
     def id(self):
@@ -328,7 +330,7 @@ class Node(NetworkObject):
 
 class Link(NetworkObject):
     def __init__(self, network, i_node, j_node, modes):
-        self.network = network
+        NetworkObject.__init__(self, network, network._extra_attr["LINK"])
         self.i_node = i_node
         self.j_node = j_node
         self.modes = frozenset(modes)
@@ -336,13 +338,7 @@ class Link(NetworkObject):
         self.type = 1
         self.num_lanes = 1
         self.volume_delay_func = 0
-        self.data1 = 0.0
-        self.data2 = 0.0
-        self.data3 = 0.0
         self.auto_time = 0.1
-        extra_attr = network._extra_attr["LINK"]
-        self._extra_attr = {idx: extra_attr[idx].default_value
-            for idx in extra_attr}
         self._extra_attr["@hinta"] = 0.0
         self._extra_attr["@hinah"] = 0.0
         self._extra_attr["@hinpt"] = 0.0
@@ -367,16 +363,11 @@ class Link(NetworkObject):
 
 class TransitLine(NetworkObject):
     def __init__(self, network, idx, vehicle):
-        self.network = network
+        NetworkObject.__init__(
+            self, network, network._extra_attr["TRANSIT_LINE"])
         self.id = idx
         self.vehicle = vehicle
         self.headway = 0.01
-        self.data1 = 0.0
-        self.data2 = 0.0
-        self.data3 = 0.0
-        extra_attr = network._extra_attr["TRANSIT_LINE"]
-        self._extra_attr = {idx: extra_attr[idx].default_value
-            for idx in extra_attr}
         self._extra_attr["@hwaht"] = 0.01
         self._extra_attr["@hwpt"] = 0.01
         self._extra_attr["@hwiht"] = 0.01
@@ -395,16 +386,12 @@ class TransitLine(NetworkObject):
 
 class TransitSegment(NetworkObject):
     def __init__(self, network, line, link):
-        self.network = network
+        NetworkObject.__init__(
+            self, network, network._extra_attr["TRANSIT_SEGMENT"])
         self.line = line
         self.link = link
         self.transit_time_func = 0
-        self.data1 = 0.0
-        self.data2 = 0.0
-        self.data3 = 0.0
-        extra_attr = network._extra_attr["TRANSIT_SEGMENT"]
-        self._extra_attr = {idx: extra_attr[idx].default_value
-            for idx in extra_attr}
+        self.dwell_time = 0.01
         self._extra_attr["@base_timtr"] = 0.0
 
     @property
@@ -418,6 +405,7 @@ class TransitSegment(NetworkObject):
     @property
     def j_node(self):
         return self.link.j_node
+
 
 class ExistenceError(Exception):
     pass
