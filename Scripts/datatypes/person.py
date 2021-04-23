@@ -27,7 +27,7 @@ class Person:
     MALE = 1
     person_attr = ["id", "age_group", "gender", "is_car_user", "income", "nr_tours"]
     zone_attr =  ["number", "area", "municipality"]
-    tour_attr = ["total_access", "sustainable_access", "car_access"]
+    tour_attr = ["total_access", "sustainable_access"]
     attr = person_attr + zone_attr + tour_attr
     
     def __init__(self, zone, age_group, 

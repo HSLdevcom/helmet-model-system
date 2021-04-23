@@ -426,7 +426,6 @@ class ModeDestModel(LogitModel):
         mode_exps = {}
         mode_expsum = 0
         car_expsum = 0
-        sust_expsum = 0
         modes = self.purpose.modes
         for mode in modes:
             mode_exps[mode] = self.mode_exps[mode][zone]
@@ -440,17 +439,11 @@ class ModeDestModel(LogitModel):
                     else:
                         mode_exps[mode] *= math.exp(b["car_users"][1])
             mode_expsum += mode_exps[mode]
-            if mode == "car":
-                car_expsum += mode_exps[mode]
-            else:
-                sust_expsum += mode_exps[mode]
         probs = numpy.empty(len(modes))
         for i, mode in enumerate(modes):
             probs[i] = mode_exps[mode] / mode_expsum
         # utils to money
         logsum = numpy.log(mode_expsum)
-        sust_logsum = numpy.log(sust_expsum)
-        car_logsum = numpy.log(car_expsum)
         b = self._get_cost_util_coefficient()
         try:
             # Convert utility into euros
@@ -460,9 +453,8 @@ class ModeDestModel(LogitModel):
             money_utility = 1 / b[0] if self.lbounds.stop < zone else 1 / b[1]
         money_utility /= self.mode_choice_param["car"]["log"]["logsum"]
         total = -money_utility * logsum
-        sust = -money_utility * sust_logsum
-        car = -money_utility * car_logsum
-        return probs, total, sust, car
+        sust = -self.purpose.sustainable_accessibility[zone]
+        return probs, total, sust
 
     def _calc_utils(self, impedance):
         self.dest_expsums = {}

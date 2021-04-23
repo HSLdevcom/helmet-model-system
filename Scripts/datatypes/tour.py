@@ -114,13 +114,12 @@ class Tour(object):
         is_car_user : bool
             Whether the person is car user or not
         """
-        probs, total, sust, car = self.purpose.model.calc_individual_mode_prob(
+        probs, total, sust = self.purpose.model.calc_individual_mode_prob(
                 is_car_user, self.position[0])
         self._mode_idx = numpy.searchsorted(probs.cumsum(), self._mode_draw)
         self.purpose.generated_tours[self.mode][self.position[0]] += 1
         self.total_access = total
         self.sustainable_access = sust
-        self.car_access = car
 
     def choose_destination(self, sec_dest_tours):
         """Choose primary destination for the tour.
