@@ -457,11 +457,7 @@ class ModeDestModel(LogitModel):
             money_utility = 1 / b
         except TypeError:
             # Separate params for cap region and surrounding
-            # Choose based location
-            if self.lbounds.stop < zone:
-                money_utility = 1 / b[0]
-            else:
-                money_utility = 1 / b[1]
+            money_utility = 1 / b[0] if self.lbounds.stop < zone else 1 / b[1]
         money_utility /= self.mode_choice_param["car"]["log"]["logsum"]
         total = -money_utility * logsum
         sust = -money_utility * sust_logsum
