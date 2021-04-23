@@ -1,6 +1,6 @@
 import parameters.assignment as param
-from path_analysis import PathAnalysis
-from journey_level import JourneyLevel
+from assignment.datatypes.path_analysis import PathAnalysis
+from assignment.datatypes.journey_level import JourneyLevel
 
 
 class TransitSpecification:
@@ -16,6 +16,8 @@ class TransitSpecification:
     ----------
     ass_class : str
         Assignment class (transit_work/transit_leisure)
+    headway_attribute : str
+        Line attribute where headway is stored
     demand_mtx : dict
         key : str
             Assignment class (transit_work/transit_leisure)
@@ -40,7 +42,8 @@ class TransitSpecification:
     is_last_iteration : bool (optional)
         If this is the last iteration, some other assignment parameters can be defined
     """
-    def __init__(self, ass_class, demand_mtx, result_mtx, count_zone_boardings=False):
+    def __init__(self, ass_class, headway_attribute, demand_mtx, result_mtx,
+            count_zone_boardings=False):
         self.demand_mtx = demand_mtx
         self.result_mtx = result_mtx
         no_penalty = dict.fromkeys(["at_nodes", "on_lines", "on_segments"])
@@ -54,7 +57,7 @@ class TransitSpecification:
             "demand": self.demand_mtx[ass_class]["id"],
             "waiting_time": {
                 "headway_fraction": param.standard_headway_fraction,
-                "effective_headways": "hdw",
+                "effective_headways": headway_attribute,
                 "spread_factor": 1,
                 "perception_factor": param.waiting_time_perception_factor
             },

@@ -1,5 +1,5 @@
 import parameters.assignment as param
-from car import Car 
+from assignment.datatypes.car import Car
 
 class CarSpecification:
     """

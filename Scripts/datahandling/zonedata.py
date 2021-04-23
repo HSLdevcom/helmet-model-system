@@ -18,7 +18,7 @@ class ZoneData:
         first_extra = numpy.searchsorted(zone_numbers, peripheral[1], "right")
         self.zone_numbers = zone_numbers[:first_extra]
         self.mapping = {self.zone_numbers[i]: i
-            for i in xrange(self.zone_numbers.size)}
+            for i in range(self.zone_numbers.size)}
         first_surrounding = numpy.searchsorted(self.zone_numbers, surrounding[0])
         self.first_surrounding_zone = first_surrounding
         first_peripheral = numpy.searchsorted(self.zone_numbers, peripheral[0])
@@ -56,8 +56,8 @@ class ZoneData:
         car_cost = read_csv_file(data_dir, ".cco", squeeze=False)
         self.car_dist_cost = car_cost["dist_cost"][0]
         truckdata = read_csv_file(data_dir, ".trk", squeeze=True)
-        self.trailers_prohibited = map(int, truckdata.loc[0, :])
-        self.garbage_destination = map(int, truckdata.loc[1, :].dropna())
+        self.trailers_prohibited = list(map(int, truckdata.loc[0, :]))
+        self.garbage_destination = list(map(int, truckdata.loc[1, :].dropna()))
         pop = popdata["total"]
         self["population"] = pop
         self.share["share_age_7-17"] = popdata["sh_7-17"][:first_peripheral]

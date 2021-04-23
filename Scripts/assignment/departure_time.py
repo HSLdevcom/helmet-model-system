@@ -24,13 +24,10 @@ class DepartureTimeModel:
 
         Includes all transport_classes, each being set to zero.
         """
-        self.demand = dict.fromkeys(self.time_periods)
-        for time_period in self.demand:
-            ass_classes = dict.fromkeys(transport_classes)
-            self.demand[time_period] = ass_classes
-            for ass_class in ass_classes:
-                zeros = numpy.zeros((self.nr_zones, self.nr_zones))
-                self.demand[time_period][ass_class] = zeros
+        n = self.nr_zones
+        self.demand = {tp: {tc: numpy.zeros((n, n))
+                for tc in transport_classes}
+            for tp in self.time_periods}
 
     def add_demand(self, demand):
         """Add demand matrix for whole day.
