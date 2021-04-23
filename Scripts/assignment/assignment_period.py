@@ -110,10 +110,12 @@ class AssignmentPeriod(Period):
             mtxs["time"][ass_class] = self._extract_timecost_from_gcost(
                 ass_class)
         mtxs["time"]["transit_work"] = self._damp(
-            mtxs["time"]["transit_work"], "transit_work_fw_time")
+            mtxs["time"]["transit_work"],
+            self._get_matrix("trip_part_transit_work", "fw_time"))
         if iteration=="last":
             mtxs["time"]["transit_leisure"] = self._damp(
-                mtxs["time"]["transit_leisure"], "transit_leisure_fw_time")
+                mtxs["time"]["transit_leisure"],
+                self._get_matrix("trip_part_transit_leisure", "fw_time"))
         else:
             for mtx_type in mtxs:
                 mtxs[mtx_type]["transit_leisure"] = mtxs[mtx_type]["transit_work"]
@@ -164,8 +166,11 @@ class AssignmentPeriod(Period):
             log.warn("All zones in transit costs do not exist in Emme-network labels.")
         if transit_zones > zones_in_zonedata:
             log.warn("All Emme-node labels do not have transit costs specified.")
+        tc = "transit_work"
         spec = TransitSpecification(
-            "transit_work", self.demand_mtx, self.result_mtx,
+            tc, self.demand_mtx[tc]["id"], self.result_mtx["time"][tc]["id"],
+            self.result_mtx["dist"][tc]["id"],
+            self.result_mtx["trip_part_"+tc],
             count_zone_boardings=True)
         for transit_zone in transit_zones:
             # Set tag to 1 for nodes in transit zone and 0 elsewhere
@@ -179,7 +184,7 @@ class AssignmentPeriod(Period):
             self.emme_project.matrix_results(
                 spec.transit_result_spec, self.emme_scenario)
             nr_visits = self._get_matrix(
-                "trip_part", "transit_work_board_cost")
+                "trip_part_transit_work", "board_cost")
             # If the number of visits is less than 1, there seems to
             # be an easy way to avoid visiting this transit zone
             has_visited[transit_zone] = (nr_visits >= 1)
@@ -311,12 +316,11 @@ class AssignmentPeriod(Period):
         emme_id = self.result_mtx[assignment_result_type][subtype]["id"]
         return self.emme_project.modeller.emmebank.matrix(emme_id).get_numpy_data()
 
-    def _damp(self, travel_time, fw_mtx_name):
+    def _damp(self, travel_time, fw_time):
         """Reduce the impact from first waiting time on total travel time."""
-        fwt = self._get_matrix("trip_part", fw_mtx_name)
         wt_weight = param.waiting_time_perception_factor
         # Calculate transit travel time where first waiting time is damped
-        dtt = travel_time + wt_weight*((5./3.*fwt)**0.8 - fwt)
+        dtt = travel_time + wt_weight*((5./3.*fw_time)**0.8 - fw_time)
         return dtt
 
     def _extract_timecost_from_gcost(self, ass_class):
@@ -387,7 +391,10 @@ class AssignmentPeriod(Period):
     def _specify(self):
         self._car_spec = CarSpecification(self.demand_mtx, self.result_mtx)
         self._transit_specs = {tc: TransitSpecification(
-                tc, self.demand_mtx, self.result_mtx)
+                tc, self.demand_mtx[tc]["id"],
+                self.result_mtx["time"][tc]["id"],
+                self.result_mtx["dist"][tc]["id"],
+                self.result_mtx["trip_part_"+tc])
             for tc in param.transit_classes}
         self.bike_spec = {
             "type": "STANDARD_TRAFFIC_ASSIGNMENT",
