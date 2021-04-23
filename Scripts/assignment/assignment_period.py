@@ -319,9 +319,7 @@ class AssignmentPeriod(Period):
     def _damp(self, travel_time, fw_time):
         """Reduce the impact from first waiting time on total travel time."""
         wt_weight = param.waiting_time_perception_factor
-        # Calculate transit travel time where first waiting time is damped
-        dtt = travel_time + wt_weight*((5./3.*fw_time)**0.8 - fw_time)
-        return dtt
+        return travel_time + wt_weight*((5./3.*fw_time)**0.8 - fw_time)
 
     def _extract_timecost_from_gcost(self, ass_class):
         """Remove monetary cost from generalized cost."""
