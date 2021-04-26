@@ -144,5 +144,5 @@ class Person:
         # print to file
         persondata = [str(getattr(self, attr)) for attr in Person.person_attr]
         zonedata = [str(getattr(self.zone, attr)) for attr in Person.zone_attr]
-        tourdata = [str(tour_attributes[attr]) for attr in tour_attributes]
+        tourdata = [str(tour_attributes[attr]) for attr in Person.tour_attr]
         return "\t".join(persondata + zonedata + tourdata)
