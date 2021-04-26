@@ -174,17 +174,13 @@ class EmmeAssignmentModel(AssignmentModel):
         resultdata.print_data(stations, "transit_stations.txt", "number")
 
         # Aggregate and print transit vehicle kms
-        transit_modes = param.transit_mode_aggregates
+        transit_modes = [veh.description for veh in network.transit_vehicles()]
         transit_dists = pandas.Series(0.0, transit_modes)
         transit_times = pandas.Series(0.0, transit_modes)
         for ap in self.assignment_periods:
             network = ap.emme_scenario.get_network()
             for line in network.transit_lines():
-                mode = "other"
-                for modes in transit_modes:
-                    if line.mode.id in transit_modes[modes]:
-                        mode = modes
-                        break
+                mode = line.vehicle.description
                 for segment in line.segments():
                     if 0 < segment.line.headway < 900:
                         freq = (param.volume_factors["bus"][ap.name]
