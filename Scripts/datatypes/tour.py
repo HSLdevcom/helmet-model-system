@@ -12,7 +12,7 @@ class Tour(object):
     ----------
     purpose : datatypes.purpose.TourPurpose
         Travel purpose (hw/hs/ho/...)
-    origin : int or Tour
+    origin : Zone or Tour
         Origin zone number or origin tour (if non-home tour)
     """
     # Expansion factor used on demand in departure time model
@@ -48,8 +48,8 @@ class Tour(object):
     @orig.setter
     def orig(self, origin):
         try:
-            self._position = (self.purpose.zone_data.zone_index(origin),)
-        except KeyError:
+            self._position = (origin.index,)
+        except AttributeError:
             # If this is non-home tour, origin refers to home-based tour
             self._source = origin
             self._non_home_position = ()
@@ -65,7 +65,7 @@ class Tour(object):
     def dest(self, destination):
         self.position = (
             self.position[0],
-            self.purpose.zone_data.zone_index(destination)
+            destination.index
         )
 
     @property
@@ -80,7 +80,7 @@ class Tour(object):
         self.position = (
             self.position[0],
             self.position[1],
-            self.purpose.zone_data.zone_index(destination)
+            destination.index
         )
 
     @property
@@ -114,11 +114,12 @@ class Tour(object):
         is_car_user : bool
             Whether the person is car user or not
         """
-        self._mode_idx = numpy.searchsorted(
-            self.purpose.model.calc_individual_mode_prob(
-                is_car_user, self.position[0]).cumsum(),
-            self._mode_draw)
+        probs, total, sust = self.purpose.model.calc_individual_mode_prob(
+                is_car_user, self.position[0])
+        self._mode_idx = numpy.searchsorted(probs.cumsum(), self._mode_draw)
         self.purpose.generated_tours[self.mode][self.position[0]] += 1
+        self.total_access = total
+        self.sustainable_access = sust
 
     def choose_destination(self, sec_dest_tours):
         """Choose primary destination for the tour.
