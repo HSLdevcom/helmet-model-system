@@ -18,34 +18,26 @@ class TransitSpecification:
         Assignment class (transit_work/transit_leisure)
     headway_attribute : str
         Line attribute where headway is stored
-    demand_mtx : dict
+    demand_mtx_id : str
+        Emme matrix id for demand matrix
+    time_mtx_id : str
+        Emme matrix id for time matrix
+    dist_mtx_id : str
+        Emme matrix id for distance matrix
+    trip_part : dict
         key : str
-            Assignment class (transit_work/transit_leisure)
+            Impedance type (inv_time/aux_time/num_board/...)
         value : dict
             id : str
                 Emme matrix id
             description : dict
                 Matrix description
-    result_mtx : dict
-        key : str
-            Impedance type (time/cost/dist)
-        value : dict
-            key : str
-                Assignment class (transit_work/transit_leisure)
-            value : dict
-                id : str
-                    Emme matrix id
-                description : dict
-                    Matrix description
     count_zone_boardings : bool (optional)
         Whether assignment is performed only to count fare zone boardings
-    is_last_iteration : bool (optional)
-        If this is the last iteration, some other assignment parameters can be defined
     """
-    def __init__(self, ass_class, headway_attribute, demand_mtx, result_mtx,
-            count_zone_boardings=False):
-        self.demand_mtx = demand_mtx
-        self.result_mtx = result_mtx
+    def __init__(self, ass_class, headway_attribute, demand_mtx_id,
+                 time_mtx_id, dist_mtx_id, trip_part,
+                 count_zone_boardings=False):
         no_penalty = dict.fromkeys(["at_nodes", "on_lines", "on_segments"])
         no_penalty["global"] = {
             "penalty": 0, 
@@ -54,7 +46,7 @@ class TransitSpecification:
         self.transit_spec = {
             "type": "EXTENDED_TRANSIT_ASSIGNMENT",
             "modes": param.transit_assignment_modes,
-            "demand": self.demand_mtx[ass_class]["id"],
+            "demand": demand_mtx_id,
             "waiting_time": {
                 "headway_fraction": param.standard_headway_fraction,
                 "effective_headways": headway_attribute,
@@ -105,8 +97,8 @@ class TransitSpecification:
                 "type": "EXTENDED_TRANSIT_MATRIX_RESULTS",
                 "by_mode_subset": {
                     "modes": param.transit_modes,
-                    "distance": self.result_mtx["dist"][ass_class]["id"],
-                    "actual_total_boarding_costs": self.result_mtx["trip_part"][ass_class + "_board_cost"]["id"],
+                    "distance": dist_mtx_id,
+                    "actual_total_boarding_costs": trip_part["board_cost"]["id"],
                 },
             }
         else:
@@ -114,17 +106,17 @@ class TransitSpecification:
             jlevel2 = JourneyLevel(boarded=True, ass_class=ass_class)
             mtx_results_spec = {
                 "type": "EXTENDED_TRANSIT_MATRIX_RESULTS",
-                "total_impedance": self.result_mtx["time"][ass_class]["id"],
-                "total_travel_time": self.result_mtx["trip_part"][ass_class + "_total_time"]["id"],
-                "actual_first_waiting_times": self.result_mtx["trip_part"][ass_class + "_fw_time"]["id"],
-                "actual_total_waiting_times": self.result_mtx["trip_part"][ass_class + "_tw_time"]["id"],
+                "total_impedance": time_mtx_id,
+                "total_travel_time": trip_part["total_time"]["id"],
+                "actual_first_waiting_times": trip_part["fw_time"]["id"],
+                "actual_total_waiting_times": trip_part["tw_time"]["id"],
                 "by_mode_subset": {
                     "modes": param.transit_assignment_modes,
-                    "distance": self.result_mtx["dist"][ass_class]["id"],
-                    "avg_boardings": self.result_mtx["trip_part"][ass_class + "_num_board"]["id"],
-                    "actual_total_boarding_times": self.result_mtx["trip_part"][ass_class + "_board_time"]["id"],
-                    "actual_in_vehicle_times": self.result_mtx["trip_part"][ass_class + "_inv_time"]["id"],
-                    "actual_aux_transit_times": self.result_mtx["trip_part"][ass_class + "_aux_time"]["id"],
+                    "distance": dist_mtx_id,
+                    "avg_boardings": trip_part["num_board"]["id"],
+                    "actual_total_boarding_times": trip_part["board_time"]["id"],
+                    "actual_in_vehicle_times": trip_part["inv_time"]["id"],
+                    "actual_aux_transit_times": trip_part["aux_time"]["id"],
                 },
             }
 
