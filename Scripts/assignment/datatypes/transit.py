@@ -1,6 +1,6 @@
 import parameters.assignment as param
-from path_analysis import PathAnalysis
-from journey_level import JourneyLevel
+from assignment.datatypes.path_analysis import PathAnalysis
+from assignment.datatypes.journey_level import JourneyLevel
 
 
 class TransitSpecification:
@@ -16,6 +16,8 @@ class TransitSpecification:
     ----------
     ass_class : str
         Assignment class (transit_work/transit_leisure)
+    headway_attribute : str
+        Line attribute where headway is stored
     demand_mtx_id : str
         Emme matrix id for demand matrix
     time_mtx_id : str
@@ -33,8 +35,9 @@ class TransitSpecification:
     count_zone_boardings : bool (optional)
         Whether assignment is performed only to count fare zone boardings
     """
-    def __init__(self, ass_class, demand_mtx_id, time_mtx_id, dist_mtx_id,
-                 trip_part, count_zone_boardings=False):
+    def __init__(self, ass_class, headway_attribute, demand_mtx_id,
+                 time_mtx_id, dist_mtx_id, trip_part,
+                 count_zone_boardings=False):
         no_penalty = dict.fromkeys(["at_nodes", "on_lines", "on_segments"])
         no_penalty["global"] = {
             "penalty": 0, 
@@ -46,7 +49,7 @@ class TransitSpecification:
             "demand": demand_mtx_id,
             "waiting_time": {
                 "headway_fraction": param.standard_headway_fraction,
-                "effective_headways": "hdw",
+                "effective_headways": headway_attribute,
                 "spread_factor": 1,
                 "perception_factor": param.waiting_time_perception_factor
             },

@@ -6,8 +6,8 @@ import utils.log as log
 from utils.zone_interval import belongs_to_area
 import parameters.assignment as param
 import parameters.zone as zone_param
-from abstract_assignment import AssignmentModel
-from assignment_period import AssignmentPeriod
+from assignment.abstract_assignment import AssignmentModel
+from assignment.assignment_period import AssignmentPeriod
 
 
 class EmmeAssignmentModel(AssignmentModel):

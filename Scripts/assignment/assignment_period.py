@@ -6,10 +6,10 @@ import copy
 import utils.log as log
 import parameters.assignment as param
 import parameters.zone as zone_param
-from datatypes.car_specification import CarSpecification
-from datatypes.transit import TransitSpecification
-from datatypes.path_analysis import PathAnalysis
-from abstract_assignment import Period
+from assignment.datatypes.car_specification import CarSpecification
+from assignment.datatypes.transit import TransitSpecification
+from assignment.datatypes.path_analysis import PathAnalysis
+from assignment.abstract_assignment import Period
 
 
 class AssignmentPeriod(Period):
@@ -70,7 +70,9 @@ class AssignmentPeriod(Period):
         self._set_emmebank_matrices(matrices, iteration=="last")
         if iteration=="init":
             self._assign_pedestrians()
+            self._set_bike_vdfs()
             self._assign_bikes(self.result_mtx["dist"]["bike"]["id"], "all")
+            self._set_car_and_transit_vdfs()
             self._assign_cars(param.stopping_criteria_coarse)
             self._calc_extra_wait_time()
             self._assign_transit()
@@ -94,6 +96,7 @@ class AssignmentPeriod(Period):
             self._calc_boarding_penalties(is_last_iteration=True)
             self._calc_extra_wait_time()
             self._assign_congested_transit()
+            self._set_bike_vdfs()
             self._assign_bikes(self.result_mtx["dist"]["bike"]["id"], "all")
         else:
             raise ValueError("Iteration number not valid")
@@ -168,7 +171,8 @@ class AssignmentPeriod(Period):
             log.warn("All Emme-node labels do not have transit costs specified.")
         tc = "transit_work"
         spec = TransitSpecification(
-            tc, self.demand_mtx[tc]["id"], self.result_mtx["time"][tc]["id"],
+            tc, "@hw"+self.name, self.demand_mtx[tc]["id"],
+            self.result_mtx["time"][tc]["id"],
             self.result_mtx["dist"][tc]["id"],
             self.result_mtx["trip_part_"+tc],
             count_zone_boardings=True)
@@ -228,6 +232,104 @@ class AssignmentPeriod(Period):
         # Reset boarding penalties
         self._calc_boarding_penalties()
         return cost
+
+    def _set_car_and_transit_vdfs(self):
+        log.info("Sets car and transit functions for scenario {}".format(
+            self.emme_scenario.id))
+        network = self.emme_scenario.get_network()
+        l = min(param.roadclasses)
+        u = max(param.roadclasses) + 1
+        transit_modesets = {modes[0]: {network.mode(m) for m in modes[1]}
+            for modes in param.transit_delay_funcs}
+        for link in network.links():
+            # Car volume delay function definition
+            linktype = link.type % 100
+            if l <= linktype < u:
+                # Car link with standard attributes
+                roadclass = param.roadclasses[linktype]
+                link.volume_delay_func = roadclass.volume_delay_func
+                link.data1 = roadclass.lane_capacity
+                link.data2 = roadclass.free_flow_speed
+            elif linktype in param.custom_roadtypes:
+                # Custom car link
+                link.volume_delay_func = linktype - 90
+                for linktype in range(l, u):
+                    roadclass = param.roadclasses[linktype]
+                    if (link.volume_delay_func == roadclass.volume_delay_func
+                            and link.data2 > roadclass.free_flow_speed-1):
+                        # Find the most appropriate road class
+                        break
+            elif linktype in (98, 99):
+                # Connector link
+                link.volume_delay_func = 99
+            else:
+                # Link with no car traffic
+                link.volume_delay_func = 0
+
+            # Transit function definition
+            for modeset in param.transit_delay_funcs:
+                # Check that intersection is not empty,
+                # hence that mode is active on link
+                if transit_modesets[modeset[0]] & link.modes:
+                    funcs = param.transit_delay_funcs[modeset]
+                    if modeset[0] == "bus":
+                        buslane_code = link.type // 100
+                        if buslane_code in param.bus_lane_link_codes[self.name]:
+                            # Bus lane
+                            if (link.num_lanes == 3
+                                    and roadclass.num_lanes == ">=3"):
+                                roadclass = param.roadclasses[linktype - 1]
+                                link.data1 = roadclass.lane_capacity
+                            link.volume_delay_func += 5
+                            func = funcs["buslane"]
+                            try:
+                                bus_delay = (param.buslane_delay
+                                             / max(roadclass.free_flow_speed, 30))
+                            except UnboundLocalError:
+                                log.warn("Bus mode on link {}, type {}".format(
+                                    link.id, link.type))
+                        else:
+                            # No bus lane
+                            func = funcs["no_buslane"]
+                            try:
+                                bus_delay = roadclass.bus_delay
+                            except UnboundLocalError:
+                                log.warn("Bus mode on link {}, type {}".format(
+                                    link.id, link.type))
+                        for segment in link.segments():
+                            segment.data2 = bus_delay
+                    else:
+                        func = funcs[self.name]
+                    break
+            for segment in link.segments():
+                segment.transit_time_func = func
+        self.emme_scenario.publish_network(network)
+
+    def _set_bike_vdfs(self):
+        log.info("Sets bike functions for scenario {}".format(
+            self.bike_scenario.id))
+        network = self.bike_scenario.get_network()
+        for link in network.links():
+            linktype = link.type % 100
+            if linktype in param.roadclasses:
+                roadtype = param.roadclasses[linktype].type
+            elif linktype in param.custom_roadtypes:
+                roadtype = param.custom_roadtypes[linktype]
+            else:
+                roadtype = None
+            if (roadtype == "motorway" and network.mode('f') in link.modes
+                    and link["@pyoratieluokka"] == 0):
+                # Force bikes on motorways onto separate bikepaths
+                link["@pyoratieluokka"] = 3
+            try:
+                pathclass = param.bikepath_vdfs[int(link["@pyoratieluokka"])]
+                if roadtype in pathclass:
+                    link.volume_delay_func = pathclass[roadtype]
+                else:
+                    link.volume_delay_func = pathclass[None]
+            except KeyError:
+                link.volume_delay_func = 99
+        self.bike_scenario.publish_network(network)
 
     def _set_emmebank_matrices(self, matrices, is_last_iteration):
         """Set matrices in emmebank.
@@ -361,10 +463,11 @@ class AssignmentPeriod(Period):
         log.info("Calculates road charges for scenario {}".format(self.emme_scenario.id))
         network = self.emme_scenario.get_network()
         for link in network.links():
-            toll_cost = link.length * link["@hinta"] # km * e/km = eur
-            dist_cost = self.dist_unit_cost * link.length # (eur/km) * km = eur
+            # Dist-based toll is stored in @hinxx where xx is ah, pt, ih
+            toll_cost = link.length * link["@hin"+self.name[:2]]
+            dist_cost = self.dist_unit_cost * link.length
             link['@toll_cost'] = toll_cost
-            link["@total_cost"] = (toll_cost + dist_cost)
+            link["@total_cost"] = toll_cost + dist_cost
         self.emme_scenario.publish_network(network)
 
     def _calc_boarding_penalties(self, extra_penalty=0, is_last_iteration=False):
@@ -389,7 +492,7 @@ class AssignmentPeriod(Period):
     def _specify(self):
         self._car_spec = CarSpecification(self.demand_mtx, self.result_mtx)
         self._transit_specs = {tc: TransitSpecification(
-                tc, self.demand_mtx[tc]["id"],
+                tc, "@hw"+self.name, self.demand_mtx[tc]["id"],
                 self.result_mtx["time"][tc]["id"],
                 self.result_mtx["dist"][tc]["id"],
                 self.result_mtx["trip_part_"+tc])
