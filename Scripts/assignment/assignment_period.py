@@ -694,12 +694,31 @@ class AssignmentPeriod(Period):
         log.info("Transit assignment performed for scenario {}".format(
             str(self.emme_scenario.id)))
 
+    def _save_uncongested_volumes(self, specs):
+        """ Save uncongested volumes. """ 
+        for i, tc in enumerate(specs):
+            self.emme_project.transit_assignment(
+                specification=specs[tc].transit_spec, scenario=self.emme_scenario,
+                save_strategies=False, add_volumes=(i > 0))
+        network = self.emme_scenario.get_network()
+        for link in network.links():
+            link["@transit_uncongested"] = 0
+        for segment in network.transit_segments():
+            try:
+                if segment.link is not None:
+                    segment.link["@transit_uncongested"] += segment.transit_volume
+            except (AttributeError, TypeError):
+                pass
+        self.emme_scenario.publish_network(network)
+        log.info("Saved uncongested transit assignment volumes to @transit_uncongested")
+
     def _assign_congested_transit(self):
         """Perform congested transit assignment for one scenario."""
         log.info("Congested transit assignment started...")
         specs = self._transit_specs
         for tc in specs:
             specs[tc].transit_spec["journey_levels"][1]["boarding_cost"]["global"]["penalty"] = param.transfer_penalty[tc]
+        self._save_uncongested_volumes(specs)
         assign_report = self.emme_project.congested_assignment(
             transit_assignment_spec=[specs[tc].transit_spec for tc in specs],
             class_names=specs.keys(),
