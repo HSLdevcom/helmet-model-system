@@ -69,5 +69,5 @@ class EmmeAssignmentTest:
 
 
 em = EmmeAssignmentTest()
-em.test_transit_cost()
 em.test_assignment()
+em.test_transit_cost()

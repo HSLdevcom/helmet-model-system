@@ -147,11 +147,11 @@ class ExtraAttribute:
         self.default_value = default_value
         self.scenario = scenario
 
-    def initialize(value=0):
+    def initialize(self, value=0):
         self.default_value = value
         network = self.scenario.get_network()
         for obj in network._objects[self.type]():
-            obj._extra_attr[idx] = value
+            obj[self.name] = value
 
 
 class Matrix:
@@ -340,9 +340,9 @@ class Link(NetworkObject):
         self.volume_delay_func = 0
         self.auto_time = 0.1
         self._extra_attr["@hinta"] = 0.0
-        self._extra_attr["@hinah"] = 0.0
-        self._extra_attr["@hinpt"] = 0.0
-        self._extra_attr["@hinih"] = 0.0
+        self._extra_attr["@hinta_aht"] = 0.0
+        self._extra_attr["@hinta_pt"] = 0.0
+        self._extra_attr["@hinta_iht"] = 0.0
         self._extra_attr["@pyoratieluokka"] = 0.0
         self._segments = []
 
@@ -368,9 +368,9 @@ class TransitLine(NetworkObject):
         self.id = idx
         self.vehicle = vehicle
         self.headway = 0.01
-        self._extra_attr["@hwaht"] = 0.01
-        self._extra_attr["@hwpt"] = 0.01
-        self._extra_attr["@hwiht"] = 0.01
+        self._extra_attr["@hw_aht"] = 0.01
+        self._extra_attr["@hw_pt"] = 0.01
+        self._extra_attr["@hw_iht"] = 0.01
         self._segments = []
 
     @property

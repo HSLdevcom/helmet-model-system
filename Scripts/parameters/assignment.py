@@ -347,7 +347,6 @@ vot_classes = {
     "truck": "business",
     "van": "business",
 }
-bike_mode = 'f'
 transit_mode_aggregates = {
     "bus": "bde",
     "trunk": "g",
@@ -372,40 +371,20 @@ aux_modes = [
     'a',
     's',
 ]
+transit_assignment_modes = transit_modes + aux_modes
 external_modes = [
     "car",
     "transit",
     "truck",
     "trailer_truck",
 ]
-# Link attributes initialized in helmet-model-system
-emme_attributes = {
-    "@bus": "LINK",
-    "@total_cost": "LINK",
-    "@toll_cost": "LINK",
-    "@wait_time_dev": "TRANSIT_SEGMENT",
-    "@car_work": "LINK",
-    "@car_leisure": "LINK",
-    "@transit_work_vol": "TRANSIT_SEGMENT",
-    "@transit_leisure_vol": "TRANSIT_SEGMENT",
-    "@transit_work_boa": "TRANSIT_SEGMENT",
-    "@transit_leisure_boa": "TRANSIT_SEGMENT",
-    "@transit_work_trb": "TRANSIT_SEGMENT",
-    "@transit_leisure_trb": "TRANSIT_SEGMENT",
-    "@trailer_truck": "LINK",
-    "@truck": "LINK",
-    "@van": "LINK", 
-    "@transit_vol": "LINK",
-    "@transit_boa": "NODE",
-    "@transit_trb": "NODE",
+segment_results = {
+    "transit_volumes": "vol",
+    "total_boardings": "boa",
+    "transfer_boardings": "trb",
 }
-bike_attributes = {
-    "@bike_aht": "LINK",
-    "@bike_iht": "LINK",
-    "@bike_pt": "LINK",
-    "@bike_day": "LINK",
-}
-transit_assignment_modes = transit_modes + aux_modes
+# Hard-coded in Emme congested transit assignment
+uncongested_transit_time = "base_timtr"
 # Emme matrix IDs
 emme_demand_mtx = {
     "car_work": {
