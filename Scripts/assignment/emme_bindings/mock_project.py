@@ -236,6 +236,9 @@ class Network:
         if idx in self._vehicles:
             return self._vehicles[idx]
 
+    def transit_vehicles(self):
+        return iter(self._vehicles.values())
+
     def create_transit_vehicle(self, idx, mode_id):
         vehicle = TransitVehicle(idx, self.mode(mode_id))
         self._vehicles[idx] = vehicle
@@ -276,6 +279,7 @@ class TransitVehicle:
     def __init__(self, idx, mode):
         self.number = idx
         self.mode = mode
+        self.description = ""
 
     @property
     def id(self):
