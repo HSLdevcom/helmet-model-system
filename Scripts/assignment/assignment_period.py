@@ -613,11 +613,11 @@ class AssignmentPeriod(Period):
         car_spec["stopping_criteria"] = stopping_criteria
         assign_report = self.emme_project.car_assignment(
             car_spec, self.emme_scenario)
-        self.emme_project.copy_attribute(
-            from_attribute_name="timau",
-            to_attribute_name=self.extra("car_time"),
-            from_scenario=self.emme_scenario,
-            to_scenario=self.emme_scenario)
+        network = self.emme_scenario.get_network()
+        time_attr = self.extra("car_time")
+        for link in network.links():
+            link[time_attr] = link.auto_time
+        self.emme_scenario.publish_network(network)
         log.info("Car assignment performed for scenario {}".format(
             self.emme_scenario.id))
         log.info("Stopping criteria: {}, iteration {} / {}".format(

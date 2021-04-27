@@ -25,8 +25,6 @@ class EmmeProject:
             "inro.emme.data.matrix.create_matrix")
         self.copy_matrix = self.modeller.tool(
             "inro.emme.data.matrix.copy_matrix")
-        self.copy_attribute = self.modeller.tool(
-            "inro.emme.data.network.copy_attribute")
         self.network_calc = self.modeller.tool(
             "inro.emme.network_calculation.network_calculator")
         self.process_functions = self.modeller.tool(
