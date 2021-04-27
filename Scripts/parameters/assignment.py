@@ -570,68 +570,70 @@ emme_result_mtx = {
             "description": "van travel generalized cost",
         },
     },
-    "trip_part":{
-        "transit_work_inv_time": {
+    "trip_part_transit_work":{
+        "inv_time": {
             "id": 51,
             "description": "transit in-vehicle time",
         },
-        "transit_work_aux_time": {
+        "aux_time": {
             "id": 52,
             "description": "transit auxilliary time",
         },
-        "transit_work_tw_time": {
+        "tw_time": {
             "id": 53,
             "description": "transit total waiting time",
         },
-        "transit_work_fw_time": {
+        "fw_time": {
             "id": 54,
             "description": "transit first waiting time",
         },
-        "transit_work_board_time": {
+        "board_time": {
             "id": 55,
             "description": "transit boarding time",
         },
-        "transit_work_total_time": {
+        "total_time": {
             "id": 56,
             "description": "transit unweighted travel time",
         },
-        "transit_work_num_board": {
+        "num_board": {
             "id": 57,
             "description": "transit trip number of boardings",
         },
-        "transit_work_board_cost": {
+        "board_cost": {
             "id": 58,
             "description": "transit boarding cost",
         },
-        "transit_leisure_inv_time": {
+    },
+    "trip_part_transit_leisure":{
+        "inv_time": {
             "id": 61,
             "description": "transit in-vehicle time",
         },
-        "transit_leisure_aux_time": {
+        "aux_time": {
             "id": 62,
             "description": "transit auxilliary time",
         },
-        "transit_leisure_tw_time": {
+        "tw_time": {
             "id": 63,
             "description": "transit total waiting time",
         },
-        "transit_leisure_fw_time": {
+        "fw_time": {
             "id": 64,
             "description": "transit first waiting time",
         },
-        "transit_leisure_board_time": {
+        "board_time": {
             "id": 65,
             "description": "transit boarding time",
         },
-        "transit_leisure_total_time": {
+        "total_time": {
             "id": 66,
             "description": "transit unweighted travel time",
         },
-        "transit_leisure_num_board": {
+        "num_board": {
             "id": 67,
             "description": "transit trip number of boardings",
         },
-        "transit_leisure_board_cost": {
+        "board_cost": {
             "id": 68,
             "description": "transit boarding cost",
         },
