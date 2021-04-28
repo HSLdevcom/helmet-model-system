@@ -21,6 +21,8 @@ class EmmeProject:
         self.modeller = _m.Modeller(emme_desktop)
         log.info("Emme started")
         self.path = os.path.dirname(self.modeller.emmebank.path)
+        self.copy_scenario = self.modeller.tool(
+            "inro.emme.data.scenario.copy_scenario")
         self.create_matrix = self.modeller.tool(
             "inro.emme.data.matrix.create_matrix")
         self.copy_matrix = self.modeller.tool(
