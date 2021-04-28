@@ -45,16 +45,23 @@ class EmmeAssignmentModel(AssignmentModel):
 
     def prepare_network(self):
         """Create matrices, extra attributes and calc background variables."""
-        self.day_scenario = self.emme_project.copy_scenario(
-            self.mod_scenario, self.mod_scenario.number + 1,
-            self.mod_scenario.title + '_' + "vrk",
-            overwrite=True, copy_paths=False, copy_strategies=False)
+        if self.save_matrices:
+            self.day_scenario = self.emme_project.copy_scenario(
+                self.mod_scenario, self.mod_scenario.number + 1,
+                self.mod_scenario.title + '_' + "vrk",
+                overwrite=True, copy_paths=False, copy_strategies=False)
+        else:
+            self.day_scenario = self.mod_scenario
         self.assignment_periods = []
         for i, tp in enumerate(["aht", "pt", "iht"]):
-            scen_id = self.mod_scenario.number + i + 2
-            self.emme_project.copy_scenario(
-                self.mod_scenario, scen_id, self.mod_scenario.title + '_' + tp,
-                overwrite=True, copy_paths=False, copy_strategies=False)
+            if self.save_matrices:
+                scen_id = self.mod_scenario.number + i + 2
+                self.emme_project.copy_scenario(
+                    self.mod_scenario, scen_id,
+                    self.mod_scenario.title + '_' + tp,
+                    overwrite=True, copy_paths=False, copy_strategies=False)
+            else:
+                scen_id = self.mod_scenario.number
             self.assignment_periods.append(AssignmentPeriod(
                 tp, scen_id, self.emme_project,
                 save_matrices=self.save_matrices))
