@@ -1,5 +1,6 @@
 import numpy
 from collections import namedtuple
+import copy
 
 
 class MockProject:
@@ -13,6 +14,18 @@ class MockProject:
 
     def __init__(self):
         self.modeller = Modeller(EmmeBank())
+
+    def copy_scenario(self, from_scenario, scenario_id, scenario_title,
+                      overwrite=False, copy_paths=True, copy_strategies=True):
+        if overwrite:
+            try:
+                self.modeller.emmebank.delete_scenario(scenario_id)
+            except KeyError:
+                pass
+        scenario = self.modeller.emmebank.copy_scenario(
+            from_scenario.number, scenario_id)
+        scenario.title = scenario_title
+        return scenario
 
     def create_matrix(self, matrix_id, matrix_name, matrix_description,
                       default_value=0, overwrite=False):
@@ -85,17 +98,40 @@ Modeller = namedtuple("Modeller", "emmebank")
 
 class EmmeBank:
     def __init__(self):
-        self._scenarios = {idx: Scenario(idx) for idx in range(19, 24)}
+        self._scenarios = {19: Scenario(19)}
         self._matrices = {}
 
     def scenario(self, idx):
-        return self._scenarios[idx]
+        if idx in self._scenarios:
+            return self._scenarios[idx]
 
     def scenarios(self):
         return iter(self._scenarios.values())
 
+    def create_scenario(self, idx):
+        if idx in self._scenarios:
+            raise ExistenceError("Scenario already exists: {}".format(idx))
+        else:
+            scenario = Scenario(idx)
+            self._scenarios[idx] = scenario
+            return scenario
+
+    def copy_scenario(self, source_id, destination_id):
+        if self.scenario(source_id) is None:
+            raise ExistenceError("Scenario does not exist: {}".format(
+                source_id))
+        else:
+            dest = self.create_scenario(destination_id)
+            dest.publish_network(
+                copy.deepcopy(self.scenario(source_id).get_network()))
+            return dest
+
+    def delete_scenario(self, idx):
+        del self._scenarios[idx]
+
     def matrix(self, idx):
-        return self._matrices[idx]
+        if idx in self._matrices:
+            return self._matrices[idx]
 
     def create_matrix(self, idx, default_value=0.0):
         if idx in self._matrices:
@@ -109,7 +145,9 @@ class EmmeBank:
 
 class Scenario:
     def __init__(self, idx):
-        self.id = idx
+        self.id = str(idx)
+        self.number = int(idx)
+        self.title = ""
         self._network = Network()
 
     @property
