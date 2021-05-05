@@ -7,13 +7,17 @@ import inro.modeller as _m
 
 # Creates and initializes EMME-resources (INRO's own library, from EMME-software's Python site-packages)
 class EmmeProject:
-    def __init__(self, filepath):
+    def __init__(self, filepath, emmebank_path=None):
         log.info("Starting Emme...")
         emme_desktop = _app.start_dedicated(
             project=filepath, 
             visible=False, 
             user_initials="HSL"
         )
+        if emmebank_path is not None:
+            db = emme_desktop.data_explorer().add_database(emmebank_path)
+            db.open()
+            emme_desktop.project.save()
         # Add logging to EMME
         sh = logging.StreamHandler(stream=self)
         logging.getLogger().addHandler(sh)

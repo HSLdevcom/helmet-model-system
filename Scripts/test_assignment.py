@@ -21,8 +21,6 @@ class EmmeAssignmentTest:
                             level=logging.INFO)
         script_dir = os.path.dirname(os.path.realpath('__file__'))
         project_dir = os.path.join(script_dir, "tests", "test_data", "Results")
-        empfile = _app.create_project(project_dir, "test_assignment")
-        emme_context = EmmeProject(empfile)
         dim = {
             "scalar_matrices": 100,
             "origin_matrices": 100,
@@ -39,14 +37,23 @@ class EmmeAssignmentTest:
             "extra_attribute_values": 3000000,
             "functions": 99,
             "operators": 5000,
-            "sola_analyses": 99,
+            "sola_analyses": 24000,
         }
-        eb = _eb.create(os.path.join(project_dir, "test_assignment"), dim)
-        path = eb.path
-        eb.dispose()
-        emme_context.app.data_explorer().add_database(path)
+        try:
+            eb = _eb.create(os.path.join(project_dir, "emmebank"), dim)
+            eb.create_scenario(19)
+            path = eb.path
+            eb.dispose()
+        except RuntimeError:
+            path = None
+        try:
+            empfile = _app.create_project(project_dir, "test_assignment")
+        except FileExistsError:
+            empfile = os.path.join(project_dir, "test_assignment", "test_assignment.emp")
+        emme_context = EmmeProject(empfile, path)
         emme_context.import_scenario(
-            os.path.join(project_dir, "..", "Network"), 19, "test")
+            os.path.join(project_dir, "..", "Network"), 19, "test",
+            overwrite=True)
         self.ass_model = ass.EmmeAssignmentModel(emme_context, 19)
         self.ass_model.prepare_network()
     
