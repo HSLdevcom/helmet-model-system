@@ -200,6 +200,7 @@ class ModelSystem:
             self._calculate_noise_areas()
             self.resultdata.flush()
         self.dtm.init_demand()
+        self.imptrans.average_car_impedance(impedance)
         return impedance
 
     def run_iteration(self, previous_iter_impedance, iteration=None):
@@ -311,6 +312,7 @@ class ModelSystem:
         if iteration=="last":
             self.ass_model.aggregate_results(self.resultdata)
             self._calculate_noise_areas()
+        self.imptrans.average_car_impedance(impedance)
 
         # Reset time-period specific demand matrices (DTM), and empty result buffer
         self.dtm.init_demand()
