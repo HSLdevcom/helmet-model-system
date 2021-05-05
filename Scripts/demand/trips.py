@@ -1,8 +1,11 @@
 import numpy
 import pandas
-import parameters
+import random
+
+import utils.log as log
+import parameters.zone as param
 from datatypes.purpose import TourPurpose, SecDestPurpose
-from models import logit
+from models import logit, linear
 from datatypes.person import Person
 
 
@@ -24,7 +27,7 @@ class DemandModel:
         self.zone_data = zone_data
         self.tour_purposes = []
         self.purpose_dict = {}
-        for purpose_spec in parameters.tour_purposes:
+        for purpose_spec in param.tour_purposes:
             if "sec_dest" in purpose_spec:
                 purpose = SecDestPurpose(
                     purpose_spec, zone_data, resultdata, is_agent_model)
@@ -33,7 +36,7 @@ class DemandModel:
                     purpose_spec, zone_data, resultdata, is_agent_model)
             self.tour_purposes.append(purpose)
             self.purpose_dict[purpose_spec["name"]] = purpose
-        for purpose_spec in parameters.tour_purposes:
+        for purpose_spec in param.tour_purposes:
             if "source" in purpose_spec:
                 purpose = self.purpose_dict[purpose_spec["name"]]
                 for source in purpose_spec["source"]:
@@ -51,6 +54,8 @@ class DemandModel:
         self.cm = logit.CarUseModel(
             zone_data, bounds, self.age_groups, self.resultdata)
         self.gm = logit.TourCombinationModel(self.zone_data)
+        if is_agent_model:
+            self.create_population()
 
     def create_population_segments(self):
         """Create population segments.
@@ -85,24 +90,42 @@ class DemandModel:
         list
             Person
         """
-        self.cm.calc_basic_prob()
+        bounds = slice(0, self.zone_data.first_peripheral_zone)
+        self.incmod = linear.IncomeModel(
+            self.zone_data, bounds, self.age_groups, self.resultdata)
         self.population = []
-        zones = self.zone_data.zone_numbers[:self.zone_data.first_peripheral_zone]
-        for idx in zones:
+        zones = self.zone_data.zone_numbers[bounds]
+        self.zone_population = pandas.Series(0, zones)
+        for zone_number in zones:
             weights = [1]
             for age_group in self.age_groups:
                 key = "share_age_" + str(age_group[0]) + "-" + str(age_group[1])
-                share = self.zone_data[key][idx]
+                share = self.zone_data[key][zone_number]
                 weights.append(share)
                 weights[0] -= share
-            for _ in xrange(0, self.zone_data["population"][idx]):
+            weights[0] = max(weights[0], 0)
+            if sum(weights) > 1:
+                if sum(weights) > 1.005:
+                    msg = "Sum of age group shares for zone {} is {}".format(
+                        zone_number, sum(weights))
+                    log.error(msg)
+                    raise ValueError(msg)
+                else:
+                    weights = numpy.array(weights)
+                    rebalance = 1 / sum(weights)
+                    weights = rebalance * weights
+            zone_pop = int(round(self.zone_data["population"][zone_number]
+                                 * param.agent_demand_fraction))
+            for _ in xrange(zone_pop):
                 a = numpy.arange(-1, len(self.age_groups))
                 group = numpy.random.choice(a=a, p=weights)
                 if group != -1:
                     # Group -1 is under-7-year-olds and they have weights[0]
-                    age_group = self.age_groups[group]
-                    person = Person(idx, age_group, self.gm, self.cm)
+                    person = Person(
+                        zone_number, self.age_groups[group], self.gm,
+                        self.cm, self.incmod)
                     self.population.append(person)
+                    self.zone_population[zone_number] += 1
 
     def generate_tours(self):
         """Generate vector of tours for each tour purpose.
@@ -130,5 +153,36 @@ class DemandModel:
                     self.purpose_dict[purpose].gen_model.tours += nr_tours
                 nr_tours_sums["-".join(combination)] = nr_tours.sum()
             result_data[age] = nr_tours_sums.sort_index()
-        self.resultdata.print_matrix(result_data, "generation", "tour_combinations")
+        self.resultdata.print_matrix(
+            result_data, "tour_combinations", "tour_combinations")
 
+    def generate_tour_probs(self):
+        """Generate matrices of cumulative tour combination probabilities.
+
+        Used in agent-based simulation.
+
+        Returns
+        -------
+        dict
+            Age (age_7-17/...) : tuple
+                Is car user (False/True) : numpy.array
+                    Matrix with cumulative tour combination probabilities
+                    for all zones
+        """
+        probs = {}
+        for age_group in self.age_groups:
+            age = "age_" + str(age_group[0]) + "-" + str(age_group[1])
+            probs[age] = (
+                self._get_probs(age, is_car_user=False),
+                self._get_probs(age, is_car_user=True),
+            )
+        return probs
+
+    def _get_probs(self, age, is_car_user):
+        bounds = slice(0, self.zone_data.first_peripheral_zone)
+        prob_dict = self.gm.calc_prob(age, is_car_user, bounds)
+        probs = numpy.empty(
+            [bounds.stop - bounds.start, len(self.gm.tour_combinations)])
+        for i, tour_combination in enumerate(self.gm.tour_combinations):
+            probs[:, i] = prob_dict[tour_combination]
+        return probs.cumsum(axis=1)

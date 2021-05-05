@@ -2,10 +2,13 @@
 ~#
 ~# tehdaan muodostettuihin liikennejarjestelmakuvauksiin joitakin tarkistuksia
 ~# parametri p1 = tulostustiedoston nimi
-~# TE 5.10.2017
+~#           p2 = skenaarion tunnus (vain AHT ja PP merkitysta)
+~# TE 19.11.2020
 ~#
 ~# Muutoksia
 ~#    Lisattu pyoraverkon (s=19) yhteenvedon tulostus (TE 22.1.2019)
+~#    lisatty ratikoiden nopeuden ja junaliikenteen pysahtymisten testaus (19.11.2020)
+~#    Muutettu testeja makron 4verkkoa_HM40.mac mukaisiksi (1.12.2020)
 ~#
 ~t1=%1%
 ~?t1=
@@ -14,6 +17,7 @@
  reports=%t1%
 ~! ECHO * >> %t1%
 ~! ECHO ****** SKENAARION %s% TARKISTUS ALKAA ****** >> %t1%
+~#
 ~! ECHO * >> %t1%
 ~! ECHO *** Yhteenveto linkkityypeista (x01-x14 vai x21-x42) ja viivytysfunktioista *** >> %t1%
  2.14
@@ -34,9 +38,14 @@
  q
 ~#
 ~# ** pyoraverkkoa ei tarkisteta enempaa
-~x=%s%
-~?x=19
+~t2=%2%
+~/ parametrit %t1%  %t2%
+~?t2=PP
 ~$LOPPU
+~#
+~# ** aikajaksojen muut yhteiset ominaisuudet tarkistetaan vain aht-skenaariosta
+~?!t2=AHT
+~$OHI
 ~#
 ~! ECHO * >> %t1%
 ~! ECHO *** Linkilta puuttuu kapasiteetti, jos alla on riveja, joilla ul1=0 *** >> %t1%
@@ -62,6 +71,173 @@
  2
  q
 ~#
+~! ECHO * >> %t1%
+~! ECHO *** Linkilta puuttuu autoliikenteen viivytysfunktio, jos alla on riveja, joilla vdf=0 *** >> %t1%
+ 2.14
+ 2
+ n
+ mod=c
+ and vdf=0
+
+~?q=2
+ 2
+ q
+~#
+~! ECHO * >> %t1%
+~! ECHO *** Linkin ul1-kentassa olevan raitiovaunuliikenteen nopeuden minimi- ja maksimiarvot, AHT *** >> %t1%
+ 2.41
+ 1
+ n
+ int(ul1/10000)
+
+ mod=tp
+
+ 2
+~?q=2
+ 2
+ q
+~#
+~! ECHO * >> %t1%
+~! ECHO *** Linkin ul1-kentassa olevan raitiovaunuliikenteen nopeuden minimi- ja maksimiarvot, PT *** >> %t1%
+ 2.41
+ 1
+ n
+ int(ul1/100) .mod. 100
+
+ mod=tp
+
+ 2
+~?q=2
+ 2
+ q
+~#
+~! ECHO * >> %t1%
+~! ECHO *** Linkin ul1-kentassa olevan raitiovaunuliikenteen nopeuden minimi- ja maksimiarvot, IHT *** >> %t1%
+ 2.41
+ 1
+ n
+ ul1 .mod. 100
+
+ mod=tp
+
+ 2
+~?q=2
+ 2
+ q
+~#
+~! ECHO * >> %t1%
+~! ECHO *** Linkin ul1-kentassa olevan raitiovaunuliikenteen nopeus on nolla ainakin yhdella aikajaksolla *** >> %t1%
+~! ECHO *** jos alla on muitakin kuin tyhjia riveja. Tarkista linkin koodaus, jos aa=0 tai pp=0 tai ii=0, kun ul1=aappii ** >> %t1%
+ 2.41
+ 1
+ y
+ @lvari
+ n
+ (int(ul1/10000).eq.0) + ((int(ul1/100) .mod. 100).eq.0) + 
+ ((ul1 .mod. 100).eq.0)
+
+ mod=tp
+
+ 4
+ q
+~#
+ 2.14
+ 2
+ n
+ mod=tp
+ and not @lvari=0
+
+~?q=2
+ 2
+ q
+~#
+~! ECHO * >> %t1%
+~! ECHO *** Juna- tai metroliikenteen matka-aika us1=0 ennen pysahtymista (noalin=0 tai noboan=0), jos rivin "line inode jnode..." ** >> %t1%
+~! ECHO *** alla on muitakin kuin tyhjia riveja. Tarkista reitin koodaus, jos rivilla @ccost=1 ** >> %t1%
+ 2.41
+ 1
+ y
+ @ccost
+ n
+ (us1.eq.0).and.((noalin.eq.0).or.(noboan.eq.0))
+
+ mod=mr
+
+ mod=mr
+
+ 4
+~#
+ 1
+ y
+ @lvari
+ n
+ @ccost
+
+ 2
+ mod=mr
+
+ mod=mr
+
+ 4
+~#
+ 1
+ n
+ us1+noalin+noboan+@ccost
+
+ 2
+ mod=mr
+
+ not @lvari=0
+
+ 1
+~?q=2
+ 2
+ q
+~#
+~! ECHO * >> %t1%
+~! ECHO *** Juna- tai metroliikenteen matka-aika us1 poikkeaa nollasta, vaikka ei pysahdysta (noalin=1 ja noboan=1), jos rivin "line inode jnode..." ** >> %t1%
+~! ECHO *** alla on muitakin kuin tyhjia riveja. Tarkista reitin koodaus, jos rivilla @ccost=1 ** >> %t1%
+ 2.41
+ 1
+ y
+ @ccost
+ n
+ (us1.ne.0).and.((noalin.eq.1).and.(noboan.eq.1))
+
+ mod=mr
+
+ mod=mr
+
+ 4
+~#
+ 1
+ y
+ @lvari
+ n
+ @ccost
+
+ 2
+ mod=mr
+
+ mod=mr
+
+ 4
+~#
+ 1
+ n
+ us1+noalin+noboan+@ccost
+
+ 2
+ mod=mr
+
+ not @lvari=0
+
+ 1
+~?q=2
+ 2
+ q
+~#
+~:OHI
 ~! ECHO * >> %t1%
 ~! ECHO *** Linjalta puuttuu vuorovali, jos alla on riveja, joilla hdwy=0.01 *** >> %t1%
  2.24

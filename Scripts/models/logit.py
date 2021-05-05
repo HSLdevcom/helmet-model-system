@@ -1,7 +1,12 @@
 import numpy
 import pandas
 import math
-import parameters
+
+from parameters.destination_choice import destination_choice, distance_boundary
+from parameters.mode_choice import mode_choice
+from parameters.car import car_usage
+import parameters.tour_generation as generation_params
+from utils.zone_interval import ZoneIntervals
 
 
 class LogitModel:
@@ -23,18 +28,24 @@ class LogitModel:
         self.resultdata = resultdata
         self.purpose = purpose
         self.bounds = purpose.bounds
+        self.lbounds = purpose.lbounds
+        self.ubounds = purpose.ubounds
         self.zone_data = zone_data
         self.dest_exps = {}
         self.mode_exps = {}
-        self.dest_choice_param = parameters.destination_choice[purpose.name]
-        self.mode_choice_param = parameters.mode_choice[purpose.name]
+        self.dest_choice_param = destination_choice[purpose.name]
+        self.mode_choice_param = mode_choice[purpose.name]
         if is_agent_model:
             self.dtype = float
         else:
             self.dtype = None
 
     def _calc_mode_util(self, impedance):
-        expsum = numpy.zeros_like(next(iter(impedance["car"].values())), self.dtype)
+        expsum = numpy.zeros_like(
+            next(iter(impedance["car"].values())), self.dtype)
+        is_1d = expsum.ndim == 1
+        if is_1d:
+            sustainable_sum = numpy.zeros_like(expsum)
         for mode in self.mode_choice_param:
             b = self.mode_choice_param[mode]
             utility = numpy.zeros_like(expsum)
@@ -47,6 +58,29 @@ class LogitModel:
             self._add_log_impedance(exps, impedance[mode], b["log"])
             self.mode_exps[mode] = exps
             expsum += exps
+            if is_1d and mode != "car":
+                sustainable_sum += exps
+        if is_1d:
+            logsum = numpy.log(sustainable_sum)
+            self.resultdata.print_data(
+                pandas.Series(logsum, self.purpose.zone_numbers),
+                "sustainable_accessibility.txt", self.purpose.name)
+            try:
+                b = self.dest_choice_param["car"]["impedance"]["cost"]
+            except KeyError:
+                # School tours do not have a constant cost parameter
+                # Use value of time conversion from CBA guidelines instead
+                b = -0.31690253
+            try:
+                # Convert utility into euros
+                money_utility = 1 / b
+            except TypeError:
+                # Separate params for cap region and surrounding
+                money_utility = numpy.zeros_like(logsum)
+                money_utility[self.lbounds] = 1 / b[0]
+                money_utility[self.ubounds] = 1 / b[1]
+            money_utility /= self.mode_choice_param["car"]["log"]["logsum"]
+            self.purpose.sustainable_accessibility = money_utility * logsum
         return expsum
     
     def _calc_dest_util(self, mode, impedance):
@@ -66,7 +100,7 @@ class LogitModel:
             impedance["transform"] = transimp
         self._add_log_impedance(self.dest_exps[mode], impedance, b["log"])
         if mode != "logsum":
-            threshold = parameters.distance_boundary[mode]
+            threshold = distance_boundary[mode]
             self.dest_exps[mode][impedance["dist"] > threshold] = 0
         try:
             return self.dest_exps[mode].sum(1)
@@ -84,179 +118,151 @@ class LogitModel:
         impedance["size"] = size
         self._add_log_impedance(dest_exps, impedance, b["log"])
         if mode != "logsum":
-            threshold = parameters.distance_boundary[mode]
+            threshold = distance_boundary[mode]
             dest_exps[impedance["dist"] > threshold] = 0
         return dest_exps
 
     def _add_constant(self, utility, b):
-        """Calculates constant term for utility function.
+        """Add constant term to utility.
+
+        If parameter b is a tuple of two terms, they will be added for
+        capital region and surrounding region respectively.
         
         Parameters
         ----------
-        shape : ndarray
-            An example numpy array which tells the function to what shape the
-            result will be broadcasted to.
-        b : float
-            The value of the constant.
-        
-        Returns
-        -------
-        ndarray
-            A numpy array of the same size and type as `shape` but filled with
-            the constant value. The result is to be added to utility.
+        utility : ndarray
+            Numpy array to which the constant b will be added
+        b : float or tuple
+            The value of the constant
         """
         try: # If only one parameter
             utility += b
         except ValueError: # Separate params for cap region and surrounding
-            k = self.zone_data.first_surrounding_zone
             if utility.ndim == 1: # 1-d array calculation
-                utility[:k] += b[0]
-                utility[k:] += b[1]
+                utility[self.lbounds] += b[0]
+                utility[self.ubounds] += b[1]
             else: # 2-d matrix calculation
-                utility[:k, :] += b[0]
-                utility[k:, :] += b[1]
+                utility[self.lbounds, :] += b[0]
+                utility[self.ubounds, :] += b[1]
     
     def _add_impedance(self, utility, impedance, b):
-        """Calculates simple linear impedance terms for utility function.
+        """Adds simple linear impedances to utility.
+
+        If parameter in b is tuple of two terms, they will be added for
+        capital region and surrounding region respectively.
         
         Parameters
         ----------
-        shape : ndarray
-            An example numpy array which tells the function to what shape the
-            result will be broadcasted to.
+        utility : ndarray
+            Numpy array to which the impedances will be added
         impedance : dict
             A dictionary of time-averaged impedance matrices. Includes keys
             `time`, `cost`, and `dist` of which values are all ndarrays.
-        b : float
+        b : dict
             The parameters for different impedance matrices.
-        
-        Returns
-        -------
-        ndarray
-            A numpy array of the same size and type as `shape` but filled with
-            the impedance terms. The result is to be added to utility.
         """
         for i in b:
             try: # If only one parameter
                 utility += b[i] * impedance[i]
             except ValueError: # Separate params for cap region and surrounding
-                k = self.zone_data.first_surrounding_zone
-                utility[:k, :] += b[i][0] * impedance[i][:k, :]
-                utility[k:, :] += b[i][1] * impedance[i][k:, :]
+                utility[self.lbounds, :] += b[i][0] * impedance[i][self.lbounds, :]
+                utility[self.ubounds, :] += b[i][1] * impedance[i][self.ubounds, :]
         return utility
 
     def _add_log_impedance(self, exps, impedance, b):
-        """Calculates log transformations of impedance for utility function.
+        """Adds log transformations of impedance to utility.
         
         This is an optimized way of calculating log terms. Calculates
         impedance1^b1 * ... * impedanceN^bN in the following equation:
         e^(linear_terms + b1*log(impedance1) + ... + bN*log(impedanceN))
         = e^(linear_terms) * impedance1^b1 * ... * impedanceN^bN
 
+        If parameter in b is tuple of two terms, they will be multiplied for
+        capital region and surrounding region respectively.
+
         Parameters
         ----------
-        shape : ndarray
-            An example numpy array which tells the function to what shape the
-            result will be broadcasted to.
+        exps : ndarray
+            Numpy array to which the impedances will be multiplied
         impedance : dict
             A dictionary of time-averaged impedance matrices. Includes keys
             `time`, `cost`, and `dist` of which values are all ndarrays.
-        b : float
-            The parameters for different impedance matrices.
-        
-        Returns
-        -------
-        ndarray
-            A numpy array of the same size and type as `shape` but filled with
-            the impedance terms. The result is to be multiplied with the
-            exponents of utility.
+        b : dict
+            The parameters for different impedance matrices
         """
         for i in b:
             try: # If only one parameter
                 exps *= numpy.power(impedance[i] + 1, b[i])
             except ValueError: # Separate params for cap region and surrounding
-                k = self.zone_data.first_surrounding_zone
-                exps[:k, :] *= numpy.power(impedance[i][:k, :] + 1, b[i][0])
-                exps[k:, :] *= numpy.power(impedance[i][k:, :] + 1, b[i][1])
+                exps[self.lbounds, :] *= numpy.power(
+                    impedance[i][self.lbounds, :] + 1, b[i][0])
+                exps[self.ubounds, :] *= numpy.power(
+                    impedance[i][self.ubounds, :] + 1, b[i][1])
         return exps
     
     def _add_zone_util(self, utility, b, generation=False):
-        """Calculates simple linear zone terms for utility function.
+        """Adds simple linear zone terms to utility.
+
+        If parameter in b is tuple of two terms, they will be added for
+        capital region and surrounding region respectively.
         
         Parameters
         ----------
-        shape : ndarray
-            An example numpy array which tells the function to what shape the
-            result will be broadcasted to.
-        b : float
+        utility : ndarray
+            Numpy array to which the impedances will be added
+        b : dict
             The parameters for different zone data.
         generation : bool
             Whether the effect of the zone term is added only to the
             geographical area in which this model is used based on the
             `self.bounds` attribute of this class.
-        
-        Returns
-        -------
-        ndarray
-            A numpy array of the same size and type as `shape` but filled with
-            the zone terms. The result is to be added to utility.
         """
         zdata = self.zone_data
         for i in b:
             try: # If only one parameter
                 utility += b[i] * zdata.get_data(i, self.bounds, generation)
             except ValueError: # Separate params for cap region and surrounding
-                k = self.zone_data.first_surrounding_zone
-                data_capital_region = zdata.get_data(
-                    i, self.bounds, generation, zdata.CAPITAL_REGION)
-                data_surrounding = zdata.get_data(
-                    i, self.bounds, generation, zdata.SURROUNDING_AREA)
+                data_cap_region = zdata.get_data(i, self.lbounds, generation)
+                data_surrounding = zdata.get_data(i, self.ubounds, generation)
                 if utility.ndim == 1: # 1-d array calculation
-                    utility[:k] += b[i][0] * data_capital_region
-                    utility[k:] += b[i][1] * data_surrounding
+                    utility[self.lbounds] += b[i][0] * data_cap_region
+                    utility[self.ubounds] += b[i][1] * data_surrounding
                 else: # 2-d matrix calculation
-                    utility[:k, :] += b[i][0] * data_capital_region
-                    utility[k:, :] += b[i][1] * data_surrounding
+                    utility[self.lbounds, :] += b[i][0] * data_cap_region
+                    utility[self.ubounds, :] += b[i][1] * data_surrounding
         return utility
     
     def _add_sec_zone_util(self, utility, b, orig=None, dest=None):
-        zdata = self.zone_data
         for i in b:
-            data = zdata.get_data(i, self.bounds, generation=True)
+            data = self.zone_data.get_data(i, self.bounds, generation=True)
             try: # If only one parameter
                 utility += b[i] * data
             except ValueError: # Separate params for orig and dest
-                u = self.zone_data.first_peripheral_zone
-                utility += b[i][0] * data[orig, :u]
-                utility += b[i][1] * data[dest, :u]
+                utility += b[i][0] * data[orig, self.bounds]
+                utility += b[i][1] * data[dest, self.bounds]
         return utility
 
     def _add_log_zone_util(self, exps, b, generation=False):
-        """Calculates log transformations of zone data for utility function.
+        """Adds log transformations of zone data to utility.
         
         This is an optimized way of calculating log terms. Calculates
         zonedata1^b1 * ... * zonedataN^bN in the following equation:
         e^(linear_terms + b1*log(zonedata1) + ... + bN*log(zonedataN))
         = e^(linear_terms) * zonedata1^b1 * ... * zonedataN^bN
 
+        If parameter in b is tuple of two terms, they will be multiplied for
+        capital region and surrounding region respectively.
+
         Parameters
         ----------
-        shape : ndarray
-            An example numpy array which tells the function to what shape the
-            result will be broadcasted to.
-        b : float
+        exps : ndarray
+            Numpy array to which the impedances will be multiplied
+        b : dict
             The parameters for different zone data.
         generation : bool
             Whether the effect of the zone term is added only to the
             geographical area in which this model is used based on the
             `self.bounds` attribute of this class.
-        
-        Returns
-        -------
-        ndarray
-            A numpy array of the same size and type as `shape` but filled with
-            the zone terms. The result is to be multiplied with the
-            exponents of utility.
         """
         zdata = self.zone_data
         for i in b:
@@ -339,10 +345,20 @@ class ModeDestModel(LogitModel):
                 Choice probabilities
         """
         mode_expsum = self._calc_utils(impedance)
-        logsum = numpy.log(mode_expsum)
         self.resultdata.print_data(
-            pandas.Series(logsum, self.purpose.zone_numbers),
-            "accessibility.txt", self.zone_data.zone_numbers, self.purpose.name)
+            pandas.Series(numpy.log(mode_expsum), self.purpose.zone_numbers),
+            "accessibility.txt", self.purpose.name)
+        if self.purpose.name == "wh":
+            # Transform into person equivalents
+            workforce = pandas.Series(
+                mode_expsum**(1/self.mode_choice_param["car"]["log"]["logsum"]),
+                self.purpose.zone_numbers)
+            self.resultdata.print_data(
+                workforce, "workforce_accessibility.txt", self.purpose.name)
+            workplaces = self.zone_data["workplaces"][self.bounds]
+            self.resultdata.print_data(
+                ZoneIntervals("areas").averages(workforce, workplaces),
+                "workforce_accessibility_per_area.txt", self.purpose.name)
         return self._calc_prob(mode_expsum)
     
     def calc_individual_prob(self, mod_mode, dummy):
@@ -380,7 +396,7 @@ class ModeDestModel(LogitModel):
         """Calculate individual choice probabilities with individual dummies.
         
         Calculate mode choice probabilities for individual
-        agent with individual dummy variable included.
+        agent with individual dummy variable "car_users" included.
         
         Parameters
         ----------
@@ -397,7 +413,8 @@ class ModeDestModel(LogitModel):
         """
         mode_exps = {}
         mode_expsum = 0
-        for mode in self.mode_choice_param:
+        modes = self.purpose.modes
+        for mode in modes:
             mode_exps[mode] = self.mode_exps[mode][zone]
             b = self.mode_choice_param[mode]["individual_dummy"]
             if is_car_user and "car_users" in b:
@@ -409,9 +426,9 @@ class ModeDestModel(LogitModel):
                     else:
                         mode_exps[mode] *= math.exp(b["car_users"][1])
             mode_expsum += mode_exps[mode]
-        probs = []
-        for mode in self.purpose.modes:
-            probs.append(mode_exps[mode] / mode_expsum)
+        probs = numpy.empty(len(modes))
+        for i, mode in enumerate(modes):
+            probs[i] = mode_exps[mode] / mode_expsum
         return probs
 
     def _calc_utils(self, impedance):
@@ -423,20 +440,19 @@ class ModeDestModel(LogitModel):
             logsum = pandas.Series(numpy.log(expsum), self.purpose.zone_numbers)
             label = self.purpose.name + "_" + mode[0]
             self.zone_data._values[label] = logsum
-            self.resultdata.print_data(
-                logsum, "accessibility.txt",
-                self.zone_data.zone_numbers, label)
+            self.resultdata.print_data(logsum, "accessibility.txt", label)
         return self._calc_mode_util(self.dest_expsums)
 
     def _calc_prob(self, mode_expsum):
         prob = {}
         self.mode_prob = {}
-        self.dest_prob = {}
+        self.cumul_dest_prob = {}
         for mode in self.mode_choice_param:
             self.mode_prob[mode] = self.mode_exps[mode] / mode_expsum
             dest_expsum = self.dest_expsums[mode]["logsum"]
-            self.dest_prob[mode] = self.dest_exps[mode].T / dest_expsum
-            prob[mode] = self.mode_prob[mode] * self.dest_prob[mode]
+            dest_prob = self.dest_exps[mode].T / dest_expsum
+            prob[mode] = self.mode_prob[mode] * dest_prob
+            self.cumul_dest_prob[mode] = dest_prob.cumsum(axis=0)
         return prob
 
 
@@ -532,12 +548,7 @@ class SecDestModel(LogitModel):
                 Choice probabilities
         """
         dest_exps = self._calc_sec_dest_util(mode, impedance, origin, destination)
-        try:
-            expsum = dest_exps.sum(1)
-        except ValueError:
-            expsum = dest_exps.sum()
-        prob = dest_exps.T / expsum
-        return prob
+        return dest_exps.T / dest_exps.sum(1)
 
 
 class OriginModel(DestModeModel):
@@ -560,9 +571,12 @@ class TourCombinationModel:
 
     def __init__(self, zone_data):
         self.zone_data = zone_data
-        self.param = parameters.tour_combinations
-        self.conditions = parameters.tour_conditions
-        self.increases = parameters.tour_number_increase
+        self.param = generation_params.tour_combinations
+        self.conditions = generation_params.tour_conditions
+        self.increases = generation_params.tour_number_increase
+        self.tour_combinations = []
+        for nr_tours in self.param:
+            self.tour_combinations += self.param[nr_tours].keys()
     
     def calc_prob(self, age_group, is_car_user, zones):
         """Calculate choice probabilities for each tour combination.
@@ -637,7 +651,7 @@ class TourCombinationModel:
                     prob[tour_combination] = 0
             util = 0
             nr_tours_exps[nr_tours] = numpy.exp(util)
-            scale_param = parameters.tour_number_scale
+            scale_param = generation_params.tour_number_scale
             nr_tours_exps[nr_tours] *= numpy.power(combination_expsum, scale_param)
             nr_tours_expsum += nr_tours_exps[nr_tours]
         # Probability of no tours at all (empty tuple) is deduced from
@@ -678,7 +692,7 @@ class CarUseModel(LogitModel):
         self.bounds = bounds
         self.genders = ("female", "male")
         self.age_groups = age_groups
-        self.param = parameters.car_usage
+        self.param = car_usage
         for i in self.param["individual_dummy"]:
             self._check(i)
     
@@ -778,31 +792,17 @@ class CarUseModel(LogitModel):
         prob = exp / (exp+1)
         return prob
 
-    def print_results(self, prob):
+    def print_results(self, prob, population_7_99=None):
         """ Print results, mainly for calibration purposes"""
-        population = self.zone_data["population"]
-        population_7_99 = (population[:self.zone_data.first_peripheral_zone] * self.zone_data["share_age_7-99"])
-        car_users = prob * population_7_99
-                
         # Print car user share by zone
-        self.resultdata.print_data(prob, "car_use.txt", self.zone_data.zone_numbers[self.bounds], "car_use")
-        
-        # print car use share by municipality
-        prob_municipality = []
-        for municipality in parameters.municipality:
-            i = slice(parameters.municipality[municipality][0],
-                      parameters.municipality[municipality][1])
-            # comparison data has car user shares of population
+        self.resultdata.print_data(prob, "car_use.txt", "car_use")
+        if population_7_99 is None:
+            # Comparison data has car user shares of population
             # over 6 years old (from HEHA)
-            prob_municipality.append(car_users.loc[i].sum() / population_7_99.loc[i].sum())
-        self.resultdata.print_data(prob_municipality, "car_use_per_municipality.txt", parameters.municipality.keys(), "car_use")
-                          
-        # print car use share by area (to get Helsinki CBD vs. Helsinki other)
-        prob_area = []
-        for area in parameters.areas:
-            i = slice(parameters.areas[area][0],
-                      parameters.areas[area][1])
-            # comparison data has car user shares of population
-            # over 6 years old (from HEHA)
-            prob_area.append(car_users.loc[i].sum() / population_7_99.loc[i].sum())
-        self.resultdata.print_data(prob_area, "car_use_per_area.txt", parameters.areas.keys(), "car_use")
+            population_7_99 = (self.zone_data["population"][self.bounds]
+                               * self.zone_data["share_age_7-99"])
+        # print car use share by municipality and area
+        for area_type in ("municipalities", "areas"):
+            prob_area = ZoneIntervals(area_type).averages(prob, population_7_99)
+            self.resultdata.print_data(
+                prob_area, "car_use_{}.txt".format(area_type), "car_use")

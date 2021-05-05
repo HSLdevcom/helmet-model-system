@@ -1,4 +1,7 @@
-from parameters import impedance_share
+from collections import defaultdict
+
+from parameters.impedance_transformation import impedance_share, divided_classes
+from parameters.assignment import assignment_classes
 
 
 class ImpedanceTransformer:
@@ -63,29 +66,21 @@ class ImpedanceTransformer:
                 Type (time/cost/dist) : numpy 2-d matrix
         """
         rows = purpose.bounds
-        if purpose.name == "hoo":
-            cols = purpose.bounds
-        else:
-            cols = slice(0, purpose.zone_data.nr_zones)
+        cols = (purpose.bounds if purpose.name == "hoo"
+            else slice(0, purpose.zone_data.nr_zones))
         day_imp = {}
         for mode in impedance_share[purpose.name]:
-            day_imp[mode] = {}
-            if mode == "car":
-                if purpose.dest == "work":
-                    ass_class = "car_work"
-                else:
-                    ass_class = "car_leisure"
+            day_imp[mode] = defaultdict(float)
+            if mode in divided_classes:
+                ass_class = "{}_{}".format(
+                    mode, assignment_classes[purpose.name])
             else:
                 ass_class = mode
-            for idx, time_period in enumerate(impedance):
+            for time_period in impedance:
                 for mtx_type in impedance[time_period]:
                     if ass_class in impedance[time_period][mtx_type]:
                         share = impedance_share[purpose.name][mode][time_period]
-                        imp = impedance[time_period][mtx_type][ass_class][rows, cols]
-                        if idx == 0:
-                            day_imp[mode][mtx_type] = share[0] * imp
-                        else:
-                            day_imp[mode][mtx_type] += share[0] * imp
-                        imp = impedance[time_period][mtx_type][ass_class][cols, rows]
-                        day_imp[mode][mtx_type] += share[1] * imp.T
+                        imp = impedance[time_period][mtx_type][ass_class]
+                        day_imp[mode][mtx_type] += share[0] * imp[rows, cols]
+                        day_imp[mode][mtx_type] += share[1] * imp[cols, rows].T
         return day_imp

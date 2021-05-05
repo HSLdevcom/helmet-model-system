@@ -1,13 +1,17 @@
 {
     "LOG_LEVEL": "INFO",
     "LOG_FORMAT": "TEXT",
+    "RUN_AGENT_SIMULATION": false,
     "USE_EMME": true,
+    "SAVE_MATRICES_IN_EMME": true,
+    "DELETE_STRATEGY_FILES": true,
     "SCENARIO_NAME": "test",
-    "RESULTS_PATH": "C:\\Users\\FIAS34036\\helmet\\system-results",
-    "EMME_PROJECT_PATH": "C:\\Users\\FIAS34036\\helmet\\helmet-model-system\\sijo_HM31.emp",
-    "FIRST_SCENARIO_ID": 39,
-    "BASELINE_DATA_PATH": "C:\\Users\\FIAS34036\\helmet\\baseline-data-full",
-    "FORECAST_DATA_PATH": "C:\\Users\\FIAS34036\\helmet\\baseline-data-full\\2016_zonedata",
-    "ITERATION_COUNT": 3,
+    "RESULTS_PATH": "C:\\XXX\\Results",
+    "EMME_PROJECT_PATH": "C:\\XXX\\xxx.emp",
+    "FIRST_SCENARIO_ID": 19,
+    "FIRST_MATRIX_ID": 100,
+    "BASELINE_DATA_PATH": "C:\\XXX\\Lahtodata",
+    "FORECAST_DATA_PATH": "C:\\XXX\\Ennusteskenaarioiden_syottotiedot\\2017",
+    "ITERATION_COUNT": 1,
     "USE_FIXED_TRANSIT_COST": false
 }

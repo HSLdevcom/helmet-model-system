@@ -18,7 +18,7 @@ class LogitModelTest(unittest.TestCase):
             pass
         pur = Purpose()
         zi = numpy.array([5, 6, 7, 2792, 16001, 17000, 31000, 31501])
-        zd = BaseZoneData(os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata_test"), zi)
+        zd = BaseZoneData(os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata"), zi)
         zd["car_users"] = pandas.Series([0.5, 0.5, 0.5, 0.5, 0.5, 0.5], zd.zone_numbers)
         mtx = numpy.arange(24, dtype=numpy.float32)
         mtx.shape = (4, 6)
@@ -42,6 +42,8 @@ class LogitModelTest(unittest.TestCase):
             },
         }
         pur.bounds = slice(0, 4)
+        pur.lbounds = slice(0, 4)
+        pur.ubounds = slice(4, 4)
         pur.zone_numbers = (5, 6, 7, 2792)
         for i in ("hw", "hc", "hu", "hs", "ho"):
             pur.name = i

@@ -1,4 +1,4 @@
-import parameters as param
+import parameters.assignment as param
 from path_analysis import PathAnalysis
 
 
@@ -7,16 +7,16 @@ class Car:
                 value_of_time_inv=None, link_costs="@total_cost"):
         od_travel_times = result_mtx["gen_cost"][ass_class]["id"]
         if value_of_time_inv is None:
-            value_of_time_inv = param.vot_inv[param.vot_class[ass_class]]
+            value_of_time_inv = param.vot_inv[param.vot_classes[ass_class]]
         self.spec = {
-            "mode": param.assignment_mode[ass_class],
+            "mode": param.assignment_modes[ass_class],
             "demand": demand_mtx[ass_class]["id"],
             "generalized_cost": {
                 "link_costs": link_costs,
                 "perception_factor": value_of_time_inv,
             },
             "results": {
-                "link_volumes": param.link_volumes[ass_class],
+                "link_volumes": '@' + ass_class,
                 "od_travel_times": {
                     "shortest_paths": od_travel_times
                 }

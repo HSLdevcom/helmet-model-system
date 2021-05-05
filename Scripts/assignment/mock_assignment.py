@@ -1,68 +1,19 @@
-import logging
-import parameters as param
-from abstract_assignment import AssignmentModel, ImpedanceSource 
+import pandas
 
 
-class MockAssignmentModel(AssignmentModel, ImpedanceSource):
+import utils.log as log
+import parameters.assignment as param
+import parameters.zone as zone_param
+from abstract_assignment import AssignmentModel, Period
+
+
+class MockAssignmentModel(AssignmentModel):
     def __init__(self, matrices):
         self.matrices = matrices
-        self.logger = logging.getLogger()
-        self.logger.info("Reading matrices from " + str(self.matrices.path))
+        log.info("Reading matrices from " + str(self.matrices.path))
         self.result_mtx=param.emme_result_mtx
-        self.emme_scenarios = {"aht": 21, "pt": 22, "iht": 23}
-    
-    def assign(self, time_period, matrices, is_last_iteration=False, is_first_iteration=False):
-        """Assign cars, bikes and transit for one time period.
-        
-        Parameters
-        ----------
-        time_period : str
-            Time period (aht/pt/iht)
-        matrices: dict
-            Assignment class (car_work/transit/...): numpy 2-d matrix
-        is_last_iteration: bool
-        is_first_iteration: bool
-        """
-        self.time_period = time_period
-        with self.matrices.open("demand", time_period, 'w') as mtx:
-            for ass_class in matrices:
-                mtx[ass_class] = matrices[ass_class]
-        self.logger.info("Saved demand matrices for " + str(time_period))
-    
-    def get_impedance(self, is_last_iteration=False):
-        """Get travel impedance matrices for one time period from files.
-        
-        Return
-        ------
-        dict
-            Type (time/cost/dist) : dict
-                Assignment class (car_work/transit/...) : numpy 2-d matrix
-        """
-        return {"time": self.get_emmebank_matrices("time", self.time_period),
-                "cost": self.get_emmebank_matrices("cost", self.time_period),
-                "dist": self.get_emmebank_matrices("dist", self.time_period)}
-    
-    def get_emmebank_matrices(self, mtx_type, time_period=None):
-        """Get all matrices of specified type.
-        
-        Parameters
-        ----------
-        mtx_type : str
-            Type (demand/time/transit/...)
-        time_period : str
-            Matrices' time period.
-
-        Return
-        ------
-        dict
-            Subtype (car_work/truck/inv_time/...) : numpy 2-d matrix
-                Matrix of the specified type
-        """
-        matrices = dict.fromkeys(self.result_mtx[mtx_type].keys())
-        with self.matrices.open(mtx_type, time_period) as mtx:
-            for mode in matrices:
-                matrices[mode] = mtx[mode]
-        return matrices
+        emme_scenarios = {"aht": 21, "pt": 22, "iht": 23}
+        self.assignment_periods = [MockPeriod(tp, matrices) for tp in emme_scenarios]
     
     @property
     def zone_numbers(self):
@@ -86,8 +37,76 @@ class MockAssignmentModel(AssignmentModel, ImpedanceSource):
     def calc_transit_cost(self, fare, peripheral_cost, default_cost=None):
         pass
 
-    def print_vehicle_kms(self, resultdata):
+    def aggregate_results(self, resultdata):
         pass
+
+    def calc_noise(self):
+        return pandas.Series(0, zone_param.area_aggregation)
 
     def prepare_network(self):
         pass
+
+    def init_assign(self, demand):
+        pass
+
+
+class MockPeriod(Period):
+    def __init__(self, name, matrices):
+        self.name = name
+        self.matrices = matrices
+
+    @property
+    def zone_numbers(self):
+        """Numpy array of all zone numbers.""" 
+        with self.matrices.open("time", self.name) as mtx:
+            zone_numbers = mtx.zone_numbers
+        return zone_numbers
+
+    def assign(self, matrices, iteration=None):
+        """Assign cars, bikes and transit for one time period.
+        Get travel impedance matrices for one time period from assignment.
+        
+        Parameters
+        ----------
+        matrices: dict
+            Assignment class (car_work/transit/...) : numpy 2-d matrix
+        iteration: int or str
+            Iteration number (0, 1, 2, ...) or "last"
+
+        Returns
+        -------
+        dict
+            Type (time/cost/dist) : dict
+                Assignment class (car_work/transit_leisure/...) : numpy 2-d matrix
+        """
+        with self.matrices.open("demand", self.name, self.zone_numbers, 'w') as mtx:
+            for ass_class in matrices:
+                mtx[ass_class] = matrices[ass_class]
+        log.info("Saved demand matrices for " + str(self.name))
+        mtxs = {mtx_type: self._get_matrices(mtx_type)
+            for mtx_type in ("time", "cost", "dist")}
+        for ass_cl in ("transit_work", "transit_leisure"):
+            mtxs["time"][ass_cl] = mtxs["time"]["transit_uncongested"]
+        if iteration != "last":
+            for ass_cl in ("car_work", "car_leisure"):
+                mtxs["cost"][ass_cl] += (param.dist_unit_cost
+                                         * mtxs["dist"][ass_cl])
+        return mtxs
+    
+    def _get_matrices(self, mtx_type):
+        """Get all matrices of specified type.
+        
+        Parameters
+        ----------
+        mtx_type : str
+            Type (demand/time/transit/...)
+
+        Return
+        ------
+        dict
+            Subtype (car_work/truck/inv_time/...) : numpy 2-d matrix
+                Matrix of the specified type
+        """
+        with self.matrices.open(mtx_type, self.name) as mtx:
+            matrices = {mode: mtx[mode] for mode in mtx.matrix_list}
+        return matrices

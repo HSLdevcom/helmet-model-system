@@ -43,10 +43,28 @@ class Config:
     def ITERATION_COUNT(self, value): self.__set_value("ITERATION_COUNT", value)
 
     @property
+    def RUN_AGENT_SIMULATION(self): return self.__get_value("RUN_AGENT_SIMULATION")
+
+    @RUN_AGENT_SIMULATION.setter
+    def RUN_AGENT_SIMULATION(self, value): self.__set_value("RUN_AGENT_SIMULATION", value)
+
+    @property
     def USE_EMME(self): return self.__get_value("USE_EMME")
 
     @USE_EMME.setter
     def USE_EMME(self, value): self.__set_value("USE_EMME", value)
+
+    @property
+    def SAVE_MATRICES_IN_EMME(self): return self.__get_value("SAVE_MATRICES_IN_EMME")
+
+    @SAVE_MATRICES_IN_EMME.setter
+    def SAVE_MATRICES_IN_EMME(self, value): self.__set_value("SAVE_MATRICES_IN_EMME", value)
+
+    @property
+    def DELETE_STRATEGY_FILES(self): return self.__get_value("DELETE_STRATEGY_FILES")
+
+    @DELETE_STRATEGY_FILES.setter
+    def DELETE_STRATEGY_FILES(self, value): self.__set_value("DELETE_STRATEGY_FILES", value)
 
     @property
     def LOG_LEVEL(self): return self.__get_value("LOG_LEVEL")
@@ -95,3 +113,9 @@ class Config:
 
     @FIRST_SCENARIO_ID.setter
     def FIRST_SCENARIO_ID(self, value): self.__set_value("FIRST_SCENARIO_ID", value)
+
+    @property
+    def FIRST_MATRIX_ID(self): return self.__get_value("FIRST_MATRIX_ID")
+
+    @FIRST_MATRIX_ID.setter
+    def FIRST_MATRIX_ID(self, value): self.__set_value("FIRST_MATRIX_ID", value)

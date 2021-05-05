@@ -1,33 +1,32 @@
-import logging
 import numpy
-import parameters as param
+
+import utils.log as log
+import parameters.departure_time as param
+from parameters.assignment import transport_classes, assignment_classes
 
 
 class DepartureTimeModel:
-    def __init__(self, nr_zones, emme_scenarios):
-        """Container for time period and assignment class specific demand.
-        
-        Parameters
-        ----------
-        nr_zones : int
-            Number of zones in assignment model
-        """
+    """Container for time period and assignment class specific demand.
+
+    Parameters
+    ----------
+    nr_zones : int
+        Number of zones in assignment model
+    """
+
+    def __init__(self, nr_zones):
         self.nr_zones = nr_zones
-        self.emme_scenarios = emme_scenarios
-        self.demand = dict.fromkeys(self.emme_scenarios)
-        for time_period in self.demand:
-            ass_classes = dict.fromkeys(param.transport_classes)
-            self.demand[time_period] = ass_classes
-            for ass_class in ass_classes:
-                zeros = numpy.zeros((self.nr_zones, self.nr_zones))
-                self.demand[time_period][ass_class] = zeros
-        self.logger = logging.getLogger()
+        self.time_periods = list(param.backup_demand_share)
+        self.init_demand()
 
     def init_demand(self):
-        """Initialize/reset demand for all time periods (each including transport_classes, each being set to zeros)."""
-        self.demand = dict.fromkeys(self.emme_scenarios)
+        """Initialize/reset demand for all time periods.
+
+        Includes all transport_classes, each being set to zero.
+        """
+        self.demand = dict.fromkeys(self.time_periods)
         for time_period in self.demand:
-            ass_classes = dict.fromkeys(param.transport_classes)
+            ass_classes = dict.fromkeys(transport_classes)
             self.demand[time_period] = ass_classes
             for ass_class in ass_classes:
                 zeros = numpy.zeros((self.nr_zones, self.nr_zones))
@@ -41,19 +40,20 @@ class DepartureTimeModel:
         demand : Demand or Tour
             Travel demand matrix or number of travellers
         """
-        if demand.mode not in ("walk", "car_passenger"):
-            if demand.mode in ("car", "transit", "bike"):
-                ass_class = (demand.mode + '_' + param.assignment_class[demand.purpose.name])
+        if demand.mode != "walk" and not demand.is_car_passenger:
+            if demand.mode in param.divided_classes:
+                ass_class = "{}_{}".format(
+                    demand.mode, assignment_classes[demand.purpose.name])
             else:
                 ass_class = demand.mode
             if len(demand.position) == 2:
                 share = param.demand_share[demand.purpose.name][demand.mode]
-                for time_period in self.emme_scenarios:
+                for time_period in self.time_periods:
                     self._add_2d_demand(
                         share[time_period], ass_class, time_period,
                         demand.matrix, demand.position)
             elif len(demand.position) == 3:
-                for time_period in self.emme_scenarios:
+                for time_period in self.time_periods:
                     self._add_3d_demand(demand, ass_class, time_period)
             else:
                 raise IndexError("Tuple position has wrong dimensions.")
@@ -62,13 +62,8 @@ class DepartureTimeModel:
         """Slice demand, include transpose and add for one time period."""
         r_0 = mtx_pos[0]
         c_0 = mtx_pos[1]
-        try:  # Addition of matrix
-            r_n = r_0 + mtx.shape[0]
-            c_n = c_0 + mtx.shape[1]
-        except AttributeError:  # Addition of agent
-            r_n = r_0 + 1
-            c_n = c_0 + 1
-            mtx = numpy.asarray([mtx])
+        r_n = r_0 + mtx.shape[0]
+        c_n = c_0 + mtx.shape[1]
         large_mtx = self.demand[time_period][ass_class]
         try:
             large_mtx[r_0:r_n, c_0:c_n] += demand_share[0] * mtx
@@ -77,11 +72,8 @@ class DepartureTimeModel:
             share = param.backup_demand_share[time_period]
             large_mtx[r_0:r_n, c_0:c_n] += share[0] * mtx
             large_mtx[c_0:c_n, r_0:r_n] += share[1] * mtx.T
-            self.logger.warn("{}x{} matrix not matching {} demand shares. Resorted to backup demand shares.".format(
-                str(mtx.shape[0]),
-                str(mtx.shape[0]),
-                str(len(demand_share[0]))
-            ))
+            log.warn("{} {} matrix not matching {} demand shares. Resorted to backup demand shares.".format(
+                mtx.shape, ass_class, len(demand_share[0])))
 
     def _add_3d_demand(self, demand, ass_class, time_period):
         """Add three-way demand."""
@@ -90,18 +82,15 @@ class DepartureTimeModel:
         o = demand.position[0]
         d1 = demand.position[1]
         d2 = demand.position[2]
-        try:  # Addition of matrix
-            colsum = mtx.sum(0)[:, numpy.newaxis]
-            share = param.demand_share[demand.purpose.name][demand.mode][tp]
-            self._add_2d_demand(share[0], ass_class, tp, mtx, (d1, d2))
-            self._add_2d_demand(share[1], ass_class, tp, colsum, (d2, o))
-        except AttributeError:  # Addition of agent
-            share = param.demand_share[demand.purpose.name][demand.mode][tp]
+        share = param.demand_share[demand.purpose.name][demand.mode][tp]
+        if demand.dest is not None:
+            # For agent simulation
             self._add_2d_demand(share, ass_class, tp, mtx, (o, d1))
             sec_purpose_name = demand.purpose.sec_dest_purpose.name
             share = param.demand_share[sec_purpose_name][demand.mode][tp]
-            self._add_2d_demand(share[0], ass_class, tp, mtx, (d1, d2))
-            self._add_2d_demand(share[1], ass_class, tp, mtx, (d2, o))
+        colsum = mtx.sum(0)[:, numpy.newaxis]
+        self._add_2d_demand(share[0], ass_class, tp, mtx, (d1, d2))
+        self._add_2d_demand(share[1], ass_class, tp, colsum, (d2, o))
     
     def add_vans(self, time_period, nr_zones):
         """Add vans as a share of private car trips for one time period.

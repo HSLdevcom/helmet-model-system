@@ -17,7 +17,7 @@ class LinearModelTest(unittest.TestCase):
             pass
         pur = Purpose()
         zi = numpy.array([5, 6, 7, 2792, 16001, 17000, 31000, 31501])
-        zd = BaseZoneData(os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata_test"), zi)
+        zd = BaseZoneData(os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata"), zi)
         zd["time_ratio"] = pandas.Series([0.9, 1.5, 1.3, 1.9, 2.0, 3.1, 0.0, 0.0],
             zi)
         zd["cost_ratio"] = pandas.Series([1.1, 0.9, 0.8, 1.2, 0.5, 0.4, 0.0, 0.0],

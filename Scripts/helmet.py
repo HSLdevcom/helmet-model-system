@@ -1,16 +1,17 @@
-from utils.config import Config
-from utils.log import Log
-from assignment.emme_assignment import EmmeAssignmentModel
-from assignment.mock_assignment import MockAssignmentModel
-from modelsystem import ModelSystem
-from datahandling.matrixdata import MatrixData
-from emme_bindings.emme_project import EmmeProject
 from argparse import ArgumentParser
 import sys
 import os
+from glob import glob
+
+from utils.config import Config
+import utils.log as log
+from assignment.emme_assignment import EmmeAssignmentModel
+from assignment.mock_assignment import MockAssignmentModel
+from modelsystem import ModelSystem, AgentModelSystem
+from datahandling.matrixdata import MatrixData
 
 
-def main(args, logger):
+def main(args):
     name = args.scenario_name if args.scenario_name is not None else Config.DefaultScenario
     iterations = args.iterations
     base_zonedata_path = os.path.join(args.baseline_data_path, "2016_zonedata")
@@ -26,12 +27,12 @@ def main(args, logger):
             "completed": 0,
             "failed": 0,
             "total": args.iterations,
-            "log": logger.get_filename()
+            "log": log.filename,
         }
     }
 
     # Read input matrices (.omx) and zonedata (.csv), and initialize models (assignment model and model-system)
-    logger.info("Initializing matrices and models..", extra=log_extra)
+    log.info("Initializing matrices and models..", extra=log_extra)
     # Check input data folders/files exist
     if not os.path.exists(base_zonedata_path):
         raise NameError("Baseline zonedata directory '{}' does not exist.".format(base_zonedata_path))
@@ -41,7 +42,7 @@ def main(args, logger):
         raise NameError("Forecast data directory '{}' does not exist.".format(forecast_zonedata_path))
     # Choose and initialize the Traffic Assignment (supply)model
     if args.do_not_use_emme:
-        logger.info("Initializing MockAssignmentModel..")
+        log.info("Initializing MockAssignmentModel..")
         mock_result_path = os.path.join(results_path, args.scenario_name, "Matrices")
         if not os.path.exists(mock_result_path):
             raise NameError("Mock Results directory " + mock_result_path + " does not exist.")
@@ -49,33 +50,60 @@ def main(args, logger):
     else:
         if not os.path.isfile(emme_project_path):
             raise NameError(".emp project file not found in given '{}' location.".format(emme_project_path))
-        logger.info("Initializing Emme..")
-        ass_model = EmmeAssignmentModel(EmmeProject(emme_project_path), first_scenario_id=args.first_scenario_id)
-    # Initialize model system (wrapping Assignment-model, and providing Demand-calculations as Python modules)
-    model = ModelSystem(forecast_zonedata_path, base_zonedata_path, base_matrices_path, results_path, ass_model, name)
+        log.info("Initializing Emme..")
+        from assignment.emme_bindings.emme_project import EmmeProject
+        ass_model = EmmeAssignmentModel(
+            EmmeProject(emme_project_path),
+            first_scenario_id=args.first_scenario_id,
+            save_matrices=args.save_matrices,
+            first_matrix_id=args.first_matrix_id)
+    # Initialize model system (wrapping Assignment-model,
+    # and providing demand calculations as Python modules)
+    if args.is_agent_model:
+        model = AgentModelSystem(
+            forecast_zonedata_path, base_zonedata_path, base_matrices_path,
+            results_path, ass_model, name)
+    else:
+        model = ModelSystem(
+            forecast_zonedata_path, base_zonedata_path, base_matrices_path,
+            results_path, ass_model, name)
     log_extra["status"]["results"] = model.mode_share
 
     # Run traffic assignment simulation for N iterations, on last iteration model-system will save the results
     log_extra["status"]["state"] = "preparing"
-    logger.info("Starting simulation with {} iterations..".format(iterations), extra=log_extra)
-    impedance = model.assign_base_demand(args.use_fixed_transit_cost)
+    log.info("Starting simulation with {} iterations..".format(iterations), extra=log_extra)
+    impedance = model.assign_base_demand(args.use_fixed_transit_cost, iterations==0)
     log_extra["status"]["state"] = "running"
     for i in range(1, iterations + 1):
         log_extra["status"]["current"] = i
         try:
-            logger.info("Starting iteration {}".format(i), extra=log_extra)
-            impedance = (model.run_iteration(impedance, is_last_iteration=True)
+            log.info("Starting iteration {}".format(i), extra=log_extra)
+            impedance = (model.run_iteration(impedance, "last")
                          if i == iterations
-                         else model.run_iteration(impedance))
+                         else model.run_iteration(impedance, i))
             log_extra["status"]["completed"] += 1
         except Exception as error:
             log_extra["status"]["failed"] += 1
-            logger.error("Exception at iteration {}".format(i), error)
-            logger.error("Fatal error occured, simulation aborted.", extra=log_extra)
+            log.error("Exception at iteration {}".format(i), error)
+            log.error("Fatal error occured, simulation aborted.", extra=log_extra)
             break
         if i == iterations:
             log_extra["status"]['state'] = 'finished'
-    logger.info("Simulation ended.", extra=log_extra)
+    # delete emme strategy files for scenarios 
+    if args.del_strat_files:
+        dbase_path = os.path.join(os.path.dirname(emme_project_path), "database")
+        filepath = os.path.join(dbase_path, "STRAT_s{}*")
+        dirpath = os.path.join(dbase_path, "STRATS_s{}", "*")
+        scenario_ids = range(args.first_scenario_id, args.first_scenario_id+5)
+        for s in scenario_ids:
+            strategy_files = glob(filepath.format(s)) + glob(dirpath.format(s))
+            for f in strategy_files:
+                try:
+                    os.remove(f)
+                except:
+                    log.info("Not able to remove file {}.".format(f))
+        log.info("Removed strategy files in {}".format(dbase_path))
+    log.info("Simulation ended.", extra=log_extra)
 
 
 if __name__ == "__main__":
@@ -97,6 +125,13 @@ if __name__ == "__main__":
     )
     # HELMET scenario metadata
     parser.add_argument(
+        "--run-agent-simulation",
+        dest="is_agent_model",
+        action="store_true",
+        default=config.RUN_AGENT_SIMULATION,
+        help="Using this flag runs agent simulations instead of aggregate model.",
+    )
+    parser.add_argument(
         "--do-not-use-emme",
         dest="do_not_use_emme",
         action="store_true",
@@ -104,11 +139,25 @@ if __name__ == "__main__":
         help="Using this flag runs with MockAssignmentModel instead of EmmeAssignmentModel, not requiring EMME.",
     )
     parser.add_argument(
+        "--save-emme-matrices",
+        dest="save_matrices",
+        action="store_true",
+        default=config.SAVE_MATRICES_IN_EMME,
+        help="Using this flag saves additional matrices and strategy files to Emme-project Database folder.",
+    )
+    parser.add_argument(
+        "--del-strat-files",
+        dest="del_strat_files",
+        action="store_true",
+        default=config.DELETE_STRATEGY_FILES,
+        help="Using this flag deletes strategy files from Emme-project Database folder.",
+    )
+    parser.add_argument(
         "--scenario-name",
         dest="scenario_name",
         type=str,
         default=config.SCENARIO_NAME,
-        help="Name of traffic assignment (HELMET) scenario. Influences result folder name and log file name."),
+        help="Name of HELMET scenario. Influences result folder name and log file name."),
     parser.add_argument(
         "--results-path",
         dest="results_path",
@@ -129,6 +178,12 @@ if __name__ == "__main__":
         default=config.FIRST_SCENARIO_ID,
         help="First (biking) scenario ID within EMME project (.emp)."),
     parser.add_argument(
+        "--first-matrix-id",
+        dest="first_matrix_id",
+        type=int,
+        default=config.FIRST_MATRIX_ID,
+        help="First matrix ID within EMME project (.emp). Used only if --save-emme-matrices."),
+    parser.add_argument(
         "--baseline-data-path",
         dest="baseline_data_path",
         type=str,
@@ -145,7 +200,7 @@ if __name__ == "__main__":
         dest="iterations",
         type=int,
         default=config.ITERATION_COUNT,
-        help="Number of traffic assignment iterations to run (each re-using previously calculated impedance)"),
+        help="Number of demand model iterations to run (each using re-calculated impedance from traffic and transit assignment)."),
     parser.add_argument(
         "--use-fixed-transit-cost",
         dest="use_fixed_transit_cost",
@@ -154,20 +209,21 @@ if __name__ == "__main__":
         help="Using this flag activates use of pre-calculated (fixed) transit costs."),
     args = parser.parse_args()
 
-    # This should be refactored some day to use Python base logger (which is in-built singleton already)
     config.LOG_LEVEL = args.log_level
     config.LOG_FORMAT = args.log_format
     config.SCENARIO_NAME = args.scenario_name
-    logger = Log.get_instance().initialize(config)
-    logger.debug('sys.version_info=' + str(sys.version_info[0]))
-    logger.debug('sys.path=' + str(sys.path))
-    logger.debug('log_level=' + args.log_level)
-    logger.debug('emme_path=' + args.emme_path)
-    logger.debug('baseline_data_path=' + args.baseline_data_path)
-    logger.debug('forecast_data_path=' + args.forecast_data_path)
-    logger.debug('iterations=' + str(args.iterations))
-    logger.debug('use_fixed_transit_cost=' + str(args.use_fixed_transit_cost))
-    logger.debug('first_scenario_id=' + str(args.first_scenario_id))
-    logger.debug('scenario_name=' + args.scenario_name)
+    log.initialize(config)
+    log.debug('sys.version_info=' + str(sys.version_info[0]))
+    log.debug('sys.path=' + str(sys.path))
+    log.debug('log_level=' + args.log_level)
+    log.debug('emme_path=' + args.emme_path)
+    log.debug('baseline_data_path=' + args.baseline_data_path)
+    log.debug('forecast_data_path=' + args.forecast_data_path)
+    log.debug('iterations=' + str(args.iterations))
+    log.debug('use_fixed_transit_cost=' + str(args.use_fixed_transit_cost))
+    log.debug('save_matrices=' + str(args.save_matrices))
+    log.debug('del_strat_files=' + str(args.del_strat_files))
+    log.debug('first_scenario_id=' + str(args.first_scenario_id))
+    log.debug('scenario_name=' + args.scenario_name)
 
-    main(args, logger)
+    main(args)

@@ -1,69 +1,67 @@
 import unittest
-from datahandling.zonedata import ZoneData
-from datahandling.matrixdata import MatrixData
 import pandas
 import os
-import parameters as params
 import numpy
 
+import utils.log as log
+from datahandling.zonedata import ZoneData
+from datahandling.matrixdata import MatrixData
+import parameters.assignment as param
+
+
 TEST_DATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "test_data")
+ZONE_INDEXES = numpy.array([5, 6, 7, 2792, 16001, 17000, 31001, 31501])
 
 # Integration tests for validating that we can read the matrices from OMX and CSV files correctly.
 # Assumes that the matrix is fixed and the values don't change throughout the project.
 
+class Config():
+    LOG_FORMAT = None
+    LOG_LEVEL = "DEBUG"
+    SCENARIO_NAME = "TEST"
 
 class MatrixDataTest(unittest.TestCase):
     
     def test_constructor(self):
-        m = MatrixData(os.path.join(TEST_DATA_PATH, "Results", "test", "Matrices"))
+        log.initialize(Config())
+        m = MatrixData(os.path.join(TEST_DATA_PATH, "Base_input_data", "base_matrices"))
         # Verify that the base folder exists
         self.assertTrue(os.path.isdir(m.path))
-        self.assertTrue(m.path.endswith("Matrices"))
 
     def test_matrix_operations(self):
-        m = MatrixData(os.path.join(TEST_DATA_PATH, "Results", "test", "Matrices"))
-        # TODO add matrices for gen_cost, transit, bike? 
+        log.initialize(Config())
+        m = MatrixData(os.path.join(TEST_DATA_PATH, "Base_input_data", "base_matrices"))
         # TODO now MockAssignmentModel writes the demand-matrices in it's tests, think about this.. 
-        MATRIX_TYPES = ["time", "dist", "cost"]
+        MATRIX_TYPES = ["demand"]
         for matrix_type in MATRIX_TYPES:
             print("validating matrix type", matrix_type)
             self._validate_matrix_operations(m, matrix_type)
 
     def _validate_matrix_operations(self, matrix_data, matrix_type):
         emme_scenarios = ["aht", "pt", "iht"]
+        expanded_zones = numpy.insert(ZONE_INDEXES, 3, 8)
         for key in emme_scenarios:
             print("Opening matrix for time period", key)
-            with matrix_data.open(matrix_type, time_period=key) as mtx:
-                self.assertIsNotNone(mtx._file)
-                # Validate that has some zone numbers and mapping
-                self.assertTrue(len(mtx.zone_numbers) > 0)
-                self.assertEquals(len(mtx.zone_numbers), len(mtx.mapping))
-                modes_for_this_type = params.emme_result_mtx[matrix_type].keys()
-                for mode in modes_for_this_type:
-                    # Validata that there is some data for each mode
-                    print("validating data for matrix mode", mode)
-                    data = mtx[mode]
-                    assert type(data) is numpy.ndarray
-                    self.assertTrue(len(data) > 0)
-                    assert (data >= 0).all()
+            with matrix_data.open(matrix_type, key, expanded_zones) as mtx:
+                for ass_class in param.transport_classes:
+                    a = mtx[ass_class]
 
 
 class ZoneDataTest(unittest.TestCase):
     FREIGHT_DATA_INDEXES = [5, 6, 7, 2792, 16001, 17000]
-    ZONE_INDEXES = numpy.array([5, 6, 7, 2792, 16001, 17000, 31000, 31501])
 
     def _get_freight_data_2016(self):
-        zdata = ZoneData(os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata_test"), self.ZONE_INDEXES)
+        zdata = ZoneData(os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata"), ZONE_INDEXES)
         df = zdata.get_freight_data()
         self.assertIsNotNone(df)
         return df
 
     def test_csv_file_read(self):
-        zdata2016 = ZoneData(os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata_test"), self.ZONE_INDEXES)
+        zdata2016 = ZoneData(os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata"), ZONE_INDEXES)
         self.assertIsNotNone(zdata2016["population"])
         self.assertIsNotNone(zdata2016["workplaces"])
 
-        zdata2030 = ZoneData(os.path.join(TEST_DATA_PATH, "Scenario_input_data", "2030_test"), self.ZONE_INDEXES)
+        zdata2030 = ZoneData(os.path.join(TEST_DATA_PATH, "Scenario_input_data", "2030_test"), ZONE_INDEXES)
         self.assertIsNotNone(zdata2030["population"])
         self.assertIsNotNone(zdata2030["workplaces"])
 
