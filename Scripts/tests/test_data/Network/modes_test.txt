@@ -1,7 +1,4 @@
 c Modeller - Mode Transaction
-c Date: 2021-04-22 09:33:28
-c Project:        HELMEL_KEHI_30                                              
-c Scenario 19:    bike
 t modes
 c id description mode_type colour cost_time_coeff cost_distance_coeff energy_time_coeff energy_distance_coeff speed_factor
 a h 'Paamuoto' 1   1   0.00   0.00   0.00   0.00

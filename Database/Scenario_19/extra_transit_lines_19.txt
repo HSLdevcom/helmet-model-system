@@ -1,8 +1,0 @@
-t extra_attributes
-@hw_aht TRANSIT_LINE 0.0 ''
-@hw_iht TRANSIT_LINE 0.0 ''
-@hw_pt TRANSIT_LINE 0.0 ''
-end extra_attributes
-    line    @hw_aht    @hw_iht     @hw_pt
-'11    '        10        10        10
-'12    '        10        10        10

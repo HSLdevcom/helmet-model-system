@@ -40,17 +40,18 @@ class EmmeAssignmentTest:
             "van": car_matrix,
         }
         travel_cost = {}
+        self.ass_model.init_assign(demand)
         for ap in self.ass_model.assignment_periods:
-            travel_cost[ap.name] = ap.assign(demand, iteration="init")
+            travel_cost[ap.name] = ap.assign(demand, iteration="last")
         resultdata = ResultsData(os.path.join(
             os.path.dirname(os.path.realpath(__file__)),
-            "..", "Results", "2016_test"))
+            "tests", "test_data", "Results", "assignment"))
         self.ass_model.aggregate_results(resultdata)
         self.ass_model.calc_noise()
         resultdata.flush()
         costs_files = MatrixData(os.path.join(
             os.path.dirname(os.path.realpath(__file__)),
-            "..", "Matrices", "2016_test"))
+            "tests", "test_data", "Results", "assignment", "Matrices"))
         for time_period in travel_cost:
             for mtx_type in travel_cost[time_period]:
                 zone_numbers = self.ass_model.zone_numbers
@@ -64,7 +65,7 @@ class EmmeAssignmentTest:
         zdata = ZoneData(os.path.join(
             os.path.dirname(os.path.realpath(__file__)), "tests", "test_data",
             "Scenario_input_data", "2030_test"), ZONE_INDEXES)
-        peripheral_cost = numpy.ones((2, 6))
+        peripheral_cost = numpy.ones((1, 10))
         self.ass_model.calc_transit_cost(zdata.transit_zone, peripheral_cost)
 
 

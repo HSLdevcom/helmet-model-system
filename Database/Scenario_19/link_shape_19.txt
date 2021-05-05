@@ -1,6 +1,0 @@
-c Modeller - Link Shape Transaction
-c Date: 2021-04-22 09:33:28
-c Project:        HELMEL_KEHI_30                                              
-c Scenario 19:    bike
-c I_Node J_Node Vertex_No. X-Coord Y-Coord
-t linkvertices
