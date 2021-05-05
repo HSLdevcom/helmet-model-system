@@ -10,6 +10,8 @@ from datahandling.zonedata import ZoneData
 from datahandling.matrixdata import MatrixData
 from datahandling.resultdata import ResultsData
 from assignment.emme_bindings.emme_project import EmmeProject
+import inro.emme.desktop.app as _app
+import inro.emme.database.emmebank as _eb
 
 
 class EmmeAssignmentTest:
@@ -18,11 +20,33 @@ class EmmeAssignmentTest:
                             datefmt='%Y-%m-%d %H:%M:%S',
                             level=logging.INFO)
         script_dir = os.path.dirname(os.path.realpath('__file__'))
-        project_dir = os.path.join(script_dir, "..")
-        for file_name in os.listdir(project_dir):
-            if file_name.endswith(".emp"):
-                empfile = os.path.join(project_dir, file_name)
+        project_dir = os.path.join(script_dir, "tests", "test_data", "Results")
+        empfile = _app.create_project(project_dir, "test_assignment")
         emme_context = EmmeProject(empfile)
+        dim = {
+            "scalar_matrices": 100,
+            "origin_matrices": 100,
+            "destination_matrices": 100,
+            "full_matrices": 400,
+            "scenarios": 5,
+            "centroids": 20,
+            "regular_nodes": 1000,
+            "links": 2000,
+            "turn_entries": 100,
+            "transit_vehicles": 30,
+            "transit_lines": 20,
+            "transit_segments": 2000,
+            "extra_attribute_values": 3000000,
+            "functions": 99,
+            "operators": 5000,
+            "sola_analyses": 99,
+        }
+        eb = _eb.create(os.path.join(project_dir, "test_assignment"), dim)
+        path = eb.path
+        eb.dispose()
+        emme_context.app.data_explorer().add_database(path)
+        emme_context.import_scenario(
+            os.path.join(project_dir, "..", "Network"), 19, "test")
         self.ass_model = ass.EmmeAssignmentModel(emme_context, 19)
         self.ass_model.prepare_network()
     
