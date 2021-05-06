@@ -92,6 +92,13 @@ class EmmeAssignmentModel(AssignmentModel):
         self._create_attributes(self.day_scenario, self._extra)
         for ap in self.assignment_periods:
             ap.prepare(self._create_attributes(ap.emme_scenario, ap.extra))
+        for idx in param.volume_delay_funcs:
+            try:
+                self.emme_project.modeller.emmebank.delete_function(idx)
+            except Exception:
+                pass
+            self.emme_project.modeller.emmebank.create_function(
+                idx, param.volume_delay_funcs[idx])
 
     def init_assign(self, demand):
         ap0 = self.assignment_periods[0]
