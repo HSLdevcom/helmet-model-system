@@ -5,15 +5,30 @@ import inro.emme.desktop.app as _app
 import inro.modeller as _m
 
 
-# Creates and initializes EMME-resources (INRO's own library, from EMME-software's Python site-packages)
 class EmmeProject:
-    def __init__(self, filepath):
+    """Initialize EMME-resources.
+
+    Access and wrap INRO's own library,
+    from EMME-software's Python site-packages.
+
+    Parameters
+    ----------
+    project_path : str
+        Path to EMME project (.emp) file
+    emmebank_path : str (optional)
+        Path to emmebank file (if EMME project is not initialized)
+    """
+    def __init__(self, project_path, emmebank_path=None):
         log.info("Starting Emme...")
         emme_desktop = _app.start_dedicated(
-            project=filepath, 
+            project=project_path,
             visible=False, 
             user_initials="HSL"
         )
+        if emmebank_path is not None:
+            db = emme_desktop.data_explorer().add_database(emmebank_path)
+            db.open()
+            emme_desktop.project.save()
         # Add logging to EMME
         sh = logging.StreamHandler(stream=self)
         logging.getLogger().addHandler(sh)
@@ -21,6 +36,8 @@ class EmmeProject:
         self.modeller = _m.Modeller(emme_desktop)
         log.info("Emme started")
         self.path = os.path.dirname(self.modeller.emmebank.path)
+        self.import_scenario = self.modeller.tool(
+            "inro.emme.data.scenario.import_scenario")
         self.copy_scenario = self.modeller.tool(
             "inro.emme.data.scenario.copy_scenario")
         self.create_matrix = self.modeller.tool(

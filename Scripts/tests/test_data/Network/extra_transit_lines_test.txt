@@ -1,0 +1,18 @@
+t extra_attributes
+@hw_aht TRANSIT_LINE 0.0 ''
+@hw_pt TRANSIT_LINE 0.0 ''
+@hw_iht TRANSIT_LINE 0.0 ''
+end extra_attributes
+    line   @hw_aht    @hw_pt   @hw_iht
+'10101 '         6       7.5         6
+'10102 '         6       7.5         6
+'10191 '        40        40        40
+'10192 '        40        40        40
+'22001 '        10        10        10
+'22002 '        10        10        10
+'3002A1'        10        10        10
+'3002A2'        10        10        10
+'72801 '        30        30        15
+'72802 '        15        30        30
+'V18761'       180       120       180
+'V18762'       180       120        90

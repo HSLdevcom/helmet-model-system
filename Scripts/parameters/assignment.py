@@ -340,6 +340,7 @@ assignment_modes = {
     "van": 'v',
 }
 volume_delays_funcs = (1, 2, 3, 4, 5)
+connector_link_types = (84, 85, 86, 87, 88, 98, 99)
 vot_classes = {
     "car_work": "work",
     "car_leisure": "leisure",

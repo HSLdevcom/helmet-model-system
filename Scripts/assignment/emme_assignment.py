@@ -181,7 +181,7 @@ class EmmeAssignmentModel(AssignmentModel):
         for node in network.regular_nodes():
             for mode in param.station_ids:
                 if (node.data2 == param.station_ids[mode]
-                        and node[self._extra("transit_boa")] > 0):
+                        and node[self._extra("transit_won_boa")] > 0):
                     stations[mode] += 1
                     break
         resultdata.print_data(stations, "transit_stations.txt", "number")
