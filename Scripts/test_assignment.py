@@ -15,6 +15,10 @@ import inro.emme.database.emmebank as _eb
 
 
 class EmmeAssignmentTest:
+    """Create small EMME test network and test assignments.
+
+    On first run, create new EMME project and database files.
+    """
     def __init__(self):
         logging.basicConfig(format='%(asctime)s %(message)s',
                             datefmt='%Y-%m-%d %H:%M:%S',
