@@ -5,12 +5,23 @@ import inro.emme.desktop.app as _app
 import inro.modeller as _m
 
 
-# Creates and initializes EMME-resources (INRO's own library, from EMME-software's Python site-packages)
 class EmmeProject:
-    def __init__(self, filepath, emmebank_path=None):
+    """Initialize EMME-resources.
+
+    Access and wrap INRO's own library,
+    from EMME-software's Python site-packages.
+
+    Parameters
+    ----------
+    project_path : str
+        Path to EMME project (.emp) file
+    emmebank_path : str (optional)
+        Path to emmebank file (if EMME project is not initialized)
+    """
+    def __init__(self, project_path, emmebank_path=None):
         log.info("Starting Emme...")
         emme_desktop = _app.start_dedicated(
-            project=filepath, 
+            project=project_path,
             visible=False, 
             user_initials="HSL"
         )

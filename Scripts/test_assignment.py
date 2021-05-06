@@ -19,8 +19,17 @@ class EmmeAssignmentTest:
         logging.basicConfig(format='%(asctime)s %(message)s',
                             datefmt='%Y-%m-%d %H:%M:%S',
                             level=logging.INFO)
-        script_dir = os.path.dirname(os.path.realpath('__file__'))
-        project_dir = os.path.join(script_dir, "tests", "test_data", "Results")
+        project_dir = os.path.join(
+            os.path.dirname(os.path.realpath('__file__')),
+            "tests", "test_data", "Results")
+        project_name = "test_assignment"
+        db_dir = os.path.join(project_dir, project_name, "Database")
+        try:
+            project_path = _app.create_project(project_dir, project_name)
+            os.makedirs(db_dir)
+        except FileExistsError:
+            project_path = os.path.join(
+                project_dir, project_name, project_name + ".emp")
         dim = {
             "scalar_matrices": 100,
             "origin_matrices": 100,
@@ -34,27 +43,24 @@ class EmmeAssignmentTest:
             "transit_vehicles": 30,
             "transit_lines": 20,
             "transit_segments": 2000,
-            "extra_attribute_values": 3000000,
+            "extra_attribute_values": 300000,
             "functions": 99,
             "operators": 5000,
-            "sola_analyses": 24000,
+            "sola_analyses": 240,
         }
+        scenario_num = 19
         try:
-            eb = _eb.create(os.path.join(project_dir, "emmebank"), dim)
-            eb.create_scenario(19)
-            path = eb.path
+            eb = _eb.create(os.path.join(db_dir, "emmebank"), dim)
+            eb.create_scenario(scenario_num)
+            emmebank_path = eb.path
             eb.dispose()
         except RuntimeError:
-            path = None
-        try:
-            empfile = _app.create_project(project_dir, "test_assignment")
-        except FileExistsError:
-            empfile = os.path.join(project_dir, "test_assignment", "test_assignment.emp")
-        emme_context = EmmeProject(empfile, path)
+            emmebank_path = None
+        emme_context = EmmeProject(project_path, emmebank_path)
         emme_context.import_scenario(
-            os.path.join(project_dir, "..", "Network"), 19, "test",
+            os.path.join(project_dir, "..", "Network"), scenario_num, "test",
             overwrite=True)
-        self.ass_model = ass.EmmeAssignmentModel(emme_context, 19)
+        self.ass_model = ass.EmmeAssignmentModel(emme_context, scenario_num)
         self.ass_model.prepare_network()
     
     def test_assignment(self):
