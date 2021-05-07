@@ -351,11 +351,6 @@ noise_zone_width = {
 }
 
 ### ASSIGNMENT REFERENCES ###
-
-# Volume-delay function files
-func_car = "d411_pituusriippuvaiset_HM30.in"
-func_bike = "d411_pituusriippuvaiset_pyora.in"
-
 transport_classes = (
     "car_work",
     "car_leisure",
