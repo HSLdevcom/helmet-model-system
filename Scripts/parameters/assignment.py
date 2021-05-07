@@ -39,6 +39,7 @@ custom_roadtypes = {
     94: "arterial",
     95: "local",
 }
+# Bike delay function ids
 bikepath_vdfs = (
     {  # 0 - Mixed traffic
         None: 78,
@@ -61,6 +62,23 @@ bikepath_vdfs = (
         None: 70,
     }
 )
+# Transit delay function ids
+transit_delay_funcs = {
+    ("bus", "bgde"): {
+        "no_buslane": 1,
+        "buslane": 2,
+    },
+    ("lightrail", "tp"): {
+        "aht": 3,
+        "pt": 4,
+        "iht": 5,
+    },
+    ("rail", "rjmw"): {
+        "aht": 6,
+        "pt": 6,
+        "iht": 6,
+    },
+}
 volume_delay_funcs = {
     # Car functions
     "fd1": "(put(60/ul2)*(1+0.02*put((volau+volad)/lanes)/"
@@ -106,19 +124,19 @@ volume_delay_funcs = {
     "fd78": "length*(60/12)",
     "fd98": "length*(60/12)",
     # Transit functions
-    # Bus, no bus lane
+    ## Bus, no bus lane
     "ft01": "us2*length+timau",
-    # Bus on bus lane
+    ## Bus on bus lane
     "ft02": "us2*length",
-    # Tram aht
+    ## Tram aht
     "ft03": "(length / (int(ul1 / 10000))) * 60",
-    # Tram pt
+    ## Tram pt
     "ft04": "(length / ((int(ul1 / 100)) .mod. 100)) * 60",
-    # Tram iht
+    ## Tram iht
     "ft05": "(length / (ul1 .mod. 100)) * 60",
-    # Train functions
+    ## Train functions
     "ft6": "us1",
-    # Escape function, speed 40 km/h
+    ## Escape function, speed 40 km/h
     "ft7": "length/(40/60)",
 }
 # Code derived from three-digit link type xyz, where x is the bus lane code,
@@ -127,23 +145,6 @@ bus_lane_link_codes = {
     "aht": (2, 3, 4, 6),
     "pt": (3, 6),
     "iht": (2, 3, 5, 6),
-}
-# Transit delay function ids
-transit_delay_funcs = {
-    ("bus", "bgde"): {
-        "no_buslane": 1,
-        "buslane": 2,
-    },
-    ("lightrail", "tp"): {
-        "aht": 3,
-        "pt": 4,
-        "iht": 5,
-    },
-    ("rail", "rjmw"): {
-        "aht": 6,
-        "pt": 6,
-        "iht": 6,
-    },
 }
 # Bus lane delay equivalent to 1.5 km per link
 buslane_delay = 60 * 1.5
@@ -399,7 +400,6 @@ assignment_modes = {
     "truck": 'k',
     "van": 'v',
 }
-volume_delays_funcs = (1, 2, 3, 4, 5)
 vot_classes = {
     "car_work": "work",
     "car_leisure": "leisure",
