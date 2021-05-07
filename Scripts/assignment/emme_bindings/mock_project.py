@@ -9,9 +9,6 @@ class MockProject:
     Emulates key features of EMME API, so that `EmmeAssignmentModel`
     and `AssignmentPeriod` can be unit tested without EMME binding.
     """
-
-    path = "c:\\xxx\\yyy"
-
     def __init__(self):
         self.modeller = Modeller(EmmeBank())
 
@@ -60,9 +57,6 @@ class MockProject:
     def network_calc(self, *args, **kwargs):
         pass
 
-    def process_functions(self, *args, **kwargs):
-        pass
-
     def car_assignment(self, *args, **kwargs):
         report = {
             "stopping_criterion": "MAX_ITERATIONS",
@@ -100,6 +94,7 @@ class EmmeBank:
     def __init__(self):
         self._scenarios = {19: Scenario(19)}
         self._matrices = {}
+        self._functions = {}
 
     def scenario(self, idx):
         if idx in self._scenarios:
@@ -141,6 +136,27 @@ class EmmeBank:
                 idx, len(next(self.scenarios()).zone_numbers), default_value)
             self._matrices[idx] = matrix
             return matrix
+
+    def function(self, idx):
+        if idx in self._functions:
+            return self._functions[idx]
+
+    def functions(self):
+        return iter(self._functions.values())
+
+    def create_function(self, idx, expression):
+        if idx in self._functions:
+            raise ExistenceError("Function already exists: {}".format(idx))
+        else:
+            func = Function(idx, expression)
+            self._functions[idx] = func
+            return func
+
+    def delete_function(self, idx):
+        try:
+            del self._functions[idx]
+        except KeyError:
+            raise ExistenceError("Function does not exist: {}".format(idx))
 
 
 class Scenario:
@@ -202,6 +218,12 @@ class Matrix:
 
     def set_numpy_data(self, data):
         self._data[:,:] = data
+
+
+class Function:
+    def __init__(self, idx, expression):
+        self.id = idx
+        self.expression = expression
 
 
 class Network:
