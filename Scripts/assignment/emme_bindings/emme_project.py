@@ -28,8 +28,6 @@ class EmmeProject:
             "inro.emme.data.matrix.copy_matrix")
         self.network_calc = self.modeller.tool(
             "inro.emme.network_calculation.network_calculator")
-        self.process_functions = self.modeller.tool(
-            "inro.emme.data.function.function_transaction")
         self.car_assignment = self.modeller.tool(
             "inro.emme.traffic_assignment.sola_traffic_assignment")
         self.bike_assignment = self.modeller.tool(
