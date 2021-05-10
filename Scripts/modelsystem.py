@@ -557,11 +557,8 @@ class AgentModelSystem(ModelSystem):
             for person in self.dm.population:
                 person.calc_income()
                 self.resultdata.print_line(str(person), fname0)
-                try:                    
-                    for tour in person.tours:
-                        self.resultdata.print_line(str(tour), fname1)
-                except NameError, IndexError:
-                    pass
+                for tour in person.tours:
+                    self.resultdata.print_line(str(tour), fname1)
             log.info("Results printed to files {} and {}".format(
                 fname0, fname1))
         log.info("Demand calculation completed")
