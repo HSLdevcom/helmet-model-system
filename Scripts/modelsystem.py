@@ -549,7 +549,7 @@ class AgentModelSystem(ModelSystem):
             self.resultdata.print_line(header, fname)
             for person in self.dm.population:
                 person.calc_income()
-                self.resultdata.print_line(person.__str__(), fname)
+                self.resultdata.print_line(str(person), fname)
             log.info("Results printed to file ".format(fname))
         log.info("Demand calculation completed")
 

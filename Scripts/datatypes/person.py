@@ -22,7 +22,7 @@ class Person:
         Model used to decide if car user
     """
 
-    ID = 0
+    id_counter = 0
     FEMALE = 0
     MALE = 1
     person_attr = ["id", "age_group", "gender", "is_car_user", "income", "nr_tours"]
@@ -32,8 +32,8 @@ class Person:
     
     def __init__(self, zone, age_group, 
                  generation_model, car_use_model, income_model):
-        self.id = Person.ID
-        Person.ID += 1
+        self.id = Person.id_counter
+        Person.id_counter += 1
         self.zone = zone
         self.age = random.randint(age_group[0], age_group[1])
         self.age_group = "age_" + str(age_group[0]) + "-" + str(age_group[1])
