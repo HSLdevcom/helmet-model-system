@@ -382,7 +382,7 @@ class AssignmentPeriod(Period):
                 else:
                     link.volume_delay_func = pathclass[None]
             except KeyError:
-                link.volume_delay_func = 99
+                link.volume_delay_func = 98
             if network.mode('f') in link.modes:
                 link.modes |= {network.mode('h')}
             elif network.mode('h') in link.modes:
@@ -625,8 +625,6 @@ class AssignmentPeriod(Period):
 
     def _assign_cars(self, stopping_criteria, lightweight=False):
         """Perform car_work traffic assignment for one scenario."""
-        function_file = os.path.join(self.emme_project.path, param.func_car)  # TODO refactor paths out from here
-        self.emme_project.process_functions(function_file)
         log.info("Car assignment started...")
         car_spec = self._car_spec.spec(lightweight)
         car_spec["stopping_criteria"] = stopping_criteria
@@ -650,8 +648,6 @@ class AssignmentPeriod(Period):
     def _assign_bikes(self, length_mat_id, length_for_links):
         """Perform bike traffic assignment for one scenario."""
         scen = self.emme_scenario
-        function_file = os.path.join(self.emme_project.path, param.func_bike)  # TODO refactor paths out from here
-        self.emme_project.process_functions(function_file)
         spec = self.bike_spec
         spec["classes"][0]["results"]["link_volumes"] = self.extra("bike")
         spec["classes"][0]["analysis"]["results"]["od_values"] = length_mat_id
