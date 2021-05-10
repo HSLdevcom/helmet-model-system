@@ -25,10 +25,9 @@ class Person:
     id_counter = 0
     FEMALE = 0
     MALE = 1
-    person_attr = ["id", "age_group", "gender", "is_car_user", "income", "nr_tours"]
+    person_attr = ["id", "age_group", "gender", "is_car_user", "income"]
     zone_attr =  ["number", "area", "municipality"]
-    tour_attr = ["total_access", "sustainable_access"]
-    attr = person_attr + zone_attr + tour_attr
+    attr = person_attr + zone_attr
     
     def __init__(self, zone, age_group, 
                  generation_model, car_use_model, income_model):
@@ -114,19 +113,18 @@ class Person:
                     pass
         # Tours that were not recycled, will be created
         for key in new_tours:
-            tour = Tour(purposes[key], self.zone)
+            tour = Tour(purposes[key], self.zone, self.id)
             self.tours.append(tour)
             if key == "hw":
                 non_home_prob = purposes["wo"].gen_model.param[key]
                 if random.random() < non_home_prob:
-                    non_home_tour = Tour(purposes["wo"], tour)
+                    non_home_tour = Tour(purposes["wo"], tour, self.id)
                     self.tours.append(non_home_tour)
             else:
                 non_home_prob = purposes["oo"].gen_model.param[key]
                 if random.random() < non_home_prob:
-                    non_home_tour = Tour(purposes["oo"], tour)
+                    non_home_tour = Tour(purposes["oo"], tour, self.id)
                     self.tours.append(non_home_tour)
-        self.nr_tours = len(self.tours)
 
     def __str__(self):
         """ Return person attributes as string.
@@ -136,13 +134,6 @@ class Person:
         str
             Person object attributes.
         """
-        # sum accessibility of all tours
-        tour_attributes = dict.fromkeys(Person.tour_attr, 0)
-        for tour in self.tours:
-            for attr in tour_attributes:
-                tour_attributes[attr] += getattr(tour, attr)
-        # print to file
         persondata = [str(getattr(self, attr)) for attr in Person.person_attr]
         zonedata = [str(getattr(self.zone, attr)) for attr in Person.zone_attr]
-        tourdata = [str(tour_attributes[attr]) for attr in Person.tour_attr]
-        return "\t".join(persondata + zonedata + tourdata)
+        return "\t".join(persondata + zonedata)

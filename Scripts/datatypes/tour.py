@@ -17,8 +17,10 @@ class Tour(object):
     """
     # Expansion factor used on demand in departure time model
     matrix = numpy.array([[1 / zone_param.agent_demand_fraction]])
+    attr = ["person_id", "mode", "total_access", "sustainable_access"]
 
-    def __init__(self, purpose, origin):
+    def __init__(self, purpose, origin, person_id):
+        self.person_id = person_id
         self.purpose = purpose
         self.orig = origin
         try:
@@ -172,3 +174,14 @@ class Tour(object):
                     + numpy.searchsorted(cumulative_probs, self._sec_dest_draw))
         self.position = (self.position[0], self.position[1], dest_idx)
         self.purpose.sec_dest_purpose.attracted_tours[self.mode][dest_idx] += 1
+
+    def __str__(self):
+        """ Return tour attributes as string.
+
+        Returns
+        ----------
+        str
+            Tour object attributes.
+        """
+        tourdata = [str(getattr(self, attr)) for attr in Tour.attr]
+        return "\t".join(tourdata)
