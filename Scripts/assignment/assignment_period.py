@@ -309,8 +309,7 @@ class AssignmentPeriod(Period):
                             and link.data2 > roadclass.free_flow_speed-1):
                         # Find the most appropriate road class
                         break
-            elif linktype in (98, 99):
-                # Connector link
+            elif linktype in param.connector_link_types:
                 link.volume_delay_func = 99
             else:
                 # Link with no car traffic
@@ -779,10 +778,11 @@ class AssignmentPeriod(Period):
                 specs[tc].ntw_results_spec, scenario=self.emme_scenario,
                 class_name=tc)
         base_timtr = param.uncongested_transit_time
-        self.emme_project.copy_attribute(
-            '@'+base_timtr, self.extra(base_timtr),
-            from_scenario=self.emme_scenario,
-            to_scenario=self.emme_scenario)
+        time_attr = self.extra(base_timtr)
+        network = self.emme_scenario.get_network()
+        for segment in network.transit_segments():
+            segment[time_attr] = segment['@'+base_timtr]
+        self.emme_scenario.publish_network(network)
         log.info("Congested transit assignment performed for scenario {}".format(
             str(self.emme_scenario.id)))
         log.info("Stopping criteria: {}, iteration {} / {}".format(

@@ -1,7 +1,4 @@
 c Modeller - Vehicle Transaction
-c Date: 2021-04-22 09:33:28
-c Project:        HELMEL_KEHI_30                                              
-c Scenario 19:    bike
 t vehicles
 c  id description mode fleet_size seated_capacity total_capacity cost_time_coeff cost_distance_coeff energy_time_coeff energy_distance_coeff auto_equivalent
 a   1 'ValluVakio' d      1    49    78   0.00   0.00   0.00   0.00   0.00

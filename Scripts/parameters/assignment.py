@@ -395,6 +395,7 @@ assignment_modes = {
     "truck": 'k',
     "van": 'v',
 }
+connector_link_types = (84, 85, 86, 87, 88, 98, 99)
 vot_classes = {
     "car_work": "work",
     "car_leisure": "leisure",
