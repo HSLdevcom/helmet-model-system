@@ -538,7 +538,7 @@ class AgentModelSystem(ModelSystem):
             for tour in person.tours:
                 self.dtm.add_demand(tour)
         if is_last_iteration:
-            self.dm.incmod.predict()
+            self.dm.predict_income()
             for person in self.dm.population:
                 person.calc_income()
         log.info("Demand calculation completed")

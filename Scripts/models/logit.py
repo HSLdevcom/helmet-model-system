@@ -345,9 +345,11 @@ class ModeDestModel(LogitModel):
                 Choice probabilities
         """
         mode_expsum = self._calc_utils(impedance)
+        logsum = pandas.Series(
+            numpy.log(mode_expsum), self.purpose.zone_numbers)
+        self.zone_data._values[self.purpose.name] = logsum
         self.resultdata.print_data(
-            pandas.Series(numpy.log(mode_expsum), self.purpose.zone_numbers),
-            "accessibility.txt", self.purpose.name)
+            logsum, "accessibility.txt", self.purpose.name)
         if self.purpose.name == "wh":
             # Transform into person equivalents
             workforce = pandas.Series(

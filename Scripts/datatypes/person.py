@@ -2,8 +2,6 @@ import numpy
 import random
 
 from datatypes.tour import Tour
-from parameters.income import log_income as param
-from parameters.income import standard_deviation
 
 
 class Person:
@@ -47,13 +45,14 @@ class Person:
             self.income = 0
         else:
             log_income = self._im.log_income[self.zone]
+            param = self._im.param
             if self.is_car_user:
                 log_income += param["car_users"]
             if self.gender in param:
                 log_income += param[self.gender]
             if self.age_group in param["age_dummies"]:
                 log_income += param["age_dummies"][self.age_group]
-            log_income += random.gauss(0, standard_deviation)
+            log_income += random.gauss(0, param["standard_deviation"])
             self.income = numpy.exp(log_income)
 
     @property

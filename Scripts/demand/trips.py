@@ -54,6 +54,15 @@ class DemandModel:
         self.cm = logit.CarUseModel(
             zone_data, bounds, self.age_groups, self.resultdata)
         self.gm = logit.TourCombinationModel(self.zone_data)
+        # Income models used only in agent modelling
+        self._incmod1 = linear.IncomeModel(
+            self.zone_data, slice(0, self.zone_data.first_not_helsinki_zone),
+            self.age_groups, self.resultdata, is_helsinki=True)
+        self._incmod2 = linear.IncomeModel(
+            self.zone_data, slice(
+                self.zone_data.first_not_helsinki_zone,
+                self.zone_data.first_peripheral_zone),
+            self.age_groups, self.resultdata, is_helsinki=False)
         if is_agent_model:
             self.create_population()
 
@@ -91,8 +100,6 @@ class DemandModel:
             Person
         """
         bounds = slice(0, self.zone_data.first_peripheral_zone)
-        self.incmod = linear.IncomeModel(
-            self.zone_data, bounds, self.age_groups, self.resultdata)
         self.population = []
         zones = self.zone_data.zone_numbers[bounds]
         self.zone_population = pandas.Series(0, zones)
@@ -116,6 +123,8 @@ class DemandModel:
                     weights = rebalance * weights
             zone_pop = int(round(self.zone_data["population"][zone_number]
                                  * param.agent_demand_fraction))
+            incmod = (self._incmod1 if self.zone_data["helsinki"][zone_number]
+                else self._incmod2)
             for _ in xrange(zone_pop):
                 a = numpy.arange(-1, len(self.age_groups))
                 group = numpy.random.choice(a=a, p=weights)
@@ -123,9 +132,13 @@ class DemandModel:
                     # Group -1 is under-7-year-olds and they have weights[0]
                     person = Person(
                         zone_number, self.age_groups[group], self.gm,
-                        self.cm, self.incmod)
+                        self.cm, incmod)
                     self.population.append(person)
                     self.zone_population[zone_number] += 1
+
+    def predict_income(self):
+        self._incmod1.predict()
+        self._incmod2.predict()
 
     def generate_tours(self):
         """Generate vector of tours for each tour purpose.
