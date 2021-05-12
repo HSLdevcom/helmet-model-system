@@ -5,6 +5,7 @@ import parameters.zone as param
 from utils.read_csv_file import read_csv_file
 from utils.zone_interval import ZoneIntervals, zone_interval
 import utils.log as log
+from datatypes.zone import Zone
 
 
 class ZoneData:
@@ -17,8 +18,8 @@ class ZoneData:
         external = param.areas["external"]
         first_extra = numpy.searchsorted(zone_numbers, peripheral[1], "right")
         self.zone_numbers = zone_numbers[:first_extra]
-        self.mapping = {self.zone_numbers[i]: i
-            for i in xrange(self.zone_numbers.size)}
+        Zone.counter = 0
+        self.zones = {number: Zone(number) for number in self.zone_numbers}
         first_surrounding = numpy.searchsorted(self.zone_numbers, surrounding[0])
         self.first_surrounding_zone = first_surrounding
         first_peripheral = numpy.searchsorted(self.zone_numbers, peripheral[0])
@@ -172,7 +173,7 @@ class ZoneData:
         int
             Index of zone number
         """
-        return self.mapping[zone_number]
+        return self.zones[zone_number].index
 
     def get_freight_data(self):
         """Get zone data for freight traffic calculation.
