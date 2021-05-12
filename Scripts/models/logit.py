@@ -347,13 +347,12 @@ class ModeDestModel(LogitModel):
             Mode (car/transit/bike/walk) : numpy 2-d matrix
                 Choice probabilities
         """
-        k = self.zone_data.first_surrounding_zone
         b = self.mode_choice_param[mod_mode]["individual_dummy"][dummy]
         try:
             self.mode_exps[mod_mode] *= numpy.exp(b)
         except ValueError:
-            self.mode_exps[mod_mode][:k] *= numpy.exp(b[0])
-            self.mode_exps[mod_mode][k:] *= numpy.exp(b[1])
+            self.mode_exps[mod_mode][self.lbounds] *= numpy.exp(b[0])
+            self.mode_exps[mod_mode][self.ubounds] *= numpy.exp(b[1])
         mode_expsum = numpy.zeros_like(self.mode_exps[mod_mode])
         for mode in self.mode_choice_param:
             mode_expsum += self.mode_exps[mode]
@@ -441,7 +440,7 @@ class ModeDestModel(LogitModel):
 
 class AccessibilityModel(ModeDestModel):
     def calc_basic_prob(self, impedance):
-        """Calculate matrix of mode and destination choice probabilities.
+        """Calculate logsum-based accessibility measures.
 
         Individual dummy variables are not included.
 
@@ -451,12 +450,6 @@ class AccessibilityModel(ModeDestModel):
             Mode (car/transit/bike/walk) : dict
                 Type (time/cost/dist) : numpy 2-d matrix
                     Impedances
-
-        Returns
-        -------
-        dict
-            Mode (car/transit/bike/walk) : numpy 2-d matrix
-                Choice probabilities
         """
         mode_expsum = self._calc_utils(impedance)
         self.resultdata.print_data(
@@ -495,7 +488,6 @@ class AccessibilityModel(ModeDestModel):
             self.resultdata.print_data(
                 ZoneIntervals("areas").averages(workforce, workplaces),
                 "workforce_accessibility_per_area.txt", self.purpose.name)
-        return self._calc_prob(mode_expsum)
 
     def _add_constant(self, utility, b):
         """Add constant term to utility.
