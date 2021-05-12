@@ -326,25 +326,7 @@ class ModeDestModel(LogitModel):
             Mode (car/transit/bike/walk) : numpy 2-d matrix
                 Choice probabilities
         """
-        mode_expsum = self._calc_utils(impedance)
-        self.resultdata.print_data(
-            pandas.Series(numpy.log(mode_expsum), self.purpose.zone_numbers),
-            "accessibility.txt", self.purpose.name)
-        if self.purpose.name == "wh":
-            # Transform into person equivalents
-            param = self.mode_choice_param
-            normalization = 1 / sum([param[mode]["constant"][0]
-                for mode in param])
-            workforce = ((normalization*mode_expsum)
-                         **(1/param["car"]["log"]["logsum"]))
-            workforce = pandas.Series(workforce, self.purpose.zone_numbers)
-            self.resultdata.print_data(
-                workforce, "workforce_accessibility.txt", self.purpose.name)
-            workplaces = self.zone_data["workplaces"][self.bounds]
-            self.resultdata.print_data(
-                ZoneIntervals("areas").averages(workforce, workplaces),
-                "workforce_accessibility_per_area.txt", self.purpose.name)
-        return self._calc_prob(mode_expsum)
+        return self._calc_prob(self._calc_utils(impedance))
     
     def calc_individual_prob(self, mod_mode, dummy):
         """Calculate matrix of probabilities with individual dummies.
@@ -395,15 +377,10 @@ class ModeDestModel(LogitModel):
         
         Returns
         -------
-        list
-            float
-                Choice probabilities for purpose modes
+        numpy.array
+            Choice probabilities for purpose modes
         float
             Total accessibility for individual (eur)
-        float
-            Sustainable modes accessibility for individual (eur)
-        float
-            Car accessibility for individual (eur)
         """
         mode_exps = {}
         mode_expsum = 0
@@ -434,9 +411,8 @@ class ModeDestModel(LogitModel):
             # Separate params for cap region and surrounding
             money_utility = 1 / b[0] if self.lbounds.stop < zone else 1 / b[1]
         money_utility /= self.mode_choice_param["car"]["log"]["logsum"]
-        total = -money_utility * logsum
-        sust = -self.purpose.sustainable_accessibility[zone]
-        return probs, total, sust
+        accessibility = -money_utility * logsum
+        return probs, accessibility
 
     def _calc_utils(self, impedance):
         self.dest_expsums = {}
@@ -464,41 +440,62 @@ class ModeDestModel(LogitModel):
 
 
 class AccessibilityModel(ModeDestModel):
-    def _calc_mode_util(self, impedance):
-        expsum = numpy.zeros_like(
-            next(iter(impedance["car"].values())), self.dtype)
-        is_1d = expsum.ndim == 1
-        if is_1d:
-            sustainable_sum = numpy.zeros_like(expsum)
+    def calc_basic_prob(self, impedance):
+        """Calculate matrix of mode and destination choice probabilities.
+
+        Individual dummy variables are not included.
+
+        Parameters
+        ----------
+        impedance : dict
+            Mode (car/transit/bike/walk) : dict
+                Type (time/cost/dist) : numpy 2-d matrix
+                    Impedances
+
+        Returns
+        -------
+        dict
+            Mode (car/transit/bike/walk) : numpy 2-d matrix
+                Choice probabilities
+        """
+        mode_expsum = self._calc_utils(impedance)
+        self.resultdata.print_data(
+            pandas.Series(numpy.log(mode_expsum), self.purpose.zone_numbers),
+            "accessibility.txt", self.purpose.name)
+
+        # Calculate sustainable accessibility
+        sustainable_sum = numpy.zeros_like(mode_expsum)
         for mode in self.mode_choice_param:
-            b = self.mode_choice_param[mode]
-            utility = numpy.zeros_like(expsum)
-            self._add_constant(utility, b["constant"])
-            utility = self._add_zone_util(
-                utility.T, b["generation"], generation=True).T
-            self._add_zone_util(utility, b["attraction"])
-            self._add_impedance(utility, impedance[mode], b["impedance"])
-            exps = numpy.exp(utility)
-            self._add_log_impedance(exps, impedance[mode], b["log"])
-            self.mode_exps[mode] = exps
-            expsum += exps
-            if is_1d and mode != "car":
-                sustainable_sum += exps
-        if is_1d:
-            logsum = numpy.log(sustainable_sum)
+            if mode != "car":
+                sustainable_sum += self.mode_exps[mode]
+        logsum = numpy.log(sustainable_sum)
+        self.resultdata.print_data(
+            pandas.Series(logsum, self.purpose.zone_numbers),
+            "sustainable_accessibility.txt", self.purpose.name)
+        b = self._get_cost_util_coefficient()
+        try:
+            money_utility = 1 / b
+        except TypeError:  # Separate params for cap region and surrounding
+            money_utility = 1 / b[0]
+        money_utility /= self.mode_choice_param["car"]["log"]["logsum"]
+        self.purpose.sustainable_accessibility = money_utility * logsum
+
+        # Calculate workforce accessibility
+        if self.purpose.name == "wh":
+            # Transform into person equivalents
+            param = self.mode_choice_param
+            normalization = 1 / sum([param[mode]["constant"][0]
+                for mode in param])
+            workforce = ((normalization*mode_expsum)
+                            **(1/param["car"]["log"]["logsum"]))
+            workforce = pandas.Series(workforce, self.purpose.zone_numbers)
             self.resultdata.print_data(
-                pandas.Series(logsum, self.purpose.zone_numbers),
-                "sustainable_accessibility.txt", self.purpose.name)
-            b = self._get_cost_util_coefficient()
-            try:
-                # Convert utility into euros
-                money_utility = 1 / b
-            except TypeError:
-                # Separate params for cap region and surrounding
-                money_utility = 1 / b[0]
-            money_utility /= self.mode_choice_param["car"]["log"]["logsum"]
-            self.purpose.sustainable_accessibility = money_utility * logsum
-        return expsum
+                workforce, "workforce_accessibility.txt", self.purpose.name)
+            workplaces = self.zone_data["workplaces"][self.bounds]
+            self.resultdata.print_data(
+                ZoneIntervals("areas").averages(workforce, workplaces),
+                "workforce_accessibility_per_area.txt", self.purpose.name)
+        return self._calc_prob(mode_expsum)
 
     def _add_constant(self, utility, b):
         """Add constant term to utility.
