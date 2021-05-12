@@ -107,8 +107,11 @@ class ModelSystem:
             if isinstance(purpose, SecDestPurpose):
                 purpose.gen_model.init_tours()
             else:
-                purpose.calc_prob(
-                    self.imptrans.transform(purpose, previous_iter_impedance))
+                purpose_impedance = self.imptrans.transform(
+                    purpose, previous_iter_impedance)
+                purpose.calc_prob(purpose_impedance)
+                if is_last_iteration and purpose.dest != "source":
+                    purpose.access_model.calc_basic_prob(purpose_impedance)
         
         # Tour generation
         self.dm.generate_tours()
@@ -247,19 +250,6 @@ class ModelSystem:
         # Calculate internal demand
         self._add_internal_demand(previous_iter_impedance, iteration=="last")
 
-        # Calculate SAVU zones
-        sust_logsum = 0
-        for purpose in self.dm.tour_purposes:
-            if (purpose.area == "metropolitan" and purpose.orig == "home"
-                    and purpose.dest != "source"
-                    and not isinstance(purpose, SecDestPurpose)):
-                zone_numbers = purpose.zone_numbers
-                weight = gen_param.tour_generation[purpose.name]["population"]
-                sust_logsum += weight * purpose.sustainable_accessibility
-        savu = numpy.searchsorted(zone_param.savu_intervals, sust_logsum) + 1
-        self.resultdata.print_data(
-            pandas.Series(savu, zone_numbers), "savu.txt", "savu_zone")
-
         # Calculate external demand
         for mode in param.external_modes:
             if mode == "truck":
@@ -311,6 +301,7 @@ class ModelSystem:
         if iteration=="last":
             self.ass_model.aggregate_results(self.resultdata)
             self._calculate_noise_areas()
+            self._calculate_savu_zones()
 
         # Reset time-period specific demand matrices (DTM), and empty result buffer
         self.dtm.init_demand()
@@ -339,6 +330,19 @@ class ModelSystem:
         conversion = pandas.Series(zone_param.pop_share_per_noise_area)
         noise_pop = conversion * noise_areas * pop
         self.resultdata.print_data(noise_pop, "noise_areas.txt", "population")
+
+    def _calculate_savu_zones(self):
+        sust_logsum = 0
+        for purpose in self.dm.tour_purposes:
+            if (purpose.area == "metropolitan" and purpose.orig == "home"
+                    and purpose.dest != "source"
+                    and not isinstance(purpose, SecDestPurpose)):
+                zone_numbers = purpose.zone_numbers
+                weight = gen_param.tour_generation[purpose.name]["population"]
+                sust_logsum += weight * purpose.sustainable_accessibility
+        savu = numpy.searchsorted(zone_param.savu_intervals, sust_logsum) + 1
+        self.resultdata.print_data(
+            pandas.Series(savu, zone_numbers), "savu.txt", "savu_zone")
 
     def _sum_trips_per_zone(self, mode, include_dests=True):
         int_demand = pandas.Series(0, self.zdata_base.zone_numbers)
@@ -492,6 +496,8 @@ class AgentModelSystem(ModelSystem):
                     self.travel_modes.update(purpose.modes)
                     purpose.init_sums()
                     purpose.calc_basic_prob(purpose_impedance)
+                if is_last_iteration and purpose.dest != "source":
+                    purpose.access_model.calc_basic_prob(purpose_impedance)
         tour_probs = self.dm.generate_tour_probs()
         log.info("Assigning mode and destination for {} agents ({} % of total population)".format(
             len(self.dm.population), int(zone_param.agent_demand_fraction*100)))
