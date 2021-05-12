@@ -15,7 +15,7 @@ openmatrix = "==0.3.3"
 numpy = "==1.16.2"
 numexpr = "==2.7.1"
 tables = "==3.5.1"
-shapely = "==1.6.4.post1"
+shapely = "*"
 
 [requires]
 python_version = "3.7"
