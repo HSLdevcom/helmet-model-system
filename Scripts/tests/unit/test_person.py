@@ -26,7 +26,10 @@ class PersonTest(unittest.TestCase):
             gen_model = GenMod()
             def __init__(self, name):
                 self.name = name
-        p = Person(101, (18, 29), GenMod(), None, ZoneData())
+        class Zone:
+            number = 101
+            index = 0
+        p = Person(Zone(), (18, 29), GenMod(), None, ZoneData())
         p.is_car_user = True
         purposes = {
             "hw": Purpose("hw"),

@@ -9,8 +9,8 @@ class Person:
     
     Parameters
     ----------
-    zone : int
-        Zone number, where person resides
+    zone : datatypes.zone.Zone
+        Zone where person resides
     age_group : tuple
         int
             Age interval to which the person belongs
@@ -20,10 +20,18 @@ class Person:
         Model used to decide if car user
     """
 
+    id_counter = 0
     FEMALE = 0
     MALE = 1
+    person_attr = ["id", "age_group", "gender", "is_car_user", "income", "nr_tours"]
+    zone_attr =  ["number", "area", "municipality"]
+    tour_attr = ["total_access", "sustainable_access"]
+    attr = person_attr + zone_attr + tour_attr
     
-    def __init__(self, zone, age_group, generation_model, car_use_model, income_model):
+    def __init__(self, zone, age_group, 
+                 generation_model, car_use_model, income_model):
+        self.id = Person.id_counter
+        Person.id_counter += 1
         self.zone = zone
         self.age = random.randint(age_group[0], age_group[1])
         self.age_group = "age_" + str(age_group[0]) + "-" + str(age_group[1])
@@ -37,14 +45,14 @@ class Person:
 
     def decide_car_use(self):
         car_use_prob = self._cm.calc_individual_prob(
-            self.age_group, self.gender, self.zone)
+            self.age_group, self.gender, self.zone.number)
         self.is_car_user = self._car_use_draw < car_use_prob
 
     def calc_income(self):
         if self.age < 17:
             self.income = 0
         else:
-            log_income = self._im.log_income[self.zone]
+            log_income = self._im.log_income[self.zone.number]
             param = self._im.param
             if self.is_car_user:
                 log_income += param["car_users"]
@@ -82,9 +90,8 @@ class Person:
                     Matrix with cumulative tour combination probabilities
                     for all zones
         """
-        zone_idx = self.generation_model.zone_data.zone_index(self.zone)
         tour_comb_idx = numpy.searchsorted(
-            tour_probs[self.age_group][self.is_car_user][zone_idx, :],
+            tour_probs[self.age_group][self.is_car_user][self.zone.index, :],
             self._tour_combination_draw)
         new_tours = list(self.generation_model.tour_combinations[tour_comb_idx])
         old_tours = self.tours
@@ -118,3 +125,23 @@ class Person:
                 if random.random() < non_home_prob:
                     non_home_tour = Tour(purposes["oo"], tour)
                     self.tours.append(non_home_tour)
+        self.nr_tours = len(self.tours)
+
+    def __str__(self):
+        """ Return person attributes as string.
+
+        Returns
+        ----------
+        str
+            Person object attributes.
+        """
+        # sum accessibility of all tours
+        tour_attributes = dict.fromkeys(Person.tour_attr, 0)
+        for tour in self.tours:
+            for attr in tour_attributes:
+                tour_attributes[attr] += getattr(tour, attr)
+        # print to file
+        persondata = [str(getattr(self, attr)) for attr in Person.person_attr]
+        zonedata = [str(getattr(self.zone, attr)) for attr in Person.zone_attr]
+        tourdata = [str(tour_attributes[attr]) for attr in Person.tour_attr]
+        return "\t".join(persondata + zonedata + tourdata)

@@ -65,12 +65,7 @@ class LogitModel:
             self.resultdata.print_data(
                 pandas.Series(logsum, self.purpose.zone_numbers),
                 "sustainable_accessibility.txt", self.purpose.name)
-            try:
-                b = self.dest_choice_param["car"]["impedance"]["cost"]
-            except KeyError:
-                # School tours do not have a constant cost parameter
-                # Use value of time conversion from CBA guidelines instead
-                b = -0.31690253
+            b = self._get_cost_util_coefficient()
             try:
                 # Convert utility into euros
                 money_utility = 1 / b
@@ -270,6 +265,14 @@ class LogitModel:
                 zdata.get_data(i, self.bounds, generation) + 1, b[i])
         return exps
 
+    def _get_cost_util_coefficient(self):
+        try:
+            b = self.dest_choice_param["car"]["impedance"]["cost"]
+        except KeyError:
+            # School tours do not have a constant cost parameter
+            # Use value of time conversion from CBA guidelines instead
+            b = -0.31690253
+        return b
 
 class ModeDestModel(LogitModel):
     """Nested logit model with mode choice in upper level.
@@ -352,9 +355,12 @@ class ModeDestModel(LogitModel):
             logsum, "accessibility.txt", self.purpose.name)
         if self.purpose.name == "wh":
             # Transform into person equivalents
-            workforce = pandas.Series(
-                mode_expsum**(1/self.mode_choice_param["car"]["log"]["logsum"]),
-                self.purpose.zone_numbers)
+            param = self.mode_choice_param
+            normalization = 1 / sum([param[mode]["constant"][0]
+                for mode in param])
+            workforce = ((normalization*mode_expsum)
+                         **(1/param["car"]["log"]["logsum"]))
+            workforce = pandas.Series(workforce, self.purpose.zone_numbers)
             self.resultdata.print_data(
                 workforce, "workforce_accessibility.txt", self.purpose.name)
             workplaces = self.zone_data["workplaces"][self.bounds]
@@ -399,6 +405,9 @@ class ModeDestModel(LogitModel):
         
         Calculate mode choice probabilities for individual
         agent with individual dummy variable "car_users" included.
+
+        Additionally save and rescale logsum values for agent based accessibility 
+        analysis.
         
         Parameters
         ----------
@@ -412,9 +421,16 @@ class ModeDestModel(LogitModel):
         list
             float
                 Choice probabilities for purpose modes
+        float
+            Total accessibility for individual (eur)
+        float
+            Sustainable modes accessibility for individual (eur)
+        float
+            Car accessibility for individual (eur)
         """
         mode_exps = {}
         mode_expsum = 0
+        car_expsum = 0
         modes = self.purpose.modes
         for mode in modes:
             mode_exps[mode] = self.mode_exps[mode][zone]
@@ -431,7 +447,19 @@ class ModeDestModel(LogitModel):
         probs = numpy.empty(len(modes))
         for i, mode in enumerate(modes):
             probs[i] = mode_exps[mode] / mode_expsum
-        return probs
+        # utils to money
+        logsum = numpy.log(mode_expsum)
+        b = self._get_cost_util_coefficient()
+        try:
+            # Convert utility into euros
+            money_utility = 1 / b
+        except TypeError:
+            # Separate params for cap region and surrounding
+            money_utility = 1 / b[0] if self.lbounds.stop < zone else 1 / b[1]
+        money_utility /= self.mode_choice_param["car"]["log"]["logsum"]
+        total = -money_utility * logsum
+        sust = -self.purpose.sustainable_accessibility[zone]
+        return probs, total, sust
 
     def _calc_utils(self, impedance):
         self.dest_expsums = {}

@@ -1,6 +1,5 @@
 import numpy
 import pandas
-import random
 
 import utils.log as log
 import parameters.zone as param
@@ -99,6 +98,7 @@ class DemandModel:
         list
             Person
         """
+        numpy.random.seed(param.population_draw)
         bounds = slice(0, self.zone_data.first_peripheral_zone)
         self.population = []
         zones = self.zone_data.zone_numbers[bounds]
@@ -131,10 +131,12 @@ class DemandModel:
                 if group != -1:
                     # Group -1 is under-7-year-olds and they have weights[0]
                     person = Person(
-                        zone_number, self.age_groups[group], self.gm,
+                        self.zone_data.zones[zone_number],
+                        self.age_groups[group], self.gm,
                         self.cm, incmod)
                     self.population.append(person)
                     self.zone_population[zone_number] += 1
+        numpy.random.seed(None)
 
     def predict_income(self):
         self._incmod1.predict()
