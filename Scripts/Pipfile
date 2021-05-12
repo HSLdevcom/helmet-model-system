@@ -9,13 +9,13 @@ pylint = "*"
 rope = "*"
 
 [packages]
-pandas = "*"
+pandas = "==0.24.2"
 openpyxl = "*"
-openmatrix = "*"
-numpy = "*"
-numexpr = "*"
-tables = "*"
+openmatrix = "==0.3.3"
+numpy = "==1.16.2"
+numexpr = "==2.7.1"
+tables = "==3.5.1"
 shapely = "*"
 
 [requires]
-python_version = "3.8"
+python_version = "3.7"
