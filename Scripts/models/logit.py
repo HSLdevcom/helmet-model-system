@@ -440,7 +440,7 @@ class ModeDestModel(LogitModel):
 
 
 class AccessibilityModel(ModeDestModel):
-    def calc_basic_prob(self, impedance):
+    def calc_accessibility(self, impedance):
         """Calculate logsum-based accessibility measures.
 
         Individual dummy variables are not included.

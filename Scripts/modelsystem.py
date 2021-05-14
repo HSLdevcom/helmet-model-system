@@ -112,7 +112,7 @@ class ModelSystem:
                     purpose, previous_iter_impedance)
                 purpose.calc_prob(purpose_impedance)
                 if is_last_iteration and purpose.dest != "source":
-                    purpose.access_model.calc_basic_prob(purpose_impedance)
+                    purpose.access_model.calc_accessibility(purpose_impedance)
         
         # Tour generation
         self.dm.generate_tours()
@@ -505,7 +505,7 @@ class AgentModelSystem(ModelSystem):
                     purpose.init_sums()
                     purpose.calc_basic_prob(purpose_impedance)
                 if is_last_iteration and purpose.dest != "source":
-                    purpose.access_model.calc_basic_prob(purpose_impedance)
+                    purpose.access_model.calc_accessibility(purpose_impedance)
         tour_probs = self.dm.generate_tour_probs()
         log.info("Assigning mode and destination for {} agents ({} % of total population)".format(
             len(self.dm.population), int(zone_param.agent_demand_fraction*100)))
