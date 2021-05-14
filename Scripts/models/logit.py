@@ -435,7 +435,7 @@ class ModeDestModel(LogitModel):
         except KeyError:
             # School tours do not have a constant cost parameter
             # Use value of time conversion from CBA guidelines instead
-            b = -0.31690253
+            b = -0.46738697
         return b
 
 
