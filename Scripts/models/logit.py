@@ -353,9 +353,12 @@ class ModeDestModel(LogitModel):
             "accessibility.txt", self.purpose.name)
         if self.purpose.name == "wh":
             # Transform into person equivalents
-            workforce = pandas.Series(
-                mode_expsum**(1/self.mode_choice_param["car"]["log"]["logsum"]),
-                self.purpose.zone_numbers)
+            param = self.mode_choice_param
+            normalization = 1 / sum([param[mode]["constant"][0]
+                for mode in param])
+            workforce = ((normalization*mode_expsum)
+                         **(1/param["car"]["log"]["logsum"]))
+            workforce = pandas.Series(workforce, self.purpose.zone_numbers)
             self.resultdata.print_data(
                 workforce, "workforce_accessibility.txt", self.purpose.name)
             workplaces = self.zone_data["workplaces"][self.bounds]
