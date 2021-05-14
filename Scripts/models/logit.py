@@ -244,14 +244,6 @@ class LogitModel:
                 zdata.get_data(i, self.bounds, generation) + 1, b[i])
         return exps
 
-    def _get_cost_util_coefficient(self):
-        try:
-            b = self.dest_choice_param["car"]["impedance"]["cost"]
-        except KeyError:
-            # School tours do not have a constant cost parameter
-            # Use value of time conversion from CBA guidelines instead
-            b = -0.31690253
-        return b
 
 class ModeDestModel(LogitModel):
     """Nested logit model with mode choice in upper level.
@@ -437,6 +429,15 @@ class ModeDestModel(LogitModel):
             self.cumul_dest_prob[mode] = dest_prob.cumsum(axis=0)
         return prob
 
+    def _get_cost_util_coefficient(self):
+        try:
+            b = self.dest_choice_param["car"]["impedance"]["cost"]
+        except KeyError:
+            # School tours do not have a constant cost parameter
+            # Use value of time conversion from CBA guidelines instead
+            b = -0.31690253
+        return b
+
 
 class AccessibilityModel(ModeDestModel):
     def calc_basic_prob(self, impedance):
@@ -456,22 +457,24 @@ class AccessibilityModel(ModeDestModel):
             pandas.Series(numpy.log(mode_expsum), self.purpose.zone_numbers),
             "accessibility.txt", self.purpose.name)
 
-        # Calculate sustainable accessibility
+        # Calculate sustainable and car accessibility
         sustainable_sum = numpy.zeros_like(mode_expsum)
         for mode in self.mode_choice_param:
             if mode != "car":
                 sustainable_sum += self.mode_exps[mode]
-        logsum = numpy.log(sustainable_sum)
+        logsum = pandas.Series(
+            numpy.log(sustainable_sum), self.purpose.zone_numbers)
         self.resultdata.print_data(
-            pandas.Series(logsum, self.purpose.zone_numbers),
-            "sustainable_accessibility.txt", self.purpose.name)
+            logsum, "sustainable_accessibility.txt", self.purpose.name)
         b = self._get_cost_util_coefficient()
         try:
             money_utility = 1 / b
         except TypeError:  # Separate params for cap region and surrounding
             money_utility = 1 / b[0]
         money_utility /= self.mode_choice_param["car"]["log"]["logsum"]
-        self.purpose.sustainable_accessibility = money_utility * logsum
+        self.purpose.sustainable_access = money_utility * logsum
+        self.purpose.car_access = (money_utility
+                                   * self.zone_data[self.purpose.name + "_c"])
 
         # Calculate workforce accessibility
         if self.purpose.name == "wh":

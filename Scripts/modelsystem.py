@@ -334,13 +334,18 @@ class ModelSystem:
 
     def _calculate_savu_zones(self):
         sust_logsum = 0
+        car_logsum = 0
         for purpose in self.dm.tour_purposes:
             if (purpose.area == "metropolitan" and purpose.orig == "home"
                     and purpose.dest != "source"
                     and not isinstance(purpose, SecDestPurpose)):
                 zone_numbers = purpose.zone_numbers
                 weight = gen_param.tour_generation[purpose.name]["population"]
-                sust_logsum += weight * purpose.sustainable_accessibility
+                sust_logsum += weight * purpose.sustainable_access
+                car_logsum += weight * purpose.car_access
+        self.resultdata.print_data(
+            sust_logsum, "sustainable_accessibility.txt", "all")
+        self.resultdata.print_data(car_logsum, "car_accessibility.txt", "all")
         savu = numpy.searchsorted(zone_param.savu_intervals, sust_logsum) + 1
         self.resultdata.print_data(
             pandas.Series(savu, zone_numbers), "savu.txt", "savu_zone")

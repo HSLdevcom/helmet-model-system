@@ -122,7 +122,7 @@ class Tour(object):
 
     @property
     def sustainable_access(self):
-        return -self.purpose.sustainable_accessibility[self.position[0]]
+        return -self.purpose.sustainable_access[self.orig]
 
     def choose_destination(self, sec_dest_tours):
         """Choose primary destination for the tour.
