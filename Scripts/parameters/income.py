@@ -23,7 +23,7 @@ log_income = {
     "standard_deviation": 0.35499,
 }
 log_income_helsinki = {
-    "constant": 0,
+    "constant": 7.50592,
     "zone": {
         "cbd": 0.26469,
         "lauttasaari": 0.25522,
