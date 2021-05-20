@@ -16,6 +16,8 @@ from demand.freight import FreightModel
 from demand.trips import DemandModel
 from demand.external import ExternalModel
 from datatypes.purpose import SecDestPurpose
+from datatypes.person import Person
+from datatypes.tour import Tour
 from transform.impedance_transformer import ImpedanceTransformer
 from models.linear import CarDensityModel
 import parameters.assignment as param
@@ -546,14 +548,9 @@ class AgentModelSystem(ModelSystem):
             random.seed(None)
             fname0 = "agents"
             fname1 = "tours"
-            # loop to first person that has tours
-            for person0 in self.dm.population:
-                if isinstance(person0.tours, list):
-                    break
             # print person and tour attr to files
-            self.resultdata.print_line("\t".join(person0.attr), fname0)
-            self.resultdata.print_line(
-                "\t".join(person0.tours[0].attr), fname1)
+            self.resultdata.print_line("\t".join(Person.attr), fname0)
+            self.resultdata.print_line("\t".join(Tour.attr), fname1)
             for person in self.dm.population:
                 person.calc_income()
                 self.resultdata.print_line(str(person), fname0)
