@@ -47,12 +47,12 @@ ROWS = {
     },
 }
 
-TRANSIT = {
+TRANSIT_ROWS = {
     1: "43",
     2: "46",
 }
 
-CAR = {
+CAR_ROWS = {
     1: "8",
     2: "13",
 }
@@ -114,9 +114,9 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
                     if transport_class in param.assignment_modes:
                         revenues_car += revenue
         ws = wb["Tuottajahyodyt"]
-        ws[COLUMNS[tp]+TRANSIT[year]] = revenues_transit
+        ws[COLUMNS[tp]+TRANSIT_ROWS[year]] = revenues_transit
         ws = wb["Julkistaloudelliset"]
-        ws[COLUMNS2[tp]+CAR[year]] = revenues_car
+        ws[COLUMNS2[tp]+CAR_ROWS[year]] = revenues_car
         print ("Gains and revenues " + tp + " calculated")
 
 
