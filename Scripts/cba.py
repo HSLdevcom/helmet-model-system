@@ -166,33 +166,31 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
 
     # Calculate gains and revenues
     for tp in ["aht", "pt", "iht"]:
-        ve1_data = MatrixData(os.path.join(scenario_1, "Matrices"))
-        ve0_data = MatrixData(os.path.join(scenario_0, "Matrices"))
+        data = {
+            "scen_1": MatrixData(os.path.join(scenario_1, "Matrices")),
+            "scen_0": MatrixData(os.path.join(scenario_0, "Matrices")),
+        }
         revenues_transit = 0
         revenues_car = 0
         cols = CELL_INDICES["gains"]["cols"]
         rows = CELL_INDICES["gains"]["rows"][year]
-        for transport_class in param.transport_classes:
-            with ve1_data.open("demand", tp) as mtx:
-                ve1_demand = mtx[transport_class]
-            with ve0_data.open("demand", tp) as mtx:
-                ve0_demand = mtx[transport_class]
+        for tc in param.transport_classes:
+            demand = {}
+            for scenario in data:
+                with data[scenario].open("demand", tp) as mtx:
+                    demand[scenario] = mtx[tc]
             for mtx_type in ["time", "cost", "dist"]:
-                ve1_cost = read_costs(
-                    ve1_data, tp, transport_class, mtx_type)
-                ve0_cost = read_costs(
-                    ve0_data, tp, transport_class, mtx_type)
-                gains_existing, gains_additional = calc_gains(
-                    ve0_demand, ve1_demand, ve0_cost, ve1_cost)
-                ws = workbook[TRANSLATIONS[transport_class]]
+                cost = {scenario: read_costs(data[scenario], tp, tc, mtx_type)
+                    for scenario in data}
+                gains_existing, gains_additional = calc_gains(demand, cost)
+                ws = workbook[TRANSLATIONS[tc]]
                 ws[cols[tp]+rows[mtx_type][0]] = gains_existing
                 ws[cols[tp]+rows[mtx_type][1]] = gains_additional
                 if mtx_type == "cost":
-                    revenue = calc_revenue(
-                        ve0_demand, ve1_demand, ve0_cost, ve1_cost)
-                    if transport_class in param.transit_classes:
+                    revenue = calc_revenue(demand, cost)
+                    if tc in param.transit_classes:
                         revenues_transit += revenue
-                    if transport_class in param.assignment_modes:
+                    if tc in param.assignment_modes:
                         revenues_car += revenue
         ws = workbook["Tuottajahyodyt"]
         rows = CELL_INDICES["transit_revenue"]["rows"][year]
@@ -227,23 +225,63 @@ def read_costs(matrixdata, time_period, transport_class, mtx_type):
     return matrix
 
 
-def calc_revenue(ve0_demand, ve1_demand, ve0_cost, ve1_cost):
-    """Calculate difference in producer revenue between scenarios ve1 and ve0"""
-    demand_change = ve1_demand - ve0_demand
-    cost_change = ve1_cost - ve0_cost
-    revenue = ((ve1_cost*demand_change)[demand_change >= 0].sum()
-               + (cost_change*ve0_demand)[demand_change >= 0].sum()
-               + (ve0_cost*demand_change)[demand_change < 0].sum()
-               + (cost_change*ve1_demand)[demand_change < 0].sum())
+def calc_revenue(demands, costs):
+    """Calculate difference in producer revenue between scen_1 and scen_0.
+
+    Parameters
+    ----------
+    demands : dict
+        scen_0 : numpy.ndarray
+            Demand matrix for scenario 0
+        scen_1 : numpy.ndarray
+            Demand matrix for scenario 1
+    costs : dict
+        scen_0 : numpy.ndarray
+            Impedance matrix for scenario 0
+        scen_1 : numpy.ndarray
+            Impedance matrix for scenario 1
+
+    Returns
+    -------
+    float
+        Calculated revenue
+    """
+    demand_change = demands["scen_1"] - demands["scen_0"]
+    cost_change = costs["scen_1"] - costs["scen_0"]
+    revenue = ((costs["scen_1"]*demand_change)[demand_change >= 0].sum()
+               + (cost_change*demands["scen_0"])[demand_change >= 0].sum()
+               + (costs["scen_0"]*demand_change)[demand_change < 0].sum()
+               + (cost_change*demands["scen_1"])[demand_change < 0].sum())
     return revenue
 
 
-def calc_gains(ve0_demand, ve1_demand, ve0_cost, ve1_cost):
-    """Calculate difference in consumer surplus between scenarios ve1 and ve0"""
-    gain = ve1_cost - ve0_cost
-    demand_change = ve1_demand - ve0_demand
-    gains_existing = ((ve0_demand*gain)[demand_change >= 0].sum()
-                      + (ve1_demand*gain)[demand_change < 0].sum())
+def calc_gains(demands, costs):
+    """Calculate difference in consumer surplus between scen_1 and scen_0.
+
+    Parameters
+    ----------
+    demands : dict
+        scen_0 : numpy.ndarray
+            Demand matrix for scenario 0
+        scen_1 : numpy.ndarray
+            Demand matrix for scenario 1
+    costs : dict
+        scen_0 : numpy.ndarray
+            Impedance matrix for scenario 0
+        scen_1 : numpy.ndarray
+            Impedance matrix for scenario 1
+
+    Returns
+    -------
+    float
+        Calculated gain for existing users
+    float
+        Calculated gain for new or evicted users
+    """
+    gain = costs["scen_1"] - costs["scen_0"]
+    demand_change = demands["scen_1"] - demands["scen_0"]
+    gains_existing = ((demands["scen_0"]*gain)[demand_change >= 0].sum()
+                      + (demands["scen_1"]*gain)[demand_change < 0].sum())
     gains_additional = (0.5*(demand_change*gain)[demand_change >= 0].sum()
                         - 0.5*(demand_change*gain)[demand_change < 0].sum())
     return gains_existing, gains_additional
