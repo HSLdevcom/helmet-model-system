@@ -121,7 +121,7 @@ class TourPurpose(Purpose):
         else:
             self.model = logit.ModeDestModel(
                 zone_data, self, resultdata, is_agent_model)
-            self.access_model = logit.AccessibilityModel(
+            self.accessibility_model = logit.AccessibilityModel(
                 zone_data, self, resultdata, is_agent_model)
         self.modes = self.model.mode_choice_param.keys()
         self.histograms = {mode: TourLengthHistogram() for mode in self.modes}
