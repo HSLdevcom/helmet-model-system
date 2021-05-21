@@ -4,11 +4,23 @@ import numpy
 import pandas
 from argparse import ArgumentError, ArgumentParser
 
+from utils.config import Config
+import utils.log as log
 import parameters.assignment as param
+import parameters.zone as zone_param
 from datahandling.matrixdata import MatrixData
 
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
+
+VEHICLE_KMS_FILE = "vehicle_kms_vdfs.txt"
+TRANSIT_KMS_FILE = "transit_kms.txt"
+
+TRANSIT_TRIPS_PER_MONTH = {
+    "work_capital_region": 60,
+    "work_surrounding": 44,
+    "leisure": 30,
+}
 
 TRANSLATIONS = {
     "car_work": "ha_tyo",
@@ -22,39 +34,91 @@ TRANSLATIONS = {
     "van": "pa",
 }
 
-COLUMNS = {
-    "aht": 'B',
-    "pt": 'C',
-    "iht": 'D',
-}
-
-COLUMNS2 = {
-    "aht": 'F',
-    "pt": 'G',
-    "iht": 'H',
-}
-
-ROWS = {
-    1: {
-        "time": ("9", "10"),
-        "dist": ("22", "23"),
-        "cost": ("37", "38"),
+CELL_INDICES = {
+    "gains": {
+        "cols": {
+            "aht": 'B',
+            "pt": 'C',
+            "iht": 'D',
+        },
+        "rows": {
+            # Different rows for the two years
+            # One row for existing users, one row for additional users
+            1: {
+                "time": ("9", "10"),
+                "dist": ("22", "23"),
+                "cost": ("37", "38"),
+            },
+            2: {
+                "time": ("14", "15"),
+                "dist": ("27", "28"),
+                "cost": ("42", "43"),
+            },
+        },
     },
-    2: {
-        "time": ("14", "15"),
-        "dist": ("27", "28"),
-        "cost": ("42", "43"),
+    "transit_revenue": {
+        "rows": {
+            1: "43",
+            2: "46",
+        },
     },
-}
-
-TRANSIT_ROWS = {
-    1: "43",
-    2: "46",
-}
-
-CAR_ROWS = {
-    1: "8",
-    2: "13",
+    "car_revenue": {
+        "cols": {
+            "aht": 'F',
+            "pt": 'G',
+            "iht": 'H',
+        },
+        "rows": {
+            1: "8",
+            2: "13",
+        },
+    },
+    "car_miles": {
+        "cols": {
+            # Column index for each volume-delay function
+            1: 'I',
+            2: 'J',
+            3: 'K',
+            4: 'L',
+            5: 'M',
+        },
+        "rows": {
+            1: {
+                "car": "19",
+                "van": "20",
+                "truck": "21",
+                "trailer_truck": "22",
+            },
+            2: {
+                "car": "32",
+                "van": "33",
+                "truck": "34",
+                "trailer_truck": "35",
+            },
+        },
+    },
+    "transit_miles": {
+        "cols": {
+            "dist": 'S',
+            "time": 'T',
+        },
+        "rows": {
+            1: {
+                "bus": "8",
+                "trunk": "9",
+                "tram": "10",
+                "metro": "11",
+                "train": "12",
+            },
+            2: {
+                "bus": "16",
+                "trunk": "17",
+                "tram": "18",
+                "metro": "19",
+                "train": "20",
+            },
+        },
+    },
 }
 
 def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
@@ -75,22 +139,39 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
     workbook : openpyxl.WorkBook
         The excel workbook where to save results
     """
-    wb = workbook
+    if year not in (1, 2):
+        raise ArgumentError("Evaluation year must be either 1 or 2")
+    log.info("Analyse year {}...".format(year))
+
+    # Calculate mile differences
     mile_diff = read_miles(scenario_1) - read_miles(scenario_0)
+    mile_diff["car"] = mile_diff["car_work"] + mile_diff["car_leisure"]
+    ws = workbook["Ulkoisvaikutukset"]
+    cols = CELL_INDICES["car_miles"]["cols"]
+    rows = CELL_INDICES["car_miles"]["rows"][year]
+    for mode in rows:
+        for vdf in cols:
+            ws[cols[vdf]+rows[mode]] = mile_diff[mode][vdf]
+
+    # Calculate transit mile differences
     transit_mile_diff = (read_transit_miles(scenario_1)
                          - read_transit_miles(scenario_0))
-    if year == 1:
-        write_results_1(wb, mile_diff, transit_mile_diff)
-    elif year == 2:
-        write_results_2(wb, mile_diff, transit_mile_diff)
-    else:
-        raise ArgumentError("Evaluation year must be either 1 or 2")
+    ws = workbook["Tuottajahyodyt"]
+    cols = CELL_INDICES["transit_miles"]["cols"]
+    rows = CELL_INDICES["transit_miles"]["rows"][year]
+    for mode in rows:
+        for imp_type in cols:
+            ws[cols[imp_type]+rows[mode]] = transit_mile_diff[imp_type][mode]
+    log.info("Mileage differences calculated")
 
+    # Calculate gains and revenues
     for tp in ["aht", "pt", "iht"]:
         ve1_data = MatrixData(os.path.join(scenario_1, "Matrices"))
         ve0_data = MatrixData(os.path.join(scenario_0, "Matrices"))
         revenues_transit = 0
         revenues_car = 0
+        cols = CELL_INDICES["gains"]["cols"]
+        rows = CELL_INDICES["gains"]["rows"][year]
         for transport_class in param.transport_classes:
             with ve1_data.open("demand", tp) as mtx:
                 ve1_demand = mtx[transport_class]
@@ -103,9 +184,9 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
                     ve0_data, tp, transport_class, mtx_type)
                 gains_existing, gains_additional = calc_gains(
                     ve0_demand, ve1_demand, ve0_cost, ve1_cost)
-                ws = wb[TRANSLATIONS[transport_class]]
-                ws[COLUMNS[tp]+ROWS[year][mtx_type][0]] = gains_existing
-                ws[COLUMNS[tp]+ROWS[year][mtx_type][1]] = gains_additional
+                ws = workbook[TRANSLATIONS[transport_class]]
+                ws[cols[tp]+rows[mtx_type][0]] = gains_existing
+                ws[cols[tp]+rows[mtx_type][1]] = gains_additional
                 if mtx_type == "cost":
                     revenue = calc_revenue(
                         ve0_demand, ve1_demand, ve0_cost, ve1_cost)
@@ -113,11 +194,15 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
                         revenues_transit += revenue
                     if transport_class in param.assignment_modes:
                         revenues_car += revenue
-        ws = wb["Tuottajahyodyt"]
-        ws[COLUMNS[tp]+TRANSIT_ROWS[year]] = revenues_transit
-        ws = wb["Julkistaloudelliset"]
-        ws[COLUMNS2[tp]+CAR_ROWS[year]] = revenues_car
-        print ("Gains and revenues " + tp + " calculated")
+        ws = workbook["Tuottajahyodyt"]
+        rows = CELL_INDICES["transit_revenue"]["rows"][year]
+        ws[cols[tp]+rows] = revenues_transit
+        ws = workbook["Julkistaloudelliset"]
+        cols = CELL_INDICES["car_revenue"]["cols"]
+        rows = CELL_INDICES["car_revenue"]["rows"][year]
+        ws[cols[tp]+rows] = revenues_car
+        log.info("Gains and revenues calculated for {}".format(tp))
+    log.info("Year {} completed".format(year))
 
 
 def read_costs(matrixdata, time_period, transport_class, mtx_type):
@@ -128,14 +213,17 @@ def read_costs(matrixdata, time_period, transport_class, mtx_type):
     else:
         with matrixdata.open(mtx_type, time_period) as mtx:
             matrix = mtx[ass_class]
+            zone_numbers = mtx.zone_numbers
     if transport_class == "transit_work" and mtx_type == "cost":
-        trips_per_month = numpy.full_like(matrix, 60)
-        # Surrounding area has a lower number of trips per month
-        trips_per_month[901:, :] = 44
-        trips_per_month = 0.5 * (trips_per_month+trips_per_month.T)
-        matrix /= trips_per_month
-    elif transport_class == "transit_leisure":
-        matrix /= 30
+        nr_trips = numpy.full_like(
+            matrix, TRANSIT_TRIPS_PER_MONTH["work_capital_region"])
+        surrounding = numpy.searchsorted(
+            zone_numbers, zone_param.areas["surrounding"][0])
+        nr_trips[surrounding:, :] = TRANSIT_TRIPS_PER_MONTH["work_surrounding"]
+        nr_trips = 0.5 * (nr_trips+nr_trips.T)
+        matrix /= nr_trips
+    elif transport_class == "transit_leisure" and mtx_type == "cost":
+        matrix /= TRANSIT_TRIPS_PER_MONTH["leisure"]
     return matrix
 
 
@@ -163,89 +251,20 @@ def calc_gains(ve0_demand, ve1_demand, ve0_cost, ve1_cost):
 
 def read_miles(scenario_path):
     """Read vehicle km data from file."""
-    file_path = os.path.join(scenario_path, "vehicle_kms_vdfs.txt")
+    file_path = os.path.join(scenario_path, VEHICLE_KMS_FILE)
     return pandas.read_csv(file_path, delim_whitespace=True)
 
 
 def read_transit_miles(scenario_path):
     """Read transit vehicle travel time and dist data from file."""
-    file_path = os.path.join(scenario_path, "transit_kms.txt")
+    file_path = os.path.join(scenario_path, TRANSIT_KMS_FILE)
     return pandas.read_csv(file_path, delim_whitespace=True)
 
 
-def write_results_1(wb, miles, transit_miles):
-    """Write results for year 1"""
-    ws = wb["Ulkoisvaikutukset"]
-    ws["I19"] = miles["car_work"][1] + miles["car_leisure"][1]
-    ws["J19"] = miles["car_work"][2] + miles["car_leisure"][2]
-    ws["K19"] = miles["car_work"][3] + miles["car_leisure"][3]
-    ws["L19"] = miles["car_work"][4] + miles["car_leisure"][4]
-    ws["M19"] = miles["car_work"][5] + miles["car_leisure"][5]
-    ws["I20"] = miles["van"][1]
-    ws["J20"] = miles["van"][2]
-    ws["K20"] = miles["van"][3]
-    ws["L20"] = miles["van"][4]
-    ws["M20"] = miles["van"][5]
-    ws["I21"] = miles["truck"][1]
-    ws["J21"] = miles["truck"][2]
-    ws["K21"] = miles["truck"][3]
-    ws["L21"] = miles["truck"][4]
-    ws["M21"] = miles["truck"][5]
-    ws["I22"] = miles["trailer_truck"][1]
-    ws["J22"] = miles["trailer_truck"][2]
-    ws["K22"] = miles["trailer_truck"][3]
-    ws["L22"] = miles["trailer_truck"][4]
-    ws["M22"] = miles["trailer_truck"][5]
-    ws = wb["Tuottajahyodyt"]
-    ws["S8"] = transit_miles["dist"]["bus"]
-    ws["S9"] = transit_miles["dist"]["trunk"]
-    ws["S10"] = transit_miles["dist"]["tram"]
-    ws["S11"] = transit_miles["dist"]["metro"]
-    ws["S12"] = transit_miles["dist"]["train"]
-    ws["T8"] = transit_miles["time"]["bus"]
-    ws["T9"] = transit_miles["time"]["trunk"]
-    ws["T10"] = transit_miles["time"]["tram"]
-    ws["T11"] = transit_miles["time"]["metro"]
-    ws["T12"] = transit_miles["time"]["train"]
-
-
-def write_results_2(wb, miles, transit_miles):
-    """Write results for year 2"""
-    ws = wb["Ulkoisvaikutukset"]
-    ws["I32"] = miles["car_work"][1] + miles["car_leisure"][1]
-    ws["J32"] = miles["car_work"][2] + miles["car_leisure"][2]
-    ws["K32"] = miles["car_work"][3] + miles["car_leisure"][3]
-    ws["L32"] = miles["car_work"][4] + miles["car_leisure"][4]
-    ws["M32"] = miles["car_work"][5] + miles["car_leisure"][5]
-    ws["I33"] = miles["van"][1]
-    ws["J33"] = miles["van"][2]
-    ws["K33"] = miles["van"][3]
-    ws["L33"] = miles["van"][4]
-    ws["M33"] = miles["van"][5]
-    ws["I34"] = miles["truck"][1]
-    ws["J34"] = miles["truck"][2]
-    ws["K34"] = miles["truck"][3]
-    ws["L34"] = miles["truck"][4]
-    ws["M34"] = miles["truck"][5]
-    ws["I35"] = miles["trailer_truck"][1]
-    ws["J35"] = miles["trailer_truck"][2]
-    ws["K35"] = miles["trailer_truck"][3]
-    ws["L35"] = miles["trailer_truck"][4]
-    ws["M35"] = miles["trailer_truck"][5]
-    ws = wb["Tuottajahyodyt"]
-    ws["S16"] = transit_miles["dist"]["bus"]
-    ws["S17"] = transit_miles["dist"]["trunk"]
-    ws["S18"] = transit_miles["dist"]["tram"]
-    ws["S19"] = transit_miles["dist"]["metro"]
-    ws["S20"] = transit_miles["dist"]["train"]
-    ws["T16"] = transit_miles["time"]["bus"]
-    ws["T17"] = transit_miles["time"]["trunk"]
-    ws["T18"] = transit_miles["time"]["tram"]
-    ws["T19"] = transit_miles["time"]["metro"]
-    ws["T20"] = transit_miles["time"]["train"]
-
-
 if __name__ == "__main__":
+    config = Config().read_from_file()
+    config.LOG_FORMAT = "JSON"
+    config.SCENARIO_NAME = "cba"
     parser = ArgumentParser(epilog="Calculates the Cost-Benefit Analysis between Results of two HELMET-Scenarios, "
                                    "and writes the outcome in CBA_kehikko.xlsx -file (in same folder).")
     parser.add_argument(
@@ -263,14 +282,15 @@ if __name__ == "__main__":
         "--results-path", dest="results_path", type=str, required=True,
         help="Path to Results directory.")
     args = parser.parse_args()
+    log.initialize(config)
     wb = load_workbook(os.path.join(SCRIPT_DIR, "CBA_kehikko.xlsx"))
     run_cost_benefit_analysis(
         args.baseline_scenario, args.projected_scenario, 1, wb)
     if args.baseline_scenario_2 is not None and args.baseline_scenario_2 != "undefined":
         run_cost_benefit_analysis(
             args.baseline_scenario_2, args.projected_scenario_2, 2, wb)
-    results_filename =  "cba_{}_{}.xlsx".format(
+    results_filename = "cba_{}_{}.xlsx".format(
         os.path.basename(args.projected_scenario),
         os.path.basename(args.baseline_scenario))
     wb.save(os.path.join(args.results_path, results_filename))
-    print ("CBA results saved to file: {}".format(results_filename))
+    log.info("CBA results saved to file: {}".format(results_filename))
