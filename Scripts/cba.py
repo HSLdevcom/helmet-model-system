@@ -203,6 +203,18 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
     log.info("Year {} completed".format(year))
 
 
+def read_miles(scenario_path):
+    """Read vehicle km data from file."""
+    file_path = os.path.join(scenario_path, VEHICLE_KMS_FILE)
+    return pandas.read_csv(file_path, delim_whitespace=True)
+
+
+def read_transit_miles(scenario_path):
+    """Read transit vehicle travel time and dist data from file."""
+    file_path = os.path.join(scenario_path, TRANSIT_KMS_FILE)
+    return pandas.read_csv(file_path, delim_whitespace=True)
+
+
 def read_costs(matrixdata, time_period, transport_class, mtx_type):
     mtx_label = transport_class.split('_')[0]
     ass_class = mtx_label if mtx_label == "bike" else transport_class
@@ -223,36 +235,6 @@ def read_costs(matrixdata, time_period, transport_class, mtx_type):
     elif transport_class == "transit_leisure" and mtx_type == "cost":
         matrix /= TRANSIT_TRIPS_PER_MONTH["leisure"]
     return matrix
-
-
-def calc_revenue(demands, costs):
-    """Calculate difference in producer revenue between scen_1 and scen_0.
-
-    Parameters
-    ----------
-    demands : dict
-        scen_0 : numpy.ndarray
-            Demand matrix for scenario 0
-        scen_1 : numpy.ndarray
-            Demand matrix for scenario 1
-    costs : dict
-        scen_0 : numpy.ndarray
-            Impedance matrix for scenario 0
-        scen_1 : numpy.ndarray
-            Impedance matrix for scenario 1
-
-    Returns
-    -------
-    float
-        Calculated revenue
-    """
-    demand_change = demands["scen_1"] - demands["scen_0"]
-    cost_change = costs["scen_1"] - costs["scen_0"]
-    revenue = ((costs["scen_1"]*demand_change)[demand_change >= 0].sum()
-               + (cost_change*demands["scen_0"])[demand_change >= 0].sum()
-               + (costs["scen_0"]*demand_change)[demand_change < 0].sum()
-               + (cost_change*demands["scen_1"])[demand_change < 0].sum())
-    return revenue
 
 
 def calc_gains(demands, costs):
@@ -287,16 +269,34 @@ def calc_gains(demands, costs):
     return gains_existing, gains_additional
 
 
-def read_miles(scenario_path):
-    """Read vehicle km data from file."""
-    file_path = os.path.join(scenario_path, VEHICLE_KMS_FILE)
-    return pandas.read_csv(file_path, delim_whitespace=True)
+def calc_revenue(demands, costs):
+    """Calculate difference in producer revenue between scen_1 and scen_0.
 
+    Parameters
+    ----------
+    demands : dict
+        scen_0 : numpy.ndarray
+            Demand matrix for scenario 0
+        scen_1 : numpy.ndarray
+            Demand matrix for scenario 1
+    costs : dict
+        scen_0 : numpy.ndarray
+            Impedance matrix for scenario 0
+        scen_1 : numpy.ndarray
+            Impedance matrix for scenario 1
 
-def read_transit_miles(scenario_path):
-    """Read transit vehicle travel time and dist data from file."""
-    file_path = os.path.join(scenario_path, TRANSIT_KMS_FILE)
-    return pandas.read_csv(file_path, delim_whitespace=True)
+    Returns
+    -------
+    float
+        Calculated revenue
+    """
+    demand_change = demands["scen_1"] - demands["scen_0"]
+    cost_change = costs["scen_1"] - costs["scen_0"]
+    revenue = ((costs["scen_1"]*demand_change)[demand_change >= 0].sum()
+               + (cost_change*demands["scen_0"])[demand_change >= 0].sum()
+               + (costs["scen_0"]*demand_change)[demand_change < 0].sum()
+               + (cost_change*demands["scen_1"])[demand_change < 0].sum())
+    return revenue
 
 
 if __name__ == "__main__":
