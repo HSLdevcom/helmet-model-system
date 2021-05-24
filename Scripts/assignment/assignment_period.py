@@ -20,6 +20,7 @@ class AssignmentPeriod(Period):
         self.emme_scenario = emme_context.modeller.emmebank.scenario(
             emme_scenario)
         self.emme_project = emme_context
+        self._save_matrices = save_matrices
         if save_matrices:
             self.demand_mtx = copy.deepcopy(demand_mtx)
             self.result_mtx = copy.deepcopy(result_mtx)
@@ -92,24 +93,36 @@ class AssignmentPeriod(Period):
             self._set_bike_vdfs()
             self._assign_bikes(self.result_mtx["dist"]["bike"]["id"], "all")
             self._set_car_and_transit_vdfs()
+            if not self._save_matrices:
+                self._calc_background_traffic()
             self._assign_cars(param.stopping_criteria_coarse)
             self._calc_extra_wait_time()
             self._assign_transit()
         elif iteration==0:
+            self._set_car_and_transit_vdfs()
+            if not self._save_matrices:
+                self._calc_background_traffic()
             self._assign_cars(param.stopping_criteria_coarse)
             self._calc_extra_wait_time()
             self._assign_transit()
         elif iteration==1:
+            if not self._save_matrices:
+                self._set_car_and_transit_vdfs()
             self._assign_cars(param.stopping_criteria_coarse)
             self._calc_extra_wait_time()
             self._assign_transit()
             self._calc_background_traffic(include_trucks=True)
         elif isinstance(iteration, int) and iteration>1:
+            if not self._save_matrices:
+                self._set_car_and_transit_vdfs()
+                self._calc_background_traffic(include_trucks=True)
             self._assign_cars(
                 param.stopping_criteria_coarse, lightweight=True)
             self._calc_extra_wait_time()
             self._assign_transit()
         elif iteration=="last":
+            if not self._save_matrices:
+                self._set_car_and_transit_vdfs()
             self._calc_background_traffic()
             self._assign_cars(param.stopping_criteria_fine)
             self._calc_boarding_penalties(is_last_iteration=True)
@@ -296,8 +309,7 @@ class AssignmentPeriod(Period):
                             and link.data2 > roadclass.free_flow_speed-1):
                         # Find the most appropriate road class
                         break
-            elif linktype in (98, 99):
-                # Connector link
+            elif linktype in param.connector_link_types:
                 link.volume_delay_func = 99
             else:
                 # Link with no car traffic
@@ -369,7 +381,7 @@ class AssignmentPeriod(Period):
                 else:
                     link.volume_delay_func = pathclass[None]
             except KeyError:
-                link.volume_delay_func = 99
+                link.volume_delay_func = 98
             if network.mode('f') in link.modes:
                 link.modes |= {network.mode('h')}
             elif network.mode('h') in link.modes:
@@ -612,8 +624,6 @@ class AssignmentPeriod(Period):
 
     def _assign_cars(self, stopping_criteria, lightweight=False):
         """Perform car_work traffic assignment for one scenario."""
-        function_file = os.path.join(self.emme_project.path, param.func_car)  # TODO refactor paths out from here
-        self.emme_project.process_functions(function_file)
         log.info("Car assignment started...")
         car_spec = self._car_spec.spec(lightweight)
         car_spec["stopping_criteria"] = stopping_criteria
@@ -637,8 +647,6 @@ class AssignmentPeriod(Period):
     def _assign_bikes(self, length_mat_id, length_for_links):
         """Perform bike traffic assignment for one scenario."""
         scen = self.emme_scenario
-        function_file = os.path.join(self.emme_project.path, param.func_bike)  # TODO refactor paths out from here
-        self.emme_project.process_functions(function_file)
         spec = self.bike_spec
         spec["classes"][0]["results"]["link_volumes"] = self.extra("bike")
         spec["classes"][0]["analysis"]["results"]["od_values"] = length_mat_id
@@ -756,7 +764,7 @@ class AssignmentPeriod(Period):
             specs[tc].transit_spec["journey_levels"][1]["boarding_cost"]["global"]["penalty"] = param.transfer_penalty[tc]
         assign_report = self.emme_project.congested_assignment(
             transit_assignment_spec=[specs[tc].transit_spec for tc in specs],
-            class_names=specs.keys(),
+            class_names=list(specs),
             congestion_function=param.trass_func,
             stopping_criteria=param.trass_stop,
             log_worksheets=False, scenario=self.emme_scenario,
@@ -770,10 +778,11 @@ class AssignmentPeriod(Period):
                 specs[tc].ntw_results_spec, scenario=self.emme_scenario,
                 class_name=tc)
         base_timtr = param.uncongested_transit_time
-        self.emme_project.copy_attribute(
-            '@'+base_timtr, self.extra(base_timtr),
-            from_scenario=self.emme_scenario,
-            to_scenario=self.emme_scenario)
+        time_attr = self.extra(base_timtr)
+        network = self.emme_scenario.get_network()
+        for segment in network.transit_segments():
+            segment[time_attr] = segment['@'+base_timtr]
+        self.emme_scenario.publish_network(network)
         log.info("Congested transit assignment performed for scenario {}".format(
             str(self.emme_scenario.id)))
         log.info("Stopping criteria: {}, iteration {} / {}".format(

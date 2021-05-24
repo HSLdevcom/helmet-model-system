@@ -39,6 +39,7 @@ custom_roadtypes = {
     94: "arterial",
     95: "local",
 }
+# Bike delay function ids
 bikepath_vdfs = (
     {  # 0 - Mixed traffic
         None: 78,
@@ -61,13 +62,6 @@ bikepath_vdfs = (
         None: 70,
     }
 )
-# Code derived from three-digit link type xyz, where x is the bus lane code,
-# 2 means that bus lane is active during aht and iht periods, etc.
-bus_lane_link_codes = {
-    "aht": (2, 3, 4, 6),
-    "pt": (3, 6),
-    "iht": (2, 3, 5, 6),
-}
 # Transit delay function ids
 transit_delay_funcs = {
     ("bus", "bgde"): {
@@ -84,6 +78,73 @@ transit_delay_funcs = {
         "pt": 6,
         "iht": 6,
     },
+}
+volume_delay_funcs = {
+    # Car functions
+    "fd1": "(put(60/ul2)*(1+0.02*put((volau+volad)/lanes)/"
+            + "(ul1-get(2))))*(get(2).le.put(ul1*0.975))*length+(get(2).gt."
+            + "get(3))*(1.78*get(1)*length+0.0075*(get(2)-get(3))*length)",
+    "fd2": "(put(60/ul2)*(1+0.09*put((volau+volad)/lanes)/"
+            + "(ul1-get(2))))*(get(2).le.put(ul1*0.935))*length+(get(2).gt."
+            + "get(3))*(2.29*get(1)*length+0.0085*(get(2)-get(3))*length)",
+    "fd3": "(put(60/ul2)*(1+0.1*put((volau+volad)/lanes)/"
+            + "(ul1-get(2))))*(get(2).le.put(ul1*0.915))*length+(get(2).gt."
+            + "get(3))*(2.08*get(1)*length+0.011*(get(2)-get(3))*length)",
+    "fd4": "(put(60/ul2)*(1+0.2*put((volau+volad)/lanes)/"
+            + "(ul1-get(2))))*(get(2).le.put(ul1*0.87))*length+(get(2).gt."
+            + "get(3))*(2.34*get(1)*length+0.014*(get(2)-get(3))*length)",
+    "fd5": "(put(60/ul2)*(1+0.3*put((volau+volad)/lanes)/"
+            + "(ul1-get(2))))*(get(2).le.put(ul1*0.81))*length+(get(2).gt."
+            + "get(3))*(2.28*get(1)*length+0.017*(get(2)-get(3))*length)",
+    "fd6": "(put(60/ul2)*(1+0.02*put((volau+volad)/((lanes-1).max.0.8))/"
+            + "(ul1-get(2))))*(get(2).le.put(ul1*0.975))*length+(get(2).gt."
+            + "get(3))*(1.78*get(1)*length+0.0075*(get(2)-get(3))*length)",
+    "fd7": "(put(60/ul2)*(1+0.09*put((volau+volad)/((lanes-1).max.0.8))/"
+            + "(ul1-get(2))))*(get(2).le.put(ul1*0.935))*length+(get(2).gt."
+            + "get(3))*(2.29*get(1)*length+0.0085*(get(2)-get(3))*length)",
+    "fd8": "(put(60/ul2)*(1+0.1*put((volau+volad)/((lanes-1).max.0.8))/"
+            + "(ul1-get(2))))*(get(2).le.put(ul1*0.915))*length+(get(2).gt."
+            + "get(3))*(2.08*get(1)*length+0.011*(get(2)-get(3))*length)",
+    "fd9": "(put(60/ul2)*(1+0.2*put((volau+volad)/((lanes-1).max.0.8))/"
+            + "(ul1-get(2))))*(get(2).le.put(ul1*0.87))*length+(get(2).gt."
+            + "get(3))*(2.34*get(1)*length+0.014*(get(2)-get(3))*length)",
+    "fd10": "(put(60/ul2)*(1+0.3*put((volau+volad)/((lanes-1).max.0.8))/"
+            + "(ul1-get(2))))*(get(2).le.put(ul1*0.81))*length+(get(2).gt."
+            + "get(3))*(2.28*get(1)*length+0.017*(get(2)-get(3))*length)",
+    "fd99": "length * 1.3",
+    # Bike functions
+    "fd70": "length*(60/19)",
+    "fd71": "length*(60/17)",
+    "fd72": "length*(60/17)",
+    "fd73": "length*(60/16)",
+    "fd74": "length*(60/15)",
+    "fd75": "length*(60/15)",
+    "fd76": "length*(60/12)",
+    "fd77": "length*(60/10)",
+    "fd78": "length*(60/12)",
+    "fd98": "length*(60/12)",
+    # Transit functions
+    ## Bus, no bus lane
+    "ft01": "us2*length+timau",
+    ## Bus on bus lane
+    "ft02": "us2*length",
+    ## Tram aht
+    "ft03": "(length / (int(ul1 / 10000))) * 60",
+    ## Tram pt
+    "ft04": "(length / ((int(ul1 / 100)) .mod. 100)) * 60",
+    ## Tram iht
+    "ft05": "(length / (ul1 .mod. 100)) * 60",
+    ## Train functions
+    "ft6": "us1",
+    ## Escape function, speed 40 km/h
+    "ft7": "length/(40/60)",
+}
+# Code derived from three-digit link type xyz, where x is the bus lane code,
+# 2 means that bus lane is active during aht and iht periods, etc.
+bus_lane_link_codes = {
+    "aht": (2, 3, 4, 6),
+    "pt": (3, 6),
+    "iht": (2, 3, 5, 6),
 }
 # Bus lane delay equivalent to 1.5 km per link
 buslane_delay = 60 * 1.5
@@ -290,11 +351,6 @@ noise_zone_width = {
 }
 
 ### ASSIGNMENT REFERENCES ###
-
-# Volume-delay function files
-func_car = "d411_pituusriippuvaiset_HM30.in"
-func_bike = "d411_pituusriippuvaiset_pyora.in"
-
 transport_classes = (
     "car_work",
     "car_leisure",
@@ -339,7 +395,7 @@ assignment_modes = {
     "truck": 'k',
     "van": 'v',
 }
-volume_delays_funcs = (1, 2, 3, 4, 5)
+connector_link_types = (84, 85, 86, 87, 88, 98, 99)
 vot_classes = {
     "car_work": "work",
     "car_leisure": "leisure",

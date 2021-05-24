@@ -53,13 +53,12 @@ Database/aja_*.mac
 Database/d2*.in
 Logbook/project.mlbk-shm
 Logbook/project.mlbk-wal
-Matrices/2016/*
-Matrices/2030/*
-Matrices/base/*
 Scripts/.pytest_cache
 Scripts/tests/.pytest_cache
 Scripts/.env
-Scripts/tests/test_data/Results/test/*
-!Scripts/tests/test_data/Results/test/Matrices
+Scripts/tests/test_data/Results/*
+!Scripts/tests/test_data/Results/test/Matrices/cost*
+!Scripts/tests/test_data/Results/test/Matrices/dist*
+!Scripts/tests/test_data/Results/test/Matrices/time*
 project.mtbx-shm
 project.mtbx-wal

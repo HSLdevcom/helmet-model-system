@@ -1,5 +1,6 @@
 import numpy
 from collections import namedtuple
+import copy
 
 
 class MockProject:
@@ -8,11 +9,20 @@ class MockProject:
     Emulates key features of EMME API, so that `EmmeAssignmentModel`
     and `AssignmentPeriod` can be unit tested without EMME binding.
     """
-
-    path = "c:\\xxx\\yyy"
-
     def __init__(self):
         self.modeller = Modeller(EmmeBank())
+
+    def copy_scenario(self, from_scenario, scenario_id, scenario_title,
+                      overwrite=False, copy_paths=True, copy_strategies=True):
+        if overwrite:
+            try:
+                self.modeller.emmebank.delete_scenario(scenario_id)
+            except KeyError:
+                pass
+        scenario = self.modeller.emmebank.copy_scenario(
+            from_scenario.number, scenario_id)
+        scenario.title = scenario_title
+        return scenario
 
     def create_matrix(self, matrix_id, matrix_name, matrix_description,
                       default_value=0, overwrite=False):
@@ -45,9 +55,6 @@ class MockProject:
             eb.matrix(from_matrix).get_numpy_data())
 
     def network_calc(self, *args, **kwargs):
-        pass
-
-    def process_functions(self, *args, **kwargs):
         pass
 
     def car_assignment(self, *args, **kwargs):
@@ -85,17 +92,41 @@ Modeller = namedtuple("Modeller", "emmebank")
 
 class EmmeBank:
     def __init__(self):
-        self._scenarios = {idx: Scenario(idx) for idx in range(19, 24)}
+        self._scenarios = {19: Scenario(19)}
         self._matrices = {}
+        self._functions = {}
 
     def scenario(self, idx):
-        return self._scenarios[idx]
+        if idx in self._scenarios:
+            return self._scenarios[idx]
 
     def scenarios(self):
         return iter(self._scenarios.values())
 
+    def create_scenario(self, idx):
+        if idx in self._scenarios:
+            raise ExistenceError("Scenario already exists: {}".format(idx))
+        else:
+            scenario = Scenario(idx)
+            self._scenarios[idx] = scenario
+            return scenario
+
+    def copy_scenario(self, source_id, destination_id):
+        if self.scenario(source_id) is None:
+            raise ExistenceError("Scenario does not exist: {}".format(
+                source_id))
+        else:
+            dest = self.create_scenario(destination_id)
+            dest.publish_network(
+                copy.deepcopy(self.scenario(source_id).get_network()))
+            return dest
+
+    def delete_scenario(self, idx):
+        del self._scenarios[idx]
+
     def matrix(self, idx):
-        return self._matrices[idx]
+        if idx in self._matrices:
+            return self._matrices[idx]
 
     def create_matrix(self, idx, default_value=0.0):
         if idx in self._matrices:
@@ -106,10 +137,33 @@ class EmmeBank:
             self._matrices[idx] = matrix
             return matrix
 
+    def function(self, idx):
+        if idx in self._functions:
+            return self._functions[idx]
+
+    def functions(self):
+        return iter(self._functions.values())
+
+    def create_function(self, idx, expression):
+        if idx in self._functions:
+            raise ExistenceError("Function already exists: {}".format(idx))
+        else:
+            func = Function(idx, expression)
+            self._functions[idx] = func
+            return func
+
+    def delete_function(self, idx):
+        try:
+            del self._functions[idx]
+        except KeyError:
+            raise ExistenceError("Function does not exist: {}".format(idx))
+
 
 class Scenario:
     def __init__(self, idx):
-        self.id = idx
+        self.id = str(idx)
+        self.number = int(idx)
+        self.title = ""
         self._network = Network()
 
     @property
@@ -164,6 +218,12 @@ class Matrix:
 
     def set_numpy_data(self, data):
         self._data[:,:] = data
+
+
+class Function:
+    def __init__(self, idx, expression):
+        self.id = idx
+        self.expression = expression
 
 
 class Network:

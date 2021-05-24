@@ -38,17 +38,33 @@ class EmmeAssignmentModel(AssignmentModel):
         self.save_matrices = save_matrices
         self.first_matrix_id = first_matrix_id if save_matrices else 0
         self.emme_project = emme_context
-        self.assignment_periods = [AssignmentPeriod(
-                tp, first_scenario_id + i + 2,
-                emme_context, save_matrices=save_matrices)
-            for i, tp in enumerate(["aht", "pt", "iht"])]
         # default value for dist, modelsystem sets new from zonedata
         self.dist_unit_cost = param.dist_unit_cost
-        self.day_scenario = self.emme_project.modeller.emmebank.scenario(
-            first_scenario_id + 1)
+        self.mod_scenario = self.emme_project.modeller.emmebank.scenario(
+            first_scenario_id)
 
     def prepare_network(self):
         """Create matrices, extra attributes and calc background variables."""
+        if self.save_matrices:
+            self.day_scenario = self.emme_project.copy_scenario(
+                self.mod_scenario, self.mod_scenario.number + 1,
+                self.mod_scenario.title + '_' + "vrk",
+                overwrite=True, copy_paths=False, copy_strategies=False)
+        else:
+            self.day_scenario = self.mod_scenario
+        self.assignment_periods = []
+        for i, tp in enumerate(["aht", "pt", "iht"]):
+            if self.save_matrices:
+                scen_id = self.mod_scenario.number + i + 2
+                self.emme_project.copy_scenario(
+                    self.mod_scenario, scen_id,
+                    self.mod_scenario.title + '_' + tp,
+                    overwrite=True, copy_paths=False, copy_strategies=False)
+            else:
+                scen_id = self.mod_scenario.number
+            self.assignment_periods.append(AssignmentPeriod(
+                tp, scen_id, self.emme_project,
+                save_matrices=self.save_matrices))
         for i, ap in enumerate(self.assignment_periods):
             tag = ap.name if self.save_matrices else ""
             id_hundred = 100*i + self.first_matrix_id
@@ -76,6 +92,13 @@ class EmmeAssignmentModel(AssignmentModel):
         self._create_attributes(self.day_scenario, self._extra)
         for ap in self.assignment_periods:
             ap.prepare(self._create_attributes(ap.emme_scenario, ap.extra))
+        for idx in param.volume_delay_funcs:
+            try:
+                self.emme_project.modeller.emmebank.delete_function(idx)
+            except Exception:
+                pass
+            self.emme_project.modeller.emmebank.create_function(
+                idx, param.volume_delay_funcs[idx])
 
     def init_assign(self, demand):
         ap0 = self.assignment_periods[0]
@@ -90,7 +113,7 @@ class EmmeAssignmentModel(AssignmentModel):
     @property
     def zone_numbers(self):
         """Numpy array of all zone numbers.""" 
-        return numpy.array(self.assignment_periods[0].emme_scenario.zone_numbers)
+        return numpy.array(self.mod_scenario.zone_numbers)
 
     @property
     def mapping(self):
@@ -128,7 +151,8 @@ class EmmeAssignmentModel(AssignmentModel):
             self._link_24h(ass_class)
 
         # Aggregate and print vehicle kms
-        vdfs = param.volume_delays_funcs
+        vdfs = {param.roadclasses[linktype].volume_delay_func
+            for linktype in param.roadclasses}
         vdf_kms = {ass_class: pandas.Series(0.0, vdfs)
             for ass_class in ass_classes}
         areas = zone_param.area_aggregation
@@ -165,7 +189,7 @@ class EmmeAssignmentModel(AssignmentModel):
         for node in network.regular_nodes():
             for mode in param.station_ids:
                 if (node.data2 == param.station_ids[mode]
-                        and node[self._extra("transit_boa")] > 0):
+                        and node[self._extra("transit_won_boa")] > 0):
                     stations[mode] += 1
                     break
         resultdata.print_data(stations, "transit_stations.txt", "number")
