@@ -43,9 +43,6 @@ class LogitModel:
     def _calc_mode_util(self, impedance):
         expsum = numpy.zeros_like(
             next(iter(impedance["car"].values())), self.dtype)
-        is_1d = expsum.ndim == 1
-        if is_1d:
-            sustainable_sum = numpy.zeros_like(expsum)
         for mode in self.mode_choice_param:
             b = self.mode_choice_param[mode]
             utility = numpy.zeros_like(expsum)
@@ -58,24 +55,6 @@ class LogitModel:
             self._add_log_impedance(exps, impedance[mode], b["log"])
             self.mode_exps[mode] = exps
             expsum += exps
-            if is_1d and mode != "car":
-                sustainable_sum += exps
-        if is_1d:
-            logsum = numpy.log(sustainable_sum)
-            self.resultdata.print_data(
-                pandas.Series(logsum, self.purpose.zone_numbers),
-                "sustainable_accessibility.txt", self.purpose.name)
-            b = self._get_cost_util_coefficient()
-            try:
-                # Convert utility into euros
-                money_utility = 1 / b
-            except TypeError:
-                # Separate params for cap region and surrounding
-                money_utility = numpy.zeros_like(logsum)
-                money_utility[self.lbounds] = 1 / b[0]
-                money_utility[self.ubounds] = 1 / b[1]
-            money_utility /= self.mode_choice_param["car"]["log"]["logsum"]
-            self.purpose.sustainable_accessibility = money_utility * logsum
         return expsum
     
     def _calc_dest_util(self, mode, impedance):
@@ -265,14 +244,6 @@ class LogitModel:
                 zdata.get_data(i, self.bounds, generation) + 1, b[i])
         return exps
 
-    def _get_cost_util_coefficient(self):
-        try:
-            b = self.dest_choice_param["car"]["impedance"]["cost"]
-        except KeyError:
-            # School tours do not have a constant cost parameter
-            # Use value of time conversion from CBA guidelines instead
-            b = -0.31690253
-        return b
 
 class ModeDestModel(LogitModel):
     """Nested logit model with mode choice in upper level.
@@ -347,25 +318,7 @@ class ModeDestModel(LogitModel):
             Mode (car/transit/bike/walk) : numpy 2-d matrix
                 Choice probabilities
         """
-        mode_expsum = self._calc_utils(impedance)
-        self.resultdata.print_data(
-            pandas.Series(numpy.log(mode_expsum), self.purpose.zone_numbers),
-            "accessibility.txt", self.purpose.name)
-        if self.purpose.name == "wh":
-            # Transform into person equivalents
-            param = self.mode_choice_param
-            normalization = 1 / sum([param[mode]["constant"][0]
-                for mode in param])
-            workforce = ((normalization*mode_expsum)
-                         **(1/param["car"]["log"]["logsum"]))
-            workforce = pandas.Series(workforce, self.purpose.zone_numbers)
-            self.resultdata.print_data(
-                workforce, "workforce_accessibility.txt", self.purpose.name)
-            workplaces = self.zone_data["workplaces"][self.bounds]
-            self.resultdata.print_data(
-                ZoneIntervals("areas").averages(workforce, workplaces),
-                "workforce_accessibility_per_area.txt", self.purpose.name)
-        return self._calc_prob(mode_expsum)
+        return self._calc_prob(self._calc_utils(impedance))
     
     def calc_individual_prob(self, mod_mode, dummy):
         """Calculate matrix of probabilities with individual dummies.
@@ -386,13 +339,12 @@ class ModeDestModel(LogitModel):
             Mode (car/transit/bike/walk) : numpy 2-d matrix
                 Choice probabilities
         """
-        k = self.zone_data.first_surrounding_zone
         b = self.mode_choice_param[mod_mode]["individual_dummy"][dummy]
         try:
             self.mode_exps[mod_mode] *= numpy.exp(b)
         except ValueError:
-            self.mode_exps[mod_mode][:k] *= numpy.exp(b[0])
-            self.mode_exps[mod_mode][k:] *= numpy.exp(b[1])
+            self.mode_exps[mod_mode][self.lbounds] *= numpy.exp(b[0])
+            self.mode_exps[mod_mode][self.ubounds] *= numpy.exp(b[1])
         mode_expsum = numpy.zeros_like(self.mode_exps[mod_mode])
         for mode in self.mode_choice_param:
             mode_expsum += self.mode_exps[mode]
@@ -416,15 +368,10 @@ class ModeDestModel(LogitModel):
         
         Returns
         -------
-        list
-            float
-                Choice probabilities for purpose modes
+        numpy.array
+            Choice probabilities for purpose modes
         float
             Total accessibility for individual (eur)
-        float
-            Sustainable modes accessibility for individual (eur)
-        float
-            Car accessibility for individual (eur)
         """
         mode_exps = {}
         mode_expsum = 0
@@ -455,9 +402,8 @@ class ModeDestModel(LogitModel):
             # Separate params for cap region and surrounding
             money_utility = 1 / b[0] if self.lbounds.stop < zone else 1 / b[1]
         money_utility /= self.mode_choice_param["car"]["log"]["logsum"]
-        total = -money_utility * logsum
-        sust = -self.purpose.sustainable_accessibility[zone]
-        return probs, total, sust
+        accessibility = -money_utility * logsum
+        return probs, accessibility
 
     def _calc_utils(self, impedance):
         self.dest_expsums = {}
@@ -482,6 +428,163 @@ class ModeDestModel(LogitModel):
             prob[mode] = self.mode_prob[mode] * dest_prob
             self.cumul_dest_prob[mode] = dest_prob.cumsum(axis=0)
         return prob
+
+    def _get_cost_util_coefficient(self):
+        try:
+            b = self.dest_choice_param["car"]["impedance"]["cost"]
+        except KeyError:
+            # School tours do not have a constant cost parameter
+            # Use value of time conversion from CBA guidelines instead
+            b = -0.46738697
+        return b
+
+
+class AccessibilityModel(ModeDestModel):
+    def calc_accessibility(self, impedance):
+        """Calculate logsum-based accessibility measures.
+
+        Individual dummy variables are not included.
+
+        Parameters
+        ----------
+        impedance : dict
+            Mode (car/transit/bike/walk) : dict
+                Type (time/cost/dist) : numpy 2-d matrix
+                    Impedances
+        """
+        mode_expsum = self._calc_utils(impedance)
+        self.resultdata.print_data(
+            pandas.Series(numpy.log(mode_expsum), self.purpose.zone_numbers),
+            "accessibility.txt", self.purpose.name)
+
+        # Calculate sustainable and car accessibility
+        sustainable_sum = numpy.zeros_like(mode_expsum)
+        for mode in self.mode_choice_param:
+            if mode != "car":
+                sustainable_sum += self.mode_exps[mode]
+        logsum = pandas.Series(
+            numpy.log(sustainable_sum), self.purpose.zone_numbers)
+        self.resultdata.print_data(
+            logsum, "sustainable_accessibility.txt", self.purpose.name)
+        b = self._get_cost_util_coefficient()
+        try:
+            money_utility = 1 / b
+        except TypeError:  # Separate params for cap region and surrounding
+            money_utility = 1 / b[0]
+        money_utility /= self.mode_choice_param["car"]["log"]["logsum"]
+        self.purpose.sustainable_access = money_utility * logsum
+        self.purpose.car_access = (money_utility
+                                   * self.zone_data[self.purpose.name + "_c"])
+
+        # Calculate workforce accessibility
+        if self.purpose.name == "wh":
+            # Transform into person equivalents
+            param = self.mode_choice_param
+            normalization = 1 / sum([param[mode]["constant"][0]
+                for mode in param])
+            workforce = ((normalization*mode_expsum)
+                            **(1/param["car"]["log"]["logsum"]))
+            workforce = pandas.Series(workforce, self.purpose.zone_numbers)
+            self.resultdata.print_data(
+                workforce, "workforce_accessibility.txt", self.purpose.name)
+            workplaces = self.zone_data["workplaces"][self.bounds]
+            self.resultdata.print_data(
+                ZoneIntervals("areas").averages(workforce, workplaces),
+                "workforce_accessibility_per_area.txt", self.purpose.name)
+
+    def _add_constant(self, utility, b):
+        """Add constant term to utility.
+
+        If parameter b is a tuple of two terms,
+        capital region will be picked.
+
+        Parameters
+        ----------
+        utility : ndarray
+            Numpy array to which the constant b will be added
+        b : float or tuple
+            The value of the constant
+        """
+        try: # If only one parameter
+            utility += b
+        except ValueError: # Separate params for cap region and surrounding
+            utility += b[0]
+
+    def _add_impedance(self, utility, impedance, b):
+        """Adds simple linear impedances to utility.
+
+        If parameter in b is tuple of two terms,
+        capital region will be picked.
+
+        Parameters
+        ----------
+        utility : ndarray
+            Numpy array to which the impedances will be added
+        impedance : dict
+            A dictionary of time-averaged impedance matrices. Includes keys
+            `time`, `cost`, and `dist` of which values are all ndarrays.
+        b : dict
+            The parameters for different impedance matrices.
+        """
+        for i in b:
+            try: # If only one parameter
+                utility += b[i] * impedance[i]
+            except ValueError: # Separate params for cap region and surrounding
+                utility += b[i][0] * impedance[i]
+        return utility
+
+    def _add_log_impedance(self, exps, impedance, b):
+        """Adds log transformations of impedance to utility.
+
+        This is an optimized way of calculating log terms. Calculates
+        impedance1^b1 * ... * impedanceN^bN in the following equation:
+        e^(linear_terms + b1*log(impedance1) + ... + bN*log(impedanceN))
+        = e^(linear_terms) * impedance1^b1 * ... * impedanceN^bN
+
+        If parameter in b is tuple of two terms,
+        capital region will be picked.
+
+        Parameters
+        ----------
+        exps : ndarray
+            Numpy array to which the impedances will be multiplied
+        impedance : dict
+            A dictionary of time-averaged impedance matrices. Includes keys
+            `time`, `cost`, and `dist` of which values are all ndarrays.
+        b : dict
+            The parameters for different impedance matrices
+        """
+        for i in b:
+            try: # If only one parameter
+                exps *= numpy.power(impedance[i] + 1, b[i])
+            except ValueError: # Separate params for cap region and surrounding
+                exps *= numpy.power(impedance[i] + 1, b[i][0])
+        return exps
+
+    def _add_zone_util(self, utility, b, generation=False):
+        """Adds simple linear zone terms to utility.
+
+        If parameter in b is tuple of two terms,
+        capital region will be picked.
+
+        Parameters
+        ----------
+        utility : ndarray
+            Numpy array to which the impedances will be added
+        b : dict
+            The parameters for different zone data.
+        generation : bool
+            Whether the effect of the zone term is added only to the
+            geographical area in which this model is used based on the
+            `self.bounds` attribute of this class.
+        """
+        zdata = self.zone_data
+        for i in b:
+            try: # If only one parameter
+                utility += b[i] * zdata.get_data(i, self.bounds, generation)
+            except ValueError: # Separate params for cap region and surrounding
+                utility += b[i][0] * zdata.get_data(i, self.bounds, generation)
+        return utility
 
 
 class DestModeModel(LogitModel):
