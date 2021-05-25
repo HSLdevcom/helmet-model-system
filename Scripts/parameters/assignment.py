@@ -403,7 +403,6 @@ vot_classes = {
     "truck": "business",
     "van": "business",
 }
-bike_mode = 'f'
 transit_modes = [
     'b',
     'd',
