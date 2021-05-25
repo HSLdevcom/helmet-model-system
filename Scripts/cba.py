@@ -152,7 +152,7 @@ def calc_gains(ve0, ve1):
 
 def read_miles(results_directory, scenario_name):
     """Read scenario data from files"""
-    file_path = os.path.join(results_directory, scenario_name, "vehicle_kms.txt")
+    file_path = os.path.join(results_directory, scenario_name, "vehicle_kms_vdfs.txt")
     return pandas.read_csv(file_path, delim_whitespace=True)
 
 
