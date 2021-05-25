@@ -84,12 +84,14 @@ CELL_INDICES = {
         },
         "rows": {
             1: {
+                "bus": "15",
                 "car": "19",
                 "van": "20",
                 "truck": "21",
                 "trailer_truck": "22",
             },
             2: {
+                "bus": "28",
                 "car": "32",
                 "van": "33",
                 "truck": "34",
