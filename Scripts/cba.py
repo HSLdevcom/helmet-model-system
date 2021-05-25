@@ -15,6 +15,7 @@ SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 
 VEHICLE_KMS_FILE = "vehicle_kms_vdfs.txt"
 TRANSIT_KMS_FILE = "transit_kms.txt"
+NOISE_FILE = "noise_areas.txt"
 
 TRANSIT_TRIPS_PER_MONTH = {
     "work_capital_region": 60,
@@ -121,6 +122,10 @@ CELL_INDICES = {
             },
         },
     },
+    "noise": {
+        1: "I24",
+        2: "I36",
+    }
 }
 
 def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
@@ -154,6 +159,10 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
     for mode in rows:
         for vdf in cols:
             ws[cols[vdf]+rows[mode]] = mile_diff[mode][vdf]
+
+    # Calculate noise effect difference
+    noise_diff = read_noise_areas(scenario_1) - read_noise_areas(scenario_0)
+    ws[CELL_INDICES["noise"][year]] = sum(noise_diff["population"])
 
     # Calculate transit mile differences
     transit_mile_diff = (read_transit_miles(scenario_1)
@@ -214,6 +223,12 @@ def read_miles(scenario_path):
 def read_transit_miles(scenario_path):
     """Read transit vehicle travel time and dist data from file."""
     file_path = os.path.join(scenario_path, TRANSIT_KMS_FILE)
+    return pandas.read_csv(file_path, delim_whitespace=True)
+
+
+def read_noise_areas(scenario_path):
+    """Read noise data from file."""
+    file_path = os.path.join(scenario_path, NOISE_FILE)
     return pandas.read_csv(file_path, delim_whitespace=True)
 
 
