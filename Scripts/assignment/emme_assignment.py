@@ -161,11 +161,13 @@ class EmmeAssignmentModel(AssignmentModel):
         vdf_area_kms = {vdf: pandas.Series(0.0, areas) for vdf in vdfs}
         network = self.day_scenario.get_network()
         for link in network.links():
-            if link.volume_delay_func <= 5:
-                vdf = link.volume_delay_func
+            linktype = link.type % 100
+            if linktype in param.roadclasses:
+                vdf = param.roadclasses[linktype].volume_delay_func
+            elif linktype in param.custom_roadtypes:
+                vdf = linktype - 90
             else:
-                # Links with bus lane
-                vdf = link.volume_delay_func - 5
+                vdf = 0
             area = belongs_to_area(link.i_node)
             for ass_class in ass_classes:
                 veh_kms = link[self._extra(ass_class)] * link.length
