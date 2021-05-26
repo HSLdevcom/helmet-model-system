@@ -150,7 +150,7 @@ class EmmeAssignmentModel(AssignmentModel):
         for ass_class in ass_classes:
             self._link_24h(ass_class)
 
-        # Aggregate and print vehicle kms
+        # Aggregate and print vehicle kms and link lengths
         vdfs = {param.roadclasses[linktype].volume_delay_func
             for linktype in param.roadclasses}
         vdf_kms = {ass_class: pandas.Series(0.0, vdfs)
@@ -159,6 +159,12 @@ class EmmeAssignmentModel(AssignmentModel):
         area_kms = {ass_class: pandas.Series(0.0, areas)
             for ass_class in ass_classes}
         vdf_area_kms = {vdf: pandas.Series(0.0, areas) for vdf in vdfs}
+        linktypes = set()
+        for linktype in param.railtypes:
+            linktypes.add(param.railtypes[linktype])
+        for linktype in param.roadtypes:
+            linktypes.add(param.roadtypes[linktype])
+        linklengths = pandas.Series(0.0, linktypes)
         network = self.day_scenario.get_network()
         for link in network.links():
             linktype = link.type % 100
@@ -177,6 +183,10 @@ class EmmeAssignmentModel(AssignmentModel):
                     area_kms[ass_class][area] += veh_kms
                 if vdf in vdfs and area in vdf_area_kms[vdf]:
                     vdf_area_kms[vdf][area] += veh_kms
+            if vdf == 0 and linktype in param.railtypes:
+                linklengths[param.railtypes[linktype]] += link.length
+            else:
+                linklengths[param.roadtypes[vdf]] += link.length / 2
         for ass_class in ass_classes:
             resultdata.print_data(
                 vdf_kms[ass_class], "vehicle_kms_vdfs.txt", ass_class)
@@ -185,6 +195,7 @@ class EmmeAssignmentModel(AssignmentModel):
         for vdf in vdf_area_kms:
             resultdata.print_data(
                 vdf_area_kms[vdf], "vehicle_kms_vdfs_areas.txt", vdf)
+        resultdata.print_data(linklengths, "link_lengths.txt", "length")
 
         # Aggregate and print numbers of stations
         stations = pandas.Series(0, param.station_ids)
