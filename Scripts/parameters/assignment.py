@@ -403,14 +403,6 @@ vot_classes = {
     "truck": "business",
     "van": "business",
 }
-transit_mode_aggregates = {
-    "bus": "bde",
-    "trunk": "g",
-    "metro": "m",
-    "train": "rj",
-    "tram": "tp",
-    "other": ""
-}
 transit_modes = [
     'b',
     'd',
