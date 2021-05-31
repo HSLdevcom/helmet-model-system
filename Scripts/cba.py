@@ -25,6 +25,12 @@ TRANSIT_TRIPS_PER_MONTH = {
     "leisure": 30,
 }
 
+TRANSIT_AGGREGATIONS = {
+    "bus": ("HSL-bussi", "ValluVakio", "ValluPika"),
+    "train": ("HSL-juna", "muu_juna"),
+    "tram": ("ratikka", "pikaratikk"),
+}
+
 TRANSLATIONS = {
     "car_work": "ha_tyo",
     "car_leisure": "ha_muu",
@@ -110,14 +116,14 @@ CELL_INDICES = {
         "rows": {
             1: {
                 "bus": "8",
-                "trunk": "9",
+                "HSL-runkob": "9",
                 "tram": "10",
                 "metro": "11",
                 "train": "12",
             },
             2: {
                 "bus": "16",
-                "trunk": "17",
+                "HSL-runkob": "17",
                 "tram": "18",
                 "metro": "19",
                 "train": "20",
@@ -198,6 +204,10 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
     # Calculate transit mile differences
     transit_mile_diff = (read(TRANSIT_KMS_FILE, scenario_1)
                          - read(TRANSIT_KMS_FILE, scenario_0))
+    for mode in TRANSIT_AGGREGATIONS:
+        transit_mile_diff[mode] = 0
+        for submode in TRANSIT_AGGREGATIONS[mode]:
+            transit_mile_diff[mode] += transit_mile_diff[submode]
     ws = workbook["Tuottajahyodyt"]
     cols = CELL_INDICES["transit_miles"]["cols"]
     rows = CELL_INDICES["transit_miles"]["rows"][year]
