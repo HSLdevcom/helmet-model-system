@@ -415,7 +415,13 @@ class ModeDestModel(LogitModel):
             label = self.purpose.name + "_" + mode[0]
             self.zone_data._values[label] = logsum
             self.resultdata.print_data(logsum, "accessibility.txt", label)
-        return self._calc_mode_util(self.dest_expsums)
+        mode_expsum = self._calc_mode_util(self.dest_expsums)
+        logsum = pandas.Series(
+            numpy.log(mode_expsum), self.purpose.zone_numbers)
+        self.zone_data._values[self.purpose.name] = logsum
+        self.resultdata.print_data(
+            logsum, "accessibility.txt", self.purpose.name)
+        return mode_expsum
 
     def _calc_prob(self, mode_expsum):
         prob = {}
@@ -453,9 +459,6 @@ class AccessibilityModel(ModeDestModel):
                     Impedances
         """
         mode_expsum = self._calc_utils(impedance)
-        self.resultdata.print_data(
-            pandas.Series(numpy.log(mode_expsum), self.purpose.zone_numbers),
-            "accessibility.txt", self.purpose.name)
 
         # Calculate sustainable and car accessibility
         sustainable_sum = numpy.zeros_like(mode_expsum)

@@ -96,6 +96,7 @@ tour_purposes = (
 areas = {
     "helsinki_cbd": (0, 999),
     "helsinki_other": (1000, 1999),
+    "lauttasaari": (1000, 1014),
     "espoo_vant_kau": (2000, 5999),
     "surrounding": (6000, 15999),
     "surround_train": (

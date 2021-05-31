@@ -142,9 +142,11 @@ class IncomeModel(LinearModel):
     resultdata : datahandling.ResultData
         Writer object for result directory
     """
-    def __init__(self, zone_data, bounds, age_groups, resultdata):
+    def __init__(self, zone_data, bounds, age_groups, resultdata,
+                 is_helsinki=False):
         LinearModel.__init__(self, zone_data, bounds, resultdata)
-        self.param = parameters.income.log_income
+        self.param = (parameters.income.log_income_helsinki if is_helsinki
+            else parameters.income.log_income)
         for age_group in self.param["age_dummies"]:
             age_interval = age_group.split('_')[1]
             if tuple(map(int, age_interval.split('-'))) not in age_groups:
@@ -152,7 +154,8 @@ class IncomeModel(LinearModel):
                     age_group))
 
     def predict(self):
-        prediction = self.param["constant"]
+        prediction = pandas.Series(
+            self.param["constant"], self.zone_data.zone_numbers[self.bounds])
         prediction = self._add_zone_terms(prediction, self.param["zone"], True)
         for municipality in self.param["municipality_dummies"]:
             dummy = self.zone_data.dummy(

@@ -556,7 +556,7 @@ class AgentModelSystem(ModelSystem):
                 self.dtm.add_demand(tour)
         if is_last_iteration:
             random.seed(zone_param.population_draw)
-            self.dm.incmod.predict()
+            self.dm.predict_income()
             random.seed(None)
             fname = "agents"
             header = "\t".join(self.dm.population[0].attr)
