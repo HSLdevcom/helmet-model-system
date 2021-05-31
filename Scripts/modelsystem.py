@@ -16,6 +16,8 @@ from demand.freight import FreightModel
 from demand.trips import DemandModel
 from demand.external import ExternalModel
 from datatypes.purpose import SecDestPurpose
+from datatypes.person import Person
+from datatypes.tour import Tour
 from transform.impedance_transformer import ImpedanceTransformer
 from models.linear import CarDensityModel
 import parameters.assignment as param
@@ -558,13 +560,18 @@ class AgentModelSystem(ModelSystem):
             random.seed(zone_param.population_draw)
             self.dm.predict_income()
             random.seed(None)
-            fname = "agents"
-            header = "\t".join(self.dm.population[0].attr)
-            self.resultdata.print_line(header, fname)
+            fname0 = "agents"
+            fname1 = "tours"
+            # print person and tour attr to files
+            self.resultdata.print_line("\t".join(Person.attr), fname0)
+            self.resultdata.print_line("\t".join(Tour.attr), fname1)
             for person in self.dm.population:
                 person.calc_income()
-                self.resultdata.print_line(str(person), fname)
-            log.info("Results printed to file ".format(fname))
+                self.resultdata.print_line(str(person), fname0)
+                for tour in person.tours:
+                    self.resultdata.print_line(str(tour), fname1)
+            log.info("Results printed to files {} and {}".format(
+                fname0, fname1))
         log.info("Demand calculation completed")
 
     def _distribute_tours(self, mode, origs, sec_dest_tours, impedance):
