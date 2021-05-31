@@ -94,7 +94,7 @@ class ZoneData:
         self["tertiary_education"] = schooldata["tertiary"]
         self["zone_area"] = landdata["builtar"]
         self.share["share_detached_houses"] = landdata["detach"]
-        self["perc_detached_houses_sqrt"] = (100*landdata["detach"]) ** 0.5
+        self["perc_detached_houses_sqrt"] = landdata["detach"] ** 0.5
         self["helsinki"] = self.dummy("municipalities", "Helsinki")
         self["cbd"] = self.dummy("areas", "helsinki_cbd")
         self["lauttasaari"] = self.dummy("areas", "lauttasaari")
