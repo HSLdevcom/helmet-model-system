@@ -28,22 +28,26 @@ class MockProject:
     def import_scenario(self, scenario_dir, scenario_id, scenario_title):
         scenario = self.modeller.emmebank.create_scenario(scenario_id)
         scenario.title = scenario_title
-        self.mode_transaction(
-            os.path.join(scenario_dir, "modes_test.txt"), scenario=scenario)
-        self.base_network_transaction(
-            os.path.join(scenario_dir, "base_network_test.txt"),
-            scenario=scenario)
-        self.vehicle_transaction(
-            os.path.join(scenario_dir, "vehicles_test.txt"), scenario=scenario)
-        self.transit_line_transaction(
-            os.path.join(scenario_dir, "transit_lines_test.txt"),
-            scenario=scenario)
-        self.import_extra_attributes(
-            os.path.join(scenario_dir, "extra_links_test.txt"),
-            scenario=scenario)
-        self.import_extra_attributes(
-            os.path.join(scenario_dir, "extra_transit_lines_test.txt"),
-            scenario=scenario)
+        for file_name in os.listdir(scenario_dir):
+            if file_name.startswith("modes"):
+                self.mode_transaction(
+                    os.path.join(scenario_dir, file_name), scenario=scenario)
+        for file_name in os.listdir(scenario_dir):
+            if file_name.startswith("base_network"):
+                self.base_network_transaction(
+                    os.path.join(scenario_dir, file_name), scenario=scenario)
+        for file_name in os.listdir(scenario_dir):
+            if file_name.startswith("vehicles"):
+                self.vehicle_transaction(
+                    os.path.join(scenario_dir, file_name), scenario=scenario)
+        for file_name in os.listdir(scenario_dir):
+            if file_name.startswith("transit_lines"):
+                self.transit_line_transaction(
+                    os.path.join(scenario_dir, file_name), scenario=scenario)
+        for file_name in os.listdir(scenario_dir):
+            if file_name.startswith("extra"):
+                self.import_extra_attributes(
+                    os.path.join(scenario_dir, file_name), scenario=scenario)
 
     def create_matrix(self, matrix_id, matrix_name, matrix_description,
                       default_value=0, overwrite=False):
@@ -237,6 +241,7 @@ class MockProject:
                         headway = float(rec[4])
                     else:
                         raise SyntaxError("Unknown update code")
+                    line.vehicle = vehicle_id
                     line.headway = headway
 
     def import_extra_attributes(self, file_path, revert_on_error=True,
@@ -540,8 +545,7 @@ class Network:
         return iter(self._segments)
 
     def create_transit_line(self, idx, transit_vehicle_id, itinerary):
-        line = TransitLine(
-                    self, idx, self._vehicles[transit_vehicle_id])
+        line = TransitLine(self, idx, transit_vehicle_id)
         self._lines[idx] = line
         for i in range(len(itinerary) - 1):
             link = self.link(itinerary[i], itinerary[i + 1])
@@ -663,6 +667,14 @@ class TransitLine(NetworkObject):
     @id.setter
     def id(self, idx):
         self._id = idx
+
+    @property
+    def vehicle(self):
+        return self._vehicle
+
+    @vehicle.setter
+    def vehicle(self, vehicle_id):
+        self._vehicle = self.network._vehicles[vehicle_id]
 
     @property
     def mode(self):
