@@ -1,6 +1,7 @@
 import numpy
 from collections import namedtuple
 import copy
+import os
 
 
 class MockProject:
@@ -23,6 +24,20 @@ class MockProject:
             from_scenario.number, scenario_id)
         scenario.title = scenario_title
         return scenario
+
+    def import_scenario(self, scenario_dir, scenario_id, scenario_title):
+        scenario = self.modeller.emmebank.create_scenario(scenario_id)
+        scenario.title = scenario_title
+        self.mode_transaction(
+            os.path.join(scenario_dir, "modes_test.txt"), scenario=scenario)
+        self.base_network_transaction(
+            os.path.join(scenario_dir, "base_network_test.txt"),
+            scenario=scenario)
+        self.vehicle_transaction(
+            os.path.join(scenario_dir, "vehicles_test.txt"), scenario=scenario)
+        self.transit_line_transaction(
+            os.path.join(scenario_dir, "transit_lines_test.txt"),
+            scenario=scenario)
 
     def create_matrix(self, matrix_id, matrix_name, matrix_description,
                       default_value=0, overwrite=False):
@@ -53,6 +68,170 @@ class MockProject:
         eb = self.modeller.emmebank
         eb.matrix(matrix_id).set_numpy_data(
             eb.matrix(from_matrix).get_numpy_data())
+
+    def mode_transaction(self, transaction_file, revert_on_error=True,
+                         scenario=None):
+        network = scenario.get_network()
+        with open(transaction_file) as f:
+            while True:
+                if f.readline() == "t modes\n":
+                    break
+            while True:
+                rec = f.readline().split()
+                if not rec:
+                    break
+                if rec[0] == "c":
+                    pass
+                elif rec[0] == "d":
+                    # TODO Implement deletion
+                    pass
+                else:
+                    if rec[0] == "a":
+                        network.create_mode(idx=rec[1])
+                    elif rec[0] == "m":
+                        network.mode(idx=rec[1])
+                    else:
+                        raise SyntaxError("Unknown update code")
+
+    def base_network_transaction(self, transaction_file, revert_on_error=True,
+                                 scenario=None):
+        network = scenario.get_network()
+        with open(transaction_file) as f:
+            while True:
+                if f.readline() == "t nodes\n":
+                    break
+            while True:
+                line = f.readline()
+                if line == "t links\n":
+                    break
+                rec = line.split()
+                if rec[0] == "c":
+                    pass
+                elif rec[0] == "d":
+                    # TODO Implement deletion
+                    pass
+                else:
+                    node_id = int(rec[1])
+                    if rec[0] == "a":
+                        node = network.create_node(node_id)
+                    elif rec[0] == "a*":
+                        node = network.create_node(node_id, is_centroid=True)
+                    elif rec[0] == "m":
+                        node = network.node(node_id)
+                    else:
+                        raise SyntaxError("Unknown update code")
+                    node.x = float(rec[2])
+                    node.y = float(rec[3])
+                    node.data1 = float(rec[4])
+                    node.data2 = float(rec[5])
+                    node.data3 = float(rec[6])
+                    node.label = rec[7]
+            while True:
+                rec = f.readline().split()
+                if not rec:
+                    break
+                if rec[0] == "c":
+                    pass
+                elif rec[0] == "d":
+                    # TODO Implement deletion
+                    pass
+                else:
+                    if rec[0] == "a":
+                        link = network.create_link(
+                            i_node_id=int(rec[1]), j_node_id=int(rec[2]),
+                            modes=rec[4])
+                    elif rec[0] == "m":
+                        link = network.link(
+                            i_node_id=int(rec[1]), j_node_id=int(rec[2]))
+                    else:
+                        raise SyntaxError("Unknown update code")
+                    link.length = float(rec[3])
+                    link.type = int(rec[5])
+                    link.num_lanes = float(rec[6])
+                    link.volume_delay_func = int(rec[7])
+                    link.data1 = float(rec[8])
+                    link.data2 = float(rec[9])
+                    link.data3 = float(rec[10])
+
+    def vehicle_transaction(self, transaction_file, revert_on_error=True,
+                            scenario=None):
+        network = scenario.get_network()
+        with open(transaction_file) as f:
+            while True:
+                if f.readline() == "t vehicles\n":
+                    break
+            while True:
+                rec = f.readline().replace("'", " ").split()
+                if not rec:
+                    break
+                if rec[0] == "c":
+                    pass
+                elif rec[0] == "d":
+                    # TODO Implement deletion
+                    pass
+                else:
+                    if rec[0] == "a":
+                        vehicle = network.create_transit_vehicle(
+                            idx=int(rec[1]), mode_id=rec[3])
+                    elif rec[0] == "m":
+                        vehicle = network.transit_vehicle(idx=int(rec[1]))
+                    else:
+                        raise SyntaxError("Unknown update code")
+                    vehicle.description = rec[2]
+
+    def transit_line_transaction(self, transaction_file, revert_on_error=True,
+                            scenario=None):
+        network = scenario.get_network()
+        with open(transaction_file) as f:
+            while True:
+                if f.readline() == "t lines\n":
+                    break
+            rec = f.readline().replace("'", " ").split()
+            while True:
+                if not rec:
+                    break
+                if rec[0] == "c":
+                    rec = f.readline().replace("'", " ").split()
+                elif rec[0] == "d":
+                    # TODO Implement deletion
+                    rec = f.readline().replace("'", " ").split()
+                else:
+                    if rec[0] == "a":
+                        line_id = rec[1]
+                        vehicle_id = int(rec[3])
+                        headway = float(rec[4])
+                        itinerary = []
+                        ttf = []
+                        data1 = []
+                        data2 = []
+                        data3 = []
+                        while True:
+                            segrec = f.readline().replace("'", " ").split()
+                            if not segrec or segrec[0] in "amd":
+                                rec = segrec
+                                break
+                            elif segrec[0] not in ("c", "path=no"):
+                                itinerary.append(segrec[0])
+                                try:
+                                    ttf.append(int(segrec[2][4:]))
+                                    data1.append(float(segrec[3][4:]))
+                                    data2.append(float(segrec[4][4:]))
+                                    data3.append(float(segrec[5][4:]))
+                                except IndexError:
+                                    pass
+                        line = network.create_transit_line(
+                            line_id, vehicle_id, itinerary)
+                        for i, segment in enumerate(line.segments()):
+                            segment.transit_time_func = ttf[i]
+                            segment.data1 = data1[i]
+                            segment.data2 = data2[i]
+                            segment.data3 = data3[i]
+                    elif rec[0] == "m":
+                        line = network.transit_line(idx=rec[1])
+                        headway = float(rec[4])
+                    else:
+                        raise SyntaxError("Unknown update code")
+                    line.headway = headway
 
     def network_calc(self, *args, **kwargs):
         pass
@@ -92,7 +271,7 @@ Modeller = namedtuple("Modeller", "emmebank")
 
 class EmmeBank:
     def __init__(self):
-        self._scenarios = {19: Scenario(19)}
+        self._scenarios = {}
         self._matrices = {}
         self._functions = {}
 
@@ -288,7 +467,8 @@ class Network:
 
     def create_link(self, i_node_id, j_node_id, modes):
         modes = [self.mode(str(mode)) for mode in modes]
-        link = Link(self, self.node(i_node_id), self.node(j_node_id), modes)
+        link = Link(
+            self, self._nodes[i_node_id], self._nodes[j_node_id], modes)
         self._links["{}-{}".format(i_node_id, j_node_id)] = link
         return link
 
@@ -316,7 +496,7 @@ class Network:
 
     def create_transit_line(self, idx, transit_vehicle_id, itinerary):
         line = TransitLine(
-                    self, idx, self.transit_vehicle(transit_vehicle_id))
+                    self, idx, self._vehicles[transit_vehicle_id])
         self._lines[idx] = line
         for i in range(len(itinerary) - 1):
             link = self.link(itinerary[i], itinerary[i + 1])
@@ -385,6 +565,8 @@ class Node(NetworkObject):
         NetworkObject.__init__(self, network, network._extra_attr["NODE"])
         self.is_centroid = is_centroid
         self.number = idx
+        self.x = 0.0
+        self.y = 0.0
         self.label = ""
 
     @property
