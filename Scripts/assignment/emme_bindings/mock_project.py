@@ -38,6 +38,12 @@ class MockProject:
         self.transit_line_transaction(
             os.path.join(scenario_dir, "transit_lines_test.txt"),
             scenario=scenario)
+        self.import_extra_attributes(
+            os.path.join(scenario_dir, "extra_links_test.txt"),
+            scenario=scenario)
+        self.import_extra_attributes(
+            os.path.join(scenario_dir, "extra_transit_lines_test.txt"),
+            scenario=scenario)
 
     def create_matrix(self, matrix_id, matrix_name, matrix_description,
                       default_value=0, overwrite=False):
@@ -161,7 +167,7 @@ class MockProject:
                 if f.readline() == "t vehicles\n":
                     break
             while True:
-                rec = f.readline().replace("'", " ").split()
+                rec = f.readline().split()
                 if not rec:
                     break
                 if rec[0] == "c":
@@ -177,7 +183,7 @@ class MockProject:
                         vehicle = network.transit_vehicle(idx=int(rec[1]))
                     else:
                         raise SyntaxError("Unknown update code")
-                    vehicle.description = rec[2]
+                    vehicle.description = rec[2][1:-1]
 
     def transit_line_transaction(self, transaction_file, revert_on_error=True,
                             scenario=None):
@@ -232,6 +238,45 @@ class MockProject:
                     else:
                         raise SyntaxError("Unknown update code")
                     line.headway = headway
+
+    def import_extra_attributes(self, file_path, revert_on_error=True,
+                                scenario=None, import_definitions=False):
+        with open(file_path) as f:
+            f.readline()
+            while True:
+                rec = f.readline().split()
+                if rec[0] == "end":
+                    break
+                attr_type = rec[1]
+                scenario.create_extra_attribute(
+                    attr_type, idx=rec[0], default_value=float(rec[2]))
+            header = f.readline().split()
+            network = scenario.get_network()
+            while True:
+                rec = f.readline().replace("'", " ").split()
+                if not rec:
+                    break
+                elif attr_type == "NODE":
+                    node = network.node(int(rec[0]))
+                    for i, attr in enumerate(header[1:], 1):
+                        node[attr] = float(rec[i])
+                elif attr_type == "LINK":
+                    link = network.link(int(rec[0]), int(rec[1]))
+                    for i, attr in enumerate(header[2:], 2):
+                        link[attr] = float(rec[i])
+                elif attr_type == "TRANSIT_LINE":
+                    line = network.transit_line(rec[0])
+                    for i, attr in enumerate(header[1:], 1):
+                        line[attr] = float(rec[i])
+                elif attr_type == "TRANSIT_SEGMENT":
+                    link = network.link(int(rec[1]), int(rec[2]))
+                    for segment in link.segments():
+                        if segment.line.id == rec[0]:
+                            break
+                    else:
+                        raise ExistenceError()
+                    for i, attr in enumerate(header[3:], 3):
+                        segment[attr] = float(rec[i])
 
     def network_calc(self, *args, **kwargs):
         pass
@@ -585,11 +630,6 @@ class Link(NetworkObject):
         self.num_lanes = 1
         self.volume_delay_func = 0
         self.auto_time = 0.1
-        self._extra_attr["@hinta"] = 0.0
-        self._extra_attr["@hinta_aht"] = 0.0
-        self._extra_attr["@hinta_pt"] = 0.0
-        self._extra_attr["@hinta_iht"] = 0.0
-        self._extra_attr["@pyoratieluokka"] = 0.0
         self._segments = []
 
     @property
@@ -614,9 +654,6 @@ class TransitLine(NetworkObject):
         self.id = idx
         self.vehicle = vehicle
         self.headway = 0.01
-        self._extra_attr["@hw_aht"] = 0.01
-        self._extra_attr["@hw_pt"] = 0.01
-        self._extra_attr["@hw_iht"] = 0.01
         self._segments = []
 
     @property
