@@ -61,7 +61,7 @@ class MockProject:
     def create_extra_attribute(self, extra_attribute_type,
                                extra_attribute_name,
                                extra_attribute_description,
-                               extra_attribute_default_value=0,
+                               extra_attribute_default_value=0.0,
                                overwrite=False, scenario=None):
         try:
             scenario.create_extra_attribute(
@@ -97,7 +97,7 @@ class MockProject:
                     pass
                 else:
                     if rec[0] == "a":
-                        network.create_mode(idx=rec[1])
+                        network.create_mode(mode_type=rec[3], idx=rec[1])
                     elif rec[0] == "m":
                         network.mode(idx=rec[1])
                     else:
@@ -121,13 +121,12 @@ class MockProject:
                     # TODO Implement deletion
                     pass
                 else:
-                    node_id = int(rec[1])
                     if rec[0] == "a":
-                        node = network.create_node(node_id)
+                        node = network.create_node(rec[1], is_centroid=False)
                     elif rec[0] == "a*":
-                        node = network.create_node(node_id, is_centroid=True)
+                        node = network.create_node(rec[1], is_centroid=True)
                     elif rec[0] == "m":
-                        node = network.node(node_id)
+                        node = network.node(rec[1])
                     else:
                         raise SyntaxError("Unknown update code")
                     node.x = float(rec[2])
@@ -148,11 +147,10 @@ class MockProject:
                 else:
                     if rec[0] == "a":
                         link = network.create_link(
-                            i_node_id=int(rec[1]), j_node_id=int(rec[2]),
-                            modes=rec[4])
+                            i_node_id=rec[1], j_node_id=rec[2], modes=rec[4])
                     elif rec[0] == "m":
                         link = network.link(
-                            i_node_id=int(rec[1]), j_node_id=int(rec[2]))
+                            i_node_id=rec[1], j_node_id=rec[2])
                     else:
                         raise SyntaxError("Unknown update code")
                     link.length = float(rec[3])
@@ -253,8 +251,10 @@ class MockProject:
                 if rec[0] == "end":
                     break
                 attr_type = rec[1]
-                scenario.create_extra_attribute(
-                    attr_type, idx=rec[0], default_value=float(rec[2]))
+                self.create_extra_attribute(
+                    attr_type, rec[0], "",
+                    extra_attribute_default_value=float(rec[2]),
+                    overwrite=True, scenario=scenario)
             header = f.readline().split()
             network = scenario.get_network()
             while True:
@@ -302,7 +302,12 @@ class MockProject:
     def transit_assignment(self, *args, **kwargs):
         pass
 
-    def congested_assignment(self, *args, **kwargs):
+    def congested_assignment(self, transit_assignment_spec, class_names,
+                             congestion_function, stopping_criteria,
+                             log_worksheets, scenario, save_strategies):
+        self.create_extra_attribute(
+            "TRANSIT_SEGMENT", "@base_timtr", "", 1.0,
+            overwrite=True, scenario=scenario)
         report = {
             "stopping_criterion": "MAX_ITERATIONS",
             "iterations": [{"number": 1}],
@@ -405,7 +410,7 @@ class Scenario:
             if idx in network._extra_attr[attr_type]:
                 return network._extra_attr[attr_type][idx]
 
-    def create_extra_attribute(self, attr_type, idx, default_value=0):
+    def create_extra_attribute(self, attr_type, idx, default_value=0.0):
         network = self.get_network()
         if idx in network._extra_attr[attr_type]:
             raise ExistenceError("Extra attribute already exists: {}".format(
@@ -430,7 +435,7 @@ class ExtraAttribute:
         self.default_value = default_value
         self.scenario = scenario
 
-    def initialize(self, value=0):
+    def initialize(self, value=0.0):
         self.default_value = value
         network = self.scenario.get_network()
         for obj in network._objects[self.type]():
@@ -480,12 +485,15 @@ class Network:
     def modes(self):
         return iter(self._modes.values())
 
-    def create_mode(self, idx):
+    def create_mode(self, mode_type, idx):
+        if not isinstance(idx, str) or len(idx) != 1:
+            raise Exception("Invalid mode ID: " + idx)
         mode = Mode(idx)
         self._modes[idx] = mode
         return mode
 
     def node(self, idx):
+        idx = int(idx)
         if idx in self._nodes:
             return self._nodes[idx]
 
@@ -498,7 +506,8 @@ class Network:
     def regular_nodes(self):
         return iter(self._regular_nodes.values())
 
-    def create_node(self, idx, is_centroid=False):
+    def create_node(self, idx, is_centroid):
+        idx = int(idx)
         node = Node(self, idx, is_centroid)
         self._nodes[idx] = node
         if is_centroid:
@@ -518,7 +527,8 @@ class Network:
     def create_link(self, i_node_id, j_node_id, modes):
         modes = [self.mode(str(mode)) for mode in modes]
         link = Link(
-            self, self._nodes[i_node_id], self._nodes[j_node_id], modes)
+            self, self._nodes[int(i_node_id)], self._nodes[int(j_node_id)],
+            modes)
         self._links["{}-{}".format(i_node_id, j_node_id)] = link
         return link
 
@@ -695,7 +705,6 @@ class TransitSegment(NetworkObject):
         self.link = link
         self.transit_time_func = 0
         self.dwell_time = 0.01
-        self._extra_attr["@base_timtr"] = 0.0
 
     @property
     def id(self):
