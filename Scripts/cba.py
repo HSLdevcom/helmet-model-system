@@ -2,7 +2,7 @@ from openpyxl import load_workbook
 import os
 import numpy
 import pandas
-from argparse import ArgumentError, ArgumentParser
+from argparse import ArgumentParser
 
 from utils.config import Config
 import utils.log as log
@@ -15,6 +15,9 @@ SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 
 VEHICLE_KMS_FILE = "vehicle_kms_vdfs.txt"
 TRANSIT_KMS_FILE = "transit_kms.txt"
+LINK_LENGTH_FILE = "link_lengths.txt"
+NOISE_FILE = "noise_areas.txt"
+STATION_FILE = "transit_stations.txt"
 
 TRANSIT_TRIPS_PER_MONTH = {
     "work_capital_region": 60,
@@ -90,12 +93,14 @@ CELL_INDICES = {
         },
         "rows": {
             1: {
+                "bus": "15",
                 "car": "19",
                 "van": "20",
                 "truck": "21",
                 "trailer_truck": "22",
             },
             2: {
+                "bus": "28",
                 "car": "32",
                 "van": "33",
                 "truck": "34",
@@ -125,6 +130,38 @@ CELL_INDICES = {
             },
         },
     },
+    "noise": {
+        1: "I24",
+        2: "I36",
+    },
+    "transit_stations": {
+        1: {
+            "metro": "U11",
+            "train": "U12",
+        },
+        2: {
+            "metro": "U19",
+            "train": "U20",
+        },
+    },
+    "link_lengths": {
+        1: {
+            "motorway": "G73",
+            "multi-lane": "G74",
+            "single-lane": "G75",
+            "train": "G76",
+            "metro": "G77",
+            "tram": "G78",
+        },
+        2: {
+            "motorway": "G82",
+            "multi-lane": "G83",
+            "single-lane": "G84",
+            "train": "G85",
+            "metro": "G86",
+            "tram": "G87",
+        },
+    },
 }
 
 def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
@@ -146,11 +183,12 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
         The excel workbook where to save results
     """
     if year not in (1, 2):
-        raise ArgumentError("Evaluation year must be either 1 or 2")
+        raise ValueError("Evaluation year must be either 1 or 2")
     log.info("Analyse year {}...".format(year))
 
     # Calculate mile differences
-    mile_diff = read_miles(scenario_1) - read_miles(scenario_0)
+    mile_diff = (read(VEHICLE_KMS_FILE, scenario_1)
+                 - read(VEHICLE_KMS_FILE, scenario_0))
     mile_diff["car"] = mile_diff["car_work"] + mile_diff["car_leisure"]
     ws = workbook["Ulkoisvaikutukset"]
     cols = CELL_INDICES["car_miles"]["cols"]
@@ -159,9 +197,13 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
         for vdf in cols:
             ws[cols[vdf]+rows[mode]] = mile_diff[mode][vdf]
 
+    # Calculate noise effect difference
+    noise_diff = read(NOISE_FILE, scenario_1) - read(NOISE_FILE, scenario_0)
+    ws[CELL_INDICES["noise"][year]] = sum(noise_diff["population"])
+
     # Calculate transit mile differences
-    transit_mile_diff = (read_transit_miles(scenario_1)
-                         - read_transit_miles(scenario_0))
+    transit_mile_diff = (read(TRANSIT_KMS_FILE, scenario_1)
+                         - read(TRANSIT_KMS_FILE, scenario_0))
     for mode in TRANSIT_AGGREGATIONS:
         transit_mile_diff[mode] = 0
         for submode in TRANSIT_AGGREGATIONS[mode]:
@@ -173,6 +215,20 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
         for imp_type in cols:
             ws[cols[imp_type]+rows[mode]] = transit_mile_diff[imp_type][mode]
     log.info("Mileage differences calculated")
+
+    # Calculate link length differences
+    linklength_diff = (read(LINK_LENGTH_FILE, scenario_1)
+                       - read(LINK_LENGTH_FILE, scenario_0))
+    indices = CELL_INDICES["link_lengths"][year]
+    for linktype in indices:
+        ws[indices[linktype]] = linklength_diff["length"][linktype]
+
+    # Calculate transit station differences
+    station_diff = (read(STATION_FILE, scenario_1)
+                    - read(STATION_FILE, scenario_0))
+    indices = CELL_INDICES["transit_stations"][year]
+    for mode in indices:
+        ws[indices[mode]] = station_diff["number"][mode]
 
     # Calculate gains and revenues
     for tp in ["aht", "pt", "iht"]:
@@ -213,16 +269,10 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
     log.info("Year {} completed".format(year))
 
 
-def read_miles(scenario_path):
-    """Read vehicle km data from file."""
-    file_path = os.path.join(scenario_path, VEHICLE_KMS_FILE)
-    return pandas.read_csv(file_path, delim_whitespace=True)
-
-
-def read_transit_miles(scenario_path):
-    """Read transit vehicle travel time and dist data from file."""
-    file_path = os.path.join(scenario_path, TRANSIT_KMS_FILE)
-    return pandas.read_csv(file_path, delim_whitespace=True)
+def read(file_name, scenario_path):
+    """Read data from file."""
+    return pandas.read_csv(
+        os.path.join(scenario_path, file_name), delim_whitespace=True)
 
 
 def read_costs(matrixdata, time_period, transport_class, mtx_type):
