@@ -675,11 +675,13 @@ railtypes = {
     6: "tram",
 }
 roadtypes = {
+    0: "walkway",
     1: "motorway",
     2: "multi-lane",
     3: "multi-lane",
     4: "single-lane",
     5: "single-lane",
+    99: "connector",
 }
 station_ids = {
     "metro": 13,

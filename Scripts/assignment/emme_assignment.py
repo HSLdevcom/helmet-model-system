@@ -172,6 +172,8 @@ class EmmeAssignmentModel(AssignmentModel):
                 vdf = param.roadclasses[linktype].volume_delay_func
             elif linktype in param.custom_roadtypes:
                 vdf = linktype - 90
+            elif linktype in param.connector_link_types:
+                vdf = 99
             else:
                 vdf = 0
             area = belongs_to_area(link.i_node)
