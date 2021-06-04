@@ -667,6 +667,20 @@ emme_result_mtx = {
     },
 }
 background_traffic = "ul3"
+railtypes = {
+    2: "tram",
+    3: "metro",
+    4: "train",
+    5: "tram",
+    6: "tram",
+}
+roadtypes = {
+    1: "motorway",
+    2: "multi-lane",
+    3: "multi-lane",
+    4: "single-lane",
+    5: "single-lane",
+}
 station_ids = {
     "metro": 13,
     "train": 14,
