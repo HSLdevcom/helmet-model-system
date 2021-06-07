@@ -45,6 +45,7 @@ class EmmeAssignmentModel(AssignmentModel):
 
     def prepare_network(self):
         """Create matrices, extra attributes and calc background variables."""
+        self._add_bus_stops()
         if self.save_matrices:
             self.day_scenario = self.emme_project.copy_scenario(
                 self.mod_scenario, self.mod_scenario.number + 1,
@@ -288,6 +289,33 @@ class EmmeAssignmentModel(AssignmentModel):
             Modified string
         """
         return "@{}_{}".format(attr, "vrk")
+
+    def _add_bus_stops(self):
+        network = self.mod_scenario.get_network()
+        for line in network.transit_lines():
+            if line.mode.id in param.stop_codes:
+                stop_codes = param.stop_codes[line.mode.id]
+                for segment in line.segments():
+                    alighting = segment.j_node.data2 in stop_codes
+                    boarding = segment.i_node.data2 in stop_codes
+                    if line.mode.id in "de":
+                        # Non-HSL bus lines
+                        not_hsl = segment.i_node.label not in param.hsl_area
+                        if line.id[-1] == '1':
+                            # Line starts in HSL area
+                            segment.allow_alightings = not_hsl and alighting
+                            segment.allow_boardings = boarding
+                        elif line.id[-1] == '2':
+                            # Line ends in HSL area
+                            segment.allow_alightings = alighting
+                            segment.allow_boardings = not_hsl and boarding
+                        else:
+                            raise ValueError(
+                                "Unknown direction code for line " + line.id)
+                    else:
+                        segment.allow_alightings = alighting
+                        segment.allow_boardings = boarding
+        self.mod_scenario.publish_network(network)
 
     def _create_attributes(self, scenario, extra):
         """Create extra attributes needed in assignment.
