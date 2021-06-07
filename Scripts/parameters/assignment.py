@@ -230,12 +230,12 @@ freight_classes = (
 )
 assignment_classes = {
     "hw": "work",
-    "hc": "leisure",
-    "hu": "leisure",
+    "hc": "work",
+    "hu": "work",
     "hs": "leisure",
     "ho": "leisure",
-    "hoo": "work",
-    "wo": "work",
+    "hoo": "leisure",
+    "wo": "leisure",
     "oo": "leisure",
     "wh": "work",
     "hwp": "work",
