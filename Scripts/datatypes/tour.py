@@ -3,6 +3,7 @@ import random
 
 import parameters.car as param
 import parameters.zone as zone_param
+from parameters.impedance_transformation import vot
 
 
 class Tour(object):
@@ -18,7 +19,8 @@ class Tour(object):
     # Expansion factor used on demand in departure time model
     matrix = numpy.array([[1 / zone_param.agent_demand_fraction]])
     attr = ["person_id", "purpose_name", "mode", 
-            "total_access", "sustainable_access"]
+            "total_access", "sustainable_access",
+            "cost", "gen_cost"]
 
     def __init__(self, purpose, origin, person_id):
         self.person_id = person_id
@@ -179,6 +181,24 @@ class Tour(object):
                     + numpy.searchsorted(cumulative_probs, self._sec_dest_draw))
         self.position = (self.position[0], self.position[1], dest_idx)
         self.purpose.sec_dest_purpose.attracted_tours[self.mode][dest_idx] += 1
+    
+    def calc_cost(self):
+        """Construct cost and time components from tour dest choice. """
+        impedance = self.purpose.model.impedance[self.mode]
+        time = self._get_cost(impedance["time"])
+        self.cost = self._get_cost(impedance["cost"])
+        self.gen_cost = self.cost + time * vot[self.purpose.name]
+
+    def _get_cost(self, mtx):
+        """Check if matrix and return value from position. """
+        cost = 0
+        if isinstance(mtx, numpy.ndarray):
+            cost += mtx[self.position[0], self.position[1]]
+            if len(self.position) > 2:
+                cost += mtx[self.position[1], self.position[2]]
+        else:
+            pass
+        return cost
 
     def __str__(self):
         """ Return tour attributes as string.
@@ -188,5 +208,6 @@ class Tour(object):
         str
             Tour object attributes.
         """
+        self.calc_cost()
         tourdata = [str(getattr(self, attr)) for attr in Tour.attr]
         return "\t".join(tourdata)
