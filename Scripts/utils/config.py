@@ -31,6 +31,9 @@ class Config:
         self.__config[key] = value
 
     @property
+    def HELMET_VERSION(self): return self.__get_value("HELMET_VERSION")
+
+    @property
     def SCENARIO_NAME(self): return self.__get_value("SCENARIO_NAME")
 
     @SCENARIO_NAME.setter

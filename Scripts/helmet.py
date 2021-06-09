@@ -131,6 +131,10 @@ if __name__ == "__main__":
     # but allow override via command-line arguments
     config = Config().read_from_file()
     parser = ArgumentParser(epilog="HELMET model system entry point script.")
+    parser.add_argument(
+        "--version",
+        action="version",
+        version="helmet v" + config.HELMET_VERSION)
     # Logging
     parser.add_argument(
         "--log-level",
@@ -235,6 +239,7 @@ if __name__ == "__main__":
     config.SCENARIO_NAME = args.scenario_name
     config.RESULTS_PATH = args.results_path
     log.initialize(config)
+    log.debug("helmet_version=" + config.HELMET_VERSION)
     log.debug('sys.version_info=' + str(sys.version_info[0]))
     log.debug('sys.path=' + str(sys.path))
     log.debug('log_level=' + args.log_level)
