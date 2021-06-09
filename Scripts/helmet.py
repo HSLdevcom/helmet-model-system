@@ -134,7 +134,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--version",
         action="version",
-        version="helmet v" + config.HELMET_VERSION)
+        version="helmet " + config.HELMET_VERSION)
     # Logging
     parser.add_argument(
         "--log-level",
