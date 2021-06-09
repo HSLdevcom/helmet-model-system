@@ -37,7 +37,7 @@ def initialize(config):
     else:
         file = Config.DefaultScenario + '.log'
     global filename
-    filename = os.path.join(sys.path[0], file)
+    filename = os.path.join(config.RESULTS_PATH, config.SCENARIO_NAME, file)
     fileFormat = logging.Formatter(
         '%(asctime)s [%(levelname)s] %(message)s', '%Y-%m-%d %H:%M:%S')
     fileHandler = logging.handlers.TimedRotatingFileHandler(

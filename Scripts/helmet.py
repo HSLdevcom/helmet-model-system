@@ -212,6 +212,7 @@ if __name__ == "__main__":
     config.LOG_LEVEL = args.log_level
     config.LOG_FORMAT = args.log_format
     config.SCENARIO_NAME = args.scenario_name
+    config.RESULTS_PATH = args.results_path
     log.initialize(config)
     log.debug('sys.version_info=' + str(sys.version_info[0]))
     log.debug('sys.path=' + str(sys.path))

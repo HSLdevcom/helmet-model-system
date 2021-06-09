@@ -19,6 +19,7 @@ class Config():
     LOG_FORMAT = None
     LOG_LEVEL = "DEBUG"
     SCENARIO_NAME = "TEST"
+    RESULTS_PATH = os.path.join(TEST_DATA_PATH, "Results")
 
 class MatrixDataTest(unittest.TestCase):
     
