@@ -58,7 +58,6 @@ class ImpedanceTransformer:
                 imp["cost"]["transit_work"], trips_month["transit_work"][0])
             trips_per_month[
                 zone_data.first_surrounding_zone:, :] = trips_month["transit_work"][1]
-            trips_per_month = 0.5 * (trips_per_month+trips_per_month.T)
             imp["cost"]["transit_work"] /= trips_per_month
             # leisure purposes with one trip rate
             trips_per_month = numpy.full_like(
