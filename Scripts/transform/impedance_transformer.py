@@ -1,7 +1,7 @@
 from collections import defaultdict
 import numpy
 
-from parameters.impedance_transformation import impedance_share, divided_classes
+from parameters.impedance_transformation import impedance_share, divided_classes, trips_month
 from parameters.assignment import assignment_classes
 
 
@@ -53,10 +53,15 @@ class ImpedanceTransformer:
         """
         for time_period in impedance:
             imp = impedance[time_period]
-            trips_per_month = numpy.full_like(imp["cost"]["transit_work"], 60.0)
-            trips_per_month[zone_data.first_surrounding_zone:, :] = 44.0
+            # work purposes with different trip rate for capital and surrounding
+            trips_per_month = numpy.full_like(
+                imp["cost"]["transit_work"], trips_month["transit_work"][0])
+            trips_per_month[
+                zone_data.first_surrounding_zone:, :] = trips_month["transit_work"][1]
             trips_per_month = 0.5 * (trips_per_month+trips_per_month.T)
             imp["cost"]["transit_work"] /= trips_per_month
-            trips_per_month = numpy.full_like(imp["cost"]["transit_leisure"], 30.0)
+            # leisure purposes with one trip rate
+            trips_per_month = numpy.full_like(
+                imp["cost"]["transit_leisure"], trips_month["transit_leisure"])
             imp["cost"]["transit_leisure"] /= trips_per_month
         return(impedance)
