@@ -53,16 +53,10 @@ class ImpedanceTransformer:
         """
         for time_period in impedance:
             imp = impedance[time_period]
-            try:
-                trips_per_month = numpy.full_like(imp["cost"]["transit_work"], 60.0)
-                trips_per_month[zone_data.first_surrounding_zone:, :] = 44.0
-                trips_per_month = 0.5 * (trips_per_month+trips_per_month.T)
-                imp["cost"]["transit_work"] /= trips_per_month
-            except:
-                pass
-            try:
-                trips_per_month = numpy.full_like(imp["cost"]["transit_leisure"], 30.0)
-                imp["cost"]["transit_leisure"] /= trips_per_month
-            except:
-                pass
+            trips_per_month = numpy.full_like(imp["cost"]["transit_work"], 60.0)
+            trips_per_month[zone_data.first_surrounding_zone:, :] = 44.0
+            trips_per_month = 0.5 * (trips_per_month+trips_per_month.T)
+            imp["cost"]["transit_work"] /= trips_per_month
+            trips_per_month = numpy.full_like(imp["cost"]["transit_leisure"], 30.0)
+            imp["cost"]["transit_leisure"] /= trips_per_month
         return(impedance)
