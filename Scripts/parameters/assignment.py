@@ -148,6 +148,17 @@ bus_lane_link_codes = {
 }
 # Bus lane delay equivalent to 1.5 km per link
 buslane_delay = 60 * 1.5
+# Codes defining whether transit mode stops at node, stored in data2
+stop_codes = {
+    't': (1, 8),
+    'p': (8,),
+    'b': (2, 3, 4, 5, 11),
+    'g': (3, 5, 11),
+    'e': (4, 5, 7, 11),
+    'd': (2, 3, 4, 5, 7, 11),
+}
+# Node labels for HSL members (new and old fare zones)
+hsl_area = "ABCDE HEXL"
 # Performance settings
 performance_settings = {
     "number_of_processors": "max"
