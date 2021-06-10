@@ -105,15 +105,13 @@ class ModelSystem:
 
         # Mode and destination probability matrices are calculated first,
         # as logsums from probability calculation are used in tour generation.
-        impedance = self.imptrans.transform_transit_cost(
-            self.zdata_forecast, previous_iter_impedance)
         self.dm.create_population_segments()
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
                 purpose.gen_model.init_tours()
             else:
                 purpose_impedance = self.imptrans.transform(
-                    purpose, impedance)
+                    purpose, previous_iter_impedance)
                 purpose.calc_prob(purpose_impedance)
                 if is_last_iteration and purpose.dest != "source":
                     purpose.accessibility_model.calc_accessibility(
@@ -127,7 +125,7 @@ class ModelSystem:
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
                 purpose_impedance = self.imptrans.transform(
-                    purpose, impedance)
+                    purpose, previous_iter_impedance)
                 purpose.generate_tours()
                 if is_last_iteration:
                     for mode in purpose.model.dest_choice_param:
@@ -490,14 +488,12 @@ class AgentModelSystem(ModelSystem):
         random.seed(None)
         self.dm.cm.calc_basic_prob()
         self.travel_modes = set()
-        impedance = self.imptrans.transform_transit_cost(
-            self.zdata_forecast, previous_iter_impedance)
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
                 purpose.init_sums()
             else:
                 purpose_impedance = self.imptrans.transform(
-                    purpose, impedance)
+                    purpose, previous_iter_impedance)
                 if (purpose.area == "peripheral" or purpose.dest == "source"
                         or purpose.name == "oop"):
                     purpose.calc_prob(purpose_impedance)
@@ -534,7 +530,7 @@ class AgentModelSystem(ModelSystem):
             car_users / self.dm.zone_population, self.dm.zone_population)
         log.info("Primary destinations assigned")
         purpose_impedance = self.imptrans.transform(
-            purpose, impedance)
+            purpose, previous_iter_impedance)
         nr_threads = param.performance_settings["number_of_processors"]
         if nr_threads == "max":
             nr_threads = multiprocessing.cpu_count()

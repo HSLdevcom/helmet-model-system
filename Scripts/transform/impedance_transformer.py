@@ -13,6 +13,8 @@ class ImpedanceTransformer:
         """Perform transformation from time period dependent matrices 
         to aggregate impedance matrices for specific travel purpose.
 
+        Transform transit costs from (eur/month) to (eur/day).
+
         Parameters
         ----------
         purpose : TourPurpose
@@ -44,23 +46,14 @@ class ImpedanceTransformer:
                         imp = impedance[time_period][mtx_type][ass_class]
                         day_imp[mode][mtx_type] += share[0] * imp[rows, cols]
                         day_imp[mode][mtx_type] += share[1] * imp[cols, rows].T
+        # transit cost to eur per day
+        if assignment_classes[purpose.name] == "work":
+            trips_per_month = numpy.full_like(
+                day_imp["transit"]["cost"], trips_month["transit_work"][0])
+            trips_per_month[purpose.ubounds, :] = trips_month["transit_work"][1]
+            day_imp["transit"]["cost"] /= trips_per_month
+        else:
+            trips_per_month = numpy.full_like(
+                day_imp["transit"]["cost"], trips_month["transit_leisure"])
+            day_imp["transit"]["cost"] /= trips_per_month
         return day_imp
-
-    def transform_transit_cost(self, zone_data, impedance):
-        """Convert transit costs.
-
-        From [eur/month] to [eur/day].
-        """
-        for time_period in impedance:
-            imp = impedance[time_period]
-            # work purposes with different trip rate for capital and surrounding
-            trips_per_month = numpy.full_like(
-                imp["cost"]["transit_work"], trips_month["transit_work"][0])
-            trips_per_month[
-                zone_data.first_surrounding_zone:, :] = trips_month["transit_work"][1]
-            imp["cost"]["transit_work"] /= trips_per_month
-            # leisure purposes with one trip rate
-            trips_per_month = numpy.full_like(
-                imp["cost"]["transit_leisure"], trips_month["transit_leisure"])
-            imp["cost"]["transit_leisure"] /= trips_per_month
-        return(impedance)
