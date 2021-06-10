@@ -19,9 +19,14 @@ class Config:
 
 class Args:
     baseline_data_path = os.path.join(TEST_DATA_PATH, "Base_input_data")
-    emme_paths = [os.path.join(TEST_DATA_PATH, "Scenario_input_data", "2030_test", "2016.cco")]
+    emme_paths = [
+        os.path.join(
+            TEST_DATA_PATH, "Scenario_input_data", "2030_test", "2016.cco"),
+    ]
     first_scenario_ids = ["test"]
-    forecast_data_paths = [os.path.join(TEST_DATA_PATH, "Scenario_input_data", "2030_test")]
+    forecast_data_paths = [
+        os.path.join(TEST_DATA_PATH, "Scenario_input_data", "2030_test"),
+    ]
     results_path = os.path.join(TEST_DATA_PATH, "Results")
     scenario_name = "test"
     do_not_use_emme = True

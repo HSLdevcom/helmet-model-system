@@ -192,7 +192,7 @@ class ModelSystem:
         demand = self.resultmatrices if is_end_assignment else self.basematrices
         for ap in self.ass_model.assignment_periods:
             tp = ap.name
-            log.info("Assigning period " + tp)
+            log.info("Assigning period {}...".format(tp))
             with demand.open("demand", tp, self.ass_model.zone_numbers) as mtx:
                 for ass_class in param.transport_classes:
                     self.dtm.demand[tp][ass_class] = mtx[ass_class]
