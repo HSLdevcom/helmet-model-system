@@ -4,6 +4,7 @@ import random
 import parameters.car as param
 import parameters.zone as zone_param
 from parameters.assignment import assignment_classes, vot_inv
+from parameters.impedance_transformation import divided_classes
 
 
 class Tour(object):
@@ -182,22 +183,47 @@ class Tour(object):
         self.position = (self.position[0], self.position[1], dest_idx)
         self.purpose.sec_dest_purpose.attracted_tours[self.mode][dest_idx] += 1
     
-    def calc_cost(self):
-        """Construct cost and time components from tour dest choice. """
-        impedance = self.purpose.model.impedance[self.mode]
-        time = self._get_cost(impedance["time"])
-        self.cost = self._get_cost(impedance["cost"])
+    def calc_cost(self, impedance):
+        """Construct cost and time components from tour dest choice.
+
+        Parameters
+        ----------
+        impedance: dict
+            Time period (aht/pt/iht) : dict
+                Type (time/cost/dist) : dict
+                    Assignment class (car_work/transit/...) : numpy 2d matrix
+        """
+        time = self._get_cost(impedance, "time")
+        self.cost = self._get_cost(impedance, "cost")
         vot = 1 / vot_inv[assignment_classes[self.purpose_name]]
         self.gen_cost = self.cost + time * vot
 
-    def _get_cost(self, mtx):
+    def _get_cost(self, impedance, mtx_type):
         """Check if matrix and return value from position. """
-        cost = 0
-        if isinstance(mtx, numpy.ndarray):
-            cost += mtx[self.position[0], self.position[1]]
-            if len(self.position) > 2:
-                cost += mtx[self.position[1], self.position[2]]
+        if self.mode in divided_classes:
+            ass_class = "{}_{}".format(
+                self.mode, assignment_classes[self.purpose.name])
         else:
+            ass_class = self.mode
+        cost = 0
+        try:
+            if assignment_classes[self.purpose_name] == "work":
+                departure_imp = impedance["aht"][mtx_type][ass_class]
+                sec_dest_imp = impedance["iht"][mtx_type][ass_class]
+                return_imp = impedance["iht"][mtx_type][ass_class]
+            else:
+                departure_imp = impedance["pt"][mtx_type][ass_class]
+                sec_dest_imp = impedance["pt"][mtx_type][ass_class]
+                return_imp = impedance["pt"][mtx_type][ass_class]
+            # first leg
+            cost += departure_imp[self.position[0], self.position[1]]
+            # check if tour has secondary destination and add accordingly
+            if len(self.position) > 2:
+                cost += sec_dest_imp[self.position[1], self.position[2]]
+                cost += return_imp[self.position[2], self.position[0]]
+            else: 
+                cost += return_imp[self.position[1], self.position[0]]
+        except KeyError:
             pass
         return cost
 
@@ -209,6 +235,5 @@ class Tour(object):
         str
             Tour object attributes.
         """
-        self.calc_cost()
         tourdata = [str(getattr(self, attr)) for attr in Tour.attr]
         return "\t".join(tourdata)

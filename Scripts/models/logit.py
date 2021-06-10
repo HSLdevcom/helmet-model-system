@@ -318,7 +318,6 @@ class ModeDestModel(LogitModel):
             Mode (car/transit/bike/walk) : numpy 2-d matrix
                 Choice probabilities
         """
-        self.impedance = impedance
         return self._calc_prob(self._calc_utils(impedance))
     
     def calc_individual_prob(self, mod_mode, dummy):
