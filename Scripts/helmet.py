@@ -48,8 +48,6 @@ def main(args):
         raise NameError(
             "Forecast data directory '{}' does not exist.".format(
                 forecast_zonedata_path))
-    log.info("Using forecast data from folder {}.".format(
-        forecast_zonedata_path))
     # Choose and initialize the Traffic Assignment (supply)model
     if args.do_not_use_emme:
         log.info("Initializing MockAssignmentModel..")
