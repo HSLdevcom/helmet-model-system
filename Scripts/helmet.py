@@ -31,10 +31,6 @@ def main(args):
             "log": log.filename,
         }
     }
-
-    # Read input matrices (.omx) and zonedata (.csv), and initialize models
-    # (assignment model and model-system)
-    log.info("Initializing matrices and models...", extra=log_extra)
     # Check input data folders/files exist
     if not os.path.exists(base_zonedata_path):
         raise NameError(
@@ -50,7 +46,7 @@ def main(args):
                 forecast_zonedata_path))
     # Choose and initialize the Traffic Assignment (supply)model
     if args.do_not_use_emme:
-        log.info("Initializing MockAssignmentModel..")
+        log.info("Initializing MockAssignmentModel...")
         mock_result_path = os.path.join(
             results_path, args.scenario_name, "Matrices")
         if not os.path.exists(mock_result_path):
@@ -63,7 +59,7 @@ def main(args):
             raise NameError(
                 ".emp project file not found in given '{}' location.".format(
                     emme_project_path))
-        log.info("Initializing Emme..")
+        log.info("Initializing Emme...")
         from assignment.emme_bindings.emme_project import EmmeProject
         ass_model = EmmeAssignmentModel(
             EmmeProject(emme_project_path),
@@ -72,6 +68,8 @@ def main(args):
             first_matrix_id=args.first_matrix_id)
     # Initialize model system (wrapping Assignment-model,
     # and providing demand calculations as Python modules)
+    # Read input matrices (.omx) and zonedata (.csv)
+    log.info("Initializing matrices and models...", extra=log_extra)
     if args.is_agent_model:
         model = AgentModelSystem(
             forecast_zonedata_path, base_zonedata_path, base_matrices_path,
@@ -86,7 +84,7 @@ def main(args):
     # on last iteration model-system will save the results
     log_extra["status"]["state"] = "preparing"
     log.info(
-        "Starting simulation with {} iterations..".format(iterations),
+        "Starting simulation with {} iterations...".format(iterations),
         extra=log_extra)
     impedance = model.assign_base_demand(
         args.use_fixed_transit_cost, iterations==0)

@@ -66,7 +66,6 @@ class AssignmentPeriod(Period):
             Type (time/cost/dist) : dict
                 Assignment class (car_work/transit/...) : numpy 2-d matrix
         """
-        log.info("Assignment starts...")
         self._set_emmebank_matrices(matrices, iteration=="last")
         if iteration=="init":
             self._assign_pedestrians()
@@ -358,7 +357,7 @@ class AssignmentPeriod(Period):
 
     def _calc_road_cost(self):
         """Calculate road charges and driving costs for one scenario."""
-        log.info("Calculates road charges for scenario {}".format(self.emme_scenario.id))
+        log.info("Calculates road charges for time period {}...".format(self.name))
         network = self.emme_scenario.get_network()
         for link in network.links():
             toll_cost = link.length * link["@hinta"] # km * e/km = eur
