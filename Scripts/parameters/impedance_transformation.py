@@ -275,17 +275,3 @@ divided_classes = (
     "car",
     "transit",
 )
-
-### VALUE OF TIME CONVERSION ###
-# use car vot values for all modes
-vot = {
-    "hw": 0.132, # eur / min
-    "hu": 0.132,
-    "hc": 0.132,
-    "hs": 0.0895,
-    "ho": 0.0895,
-    "wo": 0.0895,
-    "woo": 0.0895,
-    "oo": 0.0895,
-    "wh": 0.0895,
-}

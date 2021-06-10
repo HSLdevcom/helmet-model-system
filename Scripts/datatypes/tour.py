@@ -3,7 +3,7 @@ import random
 
 import parameters.car as param
 import parameters.zone as zone_param
-from parameters.impedance_transformation import vot
+from parameters.assignment import assignment_classes, vot_inv
 
 
 class Tour(object):
@@ -187,7 +187,8 @@ class Tour(object):
         impedance = self.purpose.model.impedance[self.mode]
         time = self._get_cost(impedance["time"])
         self.cost = self._get_cost(impedance["cost"])
-        self.gen_cost = self.cost + time * vot[self.purpose.name]
+        vot = 1 / vot_inv[assignment_classes[self.purpose_name]]
+        self.gen_cost = self.cost + time * vot
 
     def _get_cost(self, mtx):
         """Check if matrix and return value from position. """
