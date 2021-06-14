@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 import os
+import numpy
 
 from utils.config import Config
 import utils.log as log
@@ -55,28 +56,34 @@ def main(args):
         log.error(msg)
         raise ValueError(msg)
     if args.do_not_use_emme:
-        mock_result_path = os.path.join(args.results_path, args.scenario_name, "Matrices")
+        mock_result_path = os.path.join(
+            args.results_path, args.scenario_name, "Matrices")
         if not os.path.exists(mock_result_path):
             msg = "Mock Results directory {} does not exist.".format(
                 mock_result_path)
             log.error(msg)
             raise NameError(msg)
         assignment_model = MockAssignmentModel(MatrixData(mock_result_path))
+        zone_numbers = assignment_model.zone_numbers
     else:
         if not os.path.isfile(emme_paths[0]):
             msg = ".emp project file not found in given '{}' location.".format(
                 emme_paths[0])
             log.error(msg)
             raise ValueError(msg)
-        from assignment.emme_bindings.emme_project import EmmeProject
-        assignment_model = EmmeAssignmentModel(
-            EmmeProject(emme_paths[0]), first_scenario_id=first_scenario_ids[0])
+        import inro.emme.desktop.app as _app
+        app = _app.start_dedicated(
+            project=emme_paths[0], visible=False, user_initials="HSL")
+        zone_numbers = numpy.array(
+            app.data_explorer().active_database().core_emmebank.scenario(
+                first_scenario_ids[0]).zone_numbers)
+        app.close()
     # Check base zonedata
-    base_zonedata = ZoneData(base_zonedata_path, assignment_model.zone_numbers)
+    base_zonedata = ZoneData(base_zonedata_path, zone_numbers)
     # Check base matrices
     matrixdata = MatrixData(base_matrices_path)
     for tp in ("aht", "pt", "iht"):
-        with matrixdata.open("demand", tp, assignment_model.zone_numbers) as mtx:
+        with matrixdata.open("demand", tp, zone_numbers) as mtx:
             for ass_class in param.transport_classes:
                 a = mtx[ass_class]
 
@@ -85,21 +92,29 @@ def main(args):
     for i, emp_path in enumerate(emme_paths):
         log.info("Checking input data for scenario #{} ...".format(i))
 
-        # Check filepaths
-        if not os.path.isfile(emp_path):
-            msg = ".emp project file not found in given '{}' location.".format(
-                emp_path)
-            log.error(msg)
-            raise ValueError(msg)
+        # Check network
+        if not args.do_not_use_emme:
+            if not os.path.isfile(emp_path):
+                msg = ".emp project file not found in given '{}' location.".format(
+                    emp_path)
+                log.error(msg)
+                raise ValueError(msg)
+            app = _app.start_dedicated(
+                project=emme_paths[0], visible=False, user_initials="HSL")
+            scen = app.data_explorer().active_database().core_emmebank.scenario(
+                first_scenario_ids[i])
+            network = scen.get_network()
+            # TODO Validate network
+            scen.publish_network(network)
+            app.close()
+
+        # Check forecasted zonedata
         if not os.path.exists(forecast_zonedata_paths[i]):
             msg = "Forecast data directory '{}' does not exist.".format(
                 forecast_zonedata_paths[i])
             log.error(msg)
             raise ValueError(msg)
-
-        # Check forecasted zonedata
-        forecast_zonedata = ZoneData(
-            forecast_zonedata_paths[i], assignment_model.zone_numbers)
+        forecast_zonedata = ZoneData(forecast_zonedata_paths[i], zone_numbers)
 
     log.info("Successfully validated all input files")
 
