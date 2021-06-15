@@ -12,14 +12,18 @@ class Tour:
     ----------
     purpose : datatypes.purpose.TourPurpose
         Travel purpose (hw/hs/ho/...)
-    origin : int or Tour
+    origin : Zone or Tour
         Origin zone number or origin tour (if non-home tour)
     """
     # Expansion factor used on demand in departure time model
     matrix = numpy.array([[1 / zone_param.agent_demand_fraction]])
+    attr = ["person_id", "purpose_name", "mode", 
+            "total_access", "sustainable_access"]
 
-    def __init__(self, purpose, origin):
+    def __init__(self, purpose, origin, person_id):
+        self.person_id = person_id
         self.purpose = purpose
+        self.purpose_name = purpose.name
         self.orig = origin
         try:
             self.sec_dest_prob = purpose.sec_dest_purpose.gen_model.param[purpose.name]
@@ -48,8 +52,8 @@ class Tour:
     @orig.setter
     def orig(self, origin):
         try:
-            self._position = (self.purpose.zone_data.zone_index(origin),)
-        except KeyError:
+            self._position = (origin.index,)
+        except AttributeError:
             # If this is non-home tour, origin refers to home-based tour
             self._source = origin
             self._non_home_position = ()
@@ -65,7 +69,7 @@ class Tour:
     def dest(self, destination):
         self.position = (
             self.position[0],
-            self.purpose.zone_data.zone_index(destination)
+            destination.index
         )
 
     @property
@@ -80,7 +84,7 @@ class Tour:
         self.position = (
             self.position[0],
             self.position[1],
-            self.purpose.zone_data.zone_index(destination)
+            destination.index
         )
 
     @property
@@ -114,11 +118,15 @@ class Tour:
         is_car_user : bool
             Whether the person is car user or not
         """
-        self._mode_idx = numpy.searchsorted(
-            self.purpose.model.calc_individual_mode_prob(
-                is_car_user, self.position[0]).cumsum(),
-            self._mode_draw)
+        probs, accessibility = self.purpose.model.calc_individual_mode_prob(
+                is_car_user, self.position[0])
+        self._mode_idx = numpy.searchsorted(probs.cumsum(), self._mode_draw)
         self.purpose.generated_tours[self.mode][self.position[0]] += 1
+        self.total_access = accessibility
+
+    @property
+    def sustainable_access(self):
+        return -self.purpose.sustainable_access[self.orig]
 
     def choose_destination(self, sec_dest_tours):
         """Choose primary destination for the tour.
@@ -171,3 +179,14 @@ class Tour:
                     + numpy.searchsorted(cumulative_probs, self._sec_dest_draw))
         self.position = (self.position[0], self.position[1], dest_idx)
         self.purpose.sec_dest_purpose.attracted_tours[self.mode][dest_idx] += 1
+
+    def __str__(self):
+        """ Return tour attributes as string.
+
+        Returns
+        ----------
+        str
+            Tour object attributes.
+        """
+        tourdata = [str(getattr(self, attr)) for attr in Tour.attr]
+        return "\t".join(tourdata)

@@ -50,6 +50,7 @@ def is_in(interval, zone_number):
                 return True
     return False
 
+faulty_kela_code_nodes = set()
 
 cbd = Polygon(param.helsinki_cbd)
 
@@ -69,13 +70,14 @@ def belongs_to_area(node):
     """
     try:
         municipality = param.kela_codes[int(node.data3)]
+    except KeyError:
+        faulty_kela_code_nodes.add(node.id)
+        first_zone_id = -1
+    else:
         if municipality == "Helsinki" and not Point(node.x, node.y).within(cbd):
             first_zone_id = 1000
         else:
             first_zone_id = param.municipalities[municipality][0]
-    except KeyError:
-        log.warn("Municipality KELA code not found for node {}".format(node.id))
-        first_zone_id = -1
     for area in param.area_aggregation:
         if is_in(param.areas[area], first_zone_id):
             return area

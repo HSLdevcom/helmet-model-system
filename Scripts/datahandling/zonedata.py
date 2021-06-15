@@ -5,6 +5,7 @@ import parameters.zone as param
 from utils.read_csv_file import read_csv_file
 from utils.zone_interval import ZoneIntervals, zone_interval
 import utils.log as log
+from datatypes.zone import Zone
 
 
 class ZoneData:
@@ -17,10 +18,12 @@ class ZoneData:
         external = param.areas["external"]
         first_extra = numpy.searchsorted(zone_numbers, peripheral[1], "right")
         self.zone_numbers = zone_numbers[:first_extra]
-        self.mapping = {self.zone_numbers[i]: i
-            for i in range(self.zone_numbers.size)}
-        first_surrounding = numpy.searchsorted(self.zone_numbers, surrounding[0])
-        self.first_surrounding_zone = first_surrounding
+        Zone.counter = 0
+        self.zones = {number: Zone(number) for number in self.zone_numbers}
+        self.first_not_helsinki_zone = numpy.searchsorted(
+            self.zone_numbers, param.municipalities["Espoo"][0])
+        self.first_surrounding_zone = numpy.searchsorted(
+            self.zone_numbers, surrounding[0])
         first_peripheral = numpy.searchsorted(self.zone_numbers, peripheral[0])
         self.first_peripheral_zone = first_peripheral
         first_external = numpy.searchsorted(zone_numbers, external[0])
@@ -91,9 +94,10 @@ class ZoneData:
         self["tertiary_education"] = schooldata["tertiary"]
         self["zone_area"] = landdata["builtar"]
         self.share["share_detached_houses"] = landdata["detach"]
-        self["perc_detached_houses_sqrt"] = (100*landdata["detach"]) ** 0.5
+        self["perc_detached_houses_sqrt"] = landdata["detach"] ** 0.5
         self["helsinki"] = self.dummy("municipalities", "Helsinki")
         self["cbd"] = self.dummy("areas", "helsinki_cbd")
+        self["lauttasaari"] = self.dummy("areas", "lauttasaari")
         self["helsinki_other"] = self.dummy("areas", "helsinki_other")
         self["espoo_vant_kau"] = self.dummy("areas", "espoo_vant_kau")
         self["surrounding"] = self.dummy("areas", "surrounding")
@@ -172,7 +176,7 @@ class ZoneData:
         int
             Index of zone number
         """
-        return self.mapping[zone_number]
+        return self.zones[zone_number].index
 
     def get_freight_data(self):
         """Get zone data for freight traffic calculation.

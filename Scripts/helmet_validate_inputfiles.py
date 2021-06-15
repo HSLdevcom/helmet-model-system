@@ -175,6 +175,7 @@ if __name__ == "__main__":
     config.LOG_LEVEL = args.log_level
     config.LOG_FORMAT = args.log_format
     config.SCENARIO_NAME = "input_file_validation"
+    config.RESULTS_PATH = args.results_path
     log.initialize(config)
 
     main(args)

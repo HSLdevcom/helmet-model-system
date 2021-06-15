@@ -3,7 +3,7 @@ import pandas
 from math import log10
 
 import utils.log as log
-from utils.zone_interval import belongs_to_area
+from utils.zone_interval import belongs_to_area, faulty_kela_code_nodes
 import parameters.assignment as param
 import parameters.zone as zone_param
 from assignment.abstract_assignment import AssignmentModel
@@ -190,6 +190,11 @@ class EmmeAssignmentModel(AssignmentModel):
                 linklengths[param.railtypes[linktype]] += link.length
             else:
                 linklengths[param.roadtypes[vdf]] += link.length / 2
+        if faulty_kela_code_nodes:
+            s = "Municipality KELA code not found for nodes:"
+            for node in faulty_kela_code_nodes:
+                s += " {}".format(node)
+            log.warn(s)
         for ass_class in ass_classes:
             resultdata.print_data(
                 vdf_kms[ass_class], "vehicle_kms_vdfs.txt", ass_class)
