@@ -4,6 +4,7 @@ import numpy
 
 from utils.config import Config
 import utils.log as log
+from utils.validate_network import validate
 from assignment.emme_assignment import EmmeAssignmentModel
 from assignment.mock_assignment import MockAssignmentModel
 from datahandling.matrixdata import MatrixData
@@ -101,11 +102,16 @@ def main(args):
                 raise ValueError(msg)
             app = _app.start_dedicated(
                 project=emme_paths[0], visible=False, user_initials="HSL")
-            scen = app.data_explorer().active_database().core_emmebank.scenario(
-                first_scenario_ids[i])
-            network = scen.get_network()
-            # TODO Validate network
-            scen.publish_network(network)
+            emmebank = app.data_explorer().active_database().core_emmebank
+            dimensions = emmebank.dimensions
+            # TODO Check extra attribute dimensions
+            scen = emmebank.scenario(first_scenario_ids[i])
+            if (numpy.array(scen.zone_numbers) != zone_numbers).any():
+                msg = "Zone numbers do not match for EMME scenario {}".format(
+                    scen.id)
+                log.error(msg)
+                raise ValueError(msg)
+            validate(scen.get_network())
             app.close()
 
         # Check forecasted zonedata
