@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import numpy
 import pandas
@@ -19,7 +19,8 @@ class AreaFindTest(unittest.TestCase):
     def test_belongs_to_area(self):
         class Node:
             id = "test"
-            label = 'A'
+            x = 25497000
+            y = 6673000
         node = Node()
         node.data3 = 91
         area = belongs_to_area(node)

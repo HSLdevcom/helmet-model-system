@@ -97,11 +97,11 @@ class ResultsData:
                 ws = self._xlsx_buffer[filename].active
                 ws.title = sheetname
             # Write data to each cell
-            for j in xrange(0, data.shape[1]):
+            for j in range(0, data.shape[1]):
                 ws.cell(row=1, column=j+2).value = data.columns[j]
-            for i in xrange(0, data.shape[0]):
+            for i in range(0, data.shape[0]):
                 ws.cell(row=i+2, column=1).value = data.index[i]
-                for j in xrange(0, data.shape[1]):
+                for j in range(0, data.shape[1]):
                     ws.cell(row=i+2, column=j+2).value = data.iloc[i, j]
         # Create text file
         sheetname = sheetname.replace("_", "\t")

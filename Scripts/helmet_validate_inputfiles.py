@@ -75,8 +75,8 @@ def main(args):
     base_zonedata = ZoneData(base_zonedata_path, assignment_model.zone_numbers)
     # Check base matrices
     matrixdata = MatrixData(base_matrices_path)
-    for ap in assignment_model.assignment_periods:
-        with matrixdata.open("demand", ap.name, assignment_model.zone_numbers) as mtx:
+    for tp in ("aht", "pt", "iht"):
+        with matrixdata.open("demand", tp, assignment_model.zone_numbers) as mtx:
             for ass_class in param.transport_classes:
                 a = mtx[ass_class]
 
@@ -175,6 +175,7 @@ if __name__ == "__main__":
     config.LOG_LEVEL = args.log_level
     config.LOG_FORMAT = args.log_format
     config.SCENARIO_NAME = "input_file_validation"
+    config.RESULTS_PATH = args.results_path
     log.initialize(config)
 
     main(args)

@@ -192,7 +192,7 @@ class ModelSystem:
         demand = self.resultmatrices if is_end_assignment else self.basematrices
         for ap in self.ass_model.assignment_periods:
             tp = ap.name
-            log.info("Assigning period " + tp)
+            log.info("Assigning period {}...".format(tp))
             with demand.open("demand", tp, self.ass_model.zone_numbers) as mtx:
                 for ass_class in param.transport_classes:
                     self.dtm.demand[tp][ass_class] = mtx[ass_class]
@@ -272,20 +272,25 @@ class ModelSystem:
             self.dtm.add_demand(ext_demand)
 
         # Calculate tour sums and mode shares
-        trip_sum = {mode: self._sum_trips_per_zone(mode, include_dests=False)
+        tour_sum = {mode: self._sum_trips_per_zone(mode, include_dests=False)
             for mode in self.travel_modes}
-        sum_all = sum(trip_sum.values())
+        sum_all = sum(tour_sum.values())
         mode_shares = {}
         ar = ArrayAggregator(sum_all.index)
-        for mode in trip_sum:
+        for mode in tour_sum:
             self.resultdata.print_data(
-                trip_sum[mode], "origins_demand.txt", mode)
+                tour_sum[mode], "origins_demand.txt", mode)
             self.resultdata.print_data(
-                ar.aggregate(trip_sum[mode]), "origin_demand_areas.txt", mode)
+                ar.aggregate(tour_sum[mode]), "origin_demand_areas.txt", mode)
             self.resultdata.print_data(
-                trip_sum[mode] / sum_all, "origins_shares.txt", mode)
-            mode_shares[mode] = trip_sum[mode].sum() / sum_all.sum()
+                tour_sum[mode] / sum_all, "origins_shares.txt", mode)
+            mode_shares[mode] = tour_sum[mode].sum() / sum_all.sum()
         self.mode_share.append(mode_shares)
+        trip_sum = {mode: self._sum_trips_per_zone(mode)
+            for mode in self.travel_modes}
+        for mode in tour_sum:
+            self.resultdata.print_data(
+                ar.aggregate(trip_sum[mode]), "trips_areas.txt", mode)
 
         # Add vans and save demand matrices
         for ap in self.ass_model.assignment_periods:
@@ -375,10 +380,10 @@ class ModelSystem:
         elif nr_threads <= 0:
             nr_threads = 1
         bounds = next(iter(purpose.sources)).bounds
-        for i in xrange(nr_threads):
+        for i in range(nr_threads):
             # Take a range of origins, for which this thread
             # will calculate secondary destinations
-            origs = xrange(i, bounds.stop - bounds.start, nr_threads)
+            origs = range(i, bounds.stop - bounds.start, nr_threads)
             # Results will be saved in a temp dtm, to avoid memory clashes
             dtm = dt.DepartureTimeModel(self.ass_model.nr_zones)
             demand.append(dtm)
@@ -540,8 +545,8 @@ class AgentModelSystem(ModelSystem):
         modes = purpose.modes if is_last_iteration else ["car"]
         for mode in modes:
             threads = []
-            for i in xrange(nr_threads):
-                origs = xrange(i, bounds.stop - bounds.start, nr_threads)
+            for i in range(nr_threads):
+                origs = range(i, bounds.stop - bounds.start, nr_threads)
                 thread = threading.Thread(
                     target=self._distribute_tours,
                     args=(

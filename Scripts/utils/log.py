@@ -3,7 +3,8 @@ import sys
 import json
 import logging
 import logging.handlers
-from config import Config
+
+from utils import config
 
 
 # Wrapper on top of standard Python logging interface so we can easily configure
@@ -36,8 +37,11 @@ def initialize(config):
         file = config.SCENARIO_NAME + ".log"
     else:
         file = Config.DefaultScenario + '.log'
+    result_dir = os.path.join(config.RESULTS_PATH, config.SCENARIO_NAME)
+    if not os.path.exists(result_dir):
+        os.makedirs(result_dir)
     global filename
-    filename = os.path.join(sys.path[0], file)
+    filename = os.path.join(result_dir, file)
     fileFormat = logging.Formatter(
         '%(asctime)s [%(levelname)s] %(message)s', '%Y-%m-%d %H:%M:%S')
     fileHandler = logging.handlers.TimedRotatingFileHandler(

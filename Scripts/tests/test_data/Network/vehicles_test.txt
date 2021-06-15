@@ -1,0 +1,13 @@
+c Modeller - Vehicle Transaction
+t vehicles
+c  id description mode fleet_size seated_capacity total_capacity cost_time_coeff cost_distance_coeff energy_time_coeff energy_distance_coeff auto_equivalent
+a   1 'ValluVakio' d      1    49    78   0.00   0.00   0.00   0.00   0.00
+a   2 'ValluPika' e      1    49    78   0.00   0.00   0.00   0.00   0.00
+a   3 'HSL-bussi' b      1    49    78   0.00   0.00   0.00   0.00   0.00
+a   4 'metro'    m      1   260   708   0.00   0.00   0.00   0.00   0.00
+a   5 'HSL-juna' r      1   520   840   0.00   0.00   0.00   0.00   0.00
+a   6 'muu_juna' j      1   500   500   0.00   0.00   0.00   0.00   0.00
+a   7 'ratikka'  t      1    84   151   0.00   0.00   0.00   0.00   0.00
+a   8 'HSL-runkob' g      1    49    78   0.00   0.00   0.00   0.00   0.00
+a   9 'lautta'   w      1   350   350   0.00   0.00   0.00   0.00   0.00
+a  10 'pikaratikk' p      1   110   198   0.00   0.00   0.00   0.00   0.00

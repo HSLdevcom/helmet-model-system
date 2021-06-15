@@ -1,5 +1,6 @@
 import numpy
 import pandas
+from shapely.geometry import Point, Polygon
 
 import parameters.zone as param
 import utils.log as log
@@ -41,13 +42,17 @@ def is_in(interval, zone_number):
     bool
         True if zone number is in interval
     """
-    if isinstance(interval[0], int):
+    try:
         return interval[0] <= zone_number <= interval[1]
-    else:
+    except (TypeError, ValueError):
         for sub_interval in interval:
             if is_in(sub_interval, zone_number):
                 return True
     return False
+
+faulty_kela_code_nodes = set()
+
+cbd = Polygon(param.helsinki_cbd)
 
 
 def belongs_to_area(node):
@@ -65,13 +70,14 @@ def belongs_to_area(node):
     """
     try:
         municipality = param.kela_codes[int(node.data3)]
-        if municipality == "Helsinki" and node.label != 'A':
+    except KeyError:
+        faulty_kela_code_nodes.add(node.id)
+        first_zone_id = -1
+    else:
+        if municipality == "Helsinki" and not Point(node.x, node.y).within(cbd):
             first_zone_id = 1000
         else:
             first_zone_id = param.municipalities[municipality][0]
-    except KeyError:
-        log.warn("Municipality KELA code not found for node {}".format(node.id))
-        first_zone_id = -1
     for area in param.area_aggregation:
         if is_in(param.areas[area], first_zone_id):
             return area
@@ -105,7 +111,7 @@ class ZoneIntervals:
         return self.keys.__iter__()
 
     def __contains__(self, item):
-        return self._intervals.has_key(item)
+        return item in self._intervals
 
     def _get_slice(self, name, index):
         try:

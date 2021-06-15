@@ -123,7 +123,7 @@ class TourPurpose(Purpose):
                 zone_data, self, resultdata, is_agent_model)
             self.accessibility_model = logit.AccessibilityModel(
                 zone_data, self, resultdata, is_agent_model)
-        self.modes = self.model.mode_choice_param.keys()
+        self.modes = list(self.model.mode_choice_param)
         self.histograms = {mode: TourLengthHistogram() for mode in self.modes}
         self.aggregates = {mode: MatrixAggregator(zone_data.zone_numbers)
             for mode in self.modes}
