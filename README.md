@@ -1,18 +1,18 @@
-![Master](https://github.com/HSLdevcom/helmet-model-system/workflows/Python%application/badge.svg?branch=master)
+![olusanya](https://github.com/HSLdevcom/helmet-model-system/actions/workflows/pythonapp.yml/badge.svg?branch=olusanya)
 
 # helmet-model-system
 
-This repository contains python files for Helmet 4.0 Model System. Source codes can be found in the [Scripts-folder](Scripts).
+This repository contains python files for Helmet 4.1 Model System. Source codes can be found in the [Scripts-folder](Scripts).
 
 ## Usage
 
-In this chapter, we will guide you how to install HELMET 4.0 to work with INRO Emme software. The user is not expected to install any new software apart from [helmet-model-system](https://github.com/HSLdevcom/helmet-model-system) and [helmet-ui](https://github.com/HSLdevcom/helmet-ui).
+In this chapter, we will guide you how to install HELMET 4.1 to work with INRO Emme software. The user is not expected to install any new software apart from [helmet-model-system](https://github.com/HSLdevcom/helmet-model-system) and [helmet-ui](https://github.com/HSLdevcom/helmet-ui).
 
-If you do not have an Emme license or you wish to develop HELMET 4.0 further, please scroll down to [Development](#development) chapter.
+If you do not have an Emme license or you wish to develop HELMET 4.1 further, please scroll down to [Development](#development) chapter.
 
 ### Setup
 
-In production, we are using Python 2.7 which is supported by and installed together with INRO Emme software.
+In production, we are using Python 3.7 which is supported by and installed together with INRO Emme 4.5 software.
 
 We are using those Python dependencies that come with INRO Emme installation. To get access to these dependencies, you need to add them to your local PATH variable:
 
@@ -32,7 +32,7 @@ Next, you need to initialize an Emme project:
 
 ### Running
 
-You can run HELMET 4.0 from the command line or by using [helmet-ui](https://github.com/HSLdevcom/helmet-ui). Before running from the command line, set the configurations in [dev-config.json](Scripts/dev-config.json). Then, open command line to your Emme project and type:
+You can run HELMET 4.1 from the command line or by using [helmet-ui](https://github.com/HSLdevcom/helmet-ui). Before running from the command line, set the configurations in [dev-config.json](Scripts/dev-config.json). Then, open command line to your Emme project and type:
 
 ```
 cd Scripts
@@ -48,17 +48,17 @@ python test_assignment.py
 
 ## Development
 
-If you do not have INRO Emme license or you wish to develop HELMET 4.0 source code, you need to set up a development environment. Although not covered here, installing [Git](https://git-scm.com/downloads) is highly recommended!
+If you do not have INRO Emme license or you wish to develop HELMET 4.1 source code, you need to set up a development environment. Although not covered here, installing [Git](https://git-scm.com/downloads) is highly recommended!
 
 ### Environment and dependencies
 
-We are using Python 2.7 because it is supported by INRO Emme software.
+We are using Python 3.7 because it is supported by INRO Emme 4.5 software.
 
-1. Install Python 2.7. (2020-04-16: Do not install Python 2.7.17 because it will not work correctly until [this issue](https://github.com/pypa/pipenv/issues/4016) is resolved. Install Python 2.7.16 instead.)
-2. Add `C:\Python27` and `C:\Python27\Scripts` to your local PATH variable in "Environment Variables".
-3. Open a new Command Prompt and type `python --version`. You should get `Python 2.7.16` or some other Python 2.7 version. 
+1. Install Python 3.7.
+2. Add `C:\Python37` and `C:\Python37\Scripts` to your local PATH variable in "Environment Variables".
+3. Open a new Command Prompt and type `python --version`. You should get `Python 3.7.9` or some other Python 3.7 version.
 
-`pip` is the recommended package installer for Python. The normal Python installation routine installs `pip` to `C:\Python27\Scripts`. Type `pip --version` to Command Prompt to check if `pip` is installed and in your PATH. The command should return `pip 20.0.2 from c:\python27\lib\site-packages\pip (python 2.7)` (`pip` version may vary).
+`pip` is the recommended package installer for Python. The normal Python installation routine installs `pip` to `C:\Python37\Scripts`. Type `pip --version` to Command Prompt to check if `pip` is installed and in your PATH. The command should return `pip 20.1.1 from c:\python38\lib\site-packages\pip (python 3.7)` (`pip` version may vary).
 
 We are using `pipenv` to import the same open source libraries which INRO Emme software uses. `pipenv` isolates our environment from the other global Python modules and makes sure we don't break anything with our setup. Optional introduction to `pipenv` can be found from [Python docs](https://docs.python-guide.org/dev/virtualenvs/) or [Jonathan Cutrer's blog](https://jcutrer.com/python/pipenv-pipfile).
 
@@ -70,11 +70,11 @@ We are using `pipenv` to import the same open source libraries which INRO Emme s
     3. From the top box ("User variables for USERNAME"), find and select "Path" variable, and click "Edit...".
     4. Click "New" and write `%APPDATA%\Python\Scripts`.
     5. Click OK in the "Edit environment variable" window, and then click OK again in the "Environment Variables" window.
-4. Close and reopen Command Prompt and check that `pipenv` is recognised by typing `pipenv --version`. It should return `pipenv, version 2018.11.26`.
+4. Close and reopen Command Prompt and check that `pipenv` is recognised by typing `pipenv --version`. It should return `pipenv, version 2020.11.15`.
 5. Download [helmet-model-system](https://github.com/HSLdevcom/helmet-model-system) repository and open a Command Prompt to its "Scripts" folder.
 6. Install dependencies from `Pipfile`:
-    - First setup: `pipenv --python 2.7 install --dev`
-    - Additional syncing if new packages are added: `pipenv --python 2.7 sync --dev`
+    - First setup: `pipenv --python 3.7 install --dev`
+    - Additional syncing if new packages are added: `pipenv --python 3.7 sync --dev`
 7. Depending on your operating system, rename either `.env-win` (Windows) or `.env-nix` (Linux) to `.env`. In Windows, you can do this in Command Propmpt by typing `copy .env-win .env`.
 
 Now, you should have a virtual environment in `C:\Users\USERNAME\.virtualenvs\Scripts-xxxxxxxx\Lib\site-packages`.

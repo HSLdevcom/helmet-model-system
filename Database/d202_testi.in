@@ -1,6 +1,0 @@
-c Emme Module:    2.02(v5158)  Date: 12-02-24 15:48   User: E065/HSL/HRT....te
-c Project:        pieni testipankki                                           
-c Scenario    1:  pieni testiskenaario                                        
-t vehicles init
-a   1 'bussi     ' b     10    30    50   0.00   0.00   0.00   0.00   0.00
-

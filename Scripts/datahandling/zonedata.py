@@ -59,8 +59,8 @@ class ZoneData:
         car_cost = read_csv_file(data_dir, ".cco", squeeze=False)
         self.car_dist_cost = car_cost["dist_cost"][0]
         truckdata = read_csv_file(data_dir, ".trk", squeeze=True)
-        self.trailers_prohibited = map(int, truckdata.loc[0, :])
-        self.garbage_destination = map(int, truckdata.loc[1, :].dropna())
+        self.trailers_prohibited = list(map(int, truckdata.loc[0, :]))
+        self.garbage_destination = list(map(int, truckdata.loc[1, :].dropna()))
         pop = popdata["total"]
         self["population"] = pop
         self.share["share_age_7-17"] = popdata["sh_7-17"][:first_peripheral]

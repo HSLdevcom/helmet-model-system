@@ -9,7 +9,7 @@ class TourLengthHistogram:
 
     def __init__(self):
         index = ["{}-{}".format(intervals[i], intervals[i + 1])
-            for i in xrange(len(intervals) - 1)]
+            for i in range(len(intervals) - 1)]
         self.histogram = pandas.Series(0, index)
 
     def add(self, dist):
