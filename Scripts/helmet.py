@@ -12,7 +12,8 @@ from datahandling.matrixdata import MatrixData
 
 
 def main(args):
-    name = args.scenario_name if args.scenario_name is not None else Config.DefaultScenario
+    name = (args.scenario_name if args.scenario_name is not None
+        else Config.DefaultScenario)
     iterations = args.iterations
     base_zonedata_path = os.path.join(args.baseline_data_path, "2016_zonedata")
     base_matrices_path = os.path.join(args.baseline_data_path, "base_matrices")
@@ -30,27 +31,35 @@ def main(args):
             "log": log.filename,
         }
     }
-
-    # Read input matrices (.omx) and zonedata (.csv), and initialize models (assignment model and model-system)
-    log.info("Initializing matrices and models..", extra=log_extra)
     # Check input data folders/files exist
     if not os.path.exists(base_zonedata_path):
-        raise NameError("Baseline zonedata directory '{}' does not exist.".format(base_zonedata_path))
+        raise NameError(
+            "Baseline zonedata directory '{}' does not exist.".format(
+                base_zonedata_path))
     if not os.path.exists(base_matrices_path):
-        raise NameError("Baseline zonedata directory '{}' does not exist.".format(base_matrices_path))
+        raise NameError(
+            "Baseline zonedata directory '{}' does not exist.".format(
+                base_matrices_path))
     if not os.path.exists(forecast_zonedata_path):
-        raise NameError("Forecast data directory '{}' does not exist.".format(forecast_zonedata_path))
+        raise NameError(
+            "Forecast data directory '{}' does not exist.".format(
+                forecast_zonedata_path))
     # Choose and initialize the Traffic Assignment (supply)model
     if args.do_not_use_emme:
-        log.info("Initializing MockAssignmentModel..")
-        mock_result_path = os.path.join(results_path, args.scenario_name, "Matrices")
+        log.info("Initializing MockAssignmentModel...")
+        mock_result_path = os.path.join(
+            results_path, args.scenario_name, "Matrices")
         if not os.path.exists(mock_result_path):
-            raise NameError("Mock Results directory " + mock_result_path + " does not exist.")
+            raise NameError(
+                "Mock Results directory {} does not exist.".format(
+                    mock_result_path))
         ass_model = MockAssignmentModel(MatrixData(mock_result_path))
     else:
         if not os.path.isfile(emme_project_path):
-            raise NameError(".emp project file not found in given '{}' location.".format(emme_project_path))
-        log.info("Initializing Emme..")
+            raise NameError(
+                ".emp project file not found in given '{}' location.".format(
+                    emme_project_path))
+        log.info("Initializing Emme...")
         from assignment.emme_bindings.emme_project import EmmeProject
         ass_model = EmmeAssignmentModel(
             EmmeProject(emme_project_path),
@@ -59,6 +68,8 @@ def main(args):
             first_matrix_id=args.first_matrix_id)
     # Initialize model system (wrapping Assignment-model,
     # and providing demand calculations as Python modules)
+    # Read input matrices (.omx) and zonedata (.csv)
+    log.info("Initializing matrices and models...", extra=log_extra)
     if args.is_agent_model:
         model = AgentModelSystem(
             forecast_zonedata_path, base_zonedata_path, base_matrices_path,
@@ -69,10 +80,14 @@ def main(args):
             results_path, ass_model, name)
     log_extra["status"]["results"] = model.mode_share
 
-    # Run traffic assignment simulation for N iterations, on last iteration model-system will save the results
+    # Run traffic assignment simulation for N iterations,
+    # on last iteration model-system will save the results
     log_extra["status"]["state"] = "preparing"
-    log.info("Starting simulation with {} iterations..".format(iterations), extra=log_extra)
-    impedance = model.assign_base_demand(args.use_fixed_transit_cost, iterations==0)
+    log.info(
+        "Starting simulation with {} iterations...".format(iterations),
+        extra=log_extra)
+    impedance = model.assign_base_demand(
+        args.use_fixed_transit_cost, iterations==0)
     log_extra["status"]["state"] = "running"
     for i in range(1, iterations + 1):
         log_extra["status"]["current"] = i
@@ -85,7 +100,8 @@ def main(args):
         except Exception as error:
             log_extra["status"]["failed"] += 1
             log.error("Exception at iteration {}".format(i), error)
-            log.error("Fatal error occured, simulation aborted.", extra=log_extra)
+            log.error(
+                "Fatal error occured, simulation aborted.", extra=log_extra)
             break
         if i == iterations:
             log_extra["status"]['state'] = 'finished'
@@ -107,9 +123,14 @@ def main(args):
 
 
 if __name__ == "__main__":
-    # Initially read defaults from config file ("dev-config.json") but allow override via command-line arguments
+    # Initially read defaults from config file ("dev-config.json")
+    # but allow override via command-line arguments
     config = Config().read_from_file()
     parser = ArgumentParser(epilog="HELMET model system entry point script.")
+    parser.add_argument(
+        "--version",
+        action="version",
+        version="helmet " + config.HELMET_VERSION)
     # Logging
     parser.add_argument(
         "--log-level",
@@ -212,7 +233,9 @@ if __name__ == "__main__":
     config.LOG_LEVEL = args.log_level
     config.LOG_FORMAT = args.log_format
     config.SCENARIO_NAME = args.scenario_name
+    config.RESULTS_PATH = args.results_path
     log.initialize(config)
+    log.debug("helmet_version=" + config.HELMET_VERSION)
     log.debug('sys.version_info=' + str(sys.version_info[0]))
     log.debug('sys.path=' + str(sys.path))
     log.debug('log_level=' + args.log_level)

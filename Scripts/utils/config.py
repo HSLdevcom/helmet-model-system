@@ -1,5 +1,6 @@
 import os
 import json
+import subprocess
 
 
 class Config:
@@ -29,6 +30,15 @@ class Config:
 
     def __set_value(self, key, value):
         self.__config[key] = value
+
+    @property
+    def HELMET_VERSION(self):
+        try:
+            # If model system is in a git repo
+            return subprocess.check_output(["git", "describe", "--tags"])
+        except subprocess.CalledProcessError:
+            # If model system is downloaded with helmet-ui
+            return self.__get_value("HELMET_VERSION")
 
     @property
     def SCENARIO_NAME(self): return self.__get_value("SCENARIO_NAME")
