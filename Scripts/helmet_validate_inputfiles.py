@@ -93,6 +93,14 @@ def main(args):
     for i, emp_path in enumerate(emme_paths):
         log.info("Checking input data for scenario #{} ...".format(i))
 
+        # Check forecasted zonedata
+        if not os.path.exists(forecast_zonedata_paths[i]):
+            msg = "Forecast data directory '{}' does not exist.".format(
+                forecast_zonedata_paths[i])
+            log.error(msg)
+            raise ValueError(msg)
+        forecast_zonedata = ZoneData(forecast_zonedata_paths[i], zone_numbers)
+
         # Check network
         if not args.do_not_use_emme:
             if not os.path.isfile(emp_path):
@@ -143,16 +151,8 @@ def main(args):
                     scen.id)
                 log.error(msg)
                 raise ValueError(msg)
-            validate(scen.get_network())
+            validate(scen.get_network(), forecast_zonedata.fares)
             app.close()
-
-        # Check forecasted zonedata
-        if not os.path.exists(forecast_zonedata_paths[i]):
-            msg = "Forecast data directory '{}' does not exist.".format(
-                forecast_zonedata_paths[i])
-            log.error(msg)
-            raise ValueError(msg)
-        forecast_zonedata = ZoneData(forecast_zonedata_paths[i], zone_numbers)
 
     log.info("Successfully validated all input files")
 
