@@ -67,17 +67,24 @@ def main(args):
         assignment_model = MockAssignmentModel(MatrixData(mock_result_path))
         zone_numbers = assignment_model.zone_numbers
     else:
-        if not os.path.isfile(emme_paths[0]):
+        emp_path = emme_paths[0]
+        if not os.path.isfile(emp_path):
             msg = ".emp project file not found in given '{}' location.".format(
-                emme_paths[0])
+                emp_path)
             log.error(msg)
             raise ValueError(msg)
         import inro.emme.desktop.app as _app
         app = _app.start_dedicated(
-            project=emme_paths[0], visible=False, user_initials="HSL")
-        zone_numbers = numpy.array(
-            app.data_explorer().active_database().core_emmebank.scenario(
-                first_scenario_ids[0]).zone_numbers)
+            project=emp_path, visible=False, user_initials="HSL")
+        scen_id = first_scenario_ids[0]
+        try:
+            zone_numbers = numpy.array(
+                app.data_explorer().active_database().core_emmebank.scenario(
+                    scen_id).zone_numbers)
+        except AttributeError:
+            msg = "Project {} has no scenario {}".format(emp_path, scen_id)
+            log.error(msg)
+            raise ValueError(msg)
         app.close()
     # Check base zonedata
     base_zonedata = ZoneData(base_zonedata_path, zone_numbers)
@@ -109,7 +116,7 @@ def main(args):
                 log.error(msg)
                 raise ValueError(msg)
             app = _app.start_dedicated(
-                project=emme_paths[0], visible=False, user_initials="HSL")
+                project=emp_path, visible=False, user_initials="HSL")
             emmebank = app.data_explorer().active_database().core_emmebank
             nr_attr = {
                 # Number of existing extra attributes
