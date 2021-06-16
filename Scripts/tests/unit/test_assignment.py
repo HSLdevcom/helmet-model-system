@@ -20,7 +20,8 @@ class EmmeAssignmentTest(unittest.TestCase):
         context.import_scenario(scenario_dir, scenario_id, "test")
         fares = {
             "fare": {
-                'A': 59,
+                "A": 59,
+                "AB": 109,
             },
             "exclusive": {},
             "dist_fare": 3.0,
