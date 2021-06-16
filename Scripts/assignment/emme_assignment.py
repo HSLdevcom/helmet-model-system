@@ -42,7 +42,6 @@ class EmmeAssignmentModel(AssignmentModel):
                 tp, first_scenario_id + i + 2, first_scenario_id,
                 emme_context, save_matrices=save_matrices)
             for i, tp in enumerate(["aht", "pt", "iht"])]
-        # default value for dist, modelsystem sets new from zonedata
         self.day_scenario = self.emme_project.modeller.emmebank.scenario(
             first_scenario_id + 1)
 
