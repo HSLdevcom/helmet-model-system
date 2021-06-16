@@ -43,7 +43,6 @@ class EmmeAssignmentModel(AssignmentModel):
                 emme_context, save_matrices=save_matrices)
             for i, tp in enumerate(["aht", "pt", "iht"])]
         # default value for dist, modelsystem sets new from zonedata
-        self.dist_unit_cost = param.dist_unit_cost
         self.day_scenario = self.emme_project.modeller.emmebank.scenario(
             first_scenario_id + 1)
 
