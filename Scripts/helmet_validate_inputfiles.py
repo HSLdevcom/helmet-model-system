@@ -76,15 +76,14 @@ def main(args):
         import inro.emme.desktop.app as _app
         app = _app.start_dedicated(
             project=emp_path, visible=False, user_initials="HSL")
-        scen_id = first_scenario_ids[0]
-        try:
-            zone_numbers = numpy.array(
-                app.data_explorer().active_database().core_emmebank.scenario(
-                    scen_id).zone_numbers)
-        except AttributeError:
-            msg = "Project {} has no scenario {}".format(emp_path, scen_id)
+        scen = app.data_explorer().active_database().core_emmebank.scenario(
+            first_scenario_ids[0])
+        if scen is None:
+            msg = "Project {} has no scenario {}".format(emp_path, scen.id)
             log.error(msg)
             raise ValueError(msg)
+        else:
+            zone_numbers = numpy.array(scen.zone_numbers)
         app.close()
     # Check base zonedata
     base_zonedata = ZoneData(base_zonedata_path, zone_numbers)
@@ -149,11 +148,17 @@ def main(args):
             for key in nr_attr:
                 attr_space += dim[key] * (nr_attr[key]+nr_new_attr[key])
             if dim["extra_attribute_values"] < attr_space:
-                msg = "At least {} words required for extra attr.".format(
+                msg = "At least {} words required for extra attributes".format(
                     attr_space)
                 log.error(msg)
+                raise ValueError(msg)
             scen = emmebank.scenario(first_scenario_ids[i])
-            if (numpy.array(scen.zone_numbers) != zone_numbers).any():
+            if scen is None:
+                msg = "Project {} has no scenario {}".format(emp_path, scen.id)
+                log.error(msg)
+                raise ValueError(msg)
+            elif (len(scen.zone_numbers) != zone_numbers.size
+                    or (scen.zone_numbers != zone_numbers).any()):
                 msg = "Zone numbers do not match for EMME scenario {}".format(
                     scen.id)
                 log.error(msg)
