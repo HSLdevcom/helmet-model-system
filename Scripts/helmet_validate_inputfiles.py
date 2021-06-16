@@ -103,8 +103,40 @@ def main(args):
             app = _app.start_dedicated(
                 project=emme_paths[0], visible=False, user_initials="HSL")
             emmebank = app.data_explorer().active_database().core_emmebank
-            dimensions = emmebank.dimensions
-            # TODO Check extra attribute dimensions
+            nr_attr = {
+                # Number of existing extra attributes
+                # TODO Count existing extra attributes which are NOT included
+                # in the set of attributes created during model run
+                "nodes": 0,
+                "links": 4,
+                "transit_lines": 3,
+                "transit_segments": 0,
+            }
+            nr_transit_classes = len(param.transit_classes)
+            nr_segment_results = len(param.segment_results)
+            nr_vehicle_classes = len(param.emme_demand_mtx) + 1
+            nr_new_attr = {
+                "nodes": nr_transit_classes * (nr_segment_results-1),
+                "links": nr_vehicle_classes + 3,
+                "transit_lines": 0,
+                "transit_segments": nr_transit_classes*nr_segment_results + 1,
+            }
+            if not args.save_matrices:
+                # If results from all time periods are stored in same
+                # EMME scenario
+                for key in nr_new_attr:
+                    nr_new_attr[key] *= 4
+            # Attributes created during congested transit assignment
+            nr_new_attr["transit_segments"] += 3
+            dim = emmebank.dimensions
+            dim["nodes"] = dim["centroids"] + dim["regular_nodes"]
+            attr_space = 0
+            for key in nr_attr:
+                attr_space += dim[key] * (nr_attr[key]+nr_new_attr[key])
+            if dim["extra_attribute_values"] < attr_space:
+                msg = "At least {} words required for extra attr.".format(
+                    attr_space)
+                log.error(msg)
             scen = emmebank.scenario(first_scenario_ids[i])
             if (numpy.array(scen.zone_numbers) != zone_numbers).any():
                 msg = "Zone numbers do not match for EMME scenario {}".format(
@@ -149,6 +181,13 @@ if __name__ == "__main__":
         action="store_true",
         default=(not config.USE_EMME),
         help="Using this flag runs with MockAssignmentModel instead of EmmeAssignmentModel, not requiring EMME.",
+    )
+    parser.add_argument(
+        "--save-emme-matrices",
+        dest="save_matrices",
+        action="store_true",
+        default=config.SAVE_MATRICES_IN_EMME,
+        help="Using this flag saves additional matrices and strategy files to Emme-project Database folder.",
     )
     parser.add_argument(
         "--scenario-name",
