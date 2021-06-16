@@ -151,7 +151,7 @@ def main(args):
                     scen.id)
                 log.error(msg)
                 raise ValueError(msg)
-            validate(scen.get_network(), forecast_zonedata.fares)
+            validate(scen.get_network(), forecast_zonedata.transit_zone)
             app.close()
 
     log.info("Successfully validated all input files")
