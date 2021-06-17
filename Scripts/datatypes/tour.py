@@ -4,7 +4,7 @@ import random
 import parameters.car as param
 import parameters.zone as zone_param
 from parameters.assignment import assignment_classes, vot_inv
-from parameters.impedance_transformation import divided_classes
+from parameters.impedance_transformation import divided_classes, trips_month
 
 
 class Tour(object):
@@ -199,7 +199,7 @@ class Tour(object):
         self.gen_cost = self.cost + time * vot
 
     def _get_cost(self, impedance, mtx_type):
-        """Check if matrix and return value from position. """
+        """Get cost and time components from tour dest choice."""
         if self.mode in divided_classes:
             ass_class = "{}_{}".format(
                 self.mode, assignment_classes[self.purpose.name])
@@ -215,7 +215,7 @@ class Tour(object):
                 departure_imp = impedance["pt"][mtx_type][ass_class]
                 sec_dest_imp = impedance["pt"][mtx_type][ass_class]
                 return_imp = impedance["pt"][mtx_type][ass_class]
-            # first leg
+            # first leg of tour
             cost += departure_imp[self.position[0], self.position[1]]
             # check if tour has secondary destination and add accordingly
             if len(self.position) > 2:
@@ -225,6 +225,10 @@ class Tour(object):
                 cost += return_imp[self.position[1], self.position[0]]
         except KeyError:
             pass
+        # scale transit costs from month to day
+        if self.mode == "transit" and mtx_type == "cost":
+            idx = int(self.position[0] > self.purpose.zone_data.first_surrounding_zone)
+            cost /= trips_month[ass_class][idx]
         return cost
 
     def __str__(self):
