@@ -3,6 +3,27 @@ import parameters.assignment as param
 
 
 def validate(network, fares=None):
+    """Validate EMME network in terms of HELMET compatibility.
+
+    Check that:
+    - all auto links have volume-delay functions defined
+    - all tram links have speed defined
+    - all transit lines have headways defined
+    - a majority of nodes has transit fare zone defined (optional)
+
+    Parameters
+    ----------
+    network : inro.emme.network.Network
+        Network to be validated
+    fares : dict (optional)
+            key : str
+                Fare type (fare/exclusive/dist_fare/start_fare)
+            value : dict
+                key : str
+                    Zone combination (AB/ABC/...)
+                value : float/str
+                    Transit fare or name of municipality
+    """
     if fares is not None:
         fare_zones = {char for char in ''.join(fares["fare"])}
         log.debug("Zonedata has fare zones {}".format(', '.join(fare_zones)))
