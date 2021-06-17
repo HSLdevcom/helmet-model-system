@@ -2,11 +2,13 @@
 # -*- coding: utf-8 -*-
 import unittest
 import numpy
+import pandas
 import os
 
 from assignment.emme_bindings.mock_project import MockProject
 from assignment.emme_assignment import EmmeAssignmentModel
 from datahandling.resultdata import ResultsData
+from assignment.datatypes.transit_fare import TransitFareZoneSpecification
 
 
 class EmmeAssignmentTest(unittest.TestCase):
@@ -20,14 +22,13 @@ class EmmeAssignmentTest(unittest.TestCase):
         ass_model = EmmeAssignmentModel(
             context, scenario_id, save_matrices=True)
         ass_model.prepare_network()
-        fares = {
+        fares = TransitFareZoneSpecification(pandas.DataFrame({
             "fare": {
-                'A': 59,
+                "A": 59,
+                "dist": 3.0,
+                "start": 35,
             },
-            "exclusive": {},
-            "dist_fare": 3.0,
-            "start_fare": 35,
-        }
+        }))
         peripheral_cost = numpy.arange(10).reshape((1, 10))
         ass_model.calc_transit_cost(fares, peripheral_cost)
         nr_zones = ass_model.nr_zones

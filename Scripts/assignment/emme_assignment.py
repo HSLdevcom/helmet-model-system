@@ -248,14 +248,8 @@ class EmmeAssignmentModel(AssignmentModel):
         
         Parameters
         ----------
-        fares : dict
-            key : str
-                Fare type (fare/exclusive/dist_fare/start_fare)
-            value : dict
-                key : str
-                    Zone combination (AB/ABC/...)
-                value : float/str
-                    Transit fare or name of municipality
+        fares : assignment.datatypes.transit_fare.TransitFareZoneSpecification
+            Transit fare zone specification
         peripheral_cost : numpy 2-d matrix
             Fixed cost matrix for peripheral zones
         default_cost : numpy 2-d matrix
