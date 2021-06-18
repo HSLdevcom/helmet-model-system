@@ -15,17 +15,11 @@ def validate(network, fares=None):
     ----------
     network : inro.emme.network.Network
         Network to be validated
-    fares : dict (optional)
-            key : str
-                Fare type (fare/exclusive/dist_fare/start_fare)
-            value : dict
-                key : str
-                    Zone combination (AB/ABC/...)
-                value : float/str
-                    Transit fare or name of municipality
+    fares : assignment.datatypes.transit_fare.TransitFareZoneSpecification
+            Transit fare zone specification (optional)
     """
     if fares is not None:
-        fare_zones = {char for char in ''.join(fares["fare"])}
+        fare_zones = fares.transit_fare_zones()
         log.debug("Zonedata has fare zones {}".format(', '.join(fare_zones)))
         transit_zones = set()
         nr_transit_zone_nodes = 0
