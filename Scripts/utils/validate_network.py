@@ -19,7 +19,7 @@ def validate(network, fares=None):
             Transit fare zone specification (optional)
     """
     if fares is not None:
-        fare_zones = fares.transit_fare_zones()
+        fare_zones = fares.transit_fare_zones
         log.debug("Zonedata has fare zones {}".format(', '.join(fare_zones)))
         transit_zones = set()
         nr_transit_zone_nodes = 0
