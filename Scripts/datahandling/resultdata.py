@@ -15,17 +15,15 @@ class ResultsData:
         if not os.path.exists(results_directory_path):
             os.makedirs(results_directory_path)
         self.path = results_directory_path
-        self._list_buffer = {}
+        self._line_buffer = {}
         self._df_buffer = {}
         self._xlsx_buffer = {}
 
     def flush(self):
         """Save to files and empty buffers."""
-        for filename in self._list_buffer:
-            with open(os.path.join(self.path, "{}.txt".format(filename)), 'w') as f:
-                for row in self._list_buffer[filename]:
-                    f.write(row)
-        self._list_buffer = {}
+        for filename in self._line_buffer:
+            self._line_buffer[filename].close()
+        self._line_buffer = {}
         for filename in self._df_buffer:
             self._df_buffer[filename].to_csv(
                 os.path.join(self.path, filename),
@@ -55,6 +53,21 @@ class ResultsData:
             self._df_buffer[filename] = df.reindex(
                 df.index.union(data.index), copy=False)
             self._df_buffer[filename][colname] = data
+
+    def print_line(self, line, filename):
+        """Write text to line in file (closed when flushing).
+
+        Parameters
+        ----------
+        line : str
+            Row of text
+        filename : str
+            Name of file where text is pushed (can contain other text)
+        """
+        if filename not in self._line_buffer:
+            self._line_buffer[filename] = open(
+                os.path.join(self.path, "{}.txt".format(filename)), 'w')
+        self._line_buffer[filename].write(line + "\n")
 
     def print_matrix(self, data, filename, sheetname):
         """Save 2-d matrix data to buffer (printed to file when flushing).
@@ -90,11 +103,10 @@ class ResultsData:
                 ws.cell(row=i+2, column=1).value = data.index[i]
                 for j in range(0, data.shape[1]):
                     ws.cell(row=i+2, column=j+2).value = data.iloc[i, j]
-        # Create list file
-        if filename not in self._list_buffer:
-            self._list_buffer[filename] = []
+        # Create text file
         sheetname = sheetname.replace("_", "\t")
         for j in data.columns:
             for i in data.index:
-                self._list_buffer[filename].append(
-                    "{}\t{}\t{}\t{}\n".format(i, j, sheetname, str(data[j][i])))
+                self.print_line(
+                    "{}\t{}\t{}\t{}".format(i, j, sheetname, str(data[j][i])),
+                    filename)

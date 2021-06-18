@@ -2,8 +2,6 @@ import numpy
 import random
 
 from datatypes.tour import Tour
-from parameters.income import log_income as param
-from parameters.income import standard_deviation
 
 
 class Person:
@@ -11,8 +9,8 @@ class Person:
     
     Parameters
     ----------
-    zone : int
-        Zone number, where person resides
+    zone : datatypes.zone.Zone
+        Zone where person resides
     age_group : tuple
         int
             Age interval to which the person belongs
@@ -22,10 +20,17 @@ class Person:
         Model used to decide if car user
     """
 
+    id_counter = 0
     FEMALE = 0
     MALE = 1
+    person_attr = ["id", "age_group", "gender", "is_car_user", "income"]
+    zone_attr =  ["number", "area", "municipality"]
+    attr = person_attr + zone_attr
     
-    def __init__(self, zone, age_group, generation_model, car_use_model, income_model):
+    def __init__(self, zone, age_group, 
+                 generation_model, car_use_model, income_model):
+        self.id = Person.id_counter
+        Person.id_counter += 1
         self.zone = zone
         self.age = random.randint(age_group[0], age_group[1])
         self.age_group = "age_" + str(age_group[0]) + "-" + str(age_group[1])
@@ -39,21 +44,22 @@ class Person:
 
     def decide_car_use(self):
         car_use_prob = self._cm.calc_individual_prob(
-            self.age_group, self.gender, self.zone)
+            self.age_group, self.gender, self.zone.number)
         self.is_car_user = self._car_use_draw < car_use_prob
 
     def calc_income(self):
         if self.age < 17:
             self.income = 0
         else:
-            log_income = self._im.log_income[self.zone]
+            log_income = self._im.log_income[self.zone.number]
+            param = self._im.param
             if self.is_car_user:
                 log_income += param["car_users"]
             if self.gender in param:
                 log_income += param[self.gender]
             if self.age_group in param["age_dummies"]:
                 log_income += param["age_dummies"][self.age_group]
-            log_income += random.gauss(0, standard_deviation)
+            log_income += random.gauss(0, param["standard_deviation"])
             self.income = numpy.exp(log_income)
 
     @property
@@ -83,9 +89,8 @@ class Person:
                     Matrix with cumulative tour combination probabilities
                     for all zones
         """
-        zone_idx = self.generation_model.zone_data.zone_index(self.zone)
         tour_comb_idx = numpy.searchsorted(
-            tour_probs[self.age_group][self.is_car_user][zone_idx, :],
+            tour_probs[self.age_group][self.is_car_user][self.zone.index, :],
             self._tour_combination_draw)
         new_tours = list(self.generation_model.tour_combinations[tour_comb_idx])
         old_tours = self.tours
@@ -107,15 +112,27 @@ class Person:
                     pass
         # Tours that were not recycled, will be created
         for key in new_tours:
-            tour = Tour(purposes[key], self.zone)
+            tour = Tour(purposes[key], self.zone, self.id)
             self.tours.append(tour)
             if key == "hw":
                 non_home_prob = purposes["wo"].gen_model.param[key]
                 if random.random() < non_home_prob:
-                    non_home_tour = Tour(purposes["wo"], tour)
+                    non_home_tour = Tour(purposes["wo"], tour, self.id)
                     self.tours.append(non_home_tour)
             else:
                 non_home_prob = purposes["oo"].gen_model.param[key]
                 if random.random() < non_home_prob:
-                    non_home_tour = Tour(purposes["oo"], tour)
+                    non_home_tour = Tour(purposes["oo"], tour, self.id)
                     self.tours.append(non_home_tour)
+
+    def __str__(self):
+        """ Return person attributes as string.
+
+        Returns
+        ----------
+        str
+            Person object attributes.
+        """
+        persondata = [str(getattr(self, attr)) for attr in Person.person_attr]
+        zonedata = [str(getattr(self.zone, attr)) for attr in Person.zone_attr]
+        return "\t".join(persondata + zonedata)
