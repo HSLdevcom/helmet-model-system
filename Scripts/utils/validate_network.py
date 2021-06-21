@@ -33,7 +33,7 @@ def validate(network, fares=None):
         log.debug("Network has fare zones {}".format(', '.join(transit_zones)))
         if fare_zones > transit_zones:
             log.warn(
-                "All zones in transit costs do not exist in node labels.")
+                "Some zones in transit costs do not exist in node labels.")
         found_zone_share = nr_transit_zone_nodes / nr_nodes
         if found_zone_share < 0.5:
             msg = "Found transit fare zone for only {:.0%} of nodes.".format(
