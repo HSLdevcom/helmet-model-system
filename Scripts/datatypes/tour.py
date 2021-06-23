@@ -224,6 +224,8 @@ class Tour(object):
             else: 
                 cost += return_imp[self.position[1], self.position[0]]
         except KeyError:
+            # bike and walk modes do not have cost matrices specified
+            # KeyErrors are produced when trying to access matrix
             pass
         # scale transit costs from month to day
         if self.mode == "transit" and mtx_type == "cost":
