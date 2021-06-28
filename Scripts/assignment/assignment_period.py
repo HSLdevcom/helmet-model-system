@@ -183,17 +183,7 @@ class AssignmentPeriod(Period):
         self._calc_boarding_penalties(5)
         has_visited = {}
         network = self.emme_scenario.get_network()
-        transit_zones = set()
-        for node in network.nodes():
-            transit_zones.add(node.label)
-        # check that fare zones exist in network
-        log.debug("Network has fare zones {}".format(', '.join(transit_zones)))
-        zones_in_zonedata = fares.transit_fare_zones
-        log.debug("Zonedata has fare zones {}".format(', '.join(zones_in_zonedata)))
-        if zones_in_zonedata > transit_zones:
-            log.warn("All zones in transit costs do not exist in Emme-network labels.")
-        if transit_zones > zones_in_zonedata:
-            log.warn("All Emme-node labels do not have transit costs specified.")
+        transit_zones = {node.label for node in network.nodes()}
         tc = "transit_work"
         spec = TransitSpecification(
             self._segment_results[tc], self.extra("hw"),

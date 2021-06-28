@@ -443,6 +443,7 @@ segment_results = {
     "transfer_boardings": "trb",
 }
 # Hard-coded in Emme congested transit assignment
+congestion_cost = "ccost"
 uncongested_transit_time = "base_timtr"
 # Emme matrix IDs
 emme_demand_mtx = {

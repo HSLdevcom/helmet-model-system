@@ -21,10 +21,7 @@ class EmmeProject:
     def __init__(self, project_path, emmebank_path=None):
         log.info("Starting Emme...")
         emme_desktop = _app.start_dedicated(
-            project=project_path,
-            visible=False, 
-            user_initials="HSL"
-        )
+            project=project_path, visible=False, user_initials="HSL")
         if emmebank_path is not None:
             db = emme_desktop.data_explorer().add_database(emmebank_path)
             db.open()

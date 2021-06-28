@@ -355,6 +355,9 @@ class EmmeAssignmentModel(AssignmentModel):
             "TRANSIT_SEGMENT", param.extra_waiting_time["penalty"],
             "wait time st.dev.", overwrite=True, scenario=scenario)
         self.emme_project.create_extra_attribute(
+            "TRANSIT_SEGMENT", "@" + param.congestion_cost,
+            "transit congestion cost", overwrite=True, scenario=scenario)
+        self.emme_project.create_extra_attribute(
             "TRANSIT_SEGMENT", "@" + param.uncongested_transit_time,
             "uncongested transit time", overwrite=True, scenario=scenario)
         self.emme_project.create_extra_attribute(
