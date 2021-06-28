@@ -58,7 +58,8 @@ class ModelSystem:
             zone_data_path, self.zone_numbers)
 
         # Set dist unit cost from zonedata
-        self.ass_model.dist_unit_cost = self.zdata_forecast.car_dist_cost
+        for ap in self.ass_model.assignment_periods:
+            ap.dist_unit_cost = self.zdata_forecast.car_dist_cost
 
         # Output data
         self.resultmatrices = MatrixData(
