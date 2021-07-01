@@ -5,16 +5,17 @@ verify_ssl = true
 
 [dev-packages]
 pytest = "*"
-pylint = "<2.0.0"
+pylint = "*"
 rope = "*"
 
 [packages]
-pandas = "==0.21.0"
+pandas = "==0.24.2"
 openpyxl = "*"
 openmatrix = "==0.3.3"
-numpy = "==1.13.3"
-numexpr = "==2.6.4"
-tables = "==3.4.2"
+numpy = "==1.16.2"
+numexpr = "==2.7.1"
+tables = "==3.5.1"
+shapely = "*"
 
 [requires]
-python_version = "2.7"
+python_version = "3.7"

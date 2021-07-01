@@ -5,7 +5,7 @@ import parameters.car as param
 import parameters.zone as zone_param
 
 
-class Tour(object):
+class Tour:
     """Tour definition for agent-based simulation.
     
     Parameters

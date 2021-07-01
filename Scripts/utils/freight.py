@@ -21,7 +21,7 @@ def fratar(target_vect, trips, max_iter=10):
         Fratared trip matrix
     """
     # Run 2D balancing
-    for _ in xrange(0, max_iter):
+    for _ in range(0, max_iter):
         colsum = trips.sum("columns")
         colsum[colsum == 0] = 1
         trips = trips.mul(target_vect/colsum, "index")

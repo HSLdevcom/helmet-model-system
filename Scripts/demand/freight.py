@@ -63,19 +63,19 @@ class FreightModel:
         threshold = param.vector_calibration_threshold
         cond = production_forecast < threshold*production_base
         last1000 = zone_numbers[-1] // 1000
-        for i in xrange(0, last1000):
+        for i in range(0, last1000):
             l = i * 1000
             u = l + 999
             # sum1000 is a vector with the same length as one side of mtx,
             # where production for the whole thousand is summed
-            sum1000 = mtx.loc[l:u].sum().values
+            sum1000 = mtx.loc[l:u].sum().to_numpy()
             scaling = 1 / max(sum1000.sum(), 1)
             # ave1 and ave2 are scaled down so the vector sum is 1
             ave1 = sum1000 * scaling
             ave2 = ave1[:, numpy.newaxis]
-            cond1 = cond.loc[l:u]
+            cond1 = cond.loc[l:u].to_numpy()
             cond2 = cond1[:, numpy.newaxis]
-            prod1 = prod.loc[l:u].values
+            prod1 = prod.loc[l:u].to_numpy()
             prod2 = prod1[:, numpy.newaxis]
             # Where condition is not met, mtx rows and cols are replaced by
             # destination choice vector ave1/ave2 multiplied by production

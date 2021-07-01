@@ -6,6 +6,7 @@ from utils.read_csv_file import read_csv_file
 from utils.zone_interval import ZoneIntervals, zone_interval
 import utils.log as log
 from datatypes.zone import Zone
+from assignment.datatypes.transit_fare import TransitFareZoneSpecification
 
 
 class ZoneData:
@@ -37,20 +38,13 @@ class ZoneData:
         self.externalgrowth = read_csv_file(data_dir, ".ext", external_zones, float)
         transit = read_csv_file(data_dir, ".tco")
         try:
-            transit["fare"] = transit["fare"].astype(dtype=float, errors='raise')
+            transit["fare"] = transit["fare"].astype(
+                dtype=float, errors='raise')
         except ValueError:
-            msg = "Zonedata file .tco has fare values not convertible to floats."
+            msg = "Zonedata file .tco has fare values not convertible to float"
             log.error(msg)
             raise ValueError(msg)
-        transit_zone = {}
-        transit_zone["fare"] = transit["fare"].to_dict()
-        try:
-            transit_zone["exclusive"] = transit["exclusive"].dropna().to_dict()
-        except KeyError:
-            transit_zone["exclusive"] = {}
-        transit_zone["dist_fare"] = transit_zone["fare"].pop("dist")
-        transit_zone["start_fare"] = transit_zone["fare"].pop("start")
-        self.transit_zone = transit_zone
+        self.transit_zone = TransitFareZoneSpecification(transit)
         try:
             cardata = read_csv_file(data_dir, ".car")
             self["parking_norm"] = cardata["prknorm"]
@@ -59,8 +53,8 @@ class ZoneData:
         car_cost = read_csv_file(data_dir, ".cco", squeeze=False)
         self.car_dist_cost = car_cost["dist_cost"][0]
         truckdata = read_csv_file(data_dir, ".trk", squeeze=True)
-        self.trailers_prohibited = map(int, truckdata.loc[0, :])
-        self.garbage_destination = map(int, truckdata.loc[1, :].dropna())
+        self.trailers_prohibited = list(map(int, truckdata.loc[0, :]))
+        self.garbage_destination = list(map(int, truckdata.loc[1, :].dropna()))
         pop = popdata["total"]
         self["population"] = pop
         self.share["share_age_7-17"] = popdata["sh_7-17"][:first_peripheral]
