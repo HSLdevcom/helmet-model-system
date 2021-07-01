@@ -403,9 +403,11 @@ class EmmeAssignmentModel(AssignmentModel):
             link = morning_network.link(link.i_node, link.j_node)
             rlink = link.reverse_link
             if reverse_traffic > 0:
-                speed = 60 * 2 * link.length / (link.auto_time+rlink.auto_time)
+                speed = (60 * 2 * link.length
+                         / (link["@car_time_aht"]+rlink["@car_time_aht"]))
             else:
-                speed = 0.3*(60*link.length/link.auto_time) + 0.7*link.data2
+                speed = (0.3*(60*link.length/link["@car_time_aht"])
+                         + 0.7*link.data2)
             speed = max(speed, 50.0)
 
             # Calculate start noise
