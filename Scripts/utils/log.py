@@ -4,7 +4,7 @@ import json
 import logging
 import logging.handlers
 
-from utils import config
+from utils.config import Config
 
 
 # Wrapper on top of standard Python logging interface so we can easily configure
