@@ -38,8 +38,6 @@ class EmmeAssignmentModel(AssignmentModel):
         self.save_matrices = save_matrices
         self.first_matrix_id = first_matrix_id if save_matrices else 0
         self.emme_project = emme_context
-        # default value for dist, modelsystem sets new from zonedata
-        self.dist_unit_cost = param.dist_unit_cost
         self.mod_scenario = self.emme_project.modeller.emmebank.scenario(
             first_scenario_id)
 
