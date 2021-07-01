@@ -380,6 +380,7 @@ if __name__ == "__main__":
         "--results-path", dest="results_path", type=str, required=True,
         help="Path to Results directory.")
     args = parser.parse_args()
+    config.RESULTS_PATH = args.results_path
     log.initialize(config)
     wb = load_workbook(os.path.join(SCRIPT_DIR, "CBA_kehikko.xlsx"))
     run_cost_benefit_analysis(
