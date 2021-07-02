@@ -90,7 +90,8 @@ class EmmeAssignmentModel(AssignmentModel):
                 break
         self._create_attributes(self.day_scenario, self._extra)
         for ap in self.assignment_periods:
-            ap.dist_unit_cost = car_dist_unit_cost
+            if car_dist_unit_cost is not None:
+                ap.dist_unit_cost = car_dist_unit_cost
             ap.prepare(self._create_attributes(ap.emme_scenario, ap.extra))
         for idx in param.volume_delay_funcs:
             try:
