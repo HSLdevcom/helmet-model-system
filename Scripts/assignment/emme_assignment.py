@@ -41,7 +41,7 @@ class EmmeAssignmentModel(AssignmentModel):
         self.mod_scenario = self.emme_project.modeller.emmebank.scenario(
             first_scenario_id)
 
-    def prepare_network(self):
+    def prepare_network(self, car_dist_unit_cost=None):
         """Create matrices, extra attributes and calc background variables."""
         self._add_bus_stops()
         if self.save_matrices:
@@ -90,6 +90,8 @@ class EmmeAssignmentModel(AssignmentModel):
                 break
         self._create_attributes(self.day_scenario, self._extra)
         for ap in self.assignment_periods:
+            if car_dist_unit_cost is not None:
+                ap.dist_unit_cost = car_dist_unit_cost
             ap.prepare(self._create_attributes(ap.emme_scenario, ap.extra))
         for idx in param.volume_delay_funcs:
             try:

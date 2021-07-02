@@ -57,10 +57,6 @@ class ModelSystem:
         self.zdata_forecast = ZoneData(
             zone_data_path, self.zone_numbers)
 
-        # Set dist unit cost from zonedata
-        for ap in self.ass_model.assignment_periods:
-            ap.dist_unit_cost = self.zdata_forecast.car_dist_cost
-
         # Output data
         self.resultmatrices = MatrixData(
             os.path.join(results_path, name, "Matrices"))
@@ -170,7 +166,7 @@ class ModelSystem:
         impedance = {}
 
         # create attributes and background variables to network
-        self.ass_model.prepare_network()
+        self.ass_model.prepare_network(self.zdata_forecast.car_dist_cost)
 
         # Calculate transit cost matrix, and save it to emmebank
         with self.basematrices.open("demand", "aht", self.ass_model.zone_numbers) as mtx:
