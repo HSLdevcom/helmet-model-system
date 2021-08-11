@@ -113,8 +113,8 @@ class EmmeAssignmentModel(AssignmentModel):
 
     @property
     def zone_numbers(self):
-        """Numpy array of all zone numbers.""" 
-        return numpy.array(self.mod_scenario.zone_numbers)
+        """List of all zone numbers."""
+        return self.mod_scenario.zone_numbers
 
     @property
     def mapping(self):
@@ -191,9 +191,8 @@ class EmmeAssignmentModel(AssignmentModel):
             else:
                 linklengths[param.roadtypes[vdf]] += link.length / 2
         if faulty_kela_code_nodes:
-            s = "Municipality KELA code not found for nodes:"
-            for node in faulty_kela_code_nodes:
-                s += " {}".format(node)
+            s = "Municipality KELA code not found for nodes: " + ", ".join(
+                faulty_kela_code_nodes)
             log.warn(s)
         for ass_class in ass_classes:
             resultdata.print_data(
