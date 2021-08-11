@@ -36,7 +36,7 @@ class Config:
         try:
             # If model system is in a git repo
             return subprocess.check_output(["git", "describe", "--tags"])
-        except subprocess.CalledProcessError:
+        except (subprocess.CalledProcessError, WindowsError):
             # If model system is downloaded with helmet-ui
             return self.__get_value("HELMET_VERSION")
 

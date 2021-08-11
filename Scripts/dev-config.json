@@ -1,5 +1,5 @@
 {
-    "HELMET_VERSION": "v4.1.0",
+    "HELMET_VERSION": "v4.1.0-alpha.2",
     "LOG_LEVEL": "INFO",
     "LOG_FORMAT": "TEXT",
     "RUN_AGENT_SIMULATION": false,
