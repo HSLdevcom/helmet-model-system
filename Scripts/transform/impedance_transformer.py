@@ -47,11 +47,9 @@ class ImpedanceTransformer:
                         day_imp[mode][mtx_type] += share[0] * imp[rows, cols]
                         day_imp[mode][mtx_type] += share[1] * imp[cols, rows].T
         # transit cost to eur per day
-        if assignment_classes[purpose.name] == "work":
-            trips_per_month = numpy.full_like(
-                day_imp["transit"]["cost"], trips_month["transit_work"][0])
-            trips_per_month[purpose.ubounds, :] = trips_month["transit_work"][1]
-            day_imp["transit"]["cost"] /= trips_per_month
-        else:
-            day_imp["transit"]["cost"] /= trips_month["transit_leisure"]
+        transit_class = "{}_{}".format("transit", assignment_classes[purpose.name])
+        trips_per_month = numpy.full_like(
+            day_imp["transit"]["cost"], trips_month[transit_class][0])
+        trips_per_month[purpose.ubounds, :] = trips_month[transit_class][1]
+        day_imp["transit"]["cost"] /= trips_per_month
         return day_imp

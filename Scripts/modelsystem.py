@@ -574,6 +574,7 @@ class AgentModelSystem(ModelSystem):
                 person.calc_income()
                 self.resultdata.print_line(str(person), fname0)
                 for tour in person.tours:
+                    tour.calc_cost(previous_iter_impedance)
                     self.resultdata.print_line(str(tour), fname1)
             log.info("Results printed to files {} and {}".format(
                 fname0, fname1))

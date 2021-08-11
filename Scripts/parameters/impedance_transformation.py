@@ -2,7 +2,7 @@
 
 trips_month = {
     "transit_work": (60.0, 44.0),
-    "transit_leisure": 30.0,
+    "transit_leisure": (30.0, 30.0),
 }
 
 impedance_share = {
