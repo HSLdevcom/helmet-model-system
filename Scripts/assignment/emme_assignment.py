@@ -191,9 +191,8 @@ class EmmeAssignmentModel(AssignmentModel):
             else:
                 linklengths[param.roadtypes[vdf]] += link.length / 2
         if faulty_kela_code_nodes:
-            s = "Municipality KELA code not found for nodes:"
-            for node in faulty_kela_code_nodes:
-                s += " {}".format(node)
+            s = "Municipality KELA code not found for nodes: " + ", ".join(
+                faulty_kela_code_nodes)
             log.warn(s)
         for ass_class in ass_classes:
             resultdata.print_data(
