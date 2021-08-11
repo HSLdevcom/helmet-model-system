@@ -308,7 +308,7 @@ class ModelSystem:
         if iteration=="last":
             self.ass_model.aggregate_results(self.resultdata)
             self._calculate_noise_areas()
-            self._calculate_savu_zones()
+            self._calculate_accessibility_and_savu_zones()
 
         # Reset time-period specific demand matrices (DTM), and empty result buffer
         self.dtm.init_demand()
@@ -338,7 +338,8 @@ class ModelSystem:
         noise_pop = conversion * noise_areas * pop
         self.resultdata.print_data(noise_pop, "noise_areas.txt", "population")
 
-    def _calculate_savu_zones(self):
+    def _calculate_accessibility_and_savu_zones(self):
+        logsum = 0
         sust_logsum = 0
         car_logsum = 0
         for purpose in self.dm.tour_purposes:
@@ -347,8 +348,10 @@ class ModelSystem:
                     and not isinstance(purpose, SecDestPurpose)):
                 zone_numbers = purpose.zone_numbers
                 weight = gen_param.tour_generation[purpose.name]["population"]
+                logsum += weight * purpose.access
                 sust_logsum += weight * purpose.sustainable_access
                 car_logsum += weight * purpose.car_access
+        self.resultdata.print_data(logsum, "accessibility.txt", "all")
         self.resultdata.print_data(
             sust_logsum, "sustainable_accessibility.txt", "all")
         self.resultdata.print_data(car_logsum, "car_accessibility.txt", "all")
