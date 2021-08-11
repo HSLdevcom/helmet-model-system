@@ -1,6 +1,7 @@
 from collections import defaultdict
+import numpy
 
-from parameters.impedance_transformation import impedance_share, divided_classes
+from parameters.impedance_transformation import impedance_share, divided_classes, trips_month
 from parameters.assignment import assignment_classes
 
 
@@ -11,6 +12,8 @@ class ImpedanceTransformer:
     def transform(self, purpose, impedance):
         """Perform transformation from time period dependent matrices 
         to aggregate impedance matrices for specific travel purpose.
+
+        Transform transit costs from (eur/month) to (eur/day).
 
         Parameters
         ----------
@@ -43,4 +46,10 @@ class ImpedanceTransformer:
                         imp = impedance[time_period][mtx_type][ass_class]
                         day_imp[mode][mtx_type] += share[0] * imp[rows, cols]
                         day_imp[mode][mtx_type] += share[1] * imp[cols, rows].T
+        # transit cost to eur per day
+        transit_class = "{}_{}".format("transit", assignment_classes[purpose.name])
+        trips_per_month = numpy.full_like(
+            day_imp["transit"]["cost"], trips_month[transit_class][0])
+        trips_per_month[purpose.ubounds, :] = trips_month[transit_class][1]
+        day_imp["transit"]["cost"] /= trips_per_month
         return day_imp
