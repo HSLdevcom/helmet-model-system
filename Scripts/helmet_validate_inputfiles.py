@@ -83,7 +83,7 @@ def main(args):
             log.error(msg)
             raise ValueError(msg)
         else:
-            zone_numbers = numpy.array(scen.zone_numbers)
+            zone_numbers = scen.zone_numbers
         app.close()
     # Check base zonedata
     base_zonedata = ZoneData(base_zonedata_path, zone_numbers)
@@ -157,8 +157,7 @@ def main(args):
                 msg = "Project {} has no scenario {}".format(emp_path, scen.id)
                 log.error(msg)
                 raise ValueError(msg)
-            elif (len(scen.zone_numbers) != zone_numbers.size
-                    or (scen.zone_numbers != zone_numbers).any()):
+            elif scen.zone_numbers != zone_numbers:
                 msg = "Zone numbers do not match for EMME scenario {}".format(
                     scen.id)
                 log.error(msg)
