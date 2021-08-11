@@ -38,12 +38,10 @@ class EmmeAssignmentModel(AssignmentModel):
         self.save_matrices = save_matrices
         self.first_matrix_id = first_matrix_id if save_matrices else 0
         self.emme_project = emme_context
-        # default value for dist, modelsystem sets new from zonedata
-        self.dist_unit_cost = param.dist_unit_cost
         self.mod_scenario = self.emme_project.modeller.emmebank.scenario(
             first_scenario_id)
 
-    def prepare_network(self):
+    def prepare_network(self, car_dist_unit_cost=None):
         """Create matrices, extra attributes and calc background variables."""
         self._add_bus_stops()
         if self.save_matrices:
@@ -92,6 +90,8 @@ class EmmeAssignmentModel(AssignmentModel):
                 break
         self._create_attributes(self.day_scenario, self._extra)
         for ap in self.assignment_periods:
+            if car_dist_unit_cost is not None:
+                ap.dist_unit_cost = car_dist_unit_cost
             ap.prepare(self._create_attributes(ap.emme_scenario, ap.extra))
         for idx in param.volume_delay_funcs:
             try:
@@ -248,14 +248,8 @@ class EmmeAssignmentModel(AssignmentModel):
         
         Parameters
         ----------
-        fares : dict
-            key : str
-                Fare type (fare/exclusive/dist_fare/start_fare)
-            value : dict
-                key : str
-                    Zone combination (AB/ABC/...)
-                value : float/str
-                    Transit fare or name of municipality
+        fares : assignment.datatypes.transit_fare.TransitFareZoneSpecification
+            Transit fare zone specification
         peripheral_cost : numpy 2-d matrix
             Fixed cost matrix for peripheral zones
         default_cost : numpy 2-d matrix
@@ -361,6 +355,9 @@ class EmmeAssignmentModel(AssignmentModel):
             "TRANSIT_SEGMENT", param.extra_waiting_time["penalty"],
             "wait time st.dev.", overwrite=True, scenario=scenario)
         self.emme_project.create_extra_attribute(
+            "TRANSIT_SEGMENT", "@" + param.congestion_cost,
+            "transit congestion cost", overwrite=True, scenario=scenario)
+        self.emme_project.create_extra_attribute(
             "TRANSIT_SEGMENT", "@" + param.uncongested_transit_time,
             "uncongested transit time", overwrite=True, scenario=scenario)
         self.emme_project.create_extra_attribute(
@@ -406,9 +403,11 @@ class EmmeAssignmentModel(AssignmentModel):
             link = morning_network.link(link.i_node, link.j_node)
             rlink = link.reverse_link
             if reverse_traffic > 0:
-                speed = 60 * 2 * link.length / (link.auto_time+rlink.auto_time)
+                speed = (60 * 2 * link.length
+                         / (link["@car_time_aht"]+rlink["@car_time_aht"]))
             else:
-                speed = 0.3*(60*link.length/link.auto_time) + 0.7*link.data2
+                speed = (0.3*(60*link.length/link["@car_time_aht"])
+                         + 0.7*link.data2)
             speed = max(speed, 50.0)
 
             # Calculate start noise

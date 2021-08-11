@@ -1,8 +1,10 @@
 from argparse import ArgumentParser
 import os
+import numpy
 
 from utils.config import Config
 import utils.log as log
+from utils.validate_network import validate
 from assignment.emme_assignment import EmmeAssignmentModel
 from assignment.mock_assignment import MockAssignmentModel
 from datahandling.matrixdata import MatrixData
@@ -55,28 +57,40 @@ def main(args):
         log.error(msg)
         raise ValueError(msg)
     if args.do_not_use_emme:
-        mock_result_path = os.path.join(args.results_path, args.scenario_name, "Matrices")
+        mock_result_path = os.path.join(
+            args.results_path, args.scenario_name, "Matrices")
         if not os.path.exists(mock_result_path):
             msg = "Mock Results directory {} does not exist.".format(
                 mock_result_path)
             log.error(msg)
             raise NameError(msg)
         assignment_model = MockAssignmentModel(MatrixData(mock_result_path))
+        zone_numbers = assignment_model.zone_numbers
     else:
-        if not os.path.isfile(emme_paths[0]):
+        emp_path = emme_paths[0]
+        if not os.path.isfile(emp_path):
             msg = ".emp project file not found in given '{}' location.".format(
-                emme_paths[0])
+                emp_path)
             log.error(msg)
             raise ValueError(msg)
-        from assignment.emme_bindings.emme_project import EmmeProject
-        assignment_model = EmmeAssignmentModel(
-            EmmeProject(emme_paths[0]), first_scenario_id=first_scenario_ids[0])
+        import inro.emme.desktop.app as _app
+        app = _app.start_dedicated(
+            project=emp_path, visible=False, user_initials="HSL")
+        scen = app.data_explorer().active_database().core_emmebank.scenario(
+            first_scenario_ids[0])
+        if scen is None:
+            msg = "Project {} has no scenario {}".format(emp_path, scen.id)
+            log.error(msg)
+            raise ValueError(msg)
+        else:
+            zone_numbers = numpy.array(scen.zone_numbers)
+        app.close()
     # Check base zonedata
-    base_zonedata = ZoneData(base_zonedata_path, assignment_model.zone_numbers)
+    base_zonedata = ZoneData(base_zonedata_path, zone_numbers)
     # Check base matrices
     matrixdata = MatrixData(base_matrices_path)
     for tp in ("aht", "pt", "iht"):
-        with matrixdata.open("demand", tp, assignment_model.zone_numbers) as mtx:
+        with matrixdata.open("demand", tp, zone_numbers) as mtx:
             for ass_class in param.transport_classes:
                 a = mtx[ass_class]
 
@@ -85,21 +99,85 @@ def main(args):
     for i, emp_path in enumerate(emme_paths):
         log.info("Checking input data for scenario #{} ...".format(i))
 
-        # Check filepaths
-        if not os.path.isfile(emp_path):
-            msg = ".emp project file not found in given '{}' location.".format(
-                emp_path)
-            log.error(msg)
-            raise ValueError(msg)
+        # Check forecasted zonedata
         if not os.path.exists(forecast_zonedata_paths[i]):
             msg = "Forecast data directory '{}' does not exist.".format(
                 forecast_zonedata_paths[i])
             log.error(msg)
             raise ValueError(msg)
+        forecast_zonedata = ZoneData(forecast_zonedata_paths[i], zone_numbers)
 
-        # Check forecasted zonedata
-        forecast_zonedata = ZoneData(
-            forecast_zonedata_paths[i], assignment_model.zone_numbers)
+        # Check network
+        if not args.do_not_use_emme:
+            if not os.path.isfile(emp_path):
+                msg = ".emp project file not found in given '{}' location.".format(
+                    emp_path)
+                log.error(msg)
+                raise ValueError(msg)
+            app = _app.start_dedicated(
+                project=emp_path, visible=False, user_initials="HSL")
+            emmebank = app.data_explorer().active_database().core_emmebank
+            nr_attr = {
+                # Number of existing extra attributes
+                # TODO Count existing extra attributes which are NOT included
+                # in the set of attributes created during model run
+                "nodes": 0,
+                "links": 4,
+                "transit_lines": 3,
+                "transit_segments": 0,
+            }
+            nr_transit_classes = len(param.transit_classes)
+            nr_segment_results = len(param.segment_results)
+            nr_vehicle_classes = len(param.emme_demand_mtx) + 1
+            nr_new_attr = {
+                "nodes": nr_transit_classes * (nr_segment_results-1),
+                "links": nr_vehicle_classes + 3,
+                "transit_lines": 0,
+                "transit_segments": nr_transit_classes*nr_segment_results + 1,
+            }
+            if not args.save_matrices:
+                # If results from all time periods are stored in same
+                # EMME scenario
+                for key in nr_new_attr:
+                    nr_new_attr[key] *= 4
+            # Attributes created during congested transit assignment
+            nr_new_attr["transit_segments"] += 3
+            dim = emmebank.dimensions
+            dim["nodes"] = dim["centroids"] + dim["regular_nodes"]
+            attr_space = 0
+            for key in nr_attr:
+                attr_space += dim[key] * (nr_attr[key]+nr_new_attr[key])
+            if dim["extra_attribute_values"] < attr_space:
+                msg = "At least {} words required for extra attributes".format(
+                    attr_space)
+                log.error(msg)
+                raise ValueError(msg)
+            scen = emmebank.scenario(first_scenario_ids[i])
+            if scen is None:
+                msg = "Project {} has no scenario {}".format(emp_path, scen.id)
+                log.error(msg)
+                raise ValueError(msg)
+            elif (len(scen.zone_numbers) != zone_numbers.size
+                    or (scen.zone_numbers != zone_numbers).any()):
+                msg = "Zone numbers do not match for EMME scenario {}".format(
+                    scen.id)
+                log.error(msg)
+                raise ValueError(msg)
+            attrs = (
+                "@pyoratieluokka",
+                "@hinta_aht",
+                "@hinta_pt",
+                "@hinta_iht",
+                "@hw_aht",
+                "@hw_pt",
+                "@hw_iht",
+            )
+            for attr in attrs:
+                if scen.extra_attribute(attr) is None:
+                    msg = "Extra attribute {} missing from scenario {}".format(
+                        attr, scen.id)
+            validate(scen.get_network(), forecast_zonedata.transit_zone)
+            app.close()
 
     log.info("Successfully validated all input files")
 
@@ -128,6 +206,13 @@ if __name__ == "__main__":
         action="store_true",
         default=(not config.USE_EMME),
         help="Using this flag runs with MockAssignmentModel instead of EmmeAssignmentModel, not requiring EMME.",
+    )
+    parser.add_argument(
+        "--save-emme-matrices",
+        dest="save_matrices",
+        action="store_true",
+        default=config.SAVE_MATRICES_IN_EMME,
+        help="Using this flag saves additional matrices and strategy files to Emme-project Database folder.",
     )
     parser.add_argument(
         "--scenario-name",

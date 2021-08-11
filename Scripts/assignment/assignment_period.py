@@ -171,14 +171,8 @@ class AssignmentPeriod(Period):
         
         Parameters
         ----------
-        fares : dict
-            key : str
-                Fare type (fare/exclusive/dist_fare/start_fare)
-            value : dict
-                key : str
-                    Zone combination (AB/ABC/...)
-                value : float/str
-                    Transit fare or name of municipality
+        fares : assignment.datatypes.transit_fare.TransitFareZoneSpecification
+            Transit fare zone specification
         peripheral_cost : numpy 2-d matrix
             Fixed cost matrix for peripheral zones
         mapping : dict
@@ -189,17 +183,7 @@ class AssignmentPeriod(Period):
         self._calc_boarding_penalties(5)
         has_visited = {}
         network = self.emme_scenario.get_network()
-        transit_zones = set()
-        for node in network.nodes():
-            transit_zones.add(node.label)
-        # check that fare zones exist in network
-        log.debug("Network has fare zones {}".format(', '.join(transit_zones)))
-        zones_in_zonedata = set(char for char in ''.join(fares["fare"].keys()))
-        log.debug("Zonedata has fare zones {}".format(', '.join(zones_in_zonedata)))
-        if zones_in_zonedata > transit_zones:
-            log.warn("All zones in transit costs do not exist in Emme-network labels.")
-        if transit_zones > zones_in_zonedata:
-            log.warn("All Emme-node labels do not have transit costs specified.")
+        transit_zones = {node.label for node in network.nodes()}
         tc = "transit_work"
         spec = TransitSpecification(
             self._segment_results[tc], self.extra("hw"),
@@ -230,7 +214,7 @@ class AssignmentPeriod(Period):
         maxfare = 999
         cost = numpy.full_like(nr_visits, maxfare)
         mtx = next(iter(has_visited.values()))
-        for zone_combination in fares["fare"]:
+        for zone_combination in fares.zone_fares:
             goes_outside = numpy.full_like(mtx, False)
             for transit_zone in has_visited:
                 # Check if the OD-flow has been at a node that is
@@ -238,19 +222,19 @@ class AssignmentPeriod(Period):
                 if transit_zone not in zone_combination:
                     goes_outside |= has_visited[transit_zone]
             is_inside = ~goes_outside
-            if zone_combination in fares["exclusive"]:
+            if zone_combination in fares.exclusive:
                 # Calculate fares exclusive for municipality citizens
                 exclusion = pandas.DataFrame(
                     is_inside, self.emme_scenario.zone_numbers,
                     self.emme_scenario.zone_numbers)
-                municipality = fares["exclusive"][zone_combination]
+                municipality = fares.exclusive[zone_combination]
                 inclusion = zone_param.municipalities[municipality]
                 exclusion.loc[:inclusion[0]-1] = False
                 exclusion.loc[inclusion[1]+1:] = False
                 is_inside = exclusion.values
-            zone_price = fares["fare"][zone_combination]
+            zone_fare = fares.zone_fares[zone_combination]
             # If OD-flow matches several combinations, pick cheapest
-            cost[is_inside] = numpy.minimum(cost[is_inside], zone_price)
+            cost[is_inside] = numpy.minimum(cost[is_inside], zone_fare)
         # Replace fare for peripheral zones with fixed matrix
         bounds = zone_param.areas["peripheral"]
         zn = pandas.Index(self.emme_scenario.zone_numbers)
@@ -259,7 +243,7 @@ class AssignmentPeriod(Period):
         cost[:u, l:u] = peripheral_cost.T
         # Calculate distance-based cost from inv-distance
         dist = self._get_matrix("dist", "transit_work")
-        dist_cost = fares["start_fare"] + fares["dist_fare"]*dist
+        dist_cost = fares.start_fare + fares.dist_fare*dist
         cost[cost>=maxfare] = dist_cost[cost>=maxfare]
         # Reset boarding penalties
         self._calc_boarding_penalties()
