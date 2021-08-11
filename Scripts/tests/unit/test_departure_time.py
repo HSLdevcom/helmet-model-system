@@ -46,4 +46,4 @@ class DepartureTimeTest(unittest.TestCase):
         self.assertIs(type(dtm.demand["iht"]["car_leisure"]), numpy.ndarray)
         self.assertEquals(dtm.demand["pt"]["car_leisure"].ndim, 2)
         self.assertEquals(dtm.demand["aht"]["bike_work"].shape[1], 8)
-        self.assertNotEquals(dtm.demand["iht"]["car_work"][0, 1], 0)
+        self.assertNotEquals(dtm.demand["iht"]["car_leisure"][0, 1], 0)
