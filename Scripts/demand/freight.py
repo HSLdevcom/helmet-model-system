@@ -50,7 +50,7 @@ class FreightModel:
         production_base = self._generate_trips(zone_data_base, mode)
         production_forecast = self._generate_trips(zone_data_forecast, mode)
         zone_numbers = self.zdata_b.zone_numbers
-        with self.base_demand.open("freight", "vrk", zone_numbers) as mtx:
+        with self.base_demand.open("freight", "vrk", list(zone_numbers)) as mtx:
             # Remove zero values
             base_mtx = mtx[mode].clip(0.000001, None)
         production = calibrate(

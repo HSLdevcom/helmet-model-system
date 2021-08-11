@@ -113,8 +113,8 @@ class EmmeAssignmentModel(AssignmentModel):
 
     @property
     def zone_numbers(self):
-        """Numpy array of all zone numbers.""" 
-        return numpy.array(self.mod_scenario.zone_numbers)
+        """List of all zone numbers."""
+        return self.mod_scenario.zone_numbers
 
     @property
     def mapping(self):
