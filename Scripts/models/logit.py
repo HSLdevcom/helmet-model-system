@@ -375,7 +375,6 @@ class ModeDestModel(LogitModel):
         """
         mode_exps = {}
         mode_expsum = 0
-        car_expsum = 0
         modes = self.purpose.modes
         for mode in modes:
             mode_exps[mode] = self.mode_exps[mode][zone]
@@ -475,6 +474,7 @@ class AccessibilityModel(ModeDestModel):
         except TypeError:  # Separate params for cap region and surrounding
             money_utility = 1 / b[0]
         money_utility /= self.mode_choice_param["car"]["log"]["logsum"]
+        self.purpose.access = money_utility * self.zone_data[self.purpose.name]
         self.purpose.sustainable_access = money_utility * logsum
         self.purpose.car_access = (money_utility
                                    * self.zone_data[self.purpose.name + "_c"])
