@@ -107,6 +107,7 @@ class AssignmentPeriod(Period):
         elif iteration==1:
             if not self._save_matrices:
                 self._set_car_and_transit_vdfs()
+                self._calc_background_traffic()
             self._assign_cars(param.stopping_criteria_coarse)
             self._calc_extra_wait_time()
             self._assign_transit()
