@@ -122,7 +122,7 @@ def main(args):
     log.info("Simulation ended.", extra=log_extra)
 
 def run(log_extra, model):
-    iterations = log_extra["total"]
+    iterations = log_extra["status"]["total"]
     # Run traffic assignment simulation for N iterations,
     # on last iteration model-system will save the results
     log_extra["status"]["state"] = "preparing"
