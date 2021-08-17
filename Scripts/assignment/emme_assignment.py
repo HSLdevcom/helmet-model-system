@@ -40,9 +40,12 @@ class EmmeAssignmentModel(AssignmentModel):
         self.emme_project = emme_context
         self.mod_scenario = self.emme_project.modeller.emmebank.scenario(
             first_scenario_id)
+        self.network_is_prepared = False
 
     def prepare_network(self, car_dist_unit_cost=None):
         """Create matrices, extra attributes and calc background variables."""
+        if network_is_prepared:
+            return
         self._add_bus_stops()
         if self.save_matrices:
             self.day_scenario = self.emme_project.copy_scenario(
@@ -100,6 +103,7 @@ class EmmeAssignmentModel(AssignmentModel):
                 pass
             self.emme_project.modeller.emmebank.create_function(
                 idx, param.volume_delay_funcs[idx])
+        self.network_is_prepared = True
 
     def init_assign(self, demand):
         ap0 = self.assignment_periods[0]
