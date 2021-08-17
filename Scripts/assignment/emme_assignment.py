@@ -44,7 +44,7 @@ class EmmeAssignmentModel(AssignmentModel):
 
     def prepare_network(self, car_dist_unit_cost=None):
         """Create matrices, extra attributes and calc background variables."""
-        if network_is_prepared:
+        if self.network_is_prepared:
             return
         self._add_bus_stops()
         if self.save_matrices:
