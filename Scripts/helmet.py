@@ -79,23 +79,26 @@ def main(args):
             forecast_zonedata_path, base_zonedata_path, base_matrices_path,
             results_path, ass_model, name)
 
-    # Regular model run
-    run(log_extra, model)
-
     # Run with increased car ownership
     new_name = name + "_car++"
-    model.resultdata = ResultsData(os.path.join(results_path, new_name))
-    model.resultmatrices = MatrixData(
-            os.path.join(results_path, new_name, "Matrices"))
+    model.resultdata.path = os.path.join(results_path, new_name)
+    model.resultmatrices.path = os.path.join(
+        results_path, new_name, "Matrices")
     model.cdm.set_car_growth(constant=+0.1)
     run(log_extra, model)
 
     # Run with decreased car ownership
     new_name = name + "_car--"
-    model.resultdata = ResultsData(os.path.join(results_path, new_name))
-    model.resultmatrices = MatrixData(
-            os.path.join(results_path, new_name, "Matrices"))
+    model.resultdata.path = os.path.join(results_path, new_name)
+    model.resultmatrices.path = os.path.join(
+        results_path, new_name, "Matrices")
     model.cdm.set_car_growth(factor=0.8)
+    run(log_extra, model)
+
+    # Regular model run last to save regular results in EMME
+    model.resultdata.path = os.path.join(results_path, name)
+    model.resultmatrices.path = os.path.join(results_path, name, "Matrices")
+    model.cdm.set_car_growth()
     run(log_extra, model)
 
     # delete emme strategy files for scenarios
