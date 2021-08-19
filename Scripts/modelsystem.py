@@ -309,6 +309,13 @@ class ModelSystem:
             self.ass_model.aggregate_results(self.resultdata)
             self._calculate_noise_areas()
             self._calculate_accessibility_and_savu_zones()
+            self.resultdata.print_line("Mode shares", "result_summary")
+            for mode in mode_shares:
+                self.resultdata.print_line(
+                    "{}\t{:1.2%}".format(mode, mode_shares[mode]),
+                    "result_summary")
+            self.resultdata.print_line("", "result_summary")
+            self.resultdata.print_line("Something else", "result_summary")
 
         # Reset time-period specific demand matrices (DTM), and empty result buffer
         self.dtm.init_demand()
