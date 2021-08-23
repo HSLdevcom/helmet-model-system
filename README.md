@@ -28,27 +28,28 @@ To get access to these dependencies, you need to add them to your local PATH var
 6. Click "New" and write `%EMMEPATH%\Python27\Scripts`.
 7. Click OK in the "Edit environment variable" window, and then click OK again in the "Environment Variables" window.
 
-Emme assignment can be tested without further configuration. Open command line to your local Scripts folder and write:
-
-```
-python test_assignment.py
-```
-
-This will create a small EMME test network and run test assignments on it.
-
-You can also initialize a proper Emme project (if you do not want to use the test network):
+Next, you need to initialize an Emme project:
 
 1. Open Emme desktop application.
 2. Create new project in which the path should match your project name and path.
 3. Follow [external instructions](https://hsldevcom.github.io/helmet-ui/sijopankki.html) to configure the details of the Emme project.
    Now, your working folder is filled with Emme project specific folders and files.
+4. From this repository, copy the contents of the [Scripts](Scripts) folder to the "Scripts" folder in the Emme project.
 
 ### Running
 
-Before running from the command line, set the configurations in [dev-config.json](Scripts/dev-config.json). Instructions on the configuration settings are found [here](Scripts#running-the-model-system). Then, open command line to your local Scripts folder:
+Before running from the command line, set the configurations in [dev-config.json](Scripts/dev-config.json).
+Instructions on the configuration settings are found [here](Scripts#running-the-model-system).
+Then, open command line to your local Scripts folder:
 
 ```
 python helmet.py
+```
+
+Emme assignment can be tested without further configuration:
+
+```
+python test_assignment.py
 ```
 
 ## Development
