@@ -54,12 +54,6 @@ Then, open command line to your local Scripts folder:
 python helmet.py
 ```
 
-Emme assignment can be tested without further configuration:
-
-```
-python test_assignment.py
-```
-
 ## Development
 
 If you do not have INRO Emme license or you wish to develop HELMET 4.1 source code, you need to set up a development environment. Although not covered here, installing [Git](https://git-scm.com/downloads) is highly recommended!
