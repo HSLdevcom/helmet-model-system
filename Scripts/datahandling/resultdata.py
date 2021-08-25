@@ -64,10 +64,11 @@ class ResultsData:
         filename : str
             Name of file where text is pushed (can contain other text)
         """
-        if filename not in self._line_buffer:
+        try:
+            self._line_buffer[filename].write(line + "\n")
+        except KeyError:
             self._line_buffer[filename] = open(
                 os.path.join(self.path, "{}.txt".format(filename)), 'w')
-        self._line_buffer[filename].write(line + "\n")
 
     def print_matrix(self, data, filename, sheetname):
         """Save 2-d matrix data to buffer (printed to file when flushing).
