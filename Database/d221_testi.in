@@ -1,9 +1,0 @@
-c Emme Module:    2.24(v5158)  Date: 12-02-24 15:46   User: E065/HSL/HRT....te
-c Project:        pieni testipankki                                           
-c Scenario    1:  pieni testiskenaario                                        
-t lines init
-a'11    ' b   1  10.00  20.00 'testilinja snt 1    '      0      0      0
-  path=no       4 dwt=.01   ttf=1       3       2   lay=5
-a'12    ' b   1  10.00  20.00 'testilinja snt 2    '      0      0      0
-  path=no       2 dwt=.01   ttf=1       3       4   lay=5
-

@@ -1,14 +1,170 @@
 from openpyxl import load_workbook
 import os
-import openmatrix as omx
 import numpy
 import pandas
-import parameters.assignment as param
 from argparse import ArgumentParser
+
+from utils.config import Config
+import utils.log as log
+import parameters.assignment as param
+import parameters.zone as zone_param
+from datahandling.matrixdata import MatrixData
+
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 
-def run_cost_benefit_analysis(scenario_0, scenario_1, year, results_directory, workbook):
+VEHICLE_KMS_FILE = "vehicle_kms_vdfs.txt"
+TRANSIT_KMS_FILE = "transit_kms.txt"
+LINK_LENGTH_FILE = "link_lengths.txt"
+NOISE_FILE = "noise_areas.txt"
+STATION_FILE = "transit_stations.txt"
+
+TRANSIT_TRIPS_PER_MONTH = {
+    "work_capital_region": 60,
+    "work_surrounding": 44,
+    "leisure": 30,
+}
+
+TRANSIT_AGGREGATIONS = {
+    "bus": ("HSL-bussi", "ValluVakio", "ValluPika"),
+    "train": ("HSL-juna", "muu_juna"),
+    "tram": ("ratikka", "pikaratikk"),
+}
+
+TRANSLATIONS = {
+    "car_work": "ha_tyo",
+    "car_leisure": "ha_muu",
+    "transit_work": "jl_tyo",
+    "transit_leisure": "jl_muu",
+    "bike_work": "pp_tyo",
+    "bike_leisure": "pp_muu",
+    "truck": "ka",
+    "trailer_truck": "yhd",
+    "van": "pa",
+}
+
+CELL_INDICES = {
+    "gains": {
+        "cols": {
+            "aht": 'B',
+            "pt": 'C',
+            "iht": 'D',
+        },
+        "rows": {
+            # Different rows for the two years
+            # One row for existing users, one row for additional users
+            1: {
+                "time": ("9", "10"),
+                "dist": ("22", "23"),
+                "cost": ("37", "38"),
+            },
+            2: {
+                "time": ("14", "15"),
+                "dist": ("27", "28"),
+                "cost": ("42", "43"),
+            },
+        },
+    },
+    "transit_revenue": {
+        "rows": {
+            1: "43",
+            2: "46",
+        },
+    },
+    "car_revenue": {
+        "cols": {
+            "aht": 'F',
+            "pt": 'G',
+            "iht": 'H',
+        },
+        "rows": {
+            1: "8",
+            2: "13",
+        },
+    },
+    "car_miles": {
+        "cols": {
+            # Column index for each volume-delay function
+            1: 'I',
+            2: 'J',
+            3: 'K',
+            4: 'L',
+            5: 'M',
+        },
+        "rows": {
+            1: {
+                "bus": "15",
+                "car": "19",
+                "van": "20",
+                "truck": "21",
+                "trailer_truck": "22",
+            },
+            2: {
+                "bus": "28",
+                "car": "32",
+                "van": "33",
+                "truck": "34",
+                "trailer_truck": "35",
+            },
+        },
+    },
+    "transit_miles": {
+        "cols": {
+            "dist": 'S',
+            "time": 'T',
+        },
+        "rows": {
+            1: {
+                "bus": "8",
+                "HSL-runkob": "9",
+                "tram": "10",
+                "metro": "11",
+                "train": "12",
+            },
+            2: {
+                "bus": "16",
+                "HSL-runkob": "17",
+                "tram": "18",
+                "metro": "19",
+                "train": "20",
+            },
+        },
+    },
+    "noise": {
+        1: "I24",
+        2: "I36",
+    },
+    "transit_stations": {
+        1: {
+            "metro": "U11",
+            "train": "U12",
+        },
+        2: {
+            "metro": "U19",
+            "train": "U20",
+        },
+    },
+    "link_lengths": {
+        1: {
+            "motorway": "G73",
+            "multi-lane": "G74",
+            "single-lane": "G75",
+            "train": "G76",
+            "metro": "G77",
+            "tram": "G78",
+        },
+        2: {
+            "motorway": "G82",
+            "multi-lane": "G83",
+            "single-lane": "G84",
+            "train": "G85",
+            "metro": "G86",
+            "tram": "G87",
+        },
+    },
+}
+
+def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
     """Runs CBA and writes the results to excel file.
 
     Parameters
@@ -26,308 +182,187 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, results_directory, w
     workbook : openpyxl.WorkBook
         The excel workbook where to save results
     """
-    wb = workbook
-    mile_diff = read_miles(results_directory, scenario_1) - read_miles(results_directory, scenario_0)
-    transit_mile_diff = read_transit_miles(results_directory, scenario_1) - read_transit_miles(results_directory, scenario_0)
-    emme_scenarios = ["aht", "pt", "iht"]
-    revenues = {
-        "car": {},
-        "transit": {},
-    }
-    gains = dict.fromkeys(param.transport_classes)
-    for transport_class in gains:
-        gains[transport_class] = {}
-    for tp in emme_scenarios:
-        ve1 = read_scenario(os.path.join(results_directory, scenario_1, "Matrices"), tp)
-        ve0 = read_scenario(os.path.join(results_directory, scenario_0, "Matrices"), tp)
-        revenues["transit"][tp] = 0
-        for transit_class in ("transit_work", "transit_leisure"):
-            revenues["transit"][tp] += calc_revenue(
-                ve0[transit_class], ve1[transit_class])
-        revenues["car"][tp] = 0
-        for ass_mode in param.assignment_modes:
-            revenues["car"][tp] += calc_revenue(ve0[ass_mode], ve1[ass_mode])
-        print "Revenues " + tp + " calculated"
-        for transport_class in gains:
-            gains[transport_class][tp] = calc_gains(
-                ve0[transport_class], ve1[transport_class])
-        print "Gains " + tp + " calculated"
-    if year == 1:
-        write_results_1(wb, mile_diff, transit_mile_diff, revenues, gains)
-    elif year == 2:
-        write_results_2(wb, mile_diff, transit_mile_diff, revenues, gains)
-    else:
-        print "Evaluation year must be either 1 or 2"
-    
+    if year not in (1, 2):
+        raise ValueError("Evaluation year must be either 1 or 2")
+    log.info("Analyse year {}...".format(year))
 
+    # Calculate mile differences
+    mile_diff = (read(VEHICLE_KMS_FILE, scenario_1)
+                 - read(VEHICLE_KMS_FILE, scenario_0))
+    mile_diff["car"] = mile_diff["car_work"] + mile_diff["car_leisure"]
+    ws = workbook["Ulkoisvaikutukset"]
+    cols = CELL_INDICES["car_miles"]["cols"]
+    rows = CELL_INDICES["car_miles"]["rows"][year]
+    for mode in rows:
+        for vdf in cols:
+            ws[cols[vdf]+rows[mode]] = mile_diff[mode][vdf]
 
-def read_scenario(path, time_period):
-    """Read travel cost and demand data for scenario from files"""
-    files = dict.fromkeys(["demand", "time", "cost", "dist"])
-    for mtx_type in files:
-        file_name = mtx_type + '_' + time_period + ".omx"
-        file_path = os.path.join(path, file_name)
-        files[mtx_type] = omx.open_file(file_path)
-    matrices = {}
-    for transport_class in param.transport_classes:
-        matrices[transport_class] = {}
-        for mtx_type in files:
-            if mtx_type != "demand":
-                mtx_label = transport_class.split('_')[0]
-                if mtx_label == "bike":
-                    ass_class = mtx_label
-                else:
-                    ass_class = transport_class
-            else:
-                ass_class = transport_class
-            if mtx_label == "bike" and mtx_type == "cost":
-                matrices[transport_class][mtx_type] = 0
-            else:
-                matrices[transport_class][mtx_type] = numpy.array(files[mtx_type][ass_class])
+    # Calculate noise effect difference
+    noise_diff = read(NOISE_FILE, scenario_1) - read(NOISE_FILE, scenario_0)
+    ws[CELL_INDICES["noise"][year]] = sum(noise_diff["population"])
+
+    # Calculate transit mile differences
+    transit_mile_diff = (read(TRANSIT_KMS_FILE, scenario_1)
+                         - read(TRANSIT_KMS_FILE, scenario_0))
+    for mode in TRANSIT_AGGREGATIONS:
+        transit_mile_diff.loc[mode] = 0
+        for submode in TRANSIT_AGGREGATIONS[mode]:
+            transit_mile_diff.loc[mode] += transit_mile_diff.loc[submode]
+    ws = workbook["Tuottajahyodyt"]
+    cols = CELL_INDICES["transit_miles"]["cols"]
+    rows = CELL_INDICES["transit_miles"]["rows"][year]
+    for mode in rows:
+        for imp_type in cols:
+            ws[cols[imp_type]+rows[mode]] = transit_mile_diff[imp_type][mode]
+    log.info("Mileage differences calculated")
+
+    # Calculate link length differences
+    linklength_diff = (read(LINK_LENGTH_FILE, scenario_1)
+                       - read(LINK_LENGTH_FILE, scenario_0))
+    indices = CELL_INDICES["link_lengths"][year]
+    for linktype in indices:
+        ws[indices[linktype]] = linklength_diff["length"][linktype]
+
+    # Calculate transit station differences
+    station_diff = (read(STATION_FILE, scenario_1)
+                    - read(STATION_FILE, scenario_0))
+    indices = CELL_INDICES["transit_stations"][year]
+    for mode in indices:
+        ws[indices[mode]] = station_diff["number"][mode]
+
+    # Calculate gains and revenues
+    for tp in ["aht", "pt", "iht"]:
+        data = {
+            "scen_1": MatrixData(os.path.join(scenario_1, "Matrices")),
+            "scen_0": MatrixData(os.path.join(scenario_0, "Matrices")),
+        }
+        revenues_transit = 0
+        revenues_car = 0
+        cols = CELL_INDICES["gains"]["cols"]
+        rows = CELL_INDICES["gains"]["rows"][year]
+        for tc in param.transport_classes:
+            demand = {}
+            for scenario in data:
+                with data[scenario].open("demand", tp) as mtx:
+                    demand[scenario] = mtx[tc]
+            for mtx_type in ["time", "cost", "dist"]:
+                cost = {scenario: read_costs(data[scenario], tp, tc, mtx_type)
+                    for scenario in data}
+                gains_existing, gains_additional = calc_gains(demand, cost)
+                ws = workbook[TRANSLATIONS[tc]]
+                ws[cols[tp]+rows[mtx_type][0]] = gains_existing
+                ws[cols[tp]+rows[mtx_type][1]] = gains_additional
                 if mtx_type == "cost":
-                    if transport_class == "transit_work":
-                        trips_per_month = numpy.full_like(matrices[transport_class][mtx_type], 60)
-                        # Surrounding area has a lower number of trips per month
-                        trips_per_month[901:, :] = 44
-                        trips_per_month = 0.5 * (trips_per_month+trips_per_month.T)
-                        matrices[transport_class][mtx_type] = matrices[transport_class][mtx_type] / trips_per_month
-                    if transport_class == "transit_leisure":
-                        matrices[transport_class][mtx_type] = matrices[transport_class][mtx_type] / 30
-    for mtx_type in files:
-        files[mtx_type].close()
-    print "Files read"
-    return matrices    
+                    revenue = calc_revenue(demand, cost)
+                    if tc in param.transit_classes:
+                        revenues_transit += revenue
+                    if tc in param.assignment_modes:
+                        revenues_car += revenue
+        ws = workbook["Tuottajahyodyt"]
+        rows = CELL_INDICES["transit_revenue"]["rows"][year]
+        ws[cols[tp]+rows] = revenues_transit
+        ws = workbook["Julkistaloudelliset"]
+        cols = CELL_INDICES["car_revenue"]["cols"]
+        rows = CELL_INDICES["car_revenue"]["rows"][year]
+        ws[cols[tp]+rows] = revenues_car
+        log.info("Gains and revenues calculated for {}".format(tp))
+    log.info("Year {} completed".format(year))
 
 
-def calc_revenue(ve0, ve1):
-    """Calculate difference in producer revenue between scenarios ve1 and ve0"""
-    revenue = 0
-    demand_change = ve1["demand"] - ve0["demand"]
-    cost_change = ve1["cost"] - ve0["cost"]
-    revenue += (ve1["cost"] * demand_change)[demand_change >= 0].sum()
-    revenue += (cost_change * ve0["demand"])[demand_change >= 0].sum()
-    revenue += (ve0["cost"] * demand_change)[demand_change < 0].sum()
-    revenue += (cost_change * ve1["demand"])[demand_change < 0].sum()
+def read(file_name, scenario_path):
+    """Read data from file."""
+    return pandas.read_csv(
+        os.path.join(scenario_path, file_name), delim_whitespace=True)
+
+
+def read_costs(matrixdata, time_period, transport_class, mtx_type):
+    mtx_label = transport_class.split('_')[0]
+    ass_class = mtx_label if mtx_label == "bike" else transport_class
+    if mtx_label == "bike" and mtx_type == "cost":
+        matrix = 0
+    else:
+        with matrixdata.open(mtx_type, time_period) as mtx:
+            matrix = mtx[ass_class]
+            zone_numbers = mtx.zone_numbers
+    if transport_class == "transit_work" and mtx_type == "cost":
+        nr_trips = numpy.full_like(
+            matrix, TRANSIT_TRIPS_PER_MONTH["work_capital_region"])
+        surrounding = numpy.searchsorted(
+            zone_numbers, zone_param.areas["surrounding"][0])
+        nr_trips[surrounding:, :] = TRANSIT_TRIPS_PER_MONTH["work_surrounding"]
+        nr_trips = 0.5 * (nr_trips+nr_trips.T)
+        matrix /= nr_trips
+    elif transport_class == "transit_leisure" and mtx_type == "cost":
+        matrix /= TRANSIT_TRIPS_PER_MONTH["leisure"]
+    return matrix
+
+
+def calc_gains(demands, costs):
+    """Calculate difference in consumer surplus between scen_1 and scen_0.
+
+    Parameters
+    ----------
+    demands : dict
+        scen_0 : numpy.ndarray
+            Demand matrix for scenario 0
+        scen_1 : numpy.ndarray
+            Demand matrix for scenario 1
+    costs : dict
+        scen_0 : numpy.ndarray
+            Impedance matrix for scenario 0
+        scen_1 : numpy.ndarray
+            Impedance matrix for scenario 1
+
+    Returns
+    -------
+    float
+        Calculated gain for existing users
+    float
+        Calculated gain for new or evicted users
+    """
+    gain = costs["scen_1"] - costs["scen_0"]
+    demand_change = demands["scen_1"] - demands["scen_0"]
+    gains_existing = ((demands["scen_0"]*gain)[demand_change >= 0].sum()
+                      + (demands["scen_1"]*gain)[demand_change < 0].sum())
+    gains_additional = (0.5*(demand_change*gain)[demand_change >= 0].sum()
+                        - 0.5*(demand_change*gain)[demand_change < 0].sum())
+    return gains_existing, gains_additional
+
+
+def calc_revenue(demands, costs):
+    """Calculate difference in producer revenue between scen_1 and scen_0.
+
+    Parameters
+    ----------
+    demands : dict
+        scen_0 : numpy.ndarray
+            Demand matrix for scenario 0
+        scen_1 : numpy.ndarray
+            Demand matrix for scenario 1
+    costs : dict
+        scen_0 : numpy.ndarray
+            Impedance matrix for scenario 0
+        scen_1 : numpy.ndarray
+            Impedance matrix for scenario 1
+
+    Returns
+    -------
+    float
+        Calculated revenue
+    """
+    demand_change = demands["scen_1"] - demands["scen_0"]
+    cost_change = costs["scen_1"] - costs["scen_0"]
+    revenue = ((costs["scen_1"]*demand_change)[demand_change >= 0].sum()
+               + (cost_change*demands["scen_0"])[demand_change >= 0].sum()
+               + (costs["scen_0"]*demand_change)[demand_change < 0].sum()
+               + (cost_change*demands["scen_1"])[demand_change < 0].sum())
     return revenue
 
 
-def calc_cost_gains(ve0, ve1):
-    """Calculate difference in consumer surplus between scenarios ve1 and ve0"""
-    gains = {"existing": 0, "additional": 0}
-    gain = ve1["cost"] - ve0["cost"]
-    demand_change = ve1["demand"] - ve0["demand"]
-    gains["existing"] += (ve0["demand"] * gain)[demand_change >= 0].sum()
-    gains["additional"] += 0.5 * (demand_change * gain)[demand_change >= 0].sum()
-    gains["existing"] += (ve1["demand"] * gain)[demand_change < 0].sum()
-    gains["additional"] -= 0.5 * (demand_change * gain)[demand_change < 0].sum()
-    return gains
-
-
-def calc_gains(ve0, ve1):
-    """Calculate time, distance and cost gains"""
-    gains = {}
-    gains["time"] = calc_cost_gains(
-        {
-            "cost": ve0["time"],
-            "demand": ve0["demand"],
-        },
-        {
-            "cost": ve1["time"],
-            "demand": ve1["demand"],
-        },
-    )
-    gains["dist"] = calc_cost_gains(
-        {
-            "cost": ve0["dist"],
-            "demand": ve0["demand"],
-        },
-        {
-            "cost": ve1["dist"],
-            "demand": ve1["demand"],
-        },
-    )
-    gains["cost"] = calc_cost_gains(ve0, ve1)
-    return gains
-
-
-def read_miles(results_directory, scenario_name):
-    """Read scenario data from files"""
-    file_path = os.path.join(results_directory, scenario_name, "vehicle_kms_vdfs.txt")
-    return pandas.read_csv(file_path, delim_whitespace=True)
-
-
-def read_transit_miles(results_directory, scenario_name):
-    """Read scenario data from files"""
-    file_path = os.path.join(results_directory, scenario_name, "transit_kms.txt")
-    return pandas.read_csv(file_path, delim_whitespace=True)
-
-
-def write_results_1(wb, miles, transit_miles, revenues, gains):
-    """Write results for year 1"""
-    ws = wb.get_sheet_by_name("ha_tyo")
-    write_gains_1(ws, gains["car_work"])
-    ws = wb.get_sheet_by_name("ha_muu")
-    write_gains_1(ws, gains["car_leisure"])
-    ws = wb.get_sheet_by_name("jl_tyo")
-    write_gains_1(ws, gains["transit_work"])
-    ws = wb.get_sheet_by_name("jl_muu")
-    write_gains_1(ws, gains["transit_leisure"])
-    ws = wb.get_sheet_by_name("pp_tyo")
-    write_gains_1(ws, gains["bike_work"])
-    ws = wb.get_sheet_by_name("pp_muu")
-    write_gains_1(ws, gains["bike_leisure"])
-    ws = wb.get_sheet_by_name("ka")
-    write_gains_1(ws, gains["truck"])
-    ws = wb.get_sheet_by_name("yhd")
-    write_gains_1(ws, gains["trailer_truck"])
-    ws = wb.get_sheet_by_name("pa")
-    write_gains_1(ws, gains["van"])
-    ws = wb.get_sheet_by_name("Ulkoisvaikutukset")
-    ws["I19"] = miles["car_work"][1] + miles["car_leisure"][1]
-    ws["J19"] = miles["car_work"][2] + miles["car_leisure"][2]
-    ws["K19"] = miles["car_work"][3] + miles["car_leisure"][3]
-    ws["L19"] = miles["car_work"][4] + miles["car_leisure"][4]
-    ws["M19"] = miles["car_work"][5] + miles["car_leisure"][5]
-    ws["I20"] = miles["van"][1]
-    ws["J20"] = miles["van"][2]
-    ws["K20"] = miles["van"][3]
-    ws["L20"] = miles["van"][4]
-    ws["M20"] = miles["van"][5]
-    ws["I21"] = miles["truck"][1]
-    ws["J21"] = miles["truck"][2]
-    ws["K21"] = miles["truck"][3]
-    ws["L21"] = miles["truck"][4]
-    ws["M21"] = miles["truck"][5]
-    ws["I22"] = miles["trailer_truck"][1]
-    ws["J22"] = miles["trailer_truck"][2]
-    ws["K22"] = miles["trailer_truck"][3]
-    ws["L22"] = miles["trailer_truck"][4]
-    ws["M22"] = miles["trailer_truck"][5]
-    ws = wb.get_sheet_by_name("Tuottajahyodyt")
-    ws["S8"] = transit_miles["dist"]["bus"]
-    ws["S9"] = transit_miles["dist"]["trunk"]
-    ws["S10"] = transit_miles["dist"]["tram"]
-    ws["S11"] = transit_miles["dist"]["metro"]
-    ws["S12"] = transit_miles["dist"]["train"]
-    ws["T8"] = transit_miles["time"]["bus"]
-    ws["T9"] = transit_miles["time"]["trunk"]
-    ws["T10"] = transit_miles["time"]["tram"]
-    ws["T11"] = transit_miles["time"]["metro"]
-    ws["T12"] = transit_miles["time"]["train"]
-    ws["B43"] = revenues["transit"]["aht"]
-    ws["C43"] = revenues["transit"]["pt"]
-    ws["D43"] = revenues["transit"]["iht"]
-    ws = wb.get_sheet_by_name("Julkistaloudelliset")
-    ws["F8"] = revenues["car"]["aht"]
-    ws["G8"] = revenues["car"]["pt"]
-    ws["H8"] = revenues["car"]["iht"]
-
-
-def write_gains_1(ws, gains):
-    ws["B9"] = gains["aht"]["time"]["existing"]
-    ws["B10"] = gains["aht"]["time"]["additional"]
-    ws["C9"] = gains["pt"]["time"]["existing"]
-    ws["C10"] = gains["pt"]["time"]["additional"]
-    ws["D9"] = gains["iht"]["time"]["existing"]
-    ws["D10"] = gains["iht"]["time"]["additional"]
-    ws["B22"] = gains["aht"]["dist"]["existing"]
-    ws["B23"] = gains["aht"]["dist"]["additional"]
-    ws["C22"] = gains["pt"]["dist"]["existing"]
-    ws["C23"] = gains["pt"]["dist"]["additional"]
-    ws["D22"] = gains["iht"]["dist"]["existing"]
-    ws["D23"] = gains["iht"]["dist"]["additional"]
-    ws["B37"] = gains["aht"]["cost"]["existing"]
-    ws["B38"] = gains["aht"]["cost"]["additional"]
-    ws["C37"] = gains["pt"]["cost"]["existing"]
-    ws["C38"] = gains["pt"]["cost"]["additional"]
-    ws["D37"] = gains["iht"]["cost"]["existing"]
-    ws["D38"] = gains["iht"]["cost"]["additional"]
-
-
-def write_results_2(wb, miles, transit_miles, revenues, gains):
-    """Write results for year 2"""
-    ws = wb.get_sheet_by_name("ha_tyo")
-    write_gains_2(ws, gains["car_work"])
-    ws = wb.get_sheet_by_name("ha_muu")
-    write_gains_2(ws, gains["car_leisure"])
-    ws = wb.get_sheet_by_name("jl_tyo")
-    write_gains_2(ws, gains["transit_work"])
-    ws = wb.get_sheet_by_name("jl_muu")
-    write_gains_2(ws, gains["transit_leisure"])
-    ws = wb.get_sheet_by_name("pp_tyo")
-    write_gains_2(ws, gains["bike_work"])
-    ws = wb.get_sheet_by_name("pp_muu")
-    write_gains_2(ws, gains["bike_leisure"])
-    ws = wb.get_sheet_by_name("ka")
-    write_gains_2(ws, gains["truck"])
-    ws = wb.get_sheet_by_name("yhd")
-    write_gains_2(ws, gains["trailer_truck"])
-    ws = wb.get_sheet_by_name("pa")
-    write_gains_2(ws, gains["van"])
-    ws = wb.get_sheet_by_name("Ulkoisvaikutukset")
-    ws["I32"] = miles["car_work"][1] + miles["car_leisure"][1]
-    ws["J32"] = miles["car_work"][2] + miles["car_leisure"][2]
-    ws["K32"] = miles["car_work"][3] + miles["car_leisure"][3]
-    ws["L32"] = miles["car_work"][4] + miles["car_leisure"][4]
-    ws["M32"] = miles["car_work"][5] + miles["car_leisure"][5]
-    ws["I33"] = miles["van"][1]
-    ws["J33"] = miles["van"][2]
-    ws["K33"] = miles["van"][3]
-    ws["L33"] = miles["van"][4]
-    ws["M33"] = miles["van"][5]
-    ws["I34"] = miles["truck"][1]
-    ws["J34"] = miles["truck"][2]
-    ws["K34"] = miles["truck"][3]
-    ws["L34"] = miles["truck"][4]
-    ws["M34"] = miles["truck"][5]
-    ws["I35"] = miles["trailer_truck"][1]
-    ws["J35"] = miles["trailer_truck"][2]
-    ws["K35"] = miles["trailer_truck"][3]
-    ws["L35"] = miles["trailer_truck"][4]
-    ws["M35"] = miles["trailer_truck"][5]
-    ws = wb.get_sheet_by_name("Kayttajahyodyt")
-    ws = wb.get_sheet_by_name("Tuottajahyodyt")
-    ws["S16"] = transit_miles["dist"]["bus"]
-    ws["S17"] = transit_miles["dist"]["trunk"]
-    ws["S18"] = transit_miles["dist"]["tram"]
-    ws["S19"] = transit_miles["dist"]["metro"]
-    ws["S20"] = transit_miles["dist"]["train"]
-    ws["T16"] = transit_miles["time"]["bus"]
-    ws["T17"] = transit_miles["time"]["trunk"]
-    ws["T18"] = transit_miles["time"]["tram"]
-    ws["T19"] = transit_miles["time"]["metro"]
-    ws["T20"] = transit_miles["time"]["train"]
-    ws["B46"] = revenues["transit"]["aht"]
-    ws["C46"] = revenues["transit"]["pt"]
-    ws["D46"] = revenues["transit"]["iht"]
-    ws = wb.get_sheet_by_name("Julkistaloudelliset")
-    ws["F13"] = revenues["car"]["aht"]
-    ws["G13"] = revenues["car"]["pt"]
-    ws["H13"] = revenues["car"]["iht"]
-
-
-def write_gains_2(ws, gains):
-    ws["B14"] = gains["aht"]["time"]["existing"]
-    ws["B15"] = gains["aht"]["time"]["additional"]
-    ws["C14"] = gains["pt"]["time"]["existing"]
-    ws["C15"] = gains["pt"]["time"]["additional"]
-    ws["D14"] = gains["iht"]["time"]["existing"]
-    ws["D15"] = gains["iht"]["time"]["additional"]
-    ws["B27"] = gains["aht"]["dist"]["existing"]
-    ws["B28"] = gains["aht"]["dist"]["additional"]
-    ws["C27"] = gains["pt"]["dist"]["existing"]
-    ws["C28"] = gains["pt"]["dist"]["additional"]
-    ws["D27"] = gains["iht"]["dist"]["existing"]
-    ws["D28"] = gains["iht"]["dist"]["additional"]
-    ws["B42"] = gains["aht"]["cost"]["existing"]
-    ws["B43"] = gains["aht"]["cost"]["additional"]
-    ws["C42"] = gains["pt"]["cost"]["existing"]
-    ws["C43"] = gains["pt"]["cost"]["additional"]
-    ws["D42"] = gains["iht"]["cost"]["existing"]
-    ws["D43"] = gains["iht"]["cost"]["additional"]
-
-
 if __name__ == "__main__":
+    config = Config().read_from_file()
+    config.LOG_FORMAT = "JSON"
+    config.SCENARIO_NAME = "cba"
     parser = ArgumentParser(epilog="Calculates the Cost-Benefit Analysis between Results of two HELMET-Scenarios, "
                                    "and writes the outcome in CBA_kehikko.xlsx -file (in same folder).")
     parser.add_argument(
@@ -345,14 +380,16 @@ if __name__ == "__main__":
         "--results-path", dest="results_path", type=str, required=True,
         help="Path to Results directory.")
     args = parser.parse_args()
+    config.RESULTS_PATH = args.results_path
+    log.initialize(config)
     wb = load_workbook(os.path.join(SCRIPT_DIR, "CBA_kehikko.xlsx"))
     run_cost_benefit_analysis(
-        args.baseline_scenario, args.projected_scenario, 1, args.results_path, wb)
+        args.baseline_scenario, args.projected_scenario, 1, wb)
     if args.baseline_scenario_2 is not None and args.baseline_scenario_2 != "undefined":
         run_cost_benefit_analysis(
-            args.baseline_scenario_2, args.projected_scenario_2, 2, args.results_path, wb)
-    results_filename =  "cba_{}_{}.xlsx".format(
+            args.baseline_scenario_2, args.projected_scenario_2, 2, wb)
+    results_filename = "cba_{}_{}.xlsx".format(
         os.path.basename(args.projected_scenario),
         os.path.basename(args.baseline_scenario))
     wb.save(os.path.join(args.results_path, results_filename))
-    print "CBA results saved to file: {}".format(results_filename)
+    log.info("CBA results saved to file: {}".format(results_filename))

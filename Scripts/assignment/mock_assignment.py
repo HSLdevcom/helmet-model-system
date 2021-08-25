@@ -4,7 +4,7 @@ import pandas
 import utils.log as log
 import parameters.assignment as param
 import parameters.zone as zone_param
-from abstract_assignment import AssignmentModel, Period
+from assignment.abstract_assignment import AssignmentModel, Period
 
 
 class MockAssignmentModel(AssignmentModel):
@@ -43,7 +43,7 @@ class MockAssignmentModel(AssignmentModel):
     def calc_noise(self):
         return pandas.Series(0, zone_param.area_aggregation)
 
-    def prepare_network(self):
+    def prepare_network(self, car_dist_unit_cost=None):
         pass
 
     def init_assign(self, demand):

@@ -1,5 +1,164 @@
 ### ASSIGNMENT PARAMETERS ###
 
+from collections import namedtuple
+RoadClass = namedtuple(
+    "RoadClass",
+    (
+        "type", "num_lanes", "volume_delay_func", "lane_capacity",
+        "free_flow_speed", "bus_delay",
+    ))
+# Code derived from three-digit link type xyz, where yz is the road class code
+roadclasses = {
+    21: RoadClass("motorway", "<3", 1, 2100, 113, 0.265),
+    22: RoadClass("motorway", ">=3", 1, 1900, 113, 0.265),
+    23: RoadClass("motorway", "<3", 1, 2000, 97, 0.309),
+    24: RoadClass("motorway", ">=3", 1, 1800, 97, 0.309),
+    25: RoadClass("motorway", "<3", 1, 2000, 81, 0.370),
+    26: RoadClass("motorway", ">=3", 1, 1800, 81, 0.370),
+    27: RoadClass("highway", "<3", 2, 1900, 97, 0.309),
+    28: RoadClass("highway", ">=3", 2, 1800, 97, 0.309),
+    29: RoadClass("highway", "<3", 2, 1850, 81, 0.370),
+    30: RoadClass("highway", ">=3", 2, 1800, 81, 0.370),
+    31: RoadClass("highway", "any", 2, 1600, 73, 0.411),
+    32: RoadClass("highway", "any", 2, 1600, 63, 0.556),
+    33: RoadClass("arterial", "any", 3, 1450, 61, 0.492),
+    34: RoadClass("arterial", "any", 3, 1250, 54, 0.556),
+    35: RoadClass("arterial", "any", 4, 1150, 48, 0.625),
+    36: RoadClass("arterial", "any", 4, 1000, 44, 0.682),
+    37: RoadClass("arterial", "any", 4, 1000, 41, 0.732),
+    38: RoadClass("collector", "any", 5, 900, 41, 0.732),
+    39: RoadClass("collector", "any", 5, 750, 36, 0.833),
+    40: RoadClass("collector", "any", 5, 900, 36, 0.833),
+    41: RoadClass("local", "any", 5, 600, 30, 1.000),
+    42: RoadClass("local", "any", 5, 500, 23, 1.304),
+}
+custom_roadtypes = {
+    91: "motorway",
+    92: "highway",
+    93: "arterial",
+    94: "arterial",
+    95: "local",
+}
+# Bike delay function ids
+bikepath_vdfs = (
+    {  # 0 - Mixed traffic
+        None: 78,
+        "collector": 77,
+        "arterial": 77,
+        "highway": 76,
+    },
+    {  # 1 - Bike lane
+        None: 75,
+    },
+    {  # 2 - Road-side bike path
+        None: 74,
+        "arterial": 73,
+        "highway": 72,
+    },
+    {  # 3 - Separate bike path
+        None: 71
+    },
+    {  # 4 - BAANA
+        None: 70,
+    }
+)
+# Transit delay function ids
+transit_delay_funcs = {
+    ("bus", "bgde"): {
+        "no_buslane": 1,
+        "buslane": 2,
+    },
+    ("lightrail", "tp"): {
+        "aht": 3,
+        "pt": 4,
+        "iht": 5,
+    },
+    ("rail", "rjmw"): {
+        "aht": 6,
+        "pt": 6,
+        "iht": 6,
+    },
+}
+volume_delay_funcs = {
+    # Car functions
+    "fd1": "(put(60/ul2)*(1+0.02*put((volau+volad)/lanes)/"
+            + "(ul1-get(2))))*(get(2).le.put(ul1*0.975))*length+(get(2).gt."
+            + "get(3))*(1.78*get(1)*length+0.0075*(get(2)-get(3))*length)",
+    "fd2": "(put(60/ul2)*(1+0.09*put((volau+volad)/lanes)/"
+            + "(ul1-get(2))))*(get(2).le.put(ul1*0.935))*length+(get(2).gt."
+            + "get(3))*(2.29*get(1)*length+0.0085*(get(2)-get(3))*length)",
+    "fd3": "(put(60/ul2)*(1+0.1*put((volau+volad)/lanes)/"
+            + "(ul1-get(2))))*(get(2).le.put(ul1*0.915))*length+(get(2).gt."
+            + "get(3))*(2.08*get(1)*length+0.011*(get(2)-get(3))*length)",
+    "fd4": "(put(60/ul2)*(1+0.2*put((volau+volad)/lanes)/"
+            + "(ul1-get(2))))*(get(2).le.put(ul1*0.87))*length+(get(2).gt."
+            + "get(3))*(2.34*get(1)*length+0.014*(get(2)-get(3))*length)",
+    "fd5": "(put(60/ul2)*(1+0.3*put((volau+volad)/lanes)/"
+            + "(ul1-get(2))))*(get(2).le.put(ul1*0.81))*length+(get(2).gt."
+            + "get(3))*(2.28*get(1)*length+0.017*(get(2)-get(3))*length)",
+    "fd6": "(put(60/ul2)*(1+0.02*put((volau+volad)/((lanes-1).max.0.8))/"
+            + "(ul1-get(2))))*(get(2).le.put(ul1*0.975))*length+(get(2).gt."
+            + "get(3))*(1.78*get(1)*length+0.0075*(get(2)-get(3))*length)",
+    "fd7": "(put(60/ul2)*(1+0.09*put((volau+volad)/((lanes-1).max.0.8))/"
+            + "(ul1-get(2))))*(get(2).le.put(ul1*0.935))*length+(get(2).gt."
+            + "get(3))*(2.29*get(1)*length+0.0085*(get(2)-get(3))*length)",
+    "fd8": "(put(60/ul2)*(1+0.1*put((volau+volad)/((lanes-1).max.0.8))/"
+            + "(ul1-get(2))))*(get(2).le.put(ul1*0.915))*length+(get(2).gt."
+            + "get(3))*(2.08*get(1)*length+0.011*(get(2)-get(3))*length)",
+    "fd9": "(put(60/ul2)*(1+0.2*put((volau+volad)/((lanes-1).max.0.8))/"
+            + "(ul1-get(2))))*(get(2).le.put(ul1*0.87))*length+(get(2).gt."
+            + "get(3))*(2.34*get(1)*length+0.014*(get(2)-get(3))*length)",
+    "fd10": "(put(60/ul2)*(1+0.3*put((volau+volad)/((lanes-1).max.0.8))/"
+            + "(ul1-get(2))))*(get(2).le.put(ul1*0.81))*length+(get(2).gt."
+            + "get(3))*(2.28*get(1)*length+0.017*(get(2)-get(3))*length)",
+    "fd99": "length * 1.3",
+    # Bike functions
+    "fd70": "length*(60/19)",
+    "fd71": "length*(60/17)",
+    "fd72": "length*(60/17)",
+    "fd73": "length*(60/16)",
+    "fd74": "length*(60/15)",
+    "fd75": "length*(60/15)",
+    "fd76": "length*(60/12)",
+    "fd77": "length*(60/10)",
+    "fd78": "length*(60/12)",
+    "fd98": "length*(60/12)",
+    # Transit functions
+    ## Bus, no bus lane
+    "ft01": "us2*length+timau",
+    ## Bus on bus lane
+    "ft02": "us2*length",
+    ## Tram aht
+    "ft03": "(length / (int(ul1 / 10000))) * 60",
+    ## Tram pt
+    "ft04": "(length / ((int(ul1 / 100)) .mod. 100)) * 60",
+    ## Tram iht
+    "ft05": "(length / (ul1 .mod. 100)) * 60",
+    ## Train functions
+    "ft6": "us1",
+    ## Escape function, speed 40 km/h
+    "ft7": "length/(40/60)",
+}
+# Code derived from three-digit link type xyz, where x is the bus lane code,
+# 2 means that bus lane is active during aht and iht periods, etc.
+bus_lane_link_codes = {
+    "aht": (2, 3, 4, 6),
+    "pt": (3, 6),
+    "iht": (2, 3, 5, 6),
+}
+# Bus lane delay equivalent to 1.5 km per link
+buslane_delay = 60 * 1.5
+# Codes defining whether transit mode stops at node, stored in data2
+stop_codes = {
+    't': (1, 8),
+    'p': (8,),
+    'b': (2, 3, 4, 5, 11),
+    'g': (3, 5, 11),
+    'e': (4, 5, 7, 11),
+    'd': (2, 3, 4, 5, 7, 11),
+}
+# Node labels for HSL members (new and old fare zones)
+hsl_area = "ABCDE HEXL"
 # Performance settings
 performance_settings = {
     "number_of_processors": "max"
@@ -203,11 +362,6 @@ noise_zone_width = {
 }
 
 ### ASSIGNMENT REFERENCES ###
-
-# Volume-delay function files
-func_car = "d411_pituusriippuvaiset_HM30.in"
-func_bike = "d411_pituusriippuvaiset_pyora.in"
-
 transport_classes = (
     "car_work",
     "car_leisure",
@@ -230,12 +384,12 @@ freight_classes = (
 )
 assignment_classes = {
     "hw": "work",
-    "hc": "leisure",
-    "hu": "leisure",
+    "hc": "work",
+    "hu": "work",
     "hs": "leisure",
     "ho": "leisure",
-    "hoo": "work",
-    "wo": "work",
+    "hoo": "leisure",
+    "wo": "leisure",
     "oo": "leisure",
     "wh": "work",
     "hwp": "work",
@@ -252,22 +406,13 @@ assignment_modes = {
     "truck": 'k',
     "van": 'v',
 }
-volume_delays_funcs = (1, 2, 3, 4, 5)
+connector_link_types = (84, 85, 86, 87, 88, 98, 99)
 vot_classes = {
     "car_work": "work",
     "car_leisure": "leisure",
     "trailer_truck": "business",
     "truck": "business",
     "van": "business",
-}
-bike_mode = 'f'
-transit_mode_aggregates = {
-    "bus": "bde",
-    "trunk": "g",
-    "metro": "m",
-    "train": "rj",
-    "tram": "tp",
-    "other": ""
 }
 transit_modes = [
     'b',
@@ -285,40 +430,21 @@ aux_modes = [
     'a',
     's',
 ]
+transit_assignment_modes = transit_modes + aux_modes
 external_modes = [
     "car",
     "transit",
     "truck",
     "trailer_truck",
 ]
-# Link attributes initialized in helmet-model-system
-emme_attributes = {
-    "@bus": "LINK",
-    "@total_cost": "LINK",
-    "@toll_cost": "LINK",
-    "@wait_time_dev": "TRANSIT_SEGMENT",
-    "@car_work": "LINK",
-    "@car_leisure": "LINK",
-    "@transit_work_vol": "TRANSIT_SEGMENT",
-    "@transit_leisure_vol": "TRANSIT_SEGMENT",
-    "@transit_work_boa": "TRANSIT_SEGMENT",
-    "@transit_leisure_boa": "TRANSIT_SEGMENT",
-    "@transit_work_trb": "TRANSIT_SEGMENT",
-    "@transit_leisure_trb": "TRANSIT_SEGMENT",
-    "@trailer_truck": "LINK",
-    "@truck": "LINK",
-    "@van": "LINK", 
-    "@transit_vol": "LINK",
-    "@transit_boa": "NODE",
-    "@transit_trb": "NODE",
+segment_results = {
+    "transit_volumes": "vol",
+    "total_boardings": "boa",
+    "transfer_boardings": "trb",
 }
-bike_attributes = {
-    "@bike_aht": "LINK",
-    "@bike_iht": "LINK",
-    "@bike_pt": "LINK",
-    "@bike_day": "LINK",
-}
-transit_assignment_modes = transit_modes + aux_modes
+# Hard-coded in Emme congested transit assignment
+congestion_cost = "ccost"
+uncongested_transit_time = "base_timtr"
 # Emme matrix IDs
 emme_demand_mtx = {
     "car_work": {
@@ -553,6 +679,22 @@ emme_result_mtx = {
     },
 }
 background_traffic = "ul3"
+railtypes = {
+    2: "tram",
+    3: "metro",
+    4: "train",
+    5: "tram",
+    6: "tram",
+}
+roadtypes = {
+    0: "walkway",
+    1: "motorway",
+    2: "multi-lane",
+    3: "multi-lane",
+    4: "single-lane",
+    5: "single-lane",
+    99: "connector",
+}
 station_ids = {
     "metro": 13,
     "train": 14,

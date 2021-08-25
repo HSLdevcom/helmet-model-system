@@ -57,10 +57,6 @@ class ModelSystem:
         self.zdata_forecast = ZoneData(
             zone_data_path, self.zone_numbers)
 
-        # Set dist unit cost from zonedata
-        for ap in self.ass_model.assignment_periods:
-            ap.dist_unit_cost = self.zdata_forecast.car_dist_cost
-
         # Output data
         self.resultmatrices = MatrixData(
             os.path.join(results_path, name, "Matrices"))
@@ -114,7 +110,7 @@ class ModelSystem:
                 purpose_impedance = self.imptrans.transform(
                     purpose, previous_iter_impedance)
                 purpose.calc_prob(purpose_impedance)
-                if is_last_iteration and purpose.dest != "source":
+                if is_last_iteration and purpose.name not in ("sop", "so"):
                     purpose.accessibility_model.calc_accessibility(
                         purpose_impedance)
         
@@ -170,7 +166,7 @@ class ModelSystem:
         impedance = {}
 
         # create attributes and background variables to network
-        self.ass_model.prepare_network()
+        self.ass_model.prepare_network(self.zdata_forecast.car_dist_cost)
 
         # Calculate transit cost matrix, and save it to emmebank
         with self.basematrices.open("demand", "aht", self.ass_model.zone_numbers) as mtx:
@@ -312,7 +308,7 @@ class ModelSystem:
         if iteration=="last":
             self.ass_model.aggregate_results(self.resultdata)
             self._calculate_noise_areas()
-            self._calculate_savu_zones()
+            self._calculate_accessibility_and_savu_zones()
 
         # Reset time-period specific demand matrices (DTM), and empty result buffer
         self.dtm.init_demand()
@@ -342,7 +338,8 @@ class ModelSystem:
         noise_pop = conversion * noise_areas * pop
         self.resultdata.print_data(noise_pop, "noise_areas.txt", "population")
 
-    def _calculate_savu_zones(self):
+    def _calculate_accessibility_and_savu_zones(self):
+        logsum = 0
         sust_logsum = 0
         car_logsum = 0
         for purpose in self.dm.tour_purposes:
@@ -351,8 +348,10 @@ class ModelSystem:
                     and not isinstance(purpose, SecDestPurpose)):
                 zone_numbers = purpose.zone_numbers
                 weight = gen_param.tour_generation[purpose.name]["population"]
+                logsum += weight * purpose.access
                 sust_logsum += weight * purpose.sustainable_access
                 car_logsum += weight * purpose.car_access
+        self.resultdata.print_data(logsum, "accessibility.txt", "all")
         self.resultdata.print_data(
             sust_logsum, "sustainable_accessibility.txt", "all")
         self.resultdata.print_data(car_logsum, "car_accessibility.txt", "all")
@@ -381,10 +380,10 @@ class ModelSystem:
         elif nr_threads <= 0:
             nr_threads = 1
         bounds = next(iter(purpose.sources)).bounds
-        for i in xrange(nr_threads):
+        for i in range(nr_threads):
             # Take a range of origins, for which this thread
             # will calculate secondary destinations
-            origs = xrange(i, bounds.stop - bounds.start, nr_threads)
+            origs = range(i, bounds.stop - bounds.start, nr_threads)
             # Results will be saved in a temp dtm, to avoid memory clashes
             dtm = dt.DepartureTimeModel(self.ass_model.nr_zones)
             demand.append(dtm)
@@ -546,8 +545,8 @@ class AgentModelSystem(ModelSystem):
         modes = purpose.modes if is_last_iteration else ["car"]
         for mode in modes:
             threads = []
-            for i in xrange(nr_threads):
-                origs = xrange(i, bounds.stop - bounds.start, nr_threads)
+            for i in range(nr_threads):
+                origs = range(i, bounds.stop - bounds.start, nr_threads)
                 thread = threading.Thread(
                     target=self._distribute_tours,
                     args=(
@@ -575,6 +574,7 @@ class AgentModelSystem(ModelSystem):
                 person.calc_income()
                 self.resultdata.print_line(str(person), fname0)
                 for tour in person.tours:
+                    tour.calc_cost(previous_iter_impedance)
                     self.resultdata.print_line(str(tour), fname1)
             log.info("Results printed to files {} and {}".format(
                 fname0, fname1))

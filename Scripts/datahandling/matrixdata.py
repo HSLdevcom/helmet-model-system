@@ -48,7 +48,7 @@ class MatrixData:
             return peripheral_cost
 
 
-class MatrixFile(object):
+class MatrixFile:
     def __init__(self, omx_file, zone_numbers):
         self._file = omx_file
         self.missing_zones = []
@@ -62,7 +62,7 @@ class MatrixFile(object):
                     path)
                 log.error(msg)
                 raise IndexError(msg)
-            if mtx_numbers.size != zone_numbers.size or (mtx_numbers != zone_numbers).any():
+            if mtx_numbers != zone_numbers:
                 for i in mtx_numbers:
                     if i not in zone_numbers:
                         msg = "Zone number {} from file {} not found in network".format(
@@ -94,7 +94,7 @@ class MatrixFile(object):
     
     def __getitem__(self, mode):
         mtx = numpy.array(self._file[mode])
-        nr_zones = self.zone_numbers.size
+        nr_zones = len(self.zone_numbers)
         dim = (nr_zones, nr_zones)
         if mtx.shape != dim:
             msg = "Matrix {} in file {} has dimensions {}, should be {}".format(
@@ -124,7 +124,7 @@ class MatrixFile(object):
 
     @property
     def zone_numbers(self):
-        return numpy.array(self._file.mapentries("zone_number"))
+        return self._file.mapentries("zone_number")
 
     @property
     def mapping(self):

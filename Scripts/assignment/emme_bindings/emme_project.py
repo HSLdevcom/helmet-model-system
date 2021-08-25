@@ -5,30 +5,43 @@ import inro.emme.desktop.app as _app
 import inro.modeller as _m
 
 
-# Creates and initializes EMME-resources (INRO's own library, from EMME-software's Python site-packages)
 class EmmeProject:
-    def __init__(self, filepath):
+    """Initialize EMME-resources.
+
+    Access and wrap INRO's own library,
+    from EMME-software's Python site-packages.
+
+    Parameters
+    ----------
+    project_path : str
+        Path to EMME project (.emp) file
+    emmebank_path : str (optional)
+        Path to emmebank file (if EMME project is not initialized)
+    """
+    def __init__(self, project_path, emmebank_path=None):
         log.info("Starting Emme...")
         emme_desktop = _app.start_dedicated(
-            project=filepath, 
-            visible=False, 
-            user_initials="HSL"
-        )
+            project=project_path, visible=False, user_initials="HSL")
+        if emmebank_path is not None:
+            db = emme_desktop.data_explorer().add_database(emmebank_path)
+            db.open()
+            emme_desktop.project.save()
         # Add logging to EMME
         sh = logging.StreamHandler(stream=self)
         logging.getLogger().addHandler(sh)
 
         self.modeller = _m.Modeller(emme_desktop)
         log.info("Emme started")
-        self.path = os.path.dirname(self.modeller.emmebank.path)
+        self.import_scenario = self.modeller.tool(
+            "inro.emme.data.scenario.import_scenario")
+        self.copy_scenario = self.modeller.tool(
+            "inro.emme.data.scenario.copy_scenario")
         self.create_matrix = self.modeller.tool(
             "inro.emme.data.matrix.create_matrix")
         self.copy_matrix = self.modeller.tool(
             "inro.emme.data.matrix.copy_matrix")
         self.network_calc = self.modeller.tool(
             "inro.emme.network_calculation.network_calculator")
-        self.process_functions = self.modeller.tool(
-            "inro.emme.data.function.function_transaction")
         self.car_assignment = self.modeller.tool(
             "inro.emme.traffic_assignment.sola_traffic_assignment")
         self.bike_assignment = self.modeller.tool(
@@ -45,8 +58,6 @@ class EmmeProject:
             "inro.emme.transit_assignment.extended.network_results")
         self.create_extra_attribute = self.modeller.tool(
             "inro.emme.data.extra_attribute.create_extra_attribute")
-        self.network_results = self.modeller.tool(
-            "inro.emme.transit_assignment.extended.network_results")
     
     def write(self, message):
         """Write to logbook."""

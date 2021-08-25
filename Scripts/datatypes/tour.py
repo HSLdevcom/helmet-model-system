@@ -3,9 +3,11 @@ import random
 
 import parameters.car as param
 import parameters.zone as zone_param
+from parameters.assignment import assignment_classes, vot_inv
+from parameters.impedance_transformation import divided_classes, trips_month
 
 
-class Tour(object):
+class Tour:
     """Tour definition for agent-based simulation.
     
     Parameters
@@ -18,7 +20,8 @@ class Tour(object):
     # Expansion factor used on demand in departure time model
     matrix = numpy.array([[1 / zone_param.agent_demand_fraction]])
     attr = ["person_id", "purpose_name", "mode", 
-            "total_access", "sustainable_access"]
+            "total_access", "sustainable_access",
+            "cost", "gen_cost"]
 
     def __init__(self, purpose, origin, person_id):
         self.person_id = person_id
@@ -179,6 +182,56 @@ class Tour(object):
                     + numpy.searchsorted(cumulative_probs, self._sec_dest_draw))
         self.position = (self.position[0], self.position[1], dest_idx)
         self.purpose.sec_dest_purpose.attracted_tours[self.mode][dest_idx] += 1
+    
+    def calc_cost(self, impedance):
+        """Construct cost and time components from tour dest choice.
+
+        Parameters
+        ----------
+        impedance: dict
+            Time period (aht/pt/iht) : dict
+                Type (time/cost/dist) : dict
+                    Assignment class (car_work/transit/...) : numpy 2d matrix
+        """
+        time = self._get_cost(impedance, "time")
+        self.cost = self._get_cost(impedance, "cost")
+        vot = 1 / vot_inv[assignment_classes[self.purpose_name]]
+        self.gen_cost = self.cost + time * vot
+
+    def _get_cost(self, impedance, mtx_type):
+        """Get cost and time components from tour dest choice."""
+        if self.mode in divided_classes:
+            ass_class = "{}_{}".format(
+                self.mode, assignment_classes[self.purpose.name])
+        else:
+            ass_class = self.mode
+        cost = 0
+        try:
+            if assignment_classes[self.purpose_name] == "work":
+                departure_imp = impedance["aht"][mtx_type][ass_class]
+                sec_dest_imp = impedance["iht"][mtx_type][ass_class]
+                return_imp = impedance["iht"][mtx_type][ass_class]
+            else:
+                departure_imp = impedance["pt"][mtx_type][ass_class]
+                sec_dest_imp = impedance["pt"][mtx_type][ass_class]
+                return_imp = impedance["pt"][mtx_type][ass_class]
+            # first leg of tour
+            cost += departure_imp[self.position[0], self.position[1]]
+            # check if tour has secondary destination and add accordingly
+            if len(self.position) > 2:
+                cost += sec_dest_imp[self.position[1], self.position[2]]
+                cost += return_imp[self.position[2], self.position[0]]
+            else: 
+                cost += return_imp[self.position[1], self.position[0]]
+        except KeyError:
+            # bike and walk modes do not have cost matrices specified
+            # KeyErrors are produced when trying to access matrix
+            pass
+        # scale transit costs from month to day
+        if self.mode == "transit" and mtx_type == "cost":
+            idx = int(self.position[0] > self.purpose.zone_data.first_surrounding_zone)
+            cost /= trips_month[ass_class][idx]
+        return cost
 
     def __str__(self):
         """ Return tour attributes as string.

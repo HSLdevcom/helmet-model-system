@@ -101,4 +101,4 @@ class ZoneDataTest(unittest.TestCase):
         expected_industry = pandas.Series(
             [0.7, 0.0, 0.0, 0.9, 0.0, 0.0],
             index=self.FREIGHT_DATA_INDEXES, name="industry")
-        pandas.util.testing.assert_series_equal(industry, expected_industry)
+        pandas.testing.assert_series_equal(industry, expected_industry)
