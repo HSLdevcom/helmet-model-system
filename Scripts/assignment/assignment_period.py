@@ -257,12 +257,17 @@ class AssignmentPeriod(Period):
         segres = self._segment_results
         for tc in segres:
             for res in segres[tc]:
-                nodeattr = self.extra(tc[:10]+"n_"+param.segment_results[res])
-                for segment in network.transit_segments():
-                    if res == "transit_volumes":
+                if res == "transit_volumes":
+                    for link in network.links():
+                        link[self.extra(tc)] = 0
+                    for segment in network.transit_segments():
                         if segment.link is not None:
                             segment.link[self.extra(tc)] += segment[segres[tc][res]]
-                    else:
+                else:
+                    nodeattr = self.extra(tc[:10]+"n_"+param.segment_results[res])
+                    for node in network.nodes():
+                        node[nodeattr] = 0
+                    for segment in network.transit_segments():
                         segment.i_node[nodeattr] += segment[segres[tc][res]]
         self.emme_scenario.publish_network(network)
 
