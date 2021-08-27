@@ -110,7 +110,7 @@ class ModelSystem:
                 purpose_impedance = self.imptrans.transform(
                     purpose, previous_iter_impedance)
                 purpose.calc_prob(purpose_impedance)
-                if is_last_iteration and purpose.name not in ("sop", "so"):
+                if is_last_iteration and purpose.dest != "source":
                     purpose.accessibility_model.calc_accessibility(
                         purpose_impedance)
         
