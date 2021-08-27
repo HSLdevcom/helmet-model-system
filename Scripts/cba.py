@@ -205,9 +205,9 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
     transit_mile_diff = (read(TRANSIT_KMS_FILE, scenario_1)
                          - read(TRANSIT_KMS_FILE, scenario_0))
     for mode in TRANSIT_AGGREGATIONS:
-        transit_mile_diff[mode] = 0
+        transit_mile_diff.loc[mode] = 0
         for submode in TRANSIT_AGGREGATIONS[mode]:
-            transit_mile_diff[mode] += transit_mile_diff[submode]
+            transit_mile_diff.loc[mode] += transit_mile_diff.loc[submode]
     ws = workbook["Tuottajahyodyt"]
     cols = CELL_INDICES["transit_miles"]["cols"]
     rows = CELL_INDICES["transit_miles"]["rows"][year]
