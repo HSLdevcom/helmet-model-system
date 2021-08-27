@@ -107,6 +107,7 @@ class AssignmentPeriod(Period):
         elif iteration==1:
             if not self._save_matrices:
                 self._set_car_and_transit_vdfs()
+                self._calc_background_traffic()
             self._assign_cars(param.stopping_criteria_coarse)
             self._calc_extra_wait_time()
             self._assign_transit()
@@ -120,15 +121,14 @@ class AssignmentPeriod(Period):
             self._calc_extra_wait_time()
             self._assign_transit()
         elif iteration=="last":
-            if not self._save_matrices:
-                self._set_car_and_transit_vdfs()
+            self._set_bike_vdfs()
+            self._assign_bikes(self.result_mtx["dist"]["bike"]["id"], "all")
+            self._set_car_and_transit_vdfs()
             self._calc_background_traffic()
             self._assign_cars(param.stopping_criteria_fine)
             self._calc_boarding_penalties(is_last_iteration=True)
             self._calc_extra_wait_time()
             self._assign_congested_transit()
-            self._set_bike_vdfs()
-            self._assign_bikes(self.result_mtx["dist"]["bike"]["id"], "all")
         else:
             raise ValueError("Iteration number not valid")
 
