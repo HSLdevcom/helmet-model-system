@@ -490,7 +490,7 @@ class AssignmentPeriod(Period):
                     freq += 60 / segment_hdw
             link[self.extra("bus")] = freq
             if link.type // 100 in param.bus_lane_link_codes[self.name]:
-                # Bus lane
+                # Bus lane or rail
                 link[background_traffic] = 0
             else:
                 link[background_traffic] = freq
