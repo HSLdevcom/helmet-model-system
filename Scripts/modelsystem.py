@@ -309,13 +309,12 @@ class ModelSystem:
             self.ass_model.aggregate_results(self.resultdata)
             self._calculate_noise_areas()
             self._calculate_accessibility_and_savu_zones()
+            self.resultdata.print_line("", "result_summary")
             self.resultdata.print_line("Mode shares", "result_summary")
             for mode in mode_shares:
                 self.resultdata.print_line(
                     "{}\t{:1.2%}".format(mode, mode_shares[mode]),
                     "result_summary")
-            self.resultdata.print_line("", "result_summary")
-            self.resultdata.print_line("Something else", "result_summary")
 
         # Reset time-period specific demand matrices (DTM), and empty result buffer
         self.dtm.init_demand()
@@ -354,11 +353,21 @@ class ModelSystem:
                     and purpose.dest != "source"
                     and not isinstance(purpose, SecDestPurpose)):
                 zone_numbers = purpose.zone_numbers
+                bounds = purpose.bounds
                 weight = gen_param.tour_generation[purpose.name]["population"]
                 logsum += weight * purpose.access
                 sust_logsum += weight * purpose.sustainable_access
                 car_logsum += weight * purpose.car_access
+        pop = self.zdata_forecast["population"][bounds]
+        self.resultdata.print_line(
+            "Total accessibility: {:1.2f}".format(
+                numpy.average(logsum, weights=pop)),
+            "result_summary")
         self.resultdata.print_data(logsum, "accessibility.txt", "all")
+        self.resultdata.print_line(
+            "Sustainable accessibility: {:1.2f}".format(
+                numpy.average(sust_logsum, weights=pop)),
+            "result_summary")
         self.resultdata.print_data(
             sust_logsum, "sustainable_accessibility.txt", "all")
         self.resultdata.print_data(car_logsum, "car_accessibility.txt", "all")

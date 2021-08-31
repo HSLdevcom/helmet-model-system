@@ -494,6 +494,10 @@ class AccessibilityModel(ModeDestModel):
             self.resultdata.print_data(
                 ZoneIntervals("areas").averages(workforce, workplaces),
                 "workforce_accessibility_per_area.txt", self.purpose.name)
+            self.resultdata.print_line(
+                "Workforce accessibility: {:1.0f}".format(
+                    numpy.average(workforce, weights=workplaces)),
+                "result_summary")
 
     def _add_constant(self, utility, b):
         """Add constant term to utility.
