@@ -483,20 +483,21 @@ class AssignmentPeriod(Period):
         # calc @bus and data3
         heavy = (self.extra("truck"), self.extra("trailer_truck"))
         for link in network.links():
-            freq = 0
-            for segment in link.segments():
-                segment_hdw = segment.line[self.extra("hw")]
-                if 0 < segment_hdw < 900:
-                    freq += 60 / segment_hdw
-            link[self.extra("bus")] = freq
-            if link.type // 100 in param.bus_lane_link_codes[self.name]:
-                # Bus lane or rail
-                link[background_traffic] = 0
-            else:
-                link[background_traffic] = freq
-            if include_trucks:
-                for ass_class in heavy:
-                    link[background_traffic] += link[ass_class]
+            if link.type > 100: # If car or bus link
+                freq = 0
+                for segment in link.segments():
+                    segment_hdw = segment.line[self.extra("hw")]
+                    if 0 < segment_hdw < 900:
+                        freq += 60 / segment_hdw
+                link[self.extra("bus")] = freq
+                if link.type // 100 in param.bus_lane_link_codes[self.name]:
+                    # Bus lane
+                    link[background_traffic] = 0
+                else:
+                    link[background_traffic] = freq
+                if include_trucks:
+                    for ass_class in heavy:
+                        link[background_traffic] += link[ass_class]
         self.emme_scenario.publish_network(network)
 
     def _calc_road_cost(self):

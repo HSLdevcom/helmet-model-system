@@ -142,9 +142,9 @@ volume_delay_funcs = {
 # Code derived from three-digit link type xyz, where x is the bus lane code,
 # 2 means that bus lane is active during aht and iht periods, etc.
 bus_lane_link_codes = {
-    "aht": (0, 2, 3, 4, 6),
-    "pt": (0, 3, 6),
-    "iht": (0, 2, 3, 5, 6),
+    "aht": (2, 3, 4, 6),
+    "pt": (3, 6),
+    "iht": (2, 3, 5, 6),
 }
 # Bus lane delay equivalent to 1.5 km per link
 buslane_delay = 60 * 1.5
