@@ -110,8 +110,8 @@ areas = {
         (12000, 12999),
         (15000, 15499),
     ),
-    "peripheral": (16000, 30999),
-    "external": (31031, None),
+    "peripheral": (16000, 31999),
+    "external": (34031, None),
 }
 municipalities = {
     "Helsinki": (0, 1999),
