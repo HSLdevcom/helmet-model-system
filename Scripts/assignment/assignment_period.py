@@ -134,10 +134,12 @@ class AssignmentPeriod(Period):
 
         mtxs = {imp_type: self._get_emmebank_matrices(imp_type, iteration=="last")
             for imp_type in ("time", "cost", "dist")}
-        # fix the emme path analysis results (dist and cost zero if path not found)
-        for mtx_type in mtxs:
+        # fix the emme path analysis results
+        # (dist and cost zero if path not found)
+        for mtx_type in ("cost", "dist"):
             for mtx_class in mtxs[mtx_type]:
-                mtxs[mtx_type][mtx_class][ mtxs["time"][mtx_class] > 999999 ] = 999999
+                path_not_found = mtxs["time"][mtx_class] > 999999
+                mtxs[mtx_type][mtx_class][path_not_found] = 999999
         # adjust impedance
         mtxs["time"]["bike"] = mtxs["time"]["bike"].clip(None, 9999.)
         for ass_class in ("car_work", "car_leisure"):
