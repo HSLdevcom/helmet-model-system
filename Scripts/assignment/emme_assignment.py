@@ -154,7 +154,7 @@ class EmmeAssignmentModel(AssignmentModel):
         # Aggregate and print vehicle kms and link lengths
         vdfs = {param.roadclasses[linktype].volume_delay_func
             for linktype in param.roadclasses}
-        vdfs.add(0)
+        vdfs.add(0) # Links with car traffic prohibited
         vdf_kms = {ass_class: pandas.Series(0.0, vdfs)
             for ass_class in ass_classes}
         areas = zone_param.area_aggregation
