@@ -138,7 +138,7 @@ class AssignmentPeriod(Period):
         # (dist and cost zero if path not found)
         for mtx_type in ("cost", "dist"):
             for mtx_class in mtxs[mtx_type]:
-                path_not_found = mtxs["time"][mtx_class] >= 999999
+                path_not_found = mtxs["time"][mtx_class] > 999999
                 mtxs[mtx_type][mtx_class][path_not_found] = 999999
         # adjust impedance
         mtxs["time"]["bike"] = mtxs["time"]["bike"].clip(None, 9999.)
