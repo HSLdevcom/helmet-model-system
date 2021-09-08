@@ -152,6 +152,7 @@ class EmmeAssignmentModel(AssignmentModel):
             self._link_24h(ass_class)
 
         # Aggregate and print vehicle kms and link lengths
+        kms = dict.fromkeys(ass_classes, 0.0)
         vdfs = {param.roadclasses[linktype].volume_delay_func
             for linktype in param.roadclasses}
         vdf_kms = {ass_class: pandas.Series(0.0, vdfs)
@@ -180,6 +181,7 @@ class EmmeAssignmentModel(AssignmentModel):
             area = belongs_to_area(link.i_node)
             for ass_class in ass_classes:
                 veh_kms = link[self._extra(ass_class)] * link.length
+                kms[ass_class] += veh_kms
                 if vdf in vdfs:
                     vdf_kms[ass_class][vdf] += veh_kms
                 if area in areas:
@@ -194,7 +196,12 @@ class EmmeAssignmentModel(AssignmentModel):
             s = "Municipality KELA code not found for nodes: " + ", ".join(
                 faulty_kela_code_nodes)
             log.warn(s)
+        resultdata.print_line("", "result_summary")
+        resultdata.print_line("Vehicle kilometres", "result_summary")
         for ass_class in ass_classes:
+            resultdata.print_line(
+                "{}: {:1.0f}".format(ass_class, kms[ass_class]),
+                "result_summary")
             resultdata.print_data(
                 vdf_kms[ass_class], "vehicle_kms_vdfs.txt", ass_class)
             resultdata.print_data(
