@@ -196,8 +196,7 @@ class EmmeAssignmentModel(AssignmentModel):
             s = "Municipality KELA code not found for nodes: " + ", ".join(
                 faulty_kela_code_nodes)
             log.warn(s)
-        resultdata.print_line("", "result_summary")
-        resultdata.print_line("Vehicle kilometres", "result_summary")
+        resultdata.print_line("\nVehicle kilometres", "result_summary")
         for ass_class in ass_classes:
             resultdata.print_line(
                 "{}: {:1.0f}".format(ass_class, kms[ass_class]),

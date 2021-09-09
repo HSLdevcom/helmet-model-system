@@ -288,6 +288,9 @@ class ModelSystem:
         for mode in tour_sum:
             self.resultdata.print_data(
                 ar.aggregate(trip_sum[mode]), "trips_areas.txt", mode)
+        self.resultdata.print_line("\nAssigned demand", "result_summary")
+        self.resultdata.print_line(
+            "\t" + "\t".join(param.transport_classes), "result_summary")
 
         # Add vans and save demand matrices
         for ap in self.ass_model.assignment_periods:
@@ -309,8 +312,7 @@ class ModelSystem:
             self.ass_model.aggregate_results(self.resultdata)
             self._calculate_noise_areas()
             self._calculate_accessibility_and_savu_zones()
-            self.resultdata.print_line("", "result_summary")
-            self.resultdata.print_line("Mode shares", "result_summary")
+            self.resultdata.print_line("\nMode shares", "result_summary")
             for mode in mode_shares:
                 self.resultdata.print_line(
                     "{}\t{:1.2%}".format(mode, mode_shares[mode]),
@@ -323,10 +325,14 @@ class ModelSystem:
 
     def _save_demand_to_omx(self, tp):
         zone_numbers = self.ass_model.zone_numbers
+        demand_sum_string = tp
         with self.resultmatrices.open("demand", tp, zone_numbers, 'w') as mtx:
-            for ass_class in self.dtm.demand[tp]:
-                mtx[ass_class] = self.dtm.demand[tp][ass_class]
-            log.info("Saved demand matrices for " + str(tp))
+            for ass_class in param.transport_classes:
+                demand = self.dtm.demand[tp][ass_class]
+                mtx[ass_class] = demand
+                demand_sum_string += "\t{:8.0f}".format(demand.sum())
+        self.resultdata.print_line(demand_sum_string, "result_summary")
+        log.info("Saved demand matrices for " + str(tp))
 
     def _save_to_omx(self, impedance, tp):
         zone_numbers = self.ass_model.zone_numbers
@@ -360,7 +366,7 @@ class ModelSystem:
                 car_logsum += weight * purpose.car_access
         pop = self.zdata_forecast["population"][bounds]
         self.resultdata.print_line(
-            "Total accessibility: {:1.2f}".format(
+            "\nTotal accessibility: {:1.2f}".format(
                 numpy.average(logsum, weights=pop)),
             "result_summary")
         self.resultdata.print_data(logsum, "accessibility.txt", "all")
