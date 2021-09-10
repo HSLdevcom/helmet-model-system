@@ -366,12 +366,12 @@ class ModelSystem:
                 car_logsum += weight * purpose.car_access
         pop = self.zdata_forecast["population"][bounds]
         self.resultdata.print_line(
-            "\nTotal accessibility: {:1.2f}".format(
+            "\nTotal accessibility:\t{:1.2f}".format(
                 numpy.average(logsum, weights=pop)),
             "result_summary")
         self.resultdata.print_data(logsum, "accessibility.txt", "all")
         self.resultdata.print_line(
-            "Sustainable accessibility: {:1.2f}".format(
+            "Sustainable accessibility:\t{:1.2f}".format(
                 numpy.average(sust_logsum, weights=pop)),
             "result_summary")
         self.resultdata.print_data(

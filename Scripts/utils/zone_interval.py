@@ -140,6 +140,7 @@ class ZoneIntervals:
             Aggregated array
         """
         aggregation = pandas.Series(index=self.keys)
+        aggregation["all"] = numpy.average(array, weights=weights)
         for area in self:
             i = self._get_slice(area, array.index)
             w = weights.loc[i]

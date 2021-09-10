@@ -492,8 +492,6 @@ class AccessibilityModel(ModeDestModel):
                 workforce, "workplace_accessibility.txt", self.purpose.name)
             workplaces = self.zone_data["workplaces"][self.bounds]
             aggregate = ZoneIntervals("areas").averages(workforce, workplaces)
-            average = numpy.average(workforce, weights=workplaces)
-            aggregate["all"] = average
             self.resultdata.print_data(
                 aggregate, "workplace_accessibility_areas.txt",
                 self.purpose.name)
@@ -502,7 +500,8 @@ class AccessibilityModel(ModeDestModel):
                 "wh": "Workforce accessibility",
             }
             self.resultdata.print_line(
-                "{}: {:1.0f}".format(names[self.purpose.name], average),
+                "{}:\t{:1.0f}".format(
+                    names[self.purpose.name], aggregate["all"]),
                 "result_summary")
 
     def _add_constant(self, utility, b):

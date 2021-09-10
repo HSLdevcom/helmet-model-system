@@ -203,7 +203,7 @@ class EmmeAssignmentModel(AssignmentModel):
         resultdata.print_line("\nVehicle kilometres", "result_summary")
         for ass_class in ass_classes:
             resultdata.print_line(
-                "{}: {:1.0f}".format(ass_class, kms[ass_class]),
+                "{}:\t{:1.0f}".format(ass_class, kms[ass_class]),
                 "result_summary")
             resultdata.print_data(
                 vdf_kms[ass_class], "vehicle_kms_vdfs.txt", ass_class)
