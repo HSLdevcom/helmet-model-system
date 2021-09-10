@@ -155,6 +155,7 @@ class EmmeAssignmentModel(AssignmentModel):
         kms = dict.fromkeys(ass_classes, 0.0)
         vdfs = {param.roadclasses[linktype].volume_delay_func
             for linktype in param.roadclasses}
+        vdfs.add(0) # Links with car traffic prohibited
         vdf_kms = {ass_class: pandas.Series(0.0, vdfs)
             for ass_class in ass_classes}
         areas = zone_param.area_aggregation
@@ -167,6 +168,7 @@ class EmmeAssignmentModel(AssignmentModel):
         for linktype in param.roadtypes:
             linktypes.add(param.roadtypes[linktype])
         linklengths = pandas.Series(0.0, linktypes)
+        soft_modes = param.transit_classes + ("bike",)
         network = self.day_scenario.get_network()
         for link in network.links():
             linktype = link.type % 100
@@ -186,7 +188,9 @@ class EmmeAssignmentModel(AssignmentModel):
                     vdf_kms[ass_class][vdf] += veh_kms
                 if area in areas:
                     area_kms[ass_class][area] += veh_kms
-                if vdf in vdfs and area in vdf_area_kms[vdf]:
+                if (vdf in vdfs
+                        and area in vdf_area_kms[vdf]
+                        and ass_class not in soft_modes):
                     vdf_area_kms[vdf][area] += veh_kms
             if vdf == 0 and linktype in param.railtypes:
                 linklengths[param.railtypes[linktype]] += link.length
