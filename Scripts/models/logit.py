@@ -480,7 +480,7 @@ class AccessibilityModel(ModeDestModel):
                                    * self.zone_data[self.purpose.name + "_c"])
 
         # Calculate workplace-based accessibility
-        if self.purpose.name in ("wo", "wh"):
+        if self.purpose.name in ("hw", "wh"):
             # Transform into person equivalents
             param = self.mode_choice_param
             normalization = 1 / sum([param[mode]["constant"][0]
@@ -496,7 +496,7 @@ class AccessibilityModel(ModeDestModel):
                 aggregate, "workplace_accessibility_areas.txt",
                 self.purpose.name)
             names = {
-                "wo": "Workplace effective density",
+                "hw": "Workplace effective density",
                 "wh": "Workforce accessibility",
             }
             self.resultdata.print_line(
