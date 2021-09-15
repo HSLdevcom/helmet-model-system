@@ -479,8 +479,8 @@ class AccessibilityModel(ModeDestModel):
         self.purpose.car_access = (money_utility
                                    * self.zone_data[self.purpose.name + "_c"])
 
-        # Calculate workforce accessibility
-        if self.purpose.name == "wh":
+        # Calculate workplace-based accessibility
+        if self.purpose.name in ("hw", "wh"):
             # Transform into person equivalents
             param = self.mode_choice_param
             normalization = 1 / sum([param[mode]["constant"][0]
@@ -489,11 +489,20 @@ class AccessibilityModel(ModeDestModel):
                             **(1/param["car"]["log"]["logsum"]))
             workforce = pandas.Series(workforce, self.purpose.zone_numbers)
             self.resultdata.print_data(
-                workforce, "workforce_accessibility.txt", self.purpose.name)
+                workforce, "workplace_accessibility.txt", self.purpose.name)
             workplaces = self.zone_data["workplaces"][self.bounds]
+            aggregate = ZoneIntervals("areas").averages(workforce, workplaces)
             self.resultdata.print_data(
-                ZoneIntervals("areas").averages(workforce, workplaces),
-                "workforce_accessibility_per_area.txt", self.purpose.name)
+                aggregate, "workplace_accessibility_areas.txt",
+                self.purpose.name)
+            names = {
+                "hw": "Workplace effective density",
+                "wh": "Workforce accessibility",
+            }
+            self.resultdata.print_line(
+                "{}:\t{:1.0f}".format(
+                    names[self.purpose.name], aggregate["all"]),
+                "result_summary")
 
     def _add_constant(self, utility, b):
         """Add constant term to utility.
