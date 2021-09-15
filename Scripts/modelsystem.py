@@ -73,6 +73,7 @@ class ModelSystem:
         self.cdm = CarDensityModel(
             self.zdata_base, self.zdata_forecast, bounds, self.resultdata)
         self.mode_share = []
+        self.convergence = pandas.DataFrame()
         self.trucks = self.fm.calc_freight_traffic("truck")
         self.trailer_trucks = self.fm.calc_freight_traffic("trailer_truck")
 
@@ -318,8 +319,13 @@ class ModelSystem:
                     "{}\t{:1.2%}".format(mode, mode_shares[mode]),
                     "result_summary")
 
-        # Reset time-period specific demand matrices (DTM), and empty result buffer
-        self.dtm.init_demand()
+        # Reset time-period specific demand matrices (DTM),
+        # and empty result buffer
+        gap = self.dtm.init_demand()
+        log.info("Demand model convergence in iteration {} is {:1.5f}".format(
+            iteration, gap["rel_gap"]))
+        self.convergence = self.convergence.append(gap, ignore_index=True)
+        self.resultdata._df_buffer["demand_convergence.txt"] = self.convergence
         self.resultdata.flush()
         return impedance
 
