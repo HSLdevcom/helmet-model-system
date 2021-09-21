@@ -144,9 +144,9 @@ class EmmeAssignmentModel(AssignmentModel):
             for res in param.segment_results:
                 self._transit_segment_24h(
                     transit_class, param.segment_results[res])
-            if res != "transit_volumes":
-                self._node_24h(
-                    transit_class, param.segment_results[res])
+                if res != "transit_volumes":
+                    self._node_24h(
+                        transit_class, param.segment_results[res])
         ass_classes = list(param.emme_demand_mtx) + ["bus"]
         for ass_class in ass_classes:
             self._link_24h(ass_class)
