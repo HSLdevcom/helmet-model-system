@@ -272,14 +272,12 @@ class AssignmentPeriod(Period):
         log.info("Sets car and transit functions for scenario {}".format(
             self.emme_scenario.id))
         network = self.emme_scenario.get_network()
-        l = min(param.roadclasses)
-        u = max(param.roadclasses) + 1
         transit_modesets = {modes[0]: {network.mode(m) for m in modes[1]}
             for modes in param.transit_delay_funcs}
         for link in network.links():
             # Car volume delay function definition
             linktype = link.type % 100
-            if l <= linktype < u:
+            if linktype in param.roadclasses:
                 # Car link with standard attributes
                 roadclass = param.roadclasses[linktype]
                 link.volume_delay_func = roadclass.volume_delay_func
@@ -288,14 +286,12 @@ class AssignmentPeriod(Period):
             elif linktype in param.custom_roadtypes:
                 # Custom car link
                 link.volume_delay_func = linktype - 90
-                for linktype in range(l, u):
+                for linktype in param.roadclasses:
                     roadclass = param.roadclasses[linktype]
                     if (link.volume_delay_func == roadclass.volume_delay_func
                             and link.data2 > roadclass.free_flow_speed-1):
                         # Find the most appropriate road class
                         break
-            elif linktype in param.connector_link_types:
-                link.volume_delay_func = 99
             else:
                 # Link with no car traffic
                 link.volume_delay_func = 0
