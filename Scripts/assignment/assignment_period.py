@@ -741,6 +741,11 @@ class AssignmentPeriod(Period):
     def _assign_congested_transit(self):
         """Perform congested transit assignment for one scenario."""
         log.info("Congested transit assignment started...")
+        network = self.emme_scenario.get_network()
+        headway_attr = self.extra("hw")
+        for line in network.transit_lines():
+            line.headway = line[headway_attr]
+        self.emme_scenario.publish_network(network)
         specs = self._transit_specs
         for tc in specs:
             specs[tc].transit_spec["journey_levels"][1]["boarding_cost"]["global"]["penalty"] = param.transfer_penalty[tc]
