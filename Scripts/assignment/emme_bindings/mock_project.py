@@ -309,7 +309,7 @@ class MockProject:
             "TRANSIT_SEGMENT", "@base_timtr", "", 1.0,
             overwrite=True, scenario=scenario)
         report = {
-            "stopping_criterion": "MAX_ITERATIONS",
+            "stopping_criteria": "MAX_ITERATIONS",
             "iterations": [{"number": 1}],
         }
         return report
