@@ -360,6 +360,7 @@ class ModelSystem:
         logsum = 0
         sust_logsum = 0
         car_logsum = 0
+        central_access = 0
         for purpose in self.dm.tour_purposes:
             if (purpose.area == "metropolitan" and purpose.orig == "home"
                     and purpose.dest != "source"
@@ -370,6 +371,7 @@ class ModelSystem:
                 logsum += weight * purpose.access
                 sust_logsum += weight * purpose.sustainable_access
                 car_logsum += weight * purpose.car_access
+                central_access += weight * purpose.central_access
         pop = self.zdata_forecast["population"][bounds]
         self.resultdata.print_line(
             "\nTotal accessibility:\t{:1.2f}".format(
@@ -383,6 +385,8 @@ class ModelSystem:
         self.resultdata.print_data(
             sust_logsum, "sustainable_accessibility.txt", "all")
         self.resultdata.print_data(car_logsum, "car_accessibility.txt", "all")
+        self.resultdata.print_data(
+            central_access, "central_transit_access.txt", "all")
         savu = numpy.searchsorted(zone_param.savu_intervals, sust_logsum) + 1
         self.resultdata.print_data(
             pandas.Series(savu, zone_numbers), "savu.txt", "savu_zone")

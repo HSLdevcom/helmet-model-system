@@ -457,6 +457,30 @@ class AccessibilityModel(ModeDestModel):
                 Type (time/cost/dist) : numpy 2-d matrix
                     Impedances
         """
+        # Calculate cbd transit access
+        time_param = self.dest_choice_param["transit"]["impedance"]["time"]
+        try:
+            cost_param = self.dest_choice_param["transit"]["impedance"]["cost"]
+        except KeyError:
+            # School tours do not have a constant cost parameter
+            # Use value of time conversion from CBA guidelines instead
+            cost_param = -0.274445953
+        try:
+            time_access = time_param * impedance["transit"]["time"][:, 0]
+        except ValueError:
+            time_access = time_param[0] * impedance["transit"]["time"][:, 0]
+        try:
+            cost_access = cost_param * impedance["transit"]["cost"][:, 0]
+            money_utility = 1 / cost_param
+        except ValueError:
+            cost_access = cost_param[0] * impedance["transit"]["cost"][:, 0]
+            money_utility = 1 / cost_param[0]
+        central_access = pandas.Series(
+            time_access + cost_access, self.purpose.zone_numbers)
+        self.resultdata.print_data(
+            central_access, "central_transit_access.txt", self.purpose.name)
+        self.purpose.central_access = money_utility * central_access
+
         mode_expsum = self._calc_utils(impedance)
 
         # Calculate sustainable and car accessibility
