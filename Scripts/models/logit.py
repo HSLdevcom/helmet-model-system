@@ -464,7 +464,6 @@ class AccessibilityModel(ModeDestModel):
         except KeyError:
             # School tours do not have a constant cost parameter
             # Use value of time conversion from CBA guidelines instead
-            # TODO Calculate value
             cost_param = -0.274445953
         try:
             time_access = time_param * impedance["transit"]["time"][:, 0]
@@ -476,11 +475,12 @@ class AccessibilityModel(ModeDestModel):
         except ValueError:
             cost_access = cost_param[0] * impedance["transit"]["cost"][:, 0]
             money_utility = 1 / cost_param[0]
-        central_access = time_access + cost_access
+        central_access = pandas.Series(
+            time_access + cost_access, self.purpose.zone_numbers)
         self.resultdata.print_data(
-            pandas.Series(central_access, self.purpose.zone_numbers),
-            "central_transit_access.txt", self.purpose.name)
+            central_access, "central_transit_access.txt", self.purpose.name)
         self.purpose.central_access = money_utility * central_access
+
         mode_expsum = self._calc_utils(impedance)
 
         # Calculate sustainable and car accessibility
