@@ -103,6 +103,10 @@ def main(args):
             log.error(
                 "Fatal error occured, simulation aborted.", extra=log_extra)
             break
+        gap = model.convergence.iloc[-1, :] # Last iteration convergence
+        if gap["max_gap"] < args.max_gap or gap["rel_gap"] < args.rel_gap:
+            log_extra["status"]['state'] = 'finished'
+            break
         if i == iterations:
             log_extra["status"]['state'] = 'finished'
     # delete emme strategy files for scenarios 
@@ -221,7 +225,19 @@ if __name__ == "__main__":
         dest="iterations",
         type=int,
         default=config.ITERATION_COUNT,
-        help="Number of demand model iterations to run (each using re-calculated impedance from traffic and transit assignment)."),
+        help="Maximum number of demand model iterations to run (each using re-calculated impedance from traffic and transit assignment)."),
+    parser.add_argument(
+        "--max-gap",
+        dest="max_gap",
+        type=float,
+        default=config.MAX_GAP,
+        help="Car work matrix maximum change between iterations"),
+    parser.add_argument(
+        "--rel-gap",
+        dest="rel_gap",
+        type=float,
+        default=config.REL_GAP,
+        help="Car work matrix relative change between iterations"),
     parser.add_argument(
         "--use-fixed-transit-cost",
         dest="use_fixed_transit_cost",
@@ -243,6 +259,8 @@ if __name__ == "__main__":
     log.debug('baseline_data_path=' + args.baseline_data_path)
     log.debug('forecast_data_path=' + args.forecast_data_path)
     log.debug('iterations=' + str(args.iterations))
+    log.debug('max_gap=' + str(args.max_gap))
+    log.debug('rel_gap=' + str(args.rel_gap))
     log.debug('use_fixed_transit_cost=' + str(args.use_fixed_transit_cost))
     log.debug('save_matrices=' + str(args.save_matrices))
     log.debug('del_strat_files=' + str(args.del_strat_files))

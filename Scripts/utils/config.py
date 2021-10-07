@@ -53,6 +53,18 @@ class Config:
     def ITERATION_COUNT(self, value): self.__set_value("ITERATION_COUNT", value)
 
     @property
+    def MAX_GAP(self): return self.__get_value("MAX_GAP")
+
+    @MAX_GAP.setter
+    def MAX_GAP(self, value): self.__set_value("MAX_GAP", value)
+
+    @property
+    def REL_GAP(self): return self.__get_value("REL_GAP")
+
+    @REL_GAP.setter
+    def REL_GAP(self, value): self.__set_value("REL_GAP", value)
+
+    @property
     def RUN_AGENT_SIMULATION(self): return self.__get_value("RUN_AGENT_SIMULATION")
 
     @RUN_AGENT_SIMULATION.setter
