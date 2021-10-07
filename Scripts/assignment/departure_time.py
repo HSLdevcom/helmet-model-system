@@ -44,7 +44,7 @@ class DepartureTimeModel:
         max_gap = numpy.abs(car_demand - self.old_car_demand).max()
         try:
             old_sum = self.old_car_demand.sum()
-            relative_gap = (car_demand.sum()-old_sum) / old_sum
+            relative_gap = abs((car_demand.sum()-old_sum) / old_sum)
         except AttributeError:
             relative_gap = 0
         self.old_car_demand = car_demand
