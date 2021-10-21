@@ -60,7 +60,7 @@ class Config:
         self.SAVE_MATRICES_IN_EMME = False
         self.DELETE_STRATEGY_FILES = False
         self.USE_FIXED_TRANSIT_COST = False
-        for key in config.pop("SET_TRUE"):
+        for key in config.pop("OPTIONAL_FLAGS"):
             self.__dict__[key] = True
         for key in config:
             self.__dict__[key] = config[key]
