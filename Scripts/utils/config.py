@@ -3,141 +3,74 @@ import json
 import subprocess
 
 
+def read_from_file(
+        path=os.path.join(os.path.dirname(
+            os.path.realpath(__file__)), "..", "dev-config.json")):
+    """Read config parameters from json file.
+
+    Parameters
+    ----------
+    path : str (optional)
+        Path where json file is found (default: Scripts/dev-config.json)
+
+    Returns
+    -------
+    Config
+        Config object with parameters set from file
+    """
+    with open(path, 'r') as file:
+        config = json.load(file)
+    return Config(config)
+
+
 class Config:
+    """Container for config parameters.
 
-    DefaultScenario = "helmet"
+    The parameters are object variables with CAPS_LOCK,
+    which means they should not be modified.
+    For clarity the normally used parameters are explicitly initialized
+    (to None). However, during `Config` initialization, these variables are
+    read from a dictionary and hence strictly speaking modified once.
 
-    def __init__(self):
-        self.__config = {}
+    Parameters
+    ----------
+    config : dict
+        key : str
+            Parameter name (e.g., HELMET_VERSION)
+        value : str/bool/int/float
+            Parameter value
+    """
 
-    @staticmethod
-    def read_from_file(path=os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "dev-config.json")):
-        instance = Config()
-        with open(path, 'r') as f:
-            instance.__config = json.load(f)
-        return instance
-
-    def __get_value(self, key):
-        # Lookup from explicitly set values
-        if key in self.__config:
-            return self.__config[key]
-        # As backup, try lookup from environment variables
-        elif os.environ.get(key, None) is not None:
-            return os.environ[key]
-        # Else raise KeyError since the config was instantiated without setting the key
-        else:
-            raise KeyError("Tried to lookup Config.{} which isn't set and doesn't exist in environment variables".format(key))
-
-    def __set_value(self, key, value):
-        self.__config[key] = value
+    def __init__(self, config):
+        self.HELMET_VERSION = None
+        self.SCENARIO_NAME = None
+        self.ITERATION_COUNT = None
+        self.MAX_GAP = None
+        self.REL_GAP = None
+        self.LOG_LEVEL = None
+        self.LOG_FORMAT = None
+        self.BASELINE_DATA_PATH = None
+        self.FORECAST_DATA_PATH = None
+        self.RESULTS_PATH = None
+        self.EMME_PROJECT_PATH = None
+        self.FIRST_SCENARIO_ID = None
+        self.FIRST_MATRIX_ID = None
+        self.RUN_AGENT_SIMULATION = False
+        self.DO_NOT_USE_EMME = False
+        self.SAVE_MATRICES_IN_EMME = False
+        self.DELETE_STRATEGY_FILES = False
+        self.USE_FIXED_TRANSIT_COST = False
+        for key in config.pop("SET_TRUE"):
+            self.__dict__[key] = True
+        for key in config:
+            self.__dict__[key] = config[key]
 
     @property
-    def HELMET_VERSION(self):
+    def VERSION(self):
+        """HELMET version number from git tag or dev_config.json."""
         try:
             # If model system is in a git repo
             return subprocess.check_output(["git", "describe", "--tags"])
         except (subprocess.CalledProcessError, WindowsError):
             # If model system is downloaded with helmet-ui
-            return self.__get_value("HELMET_VERSION")
-
-    @property
-    def SCENARIO_NAME(self): return self.__get_value("SCENARIO_NAME")
-
-    @SCENARIO_NAME.setter
-    def SCENARIO_NAME(self, value): self.__set_value("SCENARIO_NAME", value)
-
-    @property
-    def ITERATION_COUNT(self): return self.__get_value("ITERATION_COUNT")
-
-    @ITERATION_COUNT.setter
-    def ITERATION_COUNT(self, value): self.__set_value("ITERATION_COUNT", value)
-
-    @property
-    def MAX_GAP(self): return self.__get_value("MAX_GAP")
-
-    @MAX_GAP.setter
-    def MAX_GAP(self, value): self.__set_value("MAX_GAP", value)
-
-    @property
-    def REL_GAP(self): return self.__get_value("REL_GAP")
-
-    @REL_GAP.setter
-    def REL_GAP(self, value): self.__set_value("REL_GAP", value)
-
-    @property
-    def RUN_AGENT_SIMULATION(self): return self.__get_value("RUN_AGENT_SIMULATION")
-
-    @RUN_AGENT_SIMULATION.setter
-    def RUN_AGENT_SIMULATION(self, value): self.__set_value("RUN_AGENT_SIMULATION", value)
-
-    @property
-    def USE_EMME(self): return self.__get_value("USE_EMME")
-
-    @USE_EMME.setter
-    def USE_EMME(self, value): self.__set_value("USE_EMME", value)
-
-    @property
-    def SAVE_MATRICES_IN_EMME(self): return self.__get_value("SAVE_MATRICES_IN_EMME")
-
-    @SAVE_MATRICES_IN_EMME.setter
-    def SAVE_MATRICES_IN_EMME(self, value): self.__set_value("SAVE_MATRICES_IN_EMME", value)
-
-    @property
-    def DELETE_STRATEGY_FILES(self): return self.__get_value("DELETE_STRATEGY_FILES")
-
-    @DELETE_STRATEGY_FILES.setter
-    def DELETE_STRATEGY_FILES(self, value): self.__set_value("DELETE_STRATEGY_FILES", value)
-
-    @property
-    def LOG_LEVEL(self): return self.__get_value("LOG_LEVEL")
-
-    @LOG_LEVEL.setter
-    def LOG_LEVEL(self, value): self.__set_value("LOG_LEVEL", value)
-
-    @property
-    def LOG_FORMAT(self): return self.__get_value("LOG_FORMAT")
-
-    @LOG_FORMAT.setter
-    def LOG_FORMAT(self, value): self.__set_value("LOG_FORMAT", value)
-
-    @property
-    def BASELINE_DATA_PATH(self): return self.__get_value("BASELINE_DATA_PATH")
-
-    @BASELINE_DATA_PATH.setter
-    def BASELINE_DATA_PATH(self, value): self.__set_value("BASELINE_DATA_PATH", value)
-
-    @property
-    def FORECAST_DATA_PATH(self): return self.__get_value("FORECAST_DATA_PATH")
-
-    @FORECAST_DATA_PATH.setter
-    def FORECAST_DATA_PATH(self, value): self.__set_value("FORECAST_DATA_PATH", value)
-
-    @property
-    def RESULTS_PATH(self): return self.__get_value("RESULTS_PATH")
-
-    @RESULTS_PATH.setter
-    def RESULTS_PATH(self, value): self.__set_value("RESULTS_PATH", value)
-
-    @property
-    def EMME_PROJECT_PATH(self): return self.__get_value("EMME_PROJECT_PATH")
-
-    @EMME_PROJECT_PATH.setter
-    def EMME_PROJECT_PATH(self, value): self.__set_value("EMME_PROJECT_PATH", value)
-
-    @property
-    def USE_FIXED_TRANSIT_COST(self): return self.__get_value("USE_FIXED_TRANSIT_COST")
-
-    @USE_FIXED_TRANSIT_COST.setter
-    def USE_FIXED_TRANSIT_COST(self, value): self.__set_value("USE_FIXED_TRANSIT_COST", value)
-
-    @property
-    def FIRST_SCENARIO_ID(self): return self.__get_value("FIRST_SCENARIO_ID")
-
-    @FIRST_SCENARIO_ID.setter
-    def FIRST_SCENARIO_ID(self, value): self.__set_value("FIRST_SCENARIO_ID", value)
-
-    @property
-    def FIRST_MATRIX_ID(self): return self.__get_value("FIRST_MATRIX_ID")
-
-    @FIRST_MATRIX_ID.setter
-    def FIRST_MATRIX_ID(self, value): self.__set_value("FIRST_MATRIX_ID", value)
+            return self.HELMET_VERSION

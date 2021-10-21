@@ -3,7 +3,7 @@ import sys
 import os
 from glob import glob
 
-from utils.config import Config
+import utils.config
 import utils.log as log
 from assignment.emme_assignment import EmmeAssignmentModel
 from assignment.mock_assignment import MockAssignmentModel
@@ -12,8 +12,6 @@ from datahandling.matrixdata import MatrixData
 
 
 def main(args):
-    name = (args.scenario_name if args.scenario_name is not None
-        else Config.DefaultScenario)
     iterations = args.iterations
     base_zonedata_path = os.path.join(args.baseline_data_path, "2016_zonedata")
     base_matrices_path = os.path.join(args.baseline_data_path, "base_matrices")
@@ -22,7 +20,7 @@ def main(args):
     emme_project_path = args.emme_path
     log_extra = {
         "status": {
-            "name": name,
+            "name": args.scenario_name,
             "state": "starting",
             "current": 0,
             "completed": 0,
@@ -73,11 +71,11 @@ def main(args):
     if args.is_agent_model:
         model = AgentModelSystem(
             forecast_zonedata_path, base_zonedata_path, base_matrices_path,
-            results_path, ass_model, name)
+            results_path, ass_model, args.scenario_name)
     else:
         model = ModelSystem(
             forecast_zonedata_path, base_zonedata_path, base_matrices_path,
-            results_path, ass_model, name)
+            results_path, ass_model, args.scenario_name)
     log_extra["status"]["results"] = model.mode_share
 
     # Run traffic assignment simulation for N iterations,
@@ -109,7 +107,7 @@ def main(args):
             break
         if i == iterations:
             log_extra["status"]['state'] = 'finished'
-    # delete emme strategy files for scenarios 
+    # delete emme strategy files for scenarios
     if args.del_strat_files:
         dbase_path = os.path.join(os.path.dirname(emme_project_path), "database")
         filepath = os.path.join(dbase_path, "STRAT_s{}*")
@@ -129,142 +127,112 @@ def main(args):
 if __name__ == "__main__":
     # Initially read defaults from config file ("dev-config.json")
     # but allow override via command-line arguments
-    config = Config().read_from_file()
+    config = utils.config.read_from_file()
     parser = ArgumentParser(epilog="HELMET model system entry point script.")
     parser.add_argument(
         "--version",
         action="version",
-        version="helmet " + str(config.HELMET_VERSION))
+        version="helmet " + str(config.VERSION))
     # Logging
     parser.add_argument(
         "--log-level",
-        dest="log_level",
         choices={"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"},
         default=config.LOG_LEVEL,
     )
     parser.add_argument(
         "--log-format",
-        dest="log_format",
         choices={"TEXT", "JSON"},
         default=config.LOG_FORMAT,
     )
     # HELMET scenario metadata
     parser.add_argument(
-        "--run-agent-simulation",
+        "-a", "--run-agent-simulation",
         dest="is_agent_model",
         action="store_true",
         default=config.RUN_AGENT_SIMULATION,
         help="Using this flag runs agent simulations instead of aggregate model.",
     )
     parser.add_argument(
-        "--do-not-use-emme",
-        dest="do_not_use_emme",
+        "-m", "--do-not-use-emme",
         action="store_true",
-        default=(not config.USE_EMME),
+        default=config.DO_NOT_USE_EMME,
         help="Using this flag runs with MockAssignmentModel instead of EmmeAssignmentModel, not requiring EMME.",
     )
     parser.add_argument(
-        "--save-emme-matrices",
+        "-e", "--save-emme-matrices",
         dest="save_matrices",
         action="store_true",
-        default=config.SAVE_MATRICES_IN_EMME,
         help="Using this flag saves additional matrices and strategy files to Emme-project Database folder.",
     )
     parser.add_argument(
-        "--del-strat-files",
-        dest="del_strat_files",
+        "-d", "--del-strat-files",
         action="store_true",
-        default=config.DELETE_STRATEGY_FILES,
         help="Using this flag deletes strategy files from Emme-project Database folder.",
     )
     parser.add_argument(
         "--scenario-name",
-        dest="scenario_name",
         type=str,
         default=config.SCENARIO_NAME,
         help="Name of HELMET scenario. Influences result folder name and log file name."),
     parser.add_argument(
         "--results-path",
-        dest="results_path",
         type=str,
         default=config.RESULTS_PATH,
         help="Path to folder where result data is saved to."),
     # HELMET scenario input data
     parser.add_argument(
         "--emme-path",
-        dest="emme_path",
         type=str,
         default=config.EMME_PROJECT_PATH,
         help="Filepath to .emp EMME-project-file"),
     parser.add_argument(
         "--first-scenario-id",
-        dest="first_scenario_id",
         type=int,
         default=config.FIRST_SCENARIO_ID,
         help="First (biking) scenario ID within EMME project (.emp)."),
     parser.add_argument(
         "--first-matrix-id",
-        dest="first_matrix_id",
         type=int,
         default=config.FIRST_MATRIX_ID,
         help="First matrix ID within EMME project (.emp). Used only if --save-emme-matrices."),
     parser.add_argument(
         "--baseline-data-path",
-        dest="baseline_data_path",
         type=str,
         default=config.BASELINE_DATA_PATH,
         help="Path to folder containing both baseline zonedata and -matrices (Given privately by project manager)"),
     parser.add_argument(
         "--forecast-data-path",
-        dest="forecast_data_path",
         type=str,
         default=config.FORECAST_DATA_PATH,
         help="Path to folder containing forecast zonedata"),
     parser.add_argument(
         "--iterations",
-        dest="iterations",
         type=int,
         default=config.ITERATION_COUNT,
         help="Maximum number of demand model iterations to run (each using re-calculated impedance from traffic and transit assignment)."),
     parser.add_argument(
         "--max-gap",
-        dest="max_gap",
         type=float,
         default=config.MAX_GAP,
         help="Car work matrix maximum change between iterations"),
     parser.add_argument(
         "--rel-gap",
-        dest="rel_gap",
         type=float,
         default=config.REL_GAP,
         help="Car work matrix relative change between iterations"),
     parser.add_argument(
-        "--use-fixed-transit-cost",
-        dest="use_fixed_transit_cost",
+        "-t", "--use-fixed-transit-cost",
         action="store_true",
         default=config.USE_FIXED_TRANSIT_COST,
         help="Using this flag activates use of pre-calculated (fixed) transit costs."),
     args = parser.parse_args()
 
-    config.LOG_LEVEL = args.log_level
-    config.LOG_FORMAT = args.log_format
-    config.SCENARIO_NAME = args.scenario_name
-    config.RESULTS_PATH = args.results_path
-    log.initialize(config)
-    log.debug("helmet_version=" + str(config.HELMET_VERSION))
+    log.initialize(args)
+    log.debug("helmet_version=" + str(config.VERSION))
     log.debug('sys.version_info=' + str(sys.version_info[0]))
     log.debug('sys.path=' + str(sys.path))
-    log.debug('log_level=' + args.log_level)
-    log.debug('emme_path=' + args.emme_path)
-    log.debug('baseline_data_path=' + args.baseline_data_path)
-    log.debug('forecast_data_path=' + args.forecast_data_path)
-    log.debug('iterations=' + str(args.iterations))
-    log.debug('max_gap=' + str(args.max_gap))
-    log.debug('rel_gap=' + str(args.rel_gap))
-    log.debug('use_fixed_transit_cost=' + str(args.use_fixed_transit_cost))
-    log.debug('save_matrices=' + str(args.save_matrices))
-    log.debug('del_strat_files=' + str(args.del_strat_files))
-    log.debug('first_scenario_id=' + str(args.first_scenario_id))
-    log.debug('scenario_name=' + args.scenario_name)
+    args_dict = vars(args)
+    for key in args_dict:
+        log.debug("{}={}".format(key, args_dict[key]))
 
     main(args)
