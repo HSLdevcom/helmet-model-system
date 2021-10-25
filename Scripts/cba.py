@@ -380,7 +380,17 @@ if __name__ == "__main__":
         default="JSON",
     )
     parser.add_argument(
-        "--results-path", dest="results_path", type=str, required=True,
+        "--log-level",
+        choices={"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"},
+        default=config.LOG_LEVEL,
+    )
+    parser.add_argument(
+        "--scenario-name",
+        type=str,
+        default=config.SCENARIO_NAME,
+        help="Name of HELMET scenario. Influences result folder name and log file name."),
+    parser.add_argument(
+        "--results-path", type=str, required=True,
         help="Path to Results directory.")
     args = parser.parse_args()
     log.initialize(args)
