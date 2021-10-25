@@ -57,6 +57,7 @@ class Config:
         self.FIRST_MATRIX_ID = None
         self.RUN_AGENT_SIMULATION = False
         self.DO_NOT_USE_EMME = False
+        self.RESULTS_TO_SEPARATE_EMME_SCENARIOS = False
         self.SAVE_MATRICES_IN_EMME = False
         self.DELETE_STRATEGY_FILES = False
         self.USE_FIXED_TRANSIT_COST = False

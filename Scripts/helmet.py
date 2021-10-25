@@ -62,6 +62,7 @@ def main(args):
         ass_model = EmmeAssignmentModel(
             EmmeProject(emme_project_path),
             first_scenario_id=args.first_scenario_id,
+            separate_emme_scenarios=args.separate_emme_scenarios,
             save_matrices=args.save_matrices,
             first_matrix_id=args.first_matrix_id)
     # Initialize model system (wrapping Assignment-model,
@@ -159,10 +160,15 @@ if __name__ == "__main__":
         help="Using this flag runs with MockAssignmentModel instead of EmmeAssignmentModel, not requiring EMME.",
     )
     parser.add_argument(
+        "-s", "--separate-emme-scenarios",
+        action="store_true",
+        help="Using this flag creates four new EMME scenarios and saves network time-period specific results in them.",
+    )
+    parser.add_argument(
         "-e", "--save-emme-matrices",
         dest="save_matrices",
         action="store_true",
-        help="Using this flag saves additional matrices and strategy files to Emme-project Database folder.",
+        help="Using this flag saves matrices for all time periods to Emme-project Database folder.",
     )
     parser.add_argument(
         "-d", "--del-strat-files",
