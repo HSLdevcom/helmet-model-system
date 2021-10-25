@@ -12,5 +12,5 @@
     "ITERATION_COUNT": 1,
     "MAX_GAP": 1.0,
     "REL_GAP": 0.01,
-    "OPTIONAL_FLAGS": ["DELETE_STRATEGY_FILES"]
+    "OPTIONAL_FLAGS": []
 }
