@@ -147,7 +147,7 @@ class EmmeAssignmentModel(AssignmentModel):
                 if res != "transit_volumes":
                     self._node_24h(
                         transit_class, param.segment_results[res])
-        ass_classes = list(param.emme_demand_mtx) + ["bus"]
+        ass_classes = list(param.emme_demand_mtx) + ["bus", "aux_transit_vol"]
         for ass_class in ass_classes:
             self._link_24h(ass_class)
 
@@ -340,7 +340,7 @@ class EmmeAssignmentModel(AssignmentModel):
             self.emme_project.create_extra_attribute(
                 "LINK", extra(ass_class), ass_class + " volume",
                 overwrite=True, scenario=scenario)
-        for attr in ("total_cost", "toll_cost", "car_time"):
+        for attr in ("total_cost", "toll_cost", "car_time", "aux_transit_vol"):
             self.emme_project.create_extra_attribute(
                 "LINK", extra(attr), attr,
                 overwrite=True, scenario=scenario)
