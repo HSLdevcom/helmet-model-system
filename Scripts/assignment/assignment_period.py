@@ -15,12 +15,13 @@ from assignment.abstract_assignment import Period
 class AssignmentPeriod(Period):
     def __init__(self, name, emme_scenario, emme_context,
                  demand_mtx=param.emme_demand_mtx,
-                 result_mtx=param.emme_result_mtx, save_matrices=False):
+                 result_mtx=param.emme_result_mtx, save_matrices=False,
+                 separate_emme_scenarios=False):
         self.name = name
         self.emme_scenario = emme_context.modeller.emmebank.scenario(
             emme_scenario)
         self.emme_project = emme_context
-        self._save_matrices = save_matrices
+        self._separate_emme_scenarios = separate_emme_scenarios
         if save_matrices:
             self.demand_mtx = copy.deepcopy(demand_mtx)
             self.result_mtx = copy.deepcopy(result_mtx)
@@ -92,20 +93,20 @@ class AssignmentPeriod(Period):
             self._set_bike_vdfs()
             self._assign_bikes(self.result_mtx["dist"]["bike"]["id"], "all")
             self._set_car_and_transit_vdfs()
-            if not self._save_matrices:
+            if not self._separate_emme_scenarios:
                 self._calc_background_traffic()
             self._assign_cars(param.stopping_criteria_coarse)
             self._calc_extra_wait_time()
             self._assign_transit()
         elif iteration==0:
             self._set_car_and_transit_vdfs()
-            if not self._save_matrices:
+            if not self._separate_emme_scenarios:
                 self._calc_background_traffic()
             self._assign_cars(param.stopping_criteria_coarse)
             self._calc_extra_wait_time()
             self._assign_transit()
         elif iteration==1:
-            if not self._save_matrices:
+            if not self._separate_emme_scenarios:
                 self._set_car_and_transit_vdfs()
                 self._calc_background_traffic()
             self._assign_cars(param.stopping_criteria_coarse)
@@ -113,7 +114,7 @@ class AssignmentPeriod(Period):
             self._assign_transit()
             self._calc_background_traffic(include_trucks=True)
         elif isinstance(iteration, int) and iteration>1:
-            if not self._save_matrices:
+            if not self._separate_emme_scenarios:
                 self._set_car_and_transit_vdfs()
                 self._calc_background_traffic(include_trucks=True)
             self._assign_cars(

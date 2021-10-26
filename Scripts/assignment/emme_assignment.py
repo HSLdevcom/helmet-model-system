@@ -19,14 +19,14 @@ class EmmeAssignmentModel(AssignmentModel):
     emme_context : assignment.emme_bindings.emme_project.EmmeProject
         Emme projekt to connect to this assignment
     first_scenario_id : int
-        Emme scenario id for bike scenario
-        Usually 19, followed by 20 (day scenario), 21 (morning scenario),
-        22 (midday scenario) and 23 (afternoon scenario).
-        If first scenario is set something else (e.g. 5), then following 
-        scenarios are also adjusted (6, 7, 8, 9).
+        Id fo EMME scenario where network is stored and modified.
+    separate_emme_scenarios : bool (optional)
+        Whether four new scenarios will be created in EMME
+        (with ids following directly after first scenario id)
+        for storing time-period specific network results:
+        day, morning rush hour, midday hour and afternoon rush hour.
     save_matrices : bool (optional)
-        Whether matrices and transit strategies will be saved in
-        Emme format for all time periods.
+        Whether matrices will be saved in Emme format for all time periods.
         If false, Emme matrix ids 0-99 will be used for all time periods.
     first_matrix_id : int (optional)
         Where to save matrices (if saved),
@@ -34,7 +34,9 @@ class EmmeAssignmentModel(AssignmentModel):
         Default is 100(-399).
     """
     def __init__(self, emme_context, first_scenario_id,
-                 save_matrices=False, first_matrix_id=100):
+                 separate_emme_scenarios=False, save_matrices=False,
+                 first_matrix_id=100):
+        self.separate_emme_scenarios = separate_emme_scenarios
         self.save_matrices = save_matrices
         self.first_matrix_id = first_matrix_id if save_matrices else 0
         self.emme_project = emme_context
@@ -44,7 +46,7 @@ class EmmeAssignmentModel(AssignmentModel):
     def prepare_network(self, car_dist_unit_cost=None):
         """Create matrices, extra attributes and calc background variables."""
         self._add_bus_stops()
-        if self.save_matrices:
+        if self.separate_emme_scenarios:
             self.day_scenario = self.emme_project.copy_scenario(
                 self.mod_scenario, self.mod_scenario.number + 1,
                 self.mod_scenario.title + '_' + "vrk",
@@ -53,7 +55,7 @@ class EmmeAssignmentModel(AssignmentModel):
             self.day_scenario = self.mod_scenario
         self.assignment_periods = []
         for i, tp in enumerate(["aht", "pt", "iht"]):
-            if self.save_matrices:
+            if self.separate_emme_scenarios:
                 scen_id = self.mod_scenario.number + i + 2
                 self.emme_project.copy_scenario(
                     self.mod_scenario, scen_id,
@@ -63,7 +65,8 @@ class EmmeAssignmentModel(AssignmentModel):
                 scen_id = self.mod_scenario.number
             self.assignment_periods.append(AssignmentPeriod(
                 tp, scen_id, self.emme_project,
-                save_matrices=self.save_matrices))
+                save_matrices=self.save_matrices,
+                separate_emme_scenarios=self.separate_emme_scenarios))
         for i, ap in enumerate(self.assignment_periods):
             tag = ap.name if self.save_matrices else ""
             id_hundred = 100*i + self.first_matrix_id

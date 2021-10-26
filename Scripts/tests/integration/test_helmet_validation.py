@@ -10,14 +10,9 @@ TEST_DATA_PATH = os.path.join(
     os.path.dirname(os.path.realpath(__file__)), "..", "test_data")
 
 
-class Config:
-    LOG_FORMAT = None
-    LOG_LEVEL = "DEBUG"
-    SCENARIO_NAME = "input_file_validation"
-    RESULTS_PATH = os.path.join(TEST_DATA_PATH, "Results")
-
-
 class Args:
+    log_format = None
+    log_level = "DEBUG"
     baseline_data_path = os.path.join(TEST_DATA_PATH, "Base_input_data")
     emme_paths = [
         os.path.join(
@@ -36,5 +31,5 @@ class ValdidationTest(unittest.TestCase):
 
     def test_validation(self):
         print("Testing input file validation..")
-        log.initialize(Config())
+        log.initialize(Args())
         main(Args())
