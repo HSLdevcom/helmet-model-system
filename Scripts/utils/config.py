@@ -55,6 +55,7 @@ class Config:
         self.EMME_PROJECT_PATH = None
         self.FIRST_SCENARIO_ID = None
         self.FIRST_MATRIX_ID = None
+        self.END_ASSIGNMENT_ONLY = False
         self.RUN_AGENT_SIMULATION = False
         self.DO_NOT_USE_EMME = False
         self.RESULTS_TO_SEPARATE_EMME_SCENARIOS = False

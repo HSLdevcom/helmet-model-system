@@ -12,7 +12,13 @@ from datahandling.matrixdata import MatrixData
 
 
 def main(args):
-    iterations = args.iterations
+    if args.end_assignment_only:
+        iterations = 0
+    elif args.iterations > 0:
+        iterations = args.iterations
+    else:
+        raise AttributeError(
+            "Iteration number {} not valid".format(args.iterations))
     base_zonedata_path = os.path.join(args.baseline_data_path, "2016_zonedata")
     base_matrices_path = os.path.join(args.baseline_data_path, "base_matrices")
     forecast_zonedata_path = args.forecast_data_path
@@ -25,7 +31,7 @@ def main(args):
             "current": 0,
             "completed": 0,
             "failed": 0,
-            "total": args.iterations,
+            "total": iterations,
             "log": log.filename,
         }
     }
@@ -146,6 +152,12 @@ if __name__ == "__main__":
         default=config.LOG_FORMAT,
     )
     # HELMET scenario metadata
+    parser.add_argument(
+        "-o", "--end-assignment-only",
+        action="store_true",
+        default=config.END_ASSIGNMENT_ONLY,
+        help="Using this flag runs only end assignment of base demand matrices.",
+    )
     parser.add_argument(
         "-a", "--run-agent-simulation",
         dest="is_agent_model",
