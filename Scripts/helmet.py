@@ -174,17 +174,20 @@ if __name__ == "__main__":
     parser.add_argument(
         "-s", "--separate-emme-scenarios",
         action="store_true",
+        default=config.SEPARATE_EMME_SCENARIOS,
         help="Using this flag creates four new EMME scenarios and saves network time-period specific results in them.",
     )
     parser.add_argument(
         "-e", "--save-emme-matrices",
         dest="save_matrices",
         action="store_true",
+        default=config.SAVE_MATRICES_IN_EMME,
         help="Using this flag saves matrices for all time periods to Emme-project Database folder.",
     )
     parser.add_argument(
         "-d", "--del-strat-files",
         action="store_true",
+        default=config.DELETE_STRATEGY_FILES,
         help="Using this flag deletes strategy files from Emme-project Database folder.",
     )
     parser.add_argument(
