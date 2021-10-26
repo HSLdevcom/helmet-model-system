@@ -1,4 +1,4 @@
-from argparse import ArgumentParser
+from argparse import ArgumentParser, ArgumentTypeError
 import sys
 import os
 from glob import glob
@@ -17,7 +17,7 @@ def main(args):
     elif args.iterations > 0:
         iterations = args.iterations
     else:
-        raise AttributeError(
+        raise ArgumentTypeError(
             "Iteration number {} not valid".format(args.iterations))
     base_zonedata_path = os.path.join(args.baseline_data_path, "2016_zonedata")
     base_matrices_path = os.path.join(args.baseline_data_path, "base_matrices")
