@@ -430,6 +430,8 @@ class Scenario:
 
 class ExtraAttribute:
     def __init__(self, name, attr_type, default_value, scenario):
+        if len(name) > 20 or name[0] != '@':
+            raise ArgumentError("Invalid extra attribute ID: {}".format(name))
         self.name = name
         self.type = attr_type
         self.default_value = default_value
@@ -644,6 +646,7 @@ class Link(NetworkObject):
         self.num_lanes = 1
         self.volume_delay_func = 0
         self.auto_time = 0.1
+        self.aux_transit_volume = 0.0
         self._segments = []
 
     @property
@@ -720,4 +723,8 @@ class TransitSegment(NetworkObject):
 
 
 class ExistenceError(Exception):
+    pass
+
+
+class ArgumentError(Exception):
     pass
