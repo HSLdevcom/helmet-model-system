@@ -767,7 +767,10 @@ class AssignmentPeriod(Period):
                 class_name=tc)
         base_timtr = param.uncongested_transit_time
         time_attr = self.extra(base_timtr)
+        volax_attr = self.extra("aux_transit")
         network = self.emme_scenario.get_network()
+        for link in network.links():
+            link[volax_attr] = link.aux_transit_volume
         for segment in network.transit_segments():
             segment[time_attr] = segment['@'+base_timtr]
         self.emme_scenario.publish_network(network)

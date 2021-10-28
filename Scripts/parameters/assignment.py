@@ -348,6 +348,7 @@ volume_factors = {
         "iht": 1 / 0.497,
     },
 }
+volume_factors["aux_transit"] = volume_factors["transit"]
 # Factor for converting weekday traffic into yearly day average
 years_average_day_factor = 0.85
 # Factor for converting day traffic into 7:00-22:00 traffic
