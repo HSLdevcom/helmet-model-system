@@ -376,16 +376,23 @@ class ModelSystem:
                 numpy.average(logsum, weights=pop)),
             "result_summary")
         self.resultdata.print_data(logsum, "accessibility.txt", "all")
+        avg_sust_logsum = numpy.average(sust_logsum, weights=pop)
         self.resultdata.print_line(
-            "Sustainable accessibility:\t{:1.2f}".format(
-                numpy.average(sust_logsum, weights=pop)),
+            "Sustainable accessibility:\t{:1.2f}".format(avg_sust_logsum),
             "result_summary")
         self.resultdata.print_data(
             sust_logsum, "sustainable_accessibility.txt", "all")
         self.resultdata.print_data(car_logsum, "car_accessibility.txt", "all")
-        savu = numpy.searchsorted(zone_param.savu_intervals, sust_logsum) + 1
+        intervals = zone_param.savu_intervals
+        savu = numpy.searchsorted(intervals, sust_logsum) + 1
         self.resultdata.print_data(
             pandas.Series(savu, zone_numbers), "savu.txt", "savu_zone")
+        avg_savu = numpy.searchsorted(intervals, avg_sust_logsum) + 1
+        avg_savu += ((avg_savu - intervals[avg_savu-2])
+                     / (intervals[avg_savu-1] - intervals[avg_savu-2]))
+        self.resultdata.print_line(
+            "Average SAVU:\t{:1.4f}".format(avg_savu),
+            "result_summary")
 
     def _sum_trips_per_zone(self, mode, include_dests=True):
         int_demand = pandas.Series(0, self.zdata_base.zone_numbers)
