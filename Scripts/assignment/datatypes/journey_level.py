@@ -41,7 +41,7 @@ class JourneyLevel:
         if count_zone_boardings:
             self.spec["boarding_cost"]["global"] = None
             self.spec["boarding_cost"]["at_nodes"] = {
-                "penalty": "ui1", 
+                "penalty": param.is_in_transit_zone_attr,
                 "perception_factor": 0,
             }
         

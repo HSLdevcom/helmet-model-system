@@ -195,10 +195,12 @@ class AssignmentPeriod(Period):
             self.result_mtx["dist"][tc]["id"],
             self.result_mtx["trip_part_"+tc],
             count_zone_boardings=True)
+        is_in_transit_zone_attr = param.is_in_transit_zone_attr.replace(
+            "ui", "data")
         for transit_zone in transit_zones:
             # Set tag to 1 for nodes in transit zone and 0 elsewhere
             for node in network.nodes():
-                node.data1 = (node.label == transit_zone)
+                node[is_in_transit_zone_attr] = (node.label == transit_zone)
             self.emme_scenario.publish_network(network)
             # Transit assignment with zone tag as weightless boarding cost
             self.emme_project.transit_assignment(
@@ -478,7 +480,8 @@ class AssignmentPeriod(Period):
         """Calculate background traffic (buses)."""
         network = self.emme_scenario.get_network()
         # emme api has name "data3" for ul3
-        background_traffic = param.background_traffic.replace("ul", "data")
+        background_traffic = param.background_traffic_attr.replace(
+            "ul", "data")
         # calc @bus and data3
         heavy = (self.extra("truck"), self.extra("trailer_truck"))
         for link in network.links():
@@ -519,9 +522,10 @@ class AssignmentPeriod(Period):
         else:
             penalty = param.boarding_penalty
         missing_penalties = set()
+        penalty_attr = param.boarding_penalty_attr.replace("ut", "data")
         for line in network.transit_lines():
             try:
-                line.data3 = penalty[line.mode.id] + extra_penalty
+                line[penalty_attr] = penalty[line.mode.id] + extra_penalty
             except KeyError:
                 missing_penalties.add(line.mode.id)
         if missing_penalties:
@@ -744,12 +748,24 @@ class AssignmentPeriod(Period):
         log.info("Congested transit assignment started...")
         network = self.emme_scenario.get_network()
         headway_attr = self.extra("hw")
+        penalty_attr = param.inactive_line_penalty_attr.replace("ut", "data")
         for line in network.transit_lines():
             line.headway = line[headway_attr]
+            if line[headway_attr] > 900:
+                line[penalty_attr] = 9999
+            else:
+                line[penalty_attr] = 0
         self.emme_scenario.publish_network(network)
         specs = self._transit_specs
-        for tc in specs:
-            specs[tc].transit_spec["journey_levels"][1]["boarding_cost"]["global"]["penalty"] = param.transfer_penalty[tc]
+        for transit_class in specs:
+            jlevels = specs[transit_class].transit_spec["journey_levels"]
+            (jlevels[1]["boarding_cost"]["global"]
+                    ["penalty"]) = param.transfer_penalty[transit_class]
+            for level in jlevels:
+                level["boarding_cost"]["on_lines"] = {
+                    "penalty": param.inactive_line_penalty_attr,
+                    "perception_factor": 1,
+                }
         assign_report = self.emme_project.congested_assignment(
             transit_assignment_spec=[specs[tc].transit_spec for tc in specs],
             class_names=list(specs),
