@@ -49,6 +49,7 @@ class ModelSystem:
                  results_path, assignment_model, name):
         self.ass_model = assignment_model
         self.zone_numbers = self.ass_model.zone_numbers
+        self.travel_modes = {}  # Dict instead of set, to preserve order
 
         # Input data
         self.zdata_base = BaseZoneData(
@@ -119,7 +120,6 @@ class ModelSystem:
         self.dm.generate_tours()
         
         # Assigning of tours to mode, destination and time period
-        self.travel_modes = set()
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
                 purpose_impedance = self.imptrans.transform(
@@ -138,7 +138,7 @@ class ModelSystem:
                 if purpose.dest != "source":
                     for mode in demand:
                         self.dtm.add_demand(demand[mode])
-                        self.travel_modes.add(mode)
+                        self.travel_modes[mode] = True
         log.info("Demand calculation completed")
 
     # possibly merge with init
@@ -527,7 +527,6 @@ class AgentModelSystem(ModelSystem):
         log.info("Demand calculation started...")
         random.seed(None)
         self.dm.cm.calc_basic_prob()
-        self.travel_modes = set()
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
                 purpose.init_sums()
@@ -542,10 +541,11 @@ class AgentModelSystem(ModelSystem):
                     demand = purpose.calc_demand()
                     if purpose.dest != "source":
                         for mode in demand:
-                            self.travel_modes.add(mode)
+                            self.travel_modes[mode] = True
                             self.dtm.add_demand(demand[mode])
                 else:
-                    self.travel_modes.update(purpose.modes)
+                    for mode in purpose.modes:
+                        self.travel_modes[mode] = True
                     purpose.init_sums()
                     purpose.calc_basic_prob(purpose_impedance)
                 if is_last_iteration and purpose.dest != "source":
