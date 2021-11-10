@@ -261,7 +261,8 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
                     for scenario in data}
                 gains_existing, gains_additional = calc_gains(demand, cost)
                 result_type = transport_class + "_" + mtx_type
-                results[result_type] += vol_fac * gains_existing
+                results[result_type] += (vol_fac *
+                                         (gains_existing+gains_additional))
                 ws = workbook[TRANSLATIONS[transport_class]]
                 ws[cols[timeperiod]+rows[mtx_type][0]] = gains_existing.sum()
                 ws[cols[timeperiod]+rows[mtx_type][1]] = gains_additional.sum()
