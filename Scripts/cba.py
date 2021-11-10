@@ -171,10 +171,10 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
     Parameters
     ----------
     scenario_0 : str
-        Name of do-nothing scenario, for which 
+        Name of do-nothing scenario, for which
         forecast results are available in Results folder
     scenario_1 : str
-        Name of project scenario, for which 
+        Name of project scenario, for which
         forecast results are available in Results folder
     year : int
         The evaluation year (1 or 2)
@@ -182,6 +182,12 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
         Path to where "scenario_name/Matrices" result folder exists
     workbook : openpyxl.WorkBook
         The excel workbook where to save results
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table of zone-wise consumer surplus results
+        (travel time, travel cost, distance, revenue)
     """
     if year not in (1, 2):
         raise ValueError("Evaluation year must be either 1 or 2")
@@ -325,10 +331,10 @@ def calc_gains(demands, costs):
 
     Returns
     -------
-    float
-        Calculated gain for existing users
-    float
-        Calculated gain for new or evicted users
+    numpy.ndarray
+        Calculated gain for existing users per zone
+    numpy.ndarray
+        Calculated gain for new or evicted users per zone
     """
     gain = costs["scen_1"] - costs["scen_0"]
     demand_change = demands["scen_1"] - demands["scen_0"]
@@ -357,8 +363,8 @@ def calc_revenue(demands, costs):
 
     Returns
     -------
-    float
-        Calculated revenue
+    numpy.ndarray
+        Calculated revenue per zone
     """
     demand_change = demands["scen_1"] - demands["scen_0"]
     cost_change = costs["scen_1"] - costs["scen_0"]
