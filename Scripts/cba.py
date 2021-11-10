@@ -1,5 +1,6 @@
 import os
 from argparse import ArgumentParser
+from collections import defaultdict
 import numpy
 import pandas
 from openpyxl import load_workbook
@@ -231,7 +232,8 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
         ws[indices[mode]] = station_diff["number"][mode]
 
     # Calculate gains and revenues
-    for tp in ["aht", "pt", "iht"]:
+    results = defaultdict(float)
+    for timeperiod in ["aht", "pt", "iht"]:
         data = {
             "scen_1": MatrixData(os.path.join(scenario_1, "Matrices")),
             "scen_0": MatrixData(os.path.join(scenario_0, "Matrices")),
@@ -240,33 +242,41 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
         revenues_car = 0
         cols = CELL_INDICES["gains"]["cols"]
         rows = CELL_INDICES["gains"]["rows"][year]
-        for tc in param.transport_classes:
+        for transport_class in param.transport_classes:
             demand = {}
             for scenario in data:
-                with data[scenario].open("demand", tp) as mtx:
-                    demand[scenario] = mtx[tc]
+                with data[scenario].open("demand", timeperiod) as mtx:
+                    demand[scenario] = mtx[transport_class]
+                    zone_numbers = mtx.zone_numbers
+            vol_fac = param.volume_factors[transport_class][timeperiod]
             for mtx_type in ["time", "cost", "dist"]:
-                cost = {scenario: read_costs(data[scenario], tp, tc, mtx_type)
+                cost = {scenario: read_costs(
+                        data[scenario], timeperiod, transport_class, mtx_type)
                     for scenario in data}
                 gains_existing, gains_additional = calc_gains(demand, cost)
-                ws = workbook[TRANSLATIONS[tc]]
-                ws[cols[tp]+rows[mtx_type][0]] = gains_existing
-                ws[cols[tp]+rows[mtx_type][1]] = gains_additional
+                result_type = transport_class + "_" + mtx_type
+                results[result_type] += vol_fac * gains_existing
+                ws = workbook[TRANSLATIONS[transport_class]]
+                ws[cols[timeperiod]+rows[mtx_type][0]] = gains_existing.sum()
+                ws[cols[timeperiod]+rows[mtx_type][1]] = gains_additional.sum()
                 if mtx_type == "cost":
                     revenue = calc_revenue(demand, cost)
-                    if tc in param.transit_classes:
+                    if transport_class in param.transit_classes:
                         revenues_transit += revenue
-                    if tc in param.assignment_modes:
+                        results["transit_revenue"] += vol_fac * revenues_transit
+                    if transport_class in param.assignment_modes:
                         revenues_car += revenue
+                        results["car_revenue"] += vol_fac * revenues_car
         ws = workbook["Tuottajahyodyt"]
         rows = CELL_INDICES["transit_revenue"]["rows"][year]
-        ws[cols[tp]+rows] = revenues_transit
+        ws[cols[timeperiod]+rows] = revenues_transit.sum()
         ws = workbook["Julkistaloudelliset"]
         cols = CELL_INDICES["car_revenue"]["cols"]
         rows = CELL_INDICES["car_revenue"]["rows"][year]
-        ws[cols[tp]+rows] = revenues_car
-        log.info("Gains and revenues calculated for {}".format(tp))
+        ws[cols[timeperiod]+rows] = revenues_car.sum()
+        log.info("Gains and revenues calculated for {}".format(timeperiod))
     log.info("Year {} completed".format(year))
+    return pandas.DataFrame(results, zone_numbers)
 
 
 def read(file_name, scenario_path):
@@ -322,10 +332,10 @@ def calc_gains(demands, costs):
     """
     gain = costs["scen_1"] - costs["scen_0"]
     demand_change = demands["scen_1"] - demands["scen_0"]
-    gains_existing = ((demands["scen_0"]*gain)[demand_change >= 0].sum()
-                      + (demands["scen_1"]*gain)[demand_change < 0].sum())
-    gains_additional = (0.5*(demand_change*gain)[demand_change >= 0].sum()
-                        - 0.5*(demand_change*gain)[demand_change < 0].sum())
+    gains_existing = ((demands["scen_0"]*gain)[demand_change >= 0].sum(0)
+                      + (demands["scen_1"]*gain)[demand_change < 0].sum(0))
+    gains_additional = (0.5*(demand_change*gain)[demand_change >= 0].sum(0)
+                        - 0.5*(demand_change*gain)[demand_change < 0].sum(0))
     return gains_existing, gains_additional
 
 
@@ -352,10 +362,10 @@ def calc_revenue(demands, costs):
     """
     demand_change = demands["scen_1"] - demands["scen_0"]
     cost_change = costs["scen_1"] - costs["scen_0"]
-    revenue = ((costs["scen_1"]*demand_change)[demand_change >= 0].sum()
-               + (cost_change*demands["scen_0"])[demand_change >= 0].sum()
-               + (costs["scen_0"]*demand_change)[demand_change < 0].sum()
-               + (cost_change*demands["scen_1"])[demand_change < 0].sum())
+    revenue = ((costs["scen_1"]*demand_change)[demand_change >= 0].sum(0)
+               + (cost_change*demands["scen_0"])[demand_change >= 0].sum(0)
+               + (costs["scen_0"]*demand_change)[demand_change < 0].sum(0)
+               + (cost_change*demands["scen_1"])[demand_change < 0].sum(0))
     return revenue
 
 
@@ -395,13 +405,17 @@ if __name__ == "__main__":
     args = parser.parse_args()
     log.initialize(args)
     wb = load_workbook(os.path.join(SCRIPT_DIR, "CBA_kehikko.xlsx"))
-    run_cost_benefit_analysis(
+    results = run_cost_benefit_analysis(
         args.baseline_scenario, args.projected_scenario, 1, wb)
-    if args.baseline_scenario_2 is not None and args.baseline_scenario_2 != "undefined":
+    if (args.baseline_scenario_2 is not None
+            and args.baseline_scenario_2 != "undefined"):
         run_cost_benefit_analysis(
             args.baseline_scenario_2, args.projected_scenario_2, 2, wb)
-    results_filename = "cba_{}_{}.xlsx".format(
+    results_filename = "cba_{}_{}".format(
         os.path.basename(args.projected_scenario),
         os.path.basename(args.baseline_scenario))
-    wb.save(os.path.join(args.results_path, results_filename))
+    wb.save(os.path.join(args.results_path, results_filename + ".xlsx"))
+    results.to_csv(
+        os.path.join(args.results_path, results_filename + ".txt"),
+        sep='\t', float_format="%8.1f")
     log.info("CBA results saved to file: {}".format(results_filename))
