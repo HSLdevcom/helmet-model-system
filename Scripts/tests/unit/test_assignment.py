@@ -32,7 +32,7 @@ class EmmeAssignmentTest(unittest.TestCase):
             context.modeller.emmebank.scenario(scenario_id).get_network(),
             fares)
         ass_model = EmmeAssignmentModel(
-            context, scenario_id, save_matrices=True)
+            context, scenario_id)
         ass_model.prepare_network()
         peripheral_cost = numpy.arange(10).reshape((1, 10))
         ass_model.calc_transit_cost(fares, peripheral_cost)
@@ -49,6 +49,7 @@ class EmmeAssignmentTest(unittest.TestCase):
             "van": car_matrix,
         }
         ass_model.init_assign(demand)
+        ass_model.assignment_periods[0].assign(demand, "last")
         resultdata = ResultsData(os.path.join(
             os.path.dirname(os.path.realpath(__file__)),
             "..", "test_data", "Results", "test"))

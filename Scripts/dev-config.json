@@ -1,11 +1,7 @@
 {
-    "HELMET_VERSION": "v4.1.0-alpha.2",
+    "HELMET_VERSION": "v4.1.0-alpha.4",
     "LOG_LEVEL": "INFO",
     "LOG_FORMAT": "TEXT",
-    "RUN_AGENT_SIMULATION": false,
-    "USE_EMME": true,
-    "SAVE_MATRICES_IN_EMME": true,
-    "DELETE_STRATEGY_FILES": true,
     "SCENARIO_NAME": "test",
     "RESULTS_PATH": "C:\\XXX\\Results",
     "EMME_PROJECT_PATH": "C:\\XXX\\xxx.emp",
@@ -13,6 +9,8 @@
     "FIRST_MATRIX_ID": 100,
     "BASELINE_DATA_PATH": "C:\\XXX\\Lahtodata",
     "FORECAST_DATA_PATH": "C:\\XXX\\Ennusteskenaarioiden_syottotiedot\\2017",
-    "ITERATION_COUNT": 1,
-    "USE_FIXED_TRANSIT_COST": false
+    "ITERATION_COUNT": 10,
+    "MAX_GAP": 1.0,
+    "REL_GAP": 0.01,
+    "OPTIONAL_FLAGS": []
 }

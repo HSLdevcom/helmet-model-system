@@ -1,10 +1,10 @@
-from openpyxl import load_workbook
 import os
+from argparse import ArgumentParser
 import numpy
 import pandas
-from argparse import ArgumentParser
+from openpyxl import load_workbook
 
-from utils.config import Config
+import utils.config
 import utils.log as log
 import parameters.assignment as param
 import parameters.zone as zone_param
@@ -360,9 +360,7 @@ def calc_revenue(demands, costs):
 
 
 if __name__ == "__main__":
-    config = Config().read_from_file()
-    config.LOG_FORMAT = "JSON"
-    config.SCENARIO_NAME = "cba"
+    config = utils.config.read_from_file()
     parser = ArgumentParser(epilog="Calculates the Cost-Benefit Analysis between Results of two HELMET-Scenarios, "
                                    "and writes the outcome in CBA_kehikko.xlsx -file (in same folder).")
     parser.add_argument(
@@ -377,11 +375,25 @@ if __name__ == "__main__":
         "projected_scenario_2", nargs='?', type=str,
         help="A projected scenario, compared to the baseline scenario for second forecast year (optional)")
     parser.add_argument(
-        "--results-path", dest="results_path", type=str, required=True,
+        "--log-format",
+        choices={"TEXT", "JSON"},
+        default="JSON",
+    )
+    parser.add_argument(
+        "--log-level",
+        choices={"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"},
+        default=config.LOG_LEVEL,
+    )
+    parser.add_argument(
+        "--scenario-name",
+        type=str,
+        default=config.SCENARIO_NAME,
+        help="Name of HELMET scenario. Influences result folder name and log file name."),
+    parser.add_argument(
+        "--results-path", type=str, required=True,
         help="Path to Results directory.")
     args = parser.parse_args()
-    config.RESULTS_PATH = args.results_path
-    log.initialize(config)
+    log.initialize(args)
     wb = load_workbook(os.path.join(SCRIPT_DIR, "CBA_kehikko.xlsx"))
     run_cost_benefit_analysis(
         args.baseline_scenario, args.projected_scenario, 1, wb)

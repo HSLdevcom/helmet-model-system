@@ -32,6 +32,9 @@ roadclasses = {
     41: RoadClass("local", "any", 5, 600, 30, 1.000),
     42: RoadClass("local", "any", 5, 500, 23, 1.304),
 }
+connector_link_types = (84, 85, 86, 87, 88, 98, 99)
+connector = RoadClass("connector", "any", 99, 0, 0, 0)
+roadclasses.update({linktype: connector for linktype in connector_link_types})
 custom_roadtypes = {
     91: "motorway",
     92: "highway",
@@ -345,6 +348,7 @@ volume_factors = {
         "iht": 1 / 0.497,
     },
 }
+volume_factors["aux_transit"] = volume_factors["transit"]
 # Factor for converting weekday traffic into yearly day average
 years_average_day_factor = 0.85
 # Factor for converting day traffic into 7:00-22:00 traffic
@@ -406,7 +410,6 @@ assignment_modes = {
     "truck": 'k',
     "van": 'v',
 }
-connector_link_types = (84, 85, 86, 87, 88, 98, 99)
 vot_classes = {
     "car_work": "work",
     "car_leisure": "leisure",

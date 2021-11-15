@@ -1,9 +1,9 @@
-from argparse import ArgumentParser
+from argparse import ArgumentParser, ArgumentTypeError
 import sys
 import os
 from glob import glob
 
-from utils.config import Config
+import utils.config
 import utils.log as log
 from assignment.emme_assignment import EmmeAssignmentModel
 from assignment.mock_assignment import MockAssignmentModel
@@ -13,8 +13,13 @@ from datahandling.resultdata import ResultsData
 
 
 def main(args):
-    name = (args.scenario_name if args.scenario_name is not None
-        else Config.DefaultScenario)
+    if args.end_assignment_only:
+        iterations = 0
+    elif args.iterations > 0:
+        iterations = args.iterations
+    else:
+        raise ArgumentTypeError(
+            "Iteration number {} not valid".format(args.iterations))
     base_zonedata_path = os.path.join(args.baseline_data_path, "2016_zonedata")
     base_matrices_path = os.path.join(args.baseline_data_path, "base_matrices")
     forecast_zonedata_path = args.forecast_data_path
@@ -22,12 +27,12 @@ def main(args):
     emme_project_path = args.emme_path
     log_extra = {
         "status": {
-            "name": name,
+            "name": args.scenario_name,
             "state": "starting",
             "current": 0,
             "completed": 0,
             "failed": 0,
-            "total": args.iterations,
+            "total": iterations,
             "log": log.filename,
         }
     }
@@ -64,6 +69,7 @@ def main(args):
         ass_model = EmmeAssignmentModel(
             EmmeProject(emme_project_path),
             first_scenario_id=args.first_scenario_id,
+            separate_emme_scenarios=args.separate_emme_scenarios,
             save_matrices=args.save_matrices,
             first_matrix_id=args.first_matrix_id)
     # Initialize model system (wrapping Assignment-model,
@@ -73,14 +79,15 @@ def main(args):
     if args.is_agent_model:
         model = AgentModelSystem(
             forecast_zonedata_path, base_zonedata_path, base_matrices_path,
-            results_path, ass_model, name)
+            results_path, ass_model, args.scenario_name)
     else:
         model = ModelSystem(
             forecast_zonedata_path, base_zonedata_path, base_matrices_path,
-            results_path, ass_model, name)
+            results_path, ass_model, args.scenario_name)
+    log_extra["status"]["results"] = model.mode_share
 
     # Run with increased car ownership
-    new_name = name + "_car++"
+    new_name = args.scenario_name + "_car++"
     model.resultdata.path = os.path.join(results_path, new_name)
     model.resultmatrices.path = os.path.join(
         results_path, new_name, "Matrices")
@@ -88,7 +95,7 @@ def main(args):
     run(log_extra, model)
 
     # Run with decreased car ownership
-    new_name = name + "_car--"
+    new_name = args.scenario_name + "_car--"
     model.resultdata.path = os.path.join(results_path, new_name)
     model.resultmatrices.path = os.path.join(
         results_path, new_name, "Matrices")
@@ -96,8 +103,9 @@ def main(args):
     run(log_extra, model)
 
     # Regular model run last to save regular results in EMME
-    model.resultdata.path = os.path.join(results_path, name)
-    model.resultmatrices.path = os.path.join(results_path, name, "Matrices")
+    model.resultdata.path = os.path.join(results_path, args.scenario_name)
+    model.resultmatrices.path = os.path.join(
+        results_path, args.scenario_name, "Matrices")
     model.cdm.set_car_growth()
     run(log_extra, model)
 
@@ -143,6 +151,10 @@ def run(log_extra, model):
                 "Fatal error occured, simulation aborted.", extra=log_extra)
             break
         log_extra["status"]["results"] = model.mode_share
+        gap = model.convergence.iloc[-1, :] # Last iteration convergence
+        if gap["max_gap"] < args.max_gap or gap["rel_gap"] < args.rel_gap:
+            log_extra["status"]['state'] = 'finished'
+            break
         if i == iterations:
             log_extra["status"]['state'] = 'finished'
 
@@ -150,128 +162,126 @@ def run(log_extra, model):
 if __name__ == "__main__":
     # Initially read defaults from config file ("dev-config.json")
     # but allow override via command-line arguments
-    config = Config().read_from_file()
+    config = utils.config.read_from_file()
     parser = ArgumentParser(epilog="HELMET model system entry point script.")
     parser.add_argument(
         "--version",
         action="version",
-        version="helmet " + str(config.HELMET_VERSION))
+        version="helmet " + str(config.VERSION))
     # Logging
     parser.add_argument(
         "--log-level",
-        dest="log_level",
         choices={"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"},
         default=config.LOG_LEVEL,
     )
     parser.add_argument(
         "--log-format",
-        dest="log_format",
         choices={"TEXT", "JSON"},
         default=config.LOG_FORMAT,
     )
     # HELMET scenario metadata
     parser.add_argument(
-        "--run-agent-simulation",
+        "-o", "--end-assignment-only",
+        action="store_true",
+        default=config.END_ASSIGNMENT_ONLY,
+        help="Using this flag runs only end assignment of base demand matrices.",
+    )
+    parser.add_argument(
+        "-a", "--run-agent-simulation",
         dest="is_agent_model",
         action="store_true",
         default=config.RUN_AGENT_SIMULATION,
         help="Using this flag runs agent simulations instead of aggregate model.",
     )
     parser.add_argument(
-        "--do-not-use-emme",
-        dest="do_not_use_emme",
+        "-m", "--do-not-use-emme",
         action="store_true",
-        default=(not config.USE_EMME),
+        default=config.DO_NOT_USE_EMME,
         help="Using this flag runs with MockAssignmentModel instead of EmmeAssignmentModel, not requiring EMME.",
     )
     parser.add_argument(
-        "--save-emme-matrices",
+        "-s", "--separate-emme-scenarios",
+        action="store_true",
+        default=config.SEPARATE_EMME_SCENARIOS,
+        help="Using this flag creates four new EMME scenarios and saves network time-period specific results in them.",
+    )
+    parser.add_argument(
+        "-e", "--save-emme-matrices",
         dest="save_matrices",
         action="store_true",
         default=config.SAVE_MATRICES_IN_EMME,
-        help="Using this flag saves additional matrices and strategy files to Emme-project Database folder.",
+        help="Using this flag saves matrices for all time periods to Emme-project Database folder.",
     )
     parser.add_argument(
-        "--del-strat-files",
-        dest="del_strat_files",
+        "-d", "--del-strat-files",
         action="store_true",
         default=config.DELETE_STRATEGY_FILES,
         help="Using this flag deletes strategy files from Emme-project Database folder.",
     )
     parser.add_argument(
         "--scenario-name",
-        dest="scenario_name",
         type=str,
         default=config.SCENARIO_NAME,
         help="Name of HELMET scenario. Influences result folder name and log file name."),
     parser.add_argument(
         "--results-path",
-        dest="results_path",
         type=str,
         default=config.RESULTS_PATH,
         help="Path to folder where result data is saved to."),
     # HELMET scenario input data
     parser.add_argument(
         "--emme-path",
-        dest="emme_path",
         type=str,
         default=config.EMME_PROJECT_PATH,
         help="Filepath to .emp EMME-project-file"),
     parser.add_argument(
         "--first-scenario-id",
-        dest="first_scenario_id",
         type=int,
         default=config.FIRST_SCENARIO_ID,
         help="First (biking) scenario ID within EMME project (.emp)."),
     parser.add_argument(
         "--first-matrix-id",
-        dest="first_matrix_id",
         type=int,
         default=config.FIRST_MATRIX_ID,
         help="First matrix ID within EMME project (.emp). Used only if --save-emme-matrices."),
     parser.add_argument(
         "--baseline-data-path",
-        dest="baseline_data_path",
         type=str,
         default=config.BASELINE_DATA_PATH,
         help="Path to folder containing both baseline zonedata and -matrices (Given privately by project manager)"),
     parser.add_argument(
         "--forecast-data-path",
-        dest="forecast_data_path",
         type=str,
         default=config.FORECAST_DATA_PATH,
         help="Path to folder containing forecast zonedata"),
     parser.add_argument(
         "--iterations",
-        dest="iterations",
         type=int,
         default=config.ITERATION_COUNT,
-        help="Number of demand model iterations to run (each using re-calculated impedance from traffic and transit assignment)."),
+        help="Maximum number of demand model iterations to run (each using re-calculated impedance from traffic and transit assignment)."),
     parser.add_argument(
-        "--use-fixed-transit-cost",
-        dest="use_fixed_transit_cost",
+        "--max-gap",
+        type=float,
+        default=config.MAX_GAP,
+        help="Car work matrix maximum change between iterations"),
+    parser.add_argument(
+        "--rel-gap",
+        type=float,
+        default=config.REL_GAP,
+        help="Car work matrix relative change between iterations"),
+    parser.add_argument(
+        "-t", "--use-fixed-transit-cost",
         action="store_true",
         default=config.USE_FIXED_TRANSIT_COST,
         help="Using this flag activates use of pre-calculated (fixed) transit costs."),
     args = parser.parse_args()
 
-    config.LOG_LEVEL = args.log_level
-    config.LOG_FORMAT = args.log_format
-    config.SCENARIO_NAME = args.scenario_name
-    config.RESULTS_PATH = args.results_path
-    log.initialize(config)
-    log.debug("helmet_version=" + str(config.HELMET_VERSION))
+    log.initialize(args)
+    log.debug("helmet_version=" + str(config.VERSION))
     log.debug('sys.version_info=' + str(sys.version_info[0]))
     log.debug('sys.path=' + str(sys.path))
-    log.debug('log_level=' + args.log_level)
-    log.debug('emme_path=' + args.emme_path)
-    log.debug('baseline_data_path=' + args.baseline_data_path)
-    log.debug('forecast_data_path=' + args.forecast_data_path)
-    log.debug('iterations=' + str(args.iterations))
-    log.debug('use_fixed_transit_cost=' + str(args.use_fixed_transit_cost))
-    log.debug('save_matrices=' + str(args.save_matrices))
-    log.debug('del_strat_files=' + str(args.del_strat_files))
-    log.debug('first_scenario_id=' + str(args.first_scenario_id))
-    log.debug('scenario_name=' + args.scenario_name)
+    args_dict = vars(args)
+    for key in args_dict:
+        log.debug("{}={}".format(key, args_dict[key]))
 
     main(args)

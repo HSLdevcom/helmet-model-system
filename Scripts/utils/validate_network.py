@@ -44,8 +44,7 @@ def validate(network, fares=None):
         if network.mode('c') in link.modes:
             linktype = link.type % 100
             if (linktype not in param.roadclasses
-                    and linktype not in param.custom_roadtypes
-                    and linktype not in param.connector_link_types):
+                    and linktype not in param.custom_roadtypes):
                 msg = "Link type missing for link {}".format(link.id)
                 log.error(msg)
                 raise ValueError(msg)

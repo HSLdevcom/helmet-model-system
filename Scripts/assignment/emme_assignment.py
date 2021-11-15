@@ -19,14 +19,14 @@ class EmmeAssignmentModel(AssignmentModel):
     emme_context : assignment.emme_bindings.emme_project.EmmeProject
         Emme projekt to connect to this assignment
     first_scenario_id : int
-        Emme scenario id for bike scenario
-        Usually 19, followed by 20 (day scenario), 21 (morning scenario),
-        22 (midday scenario) and 23 (afternoon scenario).
-        If first scenario is set something else (e.g. 5), then following 
-        scenarios are also adjusted (6, 7, 8, 9).
+        Id fo EMME scenario where network is stored and modified.
+    separate_emme_scenarios : bool (optional)
+        Whether four new scenarios will be created in EMME
+        (with ids following directly after first scenario id)
+        for storing time-period specific network results:
+        day, morning rush hour, midday hour and afternoon rush hour.
     save_matrices : bool (optional)
-        Whether matrices and transit strategies will be saved in
-        Emme format for all time periods.
+        Whether matrices will be saved in Emme format for all time periods.
         If false, Emme matrix ids 0-99 will be used for all time periods.
     first_matrix_id : int (optional)
         Where to save matrices (if saved),
@@ -34,7 +34,9 @@ class EmmeAssignmentModel(AssignmentModel):
         Default is 100(-399).
     """
     def __init__(self, emme_context, first_scenario_id,
-                 save_matrices=False, first_matrix_id=100):
+                 separate_emme_scenarios=False, save_matrices=False,
+                 first_matrix_id=100):
+        self.separate_emme_scenarios = separate_emme_scenarios
         self.save_matrices = save_matrices
         self.first_matrix_id = first_matrix_id if save_matrices else 0
         self.emme_project = emme_context
@@ -47,7 +49,7 @@ class EmmeAssignmentModel(AssignmentModel):
         if self.network_is_prepared:
             return
         self._add_bus_stops()
-        if self.save_matrices:
+        if self.separate_emme_scenarios:
             self.day_scenario = self.emme_project.copy_scenario(
                 self.mod_scenario, self.mod_scenario.number + 1,
                 self.mod_scenario.title + '_' + "vrk",
@@ -56,7 +58,7 @@ class EmmeAssignmentModel(AssignmentModel):
             self.day_scenario = self.mod_scenario
         self.assignment_periods = []
         for i, tp in enumerate(["aht", "pt", "iht"]):
-            if self.save_matrices:
+            if self.separate_emme_scenarios:
                 scen_id = self.mod_scenario.number + i + 2
                 self.emme_project.copy_scenario(
                     self.mod_scenario, scen_id,
@@ -66,7 +68,8 @@ class EmmeAssignmentModel(AssignmentModel):
                 scen_id = self.mod_scenario.number
             self.assignment_periods.append(AssignmentPeriod(
                 tp, scen_id, self.emme_project,
-                save_matrices=self.save_matrices))
+                save_matrices=self.save_matrices,
+                separate_emme_scenarios=self.separate_emme_scenarios))
         for i, ap in enumerate(self.assignment_periods):
             tag = ap.name if self.save_matrices else ""
             id_hundred = 100*i + self.first_matrix_id
@@ -148,16 +151,18 @@ class EmmeAssignmentModel(AssignmentModel):
             for res in param.segment_results:
                 self._transit_segment_24h(
                     transit_class, param.segment_results[res])
-            if res != "transit_volumes":
-                self._node_24h(
-                    transit_class, param.segment_results[res])
-        ass_classes = list(param.emme_demand_mtx) + ["bus"]
+                if res != "transit_volumes":
+                    self._node_24h(
+                        transit_class, param.segment_results[res])
+        ass_classes = list(param.emme_demand_mtx) + ["bus", "aux_transit"]
         for ass_class in ass_classes:
             self._link_24h(ass_class)
 
         # Aggregate and print vehicle kms and link lengths
+        kms = dict.fromkeys(ass_classes, 0.0)
         vdfs = {param.roadclasses[linktype].volume_delay_func
             for linktype in param.roadclasses}
+        vdfs.add(0) # Links with car traffic prohibited
         vdf_kms = {ass_class: pandas.Series(0.0, vdfs)
             for ass_class in ass_classes}
         areas = zone_param.area_aggregation
@@ -170,6 +175,7 @@ class EmmeAssignmentModel(AssignmentModel):
         for linktype in param.roadtypes:
             linktypes.add(param.roadtypes[linktype])
         linklengths = pandas.Series(0.0, linktypes)
+        soft_modes = param.transit_classes + ("bike",)
         extra_attrs = []
         for attr in self.day_scenario.attributes("LINK"):
             if attr[0] == '@':
@@ -182,18 +188,19 @@ class EmmeAssignmentModel(AssignmentModel):
                 vdf = param.roadclasses[linktype].volume_delay_func
             elif linktype in param.custom_roadtypes:
                 vdf = linktype - 90
-            elif linktype in param.connector_link_types:
-                vdf = 99
             else:
                 vdf = 0
             area = belongs_to_area(link.i_node)
             for ass_class in ass_classes:
                 veh_kms = link[self._extra(ass_class)] * link.length
+                kms[ass_class] += veh_kms
                 if vdf in vdfs:
                     vdf_kms[ass_class][vdf] += veh_kms
                 if area in areas:
                     area_kms[ass_class][area] += veh_kms
-                if vdf in vdfs and area in vdf_area_kms[vdf]:
+                if (vdf in vdfs
+                        and area in vdf_area_kms[vdf]
+                        and ass_class not in soft_modes):
                     vdf_area_kms[vdf][area] += veh_kms
             if vdf == 0 and linktype in param.railtypes:
                 linklengths[param.railtypes[linktype]] += link.length
@@ -207,7 +214,11 @@ class EmmeAssignmentModel(AssignmentModel):
             s = "Municipality KELA code not found for nodes: " + ", ".join(
                 faulty_kela_code_nodes)
             log.warn(s)
+        resultdata.print_line("\nVehicle kilometres", "result_summary")
         for ass_class in ass_classes:
+            resultdata.print_line(
+                "{}:\t{:1.0f}".format(ass_class, kms[ass_class]),
+                "result_summary")
             resultdata.print_data(
                 vdf_kms[ass_class], "vehicle_kms_vdfs.txt", ass_class)
             resultdata.print_data(
@@ -345,7 +356,7 @@ class EmmeAssignmentModel(AssignmentModel):
             self.emme_project.create_extra_attribute(
                 "LINK", extra(ass_class), ass_class + " volume",
                 overwrite=True, scenario=scenario)
-        for attr in ("total_cost", "toll_cost", "car_time"):
+        for attr in ("total_cost", "toll_cost", "car_time", "aux_transit"):
             self.emme_project.create_extra_attribute(
                 "LINK", extra(attr), attr,
                 overwrite=True, scenario=scenario)

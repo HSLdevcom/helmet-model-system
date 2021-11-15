@@ -49,6 +49,7 @@ class ModelSystem:
                  results_path, assignment_model, name):
         self.ass_model = assignment_model
         self.zone_numbers = self.ass_model.zone_numbers
+        self.travel_modes = {}  # Dict instead of set, to preserve order
 
         # Input data
         self.zdata_base = BaseZoneData(
@@ -73,6 +74,7 @@ class ModelSystem:
         self.cdm = CarDensityModel(
             self.zdata_base, self.zdata_forecast, bounds, self.resultdata)
         self.mode_share = []
+        self.convergence = pandas.DataFrame()
         self.trucks = self.fm.calc_freight_traffic("truck")
         self.trailer_trucks = self.fm.calc_freight_traffic("trailer_truck")
 
@@ -118,7 +120,6 @@ class ModelSystem:
         self.dm.generate_tours()
         
         # Assigning of tours to mode, destination and time period
-        self.travel_modes = set()
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
                 purpose_impedance = self.imptrans.transform(
@@ -137,7 +138,7 @@ class ModelSystem:
                 if purpose.dest != "source":
                     for mode in demand:
                         self.dtm.add_demand(demand[mode])
-                        self.travel_modes.add(mode)
+                        self.travel_modes[mode] = True
         log.info("Demand calculation completed")
 
     # possibly merge with init
@@ -288,6 +289,9 @@ class ModelSystem:
         for mode in tour_sum:
             self.resultdata.print_data(
                 ar.aggregate(trip_sum[mode]), "trips_areas.txt", mode)
+        self.resultdata.print_line("\nAssigned demand", "result_summary")
+        self.resultdata.print_line(
+            "\t" + "\t".join(param.transport_classes), "result_summary")
 
         # Add vans and save demand matrices
         for ap in self.ass_model.assignment_periods:
@@ -309,18 +313,32 @@ class ModelSystem:
             self.ass_model.aggregate_results(self.resultdata)
             self._calculate_noise_areas()
             self._calculate_accessibility_and_savu_zones()
+            self.resultdata.print_line("\nMode shares", "result_summary")
+            for mode in mode_shares:
+                self.resultdata.print_line(
+                    "{}\t{:1.2%}".format(mode, mode_shares[mode]),
+                    "result_summary")
 
-        # Reset time-period specific demand matrices (DTM), and empty result buffer
-        self.dtm.init_demand()
+        # Reset time-period specific demand matrices (DTM),
+        # and empty result buffer
+        gap = self.dtm.init_demand()
+        log.info("Demand model convergence in iteration {} is {:1.5f}".format(
+            iteration, gap["rel_gap"]))
+        self.convergence = self.convergence.append(gap, ignore_index=True)
+        self.resultdata._df_buffer["demand_convergence.txt"] = self.convergence
         self.resultdata.flush()
         return impedance
 
     def _save_demand_to_omx(self, tp):
         zone_numbers = self.ass_model.zone_numbers
+        demand_sum_string = tp
         with self.resultmatrices.open("demand", tp, zone_numbers, 'w') as mtx:
-            for ass_class in self.dtm.demand[tp]:
-                mtx[ass_class] = self.dtm.demand[tp][ass_class]
-            log.info("Saved demand matrices for " + str(tp))
+            for ass_class in param.transport_classes:
+                demand = self.dtm.demand[tp][ass_class]
+                mtx[ass_class] = demand
+                demand_sum_string += "\t{:8.0f}".format(demand.sum())
+        self.resultdata.print_line(demand_sum_string, "result_summary")
+        log.info("Saved demand matrices for " + str(tp))
 
     def _save_to_omx(self, impedance, tp):
         zone_numbers = self.ass_model.zone_numbers
@@ -347,17 +365,34 @@ class ModelSystem:
                     and purpose.dest != "source"
                     and not isinstance(purpose, SecDestPurpose)):
                 zone_numbers = purpose.zone_numbers
+                bounds = purpose.bounds
                 weight = gen_param.tour_generation[purpose.name]["population"]
                 logsum += weight * purpose.access
                 sust_logsum += weight * purpose.sustainable_access
                 car_logsum += weight * purpose.car_access
+        pop = self.zdata_forecast["population"][bounds]
+        self.resultdata.print_line(
+            "\nTotal accessibility:\t{:1.2f}".format(
+                numpy.average(logsum, weights=pop)),
+            "result_summary")
         self.resultdata.print_data(logsum, "accessibility.txt", "all")
+        avg_sust_logsum = numpy.average(sust_logsum, weights=pop)
+        self.resultdata.print_line(
+            "Sustainable accessibility:\t{:1.2f}".format(avg_sust_logsum),
+            "result_summary")
         self.resultdata.print_data(
             sust_logsum, "sustainable_accessibility.txt", "all")
         self.resultdata.print_data(car_logsum, "car_accessibility.txt", "all")
-        savu = numpy.searchsorted(zone_param.savu_intervals, sust_logsum) + 1
+        intervals = zone_param.savu_intervals
+        savu = numpy.searchsorted(intervals, sust_logsum) + 1
         self.resultdata.print_data(
             pandas.Series(savu, zone_numbers), "savu.txt", "savu_zone")
+        avg_savu = numpy.searchsorted(intervals, avg_sust_logsum) + 1
+        avg_savu += ((avg_savu - intervals[avg_savu-2])
+                     / (intervals[avg_savu-1] - intervals[avg_savu-2]))
+        self.resultdata.print_line(
+            "Average SAVU:\t{:1.4f}".format(avg_savu),
+            "result_summary")
 
     def _sum_trips_per_zone(self, mode, include_dests=True):
         int_demand = pandas.Series(0, self.zdata_base.zone_numbers)
@@ -492,7 +527,6 @@ class AgentModelSystem(ModelSystem):
         log.info("Demand calculation started...")
         random.seed(None)
         self.dm.cm.calc_basic_prob()
-        self.travel_modes = set()
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
                 purpose.init_sums()
@@ -507,10 +541,11 @@ class AgentModelSystem(ModelSystem):
                     demand = purpose.calc_demand()
                     if purpose.dest != "source":
                         for mode in demand:
-                            self.travel_modes.add(mode)
+                            self.travel_modes[mode] = True
                             self.dtm.add_demand(demand[mode])
                 else:
-                    self.travel_modes.update(purpose.modes)
+                    for mode in purpose.modes:
+                        self.travel_modes[mode] = True
                     purpose.init_sums()
                     purpose.calc_basic_prob(purpose_impedance)
                 if is_last_iteration and purpose.dest != "source":

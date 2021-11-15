@@ -17,17 +17,45 @@ class DepartureTimeModel:
     def __init__(self, nr_zones):
         self.nr_zones = nr_zones
         self.time_periods = list(param.backup_demand_share)
+        self.demand = None
+        self.old_car_demand = 0
         self.init_demand()
 
     def init_demand(self):
         """Initialize/reset demand for all time periods.
 
-        Includes all transport_classes, each being set to zero.
+        Includes all transport classes, each being set to zero.
+        The function also calculates two demand convergence indicators,
+        comparing car work demand matrix from previous round to current one.
+
+        Returns
+        -------
+        dict
+            rel_gap : float
+                Mean relative gap for car work demand ((new-old)/old)
+            max_gap : float
+                Maximum gap for OD pair in car work demand matrix
         """
+        # Calculate gaps
+        try:
+            car_demand = self.demand["aht"]["car_work"]
+        except TypeError:
+            car_demand = 0
+        max_gap = numpy.abs(car_demand - self.old_car_demand).max()
+        try:
+            old_sum = self.old_car_demand.sum()
+            relative_gap = abs((car_demand.sum()-old_sum) / old_sum)
+        except AttributeError:
+            relative_gap = 0
+        self.old_car_demand = car_demand
+
+        # Init demand
         n = self.nr_zones
         self.demand = {tp: {tc: numpy.zeros((n, n))
                 for tc in transport_classes}
             for tp in self.time_periods}
+
+        return {"rel_gap": relative_gap, "max_gap": max_gap}
 
     def add_demand(self, demand):
         """Add demand matrix for whole day.

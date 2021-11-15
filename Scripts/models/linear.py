@@ -118,7 +118,8 @@ class CarDensityModel(LinearModel):
         except AttributeError:
             # If no parking norms are given
             pass
-        base_car_density = self.zone_data_base["car_density"][self.bounds]
+        base_car_density = (self.zone_data_base["car_density"][self.bounds]
+                            .clip(upper=1.0))
         prediction = (self.pop_growth_share * prediction
                       + (1-self.pop_growth_share) * base_car_density)
         prediction += self._growth_constant

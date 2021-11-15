@@ -1,11 +1,9 @@
 from argparse import ArgumentParser
 import os
-import numpy
 
-from utils.config import Config
+import utils.config
 import utils.log as log
 from utils.validate_network import validate
-from assignment.emme_assignment import EmmeAssignmentModel
 from assignment.mock_assignment import MockAssignmentModel
 from datahandling.matrixdata import MatrixData
 from datahandling.zonedata import ZoneData
@@ -131,7 +129,7 @@ def main(args):
             nr_vehicle_classes = len(param.emme_demand_mtx) + 1
             nr_new_attr = {
                 "nodes": nr_transit_classes * (nr_segment_results-1),
-                "links": nr_vehicle_classes + 3,
+                "links": nr_vehicle_classes + 4,
                 "transit_lines": 0,
                 "transit_segments": nr_transit_classes*nr_segment_results + 1,
             }
@@ -184,26 +182,23 @@ def main(args):
 if __name__ == "__main__":
     # Initially read defaults from config file ("dev-config.json")
     # but allow override via command-line arguments
-    config = Config().read_from_file()
+    config = utils.config.read_from_file()
     parser = ArgumentParser(epilog="HELMET model system entry point script.")
     # Logging
     parser.add_argument(
         "--log-level",
-        dest="log_level",
         choices={"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"},
         default=config.LOG_LEVEL,
     )
     parser.add_argument(
         "--log-format",
-        dest="log_format",
         choices={"TEXT", "JSON"},
         default=config.LOG_FORMAT,
     )
     parser.add_argument(
         "--do-not-use-emme",
-        dest="do_not_use_emme",
         action="store_true",
-        default=(not config.USE_EMME),
+        default=config.DO_NOT_USE_EMME,
         help="Using this flag runs with MockAssignmentModel instead of EmmeAssignmentModel, not requiring EMME.",
     )
     parser.add_argument(
@@ -215,51 +210,41 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--scenario-name",
-        dest="scenario_name",
         type=str,
         default=config.SCENARIO_NAME,
         help="Name of HELMET scenario. Influences result folder name and log file name."),
     parser.add_argument(
         "--results-path",
-        dest="results_path",
         type=str,
         default=config.RESULTS_PATH,
         help="Path to folder where result data is saved to."),
     # Base input (across all scenarios)
     parser.add_argument(
         "--baseline-data-path",
-        dest="baseline_data_path",
         type=str,
         default=config.BASELINE_DATA_PATH,
         help="Path to folder containing both baseline zonedata and -matrices (Given privately by project manager)"),
     # Scenarios' individual input
     parser.add_argument(
         "--emme-paths",
-        dest="emme_paths",
         type=str,
         nargs="+",
         required=True,
         help="List of filepaths to .emp EMME-project-files"),
     parser.add_argument(
         "--first-scenario-ids",
-        dest="first_scenario_ids",
         type=int,
         nargs="+",
         required=True,
         help="List of first (biking) scenario IDs within EMME project (.emp)."),
     parser.add_argument(
         "--forecast-data-paths",
-        dest="forecast_data_paths",
         type=str,
         nargs="+",
         required=True,
         help="List of paths to folder containing forecast zonedata"),
     args = parser.parse_args()
 
-    config.LOG_LEVEL = args.log_level
-    config.LOG_FORMAT = args.log_format
-    config.SCENARIO_NAME = "input_file_validation"
-    config.RESULTS_PATH = args.results_path
-    log.initialize(config)
+    log.initialize(args)
 
     main(args)

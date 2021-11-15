@@ -13,10 +13,10 @@ TEST_DATA_PATH = os.path.join(
     os.path.dirname(os.path.realpath(__file__)), "..", "test_data")
 
 class Config():
-    LOG_FORMAT = None
-    LOG_LEVEL = "DEBUG"
-    SCENARIO_NAME = "TEST"
-    RESULTS_PATH = os.path.join(TEST_DATA_PATH, "Results")
+    log_format = None
+    log_level = "DEBUG"
+    scenario_name = "TEST"
+    results_path = os.path.join(TEST_DATA_PATH, "Results")
 
 class ModelTest(unittest.TestCase):
     

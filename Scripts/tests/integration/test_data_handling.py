@@ -18,10 +18,10 @@ ZONE_INDEXES = numpy.array([5, 6, 7, 2792, 16001, 17000, 31001, 31501])
 # values don't change throughout the project.
 
 class Config():
-    LOG_FORMAT = None
-    LOG_LEVEL = "DEBUG"
-    SCENARIO_NAME = "TEST"
-    RESULTS_PATH = os.path.join(TEST_DATA_PATH, "Results")
+    log_format = None
+    log_level = "DEBUG"
+    scenario_name = "TEST"
+    results_path = os.path.join(TEST_DATA_PATH, "Results")
 
 class MatrixDataTest(unittest.TestCase):
     
