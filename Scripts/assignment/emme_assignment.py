@@ -42,9 +42,12 @@ class EmmeAssignmentModel(AssignmentModel):
         self.emme_project = emme_context
         self.mod_scenario = self.emme_project.modeller.emmebank.scenario(
             first_scenario_id)
+        self.network_is_prepared = False
 
     def prepare_network(self, car_dist_unit_cost=None):
         """Create matrices, extra attributes and calc background variables."""
+        if self.network_is_prepared:
+            return
         self._add_bus_stops()
         if self.separate_emme_scenarios:
             self.day_scenario = self.emme_project.copy_scenario(
@@ -103,6 +106,7 @@ class EmmeAssignmentModel(AssignmentModel):
                 pass
             self.emme_project.modeller.emmebank.create_function(
                 idx, param.volume_delay_funcs[idx])
+        self.network_is_prepared = True
 
     def init_assign(self, demand):
         ap0 = self.assignment_periods[0]
@@ -172,6 +176,11 @@ class EmmeAssignmentModel(AssignmentModel):
             linktypes.add(param.roadtypes[linktype])
         linklengths = pandas.Series(0.0, linktypes)
         soft_modes = param.transit_classes + ("bike",)
+        extra_attrs = []
+        for attr in self.day_scenario.attributes("LINK"):
+            if attr[0] == '@':
+                extra_attrs.append(attr)
+        resultdata.print_line("Link\t" + "\t".join(extra_attrs), "links")
         network = self.day_scenario.get_network()
         for link in network.links():
             linktype = link.type % 100
@@ -197,6 +206,10 @@ class EmmeAssignmentModel(AssignmentModel):
                 linklengths[param.railtypes[linktype]] += link.length
             else:
                 linklengths[param.roadtypes[vdf]] += link.length / 2
+            wkt = "LINESTRING ({} {}, {} {})".format(
+                link.i_node.x, link.i_node.y, link.j_node.x, link.j_node.y)
+            attrs = "\t".join([str(link[attr]) for attr in extra_attrs])
+            resultdata.print_line(wkt + "\t" + attrs, "links")
         if faulty_kela_code_nodes:
             s = "Municipality KELA code not found for nodes: " + ", ".join(
                 faulty_kela_code_nodes)
