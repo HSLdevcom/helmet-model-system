@@ -758,14 +758,13 @@ class AssignmentPeriod(Period):
         self.emme_scenario.publish_network(network)
         specs = self._transit_specs
         for transit_class in specs:
-            jlevels = specs[transit_class].transit_spec["journey_levels"]
-            (jlevels[1]["boarding_cost"]["global"]
-                    ["penalty"]) = param.transfer_penalty[transit_class]
-            for level in jlevels:
-                level["boarding_cost"]["on_lines"] = {
-                    "penalty": param.inactive_line_penalty_attr,
-                    "perception_factor": 1,
-                }
+            spec = specs[transit_class].transit_spec
+            (spec["journey_levels"][1]["boarding_cost"]["global"]
+                 ["penalty"]) = param.transfer_penalty[transit_class]
+            spec["in_vehicle_cost"] = {
+                "penalty": param.inactive_line_penalty_attr,
+                "perception_factor": 1,
+            }
         assign_report = self.emme_project.congested_assignment(
             transit_assignment_spec=[specs[tc].transit_spec for tc in specs],
             class_names=list(specs),
