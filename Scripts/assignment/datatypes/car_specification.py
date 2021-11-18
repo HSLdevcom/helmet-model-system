@@ -46,7 +46,7 @@ class CarSpecification:
         self._spec = {
             "type": "SOLA_TRAFFIC_ASSIGNMENT",
             "background_traffic": {
-                "link_component": param.background_traffic,
+                "link_component": param.background_traffic_attr,
                 "add_transit_vehicles": False,
             },
             "performance_settings": param.performance_settings,
