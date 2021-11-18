@@ -94,7 +94,8 @@ def main(args):
     impedance = model.assign_base_demand(
         args.use_fixed_transit_cost, iterations==0)
     log_extra["status"]["state"] = "running"
-    for i in range(1, iterations + 1):
+    i = 1
+    while i <= iterations:
         log_extra["status"]["current"] = i
         try:
             log.info("Starting iteration {}".format(i), extra=log_extra)
@@ -109,11 +110,11 @@ def main(args):
                 "Fatal error occured, simulation aborted.", extra=log_extra)
             break
         gap = model.convergence.iloc[-1, :] # Last iteration convergence
-        if gap["max_gap"] < args.max_gap or gap["rel_gap"] < args.rel_gap:
-            log_extra["status"]['state'] = 'finished'
-            break
         if i == iterations:
             log_extra["status"]['state'] = 'finished'
+        elif gap["max_gap"] < args.max_gap or gap["rel_gap"] < args.rel_gap:
+            iterations = i + 1
+        i += 1
     # delete emme strategy files for scenarios
     if args.del_strat_files:
         dbase_path = os.path.join(os.path.dirname(emme_project_path), "database")
