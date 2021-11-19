@@ -9,6 +9,7 @@ from assignment.emme_assignment import EmmeAssignmentModel
 from assignment.mock_assignment import MockAssignmentModel
 from modelsystem import ModelSystem, AgentModelSystem
 from datahandling.matrixdata import MatrixData
+from datahandling.resultdata import ResultsData
 
 
 def main(args):
@@ -85,6 +86,48 @@ def main(args):
             results_path, ass_model, args.scenario_name)
     log_extra["status"]["results"] = model.mode_share
 
+    # Run with increased car ownership
+    new_name = args.scenario_name + "_car++"
+    model.resultdata.path = os.path.join(results_path, new_name)
+    model.resultmatrices.path = os.path.join(
+        results_path, new_name, "Matrices")
+    model.cdm.set_car_growth(constant=+0.1)
+    run(log_extra, model)
+
+    # Run with decreased car ownership
+    new_name = args.scenario_name + "_car--"
+    model.resultdata.path = os.path.join(results_path, new_name)
+    model.resultmatrices.path = os.path.join(
+        results_path, new_name, "Matrices")
+    model.cdm.set_car_growth(factor=0.8)
+    run(log_extra, model)
+
+    # Regular model run last to save regular results in EMME
+    model.resultdata.path = os.path.join(results_path, args.scenario_name)
+    model.resultmatrices.path = os.path.join(
+        results_path, args.scenario_name, "Matrices")
+    model.cdm.set_car_growth()
+    run(log_extra, model)
+
+    # delete emme strategy files for scenarios
+    if args.del_strat_files:
+        dbase_path = os.path.join(os.path.dirname(emme_project_path), "database")
+        filepath = os.path.join(dbase_path, "STRAT_s{}*")
+        dirpath = os.path.join(dbase_path, "STRATS_s{}", "*")
+        scenario_ids = range(args.first_scenario_id, args.first_scenario_id+5)
+        for s in scenario_ids:
+            strategy_files = glob(filepath.format(s)) + glob(dirpath.format(s))
+            for f in strategy_files:
+                try:
+                    os.remove(f)
+                except:
+                    log.info("Not able to remove file {}.".format(f))
+        log.info("Removed strategy files in {}".format(dbase_path))
+    log.info("Simulation ended.", extra=log_extra)
+
+
+def run(log_extra, model):
+    iterations = log_extra["status"]["total"]
     # Run traffic assignment simulation for N iterations,
     # on last iteration model-system will save the results
     log_extra["status"]["state"] = "preparing"
@@ -109,27 +152,13 @@ def main(args):
             log.error(
                 "Fatal error occured, simulation aborted.", extra=log_extra)
             break
+        log_extra["status"]["results"] = model.mode_share
         gap = model.convergence.iloc[-1, :] # Last iteration convergence
         if i == iterations:
             log_extra["status"]['state'] = 'finished'
         elif gap["max_gap"] < args.max_gap or gap["rel_gap"] < args.rel_gap:
             iterations = i + 1
         i += 1
-    # delete emme strategy files for scenarios
-    if args.del_strat_files:
-        dbase_path = os.path.join(os.path.dirname(emme_project_path), "database")
-        filepath = os.path.join(dbase_path, "STRAT_s{}*")
-        dirpath = os.path.join(dbase_path, "STRATS_s{}", "*")
-        scenario_ids = range(args.first_scenario_id, args.first_scenario_id+5)
-        for s in scenario_ids:
-            strategy_files = glob(filepath.format(s)) + glob(dirpath.format(s))
-            for f in strategy_files:
-                try:
-                    os.remove(f)
-                except:
-                    log.info("Not able to remove file {}.".format(f))
-        log.info("Removed strategy files in {}".format(dbase_path))
-    log.info("Simulation ended.", extra=log_extra)
 
 
 if __name__ == "__main__":
