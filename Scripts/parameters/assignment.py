@@ -681,7 +681,10 @@ emme_result_mtx = {
         },
     },
 }
-background_traffic = "ul3"
+background_traffic_attr = "ul3"
+inactive_line_penalty_attr = "ut1"
+boarding_penalty_attr = "ut3"
+is_in_transit_zone_attr = "ui1"
 railtypes = {
     2: "tram",
     3: "metro",

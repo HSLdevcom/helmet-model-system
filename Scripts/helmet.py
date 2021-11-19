@@ -125,6 +125,7 @@ def main(args):
         log.info("Removed strategy files in {}".format(dbase_path))
     log.info("Simulation ended.", extra=log_extra)
 
+
 def run(log_extra, model):
     iterations = log_extra["status"]["total"]
     # Run traffic assignment simulation for N iterations,
@@ -136,7 +137,8 @@ def run(log_extra, model):
     impedance = model.assign_base_demand(
         args.use_fixed_transit_cost, iterations==0)
     log_extra["status"]["state"] = "running"
-    for i in range(1, iterations + 1):
+    i = 1
+    while i <= iterations:
         log_extra["status"]["current"] = i
         try:
             log.info("Starting iteration {}".format(i), extra=log_extra)
@@ -152,11 +154,11 @@ def run(log_extra, model):
             break
         log_extra["status"]["results"] = model.mode_share
         gap = model.convergence.iloc[-1, :] # Last iteration convergence
-        if gap["max_gap"] < args.max_gap or gap["rel_gap"] < args.rel_gap:
-            log_extra["status"]['state'] = 'finished'
-            break
         if i == iterations:
             log_extra["status"]['state'] = 'finished'
+        elif gap["max_gap"] < args.max_gap or gap["rel_gap"] < args.rel_gap:
+            iterations = i + 1
+        i += 1
 
 
 if __name__ == "__main__":
