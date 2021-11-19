@@ -88,24 +88,24 @@ def main(args):
 
     # Run with increased car ownership
     new_name = args.scenario_name + "_car++"
-    model.resultdata.path = os.path.join(results_path, new_name)
-    model.resultmatrices.path = os.path.join(
-        results_path, new_name, "Matrices")
+    model.resultdata = ResultsData(os.path.join(results_path, new_name))
+    model.resultmatrices = MatrixData(os.path.join(
+        results_path, new_name, "Matrices"))
     model.cdm.set_car_growth(constant=+0.1)
     run(log_extra, model)
 
     # Run with decreased car ownership
     new_name = args.scenario_name + "_car--"
-    model.resultdata.path = os.path.join(results_path, new_name)
-    model.resultmatrices.path = os.path.join(
-        results_path, new_name, "Matrices")
+    model.resultdata = ResultsData(os.path.join(results_path, new_name))
+    model.resultmatrices = MatrixData(os.path.join(
+        results_path, new_name, "Matrices"))
     model.cdm.set_car_growth(factor=0.8)
     run(log_extra, model)
 
     # Regular model run last to save regular results in EMME
-    model.resultdata.path = os.path.join(results_path, args.scenario_name)
-    model.resultmatrices.path = os.path.join(
-        results_path, args.scenario_name, "Matrices")
+    model.resultdata = ResultsData(os.path.join(results_path, args.scenario_name))
+    model.resultmatrices = MatrixData(os.path.join(
+        results_path, args.scenario_name, "Matrices"))
     model.cdm.set_car_growth()
     run(log_extra, model)
 
