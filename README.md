@@ -82,7 +82,7 @@ or [Jonathan Cutrer's blog](https://jcutrer.com/python/pipenv-pipfile).
 
 1. Open Command Prompt.
 2. Install `pipenv` by running `python -m pip install --user pipenv`.
-3. `pipenv` should now be installed in `%APPDATA%\Python\Scripts` (e.g. `C:\Users\USERNAME\AppData\Roaming\Python\Scripts`).
+   `pipenv` should now be installed in `%APPDATA%\Python\Scripts` (e.g. `C:\Users\USERNAME\AppData\Roaming\Python\Scripts`).
 4. Add `%APPDATA%\Python\Scripts` to your local PATH variable.
     1. Open Control Panel.
     2. Go to User Accounts, then click again User Accounts, then select from the left hand menu "Change my environment variables".
