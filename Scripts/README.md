@@ -111,7 +111,7 @@ These should not be used when running model system from command line!
 Instead `helmet.py` flag parameters should be used.
 These can be set if model system is run from UI, to set parameters that cannot be set in UI.
 A flag is activated by putting its name inside the brackets,
-flags are separated by commas. 
+flags are separated by commas (e.g., `"OPTIONAL_FLAGS": ["RUN_AGENT_SIMULATION", "DO_NOT_USE_EMME"]`).
 
 #### `END_ASSIGNMENT_ONLY`
 
