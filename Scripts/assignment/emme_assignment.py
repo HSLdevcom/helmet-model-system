@@ -176,11 +176,8 @@ class EmmeAssignmentModel(AssignmentModel):
             linktypes.add(param.roadtypes[linktype])
         linklengths = pandas.Series(0.0, linktypes)
         soft_modes = param.transit_classes + ("bike",)
-        extra_attrs = []
-        for attr in self.day_scenario.attributes("LINK"):
-            if attr[0] == '@':
-                extra_attrs.append(attr)
-        resultdata.print_line("Link\t" + "\t".join(extra_attrs), "links")
+        attr_names = self.day_scenario.attributes("LINK")
+        resultdata.print_line("Link\t" + "\t".join(attr_names), "links")
         network = self.day_scenario.get_network()
         for link in network.links():
             linktype = link.type % 100
@@ -208,7 +205,7 @@ class EmmeAssignmentModel(AssignmentModel):
                 linklengths[param.roadtypes[vdf]] += link.length / 2
             wkt = "LINESTRING ({} {}, {} {})".format(
                 link.i_node.x, link.i_node.y, link.j_node.x, link.j_node.y)
-            attrs = "\t".join([str(link[attr]) for attr in extra_attrs])
+            attrs = "\t".join([str(link[attr]) for attr in attr_names])
             resultdata.print_line(wkt + "\t" + attrs, "links")
         if faulty_kela_code_nodes:
             s = "Municipality KELA code not found for nodes: " + ", ".join(
