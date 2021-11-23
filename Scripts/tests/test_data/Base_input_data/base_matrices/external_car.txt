@@ -3,4 +3,5 @@ Helsinki	5	3
 Espoo		2	7
 Salo		1	2
 Raasepori	3	5
-31501		1	4
+31102		1	4
+31500		3	4

@@ -9,6 +9,9 @@ from datahandling.resultdata import ResultsData
 import os
 
 TEST_DATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "test_data")
+METROPOLITAN_ZONES = [102, 103, 244, 1063, 1531, 2703, 2741, 6272, 6291]
+PERIPHERAL_ZONES = [19071]
+EXTERNAL_ZONES = [31102, 31500]
 
 
 class LogitModelTest(unittest.TestCase):
@@ -17,12 +20,12 @@ class LogitModelTest(unittest.TestCase):
         class Purpose:
             pass
         pur = Purpose()
-        zi = numpy.array([5, 6, 7, 2792, 16001, 17000, 31000, 31501])
+        zi = numpy.array(METROPOLITAN_ZONES + PERIPHERAL_ZONES + EXTERNAL_ZONES)
         zd = BaseZoneData(os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata"), zi)
-        zd["car_users"] = pandas.Series([0.5, 0.5, 0.5, 0.5, 0.5, 0.5], zd.zone_numbers)
-        mtx = numpy.arange(24, dtype=numpy.float32)
-        mtx.shape = (4, 6)
-        mtx[numpy.diag_indices(4)] = 0
+        zd["car_users"] = pandas.Series(0.5, zd.zone_numbers)
+        mtx = numpy.arange(90, dtype=numpy.float32)
+        mtx.shape = (9, 10)
+        mtx[numpy.diag_indices(9)] = 0
         impedance = {
             "car": {
                 "time": mtx,
@@ -41,10 +44,10 @@ class LogitModelTest(unittest.TestCase):
                 "dist": mtx,
             },
         }
-        pur.bounds = slice(0, 4)
-        pur.lbounds = slice(0, 4)
-        pur.ubounds = slice(4, 4)
-        pur.zone_numbers = (5, 6, 7, 2792)
+        pur.bounds = slice(0, 9)
+        pur.lbounds = slice(0, 7)
+        pur.ubounds = slice(7, 9)
+        pur.zone_numbers = METROPOLITAN_ZONES
         for i in ("hw", "hc", "hu", "hs", "ho"):
             pur.name = i
             model = ModeDestModel(zd, pur, resultdata, is_agent_model=False)
@@ -72,6 +75,6 @@ class LogitModelTest(unittest.TestCase):
     def _validate(self, prob):
         self.assertIs(type(prob), numpy.ndarray)
         self.assertEquals(prob.ndim, 2)
-        self.assertEquals(prob.shape[1], 4)
+        self.assertEquals(prob.shape[1], 9)
         self.assertNotEquals(prob[0, 1], 0)
         assert numpy.isfinite(prob).all()
