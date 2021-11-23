@@ -12,12 +12,15 @@ class ResultsData:
     Saves all result data to same folder.
     """
     def __init__(self, results_directory_path):
-        if not os.path.exists(results_directory_path):
-            os.makedirs(results_directory_path)
-        self.path = results_directory_path
+        self.set_path(results_directory_path)
         self._line_buffer = {}
         self._df_buffer = {}
         self._xlsx_buffer = {}
+
+    def set_path(self, results_directory_path):
+        if not os.path.exists(results_directory_path):
+            os.makedirs(results_directory_path)
+        self.path = results_directory_path
 
     def flush(self):
         """Save to files and empty buffers."""

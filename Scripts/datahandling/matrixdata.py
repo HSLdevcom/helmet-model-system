@@ -12,10 +12,13 @@ import parameters.assignment as param
 
 class MatrixData:
     def __init__(self, path):
+        self.set_path(path)
+
+    def set_path(self, path):
         self.path = path
         if not os.path.exists(self.path):
             os.makedirs(self.path)
-    
+
     @contextmanager
     def open(self, mtx_type, time_period, zone_numbers=None, m='r'):
         file_name = os.path.join(self.path, mtx_type+'_'+time_period+".omx")
