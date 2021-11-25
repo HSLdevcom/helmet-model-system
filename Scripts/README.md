@@ -8,6 +8,11 @@ which can be used to setup the model run in advance.
 
 ## Configuring the model run with `dev-config.json`
 
+### `HELMET_VERSION`
+
+The version number is logged in model runs.
+This should not be changed unless model code is changed.
+
 ### `LOG_LEVEL`
 
 Model runs are logged to the command prompt and to a log file.
@@ -18,22 +23,6 @@ You can choose the level of detail of logging:
 
 The default is `TEXT`, but this can be changed to `JSON`.
 
-### `USE_EMME`
-
-If you have an Emme license and wish to use proper Emme assignment, write `true`.
-If you do not have the Emme license or wish to use the mock assignment, write `false`.
-
-### `SAVE_MATRICES_IN_EMME`
-
-If `true`, demand and skim matrices (including transit trip parts) for all time
-periods will be saved to EMME project Database folder.
-If `false`, only matrices necessary for model run and CBA will be saved, in omx-format.
-
-### `DELETE_STRATEGY_FILES`
-
-Transit assignment in EMME stores large files which are used for assignment analyses.
-If `true`, these files will be deleted after the model run.
-
 ### `SCENARIO_NAME`
 
 Then, you need to set the name of your scenario.
@@ -41,7 +30,7 @@ If you are trying the test model, write `"test"`.
 
 ### `RESULTS_PATH`
 
-Finally, you need to set the path to your results folder where you wish your
+You need to set the path to your results folder where you wish your
 result tables and matrices are written to.
 This data will be written over during the model run.
 
@@ -49,9 +38,7 @@ If you are trying the test model, try
 `"C:\\FILL_YOUR_PATH\\helmet-model-system\\Scripts\\tests\\test_data\\Results"`.
 If you are trying another model, fill in whatever the path is.
 
-There should be a directory under the path which has the same name as your `SCENARIO_NAME`.
 When running the `SCENARIO_NAME` scenario, its results are written in `RESULT_PATH\\SCENARIO_NAME`.
-Moreover, you need to create a `Matrices` folder under your `RESULT_PATH\\SCENARIO_NAME` directory.
 If you are using mock assignment instead or proper Emme assignment,
 you need to initialize temporary result matrices to `RESULT_PATH\\SCENARIO_NAME\\Matrices`.
 
@@ -61,8 +48,7 @@ If you are using Emme assignment, you need to specify where your `.emp` file is 
 
 ### `FIRST_SCENARIO_ID`
 
-EMME scenario ID of the bike assignment network. The next four IDs will be reserved for
-whole day, morning peak hour, midday hour and afternoon peak respectively.
+EMME scenario ID of the network.
 
 ### `FIRST_MATRIX_ID`
 
@@ -71,7 +57,7 @@ Used only if `SAVE_MATRICES_IN_EMME` is set to `true`.
 
 ### `BASELINE_DATA_PATH`
 
-First, you need data and matrices for the initialization phase.
+You need data and matrices for the initialization phase.
 This data will not be written over at any point - it is read-only.
 The location of this data is defined in `BASELINE_DATA_PATH` key.
 
@@ -108,9 +94,52 @@ some zone a zero value line instead of a missing line must be used.
 
 ### `ITERATION_COUNT`
 
-Number of demand model iterations to run
+Maximum number of demand model iterations to run
 (each using re-calculated impedance from traffic and transit assignment).
 
-### `USE_FIXED_TRANSIT_COST`
+### `MAX_GAP`
 
-If set to `true`, pre-calculated transit costs are taken from the Results folder.
+Convergence criterion: Car work matrix maximum change between iterations.
+
+### `REL_GAP`
+
+Convergence criterion: Car work matrix relative change between iterations.
+
+### `OPTIONAL_FLAGS`
+
+These should not be used when running model system from command line!
+Instead `helmet.py` flag parameters should be used.
+These can be set if model system is run from UI, to set parameters that cannot be set in UI.
+A flag is activated by putting its name inside the brackets,
+flags are separated by commas (e.g., `"OPTIONAL_FLAGS": ["RUN_AGENT_SIMULATION", "DO_NOT_USE_EMME"]`).
+
+#### `END_ASSIGNMENT_ONLY`
+
+Using this flag runs only end assignment of base demand matrices.
+
+#### `RUN_AGENT_SIMULATION`
+
+Using this flag runs agent simulations instead of aggregate model.
+
+#### `DO_NOT_USE_EMME`
+
+Add this flag if you do not have the Emme license or wish to use the mock assignment.
+
+#### `SEPARATE_EMME_SCENARIOS`
+
+Using this flag creates four new EMME scenarios and saves
+network time-period specific results in them.
+
+#### `SAVE_MATRICES_IN_EMME`
+
+If active, demand and skim matrices (including transit trip parts) for all time
+periods will be saved to EMME project Database folder.
+
+#### `DELETE_STRATEGY_FILES`
+
+Transit assignment in EMME stores large files which are used for assignment analyses.
+If activated, these files will be deleted after the model run.
+
+#### `USE_FIXED_TRANSIT_COST`
+
+If set, pre-calculated transit costs are taken from the Results folder.
