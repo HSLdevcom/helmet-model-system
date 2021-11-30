@@ -88,6 +88,7 @@ official_node_numbers = {
     "m": (800000, 800499),
     "rj": (801000, 801499),
     "tp": (802000, 805999),
+    "p": (810000, 815999),
 }
 volume_delay_funcs = {
     # Car functions
