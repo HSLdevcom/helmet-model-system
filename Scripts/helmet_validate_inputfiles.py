@@ -133,7 +133,7 @@ def main(args):
                 "transit_lines": 0,
                 "transit_segments": nr_transit_classes*nr_segment_results + 1,
             }
-            if not args.save_matrices:
+            if not args.separate_emme_scenarios:
                 # If results from all time periods are stored in same
                 # EMME scenario
                 for key in nr_new_attr:
@@ -202,11 +202,10 @@ if __name__ == "__main__":
         help="Using this flag runs with MockAssignmentModel instead of EmmeAssignmentModel, not requiring EMME.",
     )
     parser.add_argument(
-        "--save-emme-matrices",
-        dest="save_matrices",
+        "-s", "--separate-emme-scenarios",
         action="store_true",
-        default=config.SAVE_MATRICES_IN_EMME,
-        help="Using this flag saves additional matrices and strategy files to Emme-project Database folder.",
+        default=config.SEPARATE_EMME_SCENARIOS,
+        help="Using this flag creates four new EMME scenarios and saves network time-period specific results in them.",
     )
     parser.add_argument(
         "--scenario-name",
