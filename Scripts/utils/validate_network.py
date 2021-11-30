@@ -69,9 +69,9 @@ def validate(network, fares=None):
             # Check that intersection is not empty,
             # hence that mode is active on link
             if modesets[modes] & link.modes:
-                if not lower <= link.i_node.number < upper:
+                if not lower <= link.i_node.number <= upper:
                     unofficial_nodes.add(link.i_node.id)
-                if not lower <= link.j_node.number < upper:
+                if not lower <= link.j_node.number <= upper:
                     unofficial_nodes.add(link.j_node.id)
     if unofficial_nodes:
         log.warn(
