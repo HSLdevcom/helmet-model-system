@@ -402,7 +402,8 @@ assignment_classes = {
     "oop": "leisure",
     "external": "leisure",
 }
-car_mode = 'c'
+main_mode = 'h'
+bike_mode = 'f'
 assignment_modes = {
     "car_work": 'c',
     "car_leisure": 'c',
