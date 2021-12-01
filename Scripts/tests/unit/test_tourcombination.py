@@ -17,7 +17,7 @@ class TourCombinationModelTest(unittest.TestCase):
     def test_generation(self):
         zi = numpy.array(METROPOLITAN_ZONES + PERIPHERAL_ZONES + EXTERNAL_ZONES)
         zd = ZoneData(
-            os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata"), zi)
+            os.path.join(TEST_DATA_PATH, "Base_input_data", "2018_zonedata"), zi)
         zd._values["hu_t"] = pandas.Series(0.0, METROPOLITAN_ZONES)
         zd._values["ho_w"] = pandas.Series(0.0, METROPOLITAN_ZONES)
         model = TourCombinationModel(zd)
