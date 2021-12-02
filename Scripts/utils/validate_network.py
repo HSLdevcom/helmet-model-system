@@ -40,6 +40,9 @@ def validate(network, fares=None):
                 found_zone_share)
             log.error(msg)
             raise ValueError(msg)
+    modesets = {modes: {network.mode(m) for m in modes}
+        for modes in param.official_node_numbers}
+    unofficial_nodes = set()
     for link in network.links():
         if network.mode('c') in link.modes:
             linktype = link.type % 100
@@ -55,12 +58,26 @@ def validate(network, fares=None):
                 "pt": int(speedstr[-4:-2]),
                 "iht": int(speedstr[-2:]),
             }
-            for tp in speed:
-                if speed[tp] == 0:
+            for timeperiod in speed:
+                if speed[timeperiod] == 0:
                     msg = "Speed is zero for time period {} on link {}".format(
-                        tp, link.id)
+                        timeperiod, link.id)
                     log.error(msg)
                     raise ValueError(msg)
+        for modes in modesets:
+            lower, upper = param.official_node_numbers[modes]
+            # Check that intersection is not empty,
+            # hence that mode is active on link
+            if modesets[modes] & link.modes:
+                if not lower <= link.i_node.number <= upper:
+                    unofficial_nodes.add(link.i_node.id)
+                if not lower <= link.j_node.number <= upper:
+                    unofficial_nodes.add(link.j_node.id)
+    if unofficial_nodes:
+        log.warn(
+            "Node number(s) {} not consistent with official HSL network".format(
+                ', '.join(unofficial_nodes)
+        ))
     for line in network.transit_lines():
         for hdwy in ("@hw_aht", "@hw_pt", "@hw_iht"):
             if line[hdwy] < 0.02:

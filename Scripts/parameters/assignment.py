@@ -82,6 +82,14 @@ transit_delay_funcs = {
         "iht": 6,
     },
 }
+# Node numbers used in HSL official networks
+official_node_numbers = {
+    "bgde": (40000, 599999),
+    "m": (800000, 800499),
+    "rj": (801000, 801499),
+    "tp": (802000, 805999),
+    "p": (810000, 815999),
+}
 volume_delay_funcs = {
     # Car functions
     "fd1": "(put(60/ul2)*(1+0.02*put((volau+volad)/lanes)/"

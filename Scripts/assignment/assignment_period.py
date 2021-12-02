@@ -551,7 +551,7 @@ class AssignmentPeriod(Period):
             "type": "STANDARD_TRAFFIC_ASSIGNMENT",
             "classes": [
                 {
-                    "mode": param.bike_mode,
+                    "mode": param.main_mode,
                     "demand": self.demand_mtx["bike"]["id"],
                     "results": {
                         "od_travel_times": {
