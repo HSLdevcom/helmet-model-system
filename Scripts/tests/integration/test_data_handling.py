@@ -11,7 +11,9 @@ import parameters.assignment as param
 
 TEST_DATA_PATH = os.path.join(
     os.path.dirname(os.path.realpath(__file__)), "..", "test_data")
-ZONE_INDEXES = numpy.array([5, 6, 7, 2792, 16001, 17000, 31001, 31501])
+INTERNAL_ZONES = [102, 103, 244, 1063, 1531, 2703, 2741, 6272, 6291, 19071]
+EXTERNAL_ZONES = [31102, 31500]
+ZONE_INDEXES = numpy.array(INTERNAL_ZONES + EXTERNAL_ZONES)
 
 # Integration tests for validating that we can read the matrices from OMX
 #  and CSV files correctly. Assumes that the matrix is fixed and the
@@ -52,7 +54,6 @@ class MatrixDataTest(unittest.TestCase):
 
 
 class ZoneDataTest(unittest.TestCase):
-    FREIGHT_DATA_INDEXES = [5, 6, 7, 2792, 16001, 17000]
 
     def _get_freight_data_2016(self):
         zdata = ZoneData(
@@ -88,17 +89,17 @@ class ZoneDataTest(unittest.TestCase):
 
     def test_all_cols_have_values_2016(self):
         df = self._get_freight_data_2016()
-        row = df.loc[7, :]  # Let's pick some row and validate it
-        self.assertAlmostEquals(row['industry'], 0.0)
-        self.assertAlmostEquals(row['logistics'], 0.4)
-        self.assertEquals(row['population'], 10)
-        self.assertAlmostEquals(row['shops'], 0.8)
-        self.assertEquals(row['workplaces'], 4)
+        row = df.loc[244, :]  # Let's pick some row and validate it
+        self.assertAlmostEquals(row['industry'], 2.1984)
+        self.assertAlmostEquals(row['logistics'], 1.8091)
+        self.assertEquals(row['population'], 1142)
+        self.assertAlmostEquals(row['shops'], 3.8014)
+        self.assertEquals(row['workplaces'], 229)
 
     def test_industry_series_and_indexes_2016(self):
         df = self._get_freight_data_2016()
         industry = df["industry"] # Let's pick a column and validate it
         expected_industry = pandas.Series(
-            [0.7, 0.0, 0.0, 0.9, 0.0, 0.0],
-            index=self.FREIGHT_DATA_INDEXES, name="industry")
+            [3.3971, 579.7232, 2.1984, 467.7852, 29.4101, 2.1424, 7.392, 0, 0, 0],
+            index=INTERNAL_ZONES, name="industry")
         pandas.testing.assert_series_equal(industry, expected_industry)

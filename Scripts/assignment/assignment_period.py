@@ -277,6 +277,8 @@ class AssignmentPeriod(Period):
         network = self.emme_scenario.get_network()
         transit_modesets = {modes[0]: {network.mode(m) for m in modes[1]}
             for modes in param.transit_delay_funcs}
+        main_mode = network.mode(param.main_mode)
+        car_mode = network.mode(param.assignment_modes["car_work"])
         for link in network.links():
             # Car volume delay function definition
             linktype = link.type % 100
@@ -336,16 +338,18 @@ class AssignmentPeriod(Period):
                     break
             for segment in link.segments():
                 segment.transit_time_func = func
-            if network.mode('c') in link.modes:
-                link.modes |= {network.mode('h')}
-            elif network.mode('h') in link.modes:
-                link.modes -= {network.mode('h')}
+            if car_mode in link.modes:
+                link.modes |= {main_mode}
+            elif main_mode in link.modes:
+                link.modes -= {main_mode}
         self.emme_scenario.publish_network(network)
 
     def _set_bike_vdfs(self):
         log.info("Sets bike functions for scenario {}".format(
             self.emme_scenario.id))
         network = self.emme_scenario.get_network()
+        main_mode = network.mode(param.main_mode)
+        bike_mode = network.mode(param.bike_mode)
         for link in network.links():
             linktype = link.type % 100
             if linktype in param.roadclasses:
@@ -366,10 +370,10 @@ class AssignmentPeriod(Period):
                     link.volume_delay_func = pathclass[None]
             except KeyError:
                 link.volume_delay_func = 98
-            if network.mode('f') in link.modes:
-                link.modes |= {network.mode('h')}
-            elif network.mode('h') in link.modes:
-                link.modes -= {network.mode('h')}
+            if bike_mode in link.modes:
+                link.modes |= {main_mode}
+            elif main_mode in link.modes:
+                link.modes -= {main_mode}
         self.emme_scenario.publish_network(network)
 
     def _set_emmebank_matrices(self, matrices, is_last_iteration):
@@ -547,7 +551,7 @@ class AssignmentPeriod(Period):
             "type": "STANDARD_TRAFFIC_ASSIGNMENT",
             "classes": [
                 {
-                    "mode": param.car_mode,
+                    "mode": param.main_mode,
                     "demand": self.demand_mtx["bike"]["id"],
                     "results": {
                         "od_travel_times": {

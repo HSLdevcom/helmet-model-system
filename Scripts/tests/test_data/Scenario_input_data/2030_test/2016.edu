@@ -1,13 +1,17 @@
-# Schools 2030
+# Schools 2016
 #
 # compreh: Students in comprehensive school (1-9)
 # secndry: Students in upper secondary education (gymnasium, vocational)
 # tertiary: Students in tertiary education (university, college, polytechnic)
 #
 	compreh	secndry	tertiary
-5	7	0	10
-6	4	10	0
-7	0	0	0
-2792	3	10	0
-16001	2	5	0
-17000	2	5	0
+102	0	0	0
+103	0	0	0
+244	0	0	0
+1063	0	0	0
+1531	85	0	0
+2703	496	4341	0
+2741	0	0	0
+6272	742	0	0
+6291	0	0	0
+19071	0	0	0
