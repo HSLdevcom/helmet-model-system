@@ -11,7 +11,7 @@ import parameters.assignment as param
 
 
 def main(args):
-    base_zonedata_path = os.path.join(args.baseline_data_path, "2016_zonedata")
+    base_zonedata_path = os.path.join(args.baseline_data_path, "2018_zonedata")
     base_matrices_path = os.path.join(args.baseline_data_path, "base_matrices")
     emme_paths = args.emme_paths
     first_scenario_ids = args.first_scenario_ids

@@ -57,7 +57,7 @@ class ZoneDataTest(unittest.TestCase):
 
     def _get_freight_data_2016(self):
         zdata = ZoneData(
-            os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata"),
+            os.path.join(TEST_DATA_PATH, "Base_input_data", "2018_zonedata"),
             ZONE_INDEXES)
         df = zdata.get_freight_data()
         self.assertIsNotNone(df)
@@ -65,7 +65,7 @@ class ZoneDataTest(unittest.TestCase):
 
     def test_csv_file_read(self):
         zdata2016 = ZoneData(
-            os.path.join(TEST_DATA_PATH, "Base_input_data", "2016_zonedata"),
+            os.path.join(TEST_DATA_PATH, "Base_input_data", "2018_zonedata"),
             ZONE_INDEXES)
         self.assertIsNotNone(zdata2016["population"])
         self.assertIsNotNone(zdata2016["workplaces"])

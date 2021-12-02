@@ -19,7 +19,7 @@ def main(args):
     else:
         raise ArgumentTypeError(
             "Iteration number {} not valid".format(args.iterations))
-    base_zonedata_path = os.path.join(args.baseline_data_path, "2016_zonedata")
+    base_zonedata_path = os.path.join(args.baseline_data_path, "2018_zonedata")
     base_matrices_path = os.path.join(args.baseline_data_path, "base_matrices")
     forecast_zonedata_path = args.forecast_data_path
     results_path = args.results_path
