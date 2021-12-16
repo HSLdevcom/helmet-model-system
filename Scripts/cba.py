@@ -339,11 +339,15 @@ def calc_gains(demands, costs):
     """
     gain = costs["scen_1"] - costs["scen_0"]
     demand_change = demands["scen_1"] - demands["scen_0"]
-    gains_existing = ((demands["scen_0"]*gain)[demand_change >= 0].sum(0)
-                      + (demands["scen_1"]*gain)[demand_change < 0].sum(0))
-    gains_additional = (0.5*(demand_change*gain)[demand_change >= 0].sum(0)
-                        - 0.5*(demand_change*gain)[demand_change < 0].sum(0))
-    return gains_existing, gains_additional
+    demand_incr = demand_change >= 0
+    demand_decr = demand_change < 0
+    gains_existing = numpy.zeros_like(demand_change)
+    gains_existing[demand_incr] = (demands["scen_0"]*gain)[demand_incr]
+    gains_existing[demand_decr] = (demands["scen_1"]*gain)[demand_decr]
+    gains_additional = numpy.zeros_like(demand_change)
+    gains_additional[demand_incr] = 0.5*(demand_change*gain)[demand_incr]
+    gains_additional[demand_decr] = -0.5*(demand_change*gain)[demand_decr]
+    return gains_existing.sum(0), gains_additional.sum(0)
 
 
 def calc_revenue(demands, costs):
@@ -368,12 +372,15 @@ def calc_revenue(demands, costs):
         Calculated revenue per zone
     """
     demand_change = demands["scen_1"] - demands["scen_0"]
+    demand_incr = demand_change >= 0
+    demand_decr = demand_change < 0
     cost_change = costs["scen_1"] - costs["scen_0"]
-    revenue = ((costs["scen_1"]*demand_change)[demand_change >= 0].sum(0)
-               + (cost_change*demands["scen_0"])[demand_change >= 0].sum(0)
-               + (costs["scen_0"]*demand_change)[demand_change < 0].sum(0)
-               + (cost_change*demands["scen_1"])[demand_change < 0].sum(0))
-    return revenue
+    revenue = numpy.zeros_like(demand_change)
+    revenue[demand_incr] = ((costs["scen_1"]*demand_change)[demand_incr]
+                            + (cost_change*demands["scen_0"])[demand_incr])
+    revenue[demand_decr] = ((costs["scen_0"]*demand_change)[demand_decr]
+                            + (cost_change*demands["scen_1"])[demand_decr])
+    return revenue.sum(0)
 
 
 if __name__ == "__main__":
