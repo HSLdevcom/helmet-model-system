@@ -70,6 +70,7 @@ class Config:
     @property
     def VERSION(self):
         """HELMET version number from git tag or dev_config.json."""
+        os.chdir(os.path.dirname(os.path.realpath(__file__)))
         try:
             # If model system is in a git repo
             return subprocess.check_output(["git", "describe", "--tags"])
