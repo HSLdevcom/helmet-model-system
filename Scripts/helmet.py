@@ -257,4 +257,7 @@ if __name__ == "__main__":
     for key in args_dict:
         log.debug("{}={}".format(key, args_dict[key]))
 
-    main(args)
+    if sys.version_info.major == 3:
+        main(args)
+    else:
+        log.error("Python version not supported, must use version 3")
