@@ -1,3 +1,5 @@
+import bisect
+
 import utils.log as log
 import parameters.assignment as param
 
@@ -40,8 +42,11 @@ def validate(network, fares=None):
                 found_zone_share)
             log.error(msg)
             raise ValueError(msg)
-    modesets = {modes: {network.mode(m) for m in modes}
-        for modes in param.official_node_numbers}
+    modesets = []
+    intervals = []
+    for modes in param.official_node_numbers:
+        modesets.append({network.mode(m) for m in modes})
+        intervals += param.official_node_numbers[modes]
     unofficial_nodes = set()
     for link in network.links():
         if network.mode('c') in link.modes:
@@ -64,15 +69,14 @@ def validate(network, fares=None):
                         timeperiod, link.id)
                     log.error(msg)
                     raise ValueError(msg)
-        for modes in modesets:
-            lower, upper = param.official_node_numbers[modes]
-            # Check that intersection is not empty,
-            # hence that mode is active on link
-            if modesets[modes] & link.modes:
-                if not lower <= link.i_node.number <= upper:
-                    unofficial_nodes.add(link.i_node.id)
-                if not lower <= link.j_node.number <= upper:
-                    unofficial_nodes.add(link.j_node.id)
+        for node in (link.i_node, link.j_node):
+            i = bisect.bisect(intervals, node.number)
+            if i % 2 == 0:
+                # If node number is not in one of the official intervals
+                unofficial_nodes.add(node.id)
+            elif not link.modes <= modesets[i // 2]:
+                # If link has unallowed modes
+                unofficial_nodes.add(node.id)
     if unofficial_nodes:
         log.warn(
             "Node number(s) {} not consistent with official HSL network".format(
