@@ -89,16 +89,19 @@ def main(args):
     # Run with increased car ownership
     model.set_results_path(args.scenario_name + "_car++")
     model.cdm.set_car_growth(constant=+0.1)
+    model.zdata_forecast.read_data("haj")
     run(log_extra, model)
 
     # Run with decreased car ownership
     model.set_results_path(args.scenario_name + "_car--")
     model.cdm.set_car_growth(factor=0.8)
+    model.zdata_forecast.read_data("kes")
     run(log_extra, model)
 
     # Regular model run last to save regular results in EMME
     model.set_results_path(args.scenario_name)
     model.cdm.set_car_growth()
+    model.zdata_forecast.read_data()
     run(log_extra, model)
 
     # delete emme strategy files for scenarios
