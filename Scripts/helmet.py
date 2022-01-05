@@ -87,25 +87,17 @@ def main(args):
     log_extra["status"]["results"] = model.mode_share
 
     # Run with increased car ownership
-    new_name = args.scenario_name + "_car++"
-    model.resultdata.set_path(os.path.join(results_path, new_name))
-    model.resultmatrices.set_path(os.path.join(
-        results_path, new_name, "Matrices"))
+    model.set_results_path(args.scenario_name + "_car++")
     model.cdm.set_car_growth(constant=+0.1)
     run(log_extra, model)
 
     # Run with decreased car ownership
-    new_name = args.scenario_name + "_car--"
-    model.resultdata.set_path(os.path.join(results_path, new_name))
-    model.resultmatrices.set_path(os.path.join(
-        results_path, new_name, "Matrices"))
+    model.set_results_path(args.scenario_name + "_car--")
     model.cdm.set_car_growth(factor=0.8)
     run(log_extra, model)
 
     # Regular model run last to save regular results in EMME
-    model.resultdata.set_path(os.path.join(results_path, args.scenario_name))
-    model.resultmatrices.set_path(os.path.join(
-        results_path, args.scenario_name, "Matrices"))
+    model.set_results_path(args.scenario_name)
     model.cdm.set_car_growth()
     run(log_extra, model)
 

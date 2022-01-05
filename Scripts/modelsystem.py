@@ -59,6 +59,7 @@ class ModelSystem:
             zone_data_path, self.zone_numbers)
 
         # Output data
+        self.results_path = results_path
         self.resultmatrices = MatrixData(
             os.path.join(results_path, name, "Matrices"))
         self.resultdata = ResultsData(os.path.join(results_path, name))
@@ -77,6 +78,11 @@ class ModelSystem:
         self.convergence = pandas.DataFrame()
         self.trucks = self.fm.calc_freight_traffic("truck")
         self.trailer_trucks = self.fm.calc_freight_traffic("trailer_truck")
+
+    def set_results_path(self, new_name):
+        self.resultdata.set_path(os.path.join(self.results_path, new_name))
+        self.resultmatrices.set_path(os.path.join(
+            self.results_path, new_name, "Matrices"))
 
     def _init_demand_model(self):
         return DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=False)
