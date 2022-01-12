@@ -6,6 +6,7 @@ from parameters.destination_choice import destination_choice, distance_boundary
 from parameters.mode_choice import mode_choice
 from parameters.car import car_usage
 import parameters.tour_generation as generation_params
+import parameters.zone as zone_params
 from utils.zone_interval import ZoneIntervals
 
 
@@ -593,7 +594,10 @@ class AccessibilityModel(ModeDestModel):
         zdata = self.zone_data
         for i in b:
             try: # If only one parameter
-                utility += b[i] * zdata.get_data(i, self.bounds, generation)
+                # Remove area dummies from accessibility indicators
+                if i not in zone_params.areas:
+                    utility += b[i] * zdata.get_data(
+                        i, self.bounds, generation)
             except ValueError: # Separate params for cap region and surrounding
                 utility += b[i][0] * zdata.get_data(i, self.bounds, generation)
         return utility
