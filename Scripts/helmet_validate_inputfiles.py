@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 import os
+import sys
 
 import utils.config
 import utils.log as log
@@ -246,4 +247,7 @@ if __name__ == "__main__":
 
     log.initialize(args)
 
-    main(args)
+    if sys.version_info.major == 3:
+        main(args)
+    else:
+        log.error("Python version not supported, must use version 3")

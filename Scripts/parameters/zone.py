@@ -236,7 +236,7 @@ helsinki_cbd = (
     (25499538.96, 6669673.01),
     (25500485.22, 6670292.79),
 )
-savu_intervals = (-172.28, -168.53, -164.11, -159.86, -156.18, -151.17, 9999)
+savu_intervals = (-172.85, -169.77, -167.11, -161.52, -156.85, -152.07, 9999)
 tour_length_intervals = (0, 1, 3, 5, 10, 20, 30, 40, float("inf"))
 # Population in noise zones as share of total area population as
 # function only of zone area, calculated by Ramboll Feb 2021
