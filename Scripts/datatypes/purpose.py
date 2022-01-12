@@ -316,3 +316,10 @@ class SecDestPurpose(Purpose):
                                   + impedance[mtx_type][:, orig]
                                   - impedance[mtx_type][dests, orig][:, numpy.newaxis])
         return self.model.calc_prob(mode, dest_imp, orig, dests)
+
+    def print_data(self):
+        self.resultdata.print_data(
+            pandas.Series(
+                sum(self.attracted_tours.values()),
+                self.zone_data.zone_numbers),
+            "attraction.txt", self.name)
