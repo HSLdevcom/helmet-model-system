@@ -84,12 +84,12 @@ transit_delay_funcs = {
 }
 # Node numbers used in HSL official networks and their allowed modes
 official_node_numbers = {
-    "cvkyasf": (1, 35000),
-    "cvkybgdewasf": (40000, 600000),
-    "maf": (800000, 800500),
-    "rjaf": (801000, 801500),
-    "tpaf": (802000, 806000),
-    "paf": (810000, 816000),
+    "hcvkyasf": (1, 35000),
+    "hcvkybgdewasf": (40000, 600000),
+    "hmaf": (800000, 800500),
+    "hrjaf": (801000, 801500),
+    "htpaf": (802000, 806000),
+    "hpaf": (810000, 816000),
 }
 volume_delay_funcs = {
     # Car functions
