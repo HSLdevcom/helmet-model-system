@@ -87,7 +87,7 @@ official_node_numbers = {
     "hcvkyasf": (1, 35000),
     "hcvkybgdewasf": (40000, 600000),
     "hmaf": (800000, 800500),
-    "hrjaf": (801000, 801500),
+    "hrjasf": (801000, 801500),
     "htpaf": (802000, 806000),
     "hpaf": (810000, 816000),
 }
