@@ -77,7 +77,10 @@ def belongs_to_area(node):
         if municipality == "Helsinki" and not Point(node.x, node.y).within(cbd):
             first_zone_id = 1000
         else:
-            first_zone_id = param.municipalities[municipality][0]
+            try:
+                first_zone_id = param.municipalities[municipality][0]
+            except KeyError:
+                first_zone_id = -1
     for area in param.area_aggregation:
         if is_in(param.areas[area], first_zone_id):
             return area
