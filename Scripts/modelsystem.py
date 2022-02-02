@@ -388,7 +388,7 @@ class ModelSystem:
         self.resultdata.print_data(
             pandas.Series(savu, zone_numbers), "savu.txt", "savu_zone")
         avg_savu = numpy.searchsorted(intervals, avg_sust_logsum) + 1
-        avg_savu += ((avg_savu - intervals[avg_savu-2])
+        avg_savu += ((avg_sust_logsum - intervals[avg_savu-2])
                      / (intervals[avg_savu-1] - intervals[avg_savu-2]))
         self.resultdata.print_line(
             "Average SAVU:\t{:1.4f}".format(avg_savu),
