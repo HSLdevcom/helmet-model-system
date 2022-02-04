@@ -142,20 +142,7 @@ class AssignmentPeriod(Period):
                 path_not_found = mtxs["time"][mtx_class] > 999999
                 mtxs[mtx_type][mtx_class][path_not_found] = 999999
         # adjust impedance
-        mtxs["time"]["bike"] = mtxs["time"]["bike"].clip(None, 9999.)
-        for ass_class in ("car_work", "car_leisure"):
-            mtxs["time"][ass_class] = self._extract_timecost_from_gcost(
-                ass_class)
-        mtxs["time"]["transit_work"] = self._damp(
-            mtxs["time"]["transit_work"],
-            self._get_matrix("trip_part_transit_work", "fw_time"))
-        if iteration=="last":
-            mtxs["time"]["transit_leisure"] = self._damp(
-                mtxs["time"]["transit_leisure"],
-                self._get_matrix("trip_part_transit_leisure", "fw_time"))
-        else:
-            for mtx_type in mtxs:
-                mtxs[mtx_type]["transit_leisure"] = mtxs[mtx_type]["transit_work"]
+        if iteration != "last":
             for ass_cl in ("car_work", "car_leisure"):
                 mtxs["cost"][ass_cl] += self.dist_unit_cost * mtxs["dist"][ass_cl]
         return mtxs
@@ -437,12 +424,24 @@ class AssignmentPeriod(Period):
             Subtype (car_work/truck/inv_time/...) : numpy 2-d matrix
                 Matrix of the specified type
         """
-        matrices = dict.fromkeys(self.result_mtx[mtx_type].keys())
+        matrices = {}
+        for subtype in self.result_mtx[mtx_type]:
+            if is_last_iteration or subtype not in param.freight_classes:
+                mtx = self._get_matrix(mtx_type, subtype)
+                if mtx_type == "time" and subtype == "bike":
+                    mtx = mtx.clip(None, 9999.)
+                if mtx_type == "time" and subtype == "transit_work":
+                    mtx = self._damp(mtx, "transit_work")
+                car_modes = ("car_work", "car_leisure")
+                if is_last_iteration:
+                    if mtx_type == "time" and subtype == "transit_leisure":
+                        mtx = self._damp(mtx, "transit_leisure")
+                    car_modes += param.freight_classes
+                if mtx_type == "time" and subtype in car_modes:
+                    mtx = self._extract_timecost_from_gcost(subtype)
+                matrices[subtype] = mtx
         if not is_last_iteration:
-            for key in param.freight_classes:
-                del matrices[key]
-        for subtype in matrices:
-            matrices[subtype] = self._get_matrix(mtx_type, subtype)
+            matrices["transit_leisure"] = matrices["transit_work"]
         return matrices
 
     def _get_matrix(self, assignment_result_type, subtype):
@@ -463,8 +462,9 @@ class AssignmentPeriod(Period):
         emme_id = self.result_mtx[assignment_result_type][subtype]["id"]
         return self.emme_project.modeller.emmebank.matrix(emme_id).get_numpy_data()
 
-    def _damp(self, travel_time, fw_time):
+    def _damp(self, travel_time, demand_type):
         """Reduce the impact from first waiting time on total travel time."""
+        fw_time = self._get_matrix("trip_part_"+demand_type, "fw_time")
         wt_weight = param.waiting_time_perception_factor
         return travel_time + wt_weight*((5./3.*fw_time)**0.8 - fw_time)
 
