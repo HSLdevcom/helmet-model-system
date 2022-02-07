@@ -431,7 +431,7 @@ class AssignmentPeriod(Period):
                 if mtx_type == "time" and subtype in param.assignment_modes:
                     mtx = self._extract_timecost_from_gcost(subtype)
                 elif mtx_type == "time" and subtype in param.transit_classes:
-                    mtx = self._damp(subtype)
+                    mtx = self._damp_travel_time(subtype)
                 else:
                     mtx = self._get_matrix(mtx_type, subtype)
                 if mtx_type == "time" and subtype == "bike":
@@ -460,7 +460,7 @@ class AssignmentPeriod(Period):
         return (self.emme_project.modeller.emmebank.matrix(emme_id)
                 .get_numpy_data())
 
-    def _damp(self, demand_type):
+    def _damp_travel_time(self, demand_type):
         """Reduce the impact from first waiting time on total travel time."""
         travel_time = self._get_matrix("time", demand_type)
         fw_time = self._get_matrix("trip_part_"+demand_type, "fw_time")
