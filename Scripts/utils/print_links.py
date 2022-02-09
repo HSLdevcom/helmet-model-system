@@ -6,8 +6,8 @@ def print_links(network, resultdata):
     resultdata.print_line(
         "Link\t" + "\t".join(attr_names) + "\tNoise_zone_width", "links")
     noisemodel = NoiseModel(
-        network, ("@car_work", "@car_leisure", "@van"),
-        ("@truck", "@trailer_truck"))
+        network, ("@car_work_vrk", "@car_leisure_vrk", "@van_vrk"),
+        ("@truck_vrk", "@trailer_truck_vrk"))
     for link in network.links():
         wkt = "LINESTRING ({} {}, {} {})".format(
             link.i_node.x, link.i_node.y, link.j_node.x, link.j_node.y)
