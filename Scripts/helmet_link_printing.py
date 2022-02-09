@@ -22,7 +22,7 @@ class LinkPrinting(_m.Tool()):
 
     def page(self):
         pb = _m.ToolPageBuilder(self)
-        pb.title = "Print links"
+        pb.title = "Print link attributes to file"
         pb.add_select_file(
             "results_path", "directory", file_filter="", start_path="",
             title="Directory to save file in:")
@@ -38,7 +38,8 @@ class LinkPrinting(_m.Tool()):
         """
         scen = _m.Modeller().scenario
         print_links(scen.get_network(), ResultsData(self.results_path))
-        msg = "Link printing finished for scenario {}!".format(scen.id)
+        msg = "Link attributes for scenario {} printed to links.txt!".format(
+            scen.id)
         self.write(msg)
         self.tool_run_msg = _m.PageBuilder.format_info(msg)
 
