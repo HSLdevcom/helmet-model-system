@@ -14,5 +14,5 @@ def print_links(network, resultdata):
         attrs = "\t".join([str(link[attr]) for attr in attr_names])
         noise_zone_width = noisemodel.calc_noise(link)
         resultdata.print_line(
-            wkt + "\t" + attrs + "\t" + noise_zone_width, "links")
+            wkt + "\t" + attrs + "\t" + str(noise_zone_width), "links")
     resultdata.flush()
