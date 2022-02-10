@@ -3,6 +3,17 @@ from math import log10
 import parameters.assignment as param
 
 class NoiseModel:
+    """Model for calculating noise zone width for road links.
+
+    Parameters
+    ----------
+    morning_network : inro.emme.network.Network
+        Network used for morning peak hour assignment
+    light_modes : tuple of str
+        Extra attribute names for 24-h traffic per assignment class
+    heavy_modes : tuple of str
+        Extra attribute names for 24-h traffic per assignment class
+    """
     def __init__(self, morning_network, light_modes, heavy_modes):
         self.morning_network = morning_network
         self.light_modes = light_modes
@@ -10,6 +21,18 @@ class NoiseModel:
         self.car_morning = "@car_time_aht"
 
     def calc_noise(self, link):
+        """Calculate noise zone width.
+
+        Parameters
+        ----------
+        link : inro.emme.network.link.Link
+            Link for which noise will be calculated
+
+        Returns
+        -------
+        float
+            Noise zone width (m)
+        """
         traffic = sum([link[mode] for mode in self.light_modes])
         rlink = link.reverse_link
         if rlink is None:

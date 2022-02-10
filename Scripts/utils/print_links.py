@@ -2,6 +2,17 @@ from utils.calc_noise import NoiseModel
 
 
 def print_links(network, resultdata):
+    """Dump link attributes with wkt coordinates to file.
+
+    Includes noise calculation (works well only when morning peak hour
+    is assigned in the same EMME skenario). Noise calculation could be
+    removed from here if noise extra attribute would be added.
+
+    Parameters
+    ----------
+    network : inro.emme.network.Network
+        Network where whole-day results are stored
+    """
     attr_names = network.attributes("LINK")
     resultdata.print_line(
         "Link\t" + "\t".join(attr_names) + "\tNoise_zone_width", "links")
