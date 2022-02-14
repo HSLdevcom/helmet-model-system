@@ -133,7 +133,7 @@ class AssignmentPeriod(Period):
         else:
             raise ValueError("Iteration number not valid")
 
-        mtxs = {imp_type: self._get_emmebank_matrices(imp_type, iteration=="last")
+        mtxs = {imp_type: self._get_matrices(imp_type, iteration=="last")
             for imp_type in ("time", "cost", "dist")}
         # fix the emme path analysis results
         # (dist and cost zero if path not found)
@@ -142,20 +142,7 @@ class AssignmentPeriod(Period):
                 path_not_found = mtxs["time"][mtx_class] > 999999
                 mtxs[mtx_type][mtx_class][path_not_found] = 999999
         # adjust impedance
-        mtxs["time"]["bike"] = mtxs["time"]["bike"].clip(None, 9999.)
-        for ass_class in ("car_work", "car_leisure"):
-            mtxs["time"][ass_class] = self._extract_timecost_from_gcost(
-                ass_class)
-        mtxs["time"]["transit_work"] = self._damp(
-            mtxs["time"]["transit_work"],
-            self._get_matrix("trip_part_transit_work", "fw_time"))
-        if iteration=="last":
-            mtxs["time"]["transit_leisure"] = self._damp(
-                mtxs["time"]["transit_leisure"],
-                self._get_matrix("trip_part_transit_leisure", "fw_time"))
-        else:
-            for mtx_type in mtxs:
-                mtxs[mtx_type]["transit_leisure"] = mtxs[mtx_type]["transit_work"]
+        if iteration != "last":
             for ass_cl in ("car_work", "car_leisure"):
                 mtxs["cost"][ass_cl] += self.dist_unit_cost * mtxs["dist"][ass_cl]
         return mtxs
@@ -420,7 +407,7 @@ class AssignmentPeriod(Period):
             self.emme_project.modeller.emmebank.matrix(
                 self.result_mtx[result_type][mtx_label]["id"]).set_numpy_data(matrix)
 
-    def _get_emmebank_matrices(self, mtx_type, is_last_iteration=False):
+    def _get_matrices(self, mtx_type, is_last_iteration=False):
         """Get all matrices of specified type.
 
         Parameters
@@ -437,12 +424,21 @@ class AssignmentPeriod(Period):
             Subtype (car_work/truck/inv_time/...) : numpy 2-d matrix
                 Matrix of the specified type
         """
-        matrices = dict.fromkeys(self.result_mtx[mtx_type].keys())
+        last_iteration_classes = param.freight_classes + ("transit_leisure",)
+        matrices = {}
+        for subtype in self.result_mtx[mtx_type]:
+            if is_last_iteration or subtype not in last_iteration_classes:
+                if mtx_type == "time" and subtype in param.assignment_modes:
+                    mtx = self._extract_timecost_from_gcost(subtype)
+                elif mtx_type == "time" and subtype in param.transit_classes:
+                    mtx = self._damp_travel_time(subtype)
+                else:
+                    mtx = self._get_matrix(mtx_type, subtype)
+                if mtx_type == "time" and subtype == "bike":
+                    mtx = mtx.clip(None, 9999.)
+                matrices[subtype] = mtx
         if not is_last_iteration:
-            for key in param.freight_classes:
-                del matrices[key]
-        for subtype in matrices:
-            matrices[subtype] = self._get_matrix(mtx_type, subtype)
+            matrices["transit_leisure"] = matrices["transit_work"]
         return matrices
 
     def _get_matrix(self, assignment_result_type, subtype):
@@ -461,17 +457,22 @@ class AssignmentPeriod(Period):
             Matrix of the specified type
         """
         emme_id = self.result_mtx[assignment_result_type][subtype]["id"]
-        return self.emme_project.modeller.emmebank.matrix(emme_id).get_numpy_data()
+        return (self.emme_project.modeller.emmebank.matrix(emme_id)
+                .get_numpy_data())
 
-    def _damp(self, travel_time, fw_time):
+    def _damp_travel_time(self, demand_type):
         """Reduce the impact from first waiting time on total travel time."""
+        travel_time = self._get_matrix("time", demand_type)
+        fw_time = self._get_matrix("trip_part_"+demand_type, "fw_time")
         wt_weight = param.waiting_time_perception_factor
         return travel_time + wt_weight*((5./3.*fw_time)**0.8 - fw_time)
 
     def _extract_timecost_from_gcost(self, ass_class):
-        """Remove monetary cost from generalized cost."""
-        # Traffic assignment produces a generalized cost matrix.
-        # To get travel time, monetary cost is removed from generalized cost.
+        """Remove monetary cost from generalized cost.
+
+        Traffic assignment produces a generalized cost matrix.
+        To get travel time, monetary cost is removed from generalized cost.
+        """
         vot_inv = param.vot_inv[param.vot_classes[ass_class]]
         gcost = self._get_matrix("gen_cost", ass_class)
         cost = self._get_matrix("cost", ass_class)
