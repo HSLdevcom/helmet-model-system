@@ -142,6 +142,7 @@ class AssignmentPeriod(Period):
                 path_not_found = mtxs["time"][mtx_class] > 999999
                 mtxs[mtx_type][mtx_class][path_not_found] = 999999
         # adjust impedance
+        mtxs["time"]["bike"] = mtxs["time"]["bike"].clip(None, 9999.)
         if iteration != "last":
             for ass_cl in ("car_work", "car_leisure"):
                 mtxs["cost"][ass_cl] += self.dist_unit_cost * mtxs["dist"][ass_cl]
@@ -434,8 +435,6 @@ class AssignmentPeriod(Period):
                     mtx = self._damp_travel_time(subtype)
                 else:
                     mtx = self._get_matrix(mtx_type, subtype)
-                if mtx_type == "time" and subtype == "bike":
-                    mtx = mtx.clip(None, 9999.)
                 matrices[subtype] = mtx
         if not is_last_iteration:
             matrices["transit_leisure"] = matrices["transit_work"]
