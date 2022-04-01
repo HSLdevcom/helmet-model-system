@@ -364,7 +364,7 @@ years_average_day_factor = 0.85
 share_7_22_of_day = 0.9
 # Noise zone width as function of start noise
 noise_zone_width = {
-    (float("-inf"), 55): lambda x: 5,
+    (0, 55): lambda x: 5,
     (55, 65): lambda x: 10 + 31./10*x,
     (65, 68): lambda x: 41 + 16./3*x,
     (68, 71): lambda x: 57 + 21./3*x,
