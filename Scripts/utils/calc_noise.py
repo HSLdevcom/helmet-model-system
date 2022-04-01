@@ -75,5 +75,5 @@ class NoiseModel:
                 zone_width = func[interval](start_noise - interval[0])
                 break
         else:
-            raise ValueError("{}".format(link.id))
+            raise ValueError("No noise interval found for link {}".format(link.id))
         return zone_width
