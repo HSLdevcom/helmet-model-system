@@ -33,17 +33,16 @@ class NoiseModel:
         float
             Noise zone width (m)
         """
-        traffic = sum([link[mode] for mode in self.light_modes])
+        traffic = max(sum([link[mode] for mode in self.light_modes]), 0.01)
         rlink = link.reverse_link
         if rlink is None:
             reverse_traffic = 0
         else:
             reverse_traffic = sum([rlink[mode] for mode in self.light_modes])
         cross_traffic = (param.years_average_day_factor
-                            * param.share_7_22_of_day
-                            * (traffic+reverse_traffic))
+                         * param.share_7_22_of_day
+                         * (traffic+reverse_traffic))
         heavy = sum([link[mode] for mode in self.heavy_modes])
-        traffic = max(traffic, 0.01)
         heavy_share = heavy / (traffic+heavy)
 
         # Calculate speed
@@ -51,10 +50,10 @@ class NoiseModel:
         rlink = link.reverse_link
         if reverse_traffic > 0:
             speed = (60 * 2 * link.length
-                        / (link[self.car_morning]+rlink[self.car_morning]))
+                     / (link[self.car_morning]+rlink[self.car_morning]))
         else:
             speed = (0.3*(60*link.length/link[self.car_morning])
-                        + 0.7*link.data2)
+                     + 0.7*link.data2)
         speed = max(speed, 50.0)
 
         # Calculate start noise
@@ -75,4 +74,6 @@ class NoiseModel:
             if interval[0] <= start_noise < interval[1]:
                 zone_width = func[interval](start_noise - interval[0])
                 break
+        else:
+            raise ValueError("No noise interval found for link {}".format(link.id))
         return zone_width

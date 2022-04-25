@@ -362,7 +362,7 @@ volume_factors["aux_transit"] = volume_factors["transit"]
 years_average_day_factor = 0.85
 # Factor for converting day traffic into 7:00-22:00 traffic
 share_7_22_of_day = 0.9
-# Noice zone width as function of start noise
+# Noise zone width as function of start noise
 noise_zone_width = {
     (0, 55): lambda x: 5,
     (55, 65): lambda x: 10 + 31./10*x,
