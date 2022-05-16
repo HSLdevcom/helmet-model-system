@@ -73,8 +73,9 @@ class ZoneData:
         self.share["share_male"] = pandas.Series(0.5, zone_numbers)
         self.nr_zones = len(self.zone_numbers)
         self["population_density"] = pop / landdata["builtar"]
-        wp = workdata["total"]
+        wp = workdata.pop("total")
         self["workplaces"] = wp
+        ShareChecker({})["Workplace shares"] = workdata.sum(axis="columns")
         serv = workdata["sh_serv"] * wp
         self["service"] = serv
         shop = workdata["sh_shop"] * wp
