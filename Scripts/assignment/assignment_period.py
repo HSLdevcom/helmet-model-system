@@ -125,8 +125,9 @@ class AssignmentPeriod(Period):
             self._set_bike_vdfs()
             self._assign_bikes(self.result_mtx["dist"]["bike"]["id"], "all")
             self._set_car_and_transit_vdfs()
-            self._calc_background_traffic()
-            self._assign_cars(param.stopping_criteria_fine)
+            self._calc_background_traffic(include_trucks=True)
+            self._assign_cars(param.stopping_criteria_fine, lightweight=True)
+            self._assign_cars(param.stopping_criteria_fine, trucks=True)
             self._calc_boarding_penalties(is_last_iteration=True)
             self._calc_extra_wait_time()
             self._assign_congested_transit()
@@ -501,8 +502,26 @@ class AssignmentPeriod(Period):
                     link[background_traffic] = 0
                 else:
                     link[background_traffic] = freq
-                if include_trucks:
-                    for ass_class in heavy:
+                    if include_trucks
+                        for ass_class in heavy:
+                            link[background_traffic] += link[ass_class]
+        self.emme_scenario.publish_network(network)
+
+    def _calc_background_cars(self):
+        """Calculate background traffic (light vehicles)."""
+        network = self.emme_scenario.get_network()
+        # emme api has name "data3" for ul3
+        background_traffic = param.background_traffic_attr.replace(
+            "ul", "data")
+        # calc @bus and data3
+        ligth_vehicles = (
+            self.extra("car_work"), self.extra("car_leisure"),
+            self.extra("van"))
+        for link in network.links():
+            if link.type > 100: # If car or bus link
+                link[background_traffic] = 0
+                if not link.type // 100 in param.bus_lane_link_codes[self.name]:
+                    for ass_class in ligth_vehicles:
                         link[background_traffic] += link[ass_class]
         self.emme_scenario.publish_network(network)
 
@@ -613,10 +632,10 @@ class AssignmentPeriod(Period):
             },
         }
 
-    def _assign_cars(self, stopping_criteria, lightweight=False):
+    def _assign_cars(self, stopping_criteria, lightweight=False, trucks=False):
         """Perform car_work traffic assignment for one scenario."""
         log.info("Car assignment started...")
-        car_spec = self._car_spec.spec(lightweight)
+        car_spec = self._car_spec.spec(lightweight=lightweight, trucks=trucks)
         car_spec["stopping_criteria"] = stopping_criteria
         assign_report = self.emme_project.car_assignment(
             car_spec, self.emme_scenario)

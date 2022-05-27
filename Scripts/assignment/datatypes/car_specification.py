@@ -53,12 +53,17 @@ class CarSpecification:
             "stopping_criteria": None, # This is defined later
         }
 
-    def spec (self, lightweight=False):
+    def spec (self, lightweight=False, trucks=False):
         if lightweight:
             self._spec["classes"] = [
                 self.car_work.spec,
                 self.car_leisure.spec,
                 self.van.spec,
+            ]
+        elif trucks:
+            self._spec["classes"] = [
+                self.trailer_truck.spec,
+                self.truck.spec,
             ]
         else:
             self._spec["classes"] = [
