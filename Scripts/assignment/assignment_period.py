@@ -127,6 +127,7 @@ class AssignmentPeriod(Period):
             self._set_car_and_transit_vdfs()
             self._calc_background_traffic(include_trucks=True)
             self._assign_cars(param.stopping_criteria_fine, lightweight=True)
+            self._calc_background_cars()
             self._assign_cars(param.stopping_criteria_fine, trucks=True)
             self._calc_boarding_penalties(is_last_iteration=True)
             self._calc_extra_wait_time()
@@ -513,7 +514,7 @@ class AssignmentPeriod(Period):
         # emme api has name "data3" for ul3
         background_traffic = param.background_traffic_attr.replace(
             "ul", "data")
-        # calc @bus and data3
+        # calc data3
         light_vehicles = (
             self.extra("car_work"), self.extra("car_leisure"),
             self.extra("van"))
