@@ -502,7 +502,7 @@ class AssignmentPeriod(Period):
                     link[background_traffic] = 0
                 else:
                     link[background_traffic] = freq
-                    if include_trucks
+                    if include_trucks:
                         for ass_class in heavy:
                             link[background_traffic] += link[ass_class]
         self.emme_scenario.publish_network(network)
@@ -514,14 +514,14 @@ class AssignmentPeriod(Period):
         background_traffic = param.background_traffic_attr.replace(
             "ul", "data")
         # calc @bus and data3
-        ligth_vehicles = (
+        light_vehicles = (
             self.extra("car_work"), self.extra("car_leisure"),
             self.extra("van"))
         for link in network.links():
             if link.type > 100: # If car or bus link
                 link[background_traffic] = 0
                 if not link.type // 100 in param.bus_lane_link_codes[self.name]:
-                    for ass_class in ligth_vehicles:
+                    for ass_class in light_vehicles:
                         link[background_traffic] += link[ass_class]
         self.emme_scenario.publish_network(network)
 
