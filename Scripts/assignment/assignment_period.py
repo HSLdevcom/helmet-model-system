@@ -200,7 +200,7 @@ class AssignmentPeriod(Period):
                 "trip_part_transit_work", "board_cost")
             # If the number of visits is less than 1, there seems to
             # be an easy way to avoid visiting this transit zone
-            has_visited[transit_zone] = (nr_visits >= 1)
+            has_visited[transit_zone] = (nr_visits > 0.99)
         for centroid in network.centroids():
             # Add transit zone of destination to visited
             has_visited[centroid.label][:, mapping[centroid.number]] = True
