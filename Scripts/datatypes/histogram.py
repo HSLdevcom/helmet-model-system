@@ -13,7 +13,7 @@ class TourLengthHistogram:
         self.histogram = pandas.Series(0, index)
 
     def add(self, dist):
-        self.histogram.iloc[numpy.searchsorted(self._u, dist, "right")] += 1
+        self.histogram.iat[numpy.searchsorted(self._u, dist, "right")] += 1
 
     def count_tour_dists(self, tours, dists):
         self.histogram[:], _ = numpy.histogram(dists, intervals, weights=tours)
