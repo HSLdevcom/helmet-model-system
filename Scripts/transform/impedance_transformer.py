@@ -50,6 +50,6 @@ class ImpedanceTransformer:
         transit_class = "{}_{}".format("transit", assignment_classes[purpose.name])
         trips_per_month = numpy.full_like(
             day_imp["transit"]["cost"], trips_month[transit_class][0])
-        trips_per_month[purpose.ubounds, :] = trips_month[transit_class][1]
+        trips_per_month[purpose.sub_bounds[-1], :] = trips_month[transit_class][1]
         day_imp["transit"]["cost"] /= trips_per_month
         return day_imp

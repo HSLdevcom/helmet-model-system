@@ -93,6 +93,12 @@ tour_purposes = (
         "area": "all",
     },
 )
+purpose_areas = {
+    "metropolitan": (0, 6000, 16000),
+    "peripheral": (16000, 31000),
+    "all": (0, 6000, 31000),
+    "external": (31031, 40000),
+}
 areas = {
     "helsinki_cbd": (0, 999),
     "helsinki_other": (1000, 1999),
