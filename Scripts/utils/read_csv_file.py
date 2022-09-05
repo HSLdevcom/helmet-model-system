@@ -60,19 +60,23 @@ def read_csv_file(data_dir, file_end, zone_numbers=None, dtype=None, squeeze=Fal
                 pass
     if data.index.has_duplicates:
         raise IndexError("Index in file {} has duplicates".format(path))
-    aggr_path = os.path.join(data_dir, "aggregation.txt")
-    if zone_numbers is not None and os.path.exists(aggr_path):
-        aggr = pandas.read_csv(aggr_path, delim_whitespace=True).squeeze()
-        if "total" in data.columns:
-            functions = dict.fromkeys(
-                data.columns, lambda x: numpy.ma.average(
-                    x, weights=data.loc[x.index, "total"]))
-            functions["total"] = "sum"
-            data = data.groupby(aggr).aggregate(functions).fillna(0)
-        else:
-            data = data.groupby(aggr).sum()
-        data.index = data.index.astype(int)
     if zone_numbers is not None:
+        aggr_path = os.path.join(data_dir, "aggregation.txt")
+        if os.path.exists(aggr_path):
+            aggr = pandas.read_csv(aggr_path, delim_whitespace=True).squeeze()
+            if "total" in data.columns:
+                # If file contains total and shares of total,
+                # shares are aggregated as averages with total as weight
+                functions = dict.fromkeys(
+                    data.columns, lambda x: numpy.ma.average(
+                        x, weights=data.loc[x.index, "total"]))
+                functions["total"] = "sum"
+                with numpy.testing.suppress_warnings() as sup:
+                    sup.filter(RuntimeWarning, module=numpy.ma.extras)
+                    data = data.groupby(aggr).aggregate(functions).fillna(0)
+            else:
+                data = data.groupby(aggr).sum()
+            data.index = data.index.astype(int)
         if not data.index.is_monotonic:
             data.sort_index(inplace=True)
             log.warn("File {} is not sorted in ascending order".format(path))
