@@ -40,10 +40,7 @@ def read_csv_file(data_dir, file_end, zone_numbers=None, dtype=None, squeeze=Fal
         msg = "No {} file found in folder {}".format(file_end, data_dir)
         # This error should not be logged, as it is sometimes excepted
         raise NameError(msg)
-    if squeeze:
-        header = None
-    else:
-        header = "infer"
+    header = None if squeeze else "infer"
     data = pandas.read_csv(
         path, delim_whitespace=True, squeeze=squeeze, keep_default_na=False,
         na_values="", comment='#', header=header)
@@ -63,6 +60,18 @@ def read_csv_file(data_dir, file_end, zone_numbers=None, dtype=None, squeeze=Fal
                 pass
     if data.index.has_duplicates:
         raise IndexError("Index in file {} has duplicates".format(path))
+    aggr_path = os.path.join(data_dir, "aggregation.txt")
+    if zone_numbers is not None and os.path.exists(aggr_path):
+        aggr = pandas.read_csv(aggr_path, delim_whitespace=True).squeeze()
+        if "total" in data.columns:
+            functions = dict.fromkeys(
+                data.columns, lambda x: numpy.ma.average(
+                    x, weights=data.loc[x.index, "total"]))
+            functions["total"] = "sum"
+            data = data.groupby(aggr).aggregate(functions).fillna(0)
+        else:
+            data = data.groupby(aggr).sum()
+        data.index = data.index.astype(int)
     if zone_numbers is not None:
         if not data.index.is_monotonic:
             data.sort_index(inplace=True)
