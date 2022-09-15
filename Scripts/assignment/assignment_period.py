@@ -478,7 +478,7 @@ class AssignmentPeriod(Period):
         dist = self._get_matrix("dist", ass_class)
         time = gcost - vot_inv*self.dist_unit_cost*dist
         if ass_class not in ("trailer_truck", "truck"):
-            time =- vot_inv*cost
+            time -= vot_inv*cost
         self._set_matrix(ass_class, time, "time")
         return time
 
