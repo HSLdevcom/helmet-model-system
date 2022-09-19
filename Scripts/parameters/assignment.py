@@ -183,6 +183,8 @@ vot_inv = {
 }
 # Default distance unit cost [eur/km]
 dist_unit_cost = 0.12
+# Default speed for trucks and trailer trucks [min/km]
+freight_dist_unit_time = 0.2
 # Boarding penalties for different transit modes
 boarding_penalty = {
     'b': 3, # Bus
