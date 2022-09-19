@@ -93,6 +93,9 @@ tour_purposes = (
         "area": "all",
     },
 )
+# Tour purpose zone intervals
+# Some demand models have separate sub-region parameters,
+# hence need sub-intervals defined.
 purpose_areas = {
     "metropolitan": (0, 6000, 16000),
     "peripheral": (16000, 31000),
