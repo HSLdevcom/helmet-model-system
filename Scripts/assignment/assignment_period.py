@@ -145,7 +145,7 @@ class AssignmentPeriod(Period):
         mtxs["time"]["bike"] = mtxs["time"]["bike"].clip(None, 9999.)
         if iteration != "last":
             for ass_cl in ("car_work", "car_leisure"):
-                mtxs["cost"][ass_cl] += self.dist_unit_cost[ass_cl] * mtxs["dist"][ass_cl]
+                mtxs["cost"][ass_cl] += self.dist_unit_cost * mtxs["dist"][ass_cl]
         return mtxs
 
     def calc_transit_cost(self, fares, peripheral_cost, mapping):
@@ -476,10 +476,11 @@ class AssignmentPeriod(Period):
         gcost = self._get_matrix("gen_cost", ass_class)
         cost = self._get_matrix("cost", ass_class)
         dist = self._get_matrix("dist", ass_class)
-        time = gcost - vot_inv*self.dist_unit_cost[ass_class]*dist
         if ass_class not in ("trailer_truck", "truck"):
+            time = gcost - vot_inv*(cost + self.dist_unit_cost*dist)
+        else:
             # toll costs are not applied to freight
-            time -= vot_inv*cost
+            time = gcost - vot_inv*param.freight_dist_unit_cost[ass_class]*dist
         self._set_matrix(ass_class, time, "time")
         return time
 
@@ -515,7 +516,7 @@ class AssignmentPeriod(Period):
         network = self.emme_scenario.get_network()
         for link in network.links():
             toll_cost = link.length * link[self.extra("hinta")]
-            dist_cost = self.dist_unit_cost["car_work"] * link.length
+            dist_cost = self.dist_unit_cost * link.length
             link[self.extra("toll_cost")] = toll_cost
             link[self.extra("total_cost")] = toll_cost + dist_cost
         self.emme_scenario.publish_network(network)
