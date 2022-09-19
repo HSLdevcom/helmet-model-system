@@ -89,7 +89,7 @@ class MockPeriod(Period):
             mtxs["time"][ass_cl] = mtxs["time"]["transit_uncongested"]
         if iteration != "last":
             for ass_cl in ("car_work", "car_leisure"):
-                mtxs["cost"][ass_cl] += (param.dist_unit_cost
+                mtxs["cost"][ass_cl] += (param.dist_unit_cost[ass_cl]
                                          * mtxs["dist"][ass_cl])
         return mtxs
     

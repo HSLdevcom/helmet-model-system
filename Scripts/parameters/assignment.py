@@ -181,8 +181,6 @@ vot_inv = {
     "business": 2.439, # 1 / ((24.60 eur/h) / (60 min/h)) = 2.439 min/eur
     "leisure": 11.173, # 1 / ((5.37 eur/h) / (60 min/h)) = 11.173 min/eur
 }
-# Default distance unit cost [eur/km]
-dist_unit_cost = 0.12
 # Default speed for trucks and trailer trucks [min/km]
 freight_dist_unit_time = 0.2
 # Boarding penalties for different transit modes
@@ -428,6 +426,14 @@ vot_classes = {
     "trailer_truck": "business",
     "truck": "business",
     "van": "business",
+}
+# Default distance unit cost [eur/km]
+dist_unit_cost = {
+    "car_work": 0.12,
+    "car_leisure": 0.12,
+    "truck": freight_dist_unit_time / vot_inv[vot_classes["truck"]],
+    "trailer_truck": freight_dist_unit_time / vot_inv[vot_classes["trailer_truck"]],
+    "van": 0.12
 }
 transit_modes = [
     'b',
