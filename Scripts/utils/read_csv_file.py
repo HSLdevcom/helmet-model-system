@@ -1,3 +1,4 @@
+from decimal import DivisionByZero
 import os
 import pandas
 import numpy
@@ -61,21 +62,15 @@ def read_csv_file(data_dir, file_end, zone_numbers=None, dtype=None, squeeze=Fal
     if data.index.has_duplicates:
         raise IndexError("Index in file {} has duplicates".format(path))
     if zone_numbers is not None:
-        aggr_path = os.path.join(data_dir, "aggregation.txt")
-        if os.path.exists(aggr_path):
-            aggr = pandas.read_csv(aggr_path, delim_whitespace=True).squeeze()
+        map_path = os.path.join(data_dir, "aggregation.txt")
+        if os.path.exists(map_path):
+            mapping = pandas.read_csv(map_path, delim_whitespace=True).squeeze()
             if "total" in data.columns:
                 # If file contains total and shares of total,
                 # shares are aggregated as averages with total as weight
-                functions = dict.fromkeys(
-                    data.columns, lambda x: numpy.ma.average(
-                        x, weights=data.loc[x.index, "total"]))
-                functions["total"] = "sum"
-                with numpy.testing.suppress_warnings() as sup:
-                    sup.filter(RuntimeWarning, module=numpy.ma.extras)
-                    data = data.groupby(aggr).aggregate(functions).fillna(0)
+                data = data.groupby(mapping).agg(avg, weights=data["total"])
             else:
-                data = data.groupby(aggr).sum()
+                data = data.groupby(mapping).sum()
             data.index = data.index.astype(int)
         if not data.index.is_monotonic:
             data.sort_index(inplace=True)
@@ -104,3 +99,11 @@ def read_csv_file(data_dir, file_end, zone_numbers=None, dtype=None, squeeze=Fal
             log.error(msg)
             raise ValueError(msg)
     return data
+
+def avg (data, weights):
+    if data.name == weights.name:
+        return sum(data)
+    try:
+        return numpy.average(data, weights=weights[data.index])
+    except ZeroDivisionError:
+        return 0
