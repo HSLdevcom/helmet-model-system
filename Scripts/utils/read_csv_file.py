@@ -62,7 +62,7 @@ def read_csv_file(data_dir, file_end, zone_numbers=None, dtype=None, squeeze=Fal
     if data.index.has_duplicates:
         raise IndexError("Index in file {} has duplicates".format(path))
     if zone_numbers is not None:
-        map_path = os.path.join(data_dir, "aggregation.txt")
+        map_path = os.path.join(data_dir, "zone_mapping.txt")
         if os.path.exists(map_path):
             mapping = pandas.read_csv(map_path, delim_whitespace=True).squeeze()
             if "total" in data.columns:
