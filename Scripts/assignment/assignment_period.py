@@ -480,11 +480,11 @@ class AssignmentPeriod(Period):
         gcost = self._get_matrix("gen_cost", ass_class)
         cost = self._get_matrix("cost", ass_class)
         dist = self._get_matrix("dist", ass_class)
-        if ass_class not in ("trailer_truck", "truck"):
-            time = gcost - vot_inv*(cost + self.dist_unit_cost*dist)
-        else:
+        if ass_class in ("trailer_truck", "truck"):
             # toll costs are not applied to freight
             time = gcost - vot_inv*param.freight_dist_unit_cost[ass_class]*dist
+        else:
+            time = gcost - vot_inv*(cost + self.dist_unit_cost*dist)
         self._set_matrix(ass_class, time, "time")
         return time
 
