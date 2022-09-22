@@ -1,4 +1,5 @@
 from decimal import DivisionByZero
+from itertools import groupby
 import os
 import pandas
 import numpy
@@ -69,6 +70,10 @@ def read_csv_file(data_dir, file_end, zone_numbers=None, dtype=None, squeeze=Fal
                 # If file contains total and shares of total,
                 # shares are aggregated as averages with total as weight
                 data = data.groupby(mapping).agg(avg, weights=data["total"])
+            elif "detach" in data.columns:
+                funcs = dict.fromkeys(data.columns, "sum")
+                funcs["detach"] = "mean"
+                data = data.groupby(mapping).agg(funcs)
             else:
                 data = data.groupby(mapping).sum()
             data.index = data.index.astype(int)
