@@ -45,8 +45,7 @@ class LogitModelTest(unittest.TestCase):
             },
         }
         pur.bounds = slice(0, 9)
-        pur.lbounds = slice(0, 7)
-        pur.ubounds = slice(7, 9)
+        pur.sub_bounds = [slice(0, 7), slice(7, 9)]
         pur.zone_numbers = METROPOLITAN_ZONES
         for i in ("hw", "hc", "hu", "hs", "ho"):
             pur.name = i

@@ -4,7 +4,7 @@ import random
 import parameters.car as param
 import parameters.zone as zone_param
 from parameters.assignment import assignment_classes, vot_inv
-from parameters.impedance_transformation import divided_classes, trips_month
+from parameters.impedance_transformation import divided_classes, transit_trips_per_month
 
 
 class Tour:
@@ -200,14 +200,12 @@ class Tour:
 
     def _get_cost(self, impedance, mtx_type):
         """Get cost and time components from tour dest choice."""
-        if self.mode in divided_classes:
-            ass_class = "{}_{}".format(
-                self.mode, assignment_classes[self.purpose.name])
-        else:
-            ass_class = self.mode
+        demand_type = assignment_classes[self.purpose.name]
+        ass_class = ("{}_{}".format(self.mode, demand_type)
+            if self.mode in divided_classes else self.mode)
         cost = 0
         try:
-            if assignment_classes[self.purpose_name] == "work":
+            if demand_type == "work":
                 departure_imp = impedance["aht"][mtx_type][ass_class]
                 sec_dest_imp = impedance["iht"][mtx_type][ass_class]
                 return_imp = impedance["iht"][mtx_type][ass_class]
@@ -229,8 +227,10 @@ class Tour:
             pass
         # scale transit costs from month to day
         if self.mode == "transit" and mtx_type == "cost":
-            idx = int(self.position[0] > self.purpose.zone_data.first_surrounding_zone)
-            cost /= trips_month[ass_class][idx]
+            idx = numpy.searchsorted(
+                [bounds.stop for bounds in self.purpose.sub_bounds],
+                self.position[0], side="right")
+            cost /= transit_trips_per_month[self.purpose.area][demand_type][idx]
         return cost
 
     def __str__(self):
