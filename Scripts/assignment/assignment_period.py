@@ -136,16 +136,20 @@ class AssignmentPeriod(Period):
         mtxs = {imp_type: self._get_matrices(imp_type, iteration=="last")
             for imp_type in ("time", "cost", "dist")}
         # fix the emme path analysis results
-        # (dist and cost zero if path not found)
+        # (dist and cost are zero if path not found but we want it to
+        # be the default value 999999)
         for mtx_type in ("cost", "dist"):
             for mtx_class in mtxs[mtx_type]:
                 path_not_found = mtxs["time"][mtx_class] > 999999
                 mtxs[mtx_type][mtx_class][path_not_found] = 999999
-        # adjust impedance
         if iteration == "last":
             for mtx_class in ("trailer_truck", "truck"):
-                path_not_found = mtxs["time"][mtx_class] <= 999999
-                mtxs["cost"][mtx_class][path_not_found] = 0
+                # toll costs are not applied to freight, but the cost
+                # matrix is automatically populated with default values
+                # (999999) so we need to manually fill it with zeroes
+                path_found = mtxs["time"][mtx_class] <= 999999
+                mtxs["cost"][mtx_class][path_found] = 0
+        # adjust impedance
         mtxs["time"]["bike"] = mtxs["time"]["bike"].clip(None, 9999.)
         if iteration != "last":
             for ass_cl in ("car_work", "car_leisure"):
