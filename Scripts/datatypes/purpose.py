@@ -1,6 +1,7 @@
 import numpy
 import pandas
 
+import parameters.zone as param
 from parameters.destination_choice import secondary_destination_threshold
 import models.logit as logit
 import models.generation as generation
@@ -35,25 +36,13 @@ class Purpose:
         self.dest = specification["dest"]
         self.area = specification["area"]
         self.sources = []
-        if self.area == "metropolitan":
-            l = 0
-            m = zone_data.first_surrounding_zone
-            u = zone_data.first_peripheral_zone
-        if self.area == "peripheral":
-            l = zone_data.first_peripheral_zone
-            m = None
-            u = zone_data.nr_zones
-        if self.area == "all":
-            l = 0
-            m = zone_data.first_surrounding_zone
-            u = zone_data.nr_zones
-        if self.area == "external":
-            l = zone_data.first_external_zone
-            m = None
-            u = None
-        self.bounds = slice(l, u)
-        self.lbounds = slice(l, m)
-        self.ubounds = slice(m, u)
+        zone_numbers = zone_data.zone_numbers
+        zone_intervals = param.purpose_areas[self.area]
+        self.bounds = slice(*zone_numbers.searchsorted(
+            [zone_intervals[0], zone_intervals[-1]]))
+        sub_intervals = zone_numbers[self.bounds].searchsorted(zone_intervals)
+        self.sub_bounds = [slice(sub_intervals[i-1], sub_intervals[i])
+            for i in range(1, len(sub_intervals))]
         self.zone_data = zone_data
         self.resultdata = resultdata
         self.model = None
