@@ -29,8 +29,7 @@ class LogitModel:
         self.resultdata = resultdata
         self.purpose = purpose
         self.bounds = purpose.bounds
-        self.lbounds = purpose.lbounds
-        self.ubounds = purpose.ubounds
+        self.sub_bounds = purpose.sub_bounds
         self.zone_data = zone_data
         self.dest_exps = {}
         self.mode_exps = {}
@@ -112,13 +111,12 @@ class LogitModel:
         """
         try: # If only one parameter
             utility += b
-        except ValueError: # Separate params for cap region and surrounding
-            if utility.ndim == 1: # 1-d array calculation
-                utility[self.lbounds] += b[0]
-                utility[self.ubounds] += b[1]
-            else: # 2-d matrix calculation
-                utility[self.lbounds, :] += b[0]
-                utility[self.ubounds, :] += b[1]
+        except ValueError: # Separate sub-region parameters
+            for i, bounds in enumerate(self.sub_bounds):
+                if utility.ndim == 1: # 1-d array calculation
+                    utility[bounds] += b[i]
+                else: # 2-d matrix calculation
+                    utility[bounds, :] += b[i]
     
     def _add_impedance(self, utility, impedance, b):
         """Adds simple linear impedances to utility.
@@ -139,9 +137,9 @@ class LogitModel:
         for i in b:
             try: # If only one parameter
                 utility += b[i] * impedance[i]
-            except ValueError: # Separate params for cap region and surrounding
-                utility[self.lbounds, :] += b[i][0] * impedance[i][self.lbounds, :]
-                utility[self.ubounds, :] += b[i][1] * impedance[i][self.ubounds, :]
+            except ValueError: # Separate sub-region parameters
+                for j, bounds in enumerate(self.sub_bounds):
+                    utility[bounds, :] += b[i][j] * impedance[i][bounds, :]
         return utility
 
     def _add_log_impedance(self, exps, impedance, b):
@@ -168,11 +166,10 @@ class LogitModel:
         for i in b:
             try: # If only one parameter
                 exps *= numpy.power(impedance[i] + 1, b[i])
-            except ValueError: # Separate params for cap region and surrounding
-                exps[self.lbounds, :] *= numpy.power(
-                    impedance[i][self.lbounds, :] + 1, b[i][0])
-                exps[self.ubounds, :] *= numpy.power(
-                    impedance[i][self.ubounds, :] + 1, b[i][1])
+            except ValueError: # Separate sub-region parameters
+                for j, bounds in enumerate(self.sub_bounds):
+                    exps[bounds, :] *= numpy.power(
+                        impedance[i][bounds, :] + 1, b[i][j])
         return exps
     
     def _add_zone_util(self, utility, b, generation=False):
@@ -196,15 +193,13 @@ class LogitModel:
         for i in b:
             try: # If only one parameter
                 utility += b[i] * zdata.get_data(i, self.bounds, generation)
-            except ValueError: # Separate params for cap region and surrounding
-                data_cap_region = zdata.get_data(i, self.lbounds, generation)
-                data_surrounding = zdata.get_data(i, self.ubounds, generation)
-                if utility.ndim == 1: # 1-d array calculation
-                    utility[self.lbounds] += b[i][0] * data_cap_region
-                    utility[self.ubounds] += b[i][1] * data_surrounding
-                else: # 2-d matrix calculation
-                    utility[self.lbounds, :] += b[i][0] * data_cap_region
-                    utility[self.ubounds, :] += b[i][1] * data_surrounding
+            except ValueError: # Separate sub-region parameters
+                for j, bounds in enumerate(self.sub_bounds):
+                    data = zdata.get_data(i, bounds, generation)
+                    if utility.ndim == 1: # 1-d array calculation
+                        utility[bounds] += b[i][j] * data
+                    else: # 2-d matrix calculation
+                        utility[bounds, :] += b[i][j] * data
         return utility
     
     def _add_sec_zone_util(self, utility, b, orig=None, dest=None):
@@ -344,8 +339,8 @@ class ModeDestModel(LogitModel):
         try:
             self.mode_exps[mod_mode] *= numpy.exp(b)
         except ValueError:
-            self.mode_exps[mod_mode][self.lbounds] *= numpy.exp(b[0])
-            self.mode_exps[mod_mode][self.ubounds] *= numpy.exp(b[1])
+            for i, bounds in enumerate(self.sub_bounds):
+                self.mode_exps[mod_mode][bounds] *= numpy.exp(b[i])
         mode_expsum = numpy.zeros_like(self.mode_exps[mod_mode])
         for mode in self.mode_choice_param:
             mode_expsum += self.mode_exps[mode]
@@ -399,8 +394,9 @@ class ModeDestModel(LogitModel):
             # Convert utility into euros
             money_utility = 1 / b
         except TypeError:
-            # Separate params for cap region and surrounding
-            money_utility = 1 / b[0] if self.lbounds.stop < zone else 1 / b[1]
+            # Separate sub-region parameters
+            money_utility = (1 / b[0] if self.sub_bounds[0].stop < zone
+                else 1 / b[1])
         money_utility /= self.mode_choice_param["car"]["log"]["logsum"]
         accessibility = -money_utility * logsum
         return probs, accessibility
