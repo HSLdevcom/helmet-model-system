@@ -43,6 +43,7 @@ class Purpose:
         sub_intervals = zone_numbers[self.bounds].searchsorted(zone_intervals)
         self.sub_bounds = [slice(sub_intervals[i-1], sub_intervals[i])
             for i in range(1, len(sub_intervals))]
+        self.sub_intervals = sub_intervals[1:]
         self.zone_data = zone_data
         self.resultdata = resultdata
         self.model = None

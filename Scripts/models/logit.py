@@ -379,10 +379,10 @@ class ModeDestModel(LogitModel):
                 try:
                     mode_exps[mode] *= math.exp(b["car_users"])
                 except TypeError:
-                    if zone < self.zone_data.first_surrounding_zone:
-                        mode_exps[mode] *= math.exp(b["car_users"][0])
-                    else:
-                        mode_exps[mode] *= math.exp(b["car_users"][1])
+                    # Separate sub-region parameters
+                    i = self.purpose.sub_intervals.searchsorted(
+                        zone, side="right")
+                    mode_exps[mode] *= math.exp(b["car_users"][i])
             mode_expsum += mode_exps[mode]
         probs = numpy.empty(len(modes))
         for i, mode in enumerate(modes):
@@ -395,8 +395,8 @@ class ModeDestModel(LogitModel):
             money_utility = 1 / b
         except TypeError:
             # Separate sub-region parameters
-            money_utility = (1 / b[0] if self.sub_bounds[0].stop < zone
-                else 1 / b[1])
+            i = self.purpose.sub_intervals.searchsorted(zone, side="right")
+            money_utility = 1 / b[i]
         money_utility /= self.mode_choice_param["car"]["log"]["logsum"]
         accessibility = -money_utility * logsum
         return probs, accessibility
