@@ -270,6 +270,8 @@ trass_stop = {
 transfer_penalty = {
     "transit_work": 3,
     "transit_leisure": 5,
+    "car_first_mile": 5,
+    "car_last_mile": 5,
     "transit": 5,
 }
 extra_waiting_time = {
@@ -320,6 +322,16 @@ volume_factors = {
         "aht": 1. / 0.571,
         "pt": 1. / 0.117,
         "iht": 1. / 0.373,
+    },
+    "car_first_mile": {
+        "aht": 1. / 0.478,
+        "pt": 1. / 0.109,
+        "iht": 1. / 0.405,
+    },
+    "car_last_mile": {
+        "aht": 1. / 0.478,
+        "pt": 1. / 0.109,
+        "iht": 1. / 0.405,
     },
     "bike": {
         "aht": 1. / 0.604,
@@ -386,7 +398,11 @@ transport_classes = (
     "truck",
     "van",
 )
-transit_classes = (
+park_and_ride_classes = (
+    "car_first_mile",
+    "car_last_mile",
+)
+transit_classes = park_and_ride_classes + (
     "transit_work",
     "transit_leisure",
 )
@@ -443,6 +459,7 @@ aux_modes = [
     'a',
     's',
 ]
+park_and_ride_mode = 'u'
 transit_assignment_modes = transit_modes + aux_modes
 external_modes = [
     "car",
@@ -492,6 +509,14 @@ emme_demand_mtx = {
         "id": 9,
         "description": "van demand",
     },
+    "car_first_mile":  {
+        "id": 91,
+        "description": "park-and-ride demand",
+    },
+    "car_last_mile":  {
+        "id": 92,
+        "description": "park-and-ride demand",
+    },
 }
 emme_result_mtx = {
     "time": {
@@ -531,6 +556,14 @@ emme_result_mtx = {
             "id": 19,
             "description": "van time",
         },
+        "car_first_mile":  {
+            "id": 93,
+            "description": "park-and-ride time",
+        },
+        "car_last_mile":  {
+            "id": 94,
+            "description": "park-and-ride time",
+        },
     },
     "dist": {
         "car_work": {
@@ -569,6 +602,14 @@ emme_result_mtx = {
             "id": 29,
             "description": "van distance",
         },
+        "car_first_mile":  {
+            "id": 95,
+            "description": "park-and-ride distance",
+        },
+        "car_last_mile":  {
+            "id": 96,
+            "description": "park-and-ride distance",
+        },
     },
     "cost": {
         "car_work": {
@@ -598,6 +639,14 @@ emme_result_mtx = {
         "van":  {
             "id": 39,
             "description": "van cost",
+        },
+        "car_first_mile":  {
+            "id": 97,
+            "description": "park-and-ride cost",
+        },
+        "car_last_mile":  {
+            "id": 98,
+            "description": "park-and-ride cost",
         },
     },
     "gen_cost": {
@@ -687,6 +736,74 @@ emme_result_mtx = {
         },
         "board_cost": {
             "id": 68,
+            "description": "transit boarding cost",
+        },
+    },
+    "trip_part_car_first_mile":{
+        "inv_time": {
+            "id": 71,
+            "description": "transit in-vehicle time",
+        },
+        "aux_time": {
+            "id": 72,
+            "description": "transit auxilliary time",
+        },
+        "tw_time": {
+            "id": 73,
+            "description": "transit total waiting time",
+        },
+        "fw_time": {
+            "id": 74,
+            "description": "transit first waiting time",
+        },
+        "board_time": {
+            "id": 75,
+            "description": "transit boarding time",
+        },
+        "total_time": {
+            "id": 76,
+            "description": "transit unweighted travel time",
+        },
+        "num_board": {
+            "id": 77,
+            "description": "transit trip number of boardings",
+        },
+        "board_cost": {
+            "id": 78,
+            "description": "transit boarding cost",
+        },
+    },
+    "trip_part_car_last_mile":{
+        "inv_time": {
+            "id": 81,
+            "description": "transit in-vehicle time",
+        },
+        "aux_time": {
+            "id": 82,
+            "description": "transit auxilliary time",
+        },
+        "tw_time": {
+            "id": 83,
+            "description": "transit total waiting time",
+        },
+        "fw_time": {
+            "id": 84,
+            "description": "transit first waiting time",
+        },
+        "board_time": {
+            "id": 85,
+            "description": "transit boarding time",
+        },
+        "total_time": {
+            "id": 86,
+            "description": "transit unweighted travel time",
+        },
+        "num_board": {
+            "id": 87,
+            "description": "transit trip number of boardings",
+        },
+        "board_cost": {
+            "id": 88,
             "description": "transit boarding cost",
         },
     },

@@ -19,3 +19,4 @@ a w 'Vesiliiken' 2   1
 a a 'Kavely'   3   1   0.00   0.00   0.00   0.00          5.0
 a s 'Ulkokavely' 3   1   0.00   0.00   0.00   0.00          5.0
 a f 'Polkupyora' 3   1   0.00   0.00   0.00   0.00         17.0
+a u 'Liitynta' 3   1   0.00   0.00   0.00   0.00         timau*2

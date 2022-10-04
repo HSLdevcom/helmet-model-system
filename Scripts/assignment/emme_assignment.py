@@ -95,7 +95,7 @@ class EmmeAssignmentModel(AssignmentModel):
         for ap in self.assignment_periods:
             if car_dist_unit_cost is not None:
                 ap.dist_unit_cost = car_dist_unit_cost
-            ap.prepare(self._create_attributes(ap.emme_scenario, ap.extra))
+            ap.prepare(*self._create_attributes(ap.emme_scenario, ap.extra))
         for idx in param.volume_delay_funcs:
             try:
                 self.emme_project.modeller.emmebank.delete_function(idx)
@@ -337,6 +337,23 @@ class EmmeAssignmentModel(AssignmentModel):
         extra : function
             Small helper function which modifies string
             (e.g., self._extra)
+
+        Returns
+        -------
+        dict
+            key : str
+                Transit class (transit_work/transit_leisure/...)
+            value : dict
+                key : str
+                    Segment result (transit_volumes/...)
+                value : str
+                    Extra attribute name (@transit_work_vol_aht/...)
+        dict
+            key : str
+                Transit class (transit_work/transit_leisure/...)
+            value : str or False
+                Extra attribute name for park-and-ride aux volume if
+                this is park-and-ride assignment, else False
         """
         # Create link attributes
         for ass_class in list(param.emme_demand_mtx) + ["bus"]:
@@ -349,18 +366,28 @@ class EmmeAssignmentModel(AssignmentModel):
                 overwrite=True, scenario=scenario)
         # Create node and transit segment attributes
         attr = param.segment_results
-        seg_results = {tc: {res: extra(tc[:11]+"_"+attr[res])
-                for res in param.segment_results}
-            for tc in param.transit_classes}
+        segment_results = {}
+        park_and_ride_results = {}
         for tc in param.transit_classes:
+            segment_results[tc] = {}
             for res in param.segment_results:
+                attr_name = extra(tc[:11] + "_" + attr[res])
+                segment_results[tc][res] = attr_name
                 self.emme_project.create_extra_attribute(
-                    "TRANSIT_SEGMENT", seg_results[tc][res],
-                    tc+" "+res, overwrite=True, scenario=scenario)
+                    "TRANSIT_SEGMENT", attr_name,
+                    tc + " " + res, overwrite=True, scenario=scenario)
                 if res != "transit_volumes":
                     self.emme_project.create_extra_attribute(
-                        "NODE", extra(tc[:10]+"n_"+attr[res]),
-                        tc+" "+res, overwrite=True, scenario=scenario)
+                        "NODE", extra(tc[:10] + "n_" + attr[res]),
+                        tc + " " + res, overwrite=True, scenario=scenario)
+            if tc in param.park_and_ride_classes:
+                attr_name = extra(tc[4:] + "_aux")
+                park_and_ride_results[tc] = attr_name
+                self.emme_project.create_extra_attribute(
+                    "LINK", attr_name, tc,
+                    overwrite=True, scenario=scenario)
+            else:
+                park_and_ride_results[tc] = False
         self.emme_project.create_extra_attribute(
             "TRANSIT_SEGMENT", param.extra_waiting_time["penalty"],
             "wait time st.dev.", overwrite=True, scenario=scenario)
@@ -375,7 +402,7 @@ class EmmeAssignmentModel(AssignmentModel):
             "uncongested transit time", overwrite=True, scenario=scenario)
         log.debug("Created extra attributes for scenario {}".format(
             scenario))
-        return seg_results
+        return segment_results, park_and_ride_results
 
     def calc_noise(self):
         """Calculate noise according to Road Traffic Noise Nordic 1996.
