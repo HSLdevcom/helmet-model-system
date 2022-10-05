@@ -1,4 +1,3 @@
-from argparse import ArgumentError
 import parameters.assignment as param
 
 
@@ -20,7 +19,9 @@ class JourneyLevel:
     Parameters
     ----------
     level : int
-        Journey level (0-3)
+        Journey level: 0 - not boarded yet, 1 - parked,
+        2 - boarded at least once, 3 - left transit system,
+        4 - forbidden (virtual level)
     headway_attribute : str
         Line attribute where headway is stored
     park_and_ride : str or False (optional)

@@ -2,7 +2,6 @@ import os
 import numpy
 import pandas
 import copy
-from assignment.datatypes.journey_level import JourneyLevel
 
 import utils.log as log
 import parameters.assignment as param
