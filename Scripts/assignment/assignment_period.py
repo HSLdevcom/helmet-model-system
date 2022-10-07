@@ -8,6 +8,7 @@ import parameters.assignment as param
 import parameters.zone as zone_param
 from assignment.datatypes.car_specification import CarSpecification
 from assignment.datatypes.transit import TransitSpecification
+from assignment.datatypes.journey_level import BOARDED
 from assignment.datatypes.path_analysis import PathAnalysis
 from assignment.abstract_assignment import Period
 
@@ -779,7 +780,7 @@ class AssignmentPeriod(Period):
         specs = self._transit_specs
         for transit_class in specs:
             spec = specs[transit_class].transit_spec
-            (spec["journey_levels"][1]["boarding_cost"]["global"]
+            (spec["journey_levels"][BOARDED]["boarding_cost"]["global"]
                  ["penalty"]) = param.transfer_penalty[transit_class]
             spec["in_vehicle_cost"] = {
                 "penalty": param.inactive_line_penalty_attr,
