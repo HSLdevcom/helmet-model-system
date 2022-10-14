@@ -24,7 +24,8 @@ class Car:
             "path_analyses": []
         }
         self.add_analysis("length", result_mtx["dist"][ass_class]["id"])
-        self.add_analysis(extra("toll_cost"), result_mtx["cost"][ass_class]["id"])
+        if ass_class not in ("trailer_truck", "truck"):
+            self.add_analysis(extra("toll_cost"), result_mtx["cost"][ass_class]["id"])
     
     def add_analysis (self, link_component, od_values):
         analysis = PathAnalysis(link_component, od_values)
