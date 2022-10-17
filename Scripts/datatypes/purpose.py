@@ -36,7 +36,7 @@ class Purpose:
         self.dest = specification["dest"]
         self.area = specification["area"]
         self.sources = []
-        zone_numbers = zone_data.zone_numbers
+        zone_numbers = zone_data.all_zone_numbers
         zone_intervals = param.purpose_areas[self.area]
         self.bounds = slice(*zone_numbers.searchsorted(
             [zone_intervals[0], zone_intervals[-1]]))
