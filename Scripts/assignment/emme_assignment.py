@@ -78,6 +78,16 @@ class EmmeAssignmentModel(AssignmentModel):
                     matrix_name="demand_{}_{}".format(ass_class, tag),
                     matrix_description="{} {}".format(mtx["description"], tag),
                     default_value=0, overwrite=True)
+            if ap.name == "aht":
+                self.emme_project.copy_matrix(
+                    "mf401", ap.demand_mtx["car_first_mile"]["id"],
+                    "demand_car_first_mile",
+                    ap.demand_mtx["car_first_mile"]["description"])
+            elif ap.name == "iht":
+                self.emme_project.copy_matrix(
+                    "mf402", ap.demand_mtx["car_last_mile"]["id"],
+                    "demand_car_last_mile",
+                    ap.demand_mtx["car_last_mile"]["description"])
             for mtx_type in ap.result_mtx:
                 mtx = ap.result_mtx[mtx_type]
                 for ass_class in mtx:
