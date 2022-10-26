@@ -39,10 +39,12 @@ class CarSpecification:
             link_costs=extra("total_cost"))
         self.truck = Car(
             "truck", extra, demand_mtx, result_mtx,
-            value_of_time_inv=0.2, link_costs="length")
+            value_of_time_inv=param.freight_dist_unit_time,
+            link_costs="length")
         self.trailer_truck = Car(
             "trailer_truck", extra, demand_mtx, result_mtx,
-            value_of_time_inv=0.2, link_costs="length")
+            value_of_time_inv=param.freight_dist_unit_time,
+            link_costs="length")
         self._spec = {
             "type": "SOLA_TRAFFIC_ASSIGNMENT",
             "background_traffic": {
