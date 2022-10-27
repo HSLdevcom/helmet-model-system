@@ -36,13 +36,14 @@ class Purpose:
         self.dest = specification["dest"]
         self.area = specification["area"]
         self.sources = []
-        zone_numbers = zone_data.zone_numbers
+        zone_numbers = zone_data.all_zone_numbers
         zone_intervals = param.purpose_areas[self.area]
         self.bounds = slice(*zone_numbers.searchsorted(
             [zone_intervals[0], zone_intervals[-1]]))
         sub_intervals = zone_numbers[self.bounds].searchsorted(zone_intervals)
         self.sub_bounds = [slice(sub_intervals[i-1], sub_intervals[i])
             for i in range(1, len(sub_intervals))]
+        self.sub_intervals = sub_intervals[1:]
         self.zone_data = zone_data
         self.resultdata = resultdata
         self.model = None
