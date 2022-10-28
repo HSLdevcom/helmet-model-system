@@ -227,10 +227,9 @@ class Tour:
             pass
         # scale transit costs from month to day
         if self.mode == "transit" and mtx_type == "cost":
-            idx = numpy.searchsorted(
-                [bounds.stop for bounds in self.purpose.sub_bounds],
+            i = self.purpose.sub_intervals.searchsorted(
                 self.position[0], side="right")
-            cost /= transit_trips_per_month[self.purpose.area][demand_type][idx]
+            cost /= transit_trips_per_month[self.purpose.area][demand_type][i]
         return cost
 
     def __str__(self):

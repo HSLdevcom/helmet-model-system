@@ -13,29 +13,30 @@ class ZoneData:
     def __init__(self, data_dir, zone_numbers):
         self._values = {}
         self.share = ShareChecker(self)
-        zone_numbers = numpy.array(zone_numbers)
+        all_zone_numbers = numpy.array(zone_numbers)
+        self.all_zone_numbers = all_zone_numbers
         surrounding = param.areas["surrounding"]
         peripheral = param.areas["peripheral"]
         external = param.areas["external"]
-        first_extra = numpy.searchsorted(zone_numbers, peripheral[1], "right")
-        self.zone_numbers = zone_numbers[:first_extra]
+        self.zone_numbers = all_zone_numbers[:all_zone_numbers.searchsorted(
+            peripheral[1], "right")]
         Zone.counter = 0
         self.zones = {number: Zone(number) for number in self.zone_numbers}
-        self.first_not_helsinki_zone = numpy.searchsorted(
-            self.zone_numbers, param.municipalities["Espoo"][0])
-        self.first_surrounding_zone = numpy.searchsorted(
-            self.zone_numbers, surrounding[0])
-        first_peripheral = numpy.searchsorted(self.zone_numbers, peripheral[0])
+        self.first_not_helsinki_zone = self.zone_numbers.searchsorted(
+            param.municipalities["Espoo"][0])
+        self.first_surrounding_zone = self.zone_numbers.searchsorted(
+            surrounding[0])
+        first_peripheral = self.zone_numbers.searchsorted(peripheral[0])
         self.first_peripheral_zone = first_peripheral
-        first_external = numpy.searchsorted(zone_numbers, external[0])
-        self.first_external_zone = first_external
-        external_zones = zone_numbers[first_external:]
         popdata = read_csv_file(data_dir, ".pop", self.zone_numbers, float)
         workdata = read_csv_file(data_dir, ".wrk", self.zone_numbers, float)
         schooldata = read_csv_file(data_dir, ".edu", self.zone_numbers, float)
         landdata = read_csv_file(data_dir, ".lnd", self.zone_numbers, float)
         parkdata = read_csv_file(data_dir, ".prk", self.zone_numbers, float)
-        self.externalgrowth = read_csv_file(data_dir, ".ext", external_zones, float)
+        self.externalgrowth = read_csv_file(
+            data_dir, ".ext",
+            all_zone_numbers[all_zone_numbers.searchsorted(external[0]):],
+            float)
         transit = read_csv_file(data_dir, ".tco")
         try:
             transit["fare"] = transit["fare"].astype(
@@ -69,8 +70,8 @@ class ZoneData:
                                         + self["share_age_65-99"])
         self.share["share_age_18-99"] = (self["share_age_7-99"]
                                          -self["share_age_7-17"])
-        self.share["share_female"] = pandas.Series(0.5, zone_numbers)
-        self.share["share_male"] = pandas.Series(0.5, zone_numbers)
+        self.share["share_female"] = pandas.Series(0.5, self.zone_numbers)
+        self.share["share_male"] = pandas.Series(0.5, self.zone_numbers)
         self.nr_zones = len(self.zone_numbers)
         self["population_density"] = pop / landdata["builtar"]
         wp = workdata["total"]
