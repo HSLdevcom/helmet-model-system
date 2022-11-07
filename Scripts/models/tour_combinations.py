@@ -75,12 +75,12 @@ class TourCombinationModel:
                 else:
                     is_allowed = True
                 if is_allowed:
-                    param = self.param[nr_tours][tour_combination]
+                    b = self.param[nr_tours][tour_combination]
                     util = 0
-                    util += param["constant"]
-                    for i in param["zone"]:
-                        util += param["zone"][i] * self.zone_data[i][zones]
-                    dummies = param["individual_dummy"]
+                    util += b["constant"]
+                    for i in b["zone"]:
+                        util += b["zone"][i] * self.zone_data[i][zones]
+                    dummies = b["individual_dummy"]
                     if age_group in dummies:
                         util += dummies[age_group]
                     if is_car_user and "car_users" in dummies:
