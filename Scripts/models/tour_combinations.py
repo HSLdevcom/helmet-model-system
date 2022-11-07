@@ -1,6 +1,6 @@
 import numpy
 
-import parameters.tour_generation as params
+import parameters.tour_generation as param
 
 
 class TourCombinationModel:
@@ -19,9 +19,9 @@ class TourCombinationModel:
 
     def __init__(self, zone_data):
         self.zone_data = zone_data
-        self.param = params.tour_combinations
-        self.conditions = params.tour_conditions
-        self.increases = params.tour_number_increase
+        self.param = param.tour_combinations
+        self.conditions = param.tour_conditions
+        self.increases = param.tour_number_increase
         self.tour_combinations = []
         for nr_tours in self.param:
             self.tour_combinations += self.param[nr_tours].keys()
@@ -99,7 +99,7 @@ class TourCombinationModel:
                     prob[tour_combination] = 0
             util = 0
             nr_tours_exps[nr_tours] = numpy.exp(util)
-            scale_param = params.tour_number_scale
+            scale_param = param.tour_number_scale
             nr_tours_exps[nr_tours] *= numpy.power(combination_expsum, scale_param)
             nr_tours_expsum += nr_tours_exps[nr_tours]
         # Probability of no tours at all (empty tuple) is deduced from

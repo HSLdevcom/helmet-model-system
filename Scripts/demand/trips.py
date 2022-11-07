@@ -4,7 +4,7 @@ import pandas
 import utils.log as log
 import parameters.zone as param
 from datatypes.purpose import TourPurpose, SecDestPurpose
-from models import car_use, logit, linear, tour_combinations
+from models import car_use, linear, tour_combinations
 from datatypes.person import Person
 
 
@@ -198,8 +198,8 @@ class DemandModel:
 
     def _get_probs(self, age, is_car_user):
         bounds = slice(0, self.zone_data.first_peripheral_zone)
-        prob_dict = self.tour_generation_model.calc_prob(age, is_car_user, bounds)
         gm = self.tour_generation_model
+        prob_dict = gm.calc_prob(age, is_car_user, bounds)
         probs = numpy.empty(
             [bounds.stop - bounds.start, len(gm.tour_combinations)])
         for i, tour_combination in enumerate(gm.tour_combinations):
