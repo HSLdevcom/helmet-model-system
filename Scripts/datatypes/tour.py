@@ -35,10 +35,21 @@ class Tour:
         self._is_car_passenger = (True
             if random.random() > param.car_driver_share[self.purpose.name]
             else False)
-        self._mode_draw = random.random()
+        self._mode_draw = numpy.random.gumbel(size=len(self.purpose.modes))
         self._dest_draw = random.random()
         self._sec_dest_gen_draw = random.random()
         self._sec_dest_draw = random.random()
+        b = purpose.model.get_cost_util_coefficient()
+        try:
+            # Convert utility into euros
+            money_utility = 1 / b
+        except TypeError:
+            # Separate sub-region parameters
+            i = self.purpose.sub_intervals.searchsorted(
+                self.position[0], side="right")
+            money_utility = 1 / b[i]
+        money_utility /= self.purpose.model.mode_choice_param["car"]["log"]["logsum"]
+        self.money_utility = money_utility
 
     @property
     def mode(self):
@@ -121,11 +132,11 @@ class Tour:
         is_car_user : bool
             Whether the person is car user or not
         """
-        probs, accessibility = self.purpose.model.calc_individual_mode_prob(
-                is_car_user, self.position[0])
-        self._mode_idx = numpy.searchsorted(probs.cumsum(), self._mode_draw)
+        utils = self.purpose.model.calc_individual_mode_prob(
+                is_car_user, self.position[0]) + self._mode_draw
+        self._mode_idx = utils.argmax()
         self.purpose.generated_tours[self.mode][self.position[0]] += 1
-        self.total_access = accessibility
+        self.total_access = -self.money_utility * utils[self._mode_idx]
 
     @property
     def sustainable_access(self):

@@ -31,6 +31,7 @@ class LogitModel:
         self.zone_data = zone_data
         self.dest_exps = {}
         self.mode_exps = {}
+        self.mode_utils = {}
         self.dest_choice_param = destination_choice[purpose.name]
         self.mode_choice_param = mode_choice[purpose.name]
         if is_agent_model:
@@ -49,8 +50,9 @@ class LogitModel:
                 utility.T, b["generation"], generation=True).T
             self._add_zone_util(utility, b["attraction"])
             self._add_impedance(utility, impedance[mode], b["impedance"])
+            self._add_log_impedance(utility, impedance[mode], b["log"])
+            self.mode_utils[mode] = utility
             exps = numpy.exp(utility)
-            self._add_log_impedance(exps, impedance[mode], b["log"])
             self.mode_exps[mode] = exps
             expsum += exps
         return expsum
@@ -60,7 +62,6 @@ class LogitModel:
         utility = numpy.zeros_like(next(iter(impedance.values())), self.dtype)
         self._add_zone_util(utility, b["attraction"])
         self._add_impedance(utility, impedance, b["impedance"])
-        self.dest_exps[mode] = numpy.exp(utility)
         size = numpy.zeros_like(utility)
         self._add_zone_util(size, b["size"])
         impedance["size"] = size
@@ -70,7 +71,8 @@ class LogitModel:
             self._add_zone_util(transimp, b_transf["attraction"])
             self._add_impedance(transimp, impedance, b_transf["impedance"])
             impedance["transform"] = transimp
-        self._add_log_impedance(self.dest_exps[mode], impedance, b["log"])
+        self._add_log_impedance(utility, impedance, b["log"])
+        self.dest_exps[mode] = numpy.exp(utility)
         if mode != "logsum":
             threshold = distance_boundary[mode]
             self.dest_exps[mode][impedance["dist"] > threshold] = 0
@@ -140,13 +142,8 @@ class LogitModel:
                     utility[bounds, :] += b[i][j] * impedance[i][bounds, :]
         return utility
 
-    def _add_log_impedance(self, exps, impedance, b):
+    def _add_log_impedance(self, utility, impedance, b):
         """Adds log transformations of impedance to utility.
-        
-        This is an optimized way of calculating log terms. Calculates
-        impedance1^b1 * ... * impedanceN^bN in the following equation:
-        e^(linear_terms + b1*log(impedance1) + ... + bN*log(impedanceN))
-        = e^(linear_terms) * impedance1^b1 * ... * impedanceN^bN
 
         If parameter in b is tuple of two terms, they will be multiplied for
         capital region and surrounding region respectively.
@@ -163,12 +160,12 @@ class LogitModel:
         """
         for i in b:
             try: # If only one parameter
-                exps *= numpy.power(impedance[i] + 1, b[i])
+                utility += b[i] * numpy.log(impedance[i] + 1)
             except ValueError: # Separate sub-region parameters
                 for j, bounds in enumerate(self.sub_bounds):
-                    exps[bounds, :] *= numpy.power(
-                        impedance[i][bounds, :] + 1, b[i][j])
-        return exps
+                    utility[bounds, :] += b[i][j] * numpy.log(
+                        impedance[i][bounds, :] + 1)
+        return utility
     
     def _add_zone_util(self, utility, b, generation=False):
         """Adds simple linear zone terms to utility.
@@ -223,8 +220,8 @@ class LogitModel:
 
         Parameters
         ----------
-        exps : ndarray
-            Numpy array to which the impedances will be multiplied
+        utility : ndarray
+            Numpy array to which the impedances will be added
         b : dict
             The parameters for different zone data.
         generation : bool
@@ -367,37 +364,20 @@ class ModeDestModel(LogitModel):
         float
             Total accessibility for individual (eur)
         """
-        mode_exps = {}
-        mode_expsum = 0
         modes = self.purpose.modes
-        for mode in modes:
-            mode_exps[mode] = self.mode_exps[mode][zone]
+        mode_utils = numpy.empty(len(modes))
+        for i, mode in enumerate(modes):
+            mode_utils[i] = self.mode_utils[mode][zone]
             b = self.mode_choice_param[mode]["individual_dummy"]
             if is_car_user and "car_users" in b:
                 try:
-                    mode_exps[mode] *= math.exp(b["car_users"])
-                except TypeError:
+                    mode_utils[i] += b["car_users"]
+                except ValueError:
                     # Separate sub-region parameters
-                    i = self.purpose.sub_intervals.searchsorted(
+                    j = self.purpose.sub_intervals.searchsorted(
                         zone, side="right")
-                    mode_exps[mode] *= math.exp(b["car_users"][i])
-            mode_expsum += mode_exps[mode]
-        probs = numpy.empty(len(modes))
-        for i, mode in enumerate(modes):
-            probs[i] = mode_exps[mode] / mode_expsum
-        # utils to money
-        logsum = numpy.log(mode_expsum)
-        b = self._get_cost_util_coefficient()
-        try:
-            # Convert utility into euros
-            money_utility = 1 / b
-        except TypeError:
-            # Separate sub-region parameters
-            i = self.purpose.sub_intervals.searchsorted(zone, side="right")
-            money_utility = 1 / b[i]
-        money_utility /= self.mode_choice_param["car"]["log"]["logsum"]
-        accessibility = -money_utility * logsum
-        return probs, accessibility
+                    mode_utils[i] += b["car_users"][j]
+        return mode_utils
 
     def _calc_utils(self, impedance):
         self.dest_expsums = {}
@@ -429,7 +409,7 @@ class ModeDestModel(LogitModel):
             self.cumul_dest_prob[mode] = dest_prob.cumsum(axis=0)
         return prob
 
-    def _get_cost_util_coefficient(self):
+    def get_cost_util_coefficient(self):
         try:
             b = self.dest_choice_param["car"]["impedance"]["cost"]
         except KeyError:
@@ -463,7 +443,7 @@ class AccessibilityModel(ModeDestModel):
             numpy.log(sustainable_sum), self.purpose.zone_numbers)
         self.resultdata.print_data(
             logsum, "sustainable_accessibility.txt", self.purpose.name)
-        b = self._get_cost_util_coefficient()
+        b = self.get_cost_util_coefficient()
         try:
             money_utility = 1 / b
         except TypeError:  # Separate params for cap region and surrounding
@@ -540,21 +520,16 @@ class AccessibilityModel(ModeDestModel):
                 utility += b[i][0] * impedance[i]
         return utility
 
-    def _add_log_impedance(self, exps, impedance, b):
+    def _add_log_impedance(self, utility, impedance, b):
         """Adds log transformations of impedance to utility.
-
-        This is an optimized way of calculating log terms. Calculates
-        impedance1^b1 * ... * impedanceN^bN in the following equation:
-        e^(linear_terms + b1*log(impedance1) + ... + bN*log(impedanceN))
-        = e^(linear_terms) * impedance1^b1 * ... * impedanceN^bN
 
         If parameter in b is tuple of two terms,
         capital region will be picked.
 
         Parameters
         ----------
-        exps : ndarray
-            Numpy array to which the impedances will be multiplied
+        utility : ndarray
+            Numpy array to which the impedances will be added
         impedance : dict
             A dictionary of time-averaged impedance matrices. Includes keys
             `time`, `cost`, and `dist` of which values are all ndarrays.
@@ -563,10 +538,10 @@ class AccessibilityModel(ModeDestModel):
         """
         for i in b:
             try: # If only one parameter
-                exps *= numpy.power(impedance[i] + 1, b[i])
+                utility += b[i] * numpy.log(impedance[i] + 1)
             except ValueError: # Separate params for cap region and surrounding
-                exps *= numpy.power(impedance[i] + 1, b[i][0])
-        return exps
+                utility += b[i][0] * numpy.log(impedance[i] + 1)
+        return utility
 
     def _add_zone_util(self, utility, b, generation=False):
         """Adds simple linear zone terms to utility.
