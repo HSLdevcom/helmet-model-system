@@ -490,7 +490,7 @@ class Network:
     def create_mode(self, mode_type, idx):
         if not isinstance(idx, str) or len(idx) != 1:
             raise Exception("Invalid mode ID: " + idx)
-        mode = Mode(idx)
+        mode = Mode(idx, mode_type)
         self._modes[idx] = mode
         return mode
 
@@ -569,8 +569,9 @@ class Network:
 
 
 class Mode:
-    def __init__(self, idx):
+    def __init__(self, idx, mode_type):
         self.id = idx
+        self.type = mode_type
 
     def __str__(self):
         return self.id

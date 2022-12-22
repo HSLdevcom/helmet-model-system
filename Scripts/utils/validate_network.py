@@ -42,29 +42,13 @@ def validate(network, fares=None):
                 found_zone_share)
             log.error(msg)
             raise ValueError(msg)
-    main_mode = network.mode(param.main_mode)
-    if main_mode is None or main_mode.type != "AUTO":
-            msg = "{} is not main auto mode".format(param.main_mode)
-            log.error(msg)
-            raise ValueError(msg)
+    validate_mode(network, param.main_mode, "AUTO")
     for m in param.assignment_modes.values():
-        mode = network.mode(m)
-        if mode is None or mode.type != "AUX_AUTO":
-            msg = "{} is not aux_auto mode".format(m)
-            log.error(msg)
-            raise ValueError(msg)
+        validate_mode(network, m, "AUX_AUTO")
     for m in param.transit_modes:
-        mode = network.mode(m)
-        if mode is None or mode.type != "TRANSIT":
-            msg = "{} is not transit mode".format(m)
-            log.error(msg)
-            raise ValueError(msg)
+        validate_mode(network, m, "TRANSIT")
     for m in param.aux_modes + [param.bike_mode]:
-        mode = network.mode(m)
-        if mode is None or mode.type != "AUX_TRANSIT":
-            msg = "{} is not aux_transit mode".format(m)
-            log.error(msg)
-            raise ValueError(msg)
+        validate_mode(network, m, "AUX_TRANSIT")
     modesets = []
     intervals = []
     for modes in param.official_node_numbers:
@@ -111,3 +95,10 @@ def validate(network, fares=None):
                 msg = "Headway missing for line {}".format(line.id)
                 log.error(msg)
                 raise ValueError(msg)
+
+def validate_mode(network, m, mode_type):
+    mode = network.mode(m)
+    if mode is None or mode.type != mode_type:
+        msg = f"{m} is not {mode_type} mode"
+        log.error(msg)
+        raise ValueError(msg)
