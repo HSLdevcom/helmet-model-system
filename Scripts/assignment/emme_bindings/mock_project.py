@@ -11,6 +11,7 @@ MODE_TYPES = {
     "4": "AUX_AUTO",
 }
 
+
 class MockProject:
     """Mock-up version of `EmmeProject`.
 
