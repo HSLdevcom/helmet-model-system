@@ -136,11 +136,19 @@ class AssignmentPeriod(Period):
         mtxs = {imp_type: self._get_matrices(imp_type, iteration=="last")
             for imp_type in ("time", "cost", "dist")}
         # fix the emme path analysis results
-        # (dist and cost zero if path not found)
+        # (dist and cost are zero if path not found but we want it to
+        # be the default value 999999)
         for mtx_type in ("cost", "dist"):
             for mtx_class in mtxs[mtx_type]:
                 path_not_found = mtxs["time"][mtx_class] > 999999
                 mtxs[mtx_type][mtx_class][path_not_found] = 999999
+        if iteration == "last":
+            for mtx_class in ("trailer_truck", "truck"):
+                # toll costs are not applied to freight, but the cost
+                # matrix is automatically populated with default values
+                # (999999) so we need to manually fill it with zeroes
+                path_found = mtxs["time"][mtx_class] <= 999999
+                mtxs["cost"][mtx_class][path_found] = 0
         # adjust impedance
         mtxs["time"]["bike"] = mtxs["time"]["bike"].clip(None, 9999.)
         if iteration != "last":
@@ -476,7 +484,11 @@ class AssignmentPeriod(Period):
         gcost = self._get_matrix("gen_cost", ass_class)
         cost = self._get_matrix("cost", ass_class)
         dist = self._get_matrix("dist", ass_class)
-        time = gcost - vot_inv*(cost + self.dist_unit_cost*dist)
+        if ass_class in ("trailer_truck", "truck"):
+            # toll costs are not applied to freight
+            time = gcost - vot_inv*param.freight_dist_unit_cost[ass_class]*dist
+        else:
+            time = gcost - vot_inv*(cost + self.dist_unit_cost*dist)
         self._set_matrix(ass_class, time, "time")
         return time
 
