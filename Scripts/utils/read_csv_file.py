@@ -1,3 +1,5 @@
+from decimal import DivisionByZero
+from itertools import groupby
 import os
 import pandas
 import numpy
@@ -40,10 +42,7 @@ def read_csv_file(data_dir, file_end, zone_numbers=None, dtype=None, squeeze=Fal
         msg = "No {} file found in folder {}".format(file_end, data_dir)
         # This error should not be logged, as it is sometimes excepted
         raise NameError(msg)
-    if squeeze:
-        header = None
-    else:
-        header = "infer"
+    header = None if squeeze else "infer"
     data = pandas.read_csv(
         path, delim_whitespace=True, squeeze=squeeze, keep_default_na=False,
         na_values="", comment='#', header=header)
@@ -64,6 +63,20 @@ def read_csv_file(data_dir, file_end, zone_numbers=None, dtype=None, squeeze=Fal
     if data.index.has_duplicates:
         raise IndexError("Index in file {} has duplicates".format(path))
     if zone_numbers is not None:
+        map_path = os.path.join(data_dir, "zone_mapping.txt")
+        if os.path.exists(map_path):
+            mapping = pandas.read_csv(map_path, delim_whitespace=True).squeeze()
+            if "total" in data.columns:
+                # If file contains total and shares of total,
+                # shares are aggregated as averages with total as weight
+                data = data.groupby(mapping).agg(avg, weights=data["total"])
+            elif "detach" in data.columns:
+                funcs = dict.fromkeys(data.columns, "sum")
+                funcs["detach"] = "mean"
+                data = data.groupby(mapping).agg(funcs)
+            else:
+                data = data.groupby(mapping).sum()
+            data.index = data.index.astype(int)
         if not data.index.is_monotonic:
             data.sort_index(inplace=True)
             log.warn("File {} is not sorted in ascending order".format(path))
@@ -91,3 +104,11 @@ def read_csv_file(data_dir, file_end, zone_numbers=None, dtype=None, squeeze=Fal
             log.error(msg)
             raise ValueError(msg)
     return data
+
+def avg (data, weights):
+    if data.name == weights.name:
+        return sum(data)
+    try:
+        return numpy.average(data, weights=weights[data.index])
+    except ZeroDivisionError:
+        return 0
