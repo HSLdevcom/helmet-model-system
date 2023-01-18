@@ -4,7 +4,7 @@ import pandas
 import utils.log as log
 import parameters.zone as param
 from datatypes.purpose import TourPurpose, SecDestPurpose
-from models import logit, linear
+from models import car_use, linear, tour_combinations
 from datatypes.person import Person
 
 
@@ -50,9 +50,10 @@ class DemandModel:
             (50, 64),
             (65, 99),
         )
-        self.cm = logit.CarUseModel(
+        self.car_use_model = car_use.CarUseModel(
             zone_data, bounds, self.age_groups, self.resultdata)
-        self.gm = logit.TourCombinationModel(self.zone_data)
+        self.tour_generation_model = tour_combinations.TourCombinationModel(
+            self.zone_data)
         # Income models used only in agent modelling
         self._incmod1 = linear.IncomeModel(
             self.zone_data, slice(0, self.zone_data.first_not_helsinki_zone),
@@ -75,18 +76,19 @@ class DemandModel:
                 Car user (car_user/no_car) : pandas Series
                     Zone array with number of people belonging to segment
         """
-        self.zone_data["car_users"] = self.cm.calc_prob()
+        cm = self.car_use_model
+        self.zone_data["car_users"] = cm.calc_prob()
         self.segments = {}
-        first_peripheral_zone = self.zone_data.first_peripheral_zone
-        pop = self.zone_data["population"][:first_peripheral_zone]
+        ubound = self.zone_data.first_peripheral_zone
+        pop = self.zone_data["population"][:ubound]
         for age_group in self.age_groups:
             age = "age_" + str(age_group[0]) + "-" + str(age_group[1])
             self.segments[age] = {}
-            age_share = self.zone_data["share_" + age][:first_peripheral_zone]
+            age_share = self.zone_data["share_" + age][:ubound]
             car_share = 0
-            for gender in self.cm.genders:
-                car_share += ( self.zone_data["share_" + gender][:first_peripheral_zone]
-                             * self.cm.calc_individual_prob(age, gender))
+            for gender in cm.genders:
+                car_share += (self.zone_data["share_" + gender][:ubound]
+                              * cm.calc_individual_prob(age, gender))
             self.segments[age]["car_users"] = car_share * age_share * pop
             self.segments[age]["no_car"] = (1-car_share) * age_share * pop
 
@@ -132,8 +134,8 @@ class DemandModel:
                     # Group -1 is under-7-year-olds and they have weights[0]
                     person = Person(
                         self.zone_data.zones[zone_number],
-                        self.age_groups[group], self.gm,
-                        self.cm, incmod)
+                        self.age_groups[group], self.tour_generation_model,
+                        self.car_use_model, incmod)
                     self.population.append(person)
                     self.zone_population[zone_number] += 1
         numpy.random.seed(None)
@@ -154,11 +156,12 @@ class DemandModel:
                 purpose.gen_model.add_tours()
         bounds = slice(0, self.zone_data.first_peripheral_zone)
         result_data = pandas.DataFrame()  # For printing of results
+        gm = self.tour_generation_model
         for age_group in self.age_groups:
             age = "age_" + str(age_group[0]) + "-" + str(age_group[1])
             segment = self.segments[age]
-            prob_c = self.gm.calc_prob(age, is_car_user=True, zones=bounds)
-            prob_n = self.gm.calc_prob(age, is_car_user=False, zones=bounds)
+            prob_c = gm.calc_prob(age, is_car_user=True, zones=bounds)
+            prob_n = gm.calc_prob(age, is_car_user=False, zones=bounds)
             nr_tours_sums = pandas.Series()
             for combination in prob_c:
                 # Each combination is a tuple of tours performed during a day
@@ -195,9 +198,10 @@ class DemandModel:
 
     def _get_probs(self, age, is_car_user):
         bounds = slice(0, self.zone_data.first_peripheral_zone)
-        prob_dict = self.gm.calc_prob(age, is_car_user, bounds)
+        gm = self.tour_generation_model
+        prob_dict = gm.calc_prob(age, is_car_user, bounds)
         probs = numpy.empty(
-            [bounds.stop - bounds.start, len(self.gm.tour_combinations)])
-        for i, tour_combination in enumerate(self.gm.tour_combinations):
+            [bounds.stop - bounds.start, len(gm.tour_combinations)])
+        for i, tour_combination in enumerate(gm.tour_combinations):
             probs[:, i] = prob_dict[tour_combination]
         return probs.cumsum(axis=1)
