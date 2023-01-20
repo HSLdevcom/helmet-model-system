@@ -4,6 +4,11 @@ import utils.log as log
 import parameters.assignment as param
 
 
+EMME_AUTO_MODE = "AUTO"
+EMME_AUX_AUTO_MODE = "AUX_AUTO"
+EMME_TRANSIT_MODE = "TRANSIT"
+EMME_AUX_TRANSIT_MODE = "AUX_TRANSIT"
+
 def validate(network, fares=None):
     """Validate EMME network in terms of HELMET compatibility.
 
@@ -42,13 +47,13 @@ def validate(network, fares=None):
                 found_zone_share)
             log.error(msg)
             raise ValueError(msg)
-    validate_mode(network, param.main_mode, "AUTO")
+    validate_mode(network, param.main_mode, EMME_AUTO_MODE)
     for m in param.assignment_modes.values():
-        validate_mode(network, m, "AUX_AUTO")
+        validate_mode(network, m, EMME_AUX_AUTO_MODE)
     for m in param.transit_modes:
-        validate_mode(network, m, "TRANSIT")
+        validate_mode(network, m, EMME_TRANSIT_MODE)
     for m in param.aux_modes + [param.bike_mode]:
-        validate_mode(network, m, "AUX_TRANSIT")
+        validate_mode(network, m, EMME_AUX_TRANSIT_MODE)
     modesets = []
     intervals = []
     for modes in param.official_node_numbers:
