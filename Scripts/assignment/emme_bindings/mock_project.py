@@ -4,6 +4,14 @@ import copy
 import os
 
 
+MODE_TYPES = {
+    "1": "AUTO",
+    "2": "TRANSIT",
+    "3": "AUX_TRANSIT",
+    "4": "AUX_AUTO",
+}
+
+
 class MockProject:
     """Mock-up version of `EmmeProject`.
 
@@ -87,7 +95,13 @@ class MockProject:
                 if f.readline() == "t modes\n":
                     break
             while True:
-                rec = f.readline().split()
+                rec = f.readline().split("'")
+                if len(rec) == 3:
+                    rec = rec[0].split() + [rec[1]] + rec[2].split()
+                elif len(rec) <= 1:
+                    rec = rec[0].split()
+                else:
+                    raise SyntaxError("Extra single quotes (') found in mode table")
                 if not rec:
                     break
                 if rec[0] == "c":
@@ -97,11 +111,13 @@ class MockProject:
                     pass
                 else:
                     if rec[0] == "a":
-                        network.create_mode(mode_type=rec[3], idx=rec[1])
+                        mode = network.create_mode(
+                            mode_type=MODE_TYPES[rec[3]], idx=rec[1])
                     elif rec[0] == "m":
-                        network.mode(idx=rec[1])
+                        mode = network.mode(idx=rec[1])
                     else:
                         raise SyntaxError("Unknown update code")
+                    mode.description = rec[2]
 
     def base_network_transaction(self, transaction_file, revert_on_error=True,
                                  scenario=None):
@@ -490,7 +506,7 @@ class Network:
     def create_mode(self, mode_type, idx):
         if not isinstance(idx, str) or len(idx) != 1:
             raise Exception("Invalid mode ID: " + idx)
-        mode = Mode(idx)
+        mode = Mode(idx, mode_type)
         self._modes[idx] = mode
         return mode
 
@@ -569,8 +585,10 @@ class Network:
 
 
 class Mode:
-    def __init__(self, idx):
+    def __init__(self, idx, mode_type):
         self.id = idx
+        self.type = mode_type
+        self.description = ""
 
     def __str__(self):
         return self.id
