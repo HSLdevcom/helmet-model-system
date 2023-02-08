@@ -743,7 +743,8 @@ class AssignmentPeriod(Period):
                                   + b["ctime"]*cumulative_time
                                   + b["cspeed"]*cumulative_speed)
                 # Estimated waiting time addition caused by headway deviation
-                segment["@wait_time_dev"] = headway_sd**2 / (2.0*line.headway)
+                headway_attr = self.extra("hw")
+                segment["@wait_time_dev"] = headway_sd**2 / (2.0*line[headway_attr])
         self.emme_scenario.publish_network(network)
 
     def _assign_transit(self):
