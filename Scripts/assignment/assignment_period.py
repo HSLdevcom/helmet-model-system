@@ -690,6 +690,7 @@ class AssignmentPeriod(Period):
     def _calc_extra_wait_time(self):
         """Calculate extra waiting time for one scenario."""
         network = self.emme_scenario.get_network()
+        headway_attr = self.extra("hw")
         # Calculation of cumulative line segment travel time and speed
         log.info("Calculates cumulative travel times for scenario " + str(self.emme_scenario.id))
         for line in network.transit_lines():
@@ -743,7 +744,6 @@ class AssignmentPeriod(Period):
                                   + b["ctime"]*cumulative_time
                                   + b["cspeed"]*cumulative_speed)
                 # Estimated waiting time addition caused by headway deviation
-                headway_attr = self.extra("hw")
                 segment["@wait_time_dev"] = headway_sd**2 / (2.0*line[headway_attr])
         self.emme_scenario.publish_network(network)
 
