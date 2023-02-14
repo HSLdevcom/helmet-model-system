@@ -58,25 +58,18 @@ class TourCombinationModel:
             combination_expsum = 0
             for tour_combination in self.param[nr_tours]:
                 # Lower level of nested logit model
-                if tour_combination in self.conditions:
-                    if self.conditions[tour_combination][0]:
-                        # If this tour pattern is exclusively for one age group
-                        if age_group == self.conditions[tour_combination][1]:
-                            is_allowed = True
-                        else:
-                            is_allowed = False
-                    else:
-                        # If one age group is excluded from this tour pattern
-                        if age_group == self.conditions[tour_combination][1]:
-                            is_allowed = False
-                        else:
-                            is_allowed = True
-                else:
+                try:
+                    cond = self.conditions[tour_combination]
+                except KeyError:
                     is_allowed = True
+                else:
+                    # If this tour pattern is exclusively for this age group
+                    # or if this age group is excluded from this tour pattern
+                    is_allowed = (age_group == cond[1] if cond[0]
+                        else age_group != cond[1])
                 if is_allowed:
                     b = self.param[nr_tours][tour_combination]
-                    util = 0
-                    util += b["constant"]
+                    util = b["constant"]
                     for i in b["zone"]:
                         util += b["zone"][i] * self.zone_data[i][zones]
                     dummies = b["individual_dummy"]
