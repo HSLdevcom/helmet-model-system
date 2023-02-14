@@ -6,6 +6,15 @@ agent_demand_fraction = 1.0
 # None = different population for each run
 population_draw = 31
 
+# Age groups in zone data
+age_groups = (
+        (7, 17),
+        (18, 29),
+        (30, 49),
+        (50, 64),
+        (65, 99),
+    )
+
 ### DEMAND MODEL REFERENCES ###
 
 tour_purposes = (

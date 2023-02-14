@@ -22,9 +22,8 @@ class TourCombinationModel:
         self.param = param.tour_combinations
         self.conditions = param.tour_conditions
         self.increases = param.tour_number_increase
-        self.tour_combinations = []
-        for nr_tours in self.param:
-            self.tour_combinations += self.param[nr_tours].keys()
+        self.tour_combinations = [combination for nr_tours in self.param
+            for combination in self.param[nr_tours]]
 
     def calc_prob(self, age_group, is_car_user, zones):
         """Calculate choice probabilities for each tour combination.
@@ -47,8 +46,8 @@ class TourCombinationModel:
         dict
             key : tuple of str
                 Tour combination (-/hw/hw-ho/...)
-            value : float or numpy 1-d array
-                Choice probability
+            value : pandas.Series
+                Choice probabilities per zone
         """
         prob = {}
         nr_tours_exps = {}
