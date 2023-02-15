@@ -39,16 +39,17 @@ class DemandModel:
                     purpose.sources.append(self.purpose_dict[source])
                     if "sec_dest" in purpose_spec:
                         self.purpose_dict[source].sec_dest_purpose = purpose
-        self.bounds = slice(0, zone_data.first_peripheral_zone)
+        bounds = param.purpose_areas["metropolitan"]
+        self.bounds = slice(*zone_data.all_zone_numbers.searchsorted(
+            [bounds[0], bounds[-1]]))
         self.car_use_model = car_use.CarUseModel(
             zone_data, self.bounds, param.age_groups, self.resultdata)
         self.tour_generation_model = tour_combinations.TourCombinationModel(
             self.zone_data)
         # Income models used only in agent modelling
-        bounds = (
-            self.bounds.start, self.zone_data.first_not_helsinki_zone,
-            self.bounds.stop,
-        )
+        first_not_helsinki = zone_data.zone_numbers.searchsorted(
+            param.municipalities["Espoo"][0])
+        bounds = (self.bounds.start, first_not_helsinki, self.bounds.stop)
         self._income_models = [
             linear.IncomeModel(
                 self.zone_data, slice(*bounds[-2:]),
@@ -66,13 +67,11 @@ class DemandModel:
 
     def create_population_segments(self):
         """Create population segments.
-        
-        Returns
-        -------
-        dict
-            Age (age_7-17/...) : dict
-                Car user (car_user/no_car) : pandas Series
-                    Zone array with number of people belonging to segment
+
+        Store dict of dicts of `pandas.Series`, where each series is a
+        zone array with number of people belonging to segment.
+        Upper-level dict keys are age group strings (age_7-17/...).
+        Lower-level dict keys are strings car_user and no_car.
         """
         cm = self.car_use_model
         self.zone_data["car_users"] = cm.calc_prob()
@@ -90,11 +89,8 @@ class DemandModel:
 
     def create_population(self):
         """Create population for agent-based simulation.
-        
-        Returns
-        -------
-        list
-            Person
+
+        Store list of `Person` instances in `self.population`.
         """
         numpy.random.seed(param.population_draw)
         self.population = []
