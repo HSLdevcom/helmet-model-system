@@ -22,12 +22,7 @@ class ZoneData:
             peripheral[1], "right")]
         Zone.counter = 0
         self.zones = {number: Zone(number) for number in self.zone_numbers}
-        self.first_not_helsinki_zone = self.zone_numbers.searchsorted(
-            param.municipalities["Espoo"][0])
-        self.first_surrounding_zone = self.zone_numbers.searchsorted(
-            surrounding[0])
         first_peripheral = self.zone_numbers.searchsorted(peripheral[0])
-        self.first_peripheral_zone = first_peripheral
         popdata = read_csv_file(data_dir, ".pop", self.zone_numbers, float)
         workdata = read_csv_file(data_dir, ".wrk", self.zone_numbers, float)
         schooldata = read_csv_file(data_dir, ".edu", self.zone_numbers, float)
