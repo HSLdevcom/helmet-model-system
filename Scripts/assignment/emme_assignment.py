@@ -165,11 +165,13 @@ class EmmeAssignmentModel(AssignmentModel):
         area_kms = {ass_class: pandas.Series(0.0, areas)
             for ass_class in ass_classes}
         vdf_area_kms = {vdf: pandas.Series(0.0, areas) for vdf in vdfs}
-        linktypes = set()
-        for linktype in param.railtypes:
-            linktypes.add(param.railtypes[linktype])
+        linktypes = list()
         for linktype in param.roadtypes:
-            linktypes.add(param.roadtypes[linktype])
+            if param.roadtypes[linktype] not in linktypes:
+                linktypes.append(param.roadtypes[linktype])
+        for linktype in param.railtypes:
+            if param.railtypes[linktype] not in linktypes:
+                linktypes.append(param.railtypes[linktype])
         linklengths = pandas.Series(0.0, linktypes)
         soft_modes = param.transit_classes + ("bike",)
         network = self.day_scenario.get_network()
