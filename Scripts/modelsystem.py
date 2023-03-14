@@ -279,7 +279,7 @@ class ModelSystem:
             self.resultdata.print_data(
                 tour_sum[mode], "origins_demand.txt", mode)
             self.resultdata.print_data(
-                ar.aggregate(tour_sum[mode]), "origin_demand_areas.txt", mode)
+                ar.aggregate(tour_sum[mode]), "origins_demand_areas.txt", mode)
             self.resultdata.print_data(
                 tour_sum[mode] / sum_all, "origins_shares.txt", mode)
             mode_shares[mode] = tour_sum[mode].sum() / sum_all.sum()
