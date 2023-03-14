@@ -161,6 +161,9 @@ def main(args):
                     scen.id)
                 log.error(msg)
                 raise ValueError(msg)
+            for scen in emmebank.scenarios():
+                if scen.zone_numbers != zone_numbers:
+                    log.warn("Scenarios with different zones found in EMME bank!")
             attrs = (
                 "@pyoratieluokka",
                 "@hinta_aht",

@@ -274,7 +274,7 @@ class EmmeAssignmentModel(AssignmentModel):
         for ap in self.assignment_periods:
             for transit_class in param.transit_classes:
                 idx = ap.result_mtx["cost"][transit_class]["id"]
-                emmebank.matrix(idx).set_numpy_data(cost)
+                emmebank.matrix(idx).set_numpy_data(cost, ap.emme_scenario.id)
             if not self.save_matrices:
                 break
 

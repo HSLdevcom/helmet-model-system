@@ -465,10 +465,10 @@ class Matrix:
         self.id = idx
         self._data = numpy.full((dim, dim), default_value, dtype=float)
 
-    def get_numpy_data(self):
+    def get_numpy_data(self, scenario_id=None):
         return self._data
 
-    def set_numpy_data(self, data):
+    def set_numpy_data(self, data, scenario_id=None):
         self._data[:,:] = data
 
 
