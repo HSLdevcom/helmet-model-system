@@ -72,10 +72,8 @@ class ZoneData:
         self["population_density"] = pop / landdata["builtar"]
         wp = workdata["total"]
         self["workplaces"] = wp
-        serv = workdata["sh_serv"] * wp
-        self["service"] = serv
-        shop = workdata["sh_shop"] * wp
-        self["shops"] = shop
+        self["service"] = workdata["sh_serv"] * wp
+        self["shops"] = workdata["sh_shop"] * wp
         self["logistics"] = workdata["sh_logi"] * wp
         self["industry"] = workdata["sh_indu"] * wp
         self["parking_cost_work"] = parkdata["parcosw"]
