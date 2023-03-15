@@ -88,7 +88,7 @@ def main(args):
     base_zonedata = ZoneData(base_zonedata_path, zone_numbers)
     # Check base matrices
     matrixdata = MatrixData(base_matrices_path)
-    for tp in ("aht", "pt", "iht"):
+    for tp in param.time_periods:
         with matrixdata.open("demand", tp, zone_numbers) as mtx:
             for ass_class in param.transport_classes:
                 a = mtx[ass_class]
@@ -116,13 +116,18 @@ def main(args):
             app = _app.start_dedicated(
                 project=emp_path, visible=False, user_initials="HSL")
             emmebank = app.data_explorer().active_database().core_emmebank
+            link_attrs = ["@pyoratieluokka"]
+            line_attrs = []
+            for tp in param.time_periods:
+                link_attrs.append(f"@hinta_{tp}")
+                line_attrs.append(f"@hw_{tp}")
             nr_attr = {
                 # Number of existing extra attributes
                 # TODO Count existing extra attributes which are NOT included
                 # in the set of attributes created during model run
                 "nodes": 0,
-                "links": 4,
-                "transit_lines": 3,
+                "links": len(link_attrs),
+                "transit_lines": len(line_attrs),
                 "transit_segments": 0,
             }
             nr_transit_classes = len(param.transit_classes)
@@ -164,19 +169,12 @@ def main(args):
             for scen in emmebank.scenarios():
                 if scen.zone_numbers != zone_numbers:
                     log.warn("Scenarios with different zones found in EMME bank!")
-            attrs = (
-                "@pyoratieluokka",
-                "@hinta_aht",
-                "@hinta_pt",
-                "@hinta_iht",
-                "@hw_aht",
-                "@hw_pt",
-                "@hw_iht",
-            )
-            for attr in attrs:
+            for attr in link_attrs + line_attrs:
                 if scen.extra_attribute(attr) is None:
                     msg = "Extra attribute {} missing from scenario {}".format(
                         attr, scen.id)
+                    log.error(msg)
+                    raise ValueError(msg)
             validate(scen.get_network(), forecast_zonedata.transit_zone)
             app.close()
 
