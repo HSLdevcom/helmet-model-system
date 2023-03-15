@@ -96,7 +96,7 @@ def validate(network, fares=None):
         ))
     hdw_attrs = [f"@hw_{tp}" for tp in param.time_periods]
     for line in network.transit_lines():
-        for hdwy in hdw_attr:
+        for hdwy in hdw_attrs:
             if line[hdwy] < 0.02:
                 msg = "Headway missing for line {}".format(line.id)
                 log.error(msg)
