@@ -90,16 +90,16 @@ class ZoneDataTest(unittest.TestCase):
     def test_all_cols_have_values_2016(self):
         df = self._get_freight_data_2016()
         row = df.loc[244, :]  # Let's pick some row and validate it
-        self.assertAlmostEquals(row['industry'], 2.1984)
-        self.assertAlmostEquals(row['logistics'], 1.8091)
-        self.assertEquals(row['population'], 1142)
-        self.assertAlmostEquals(row['shops'], 3.8014)
-        self.assertEquals(row['workplaces'], 229)
+        expected_row = pandas.Series(
+            [1142, 229, 3.8014, 1.8091, 2.1984],
+            index=["population", "workplaces", "shops", "logistics", "industry"],
+            dtype=numpy.float32, name=244)
+        pandas.testing.assert_series_equal(row, expected_row)
 
     def test_industry_series_and_indexes_2016(self):
         df = self._get_freight_data_2016()
         industry = df["industry"] # Let's pick a column and validate it
         expected_industry = pandas.Series(
             [3.3971, 579.7232, 2.1984, 467.7852, 29.4101, 2.1424, 7.392, 0, 0, 0],
-            index=INTERNAL_ZONES, name="industry")
+            index=INTERNAL_ZONES, dtype=numpy.float32, name="industry")
         pandas.testing.assert_series_equal(industry, expected_industry)
