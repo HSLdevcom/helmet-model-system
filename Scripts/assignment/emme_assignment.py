@@ -43,8 +43,17 @@ class EmmeAssignmentModel(AssignmentModel):
         self.mod_scenario = self.emme_project.modeller.emmebank.scenario(
             first_scenario_id)
 
-    def prepare_network(self, car_dist_unit_cost=None):
-        """Create matrices, extra attributes and calc background variables."""
+    def prepare_network(self, car_dist_unit_cost=None,
+                        time_periods=param.time_periods):
+        """Create matrices, extra attributes and calc background variables.
+
+        Parameters
+        ----------
+        car_dist_unit_cost : float (optional)
+            Car cost per km in euros
+        time_periods : list of str (optional)
+            Time period names, default is aht, pt, iht
+        """
         self._add_bus_stops()
         if self.separate_emme_scenarios:
             self.day_scenario = self.emme_project.copy_scenario(
@@ -54,7 +63,7 @@ class EmmeAssignmentModel(AssignmentModel):
         else:
             self.day_scenario = self.mod_scenario
         self.assignment_periods = []
-        for i, tp in enumerate(["aht", "pt", "iht"]):
+        for i, tp in enumerate(time_periods):
             if self.separate_emme_scenarios:
                 scen_id = self.mod_scenario.number + i + 2
                 self.emme_project.copy_scenario(

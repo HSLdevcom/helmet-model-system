@@ -51,7 +51,7 @@ class DepartureTimeModel:
 
         # Init demand
         n = self.nr_zones
-        self.demand = {tp: {tc: numpy.zeros((n, n))
+        self.demand = {tp: {tc: numpy.zeros((n, n), numpy.float32)
                 for tc in transport_classes}
             for tp in self.time_periods}
 

@@ -170,12 +170,15 @@ class ModelSystem:
         self.ass_model.prepare_network(self.zdata_forecast.car_dist_cost)
 
         # Calculate transit cost matrix, and save it to emmebank
-        with self.basematrices.open("demand", "aht", self.ass_model.zone_numbers) as mtx:
-            base_demand = {ass_class: mtx[ass_class] for ass_class in param.transport_classes}
+        time_periods = param.time_periods
+        with self.basematrices.open(
+                "demand", time_periods[0], self.ass_model.zone_numbers) as mtx:
+            base_demand = {ass_class: mtx[ass_class]
+                for ass_class in param.transport_classes}
         self.ass_model.init_assign(base_demand)
         if use_fixed_transit_cost:
             log.info("Using fixed transit cost matrix")
-            with self.resultmatrices.open("cost", "aht") as aht_mtx:
+            with self.resultmatrices.open("cost", time_periods[0]) as aht_mtx:
                 fixed_cost = aht_mtx["transit_work"]
         else:
             log.info("Calculating transit cost")
@@ -197,7 +200,7 @@ class ModelSystem:
             impedance[tp] = ap.assign(
                 self.dtm.demand[tp],
                 iteration=("last" if is_end_assignment else 0))
-            if tp == "aht":
+            if tp == time_periods[0]:
                 self._update_ratios(impedance[tp], tp)
             if is_end_assignment:
                 self._save_to_omx(impedance[tp], tp)
