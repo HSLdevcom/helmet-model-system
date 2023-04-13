@@ -33,14 +33,10 @@ class LogitModel:
         self.mode_exps = {}
         self.dest_choice_param = destination_choice[purpose.name]
         self.mode_choice_param = mode_choice[purpose.name]
-        if is_agent_model:
-            self.dtype = float
-        else:
-            self.dtype = None
 
     def _calc_mode_util(self, impedance):
         expsum = numpy.zeros_like(
-            next(iter(impedance["car"].values())), self.dtype)
+            next(iter(impedance["car"].values())))
         for mode in self.mode_choice_param:
             b = self.mode_choice_param[mode]
             utility = numpy.zeros_like(expsum)
@@ -57,7 +53,7 @@ class LogitModel:
     
     def _calc_dest_util(self, mode, impedance):
         b = self.dest_choice_param[mode]
-        utility = numpy.zeros_like(next(iter(impedance.values())), self.dtype)
+        utility = numpy.zeros_like(next(iter(impedance.values())))
         self._add_zone_util(utility, b["attraction"])
         self._add_impedance(utility, impedance, b["impedance"])
         self.dest_exps[mode] = numpy.exp(utility)
@@ -81,7 +77,7 @@ class LogitModel:
     
     def _calc_sec_dest_util(self, mode, impedance, orig, dest):
         b = self.dest_choice_param[mode]
-        utility = numpy.zeros_like(next(iter(impedance.values())), self.dtype)
+        utility = numpy.zeros_like(next(iter(impedance.values())))
         self._add_sec_zone_util(utility, b["attraction"], orig, dest)
         self._add_impedance(utility, impedance, b["impedance"])
         dest_exps = numpy.exp(utility)
