@@ -156,6 +156,9 @@ def main(args):
                     attr_space)
                 log.error(msg)
                 raise ValueError(msg)
+            for scen in emmebank.scenarios():
+                if scen.zone_numbers != zone_numbers:
+                    log.warn("Scenarios with different zones found in EMME bank!")
             scen = emmebank.scenario(first_scenario_ids[i])
             if scen is None:
                 msg = "Project {} has no scenario {}".format(emp_path, scen.id)
@@ -166,9 +169,6 @@ def main(args):
                     scen.id)
                 log.error(msg)
                 raise ValueError(msg)
-            for scen in emmebank.scenarios():
-                if scen.zone_numbers != zone_numbers:
-                    log.warn("Scenarios with different zones found in EMME bank!")
             for attr in link_attrs + line_attrs:
                 if scen.extra_attribute(attr) is None:
                     msg = "Extra attribute {} missing from scenario {}".format(
