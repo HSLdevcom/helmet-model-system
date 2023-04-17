@@ -35,8 +35,7 @@ class ZoneData:
             dtype)
         transit = read_csv_file(data_dir, ".tco")
         try:
-            transit["fare"] = transit["fare"].astype(
-                dtype=float, errors='raise')
+            transit["fare"] = transit["fare"].astype(dtype, errors='raise')
         except ValueError:
             msg = "Zonedata file .tco has fare values not convertible to float"
             log.error(msg)
