@@ -28,6 +28,8 @@ class EmmeAssignmentModel(AssignmentModel):
     save_matrices : bool (optional)
         Whether matrices will be saved in Emme format for all time periods.
         If false, Emme matrix ids 0-99 will be used for all time periods.
+    time_periods : list of str (optional)
+            Time period names, default is aht, pt, iht
     first_matrix_id : int (optional)
         Where to save matrices (if saved),
         300 matrix ids will be reserved, starting from first_matrix_id.
@@ -35,24 +37,22 @@ class EmmeAssignmentModel(AssignmentModel):
     """
     def __init__(self, emme_context, first_scenario_id,
                  separate_emme_scenarios=False, save_matrices=False,
-                 first_matrix_id=100):
+                 time_periods=param.time_periods, first_matrix_id=100):
         self.separate_emme_scenarios = separate_emme_scenarios
         self.save_matrices = save_matrices
+        self.time_periods = time_periods
         self.first_matrix_id = first_matrix_id if save_matrices else 0
         self.emme_project = emme_context
         self.mod_scenario = self.emme_project.modeller.emmebank.scenario(
             first_scenario_id)
 
-    def prepare_network(self, car_dist_unit_cost=None,
-                        time_periods=param.time_periods):
+    def prepare_network(self, car_dist_unit_cost=None):
         """Create matrices, extra attributes and calc background variables.
 
         Parameters
         ----------
         car_dist_unit_cost : float (optional)
             Car cost per km in euros
-        time_periods : list of str (optional)
-            Time period names, default is aht, pt, iht
         """
         self._add_bus_stops()
         if self.separate_emme_scenarios:
@@ -63,7 +63,7 @@ class EmmeAssignmentModel(AssignmentModel):
         else:
             self.day_scenario = self.mod_scenario
         self.assignment_periods = []
-        for i, tp in enumerate(time_periods):
+        for i, tp in enumerate(self.time_periods):
             if self.separate_emme_scenarios:
                 scen_id = self.mod_scenario.number + i + 2
                 self.emme_project.copy_scenario(

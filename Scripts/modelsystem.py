@@ -68,7 +68,8 @@ class ModelSystem:
             self.zdata_base, self.zdata_forecast, self.basematrices)
         self.em = ExternalModel(
             self.basematrices, self.zdata_forecast, self.zone_numbers)
-        self.dtm = dt.DepartureTimeModel(self.ass_model.nr_zones)
+        self.dtm = dt.DepartureTimeModel(
+            self.ass_model.nr_zones, self.ass_model.time_periods)
         self.imptrans = ImpedanceTransformer()
         bounds = slice(0, self.zdata_forecast.nr_zones)
         self.cdm = CarDensityModel(
@@ -170,7 +171,7 @@ class ModelSystem:
         self.ass_model.prepare_network(self.zdata_forecast.car_dist_cost)
 
         # Calculate transit cost matrix, and save it to emmebank
-        time_periods = param.time_periods
+        time_periods = self.ass_model.time_periods
         with self.basematrices.open(
                 "demand", time_periods[0], self.ass_model.zone_numbers) as mtx:
             base_demand = {ass_class: mtx[ass_class]
