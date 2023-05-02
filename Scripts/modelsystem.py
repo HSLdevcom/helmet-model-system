@@ -424,7 +424,8 @@ class ModelSystem:
             # will calculate secondary destinations
             origs = range(i, bounds.stop - bounds.start, nr_threads)
             # Results will be saved in a temp dtm, to avoid memory clashes
-            dtm = dt.DepartureTimeModel(self.ass_model.nr_zones)
+            dtm = dt.DepartureTimeModel(
+                self.ass_model.nr_zones, self.ass_model.time_periods)
             demand.append(dtm)
             thread = threading.Thread(
                 target=self._distribute_tours,
