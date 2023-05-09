@@ -420,6 +420,11 @@ class Scenario:
     def zone_numbers(self):
         return sorted(self._network._centroids)
 
+    def attributes(self, attr_type):
+        network = self.get_network()
+        # TODO Return other attributes except extra attributes
+        return list(network._extra_attr[attr_type])
+
     def extra_attribute(self, idx):
         network = self.get_network()
         for attr_type in network._extra_attr:
