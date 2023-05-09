@@ -19,11 +19,9 @@ class LogitModel:
         Tour purpose (type of tour)
     resultdata : ResultData
         Writer object to result directory
-    is_agent_model : bool (optional)
-        Whether the model is used for agent-based simulation
     """
 
-    def __init__(self, zone_data, purpose, resultdata, is_agent_model):
+    def __init__(self, zone_data, purpose, resultdata):
         self.resultdata = resultdata
         self.purpose = purpose
         self.bounds = purpose.bounds
