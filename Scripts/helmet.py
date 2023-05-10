@@ -85,6 +85,9 @@ def main(args):
             results_path, ass_model, args.scenario_name)
     log_extra["status"]["results"] = model.mode_share
 
+    model.cdm.set_car_growth(constant=args.car_growth_constant,
+                             factor=args.car_growth_factor)
+
     # Run traffic assignment simulation for N iterations,
     # on last iteration model-system will save the results
     log_extra["status"]["state"] = "preparing"
@@ -247,6 +250,17 @@ if __name__ == "__main__":
         action="store_true",
         default=config.USE_FIXED_TRANSIT_COST,
         help="Using this flag activates use of pre-calculated (fixed) transit costs."),
+    # MAL 2023 input data
+    parser.add_argument(
+        "--car-growth-constant",
+        type=float,
+        default=0.0,
+        help="Car ownership growth constant. To increase, try 0.1."),
+    parser.add_argument(
+        "--car-growth-factor",
+        type=float,
+        default=1.0,
+        help="Car ownership growth factor. To decrease, try 0.8."),
     args = parser.parse_args()
 
     log.initialize(args)
