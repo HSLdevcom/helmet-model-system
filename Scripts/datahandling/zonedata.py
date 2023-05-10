@@ -13,33 +13,29 @@ class ZoneData:
     def __init__(self, data_dir, zone_numbers):
         self._values = {}
         self.share = ShareChecker(self)
-        zone_numbers = numpy.array(zone_numbers)
+        all_zone_numbers = numpy.array(zone_numbers)
+        self.all_zone_numbers = all_zone_numbers
         surrounding = param.areas["surrounding"]
         peripheral = param.areas["peripheral"]
         external = param.areas["external"]
-        first_extra = numpy.searchsorted(zone_numbers, peripheral[1], "right")
-        self.zone_numbers = zone_numbers[:first_extra]
+        self.zone_numbers = all_zone_numbers[:all_zone_numbers.searchsorted(
+            peripheral[1], "right")]
         Zone.counter = 0
         self.zones = {number: Zone(number) for number in self.zone_numbers}
-        self.first_not_helsinki_zone = numpy.searchsorted(
-            self.zone_numbers, param.municipalities["Espoo"][0])
-        self.first_surrounding_zone = numpy.searchsorted(
-            self.zone_numbers, surrounding[0])
-        first_peripheral = numpy.searchsorted(self.zone_numbers, peripheral[0])
-        self.first_peripheral_zone = first_peripheral
-        first_external = numpy.searchsorted(zone_numbers, external[0])
-        self.first_external_zone = first_external
-        external_zones = zone_numbers[first_external:]
-        popdata = read_csv_file(data_dir, ".pop", self.zone_numbers, float)
-        workdata = read_csv_file(data_dir, ".wrk", self.zone_numbers, float)
-        schooldata = read_csv_file(data_dir, ".edu", self.zone_numbers, float)
-        landdata = read_csv_file(data_dir, ".lnd", self.zone_numbers, float)
-        parkdata = read_csv_file(data_dir, ".prk", self.zone_numbers, float)
-        self.externalgrowth = read_csv_file(data_dir, ".ext", external_zones, float)
+        first_peripheral = self.zone_numbers.searchsorted(peripheral[0])
+        dtype = numpy.float32
+        popdata = read_csv_file(data_dir, ".pop", self.zone_numbers, dtype)
+        workdata = read_csv_file(data_dir, ".wrk", self.zone_numbers, dtype)
+        schooldata = read_csv_file(data_dir, ".edu", self.zone_numbers, dtype)
+        landdata = read_csv_file(data_dir, ".lnd", self.zone_numbers, dtype)
+        parkdata = read_csv_file(data_dir, ".prk", self.zone_numbers, dtype)
+        self.externalgrowth = read_csv_file(
+            data_dir, ".ext",
+            all_zone_numbers[all_zone_numbers.searchsorted(external[0]):],
+            dtype)
         transit = read_csv_file(data_dir, ".tco")
         try:
-            transit["fare"] = transit["fare"].astype(
-                dtype=float, errors='raise')
+            transit["fare"] = transit["fare"].astype(dtype, errors='raise')
         except ValueError:
             msg = "Zonedata file .tco has fare values not convertible to float"
             log.error(msg)
@@ -69,16 +65,14 @@ class ZoneData:
                                         + self["share_age_65-99"])
         self.share["share_age_18-99"] = (self["share_age_7-99"]
                                          -self["share_age_7-17"])
-        self.share["share_female"] = pandas.Series(0.5, zone_numbers)
-        self.share["share_male"] = pandas.Series(0.5, zone_numbers)
+        self.share["share_female"] = pandas.Series(0.5, self.zone_numbers)
+        self.share["share_male"] = pandas.Series(0.5, self.zone_numbers)
         self.nr_zones = len(self.zone_numbers)
         self["population_density"] = pop / landdata["builtar"]
         wp = workdata["total"]
         self["workplaces"] = wp
-        serv = workdata["sh_serv"] * wp
-        self["service"] = serv
-        shop = workdata["sh_shop"] * wp
-        self["shops"] = shop
+        self["service"] = workdata["sh_serv"] * wp
+        self["shops"] = workdata["sh_shop"] * wp
         self["logistics"] = workdata["sh_logi"] * wp
         self["industry"] = workdata["sh_indu"] * wp
         self["parking_cost_work"] = parkdata["parcosw"]
@@ -98,30 +92,23 @@ class ZoneData:
         self["shops_cbd"] = self["cbd"] * self["shops"]
         self["shops_elsewhere"] = (1-self["cbd"]) * self["shops"]
         # Create diagonal matrix with zone area
-        di = numpy.diag_indices(self.nr_zones)
-        self["own_zone"] = numpy.zeros((self.nr_zones, self.nr_zones))
-        self["own_zone"][di] = 1
+        self["own_zone"] = numpy.full((self.nr_zones, self.nr_zones), False)
+        self["own_zone"][numpy.diag_indices(self.nr_zones)] = True
         self["own_zone_area"] = self["own_zone"] * self["zone_area"].values
         self["own_zone_area_sqrt"] = numpy.sqrt(self["own_zone_area"])
         # Create matrix where value is 1 if origin and destination is in
         # same municipality
-        home_municipality = pandas.DataFrame(
-            0, self.zone_numbers, self.zone_numbers)
+        own_municipality = pandas.DataFrame(
+            False, self.zone_numbers, self.zone_numbers)
         intervals = ZoneIntervals("municipalities")
         for i in intervals:
-            home_municipality.loc[intervals[i], intervals[i]] = 1
-        self["population_own"] = home_municipality.values * pop.values
-        self["population_other"] = (1-home_municipality.values) * pop.values
-        self["workplaces_own"] = home_municipality.values * wp.values
-        self["workplaces_other"] = (1-home_municipality.values) * wp.values
-        self["service_own"] = home_municipality.values * serv.values
-        self["service_other"] = (1-home_municipality.values) * serv.values
-        self["shops_own"] = home_municipality.values * shop.values
-        self["shops_other"] = (1-home_municipality.values) * shop.values
+            own_municipality.loc[intervals[i], intervals[i]] = True
+        self["own"] = own_municipality.values
+        self["other"] = ~own_municipality.values
 
     def dummy(self, division_type, name, bounds=slice(None)):
-        dummy = pandas.Series(0, self.zone_numbers[bounds])
-        dummy.loc[zone_interval(division_type, name)] = 1
+        dummy = pandas.Series(False, self.zone_numbers[bounds])
+        dummy.loc[zone_interval(division_type, name)] = True
         return dummy
 
     def __getitem__(self, key):
@@ -207,13 +194,24 @@ class ZoneData:
         -------
         pandas Series or numpy 2-d matrix
         """
-        if self._values[key].ndim == 1: # If not a compound (i.e., matrix)
+        try:
+            val = self._values[key]
+        except KeyError as err:
+            key = key.split('_')
+            if key[1] in ("own", "other"):
+                # If parameter is only for own municipality or for all
+                # municipalities except own, array is multiplied by
+                # bool matrix
+                return (self[key[1]] * self._values[key[0]].values)[bounds, :]
+            else:
+                raise KeyError(err)
+        if val.ndim == 1: # If not a compound (i.e., matrix)
             if generation:  # Return values for purpose zones
-                return self._values[key][bounds].values
+                return val[bounds].values
             else:  # Return values for all zones
-                return self._values[key].values
+                return val.values
         else:  # Return matrix (purpose zones -> all zones)
-            return self._values[key][bounds, :]
+            return val[bounds, :]
 
 
 class BaseZoneData(ZoneData):

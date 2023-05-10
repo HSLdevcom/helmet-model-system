@@ -36,13 +36,14 @@ class Purpose:
         self.dest = specification["dest"]
         self.area = specification["area"]
         self.sources = []
-        zone_numbers = zone_data.zone_numbers
+        zone_numbers = zone_data.all_zone_numbers
         zone_intervals = param.purpose_areas[self.area]
         self.bounds = slice(*zone_numbers.searchsorted(
             [zone_intervals[0], zone_intervals[-1]]))
         sub_intervals = zone_numbers[self.bounds].searchsorted(zone_intervals)
         self.sub_bounds = [slice(sub_intervals[i-1], sub_intervals[i])
             for i in range(1, len(sub_intervals))]
+        self.sub_intervals = sub_intervals[1:]
         self.zone_data = zone_data
         self.resultdata = resultdata
         self.model = None
@@ -91,27 +92,22 @@ class TourPurpose(Purpose):
         Data used for all demand calculations
     resultdata : ResultData
         Writer object for result directory
-    is_agent_model : bool (optional)
-        Whether the model is used for agent-based simulation
     """
 
-    def __init__(self, specification, zone_data, resultdata, is_agent_model):
+    def __init__(self, specification, zone_data, resultdata):
         Purpose.__init__(self, specification, zone_data, resultdata)
         if self.orig == "source":
             self.gen_model = generation.NonHomeGeneration(self, resultdata)
         else:
             self.gen_model = generation.GenerationModel(self, resultdata)
         if self.name == "sop":
-            self.model = logit.OriginModel(
-                zone_data, self, resultdata, is_agent_model)
+            self.model = logit.OriginModel(zone_data, self, resultdata)
         elif self.name == "so":
-            self.model = logit.DestModeModel(
-                zone_data, self, resultdata, is_agent_model)
+            self.model = logit.DestModeModel(zone_data, self, resultdata)
         else:
-            self.model = logit.ModeDestModel(
-                zone_data, self, resultdata, is_agent_model)
+            self.model = logit.ModeDestModel(zone_data, self, resultdata)
             self.accessibility_model = logit.AccessibilityModel(
-                zone_data, self, resultdata, is_agent_model)
+                zone_data, self, resultdata)
         self.modes = list(self.model.mode_choice_param)
         self.histograms = {mode: TourLengthHistogram() for mode in self.modes}
         self.aggregates = {mode: MatrixAggregator(zone_data.zone_numbers)
@@ -214,15 +210,12 @@ class SecDestPurpose(Purpose):
         Data used for all demand calculations
     resultdata : ResultData
         Writer object to result directory
-    is_agent_model : bool (optional)
-        Whether the model is used for agent-based simulation
     """
 
-    def __init__(self, specification, zone_data, resultdata, is_agent_model):
+    def __init__(self, specification, zone_data, resultdata):
         Purpose.__init__(self, specification, zone_data, resultdata)
         self.gen_model = generation.SecDestGeneration(self, resultdata)
-        self.model = logit.SecDestModel(
-            zone_data, self, resultdata, is_agent_model)
+        self.model = logit.SecDestModel(zone_data, self, resultdata)
         self.modes = self.model.dest_choice_param.keys()
 
     def init_sums(self):

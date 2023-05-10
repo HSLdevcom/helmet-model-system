@@ -4,6 +4,11 @@ import utils.log as log
 import parameters.assignment as param
 
 
+EMME_AUTO_MODE = "AUTO"
+EMME_AUX_AUTO_MODE = "AUX_AUTO"
+EMME_TRANSIT_MODE = "TRANSIT"
+EMME_AUX_TRANSIT_MODE = "AUX_TRANSIT"
+
 def validate(network, fares=None):
     """Validate EMME network in terms of HELMET compatibility.
 
@@ -42,6 +47,13 @@ def validate(network, fares=None):
                 found_zone_share)
             log.error(msg)
             raise ValueError(msg)
+    validate_mode(network, param.main_mode, EMME_AUTO_MODE)
+    for m in param.assignment_modes.values():
+        validate_mode(network, m, EMME_AUX_AUTO_MODE)
+    for m in param.transit_modes:
+        validate_mode(network, m, EMME_TRANSIT_MODE)
+    for m in param.aux_modes + [param.bike_mode]:
+        validate_mode(network, m, EMME_AUX_TRANSIT_MODE)
     modesets = []
     intervals = []
     for modes in param.official_node_numbers:
@@ -82,9 +94,17 @@ def validate(network, fares=None):
             "Node number(s) {} not consistent with official HSL network".format(
                 ', '.join(unofficial_nodes)
         ))
+    hdw_attrs = [f"@hw_{tp}" for tp in param.time_periods]
     for line in network.transit_lines():
-        for hdwy in ("@hw_aht", "@hw_pt", "@hw_iht"):
+        for hdwy in hdw_attrs:
             if line[hdwy] < 0.02:
                 msg = "Headway missing for line {}".format(line.id)
                 log.error(msg)
                 raise ValueError(msg)
+
+def validate_mode(network, m, mode_type):
+    mode = network.mode(m)
+    if mode is None or mode.type != mode_type:
+        msg = f"{m} is not {mode_type} mode"
+        log.error(msg)
+        raise ValueError(msg)

@@ -183,6 +183,8 @@ vot_inv = {
 }
 # Default distance unit cost [eur/km]
 dist_unit_cost = 0.12
+# Default distance unit time for trucks and trailer trucks [min/km]
+freight_dist_unit_time = 0.2
 # Boarding penalties for different transit modes
 boarding_penalty = {
     'b': 3, # Bus
@@ -239,14 +241,14 @@ headway_sd_func = {
 }
 # Stopping criteria for last traffic assignment
 stopping_criteria_fine = {
-    "max_iterations": 200,
+    "max_iterations": 400,
     "relative_gap": 0.00001,
     "best_relative_gap": 0.001,
     "normalized_gap": 0.0005,
 }
 # Stopping criteria for traffic assignment in loop
 stopping_criteria_coarse = {
-    "max_iterations": 100,
+    "max_iterations": 200,
     "relative_gap": 0.0001,
     "best_relative_gap": 0.01,
     "normalized_gap": 0.005,
@@ -387,6 +389,7 @@ noise_zone_width = {
 }
 
 ### ASSIGNMENT REFERENCES ###
+time_periods = ("aht", "pt", "iht")
 transport_classes = (
     "car_work",
     "car_leisure",
@@ -442,6 +445,11 @@ vot_classes = {
     "trailer_truck": "business",
     "truck": "business",
     "van": "business",
+}
+# Distance unit cost for freight [eur/km]
+freight_dist_unit_cost = {
+    "truck": freight_dist_unit_time / vot_inv[vot_classes["truck"]],
+    "trailer_truck": freight_dist_unit_time / vot_inv[vot_classes["trailer_truck"]],
 }
 transit_modes = [
     'b',
