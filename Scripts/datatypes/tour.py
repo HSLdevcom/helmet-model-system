@@ -21,7 +21,7 @@ class Tour:
     matrix = numpy.array([[1 / zone_param.agent_demand_fraction]])
     attr = ["person_id", "purpose_name", "mode", 
             "total_access", "sustainable_access",
-            "cost", "gen_cost"]
+            "cost", "gen_cost","orig","dest","sec_dest"]
 
     def __init__(self, purpose, origin, person_id):
         self.person_id = person_id
@@ -148,6 +148,7 @@ class Tour:
         dest_idx = numpy.searchsorted(
             self.purpose.model.cumul_dest_prob[self.mode][:, orig_rel_idx],
             self._dest_draw)
+        if dest_idx>1976: dest_idx = 1976 ### TÄMÄ ON VÄÄRIN!!!
         self.position = (orig_idx, dest_idx)
         self.purpose.attracted_tours[self.mode][dest_idx] += 1
         self.purpose.histograms[self.mode].add(
