@@ -68,7 +68,7 @@ def validate(network, fares=None):
                 msg = "Link type missing for link {}".format(link.id)
                 log.error(msg)
                 raise ValueError(msg)
-        if network.mode('t') in link.modes:
+        if network.mode('t') in link.modes or network.mode('p') in link.modes:
             speedstr = str(int(link.data1))
             speed = {
                 "aht": int(speedstr[:-4]),
