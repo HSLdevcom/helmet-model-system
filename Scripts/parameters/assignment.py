@@ -94,7 +94,7 @@ official_node_numbers = {
 vdf_temp = ("(put(60/ul2)*(1+{}*put((volau+volad)/{})/"
             + "(ul1-get(2))))*(get(2).le.put(ul1*{}))*length+(get(2).gt."
             + "get(3))*({}*get(1)*length+{}*(get(2)-get(3))*length)")
-buslane = "((lanes-1).max.0.8))"
+buslane = "((lanes-1).max.0.8)"
 volume_delay_funcs = {
     # Car functions
     "fd1": vdf_temp.format(0.02, "lanes", 0.975, 1.78, 0.0075),
