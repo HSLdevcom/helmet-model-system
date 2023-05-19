@@ -467,7 +467,8 @@ aux_modes = [
     'a',
     's',
 ]
-park_and_ride_mode = 'u'
+drive_access_mode = 'u'
+park_mode = 'x'
 transit_assignment_modes = transit_modes + aux_modes
 external_modes = [
     "car",

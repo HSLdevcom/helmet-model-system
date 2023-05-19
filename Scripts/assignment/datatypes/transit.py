@@ -90,10 +90,10 @@ class TransitSpecification:
             "performance_settings": param.performance_settings,
         }
         if park_and_ride_results:
-            self.transit_spec["modes"].append(param.park_and_ride_mode)
+            self.transit_spec["modes"].append(param.drive_access_mode)
             self.transit_spec["results"] = {
                 "aux_transit_volumes_by_mode": [{
-                    "mode": param.park_and_ride_mode,
+                    "mode": param.drive_access_mode,
                     "volume": park_and_ride_results,
                 }],
             }

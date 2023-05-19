@@ -283,7 +283,7 @@ class AssignmentPeriod(Period):
             for modes in param.transit_delay_funcs}
         main_mode = network.mode(param.main_mode)
         car_mode = network.mode(param.assignment_modes["car_work"])
-        park_and_ride_mode = network.mode(param.park_and_ride_mode)
+        park_and_ride_mode = network.mode(param.drive_access_mode)
         for link in network.links():
             # Car volume delay function definition
             linktype = link.type % 100

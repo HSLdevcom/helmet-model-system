@@ -32,36 +32,38 @@ class JourneyLevel:
     """
     def __init__(self, level, headway_attribute, park_and_ride=False,
             count_zone_boardings=False):
-        # Boarding transit modes allowed only on levels 0-2
-        next = BOARDED if level <= BOARDED else FORBIDDEN
-        transitions = [{
-                "mode": mode,
-                "next_journey_level": next,
-            } for mode in param.transit_modes]
+        transitions = []
         if park_and_ride:
             if "first_mile" in park_and_ride:
                 # Park-and-ride (car) mode allowed only on level 0.
                 car = FORBIDDEN if level >= PARKED else NOT_BOARDED
-                # If we want parking to be allowed only on specific links
-                # (i.e., park-and-ride facilities), we should specify an
-                # own mode for these links. For now, parking is allowed
-                # on all links where walking to a stop is possible.
-                walk = PARKED if level == NOT_BOARDED else level
+                park = PARKED if level == NOT_BOARDED else FORBIDDEN
+                walk = FORBIDDEN if level == NOT_BOARDED else level
+                next = BOARDED if level in (PARKED, BOARDED) else FORBIDDEN
             elif "last_mile" in park_and_ride:
                 # Transfer to park-and-ride (car) mode only allowed after first
-                # boarding. If we want parking to be allowed only on specific
-                # links, we should specify an own mode for these links.
-                # For now, parking is allowed on all links where walking
-                # from a stop is possible.
-                car = FORBIDDEN if level in (NOT_BOARDED, FORBIDDEN) else LEFT
+                # boarding.
                 walk = FORBIDDEN if level == LEFT else level
+                next = BOARDED if level <= BOARDED else FORBIDDEN
+                park = LEFT if level == BOARDED else FORBIDDEN
+                car = LEFT if level == LEFT else FORBIDDEN
             transitions.append({
-                "mode": param.park_and_ride_mode,
+                "mode": param.drive_access_mode,
                 "next_journey_level": car,
+            })
+            transitions.append({
+                "mode": param.park_mode,
+                "next_journey_level": park,
             })
         else:
             # Walk modes do not normally affect journey level transitions
             walk = level
+            # Boarding transit modes allowed only on levels 0-2
+            next = BOARDED if level <= BOARDED else FORBIDDEN
+        transitions += [{
+                "mode": mode,
+                "next_journey_level": next,
+            } for mode in param.transit_modes]
         transitions += [{
                 "mode": mode,
                 "next_journey_level": walk,
