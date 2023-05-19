@@ -27,7 +27,7 @@ class DemandModel:
         self.tour_purposes = []
         self.purpose_dict = {}
         for purpose_spec in param.tour_purposes:
-            args = (purpose_spec, zone_data, resultdata, is_agent_model)
+            args = (purpose_spec, zone_data, resultdata)
             purpose = (SecDestPurpose(*args) if "sec_dest" in purpose_spec
                 else TourPurpose(*args))
             self.tour_purposes.append(purpose)

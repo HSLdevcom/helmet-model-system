@@ -12,11 +12,12 @@ class DepartureTimeModel:
     ----------
     nr_zones : int
         Number of zones in assignment model
+    time_periods : list of str (optional)
+        Time period names, default is aht, pt, iht
     """
-
-    def __init__(self, nr_zones):
+    def __init__(self, nr_zones, time_periods=list(param.backup_demand_share)):
         self.nr_zones = nr_zones
-        self.time_periods = list(param.backup_demand_share)
+        self.time_periods = time_periods
         self.demand = None
         self.old_car_demand = 0
         self.init_demand()
@@ -38,7 +39,7 @@ class DepartureTimeModel:
         """
         # Calculate gaps
         try:
-            car_demand = self.demand["aht"]["car_work"]
+            car_demand = self.demand[self.time_periods[0]]["car_work"]
         except TypeError:
             car_demand = 0
         max_gap = numpy.abs(car_demand - self.old_car_demand).max()
