@@ -289,8 +289,9 @@ class ModeDestModel(LogitModel):
         return prob
     
     def calc_basic_prob(self, impedance):
-        """Calculate matrix of mode and destination choice probabilities.
+        """Calculate utilities and cumulative destination choice probabilities.
 
+        Only used in agent simulation.
         Individual dummy variables are not included.
         
         Parameters
