@@ -643,7 +643,7 @@ class AssignmentPeriod(Period):
             self.emme_scenario.id))
         log.info("Stopping criteria: {}, iteration {} / {}".format(
             assign_report["stopping_criterion"],
-            assign_report["iterations"][-1]["number"],
+            len(assign_report["iterations"]),
             stopping_criteria["max_iterations"]
             ))
         if assign_report["stopping_criterion"] == "MAX_ITERATIONS":
