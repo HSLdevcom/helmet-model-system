@@ -109,7 +109,7 @@ pipenv run python helmet.py
 
 ### Mock assignment run in Helmet UI
 
-Download [Helmet-UI executable](https://github.com/HSLdevcom/helmet-ui/releases/). 
+Refer to this manual: [https://hsldevcom.github.io/helmet-docs/kaytto-ohje.html#helmet-asennus](https://hsldevcom.github.io/helmet-docs/kaytto-ohje.html#helmet-asennus).
 
 #### Change the config settings
 1. Download latest version of helmet-model-system in `Projektin asetukset` (edit: or set this manually to `helmet-model-system\Scripts` folder which you probably downloaded when installing Python environment!).
@@ -123,7 +123,7 @@ Download [Helmet-UI executable](https://github.com/HSLdevcom/helmet-ui/releases/
     - helmet-model-system was set previously
     - Projektin kansiopolku: your choice
     - Lähtödata: `helmet-model-system\tests\test_data\Base_input_data`
-    - Tulokset: your choice (copy Matrices folder from to the location) or `helmet-model-system\tests\test_data\Base_input_data`
+    - Tulokset: your choice (copy Matrices folder from to the location) or `helmet-model-system\tests\test_data\Results`
 2. "Uusi Helmet-skenaario" button
     - Skenaarion nimi: your choice
     - Emme-projekti: create an empty (dummy) text file and save it with file extension `.emp`
@@ -133,12 +133,19 @@ Download [Helmet-UI executable](https://github.com/HSLdevcom/helmet-ui/releases/
     - The rest can have default values (edited) 
 	
 #### Run your first demo model run
-1. Copy `helmet-model-system\tests\test_data\Results\test\Matrices` as your `[result-folder]\[scenario-name]\Matrices` folder.
-2. Select scenario with checkbox and click `Käynnistä (1) skenaariota`.When running the first model run again and again, just do #2. When you create more scenarios, always copy matrices (#1) first to a new location. (This is a demo model thing that needs to be done because we are independent of Emme.)
+1. In case your scenario name is not `test`, copy the `helmet-model-system\tests\test_data\Results\test\Matrices` folder to `[your-result-folder]\[your-scenario-name]\Matrices`.
+2. Select scenario with checkbox and click `Käynnistä (1) skenaariota`. When running the first model run again and again, just do #2. When you create more scenarios, always copy matrices (#1) first to a new location. (This is a demo model thing that needs to be done because we are independent of Emme.)
 	
-#### Running in command line
-If you run mock assignment in the command line you can just use (Make sure your virtual environment is activated):
-`pipenv run python helmet.py -m`
+#### Running mock assignment in command line
+Alternatively, you can run the mock assignment with the help of command line
+1. Make sure your virtual environment is activated (As described in Environment and Dependencies)
+2. Adjust the following variables in `dev-config.json` (while replacing the YOUR_PATH variable with absolute path to the helmet-model-system folder)
+    - `"SCENARIO_NAME": "test"`,
+    - `"RESULTS_PATH": "YOUR_PATH\\helmet-model-system\\Scripts\\tests\\test_data\\Results"`,
+    - `"BASELINE_DATA_PATH": "YOUR_PATH\\helmet-model-system\\Scripts\\tests\\test_data\\Base_input_data"`,
+    - `"FORECAST_DATA_PATH": "YOUR_PATH\\helmet-model-system\\Scripts\\tests\\test_data\\Scenario_input_data\\2030_test"`,
+    - `"OPTIONAL_FLAGS": ["DO_NOT_USE_EMME"]`
+3. Type the following to the command line: `pipenv run python helmet.py`
 
 
 ### Visual Studio Code
