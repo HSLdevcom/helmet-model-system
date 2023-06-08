@@ -61,8 +61,26 @@ def validate(network, fares=None):
         intervals += param.official_node_numbers[modes]
     unofficial_nodes = set()
     for link in network.links():
+        if len(link.modes) == 0:
+            msg = "No modes defined for link {}. At minimum mode h and one more mode needs to be defined for the simulation to work".format(link.id)
+            log.error(msg)
+            raise ValueError(msg)
+        if network.mode('h') in link.modes and len(link.modes) == 1:
+            msg = "Only h mode defined for link {}. At minimum mode h and one more mode needs to be defined for the simulation to work".format(link.id)
+            log.error(msg)
+            raise ValueError(msg)
+        
+        linktype = link.type % 100
+        if (linktype != 70 and link.length == 0): 
+            msg = "Link {} has zero length. Link length can be zero only if linktypeis 70. (vaihtokävelyt)".format(link.id)
+            log.error(msg)
+            raise ValueError(msg)
+    
+        if (linktype == 1):
+            msg = "Link type 1 for link {}. Link type 1 is out of use in Helmet 4+ versions".format(link.id)
+            log.error(msg)
+            raise ValueError(msg)
         if network.mode('c') in link.modes:
-            linktype = link.type % 100
             if (linktype not in param.roadclasses
                     and linktype not in param.custom_roadtypes):
                 msg = "Link type missing for link {}".format(link.id)
