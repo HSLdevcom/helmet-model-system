@@ -61,7 +61,7 @@ def validate(network, fares=None):
         intervals += param.official_node_numbers[modes]
     unofficial_nodes = set()
     for link in network.links():
-        if len(link.modes) == 0:
+        if not link.modes:
             msg = "No modes defined for link {}. At minimum mode h and one more mode needs to be defined for the simulation to work".format(link.id)
             log.error(msg)
             raise ValueError(msg)
@@ -72,7 +72,7 @@ def validate(network, fares=None):
         
         linktype = link.type % 100
         if (linktype != 70 and link.length == 0): 
-            msg = "Link {} has zero length. Link length can be zero only if linktypeis 70. (vaihtokävelyt)".format(link.id)
+            msg = "Link {} has zero length. Link length can be zero only if linktype is 70. (vaihtokävelyt)".format(link.id)
             log.error(msg)
             raise ValueError(msg)
     
