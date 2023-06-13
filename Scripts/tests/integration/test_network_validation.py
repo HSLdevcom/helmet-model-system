@@ -95,6 +95,42 @@ class EmmeAssignmentTest(unittest.TestCase):
         self.assertRaises(ValueError, validate,
             network6,
             fares)
+        
+        #Link check, link should not have type 100
+        network7 = copy.deepcopy(network0)
+        node1 = network7.create_node(800911, False)
+        node2 = network7.create_node(800912, False)
+        link6 = network7.create_link(800911, 800912, "haf")
+        link6.type = 100
+        link6.length = 1.0
+
+        self.assertRaises(ValueError, validate,
+            network7,
+            fares)
+        
+        #Link check, link should not have type 999
+        network8 = copy.deepcopy(network0)
+        node1 = network8.create_node(800913, False)
+        node2 = network8.create_node(800914, False)
+        link7 = network8.create_link(800913, 800914, "haf")
+        link7.type = 999
+        link7.length = 1.0
+
+        self.assertRaises(ValueError, validate,
+            network8,
+            fares)
+        
+        #Link check, link must not directly connect two centroids
+        network9 = copy.deepcopy(network0)
+        node1 = network9.create_node(800915, True)
+        node2 = network9.create_node(800916, True)
+        link8 = network9.create_link(800915, 800916, "haf")
+        link8.type = 142
+        link8.length = 1.0
+
+        self.assertRaises(ValueError, validate,
+            network9,
+            fares)
 
         
 if __name__ == "__main__":

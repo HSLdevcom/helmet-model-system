@@ -69,6 +69,14 @@ def validate(network, fares=None):
             msg = "Only h mode defined for link {}. At minimum mode h and one more mode needs to be defined for the simulation to work".format(link.id)
             log.error(msg)
             raise ValueError(msg)
+        if link.type == 100:
+            msg = "Link id {} type must not be 100, please refer to the helmet-docs manual".format(link.id)
+            log.error(msg)
+            raise ValueError(msg)
+        if link.type == 999:
+            msg = "Link id {} type must not be 999, please refer to the helmet-docs manual".format(link.id)
+            log.error(msg)
+            raise ValueError(msg)
         
         linktype = link.type % 100
         if (linktype != 70 and link.length == 0): 
@@ -99,7 +107,13 @@ def validate(network, fares=None):
                         timeperiod, link.id)
                     log.error(msg)
                     raise ValueError(msg)
+        centroid_count = 0
         for node in (link.i_node, link.j_node):
+            if node.is_centroid: centroid_count += 1
+            if centroid_count == 2:
+                msg = "Link {} is leading directly from centroid node {} to centroid node {}. This is not allowed.".format(link.id,link.i_node.number,link.j_node.number)
+                log.error(msg)
+                raise ValueError(msg)
             i = bisect.bisect(intervals, node.number)
             if i % 2 == 0:
                 # If node number is not in one of the official intervals
