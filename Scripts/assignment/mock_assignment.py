@@ -8,20 +8,21 @@ from assignment.abstract_assignment import AssignmentModel, Period
 
 
 class MockAssignmentModel(AssignmentModel):
-    def __init__(self, matrices):
+    def __init__(self, matrices, time_periods=param.time_periods):
         self.matrices = matrices
         log.info("Reading matrices from " + str(self.matrices.path))
         self.result_mtx=param.emme_result_mtx
-        emme_scenarios = {"aht": 21, "pt": 22, "iht": 23}
-        self.assignment_periods = [MockPeriod(tp, matrices) for tp in emme_scenarios]
-    
+        self.time_periods = time_periods
+        self.assignment_periods = [MockPeriod(tp, matrices)
+                                   for tp in time_periods]
+
     @property
     def zone_numbers(self):
         """Numpy array of all zone numbers.""" 
         with self.matrices.open("time", "aht") as mtx:
             zone_numbers = mtx.zone_numbers
         return zone_numbers
-    
+
     @property
     def mapping(self):
         """dict: Dictionary of zone numbers and corresponding indices."""

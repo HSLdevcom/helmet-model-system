@@ -94,7 +94,7 @@ def validate(network, fares=None):
                 msg = "Link type missing for link {}".format(link.id)
                 log.error(msg)
                 raise ValueError(msg)
-        if network.mode('t') in link.modes:
+        if network.mode('t') in link.modes or network.mode('p') in link.modes:
             speedstr = str(int(link.data1))
             speed = {
                 "aht": int(speedstr[:-4]),
@@ -127,8 +127,9 @@ def validate(network, fares=None):
             "Node number(s) {} not consistent with official HSL network".format(
                 ', '.join(unofficial_nodes)
         ))
+    hdw_attrs = [f"@hw_{tp}" for tp in param.time_periods]
     for line in network.transit_lines():
-        for hdwy in ("@hw_aht", "@hw_pt", "@hw_iht"):
+        for hdwy in hdw_attrs:
             if line[hdwy] < 0.02:
                 msg = "Headway missing for line {}".format(line.id)
                 log.error(msg)
