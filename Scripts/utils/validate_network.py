@@ -107,13 +107,14 @@ def validate(network, fares=None):
                         timeperiod, link.id)
                     log.error(msg)
                     raise ValueError(msg)
-        centroid_count = 0
+                
+        if link.i_node.is_centroid and link.j_node.is_centroid:
+            msg = "Link {} is leading directly from centroid node {} to centroid node {}. This is not allowed.".format(link.id,link.i_node.number,link.j_node.number)
+            log.error(msg)
+            raise ValueError(msg)
+        
         for node in (link.i_node, link.j_node):
-            if node.is_centroid: centroid_count += 1
-            if centroid_count == 2:
-                msg = "Link {} is leading directly from centroid node {} to centroid node {}. This is not allowed.".format(link.id,link.i_node.number,link.j_node.number)
-                log.error(msg)
-                raise ValueError(msg)
+            
             i = bisect.bisect(intervals, node.number)
             if i % 2 == 0:
                 # If node number is not in one of the official intervals
