@@ -1,7 +1,5 @@
-import os
 import numpy
 import pandas
-import copy
 
 import utils.log as log
 import parameters.assignment as param
@@ -12,20 +10,42 @@ from assignment.datatypes.path_analysis import PathAnalysis
 from assignment.abstract_assignment import Period
 
 
-emme_matrices = {}
-
-
 class AssignmentPeriod(Period):
+    """
+    EMME assignment period definition.
+
+    This typically represents an hour of the day, which may or may not
+    have a dedicated EMME scenario. In case it does not have its own
+    EMME scenario, assignment results are stored only in extra attributes.
+
+    Parameters
+    ----------
+    name : str
+        Time period name (aht/pt/iht)
+    emme_scenario : int
+        EMME scenario linked to the time period
+    emme_context : assignment.emme_bindings.emme_project.EmmeProject
+        Emme project to connect to this assignment
+    emme_matrices : dict
+        key : str
+                Assignment class (car_work/transit_leisure/...)
+            value : dict
+                key : str
+                    Matrix type (demand/time/cost/dist/...)
+                value : str
+                    EMME matrix id
+    separate_emme_scenarios : bool (optional)
+        Whether separate scenarios have been created in EMME
+        for storing time-period specific network results.
+    """
     def __init__(self, name, emme_scenario, emme_context,
-                 save_matrices=False, separate_emme_scenarios=False):
+                 emme_matrices, separate_emme_scenarios=False):
         self.name = name
         self.emme_scenario = emme_context.modeller.emmebank.scenario(
             emme_scenario)
         self.emme_project = emme_context
         self._separate_emme_scenarios = separate_emme_scenarios
-        # Refer to the same matrices for all time periods
-        # if not `save_matrices`
-        self.emme_matrices = {} if save_matrices else emme_matrices
+        self.emme_matrices = emme_matrices
         self.dist_unit_cost = param.dist_unit_cost
 
     def extra(self, attr):

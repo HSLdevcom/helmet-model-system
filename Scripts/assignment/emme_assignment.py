@@ -1,4 +1,3 @@
-import numpy
 import pandas
 from math import log10
 
@@ -62,6 +61,10 @@ class EmmeAssignmentModel(AssignmentModel):
                 overwrite=True, copy_paths=False, copy_strategies=False)
         else:
             self.day_scenario = self.mod_scenario
+        matrix_types = tuple({mtx_type for ass_class
+            in param.emme_matrices.values() for mtx_type in ass_class})
+        id_ten = {result_type: 10*i for i, result_type
+            in enumerate(matrix_types + param.transit_classes)}
         self.assignment_periods = []
         for i, tp in enumerate(self.time_periods):
             if self.separate_emme_scenarios:
@@ -72,43 +75,12 @@ class EmmeAssignmentModel(AssignmentModel):
                     overwrite=True, copy_paths=False, copy_strategies=False)
             else:
                 scen_id = self.mod_scenario.number
+            if i == 0 or self.save_matrices:
+                emme_matrices = self._create_matrices(
+                    tp, 100*i + self.first_matrix_id, id_ten)
             self.assignment_periods.append(AssignmentPeriod(
-                tp, scen_id, self.emme_project,
-                save_matrices=self.save_matrices,
+                tp, scen_id, self.emme_project, emme_matrices,
                 separate_emme_scenarios=self.separate_emme_scenarios))
-        mtx_types = tuple({mtx_type for ass_class
-            in param.emme_matrices.values() for mtx_type in ass_class})
-        id_ten = {result_type: 10*i for i, result_type
-            in enumerate(mtx_types + param.transit_classes)}
-        for i, ap in enumerate(self.assignment_periods):
-            tag = ap.name if self.save_matrices else ""
-            id_hundred = 100*i + self.first_matrix_id
-            for j, ass_class in enumerate(param.emme_matrices, start=1):
-                matrix_ids = {}
-                for mtx_type in param.emme_matrices[ass_class]:
-                    matrix_ids[mtx_type] = "mf{}".format(
-                        id_hundred + id_ten[mtx_type] + j)
-                    description = f"{mtx_type}_{ass_class}_{tag}"
-                    default_value = 0 if mtx_type == "demand" else 999999
-                    self.emme_project.create_matrix(
-                        matrix_id=matrix_ids[mtx_type],
-                        matrix_name=description, matrix_description=description,
-                        default_value=default_value, overwrite=True)
-                if ass_class in param.transit_classes:
-                    for subset, parts in param.transit_impedance_matrices.items():
-                        matrix_ids[subset] = {}
-                        for mtx_type, longer_name in parts.items():
-                            id = f"mf{id_hundred + id_ten[ass_class] + j}"
-                            matrix_ids[subset][longer_name] = id
-                            matrix_ids[longer_name] = id
-                            description = f"{mtx_type}_{ass_class}_{tag}"
-                            self.emme_project.create_matrix(
-                                matrix_id=id, matrix_name=description,
-                                matrix_description=description,
-                                default_value=999999, overwrite=True)
-                ap.emme_matrices[ass_class] = matrix_ids
-            if not self.save_matrices:
-                break
         self._create_attributes(self.day_scenario, self._extra)
         for ap in self.assignment_periods:
             if car_dist_unit_cost is not None:
@@ -342,6 +314,57 @@ class EmmeAssignmentModel(AssignmentModel):
                         segment.allow_alightings = is_stop
                         segment.allow_boardings = is_stop
         self.mod_scenario.publish_network(network)
+
+    def _create_matrices(self, time_period, id_hundred, id_ten):
+        """Create EMME matrices for storing demand and impedance.
+
+        Parameters
+        ----------
+        time_period : str
+            Time period name (aht, pt, iht)
+        id_hundred : int
+            A new hundred in the matrix id space marks new assignment period
+        id_ten : int
+            A new ten in the matrix id space marks new type of matrix
+
+        Returns
+        -------
+        dict
+            key : str
+                Assignment class (car_work/transit_leisure/...)
+            value : dict
+                key : str
+                    Matrix type (demand/time/cost/dist/...)
+                value : str
+                    EMME matrix id
+        """
+        tag = time_period if self.save_matrices else ""
+        emme_matrices = {}
+        for j, ass_class in enumerate(param.emme_matrices, start=1):
+            matrix_ids = {}
+            for mtx_type in param.emme_matrices[ass_class]:
+                matrix_ids[mtx_type] = "mf{}".format(
+                    id_hundred + id_ten[mtx_type] + j)
+                description = f"{mtx_type}_{ass_class}_{tag}"
+                default_value = 0 if mtx_type == "demand" else 999999
+                self.emme_project.create_matrix(
+                    matrix_id=matrix_ids[mtx_type],
+                    matrix_name=description, matrix_description=description,
+                    default_value=default_value, overwrite=True)
+            if ass_class in param.transit_classes:
+                for subset, parts in param.transit_impedance_matrices.items():
+                    matrix_ids[subset] = {}
+                    for mtx_type, longer_name in parts.items():
+                        id = f"mf{id_hundred + id_ten[ass_class] + j}"
+                        matrix_ids[subset][longer_name] = id
+                        matrix_ids[longer_name] = id
+                        description = f"{mtx_type}_{ass_class}_{tag}"
+                        self.emme_project.create_matrix(
+                            matrix_id=id, matrix_name=description,
+                            matrix_description=description,
+                            default_value=999999, overwrite=True)
+            emme_matrices[ass_class] = matrix_ids
+        return emme_matrices
 
     def _create_attributes(self, scenario, extra):
         """Create extra attributes needed in assignment.

@@ -1,5 +1,4 @@
 import parameters.assignment as param
-from assignment.datatypes.path_analysis import PathAnalysis
 from assignment.datatypes.journey_level import JourneyLevel
 
 
