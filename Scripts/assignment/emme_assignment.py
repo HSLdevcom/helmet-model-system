@@ -61,10 +61,12 @@ class EmmeAssignmentModel(AssignmentModel):
                 overwrite=True, copy_paths=False, copy_strategies=False)
         else:
             self.day_scenario = self.mod_scenario
-        matrix_types = tuple({mtx_type for ass_class
+        matrix_types = tuple({mtx_type: None for ass_class
             in param.emme_matrices.values() for mtx_type in ass_class})
-        id_ten = {result_type: 10*i for i, result_type
+        ten = max(10, len(param.emme_matrices))
+        id_ten = {result_type: i*ten for i, result_type
             in enumerate(matrix_types + param.transit_classes)}
+        hundred = max(100, ten*len(matrix_types + param.transit_classes))
         self.assignment_periods = []
         for i, tp in enumerate(self.time_periods):
             if self.separate_emme_scenarios:
@@ -77,7 +79,7 @@ class EmmeAssignmentModel(AssignmentModel):
                 scen_id = self.mod_scenario.number
             if i == 0 or self.save_matrices:
                 emme_matrices = self._create_matrices(
-                    tp, 100*i + self.first_matrix_id, id_ten)
+                    tp, i*hundred + self.first_matrix_id, id_ten)
             self.assignment_periods.append(AssignmentPeriod(
                 tp, scen_id, self.emme_project, emme_matrices,
                 separate_emme_scenarios=self.separate_emme_scenarios))
@@ -324,8 +326,11 @@ class EmmeAssignmentModel(AssignmentModel):
             Time period name (aht, pt, iht)
         id_hundred : int
             A new hundred in the matrix id space marks new assignment period
-        id_ten : int
-            A new ten in the matrix id space marks new type of matrix
+        id_ten : dict
+            key : str
+                Matrix type (demand/time/cost/dist/...)
+            value : int
+                A new ten in the matrix id space marks new type of matrix
 
         Returns
         -------
@@ -340,11 +345,11 @@ class EmmeAssignmentModel(AssignmentModel):
         """
         tag = time_period if self.save_matrices else ""
         emme_matrices = {}
-        for j, ass_class in enumerate(param.emme_matrices, start=1):
+        for i, ass_class in enumerate(param.emme_matrices, start=1):
             matrix_ids = {}
             for mtx_type in param.emme_matrices[ass_class]:
                 matrix_ids[mtx_type] = "mf{}".format(
-                    id_hundred + id_ten[mtx_type] + j)
+                    id_hundred + id_ten[mtx_type] + i)
                 description = f"{mtx_type}_{ass_class}_{tag}"
                 default_value = 0 if mtx_type == "demand" else 999999
                 self.emme_project.create_matrix(
@@ -352,9 +357,11 @@ class EmmeAssignmentModel(AssignmentModel):
                     matrix_name=description, matrix_description=description,
                     default_value=default_value, overwrite=True)
             if ass_class in param.transit_classes:
+                j = 0
                 for subset, parts in param.transit_impedance_matrices.items():
                     matrix_ids[subset] = {}
                     for mtx_type, longer_name in parts.items():
+                        j += 1
                         id = f"mf{id_hundred + id_ten[ass_class] + j}"
                         matrix_ids[subset][longer_name] = id
                         matrix_ids[longer_name] = id
