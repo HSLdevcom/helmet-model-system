@@ -8,6 +8,7 @@ import parameters.assignment as param
 import parameters.zone as zone_param
 from assignment.datatypes.car_specification import CarSpecification
 from assignment.datatypes.transit import TransitSpecification
+from assignment.datatypes.journey_level import BOARDED
 from assignment.datatypes.path_analysis import PathAnalysis
 from assignment.abstract_assignment import Period
 
@@ -46,7 +47,7 @@ class AssignmentPeriod(Period):
         """
         return "@{}_{}".format(attr, self.name)
 
-    def prepare(self, segment_results):
+    def prepare(self, segment_results, park_and_ride_results):
         """Prepare network for assignment.
 
         Calculate road toll cost, set boarding penalties,
@@ -62,8 +63,15 @@ class AssignmentPeriod(Period):
                     Segment result (transit_volumes/...)
                 value : str
                     Extra attribute name (@transit_work_vol_aht/...)
+        park_and_ride_results : dict
+            key : str
+                Transit class (transit_work/transit_leisure/...)
+            value : str or False
+                Extra attribute name for park-and-ride aux volume if
+                this is park-and-ride assignment, else False
         """
         self._segment_results = segment_results
+        self._park_and_ride_results = park_and_ride_results
         self._calc_road_cost()
         self._calc_boarding_penalties()
         self._calc_background_traffic()
@@ -185,8 +193,8 @@ class AssignmentPeriod(Period):
         transit_zones = {node.label for node in network.nodes()}
         tc = "transit_work"
         spec = TransitSpecification(
-            self._segment_results[tc], self.extra("hw"),
-            self.demand_mtx[tc]["id"],
+            self._segment_results[tc], self._park_and_ride_results[tc],
+            self.extra("hw"), self.demand_mtx[tc]["id"],
             self.result_mtx["time"][tc]["id"],
             self.result_mtx["dist"][tc]["id"],
             self.result_mtx["trip_part_"+tc],
@@ -275,6 +283,7 @@ class AssignmentPeriod(Period):
             for modes in param.transit_delay_funcs}
         main_mode = network.mode(param.main_mode)
         car_mode = network.mode(param.assignment_modes["car_work"])
+        park_and_ride_mode = network.mode(param.drive_access_mode)
         for link in network.links():
             # Car volume delay function definition
             linktype = link.type % 100
@@ -335,9 +344,9 @@ class AssignmentPeriod(Period):
             for segment in link.segments():
                 segment.transit_time_func = func
             if car_mode in link.modes:
-                link.modes |= {main_mode}
-            elif main_mode in link.modes:
-                link.modes -= {main_mode}
+                link.modes |= {main_mode, park_and_ride_mode}
+            else:
+                link.modes -= {main_mode, park_and_ride_mode}
         self.emme_scenario.publish_network(network)
 
     def _set_bike_vdfs(self):
@@ -502,6 +511,8 @@ class AssignmentPeriod(Period):
             "ul", "data")
         # calc @bus and data3
         heavy = (self.extra("truck"), self.extra("trailer_truck"))
+        park_and_ride = [self._park_and_ride_results[direction]
+            for direction in param.park_and_ride_classes]
         for link in network.links():
             if link.type > 100: # If car or bus link
                 freq = 0
@@ -515,6 +526,8 @@ class AssignmentPeriod(Period):
                     link[background_traffic] = 0
                 else:
                     link[background_traffic] = freq
+                for direction in park_and_ride:
+                    link[background_traffic] += link[direction]
                 if include_trucks:
                     for ass_class in heavy:
                         link[background_traffic] += link[ass_class]
@@ -555,8 +568,8 @@ class AssignmentPeriod(Period):
         self._car_spec = CarSpecification(
             self.extra, self.demand_mtx, self.result_mtx)
         self._transit_specs = {tc: TransitSpecification(
-                self._segment_results[tc], self.extra("hw"),
-                self.demand_mtx[tc]["id"],
+                self._segment_results[tc], self._park_and_ride_results[tc],
+                self.extra("hw"), self.demand_mtx[tc]["id"],
                 self.result_mtx["time"][tc]["id"],
                 self.result_mtx["dist"][tc]["id"],
                 self.result_mtx["trip_part_"+tc])
@@ -754,11 +767,15 @@ class AssignmentPeriod(Period):
         log.info("Transit assignment started...")
         # Here we assign all transit in one class, multi-class assignment is
         # performed in last iteration (congested assignment)
-        spec = self._transit_specs["transit_work"]
-        self.emme_project.transit_assignment(
-            specification=spec.transit_spec, scenario=self.emme_scenario,
-            save_strategies=True)
-        self.emme_project.matrix_results(spec.transit_result_spec, scenario=self.emme_scenario)
+        transit_classes = param.park_and_ride_classes + ("transit_work",)
+        for i, transit_class in enumerate(transit_classes):
+            spec = self._transit_specs[transit_class]
+            self.emme_project.transit_assignment(
+                specification=spec.transit_spec, scenario=self.emme_scenario,
+                add_volumes=i, save_strategies=True, class_name=transit_class)
+            self.emme_project.matrix_results(
+                spec.transit_result_spec, scenario=self.emme_scenario,
+                class_name=transit_class)
         log.info("Transit assignment performed for scenario {}".format(
             str(self.emme_scenario.id)))
 
@@ -778,7 +795,7 @@ class AssignmentPeriod(Period):
         specs = self._transit_specs
         for transit_class in specs:
             spec = specs[transit_class].transit_spec
-            (spec["journey_levels"][1]["boarding_cost"]["global"]
+            (spec["journey_levels"][BOARDED]["boarding_cost"]["global"]
                  ["penalty"]) = param.transfer_penalty[transit_class]
             spec["in_vehicle_cost"] = {
                 "penalty": param.inactive_line_penalty_attr,

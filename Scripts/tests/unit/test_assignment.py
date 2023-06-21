@@ -20,6 +20,10 @@ class EmmeAssignmentTest(unittest.TestCase):
             "..", "test_data", "Network")
         scenario_id = 19
         context.import_scenario(scenario_dir, scenario_id, "test")
+        context.create_matrix(
+            "mf401", "demand_car_first_mile", "demand_car_first_mile")
+        context.create_matrix(
+            "mf402", "demand_car_last_mile", "demand_car_last_mile")
         fares = TransitFareZoneSpecification(pandas.DataFrame({
             "fare": {
                 "A": 59,
@@ -43,6 +47,8 @@ class EmmeAssignmentTest(unittest.TestCase):
             "car_leisure": car_matrix,
             "transit_work": car_matrix,
             "transit_leisure": car_matrix,
+            "car_first_mile": car_matrix,
+            "car_last_mile": car_matrix,
             "bike": car_matrix,
             "trailer_truck": car_matrix,
             "truck": car_matrix,

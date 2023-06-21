@@ -75,6 +75,8 @@ class EmmeAssignmentTest:
             "car_leisure": car_matrix,
             "transit_work": car_matrix,
             "transit_leisure": car_matrix,
+            "car_first_mile": car_matrix,
+            "car_last_mile": car_matrix,
             "bike": car_matrix,
             "trailer_truck": car_matrix,
             "truck": car_matrix,
