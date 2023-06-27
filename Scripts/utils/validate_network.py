@@ -61,8 +61,34 @@ def validate(network, fares=None):
         intervals += param.official_node_numbers[modes]
     unofficial_nodes = set()
     for link in network.links():
+        if not link.modes:
+            msg = "No modes defined for link {}. At minimum mode h and one more mode needs to be defined for the simulation to work".format(link.id)
+            log.error(msg)
+            raise ValueError(msg)
+        if network.mode('h') in link.modes and len(link.modes) == 1:
+            msg = "Only h mode defined for link {}. At minimum mode h and one more mode needs to be defined for the simulation to work".format(link.id)
+            log.error(msg)
+            raise ValueError(msg)
+        if link.type == 100:
+            msg = "Link id {} type must not be 100, please refer to the helmet-docs manual".format(link.id)
+            log.error(msg)
+            raise ValueError(msg)
+        if link.type == 999:
+            msg = "Link id {} type must not be 999, please refer to the helmet-docs manual".format(link.id)
+            log.error(msg)
+            raise ValueError(msg)
+        
+        linktype = link.type % 100
+        if (linktype != 70 and link.length == 0): 
+            msg = "Link {} has zero length. Link length can be zero only if linktype is 70. (vaihtokävelyt)".format(link.id)
+            log.error(msg)
+            raise ValueError(msg)
+    
+        if (linktype == 1):
+            msg = "Link type 1 for link {}. Link type 1 is out of use in Helmet 4+ versions".format(link.id)
+            log.error(msg)
+            raise ValueError(msg)
         if network.mode('c') in link.modes:
-            linktype = link.type % 100
             if (linktype not in param.roadclasses
                     and linktype not in param.custom_roadtypes):
                 msg = "Link type missing for link {}".format(link.id)
@@ -81,7 +107,14 @@ def validate(network, fares=None):
                         timeperiod, link.id)
                     log.error(msg)
                     raise ValueError(msg)
+                
+        if link.i_node.is_centroid and link.j_node.is_centroid:
+            msg = "Link {} is leading directly from centroid node {} to centroid node {}. This is not allowed.".format(link.id,link.i_node.number,link.j_node.number)
+            log.error(msg)
+            raise ValueError(msg)
+        
         for node in (link.i_node, link.j_node):
+            
             i = bisect.bisect(intervals, node.number)
             if i % 2 == 0:
                 # If node number is not in one of the official intervals
