@@ -99,9 +99,10 @@ def main(args):
         log_extra["status"]["current"] = i
         try:
             log.info("Starting iteration {}".format(i), extra=log_extra)
-            impedance = (model.run_iteration(impedance, "last")
+            convergence_args={"REL_GAP":args.rel_gap,"MAX_GAP":args.max_gap}
+            impedance = (model.run_iteration(impedance, "last", convergence_args)
                          if i == iterations
-                         else model.run_iteration(impedance, i))
+                         else model.run_iteration(impedance, i, convergence_args))
             log_extra["status"]["completed"] += 1
         except Exception as error:
             log_extra["status"]["failed"] += 1
