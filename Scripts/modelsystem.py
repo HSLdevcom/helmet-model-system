@@ -208,7 +208,7 @@ class ModelSystem:
         self.dtm.init_demand()
         return impedance
 
-    def run_iteration(self, previous_iter_impedance, iteration=None, convergence_args={"REL_GAP":0.01,"MAX_GAP":1}):
+    def run_iteration(self, previous_iter_impedance, iteration=None):
         """Calculate demand and assign to network.
 
         Parameters
@@ -322,9 +322,8 @@ class ModelSystem:
         # Reset time-period specific demand matrices (DTM),
         # and empty result buffer
         gap = self.dtm.init_demand()
-        is_converged = gap["max_gap"] < convergence_args["MAX_GAP"] or gap["rel_gap"] < convergence_args["REL_GAP"]
-        log.info("Demand model convergence in iteration {} is {:1.5f} - Convergence fulfilled status: {}".format(
-            iteration, gap["rel_gap"], is_converged))
+        log.info("Demand model convergence in iteration {} is {:1.5f}".format(
+            iteration, gap["rel_gap"]))
         self.convergence = self.convergence.append(gap, ignore_index=True)
         self.resultdata._df_buffer["demand_convergence.txt"] = self.convergence
         self.resultdata.flush()
