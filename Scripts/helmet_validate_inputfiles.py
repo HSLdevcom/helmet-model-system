@@ -78,7 +78,7 @@ def main(args):
         scen = app.data_explorer().active_database().core_emmebank.scenario(
             first_scenario_ids[0])
         if scen is None:
-            msg = "Project {} has no scenario {}".format(emp_path, scen.id)
+            msg = "Project {} has no scenario {}".format(emp_path, first_scenario_ids[0])
             log.error(msg)
             raise ValueError(msg)
         else:
