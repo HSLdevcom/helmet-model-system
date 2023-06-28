@@ -33,6 +33,7 @@ def main(args):
             "failed": 0,
             "total": iterations,
             "log": log.filename,
+            "converged": 0,
         }
     }
     # Check input data folders/files exist
@@ -114,7 +115,13 @@ def main(args):
             log_extra["status"]['state'] = 'finished'
         elif gap["max_gap"] < args.max_gap or gap["rel_gap"] < args.rel_gap:
             iterations = i + 1
+        #This is here separately because the model can converge in the last iteration as well
+        if gap["max_gap"] < args.max_gap or gap["rel_gap"] < args.rel_gap: 
+            log_extra["status"]["converged"] = 1
         i += 1
+    
+    if not log_extra["status"]["converged"]: log.warn("Model has not converged")
+
     # delete emme strategy files for scenarios
     if args.del_strat_files:
         dbase_path = os.path.join(os.path.dirname(emme_project_path), "database")
