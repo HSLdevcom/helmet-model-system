@@ -161,7 +161,7 @@ def main(args):
                     log.warn("Scenarios with different zones found in EMME bank!")
             scen = emmebank.scenario(first_scenario_ids[i])
             if scen is None:
-                msg = "Project {} has no scenario {}".format(emp_path, scen.id)
+                msg = "Project {} has no scenario {}".format(emp_path, first_scenario_ids[0])
                 log.error(msg)
                 raise ValueError(msg)
             elif scen.zone_numbers != zone_numbers:
