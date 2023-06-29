@@ -385,7 +385,9 @@ class EmmeAssignmentModel(AssignmentModel):
             (e.g., self._extra)
         """
         # Create link attributes
-        for ass_class in list(param.emme_matrices) + ["bus"]:
+        ass_classes = list(param.emme_matrices) + ["bus"]
+        ass_classes.remove("walk")
+        for ass_class in ass_classes:
             self.emme_project.create_extra_attribute(
                 "LINK", extra(ass_class), ass_class + " volume",
                 overwrite=True, scenario=scenario)
