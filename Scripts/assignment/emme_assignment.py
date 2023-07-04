@@ -427,6 +427,7 @@ class EmmeAssignmentModel(AssignmentModel):
             speed = max(speed, 50.0)
             
             # Calculate start noise
+            log.info("NEW FORMULA FOR NOISE CALC")
             if speed >= 50:
                 LAE_light = 73.5 + 25*log10(speed/50)
                 LAE_heavy = 80.5 + 30*log10(speed/50)
@@ -442,6 +443,7 @@ class EmmeAssignmentModel(AssignmentModel):
                 start_noise = 10*log10(10**(LAeq_light/10)+10**(LAeq_heavy/10))
             else:
                 start_noise = 0
+            log.info(start_noise)
 
 
 
