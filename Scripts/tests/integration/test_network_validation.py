@@ -1,46 +1,15 @@
 from argparse import ArgumentTypeError
 import unittest, os, pandas
-from assignment.emme_bindings.mock_project import MockProject
+from assignment.emme_bindings.mock_project import MockProject, MODE_TYPES
 from assignment.datatypes.transit_fare import TransitFareZoneSpecification
 from assignment.mock_assignment import MockAssignmentModel
 from datahandling.matrixdata import MatrixData
 from utils.validate_network import validate
-import parameters.assignment as param
+from utils.validate_loaded_network import validate_loaded
+from utils.network import add_bus_stops
+from parameters.assignment import time_periods
 import parameters.zone as zone_param
 import copy
-
-MODE_TYPES = {
-    "1": "AUTO",
-    "2": "TRANSIT",
-    "3": "AUX_TRANSIT",
-    "4": "AUX_AUTO",
-}
-
-time_periods = ("aht", "pt", "iht")
-
-def add_bus_stops(network):
-    for line in network.transit_lines():
-        if line.mode.id in param.stop_codes:
-            stop_codes = param.stop_codes[line.mode.id]
-            for segment in line.segments():
-                is_stop = segment.i_node.data2 in stop_codes
-                if line.mode.id in "de":
-                    # Non-HSL bus lines
-                    not_hsl = segment.i_node.label not in param.hsl_area
-                    if line.id[-1] == '1':
-                        # Line starts in HSL area
-                        segment.allow_alightings = not_hsl and is_stop
-                        segment.allow_boardings = is_stop
-                    elif line.id[-1] == '2':
-                        # Line ends in HSL area
-                        segment.allow_alightings = is_stop
-                        segment.allow_boardings = not_hsl and is_stop
-                    else:
-                        raise ValueError(
-                            "Unknown direction code for line " + line.id)
-                else:
-                    segment.allow_alightings = is_stop
-                    segment.allow_boardings = is_stop
 
 class EmmeAssignmentTest(unittest.TestCase):
     def test_assignment(self):
@@ -192,10 +161,10 @@ class EmmeAssignmentTest(unittest.TestCase):
             line[hdwy] = 5.0
         line._segments[0].data1 = 0
         add_bus_stops(network)
-        line._segments[1].noboa = 0
-        # self.assertRaises(ValueError, validate,
-        #     network,
-        #     fares) 
+        line._segments[1].allow_boardings = 0
+        self.assertRaises(ValueError, validate_loaded,
+            network,
+            fares) 
 
         #NOT FINISHED!!!
         #NOBOA and NOALI only available after prepare_network function is run
