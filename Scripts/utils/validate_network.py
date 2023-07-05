@@ -94,8 +94,12 @@ def validate(network, fares=None):
                 msg = "Link type missing for link {}".format(link.id)
                 log.error(msg)
                 raise ValueError(msg)
+            if (link.volume_delay_func == 0):
+                msg = "Link VDF missing for link {}".format(link.id)
+                log.error(msg)
+                raise ValueError(msg)
         if network.mode('t') in link.modes or network.mode('p') in link.modes:
-            speedstr = str(int(link.data1))
+            speedstr = str(int(link.data1)).zfill(6)
             speed = {
                 "aht": int(speedstr[:-4]),
                 "pt": int(speedstr[-4:-2]),
