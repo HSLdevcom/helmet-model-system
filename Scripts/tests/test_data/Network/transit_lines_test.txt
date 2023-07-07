@@ -506,7 +506,7 @@ a'3002A1' r   5  10.00  30.00 'Hki-Kauklahti'           0      0      2
    801031      dwt=+0.01   ttf=6   us1=2   us2=0   us3=0
    801032      dwt=+0.01   ttf=6   us1=1   us2=0   us3=0
    801033      dwt=+0.01   ttf=6   us1=2   us2=0   us3=0
-   801034      dwt=+0.01   ttf=6   us1=3   us2=0   us3=0
+   801034      dwt=+0.01   ttf=6   us1=0   us2=0   us3=0
    801035      dwt=+0.01   ttf=6   us1=2   us2=0   us3=0
    801036      dwt=+0.01   ttf=6   us1=2   us2=0   us3=0
    801037      dwt=+0.01   ttf=6   us1=3   us2=0   us3=0
@@ -525,7 +525,7 @@ a'3002A2' r   5  10.00  30.00 'Kauklahti-Hki'           0      0      2
    801038      dwt=+0.01   ttf=6   us1=3   us2=0   us3=0
    801037      dwt=+0.01   ttf=6   us1=2   us2=0   us3=0
    801036      dwt=+0.01   ttf=6   us1=2   us2=0   us3=0
-   801035      dwt=+0.01   ttf=6   us1=3   us2=0   us3=0
+   801035      dwt=+0.01   ttf=6   us1=0   us2=0   us3=0
    801034      dwt=+0.01   ttf=6   us1=2   us2=0   us3=0
    801033      dwt=+0.01   ttf=6   us1=1   us2=0   us3=0
    801032      dwt=+0.01   ttf=6   us1=2   us2=0   us3=0

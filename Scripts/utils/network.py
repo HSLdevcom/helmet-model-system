@@ -1,6 +1,7 @@
 import parameters.assignment as param
 
 def add_bus_stops(network):
+    """This function loads the noboa and noali parameter according to the Helmet specs for trams and buses, including VALLU-lines. """
     for line in network.transit_lines():
         if line.mode.id in param.stop_codes:
             stop_codes = param.stop_codes[line.mode.id]
@@ -23,4 +24,22 @@ def add_bus_stops(network):
                 else:
                     segment.allow_alightings = is_stop
                     segment.allow_boardings = is_stop
+    return network
+
+def add_noboa_noali(network):
+    """ This function emulates loading the network into the scenario via transactions. It handles buses, trams, metros and trains. Ferries remain as noboa=0 everywhere. """
+    for line in network.transit_lines():
+        if line.mode.id in param.stop_codes:
+            stop_codes = param.stop_codes[line.mode.id]
+            for segment in line.segments():
+                is_stop = segment.i_node.data2 in stop_codes
+                segment.allow_alightings = is_stop
+                segment.allow_boardings = is_stop
+        elif line.mode.id in ['m','r']:
+            for segment in line.segments():
+                is_stop = segment.data1 > 0
+                segment.allow_alightings = is_stop
+                segment.allow_boardings = is_stop
+                print(segment.id, is_stop)
+
     return network

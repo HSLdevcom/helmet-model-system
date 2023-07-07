@@ -229,6 +229,8 @@ class MockProject:
                         data1 = []
                         data2 = []
                         data3 = []
+                        allow_boardings = []
+                        allow_alightings = []
                         while True:
                             segrec = f.readline().replace("'", " ").split()
                             if not segrec or segrec[0] in "amd":
@@ -241,6 +243,8 @@ class MockProject:
                                     data1.append(float(segrec[3][4:]))
                                     data2.append(float(segrec[4][4:]))
                                     data3.append(float(segrec[5][4:]))
+                                    allow_boardings.append(1)
+                                    allow_alightings.append(1)
                                 except IndexError:
                                     pass
                         line = network.create_transit_line(
@@ -250,6 +254,8 @@ class MockProject:
                             segment.data1 = data1[i]
                             segment.data2 = data2[i]
                             segment.data3 = data3[i]
+                            segment.allow_boardings = allow_boardings[i]
+                            segment.allow_alightings = allow_alightings[i]
                     elif rec[0] == "m":
                         line = network.transit_line(idx=rec[1])
                         headway = float(rec[4])
