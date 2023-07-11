@@ -71,7 +71,8 @@ def main(args):
             first_scenario_id=args.first_scenario_id,
             separate_emme_scenarios=args.separate_emme_scenarios,
             save_matrices=args.save_matrices,
-            first_matrix_id=args.first_matrix_id)
+            first_matrix_id=args.first_matrix_id,
+            run_congested_pt=args.run_congested_pt)
     # Initialize model system (wrapping Assignment-model,
     # and providing demand calculations as Python modules)
     # Read input matrices (.omx) and zonedata (.csv)
@@ -192,6 +193,12 @@ if __name__ == "__main__":
         action="store_true",
         default=config.SAVE_MATRICES_IN_EMME,
         help="Using this flag saves matrices for all time periods to Emme-project Database folder.",
+    )
+    parser.add_argument(
+        "--do-not-use-congested-transit",
+        action="store_true",
+        default=config.DO_NOT_USE_CONGESTED_PT,
+        help="Using this avoids using congested public transport assignment in the last iteration.",
     )
     parser.add_argument(
         "-d", "--del-strat-files",
