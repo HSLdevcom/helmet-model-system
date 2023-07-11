@@ -72,7 +72,7 @@ def main(args):
             separate_emme_scenarios=args.separate_emme_scenarios,
             save_matrices=args.save_matrices,
             first_matrix_id=args.first_matrix_id,
-            run_congested_pt=args.run_congested_pt)
+            do_not_use_congested_pt=args.do_not_use_congested_transit)
     # Initialize model system (wrapping Assignment-model,
     # and providing demand calculations as Python modules)
     # Read input matrices (.omx) and zonedata (.csv)

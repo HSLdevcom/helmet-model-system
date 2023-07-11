@@ -38,7 +38,7 @@ class EmmeAssignmentModel(AssignmentModel):
     def __init__(self, emme_context, first_scenario_id,
                  separate_emme_scenarios=False, save_matrices=False,
                  time_periods=param.time_periods, first_matrix_id=100,
-                 run_congested_pt=True):
+                 do_not_use_congested_pt=False):
         self.separate_emme_scenarios = separate_emme_scenarios
         self.save_matrices = save_matrices
         self.time_periods = time_periods
@@ -46,7 +46,7 @@ class EmmeAssignmentModel(AssignmentModel):
         self.emme_project = emme_context
         self.mod_scenario = self.emme_project.modeller.emmebank.scenario(
             first_scenario_id)
-        self.run_congested_pt = run_congested_pt
+        self.do_not_use_congested_pt = do_not_use_congested_pt
 
     def prepare_network(self, car_dist_unit_cost=None):
         """Create matrices, extra attributes and calc background variables.
@@ -78,7 +78,7 @@ class EmmeAssignmentModel(AssignmentModel):
                 tp, scen_id, self.emme_project,
                 save_matrices=self.save_matrices,
                 separate_emme_scenarios=self.separate_emme_scenarios,
-                run_congested_pt=self.run_congested_pt))
+                do_not_use_congested_pt=self.do_not_use_congested_pt))
         for i, ap in enumerate(self.assignment_periods):
             tag = ap.name if self.save_matrices else ""
             id_hundred = 100*i + self.first_matrix_id

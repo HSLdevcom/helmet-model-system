@@ -16,7 +16,7 @@ class AssignmentPeriod(Period):
     def __init__(self, name, emme_scenario, emme_context,
                  demand_mtx=param.emme_demand_mtx,
                  result_mtx=param.emme_result_mtx, save_matrices=False,
-                 separate_emme_scenarios=False, run_congested_pt=True):
+                 separate_emme_scenarios=False, do_not_use_congested_pt=False):
         self.name = name
         self.emme_scenario = emme_context.modeller.emmebank.scenario(
             emme_scenario)
@@ -30,7 +30,7 @@ class AssignmentPeriod(Period):
             self.demand_mtx = demand_mtx
             self.result_mtx = result_mtx
         self.dist_unit_cost = param.dist_unit_cost
-        self.run_congested_pt = run_congested_pt
+        self.do_not_use_congested_pt = do_not_use_congested_pt
 
     def extra(self, attr):
         """Add prefix "@" and time-period suffix.
@@ -130,7 +130,7 @@ class AssignmentPeriod(Period):
             self._assign_cars(param.stopping_criteria_fine)
             self._calc_boarding_penalties(is_last_iteration=True)
             self._calc_extra_wait_time()
-            if self.run_congested_pt:
+            if not self.do_not_use_congested_pt:
                 self._assign_congested_transit()
             else:
                 log.info("Using uncongested public transport in the last iteration")
