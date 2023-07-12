@@ -1,5 +1,7 @@
+from typing import Dict
 import numpy
 import pandas
+from datahandling.zonedata import ZoneData
 
 import parameters.zone as param
 from parameters.destination_choice import secondary_destination_threshold
@@ -30,7 +32,10 @@ class Purpose:
         Data used for all demand calculations
     """
 
-    def __init__(self, specification, zone_data, resultdata=None):
+    def __init__(self, 
+                 specification: Dict[str,str], 
+                 zone_data: ZoneData, 
+                 resultdata: bool=None):
         self.name = specification["name"]
         self.orig = specification["orig"]
         self.dest = specification["dest"]

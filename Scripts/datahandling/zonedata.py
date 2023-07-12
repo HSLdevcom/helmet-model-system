@@ -144,7 +144,8 @@ class ZoneData:
                     raise ValueError(msg)
         self._values[key] = data
 
-    def zone_index(self, zone_number):
+    def zone_index(self, 
+                   zone_number: int) -> int:
         """Get index of given zone number.
 
         Parameters

@@ -1,5 +1,8 @@
+import pandas
+
+
 class TransitFareZoneSpecification:
-    def __init__(self, fare_table):
+    def __init__(self, fare_table: pandas.DataFrame):
         """Transit fare zone specification.
 
         Parameters

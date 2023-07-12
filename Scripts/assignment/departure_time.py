@@ -1,4 +1,7 @@
+from typing import Dict, List, Tuple, Union
 import numpy
+from datatypes.demand import Demand
+from datatypes.tour import Tour
 
 import utils.log as log
 import parameters.departure_time as param
@@ -15,14 +18,16 @@ class DepartureTimeModel:
     time_periods : list of str (optional)
         Time period names, default is aht, pt, iht
     """
-    def __init__(self, nr_zones, time_periods=list(param.backup_demand_share)):
+    def __init__(self, 
+                 nr_zones: int, 
+                 time_periods: List[str]=list(param.backup_demand_share)):
         self.nr_zones = nr_zones
         self.time_periods = time_periods
         self.demand = None
         self.old_car_demand = 0
         self.init_demand()
 
-    def init_demand(self):
+    def init_demand(self) -> Dict[str,float]:
         """Initialize/reset demand for all time periods.
 
         Includes all transport classes, each being set to zero.
@@ -58,7 +63,7 @@ class DepartureTimeModel:
 
         return {"rel_gap": relative_gap, "max_gap": max_gap}
 
-    def add_demand(self, demand):
+    def add_demand(self, demand: Union[Demand, Tour]):
         """Add demand matrix for whole day.
         
         Parameters
@@ -73,7 +78,7 @@ class DepartureTimeModel:
             else:
                 ass_class = demand.mode
             if len(demand.position) == 2:
-                share = param.demand_share[demand.purpose.name][demand.mode]
+                share: dict[str, Tuple[float,float]] = param.demand_share[demand.purpose.name][demand.mode]
                 for time_period in self.time_periods:
                     self._add_2d_demand(
                         share[time_period], ass_class, time_period,
@@ -84,8 +89,13 @@ class DepartureTimeModel:
             else:
                 raise IndexError("Tuple position has wrong dimensions.")
 
-    def _add_2d_demand(self, demand_share, ass_class, time_period, mtx, mtx_pos):
-        """Slice demand, include transpose and add for one time period."""
+    def _add_2d_demand(self, 
+                       demand_share: Tuple[float, float], 
+                       ass_class: str, 
+                       time_period: str, 
+                       mtx: numpy.ndarray, 
+                       mtx_pos: Tuple[int, int]):
+        """Slice demand, include transpose and add for one time period. ???types"""
         r_0 = mtx_pos[0]
         c_0 = mtx_pos[1]
         r_n = r_0 + mtx.shape[0]
@@ -101,7 +111,10 @@ class DepartureTimeModel:
             log.warn("{} {} matrix not matching {} demand shares. Resorted to backup demand shares.".format(
                 mtx.shape, ass_class, len(demand_share[0])))
 
-    def _add_3d_demand(self, demand, ass_class, time_period):
+    def _add_3d_demand(self, 
+                       demand: Union[Demand, Tour], 
+                       ass_class: str, 
+                       time_period: str):
         """Add three-way demand."""
         mtx = demand.matrix
         tp = time_period
@@ -118,7 +131,7 @@ class DepartureTimeModel:
         self._add_2d_demand(share[0], ass_class, tp, mtx, (d1, d2))
         self._add_2d_demand(share[1], ass_class, tp, colsum, (d2, o))
     
-    def add_vans(self, time_period, nr_zones):
+    def add_vans(self, time_period: str, nr_zones: int):
         """Add vans as a share of private car trips for one time period.
         
         Parameters

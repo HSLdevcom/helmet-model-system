@@ -1,3 +1,7 @@
+from typing import Optional
+
+import numpy
+from datatypes.purpose import Purpose
 import parameters.car as param
 
 
@@ -5,7 +9,11 @@ class Demand:
     # Only used for sister class Tour
     is_car_passenger = False
 
-    def __init__(self, purpose, mode, matrix, origin=None):
+    def __init__(self, 
+                 purpose: Purpose, 
+                 mode: str, 
+                 matrix: numpy.ndarray, 
+                 origin: Optional[int]=None):
         """Demand matrix for whole day
         
         Parameters

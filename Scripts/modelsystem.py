@@ -1,10 +1,12 @@
 import threading
 import multiprocessing
 import os
+from typing import Dict
 import numpy
 import pandas
 import random
 from collections import defaultdict
+from assignment.abstract_assignment import AssignmentModel
 
 import utils.log as log
 from utils.zone_interval import ArrayAggregator
@@ -45,8 +47,13 @@ class ModelSystem:
         Name of scenario, used for results subfolder
     """
 
-    def __init__(self, zone_data_path, base_zone_data_path, base_matrices_path,
-                 results_path, assignment_model, name):
+    def __init__(self, 
+                 zone_data_path: str, 
+                 base_zone_data_path: str, 
+                 base_matrices_path: str,
+                 results_path: str, 
+                 assignment_model: AssignmentModel, 
+                 name: str):
         self.ass_model = assignment_model
         self.zone_numbers = self.ass_model.zone_numbers
         self.travel_modes = {}  # Dict instead of set, to preserve order
@@ -143,7 +150,9 @@ class ModelSystem:
         log.info("Demand calculation completed")
 
     # possibly merge with init
-    def assign_base_demand(self, use_fixed_transit_cost=False, is_end_assignment=False):
+    def assign_base_demand(self, 
+                           use_fixed_transit_cost: bool = False, 
+                           is_end_assignment: bool = False) -> Dict[str, Dict[str, numpy.ndarray]]:
         """Assign base demand to network (before first iteration).
 
         Parameters

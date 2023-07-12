@@ -1,3 +1,4 @@
+from typing import Dict
 import parameters.assignment as param
 from assignment.datatypes.path_analysis import PathAnalysis
 from assignment.datatypes.journey_level import JourneyLevel
@@ -38,9 +39,14 @@ class TransitSpecification:
     count_zone_boardings : bool (optional)
         Whether assignment is performed only to count fare zone boardings
     """
-    def __init__(self, segment_results, headway_attribute,
-                 demand_mtx_id, time_mtx_id, dist_mtx_id, trip_part,
-                 count_zone_boardings=False):
+    def __init__(self, 
+                 segment_results: Dict[str,str], 
+                 headway_attribute: str,
+                 demand_mtx_id: str, 
+                 time_mtx_id: str, 
+                 dist_mtx_id: str, 
+                 trip_part: Dict[str,Dict[str,Dict]],
+                 count_zone_boardings: bool = False):
         no_penalty = dict.fromkeys(["at_nodes", "on_lines", "on_segments"])
         no_penalty["global"] = {
             "penalty": 0, 

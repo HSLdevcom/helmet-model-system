@@ -1,13 +1,18 @@
 from decimal import DivisionByZero
 from itertools import groupby
 import os
+from typing import Optional
 import pandas
 import numpy
 
 import utils.log as log
 
 
-def read_csv_file(data_dir, file_end, zone_numbers=None, dtype=None, squeeze=False):
+def read_csv_file(data_dir: str, 
+                  file_end: str, 
+                  zone_numbers: Optional[numpy.ndarray] = None, 
+                  dtype: Optional[numpy.dtype] = None, 
+                  squeeze: bool=False) -> pandas.DataFrame:
     """Read (zone) data from space-separated file.
     
     Parameters

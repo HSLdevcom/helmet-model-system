@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 import utils.log as log
 import logging
 import inro.emme.desktop.app as _app
@@ -18,7 +19,9 @@ class EmmeProject:
     emmebank_path : str (optional)
         Path to emmebank file (if EMME project is not initialized)
     """
-    def __init__(self, project_path, emmebank_path=None):
+    def __init__(self, 
+                 project_path: str, 
+                 emmebank_path: Optional[str] = None):
         log.info("Starting Emme...")
         emme_desktop = _app.start_dedicated(
             project=project_path, visible=False, user_initials="HSL")
@@ -59,7 +62,7 @@ class EmmeProject:
         self.create_extra_attribute = self.modeller.tool(
             "inro.emme.data.extra_attribute.create_extra_attribute")
     
-    def write(self, message):
+    def write(self, message: str):
         """Write to logbook."""
         # _m.logbook_write(message)
         try:

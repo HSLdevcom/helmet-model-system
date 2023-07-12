@@ -1,10 +1,17 @@
 import parameters.assignment as param
 from assignment.datatypes.path_analysis import PathAnalysis
+from collections.abc import Callable
+from typing import Dict, Optional, Union
 
 
 class Car:
-    def __init__(self, ass_class, extra, demand_mtx, result_mtx,
-                link_costs, value_of_time_inv=None):
+    def __init__(self, 
+                 ass_class: str, 
+                 extra: Callable, 
+                 demand_mtx: Dict[str, Dict[str, Dict[str, Union[int, str]]]], 
+                 result_mtx: Dict[str, Dict[str, Dict[str, Union[int, str]]]],
+                 link_costs: str, 
+                 value_of_time_inv: Optional[float]=None):
         od_travel_times = result_mtx["gen_cost"][ass_class]["id"]
         if value_of_time_inv is None:
             value_of_time_inv = param.vot_inv[param.vot_classes[ass_class]]
@@ -27,6 +34,8 @@ class Car:
         if ass_class not in ("trailer_truck", "truck"):
             self.add_analysis(extra("toll_cost"), result_mtx["cost"][ass_class]["id"])
     
-    def add_analysis (self, link_component, od_values):
+    def add_analysis (self, 
+                      link_component: str, 
+                      od_values: Union[int, str]):
         analysis = PathAnalysis(link_component, od_values)
         self.spec["path_analyses"].append(analysis.spec)
