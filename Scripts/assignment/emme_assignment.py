@@ -14,7 +14,7 @@ import parameters.zone as zone_param
 from assignment.abstract_assignment import AssignmentModel
 from assignment.assignment_period import AssignmentPeriod
 if TYPE_CHECKING:
-    from inro.modeller.emmebank import Scenario # type: ignore
+    from inro.emme.database.scenario import Scenario # type: ignore
     from inro.emme.network.Network import Network # type: ignore
 
 
@@ -369,7 +369,7 @@ class EmmeAssignmentModel(AssignmentModel):
             (e.g., self._extra)
         """
         # Create link attributes
-        scenario = cast(Scenario, scenario)
+        if TYPE_CHECKING: scenario = cast(Scenario, scenario)
         for ass_class in list(param.emme_demand_mtx) + ["bus"]:
             self.emme_project.create_extra_attribute(
                 "LINK", extra(ass_class), ass_class + " volume",
