@@ -1,4 +1,5 @@
-from typing import Dict, Union
+from __future__ import annotations
+from typing import Any, Dict, List, Union
 import parameters.assignment as param
 from assignment.datatypes.car import Car
 from collections.abc import Callable
@@ -51,7 +52,7 @@ class CarSpecification:
             "trailer_truck", extra, demand_mtx, result_mtx,
             value_of_time_inv=param.freight_dist_unit_time,
             link_costs="length")
-        self._spec = {
+        self._spec: Dict[str, Any]= {
             "type": "SOLA_TRAFFIC_ASSIGNMENT",
             "background_traffic": {
                 "link_component": param.background_traffic_attr,
@@ -62,7 +63,7 @@ class CarSpecification:
         }
 
     def spec (self, 
-              lightweight: bool = False):
+              lightweight: bool = False) -> Dict[str, Any]:
         if lightweight:
             self._spec["classes"] = [
                 self.car_work.spec,

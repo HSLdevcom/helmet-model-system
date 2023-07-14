@@ -1,9 +1,12 @@
+from __future__ import annotations
 import os
-from typing import Optional
+from typing import Any, Optional, cast, TYPE_CHECKING
 import utils.log as log
 import logging
-import inro.emme.desktop.app as _app
-import inro.modeller as _m
+if TYPE_CHECKING:
+    import inro.emme.desktop.app as _app # type: ignore
+    import inro.modeller as _m # type: ignore
+    from inro.modeller import ContextManager # type: ignore
 
 
 class EmmeProject:
@@ -23,6 +26,7 @@ class EmmeProject:
                  project_path: str, 
                  emmebank_path: Optional[str] = None):
         log.info("Starting Emme...")
+        self.cm: Optional[ContextManager] = None #type checker hint
         emme_desktop = _app.start_dedicated(
             project=project_path, visible=False, user_initials="HSL")
         if emmebank_path is not None:
@@ -65,7 +69,9 @@ class EmmeProject:
     def write(self, message: str):
         """Write to logbook."""
         # _m.logbook_write(message)
+
         try:
+            self.cm = cast(ContextManager, self.cm)
             self.cm.__exit__(None, None, None)
         except AttributeError:
             pass

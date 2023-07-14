@@ -2,6 +2,9 @@
 
 # Driver share of car tours
 # Inverse of car occupancy
+from typing import Any, Dict, Tuple, Union
+
+
 car_driver_share = {
     "hw": 0.928309883,
     "hc": 0,
@@ -15,7 +18,7 @@ car_driver_share = {
     "hop": 0.699605826,
     "oop": 0.784781268,
 }
-car_usage = {
+car_usage: Dict[str,Any] = {
     "constant": -11.2296,
     "generation": {},
     "log": {

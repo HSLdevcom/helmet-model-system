@@ -1,5 +1,6 @@
+from __future__ import annotations
 from typing import Dict, Iterable, List, Optional, Union
-import numpy
+import numpy # type: ignore
 from collections import namedtuple
 import copy
 import os
@@ -511,21 +512,21 @@ class Network:
         }
         self._extra_attr = {attr_type: {} for attr_type in self._objects}
 
-    def mode(self, idx: int) -> Mode:
+    def mode(self, idx: int) -> 'Mode':
         if idx in self._modes:
             return self._modes[idx]
 
     def modes(self) -> Iterable:
         return iter(self._modes.values())
 
-    def create_mode(self, mode_type: str, idx: str) -> Mode:
+    def create_mode(self, mode_type: str, idx: str) -> 'Mode':
         if not isinstance(idx, str) or len(idx) != 1:
             raise Exception("Invalid mode ID: " + idx)
         mode = Mode(idx, mode_type)
         self._modes[idx] = mode
         return mode
 
-    def node(self, idx: int) -> Node:
+    def node(self, idx: int) -> 'Node':
         idx = int(idx)
         if idx in self._nodes:
             return self._nodes[idx]
@@ -539,7 +540,7 @@ class Network:
     def regular_nodes(self) -> Iterable:
         return iter(self._regular_nodes.values())
 
-    def create_node(self, idx: int, is_centroid: bool) -> Node:
+    def create_node(self, idx: int, is_centroid: bool) -> 'Node':
         idx = int(idx)
         node = Node(self, idx, is_centroid)
         self._nodes[idx] = node
@@ -549,7 +550,7 @@ class Network:
             self._regular_nodes[idx] = node
         return node
 
-    def link(self, i_node_id: int, j_node_id: int) -> Link:
+    def link(self, i_node_id: int, j_node_id: int) -> 'Link':
         idx = "{}-{}".format(i_node_id, j_node_id)
         if idx in self._links:
             return self._links[idx]
@@ -557,7 +558,7 @@ class Network:
     def links(self) -> Iterable:
         return iter(self._links.values())
 
-    def create_link(self, i_node_id: int, j_node_id: int, modes: str) -> Link:
+    def create_link(self, i_node_id: int, j_node_id: int, modes: str) -> 'Link':
         modes = [self.mode(str(mode)) for mode in modes]
         link = Link(
             self, self._nodes[int(i_node_id)], self._nodes[int(j_node_id)],
@@ -565,29 +566,29 @@ class Network:
         self._links["{}-{}".format(i_node_id, j_node_id)] = link
         return link
 
-    def transit_vehicle(self, idx: int) -> TransitVehicle:
+    def transit_vehicle(self, idx: int) -> 'TransitVehicle':
         if idx in self._vehicles:
             return self._vehicles[idx]
 
     def transit_vehicles(self) -> Iterable:
         return iter(self._vehicles.values())
 
-    def create_transit_vehicle(self, idx: int, mode_id: str) -> TransitVehicle:
+    def create_transit_vehicle(self, idx: int, mode_id: str) -> 'TransitVehicle':
         vehicle = TransitVehicle(idx, self.mode(mode_id))
         self._vehicles[idx] = vehicle
         return vehicle
 
-    def transit_line(self, idx) -> TransitLine:
+    def transit_line(self, idx) -> 'TransitLine':
         if idx in self._lines:
             return self._lines[idx]
 
-    def transit_lines(self) -> Iterable:
+    def transit_lines(self) -> Iterable['TransitLine']:
         return iter(self._lines.values())
 
     def transit_segments(self) -> Iterable:
         return iter(self._segments)
 
-    def create_transit_line(self, idx: str, transit_vehicle_id: int, itinerary: List[List[str]]) -> TransitLine:
+    def create_transit_line(self, idx: str, transit_vehicle_id: int, itinerary: List[List[str]]) -> 'TransitLine':
         line = TransitLine(self, idx, transit_vehicle_id)
         self._lines[idx] = line
         for i in range(len(itinerary) - 1):
@@ -624,7 +625,7 @@ class TransitVehicle:
 
 
 class NetworkObject:
-    def __init__(self, network: Network, extra_attr: Dict[str, Dict[str, Union[Link, Node, TransitLine, TransitSegment]]]):
+    def __init__(self, network: Network, extra_attr: Dict[str, Dict[str, Union['Link', 'Node', 'TransitLine', 'TransitSegment']]]):
         self.network = network
         self._extra_attr = {idx: extra_attr[idx].default_value
             for idx in extra_attr}
@@ -733,7 +734,7 @@ class TransitLine(NetworkObject):
     def mode(self) -> Mode:
         return self.vehicle.mode
 
-    def segment(self, idx) -> TransitSegment:
+    def segment(self, idx) -> 'TransitSegment':
         return self._segments[idx]
 
     def segments(self) -> Iterable:

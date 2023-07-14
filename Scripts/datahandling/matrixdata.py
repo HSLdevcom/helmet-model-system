@@ -1,10 +1,12 @@
+from __future__ import annotations
 import os
-from typing import Optional
-import openmatrix as omx
-import numpy
+from typing import TYPE_CHECKING, Optional
+import openmatrix as omx # type: ignore
+import numpy # type: ignore
 import pandas
 from contextlib import contextmanager
-from datahandling.zonedata import BaseZoneData
+if TYPE_CHECKING:
+    from datahandling.zonedata import BaseZoneData
 
 import utils.log as log
 from utils.read_csv_file import read_csv_file

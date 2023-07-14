@@ -1,20 +1,25 @@
+from __future__ import annotations
 from abc import ABCMeta, abstractmethod
+from typing import Any, Dict, List, Union
 
 
 class AssignmentModel:
     __metaclass__ = ABCMeta
 
+    @property
     @abstractmethod
-    def mapping(self):
+    def mapping(self) -> Dict[int,int]:
         """Dictionary of zone numbers and corresponding indices."""
         pass
 
+    @property
     @abstractmethod
-    def zone_numbers(self):
+    def zone_numbers(self) -> List[int]:
         pass
 
+    @property
     @abstractmethod
-    def nr_zones(self):
+    def nr_zones(self) -> int:
         pass
 
     @abstractmethod
@@ -41,5 +46,5 @@ class Period:
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def assign(self):
+    def assign(self, matrices: Dict[Any, Any], iteration: Union[int, str]) -> Dict[Any, Any]:
         pass

@@ -1,7 +1,8 @@
+from __future__ import annotations
 import parameters.assignment as param
 from assignment.datatypes.path_analysis import PathAnalysis
 from collections.abc import Callable
-from typing import Dict, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 
 class Car:
@@ -15,7 +16,7 @@ class Car:
         od_travel_times = result_mtx["gen_cost"][ass_class]["id"]
         if value_of_time_inv is None:
             value_of_time_inv = param.vot_inv[param.vot_classes[ass_class]]
-        self.spec = {
+        self.spec: Dict[str, Any] = {
             "mode": param.assignment_modes[ass_class],
             "demand": demand_mtx[ass_class]["id"],
             "generalized_cost": {

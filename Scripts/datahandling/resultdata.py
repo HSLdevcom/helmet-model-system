@@ -1,4 +1,6 @@
+from __future__ import annotations
 import os
+from typing import Any, Dict
 import pandas
 try:
     from openpyxl import Workbook, load_workbook
@@ -15,9 +17,9 @@ class ResultsData:
         if not os.path.exists(results_directory_path):
             os.makedirs(results_directory_path)
         self.path = results_directory_path
-        self._line_buffer = {}
-        self._df_buffer = {}
-        self._xlsx_buffer = {}
+        self._line_buffer: Dict[str, Any] = {}
+        self._df_buffer: Dict[str, Any] = {}
+        self._xlsx_buffer: Dict[str, Any] = {}
 
     def flush(self):
         """Save to files and empty buffers."""

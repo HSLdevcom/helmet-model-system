@@ -1,5 +1,5 @@
 from collections import defaultdict
-import numpy
+import numpy # type: ignore
 
 import parameters.impedance_transformation as param
 from parameters.assignment import assignment_classes

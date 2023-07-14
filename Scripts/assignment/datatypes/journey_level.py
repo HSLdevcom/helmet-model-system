@@ -1,3 +1,5 @@
+from __future__ import annotations
+from typing import Any, Dict
 import parameters.assignment as param
 
 
@@ -13,7 +15,7 @@ class JourneyLevel:
                 "mode": mode,
                 "next_journey_level": 1
             })
-        self.spec = {
+        self.spec: Dict[str, Any] = {
             "transition_rules": transitions,
             "boarding_time": None,
             "boarding_cost": dict.fromkeys([

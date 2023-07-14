@@ -1,7 +1,9 @@
-from typing import Optional
+from __future__ import annotations
+from typing import TYPE_CHECKING, Optional
 
-import numpy
-from datatypes.purpose import Purpose
+import numpy # type: ignore
+if TYPE_CHECKING:
+    from datatypes.purpose import Purpose
 import parameters.car as param
 
 

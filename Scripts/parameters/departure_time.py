@@ -1,7 +1,10 @@
 ### DEPARTURE TIME PARAMETERS ###
 
 # Demand shares for different time periods
-demand_share = {
+from typing import Any, Dict
+
+
+demand_share: Dict[str,Dict[str,Any]] = {
     "hw": {
         "car": {
             "aht": (0.288820549293814, 0.00164983305999384),

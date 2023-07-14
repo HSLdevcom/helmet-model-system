@@ -1,5 +1,6 @@
-from typing import Dict, Tuple
-import numpy
+from __future__ import annotations
+from typing import Dict, List, Tuple
+import numpy # type: ignore
 import random
 from datatypes.purpose import TourPurpose
 
@@ -46,7 +47,7 @@ class Person:
         self.age = random.randint(age_group[0], age_group[1])
         self.age_group = "age_" + str(age_group[0]) + "-" + str(age_group[1])
         self.sex = random.random() < 0.5
-        self.tours = []
+        self.tours: List[Tour] = []
         self.generation_model = generation_model
         self._cm = car_use_model
         self._im = income_model
@@ -86,7 +87,7 @@ class Person:
 
     def add_tours(self, 
                   purposes: Dict[str,TourPurpose], 
-                  tour_probs: Dict[Tuple[int,int],numpy.ndarray]):
+                  tour_probs: Dict[str,numpy.ndarray]):
         """Initilize tour list and add new tours.
 
         Parameters

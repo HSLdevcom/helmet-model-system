@@ -1,8 +1,10 @@
+from __future__ import annotations
 import os
-import numpy
+import numpy # type: ignore
 import pandas
 import copy
 
+from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 import utils.log as log
 import parameters.assignment as param
 import parameters.zone as zone_param
@@ -12,14 +14,15 @@ from assignment.datatypes.path_analysis import PathAnalysis
 from assignment.abstract_assignment import Period
 from assignment.emme_bindings.emme_project import EmmeProject
 from assignment.datatypes.transit_fare import TransitFareZoneSpecification
-from emme_context.modeller.emmebank import Scenario
-from typing import Dict, Union
+if TYPE_CHECKING:
+    from emme_context.modeller.emmebank import Scenario # type: ignore
+
 
 class AssignmentPeriod(Period):
     def __init__(self, name: str, emme_scenario: int, 
                  emme_context: EmmeProject,
-                 demand_mtx: Dict[str, Dict[str, Dict[str, Union[int, str]]]] = param.emme_demand_mtx,
-                 result_mtx: Dict[str, Dict[str, Dict[str, Union[int, str]]]] = param.emme_result_mtx, 
+                 demand_mtx: Dict[str, Dict[str, Any]] = param.emme_demand_mtx,
+                 result_mtx: Dict[str, Dict[str, Dict[str, Any]]] = param.emme_result_mtx, 
                  save_matrices: bool = False,
                  separate_emme_scenarios: bool = False):
         self.name = name
@@ -416,7 +419,7 @@ class AssignmentPeriod(Period):
     def _set_matrix(self, 
                     mtx_label: str, 
                     matrix: numpy.ndarray, 
-                    result_type: str = None):
+                    result_type: Optional[str] = None):
         if numpy.isnan(matrix).any():
             msg = ("NAs in demand matrix {}. ".format(mtx_label)
                    + "Would cause infinite loop in Emme assignment.")
@@ -566,8 +569,8 @@ class AssignmentPeriod(Period):
             except KeyError:
                 missing_penalties.add(line.mode.id)
         if missing_penalties:
-            missing_penalties = ", ".join(missing_penalties)
-            log.warn("No boarding penalty found for transit modes " + missing_penalties)
+            missing_penalties_str: str = ", ".join(missing_penalties)
+            log.warn("No boarding penalty found for transit modes " + missing_penalties_str)
         self.emme_scenario.publish_network(network)
 
     def _specify(self):

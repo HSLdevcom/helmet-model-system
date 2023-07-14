@@ -1,5 +1,6 @@
-from typing import Callable, Dict, List, Optional
-import numpy
+from __future__ import annotations
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, cast
+import numpy # type: ignore
 import pandas
 from math import log10
 from assignment.datatypes.transit_fare import TransitFareZoneSpecification
@@ -12,6 +13,9 @@ import parameters.assignment as param
 import parameters.zone as zone_param
 from assignment.abstract_assignment import AssignmentModel
 from assignment.assignment_period import AssignmentPeriod
+if TYPE_CHECKING:
+    from inro.modeller.emmebank import Scenario # type: ignore
+    from inro.emme.network.Network import Network # type: ignore
 
 
 class EmmeAssignmentModel(AssignmentModel):
@@ -89,8 +93,8 @@ class EmmeAssignmentModel(AssignmentModel):
             tag = ap.name if self.save_matrices else ""
             id_hundred = 100*i + self.first_matrix_id
             for ass_class in ap.demand_mtx:
-                mtx = ap.demand_mtx[ass_class]
-                mtx["id"] = "mf{}".format(id_hundred + mtx["id"])
+                mtx: Dict[str, Any] = ap.demand_mtx[ass_class]
+                mtx["id"] = "mf{}".format(id_hundred + int(mtx["id"])) #type checker hint - int(var)
                 self.emme_project.create_matrix(
                     matrix_id=mtx["id"],
                     matrix_name="demand_{}_{}".format(ass_class, tag),
@@ -100,7 +104,7 @@ class EmmeAssignmentModel(AssignmentModel):
                 mtx = ap.result_mtx[mtx_type]
                 for ass_class in mtx:
                     mtx[ass_class]["id"] = "mf{}".format(
-                        id_hundred + mtx[ass_class]["id"])
+                        id_hundred + int(mtx[ass_class]["id"])) #type checker hint - int(var)
                     self.emme_project.create_matrix(
                         matrix_id=mtx[ass_class]["id"],
                         matrix_name="{}_{}_{}".format(mtx_type, ass_class, tag),
@@ -326,7 +330,7 @@ class EmmeAssignmentModel(AssignmentModel):
         return "@{}_{}".format(attr, "vrk")
 
     def _add_bus_stops(self):
-        network = self.mod_scenario.get_network()
+        network: Network = self.mod_scenario.get_network()
         for line in network.transit_lines():
             if line.mode.id in param.stop_codes:
                 stop_codes = param.stop_codes[line.mode.id]
@@ -352,7 +356,7 @@ class EmmeAssignmentModel(AssignmentModel):
         self.mod_scenario.publish_network(network)
 
     def _create_attributes(self, 
-                           scenario: inro.modeller.emmebank.Scenario, 
+                           scenario: Any, 
                            extra: Callable[[str], str]) -> Dict[str,Dict[str,str]]:
         """Create extra attributes needed in assignment.
 
@@ -365,13 +369,14 @@ class EmmeAssignmentModel(AssignmentModel):
             (e.g., self._extra)
         """
         # Create link attributes
+        scenario = cast(Scenario, scenario)
         for ass_class in list(param.emme_demand_mtx) + ["bus"]:
             self.emme_project.create_extra_attribute(
                 "LINK", extra(ass_class), ass_class + " volume",
                 overwrite=True, scenario=scenario)
-        for attr in ("total_cost", "toll_cost", "car_time", "aux_transit"):
+        for attr_s in ("total_cost", "toll_cost", "car_time", "aux_transit"): #attr_s tp make difference for type checker
             self.emme_project.create_extra_attribute(
-                "LINK", extra(attr), attr,
+                "LINK", extra(attr_s), attr_s,
                 overwrite=True, scenario=scenario)
         # Create node and transit segment attributes
         attr = param.segment_results
@@ -403,7 +408,7 @@ class EmmeAssignmentModel(AssignmentModel):
             scenario))
         return seg_results
 
-    def calc_noise(self) -> pandas.DataFrame:
+    def calc_noise(self) -> pandas.Series:
         """Calculate noise according to Road Traffic Noise Nordic 1996.
 
         Returns
