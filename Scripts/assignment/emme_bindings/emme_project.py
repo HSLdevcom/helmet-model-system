@@ -6,7 +6,8 @@ import logging
 if TYPE_CHECKING:
     import inro.emme.desktop.app as _app # type: ignore
     import inro.modeller as _m # type: ignore
-    from inro.modeller import ContextManager # type: ignore
+    #The following one is likely in different location
+    from inro.modeller import ContentManager # type: ignore
 
 
 class EmmeProject:
@@ -26,7 +27,7 @@ class EmmeProject:
                  project_path: str, 
                  emmebank_path: Optional[str] = None):
         log.info("Starting Emme...")
-        if TYPE_CHECKING: self.cm: Optional[ContextManager] = None #type checker hint
+        if TYPE_CHECKING: self.cm: Optional[ContentManager] = None #type checker hint
         emme_desktop = _app.start_dedicated(
             project=project_path, visible=False, user_initials="HSL")
         if emmebank_path is not None:
@@ -71,7 +72,7 @@ class EmmeProject:
         # _m.logbook_write(message)
 
         try:
-            if TYPE_CHECKING: self.cm = cast(ContextManager, self.cm)
+            if TYPE_CHECKING: self.cm = cast(ContentManager, self.cm)
             self.cm.__exit__(None, None, None)
         except AttributeError:
             pass
