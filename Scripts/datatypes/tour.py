@@ -5,7 +5,7 @@ import random
 if TYPE_CHECKING:
     from datatypes.purpose import TourPurpose
     from datatypes.zone import Zone
-    from models.logit import DestModeModel, ModeDestModel, OriginModel
+from models.logit import ModeDestModel
 
 import parameters.car as param
 import parameters.zone as zone_param

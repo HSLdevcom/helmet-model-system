@@ -26,7 +26,7 @@ class EmmeProject:
                  project_path: str, 
                  emmebank_path: Optional[str] = None):
         log.info("Starting Emme...")
-        self.cm: Optional[ContextManager] = None #type checker hint
+        if TYPE_CHECKING: self.cm: Optional[ContextManager] = None #type checker hint
         emme_desktop = _app.start_dedicated(
             project=project_path, visible=False, user_initials="HSL")
         if emmebank_path is not None:
@@ -71,7 +71,7 @@ class EmmeProject:
         # _m.logbook_write(message)
 
         try:
-            self.cm = cast(ContextManager, self.cm)
+            if TYPE_CHECKING: self.cm = cast(ContextManager, self.cm)
             self.cm.__exit__(None, None, None)
         except AttributeError:
             pass

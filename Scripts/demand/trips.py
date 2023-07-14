@@ -6,7 +6,7 @@ if TYPE_CHECKING:
     from datahandling.resultdata import ResultsData
     from datahandling.zonedata import ZoneData
     from datatypes.purpose import Purpose
-    from datatypes.person import Person
+from datatypes.person import Person
 
 import utils.log as log
 import parameters.zone as param
@@ -53,7 +53,6 @@ class DemandModel:
         bounds = param.purpose_areas["metropolitan"]
         self.bounds = slice(*zone_data.all_zone_numbers.searchsorted(
             [bounds[0], bounds[-1]]))
-        log.info("Car_Use bounds: "+str(self.bounds))
         self.car_use_model = car_use.CarUseModel(
             zone_data, self.bounds, param.age_groups, self.resultdata)
         self.tour_generation_model = tour_combinations.TourCombinationModel(

@@ -197,7 +197,6 @@ class ZoneData:
         -------
         pandas Series or numpy 2-d matrix
         """
-        log.info(".....")
         try:
             val = self._values[key]
         except KeyError as err:

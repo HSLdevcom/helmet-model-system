@@ -369,7 +369,7 @@ class EmmeAssignmentModel(AssignmentModel):
             (e.g., self._extra)
         """
         # Create link attributes
-        scenario = cast(Scenario, scenario)
+        if TYPE_CHECKING: scenario = cast(Scenario, scenario)
         for ass_class in list(param.emme_demand_mtx) + ["bus"]:
             self.emme_project.create_extra_attribute(
                 "LINK", extra(ass_class), ass_class + " volume",
