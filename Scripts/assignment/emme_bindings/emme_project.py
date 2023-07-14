@@ -3,9 +3,9 @@ import os
 from typing import Any, Optional, cast, TYPE_CHECKING
 import utils.log as log
 import logging
+import inro.emme.desktop.app as _app # type: ignore
+import inro.modeller as _m # type: ignore
 if TYPE_CHECKING:
-    import inro.emme.desktop.app as _app # type: ignore
-    import inro.modeller as _m # type: ignore
     from inro.modeller import ContextManager # type: ignore
 
 

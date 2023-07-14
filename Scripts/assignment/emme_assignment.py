@@ -14,7 +14,7 @@ import parameters.zone as zone_param
 from assignment.abstract_assignment import AssignmentModel
 from assignment.assignment_period import AssignmentPeriod
 if TYPE_CHECKING:
-    from inro.modeller.emmebank import Scenario # type: ignore
+    from inro.emme.database.scenario import Scenario # type: ignore
     from inro.emme.network.Network import Network # type: ignore
 
 
