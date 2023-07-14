@@ -10,9 +10,13 @@ import assignment.emme_assignment as ass
 from datahandling.zonedata import ZoneData
 from datahandling.matrixdata import MatrixData
 from datahandling.resultdata import ResultsData
-from assignment.emme_bindings.emme_project import EmmeProject
-import inro.emme.desktop.app as _app
-import inro.emme.database.emmebank as _eb
+try:
+    from assignment.emme_bindings.emme_project import EmmeProject
+    import inro.emme.desktop.app as _app
+    import inro.emme.database.emmebank as _eb
+    emme_available = True
+except ImportError:
+    emme_available = False
 
 
 class EmmeAssignmentTest:
@@ -112,6 +116,6 @@ class EmmeAssignmentTest:
         peripheral_cost = numpy.ones((1, 10))
         self.ass_model.calc_transit_cost(zdata.transit_zone, peripheral_cost)
 
-
-em = EmmeAssignmentTest()
-em.test_assignment()
+if emme_available:
+    em = EmmeAssignmentTest()
+    em.test_assignment()

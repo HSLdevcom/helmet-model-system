@@ -3,9 +3,6 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, cast
 import numpy # type: ignore
 import pandas
 from math import log10
-from assignment.datatypes.transit_fare import TransitFareZoneSpecification
-from assignment.emme_bindings.emme_project import EmmeProject
-from datahandling.resultdata import ResultsData
 
 import utils.log as log
 from utils.zone_interval import belongs_to_area, faulty_kela_code_nodes
@@ -14,6 +11,9 @@ import parameters.zone as zone_param
 from assignment.abstract_assignment import AssignmentModel
 from assignment.assignment_period import AssignmentPeriod
 if TYPE_CHECKING:
+    from assignment.emme_bindings.emme_project import EmmeProject
+    from assignment.datatypes.transit_fare import TransitFareZoneSpecification
+    from datahandling.resultdata import ResultsData
     from inro.emme.database.scenario import Scenario # type: ignore
     from inro.emme.network.Network import Network # type: ignore
 

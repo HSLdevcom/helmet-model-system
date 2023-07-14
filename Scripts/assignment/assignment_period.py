@@ -12,9 +12,9 @@ from assignment.datatypes.car_specification import CarSpecification
 from assignment.datatypes.transit import TransitSpecification
 from assignment.datatypes.path_analysis import PathAnalysis
 from assignment.abstract_assignment import Period
-from assignment.emme_bindings.emme_project import EmmeProject
-from assignment.datatypes.transit_fare import TransitFareZoneSpecification
 if TYPE_CHECKING:
+    from assignment.emme_bindings.emme_project import EmmeProject
+    from assignment.datatypes.transit_fare import TransitFareZoneSpecification
     from emme_context.modeller.emmebank import Scenario # type: ignore
 
 
