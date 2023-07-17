@@ -763,7 +763,23 @@ class AssignmentPeriod(Period):
         self.emme_project.transit_assignment(
             specification=spec.transit_spec, scenario=self.emme_scenario,
             save_strategies=True)
-        self.emme_project.matrix_results(spec.transit_result_spec, scenario=self.emme_scenario)
+        #self.emme_project.matrix_results(spec.transit_result_spec, scenario=self.emme_scenario)
+        # save results for both classes
+        for tc in self._transit_specs:
+            self.emme_project.matrix_results(
+                self._transit_specs[tc].transit_result_spec, scenario=self.emme_scenario,
+                class_name=tc)
+            self.emme_project.network_results(
+                self._transit_specs[tc].ntw_results_spec, scenario=self.emme_scenario,
+                class_name=tc)
+        base_timtr = param.uncongested_transit_time
+        time_attr = self.extra(base_timtr)
+        volax_attr = self.extra("aux_transit")
+        network = self.emme_scenario.get_network()
+        for link in network.links():
+            link[volax_attr] = link.aux_transit_volume
+        for segment in network.transit_segments():
+            segment[time_attr] = segment['@'+base_timtr]
         log.info("Transit assignment performed for scenario {}".format(
             str(self.emme_scenario.id)))
 
