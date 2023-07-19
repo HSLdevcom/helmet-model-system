@@ -761,9 +761,10 @@ class AssignmentPeriod(Period):
         # performed in last iteration (congested assignment)
         #spec = self._transit_specs["transit_work"]
         specs = self._transit_specs
-        self.emme_project.transit_assignment(
-            specification=[specs[tc].transit_spec for tc in specs], scenario=self.emme_scenario,
-            save_strategies=True)
+        for tc in specs:
+            self.emme_project.transit_assignment(
+                specification=specs[tc].transit_spec, scenario=self.emme_scenario,
+                save_strategies=True)
         #self.emme_project.matrix_results(spec.transit_result_spec, scenario=self.emme_scenario)
         # save results for both classes
         for tc in self._transit_specs:
