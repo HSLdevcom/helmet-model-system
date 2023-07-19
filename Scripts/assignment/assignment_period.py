@@ -759,9 +759,10 @@ class AssignmentPeriod(Period):
         log.info("Transit assignment started...")
         # Here we assign all transit in one class, multi-class assignment is
         # performed in last iteration (congested assignment)
-        spec = self._transit_specs["transit_work"]
+        #spec = self._transit_specs["transit_work"]
+        specs = self._transit_specs
         self.emme_project.transit_assignment(
-            specification=spec.transit_spec, scenario=self.emme_scenario,
+            specification=[specs[tc].transit_spec for tc in specs], scenario=self.emme_scenario,
             save_strategies=True)
         #self.emme_project.matrix_results(spec.transit_result_spec, scenario=self.emme_scenario)
         # save results for both classes
@@ -780,6 +781,7 @@ class AssignmentPeriod(Period):
             link[volax_attr] = link.aux_transit_volume
         for segment in network.transit_segments():
             segment[time_attr] = segment['@'+base_timtr]
+        self.emme_scenario.publish_network(network)
         log.info("Transit assignment performed for scenario {}".format(
             str(self.emme_scenario.id)))
 
