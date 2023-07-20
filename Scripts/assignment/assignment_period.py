@@ -760,6 +760,16 @@ class AssignmentPeriod(Period):
         # Here we assign all transit in one class, multi-class assignment is
         # performed in last iteration (congested assignment)
         #spec = self._transit_specs["transit_work"]
+        network = self.emme_scenario.get_network()
+        headway_attr = self.extra("hw")
+        penalty_attr = param.inactive_line_penalty_attr.replace("ut", "data")
+        for line in network.transit_lines():
+            line.headway = line[headway_attr]
+            if line[headway_attr] > 900:
+                line[penalty_attr] = 9999
+            else:
+                line[penalty_attr] = 0
+        self.emme_scenario.publish_network(network)
         specs = self._transit_specs
         for tc in specs:
             self.emme_project.transit_assignment(
