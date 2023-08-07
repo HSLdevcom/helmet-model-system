@@ -253,6 +253,22 @@ class ModeDestModel(LogitModel):
     is_agent_model : bool (optional)
         Whether the model is used for agent-based simulation
     """
+    def __init__(self, *args, **kwargs):
+        LogitModel.__init__(self, *args, **kwargs)
+        try:
+            b = self.dest_choice_param["car"]["impedance"]["cost"]
+        except KeyError:
+            # School tours do not have a constant cost parameter
+            # Use value of time conversion from CBA guidelines instead
+            b = -0.46738697
+        try:
+            # Convert utility into euros
+            money_utility = 1 / b
+        except TypeError:
+            # Separate sub-region parameters
+            money_utility = 1 / b[0]
+        money_utility /= self.mode_choice_param["car"]["log"]["logsum"]
+        self.money_utility = money_utility
 
     def calc_prob(self, impedance):
         """Calculate matrix of choice probabilities.
@@ -399,15 +415,6 @@ class ModeDestModel(LogitModel):
             prob[mode] = mode_prob * dest_prob
         return prob
 
-    def get_cost_util_coefficient(self):
-        try:
-            b = self.dest_choice_param["car"]["impedance"]["cost"]
-        except KeyError:
-            # School tours do not have a constant cost parameter
-            # Use value of time conversion from CBA guidelines instead
-            b = -0.46738697
-        return b
-
 
 class AccessibilityModel(ModeDestModel):
     def calc_accessibility(self, impedance):
@@ -433,15 +440,10 @@ class AccessibilityModel(ModeDestModel):
             numpy.log(sustainable_sum), self.purpose.zone_numbers)
         self.resultdata.print_data(
             logsum, "sustainable_accessibility.txt", self.purpose.name)
-        b = self.get_cost_util_coefficient()
-        try:
-            money_utility = 1 / b
-        except TypeError:  # Separate params for cap region and surrounding
-            money_utility = 1 / b[0]
-        money_utility /= self.mode_choice_param["car"]["log"]["logsum"]
-        self.purpose.access = money_utility * self.zone_data[self.purpose.name]
-        self.purpose.sustainable_access = money_utility * logsum
-        self.purpose.car_access = (money_utility
+        self.purpose.access = (self.money_utility
+                               * self.zone_data[self.purpose.name])
+        self.purpose.sustainable_access = self.money_utility * logsum
+        self.purpose.car_access = (self.money_utility
                                    * self.zone_data[self.purpose.name + "_c"])
 
         # Calculate workplace-based accessibility
