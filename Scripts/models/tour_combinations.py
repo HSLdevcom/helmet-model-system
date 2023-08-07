@@ -22,9 +22,8 @@ class TourCombinationModel:
         self.param = param.tour_combinations
         self.conditions = param.tour_conditions
         self.increases = param.tour_number_increase
-        self.tour_combinations = []
-        for nr_tours in self.param:
-            self.tour_combinations += self.param[nr_tours].keys()
+        self.tour_combinations = [combination for nr_tours in self.param
+            for combination in self.param[nr_tours]]
 
     def calc_prob(self, age_group, is_car_user, zones):
         """Calculate choice probabilities for each tour combination.
@@ -47,8 +46,8 @@ class TourCombinationModel:
         dict
             key : tuple of str
                 Tour combination (-/hw/hw-ho/...)
-            value : float or numpy 1-d array
-                Choice probability
+            value : pandas.Series
+                Choice probabilities per zone
         """
         prob = {}
         nr_tours_exps = {}
@@ -59,25 +58,18 @@ class TourCombinationModel:
             combination_expsum = 0
             for tour_combination in self.param[nr_tours]:
                 # Lower level of nested logit model
-                if tour_combination in self.conditions:
-                    if self.conditions[tour_combination][0]:
-                        # If this tour pattern is exclusively for one age group
-                        if age_group == self.conditions[tour_combination][1]:
-                            is_allowed = True
-                        else:
-                            is_allowed = False
-                    else:
-                        # If one age group is excluded from this tour pattern
-                        if age_group == self.conditions[tour_combination][1]:
-                            is_allowed = False
-                        else:
-                            is_allowed = True
-                else:
+                try:
+                    cond = self.conditions[tour_combination]
+                except KeyError:
                     is_allowed = True
+                else:
+                    # If this tour pattern is exclusively for this age group
+                    # or if this age group is excluded from this tour pattern
+                    is_allowed = (age_group == cond[1] if cond[0]
+                        else age_group != cond[1])
                 if is_allowed:
                     b = self.param[nr_tours][tour_combination]
-                    util = 0
-                    util += b["constant"]
+                    util = b["constant"]
                     for i in b["zone"]:
                         util += b["zone"][i] * self.zone_data[i][zones]
                     dummies = b["individual_dummy"]

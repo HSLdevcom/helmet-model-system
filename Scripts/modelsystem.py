@@ -68,7 +68,8 @@ class ModelSystem:
             self.zdata_base, self.zdata_forecast, self.basematrices)
         self.em = ExternalModel(
             self.basematrices, self.zdata_forecast, self.zone_numbers)
-        self.dtm = dt.DepartureTimeModel(self.ass_model.nr_zones)
+        self.dtm = dt.DepartureTimeModel(
+            self.ass_model.nr_zones, self.ass_model.time_periods)
         self.imptrans = ImpedanceTransformer()
         bounds = slice(0, self.zdata_forecast.nr_zones)
         self.cdm = CarDensityModel(
@@ -170,12 +171,15 @@ class ModelSystem:
         self.ass_model.prepare_network(self.zdata_forecast.car_dist_cost)
 
         # Calculate transit cost matrix, and save it to emmebank
-        with self.basematrices.open("demand", "aht", self.ass_model.zone_numbers) as mtx:
-            base_demand = {ass_class: mtx[ass_class] for ass_class in param.transport_classes}
+        time_periods = self.ass_model.time_periods
+        with self.basematrices.open(
+                "demand", time_periods[0], self.ass_model.zone_numbers) as mtx:
+            base_demand = {ass_class: mtx[ass_class]
+                for ass_class in param.transport_classes}
         self.ass_model.init_assign(base_demand)
         if use_fixed_transit_cost:
             log.info("Using fixed transit cost matrix")
-            with self.resultmatrices.open("cost", "aht") as aht_mtx:
+            with self.resultmatrices.open("cost", time_periods[0]) as aht_mtx:
                 fixed_cost = aht_mtx["transit_work"]
         else:
             log.info("Calculating transit cost")
@@ -197,7 +201,7 @@ class ModelSystem:
             impedance[tp] = ap.assign(
                 self.dtm.demand[tp],
                 iteration=("last" if is_end_assignment else 0))
-            if tp == "aht":
+            if tp == time_periods[0]:
                 self._update_ratios(impedance[tp], tp)
             if is_end_assignment:
                 self._save_to_omx(impedance[tp], tp)
@@ -279,7 +283,7 @@ class ModelSystem:
             self.resultdata.print_data(
                 tour_sum[mode], "origins_demand.txt", mode)
             self.resultdata.print_data(
-                ar.aggregate(tour_sum[mode]), "origin_demand_areas.txt", mode)
+                ar.aggregate(tour_sum[mode]), "origins_demand_areas.txt", mode)
             self.resultdata.print_data(
                 tour_sum[mode] / sum_all, "origins_shares.txt", mode)
             mode_shares[mode] = tour_sum[mode].sum() / sum_all.sum()
@@ -420,7 +424,8 @@ class ModelSystem:
             # will calculate secondary destinations
             origs = range(i, bounds.stop - bounds.start, nr_threads)
             # Results will be saved in a temp dtm, to avoid memory clashes
-            dtm = dt.DepartureTimeModel(self.ass_model.nr_zones)
+            dtm = dt.DepartureTimeModel(
+                self.ass_model.nr_zones, self.ass_model.time_periods)
             demand.append(dtm)
             thread = threading.Thread(
                 target=self._distribute_tours,

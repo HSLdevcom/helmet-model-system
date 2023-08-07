@@ -91,38 +91,22 @@ official_node_numbers = {
     "htpaf": (802000, 806000),
     "hpaf": (810000, 816000),
 }
+vdf_temp = ("(put(60/ul2)*(1+{}*put((volau+volad)/{})/"
+            + "(ul1-get(2))))*(get(2).le.put(ul1*{}))*length+(get(2).gt."
+            + "get(3))*({}*get(1)*length+{}*(get(2)-get(3))*length)")
+buslane = "((lanes-1).max.0.8)"
 volume_delay_funcs = {
     # Car functions
-    "fd1": "(put(60/ul2)*(1+0.02*put((volau+volad)/lanes)/"
-            + "(ul1-get(2))))*(get(2).le.put(ul1*0.975))*length+(get(2).gt."
-            + "get(3))*(1.78*get(1)*length+0.0075*(get(2)-get(3))*length)",
-    "fd2": "(put(60/ul2)*(1+0.09*put((volau+volad)/lanes)/"
-            + "(ul1-get(2))))*(get(2).le.put(ul1*0.935))*length+(get(2).gt."
-            + "get(3))*(2.29*get(1)*length+0.0085*(get(2)-get(3))*length)",
-    "fd3": "(put(60/ul2)*(1+0.1*put((volau+volad)/lanes)/"
-            + "(ul1-get(2))))*(get(2).le.put(ul1*0.915))*length+(get(2).gt."
-            + "get(3))*(2.08*get(1)*length+0.011*(get(2)-get(3))*length)",
-    "fd4": "(put(60/ul2)*(1+0.2*put((volau+volad)/lanes)/"
-            + "(ul1-get(2))))*(get(2).le.put(ul1*0.87))*length+(get(2).gt."
-            + "get(3))*(2.34*get(1)*length+0.014*(get(2)-get(3))*length)",
-    "fd5": "(put(60/ul2)*(1+0.3*put((volau+volad)/lanes)/"
-            + "(ul1-get(2))))*(get(2).le.put(ul1*0.81))*length+(get(2).gt."
-            + "get(3))*(2.28*get(1)*length+0.017*(get(2)-get(3))*length)",
-    "fd6": "(put(60/ul2)*(1+0.02*put((volau+volad)/((lanes-1).max.0.8))/"
-            + "(ul1-get(2))))*(get(2).le.put(ul1*0.975))*length+(get(2).gt."
-            + "get(3))*(1.78*get(1)*length+0.0075*(get(2)-get(3))*length)",
-    "fd7": "(put(60/ul2)*(1+0.09*put((volau+volad)/((lanes-1).max.0.8))/"
-            + "(ul1-get(2))))*(get(2).le.put(ul1*0.935))*length+(get(2).gt."
-            + "get(3))*(2.29*get(1)*length+0.0085*(get(2)-get(3))*length)",
-    "fd8": "(put(60/ul2)*(1+0.1*put((volau+volad)/((lanes-1).max.0.8))/"
-            + "(ul1-get(2))))*(get(2).le.put(ul1*0.915))*length+(get(2).gt."
-            + "get(3))*(2.08*get(1)*length+0.011*(get(2)-get(3))*length)",
-    "fd9": "(put(60/ul2)*(1+0.2*put((volau+volad)/((lanes-1).max.0.8))/"
-            + "(ul1-get(2))))*(get(2).le.put(ul1*0.87))*length+(get(2).gt."
-            + "get(3))*(2.34*get(1)*length+0.014*(get(2)-get(3))*length)",
-    "fd10": "(put(60/ul2)*(1+0.3*put((volau+volad)/((lanes-1).max.0.8))/"
-            + "(ul1-get(2))))*(get(2).le.put(ul1*0.81))*length+(get(2).gt."
-            + "get(3))*(2.28*get(1)*length+0.017*(get(2)-get(3))*length)",
+    "fd1": vdf_temp.format(0.02, "lanes", 0.975, 1.78, 0.0075),
+    "fd2": vdf_temp.format(0.09, "lanes", 0.935, 2.29, 0.0085),
+    "fd3": vdf_temp.format(0.10, "lanes", 0.915, 2.08, 0.0110),
+    "fd4": vdf_temp.format(0.20, "lanes", 0.870, 2.34, 0.0140),
+    "fd5": vdf_temp.format(0.30, "lanes", 0.810, 2.28, 0.0170),
+    "fd6": vdf_temp.format(0.02, buslane, 0.975, 1.78, 0.0075),
+    "fd7": vdf_temp.format(0.09, buslane, 0.935, 2.29, 0.0085),
+    "fd8": vdf_temp.format(0.10, buslane, 0.915, 2.08, 0.0110),
+    "fd9": vdf_temp.format(0.20, buslane, 0.870, 2.34, 0.0140),
+    "fd10": vdf_temp.format(0.3, buslane, 0.810, 2.28, 0.0170),
     "fd99": "length * 1.3",
     # Bike functions
     "fd70": "length*(60/19)",
@@ -241,14 +225,14 @@ headway_sd_func = {
 }
 # Stopping criteria for last traffic assignment
 stopping_criteria_fine = {
-    "max_iterations": 200,
+    "max_iterations": 400,
     "relative_gap": 0.00001,
     "best_relative_gap": 0.001,
     "normalized_gap": 0.0005,
 }
 # Stopping criteria for traffic assignment in loop
 stopping_criteria_coarse = {
-    "max_iterations": 100,
+    "max_iterations": 200,
     "relative_gap": 0.0001,
     "best_relative_gap": 0.01,
     "normalized_gap": 0.005,
@@ -377,6 +361,7 @@ noise_zone_width = {
 }
 
 ### ASSIGNMENT REFERENCES ###
+time_periods = ("aht", "pt", "iht")
 transport_classes = (
     "car_work",
     "car_leisure",

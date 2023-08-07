@@ -49,24 +49,24 @@ class LogitModelTest(unittest.TestCase):
         pur.zone_numbers = METROPOLITAN_ZONES
         for i in ("hw", "hc", "hu", "hs", "ho"):
             pur.name = i
-            model = ModeDestModel(zd, pur, resultdata, is_agent_model=False)
+            model = ModeDestModel(zd, pur, resultdata)
             prob = model.calc_prob(impedance)
             for mode in ("car", "transit", "bike", "walk"):
                 self._validate(prob[mode])
         for i in ("wo", "oo"):
             pur.name = i
-            model = ModeDestModel(zd, pur, resultdata, is_agent_model=False)
+            model = ModeDestModel(zd, pur, resultdata)
             prob = model.calc_prob(impedance)
             for mode in ("car", "transit", "bike", "walk"):
                 self._validate(prob[mode])
         pur.name = "oop"
-        model = ModeDestModel(zd, pur, resultdata, is_agent_model=False)
+        model = ModeDestModel(zd, pur, resultdata)
         prob = model.calc_prob(impedance)
         for mode in ("car", "transit"):
             self._validate(prob[mode])
         for i in ("hwp", "hop"):
             pur.name = i
-            model = ModeDestModel(zd, pur, resultdata, is_agent_model=False)
+            model = ModeDestModel(zd, pur, resultdata)
             prob = model.calc_prob(impedance)
             for mode in ("car", "transit"):
                 self._validate(prob[mode])

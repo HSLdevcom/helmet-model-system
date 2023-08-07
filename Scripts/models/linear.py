@@ -136,14 +136,16 @@ class IncomeModel(LinearModel):
     bounds : slice
         Defines the area on which the model is predicting to (usually the
         metropolitan area)
+    resultdata : datahandling.ResultData
+        Writer object for result directory
     age_groups : tuple
         tuple
             int
                 Age intervals for validation
-    resultdata : datahandling.ResultData
-        Writer object for result directory
+    is_helsinki : bool (optional)
+        If model is for the municipality of Helsinki
     """
-    def __init__(self, zone_data, bounds, age_groups, resultdata,
+    def __init__(self, zone_data, bounds, resultdata, age_groups,
                  is_helsinki=False):
         LinearModel.__init__(self, zone_data, bounds, resultdata)
         self.param = (parameters.income.log_income_helsinki if is_helsinki

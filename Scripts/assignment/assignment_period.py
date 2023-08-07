@@ -411,10 +411,12 @@ class AssignmentPeriod(Period):
             raise ValueError(msg)
         elif result_type is None:
             self.emme_project.modeller.emmebank.matrix(
-                self.demand_mtx[mtx_label]["id"]).set_numpy_data(matrix)
+                self.demand_mtx[mtx_label]["id"]).set_numpy_data(
+                    matrix, scenario_id=self.emme_scenario.id)
         else:
             self.emme_project.modeller.emmebank.matrix(
-                self.result_mtx[result_type][mtx_label]["id"]).set_numpy_data(matrix)
+                self.result_mtx[result_type][mtx_label]["id"]).set_numpy_data(
+                    matrix, scenario_id=self.emme_scenario.id)
 
     def _get_matrices(self, mtx_type, is_last_iteration=False):
         """Get all matrices of specified type.
@@ -465,7 +467,7 @@ class AssignmentPeriod(Period):
         """
         emme_id = self.result_mtx[assignment_result_type][subtype]["id"]
         return (self.emme_project.modeller.emmebank.matrix(emme_id)
-                .get_numpy_data())
+                .get_numpy_data(scenario_id=self.emme_scenario.id))
 
     def _damp_travel_time(self, demand_type):
         """Reduce the impact from first waiting time on total travel time."""
@@ -641,7 +643,7 @@ class AssignmentPeriod(Period):
             self.emme_scenario.id))
         log.info("Stopping criteria: {}, iteration {} / {}".format(
             assign_report["stopping_criterion"],
-            assign_report["iterations"][-1]["number"],
+            len(assign_report["iterations"]),
             stopping_criteria["max_iterations"]
             ))
         if assign_report["stopping_criterion"] == "MAX_ITERATIONS":
@@ -690,6 +692,7 @@ class AssignmentPeriod(Period):
     def _calc_extra_wait_time(self):
         """Calculate extra waiting time for one scenario."""
         network = self.emme_scenario.get_network()
+        headway_attr = self.extra("hw")
         # Calculation of cumulative line segment travel time and speed
         log.info("Calculates cumulative travel times for scenario " + str(self.emme_scenario.id))
         for line in network.transit_lines():
@@ -743,7 +746,7 @@ class AssignmentPeriod(Period):
                                   + b["ctime"]*cumulative_time
                                   + b["cspeed"]*cumulative_speed)
                 # Estimated waiting time addition caused by headway deviation
-                segment["@wait_time_dev"] = headway_sd**2 / (2.0*line.headway)
+                segment["@wait_time_dev"] = headway_sd**2 / (2.0*line[headway_attr])
         self.emme_scenario.publish_network(network)
 
     def _assign_transit(self):
