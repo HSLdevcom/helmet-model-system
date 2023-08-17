@@ -431,10 +431,10 @@ class EmmeAssignmentModel(AssignmentModel):
             if speed >= 50:
                 LAE_light = 73.5 + 25*log10(speed/50) 
                 LAE_heavy = 80.5 + 30*log10(speed/50)
-            if speed >= 40:
+            elif speed >= 40:
                 LAE_light = 73.5 + 25*log10(speed/50)
                 LAE_heavy = 80.5
-            if speed < 40:
+            elif speed < 40:
                 LAE_light = 71.1
                 LAE_heavy = 80.5
             if cross_traffic > 0:
