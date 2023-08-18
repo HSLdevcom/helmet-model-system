@@ -464,15 +464,15 @@ emme_matrices = {
 transit_impedance_matrices = {
     "total": {
         "total_time": "total_travel_time",
-        "fw_time": "actual_first_waiting_times",
         "tw_time": "actual_total_waiting_times",
+        "fw_time": "actual_first_waiting_times",
     },
     "by_mode_subset": {
-        "num_board": "avg_boardings",
-        "board_time": "actual_total_boarding_times",
-        "board_cost": "actual_total_boarding_costs",
         "inv_time": "actual_in_vehicle_times",
         "aux_time": "actual_aux_transit_times",
+        "board_time": "actual_total_boarding_times",
+        "num_board": "avg_boardings",
+        "board_cost": "actual_total_boarding_costs",
     },
 }
 background_traffic_attr = "ul3"

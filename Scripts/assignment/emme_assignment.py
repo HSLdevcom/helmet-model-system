@@ -364,10 +364,10 @@ class EmmeAssignmentModel(AssignmentModel):
                         id = f"mf{id_hundred + id_ten[ass_class] + j}"
                         matrix_ids[subset][longer_name] = id
                         matrix_ids[longer_name] = id
-                        description = f"{mtx_type}_{ass_class}_{tag}"
                         self.emme_project.create_matrix(
-                            matrix_id=id, matrix_name=description,
-                            matrix_description=description,
+                            matrix_id=id,
+                            matrix_name=f"{mtx_type}_{ass_class}_{tag}",
+                            matrix_description=longer_name,
                             default_value=999999, overwrite=True)
             emme_matrices[ass_class] = matrix_ids
         return emme_matrices
