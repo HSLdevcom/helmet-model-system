@@ -63,8 +63,12 @@ def read_csv_file(data_dir, file_end, zone_numbers=None, dtype=None, squeeze=Fal
     if data.index.has_duplicates:
         raise IndexError("Index in file {} has duplicates".format(path))
     if zone_numbers is not None:
+        if not data.index.is_monotonic:
+            data.sort_index(inplace=True)
+            log.warn("File {} is not sorted in ascending order".format(path))
         map_path = os.path.join(data_dir, "zone_mapping.txt")
         if os.path.exists(map_path):
+            log_path = map_path
             mapping = pandas.read_csv(map_path, delim_whitespace=True).squeeze()
             if "total" in data.columns:
                 # If file contains total and shares of total,
@@ -77,22 +81,25 @@ def read_csv_file(data_dir, file_end, zone_numbers=None, dtype=None, squeeze=Fal
             else:
                 data = data.groupby(mapping).sum()
             data.index = data.index.astype(int)
-        if not data.index.is_monotonic:
-            data.sort_index(inplace=True)
-            log.warn("File {} is not sorted in ascending order".format(path))
+        else:
+            log_path = path
         if data.index.size != zone_numbers.size or (data.index != zone_numbers).any():
             for i in data.index:
                 if int(i) not in zone_numbers:
                     msg = "Zone number {} from file {} not found in network".format(
-                        i, path)
+                        i, log_path)
                     log.error(msg)
                     raise IndexError(msg)
             for i in zone_numbers:
                 if i not in data.index:
-                    msg = "Zone number {} not found in file {}".format(i, path)
+                    if log_path == map_path and i in mapping.array:
+                        # If mapping is ok, then error must be in data file
+                        log_path = path
+                        i = mapping[mapping == i].index[0]
+                    msg = "Zone number {} not found in file {}".format(i, log_path)
                     log.error(msg)
                     raise IndexError(msg)
-            msg = "Zone numbers did not match for file {}".format(path)
+            msg = "Zone numbers did not match for file {}".format(log_path)
             log.error(msg)
             raise IndexError(msg)
     if dtype is not None:
