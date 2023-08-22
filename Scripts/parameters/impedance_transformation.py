@@ -1,6 +1,9 @@
 ### IMPEDANCE TRANSFORMATION PARAMETERS ###
 
-transit_trips_per_month = {
+from typing import Dict, Tuple, Union
+
+
+transit_trips_per_month: Dict[str,Dict[str,Union[Tuple[float],Tuple[float,float]]]] = {
     "metropolitan": {
         "work": (60.0, 44.0),
         "leisure": (30.0, 30.0),

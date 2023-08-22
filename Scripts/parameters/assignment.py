@@ -1,6 +1,7 @@
 ### ASSIGNMENT PARAMETERS ###
 
 from collections import namedtuple
+from typing import Dict, List, Union
 RoadClass = namedtuple(
     "RoadClass",
     (
@@ -361,7 +362,7 @@ noise_zone_width = {
 }
 
 ### ASSIGNMENT REFERENCES ###
-time_periods = ("aht", "pt", "iht")
+time_periods: List[str] = ["aht", "pt", "iht"]
 transport_classes = (
     "car_work",
     "car_leisure",
@@ -451,7 +452,7 @@ segment_results = {
 congestion_cost = "ccost"
 uncongested_transit_time = "base_timtr"
 # Emme matrix IDs
-emme_demand_mtx = {
+emme_demand_mtx: Dict[str,Dict[str,Union[int,str]]]= {
     "car_work": {
         "id": 1,
         "description": "car work demand",
@@ -485,7 +486,7 @@ emme_demand_mtx = {
         "description": "van demand",
     },
 }
-emme_result_mtx = {
+emme_result_mtx: Dict[str,Dict[str,Dict[str,Union[int,str]]]] = {
     "time": {
         "car_work": {
             "id": 11,

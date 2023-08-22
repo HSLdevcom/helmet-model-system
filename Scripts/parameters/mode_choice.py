@@ -1,7 +1,10 @@
 ### MODE CHOICE PARAMETERS ###
 
 # Mode choice (calibrated 02.10.2020)
-mode_choice = {
+from typing import Any, Dict, Optional
+
+
+mode_choice: Dict[str, Optional[Dict[str, Dict[str, Any]]]] = {
     "hw": {
         "car": {
             "constant": (0.830938747727 * (0 + 0.278), 

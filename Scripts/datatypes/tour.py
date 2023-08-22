@@ -1,5 +1,11 @@
-import numpy
+from __future__ import annotations
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union, cast
+import numpy # type: ignore
 import random
+if TYPE_CHECKING:
+    from datatypes.purpose import TourPurpose
+    from datatypes.zone import Zone
+from models.logit import ModeDestModel
 
 import parameters.car as param
 import parameters.zone as zone_param
@@ -16,6 +22,8 @@ class Tour:
         Travel purpose (hw/hs/ho/...)
     origin : Zone or Tour
         Origin zone number or origin tour (if non-home tour)
+    person_id: 
+        id of Person
     """
     # Expansion factor used on demand in departure time model
     matrix = numpy.array([[1 / zone_param.agent_demand_fraction]])
@@ -23,10 +31,14 @@ class Tour:
             "total_access", "sustainable_access",
             "cost", "gen_cost"]
 
-    def __init__(self, purpose, origin, person_id):
+    def __init__(self, 
+                 purpose: TourPurpose, 
+                 origin: Union[Zone,'Tour'], 
+                 person_id: int):
         self.person_id = person_id
         self.purpose = purpose
         self.purpose_name = purpose.name
+        self.purpose.name = cast(str, self.purpose.name) #type checker help
         self.orig = origin
         try:
             self.sec_dest_prob = purpose.sec_dest_purpose.gen_model.param[purpose.name]
@@ -45,7 +57,7 @@ class Tour:
             return self.purpose.modes[self._mode_idx]
 
     @property
-    def is_car_passenger(self):
+    def is_car_passenger(self) -> bool:
         return self.mode == "car" and self._is_car_passenger
 
     @property
@@ -62,7 +74,7 @@ class Tour:
             self._non_home_position = ()
 
     @property
-    def dest(self):
+    def dest(self) -> Optional[int]:
         if len(self.position) > 1:
             return self.purpose.zone_data.zone_numbers[self.position[1]]
         else:
@@ -76,8 +88,9 @@ class Tour:
         )
 
     @property
-    def sec_dest(self):
+    def sec_dest(self) -> Optional[int]:
         if len(self.position) > 2:
+            self.position = cast(Tuple[int,int,int], self.position) #help for the type checker
             return self.purpose.zone_data.zone_numbers[self.position[2]]
         else:
             return None
@@ -91,7 +104,7 @@ class Tour:
         )
 
     @property
-    def position(self):
+    def position(self) -> Union[Tuple[int,int], Tuple[int,int,int]]:
         """Index position in matrix where to insert the demand.
 
         Returns
@@ -111,7 +124,7 @@ class Tour:
         else:
             self._non_home_position = position[1:]
 
-    def choose_mode(self, is_car_user):
+    def choose_mode(self, is_car_user: bool):
         """Choose tour travel mode.
 
         Assumes tour purpose model has already calculated probability matrices.
@@ -121,6 +134,7 @@ class Tour:
         is_car_user : bool
             Whether the person is car user or not
         """
+        self.purpose.model = cast(ModeDestModel, self.purpose.model) #type checker help
         probs, accessibility = self.purpose.model.calc_individual_mode_prob(
                 is_car_user, self.position[0])
         self._mode_idx = numpy.searchsorted(probs.cumsum(), self._mode_draw)
@@ -131,7 +145,7 @@ class Tour:
     def sustainable_access(self):
         return -self.purpose.sustainable_access[self.orig]
 
-    def choose_destination(self, sec_dest_tours):
+    def choose_destination(self, sec_dest_tours: Dict[str, Dict[int, Dict[int, List['Tour']]]]):
         """Choose primary destination for the tour.
 
         Assumes tour purpose model has already calculated probability matrices.
@@ -145,6 +159,7 @@ class Tour:
         """
         orig_idx = self.position[0]
         orig_rel_idx = orig_idx - self.purpose.bounds.start
+        self.purpose.model = cast(ModeDestModel, self.purpose.model) #type checker help
         dest_idx = numpy.searchsorted(
             self.purpose.model.cumul_dest_prob[self.mode][:, orig_rel_idx],
             self._dest_draw)
@@ -170,7 +185,7 @@ class Tour:
             dest_idx =- bounds.start
             sec_dest_tours[self.mode][orig_rel_idx][dest_idx].append(self)
 
-    def choose_secondary_destination(self, cumulative_probs):
+    def choose_secondary_destination(self, cumulative_probs: numpy.ndarray):
         """Choose secondary destination for the tour.
 
         Parameters
@@ -183,7 +198,7 @@ class Tour:
         self.position = (self.position[0], self.position[1], dest_idx)
         self.purpose.sec_dest_purpose.attracted_tours[self.mode][dest_idx] += 1
     
-    def calc_cost(self, impedance):
+    def calc_cost(self, impedance: Dict[str,Dict[str,Dict[str,numpy.ndarray]]]):
         """Construct cost and time components from tour dest choice.
 
         Parameters
@@ -195,15 +210,19 @@ class Tour:
         """
         time = self._get_cost(impedance, "time")
         self.cost = self._get_cost(impedance, "cost")
+        self.purpose_name = cast(str, self.purpose_name) #type checker help
         vot = 1 / vot_inv[assignment_classes[self.purpose_name]]
         self.gen_cost = self.cost + time * vot
 
-    def _get_cost(self, impedance, mtx_type):
+    def _get_cost(self, 
+                  impedance: Dict[str,Dict[str,Dict[str,numpy.ndarray]]], 
+                  mtx_type: str) -> Union[int,float]:
         """Get cost and time components from tour dest choice."""
+        self.purpose.name = cast(str, self.purpose.name) #type checker help
         demand_type = assignment_classes[self.purpose.name]
         ass_class = ("{}_{}".format(self.mode, demand_type)
             if self.mode in divided_classes else self.mode)
-        cost = 0
+        cost: float = 0.0
         try:
             if demand_type == "work":
                 departure_imp = impedance["aht"][mtx_type][ass_class]
@@ -217,6 +236,7 @@ class Tour:
             cost += departure_imp[self.position[0], self.position[1]]
             # check if tour has secondary destination and add accordingly
             if len(self.position) > 2:
+                self.position = cast(Tuple[int,int,int], self.position) #type checker help
                 cost += sec_dest_imp[self.position[1], self.position[2]]
                 cost += return_imp[self.position[2], self.position[0]]
             else: 
@@ -226,13 +246,14 @@ class Tour:
             # KeyErrors are produced when trying to access matrix
             pass
         # scale transit costs from month to day
+        self.purpose.area = cast(str, self.purpose.area) #type checker help
         if self.mode == "transit" and mtx_type == "cost":
             i = self.purpose.sub_intervals.searchsorted(
                 self.position[0], side="right")
             cost /= transit_trips_per_month[self.purpose.area][demand_type][i]
         return cost
 
-    def __str__(self):
+    def __str__(self) -> str:
         """ Return tour attributes as string.
 
         Returns

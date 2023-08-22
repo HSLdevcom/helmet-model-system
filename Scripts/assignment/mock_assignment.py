@@ -1,4 +1,9 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
+import numpy # type: ignore
 import pandas
+if TYPE_CHECKING:
+    from datahandling.matrixdata import MatrixData
 
 
 import utils.log as log
@@ -8,7 +13,7 @@ from assignment.abstract_assignment import AssignmentModel, Period
 
 
 class MockAssignmentModel(AssignmentModel):
-    def __init__(self, matrices, time_periods=param.time_periods):
+    def __init__(self, matrices: MatrixData, time_periods: List[str]=param.time_periods):
         self.matrices = matrices
         log.info("Reading matrices from " + str(self.matrices.path))
         self.result_mtx=param.emme_result_mtx
@@ -17,7 +22,7 @@ class MockAssignmentModel(AssignmentModel):
                                    for tp in time_periods]
 
     @property
-    def zone_numbers(self):
+    def zone_numbers(self) -> numpy.array:
         """Numpy array of all zone numbers.""" 
         with self.matrices.open("time", "aht") as mtx:
             zone_numbers = mtx.zone_numbers
@@ -31,7 +36,7 @@ class MockAssignmentModel(AssignmentModel):
         return mapping
 
     @property
-    def nr_zones(self):
+    def nr_zones(self) -> int:
         """int: Number of zones in assignment model."""
         return len(self.zone_numbers)
 
@@ -44,7 +49,7 @@ class MockAssignmentModel(AssignmentModel):
     def calc_noise(self):
         return pandas.Series(0, zone_param.area_aggregation)
 
-    def prepare_network(self, car_dist_unit_cost=None):
+    def prepare_network(self, car_dist_unit_cost: Optional[float]=None):
         pass
 
     def init_assign(self, demand):
@@ -52,7 +57,7 @@ class MockAssignmentModel(AssignmentModel):
 
 
 class MockPeriod(Period):
-    def __init__(self, name, matrices):
+    def __init__(self, name: str, matrices: MatrixData):
         self.name = name
         self.matrices = matrices
 
@@ -63,7 +68,9 @@ class MockPeriod(Period):
             zone_numbers = mtx.zone_numbers
         return zone_numbers
 
-    def assign(self, matrices, iteration=None):
+    def assign(self, 
+               matrices: Dict[str, numpy.ndarray], 
+               iteration: Optional[Union[int,str]]=None) -> Dict[str,Dict[str,numpy.ndarray]]:
         """Assign cars, bikes and transit for one time period.
         Get travel impedance matrices for one time period from assignment.
         
@@ -94,7 +101,7 @@ class MockPeriod(Period):
                                          * mtxs["dist"][ass_cl])
         return mtxs
     
-    def _get_matrices(self, mtx_type):
+    def _get_matrices(self, mtx_type: str) -> Dict[str, numpy.ndarray]:
         """Get all matrices of specified type.
         
         Parameters
