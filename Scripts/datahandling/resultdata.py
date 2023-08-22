@@ -1,4 +1,6 @@
+from __future__ import annotations
 import os
+from typing import Any, Dict
 import pandas
 try:
     from openpyxl import Workbook, load_workbook
@@ -11,13 +13,13 @@ class ResultsData:
     """
     Saves all result data to same folder.
     """
-    def __init__(self, results_directory_path):
+    def __init__(self, results_directory_path: str):
         if not os.path.exists(results_directory_path):
             os.makedirs(results_directory_path)
         self.path = results_directory_path
-        self._line_buffer = {}
-        self._df_buffer = {}
-        self._xlsx_buffer = {}
+        self._line_buffer: Dict[str, Any] = {}
+        self._df_buffer: Dict[str, Any] = {}
+        self._xlsx_buffer: Dict[str, Any] = {}
 
     def flush(self):
         """Save to files and empty buffers."""
@@ -34,7 +36,7 @@ class ResultsData:
                 os.path.join(self.path, "{}.xlsx".format(filename)))
         self._xlsx_buffer = {}
 
-    def print_data(self, data, filename, colname):
+    def print_data(self, data: pandas.Series, filename: str, colname: str):
         """Save data to DataFrame buffer (printed to text file when flushing).
 
         Parameters
@@ -54,7 +56,7 @@ class ResultsData:
                 df.index.union(data.index), copy=False)
             self._df_buffer[filename][colname] = data
 
-    def print_line(self, line, filename):
+    def print_line(self, line: str, filename: str):
         """Write text to line in file (closed when flushing).
 
         Parameters
@@ -72,7 +74,7 @@ class ResultsData:
             self._line_buffer[filename] = buffer
         buffer.write(line + "\n")
 
-    def print_matrix(self, data, filename, sheetname):
+    def print_matrix(self, data: pandas.DataFrame, filename: str, sheetname: str):
         """Save 2-d matrix data to buffer (printed to file when flushing).
 
         Saves matrix both in Excel format and as list in text file.

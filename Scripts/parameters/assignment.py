@@ -1,6 +1,7 @@
 ### ASSIGNMENT PARAMETERS ###
 
 from collections import namedtuple
+from typing import Dict, List, Union
 RoadClass = namedtuple(
     "RoadClass",
     (
@@ -361,7 +362,7 @@ noise_zone_width = {
 }
 
 ### ASSIGNMENT REFERENCES ###
-time_periods = ("aht", "pt", "iht")
+time_periods: List[str] = ["aht", "pt", "iht"]
 transport_classes = (
     "car_work",
     "car_leisure",

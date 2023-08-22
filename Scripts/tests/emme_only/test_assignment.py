@@ -3,15 +3,20 @@
 
 import os
 import logging
+import utils.log as log
 import numpy
 
 import assignment.emme_assignment as ass
 from datahandling.zonedata import ZoneData
 from datahandling.matrixdata import MatrixData
 from datahandling.resultdata import ResultsData
-from assignment.emme_bindings.emme_project import EmmeProject
-import inro.emme.desktop.app as _app
-import inro.emme.database.emmebank as _eb
+try:
+    from assignment.emme_bindings.emme_project import EmmeProject
+    import inro.emme.desktop.app as _app
+    import inro.emme.database.emmebank as _eb
+    emme_available = True
+except ImportError:
+    emme_available = False
 
 
 class EmmeAssignmentTest:
@@ -26,6 +31,7 @@ class EmmeAssignmentTest:
         project_dir = os.path.join(
             os.path.dirname(os.path.realpath('__file__')),
             "tests", "test_data", "Results")
+        log.info(str(project_dir))
         project_name = "test_assignment"
         db_dir = os.path.join(project_dir, project_name, "Database")
         try:
@@ -88,13 +94,13 @@ class EmmeAssignmentTest:
             travel_cost[ap.name]["time"]["transit_uncongested"] = travel_cost[ap.name]["time"]["transit_work"]
         resultdata = ResultsData(os.path.join(
             os.path.dirname(os.path.realpath(__file__)),
-            "tests", "test_data", "Results", "assignment"))
+            "..","test_data", "Results", "assignment"))
         self.ass_model.aggregate_results(resultdata)
         self.ass_model.calc_noise()
         resultdata.flush()
         costs_files = MatrixData(os.path.join(
             os.path.dirname(os.path.realpath(__file__)),
-            "tests", "test_data", "Results", "assignment", "Matrices"))
+            "..","test_data", "Results", "assignment", "Matrices"))
         for time_period in travel_cost:
             for mtx_type in travel_cost[time_period]:
                 zone_numbers = self.ass_model.zone_numbers
@@ -105,11 +111,11 @@ class EmmeAssignmentTest:
 
     def test_transit_cost(self):
         zdata = ZoneData(os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), "tests", "test_data",
+            os.path.dirname(os.path.realpath(__file__)), "..", "test_data",
             "Scenario_input_data", "2030_test"), self.ass_model.zone_numbers)
         peripheral_cost = numpy.ones((1, 10))
         self.ass_model.calc_transit_cost(zdata.transit_zone, peripheral_cost)
 
-
-em = EmmeAssignmentTest()
-em.test_assignment()
+if emme_available:
+    em = EmmeAssignmentTest()
+    em.test_assignment()

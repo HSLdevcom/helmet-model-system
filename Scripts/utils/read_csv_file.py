@@ -1,13 +1,18 @@
 from decimal import DivisionByZero
 from itertools import groupby
 import os
+from typing import Optional
 import pandas
-import numpy
+import numpy # type: ignore
 
 import utils.log as log
 
 
-def read_csv_file(data_dir, file_end, zone_numbers=None, dtype=None, squeeze=False):
+def read_csv_file(data_dir: str, 
+                  file_end: str, 
+                  zone_numbers: Optional[numpy.ndarray] = None, 
+                  dtype: Optional[numpy.dtype] = None, 
+                  squeeze: bool=False) -> pandas.DataFrame:
     """Read (zone) data from space-separated file.
     
     Parameters
@@ -42,11 +47,11 @@ def read_csv_file(data_dir, file_end, zone_numbers=None, dtype=None, squeeze=Fal
         msg = "No {} file found in folder {}".format(file_end, data_dir)
         # This error should not be logged, as it is sometimes excepted
         raise NameError(msg)
-    header = None if squeeze else "infer"
-    data = pandas.read_csv(
+    header: Optional[str] = None if squeeze else "infer"
+    data: pandas.DataFrame = pandas.read_csv(
         path, delim_whitespace=True, squeeze=squeeze, keep_default_na=False,
         na_values="", comment='#', header=header)
-    if data.index.is_numeric() and data.index.hasnans:
+    if data.index.is_numeric() and data.index.hasnans: # type: ignore
         msg = "Row with only spaces or tabs in file {}".format(path)
         log.error(msg)
         raise IndexError(msg)

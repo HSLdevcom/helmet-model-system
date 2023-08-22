@@ -1,5 +1,10 @@
-import numpy
+from __future__ import annotations
+from typing import TYPE_CHECKING, List, Optional, Tuple
+import numpy # type: ignore
 import pandas
+if TYPE_CHECKING:
+    from datahandling.resultdata import ResultsData
+    from datahandling.zonedata import ZoneData
 
 from models.logit import LogitModel
 from parameters.car import car_usage
@@ -15,7 +20,7 @@ class CarUseModel(LogitModel):
         Data used for all demand calculations
     bounds : slice
         Zone bounds
-    age_groups : tuple
+    age_groups : list
         tuple
             int
                 Age intervals
@@ -23,7 +28,11 @@ class CarUseModel(LogitModel):
         Writer object to result directory
     """
 
-    def __init__(self, zone_data, bounds, age_groups, resultdata):
+    def __init__(self, 
+                 zone_data: ZoneData, 
+                 bounds: slice, 
+                 age_groups: List[Tuple[int,int]], 
+                 resultdata: ResultsData):
         self.resultdata = resultdata
         self.zone_data = zone_data
         self.bounds = bounds
@@ -46,7 +55,7 @@ class CarUseModel(LogitModel):
             raise AttributeError(
                 "Car use dummy name {} not valid".format(age_interval))
 
-    def calc_basic_prob(self):
+    def calc_basic_prob(self) -> numpy.ndarray:
         """Calculate car user probabilities without individual dummies.
 
         Returns
@@ -63,7 +72,7 @@ class CarUseModel(LogitModel):
         prob = self.exps / (self.exps+1)
         return prob
 
-    def calc_prob(self):
+    def calc_prob(self) -> pandas.Series:
         """Calculate car user probabilities with individual dummies included.
 
         Returns
@@ -74,10 +83,10 @@ class CarUseModel(LogitModel):
         prob = self.calc_basic_prob()
         no_dummy_share = 1
         dummy_prob = 0
-        b = self.param
+        b = self.param # ???types
         for i in b["individual_dummy"]:
             try:
-                dummy_share = self.zone_data.get_data(
+                dummy_share:numpy.ndarray = self.zone_data.get_data(
                     "share_"+i, self.bounds, generation=True)
             except TypeError:
                 # If the dummy is for a compound segment (age + gender)
@@ -96,7 +105,10 @@ class CarUseModel(LogitModel):
         self.print_results(prob)
         return prob
 
-    def calc_individual_prob(self, age_group, gender, zone=None):
+    def calc_individual_prob(self, 
+                             age_group: str, 
+                             gender: str, 
+                             zone: Optional[int] = None):
         """Calculate car user probability with individual dummies included.
 
         Uses results from previously run `calc_basic_prob()`.
@@ -129,7 +141,9 @@ class CarUseModel(LogitModel):
         prob = exp / (exp+1)
         return prob
 
-    def print_results(self, prob, population_7_99=None):
+    def print_results(self, 
+                      prob: pandas.Series, 
+                      population_7_99: Optional[pandas.Series]=None):
         """ Print results, mainly for calibration purposes"""
         # Print car user share by zone
         self.resultdata.print_data(prob, "car_use.txt", "car_use")

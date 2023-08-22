@@ -1,4 +1,4 @@
-import numpy
+import numpy # type: ignore
 
 import parameters.tour_generation as param
 

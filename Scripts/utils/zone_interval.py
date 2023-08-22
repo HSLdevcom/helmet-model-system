@@ -1,6 +1,6 @@
-import numpy
+import numpy # type: ignore
 import pandas
-from shapely.geometry import Point, Polygon
+from shapely.geometry import Point, Polygon # type: ignore
 
 import parameters.zone as param
 import utils.log as log

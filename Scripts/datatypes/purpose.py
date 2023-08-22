@@ -1,5 +1,9 @@
-import numpy
+from __future__ import annotations
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, cast
+import numpy # type: ignore
 import pandas
+from datahandling.resultdata import ResultsData
+from datahandling.zonedata import ZoneData
 
 import parameters.zone as param
 from parameters.destination_choice import secondary_destination_threshold
@@ -30,12 +34,17 @@ class Purpose:
         Data used for all demand calculations
     """
 
-    def __init__(self, specification, zone_data, resultdata=None):
+    def __init__(self, 
+                 specification: Dict[str,Optional[str]], 
+                 zone_data: ZoneData, 
+                 resultdata: Optional[ResultsData]=None):
         self.name = specification["name"]
         self.orig = specification["orig"]
         self.dest = specification["dest"]
         self.area = specification["area"]
-        self.sources = []
+        self.name = cast(str, self.name) #type checker help
+        self.area = cast(str, self.area) #type checker help
+        self.sources: List[Any] = []
         zone_numbers = zone_data.all_zone_numbers
         zone_intervals = param.purpose_areas[self.area]
         self.bounds = slice(*zone_numbers.searchsorted(
@@ -47,9 +56,9 @@ class Purpose:
         self.zone_data = zone_data
         self.resultdata = resultdata
         self.model = None
-        self.modes = []
-        self.generated_tours = {}
-        self.attracted_tours = {}
+        self.modes: List[str] = []
+        self.generated_tours: Dict[str, numpy.array] = {}
+        self.attracted_tours: Dict[str, numpy.array] = {}
 
     @property
     def zone_numbers(self):
@@ -101,7 +110,7 @@ class TourPurpose(Purpose):
         else:
             self.gen_model = generation.GenerationModel(self, resultdata)
         if self.name == "sop":
-            self.model = logit.OriginModel(zone_data, self, resultdata)
+            self.model: Union[logit.OriginModel, logit.DestModeModel, logit.ModeDestModel] = logit.OriginModel(zone_data, self, resultdata)
         elif self.name == "so":
             self.model = logit.DestModeModel(zone_data, self, resultdata)
         else:

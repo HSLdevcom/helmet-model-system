@@ -1,4 +1,4 @@
-import numpy
+import numpy # type: ignore
 import pandas
 import math
 
