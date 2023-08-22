@@ -6,7 +6,6 @@ from assignment.mock_assignment import MockAssignmentModel
 from datahandling.matrixdata import MatrixData
 from utils.validate_network import validate
 from utils.validate_loaded_network import validate_loaded
-from utils.network import add_bus_stops, add_noboa_noali
 from parameters.assignment import time_periods
 import parameters.zone as zone_param
 import copy
@@ -170,7 +169,6 @@ class EmmeAssignmentTest(unittest.TestCase):
             line[hdwy] = 5.0
         line._segments[0].data1 = 0
         line._segments[1].data1 = 0
-        add_noboa_noali(network)
         line._segments[0].allow_boardings = 0
         line._segments[0].allow_alightings = 0
         line._segments[1].allow_boardings = 1
@@ -202,7 +200,6 @@ class EmmeAssignmentTest(unittest.TestCase):
             line[hdwy] = 5.0
         line._segments[0].data1 = 5
         line._segments[1].data1 = 0
-        #add_bus_stops(network)
         line._segments[0].allow_boardings = 0
         line._segments[0].allow_alightings = 0
         line._segments[1].allow_boardings = 0
