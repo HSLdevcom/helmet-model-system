@@ -5,7 +5,7 @@ from utils.zone_interval import is_in
 class Zone:
     counter = 0
 
-    def __init__(self, number):
+    def __init__(self, number: int):
         self.number = number
         self.index = Zone.counter
         Zone.counter += 1

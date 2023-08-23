@@ -1,5 +1,10 @@
-import numpy
+from __future__ import annotations
+from typing import TYPE_CHECKING
+import numpy # type: ignore
 import pandas
+if TYPE_CHECKING:
+    from datahandling.matrixdata import MatrixData
+    from datahandling.zonedata import ZoneData
 
 import parameters.tour_generation as param
 from utils.freight import fratar, calibrate
@@ -20,7 +25,10 @@ class FreightModel:
         Base demand matrices
     """
 
-    def __init__(self, zone_data_base, zone_data_forecast, base_demand):
+    def __init__(self, 
+                 zone_data_base: ZoneData, 
+                 zone_data_forecast: ZoneData, 
+                 base_demand: MatrixData):
         self.zdata_b = zone_data_base
         self.zdata_f = zone_data_forecast
         self.base_demand = base_demand
@@ -32,7 +40,7 @@ class FreightModel:
         }
         self.purpose = Purpose(spec, zone_data_base)
 
-    def calc_freight_traffic(self, mode):
+    def calc_freight_traffic(self, mode: str) -> Demand:
         """Calculate freight traffic matrix.
 
         Parameters
@@ -47,8 +55,8 @@ class FreightModel:
         """
         zone_data_base = self.zdata_b.get_freight_data()
         zone_data_forecast = self.zdata_f.get_freight_data()
-        production_base = self._generate_trips(zone_data_base, mode)
-        production_forecast = self._generate_trips(zone_data_forecast, mode)
+        production_base: numpy.ndarray = self._generate_trips(zone_data_base, mode)
+        production_forecast: numpy.ndarray = self._generate_trips(zone_data_forecast, mode)
         zone_numbers = self.zdata_b.zone_numbers
         with self.base_demand.open("freight", "vrk", list(zone_numbers)) as mtx:
             # Remove zero values
@@ -98,6 +106,8 @@ class FreightModel:
             demand.loc[self.zdata_f.trailers_prohibited] = 0
         return Demand(self.purpose, mode, demand.values)
 
-    def _generate_trips(self, zone_data, mode):
+    def _generate_trips(self, 
+                        zone_data: pandas.DataFrame, 
+                        mode: str) -> numpy.ndarray:
         b = pandas.Series(param.tour_generation[mode])
         return (b * zone_data).sum(1) + 0.001

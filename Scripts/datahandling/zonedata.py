@@ -1,4 +1,6 @@
-import numpy
+from __future__ import annotations
+from typing import Any, Dict, List, Tuple, Union
+import numpy # type: ignore
 import pandas
 
 import parameters.zone as param
@@ -10,8 +12,8 @@ from assignment.datatypes.transit_fare import TransitFareZoneSpecification
 
 
 class ZoneData:
-    def __init__(self, data_dir, zone_numbers):
-        self._values = {}
+    def __init__(self, data_dir: str, zone_numbers: numpy.array):
+        self._values: Dict[str,Any]= {}
         self.share = ShareChecker(self)
         all_zone_numbers = numpy.array(zone_numbers)
         self.all_zone_numbers = all_zone_numbers
@@ -114,7 +116,7 @@ class ZoneData:
     def __getitem__(self, key):
         return self._values[key]
 
-    def __setitem__(self, key, data):
+    def __setitem__(self, key: str, data: Any):
         try:
             if not numpy.isfinite(data).all():
                 for (i, val) in data.iteritems():
@@ -144,7 +146,8 @@ class ZoneData:
                     raise ValueError(msg)
         self._values[key] = data
 
-    def zone_index(self, zone_number):
+    def zone_index(self, 
+                   zone_number: int) -> int:
         """Get index of given zone number.
 
         Parameters
@@ -159,7 +162,7 @@ class ZoneData:
         """
         return self.zones[zone_number].index
 
-    def get_freight_data(self):
+    def get_freight_data(self) -> pandas.DataFrame:
         """Get zone data for freight traffic calculation.
         
         Returns
@@ -177,15 +180,15 @@ class ZoneData:
         data = {k: self._values[k] for k in freight_variables}
         return pandas.DataFrame(data)
 
-    def get_data(self, key, bounds, generation=False):
+    def get_data(self, key: str, bounds: slice, generation: bool=False) -> Union[pandas.Series, numpy.ndarray]:
         """Get data of correct shape for zones included in purpose.
         
         Parameters
         ----------
         key : str
             Key describing the data (e.g., "population")
-        bounds : tuple
-            Two integers that describe the lower and upper bounds of purpose
+        bounds : slice
+            Slice that describes the lower and upper bounds of purpose
         generation : bool, optional
             If set to True, returns data only for zones in purpose,
             otherwise returns data for all zones
@@ -197,12 +200,12 @@ class ZoneData:
         try:
             val = self._values[key]
         except KeyError as err:
-            key = key.split('_')
-            if key[1] in ("own", "other"):
+            keyl: List[str] = key.split('_')
+            if keyl[1] in ("own", "other"):
                 # If parameter is only for own municipality or for all
                 # municipalities except own, array is multiplied by
                 # bool matrix
-                return (self[key[1]] * self._values[key[0]].values)[bounds, :]
+                return (self[keyl[1]] * self._values[keyl[0]].values)[bounds, :]
             else:
                 raise KeyError(err)
         if val.ndim == 1: # If not a compound (i.e., matrix)
@@ -215,7 +218,7 @@ class ZoneData:
 
 
 class BaseZoneData(ZoneData):
-    def __init__(self, data_dir, zone_numbers):
+    def __init__(self, data_dir: str, zone_numbers: numpy.array):
         ZoneData.__init__(self, data_dir, zone_numbers)
         cardata = read_csv_file(data_dir, ".car", self.zone_numbers)
         self["car_density"] = cardata["cardens"]

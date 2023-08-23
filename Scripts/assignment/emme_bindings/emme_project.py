@@ -1,8 +1,13 @@
+from __future__ import annotations
 import os
+from typing import Any, Optional, cast, TYPE_CHECKING
 import utils.log as log
 import logging
-import inro.emme.desktop.app as _app
-import inro.modeller as _m
+import inro.emme.desktop.app as _app # type: ignore
+import inro.modeller as _m # type: ignore
+if TYPE_CHECKING:
+    #The following one is likely in different location
+    from inro.modeller import ContentManager # type: ignore
 
 
 class EmmeProject:
@@ -18,8 +23,11 @@ class EmmeProject:
     emmebank_path : str (optional)
         Path to emmebank file (if EMME project is not initialized)
     """
-    def __init__(self, project_path, emmebank_path=None):
+    def __init__(self, 
+                 project_path: str, 
+                 emmebank_path: Optional[str] = None):
         log.info("Starting Emme...")
+        if TYPE_CHECKING: self.cm: Optional[ContentManager] = None #type checker hint
         emme_desktop = _app.start_dedicated(
             project=project_path, visible=False, user_initials="HSL")
         if emmebank_path is not None:
@@ -59,10 +67,12 @@ class EmmeProject:
         self.create_extra_attribute = self.modeller.tool(
             "inro.emme.data.extra_attribute.create_extra_attribute")
     
-    def write(self, message):
+    def write(self, message: str):
         """Write to logbook."""
         # _m.logbook_write(message)
+
         try:
+            if TYPE_CHECKING: self.cm = cast(ContentManager, self.cm)
             self.cm.__exit__(None, None, None)
         except AttributeError:
             pass

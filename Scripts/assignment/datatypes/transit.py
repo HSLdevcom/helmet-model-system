@@ -1,3 +1,5 @@
+from __future__ import annotations
+from typing import Any, Dict, Union
 import parameters.assignment as param
 from assignment.datatypes.path_analysis import PathAnalysis
 from assignment.datatypes.journey_level import JourneyLevel
@@ -38,15 +40,20 @@ class TransitSpecification:
     count_zone_boardings : bool (optional)
         Whether assignment is performed only to count fare zone boardings
     """
-    def __init__(self, segment_results, headway_attribute,
-                 demand_mtx_id, time_mtx_id, dist_mtx_id, trip_part,
-                 count_zone_boardings=False):
+    def __init__(self, 
+                 segment_results: Dict[str,str], 
+                 headway_attribute: str,
+                 demand_mtx_id: Union[int,str], 
+                 time_mtx_id: Union[int,str], 
+                 dist_mtx_id: Union[int,str], 
+                 trip_part: Dict[str,Dict[str,Dict]],
+                 count_zone_boardings: bool = False):
         no_penalty = dict.fromkeys(["at_nodes", "on_lines", "on_segments"])
         no_penalty["global"] = {
             "penalty": 0, 
             "perception_factor": 1,
         }
-        self.transit_spec = {
+        self.transit_spec: Dict[str, Any] = {
             "type": "EXTENDED_TRANSIT_ASSIGNMENT",
             "modes": param.transit_assignment_modes,
             "demand": demand_mtx_id,
@@ -93,7 +100,7 @@ class TransitSpecification:
                 headway_attribute, boarded=False, count_zone_boardings=True)
             jlevel2 = JourneyLevel(
                 headway_attribute, boarded=True, count_zone_boardings=True)
-            mtx_results_spec = {
+            mtx_results_spec: Dict[str, Any] = {
                 "type": "EXTENDED_TRANSIT_MATRIX_RESULTS",
                 "by_mode_subset": {
                     "modes": param.transit_modes,

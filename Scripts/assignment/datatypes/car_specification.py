@@ -1,5 +1,8 @@
+from __future__ import annotations
+from typing import Any, Dict, List, Union
 import parameters.assignment as param
 from assignment.datatypes.car import Car
+from collections.abc import Callable
 
 class CarSpecification:
     """
@@ -7,6 +10,7 @@ class CarSpecification:
 
     Parameters
     ----------
+    extra: AssignmentPeriod method
     demand_mtx : dict
         key : str
             Assignment class (transit_work/transit_leisure)
@@ -27,7 +31,10 @@ class CarSpecification:
                 description : dict
                     Matrix description
     """
-    def __init__(self, extra, demand_mtx, result_mtx):
+    def __init__(self, 
+                 extra: Callable, 
+                 demand_mtx: Dict[str, Dict[str, Dict[str, Union[int, str]]]], 
+                 result_mtx: Dict[str, Dict[str, Dict[str, Union[int, str]]]]):
         self.car_work = Car(
             "car_work", extra, demand_mtx, result_mtx,
             link_costs=extra("total_cost"))
@@ -45,7 +52,7 @@ class CarSpecification:
             "trailer_truck", extra, demand_mtx, result_mtx,
             value_of_time_inv=param.freight_dist_unit_time,
             link_costs="length")
-        self._spec = {
+        self._spec: Dict[str, Any]= {
             "type": "SOLA_TRAFFIC_ASSIGNMENT",
             "background_traffic": {
                 "link_component": param.background_traffic_attr,
@@ -55,7 +62,8 @@ class CarSpecification:
             "stopping_criteria": None, # This is defined later
         }
 
-    def spec (self, lightweight=False):
+    def spec (self, 
+              lightweight: bool = False) -> Dict[str, Any]:
         if lightweight:
             self._spec["classes"] = [
                 self.car_work.spec,

@@ -1,5 +1,8 @@
+from typing import Optional, Union
+
+
 class PathAnalysis:
-    def __init__(self, link_component, od_values=None):
+    def __init__(self, link_component:str, od_values:Optional[Union[str,int]]=None):
         self.spec = {
             "link_component": link_component,
             "operator": "+",
