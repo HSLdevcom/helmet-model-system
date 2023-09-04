@@ -1,6 +1,5 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, cast
-import numpy # type: ignore
 import pandas
 from math import log10
 
@@ -75,6 +74,12 @@ class EmmeAssignmentModel(AssignmentModel):
                 overwrite=True, copy_paths=False, copy_strategies=False)
         else:
             self.day_scenario = self.mod_scenario
+        matrix_types = tuple({mtx_type: None for ass_class
+            in param.emme_matrices.values() for mtx_type in ass_class})
+        ten = max(10, len(param.emme_matrices))
+        id_ten = {result_type: i*ten for i, result_type
+            in enumerate(matrix_types + param.transit_classes)}
+        hundred = max(100, ten*len(matrix_types + param.transit_classes))
         self.assignment_periods = []
         for i, tp in enumerate(self.time_periods):
             if self.separate_emme_scenarios:
@@ -85,34 +90,12 @@ class EmmeAssignmentModel(AssignmentModel):
                     overwrite=True, copy_paths=False, copy_strategies=False)
             else:
                 scen_id = self.mod_scenario.number
+            if i == 0 or self.save_matrices:
+                emme_matrices = self._create_matrices(
+                    tp, i*hundred + self.first_matrix_id, id_ten)
             self.assignment_periods.append(AssignmentPeriod(
-                tp, scen_id, self.emme_project,
-                save_matrices=self.save_matrices,
+                tp, scen_id, self.emme_project, emme_matrices,
                 separate_emme_scenarios=self.separate_emme_scenarios))
-        for i, ap in enumerate(self.assignment_periods):
-            tag = ap.name if self.save_matrices else ""
-            id_hundred = 100*i + self.first_matrix_id
-            for ass_class in ap.demand_mtx:
-                mtx: Dict[str, Any] = ap.demand_mtx[ass_class]
-                mtx["id"] = "mf{}".format(id_hundred + int(mtx["id"])) #type checker hint - int(var)
-                self.emme_project.create_matrix(
-                    matrix_id=mtx["id"],
-                    matrix_name="demand_{}_{}".format(ass_class, tag),
-                    matrix_description="{} {}".format(mtx["description"], tag),
-                    default_value=0, overwrite=True)
-            for mtx_type in ap.result_mtx:
-                mtx = ap.result_mtx[mtx_type]
-                for ass_class in mtx:
-                    mtx[ass_class]["id"] = "mf{}".format(
-                        id_hundred + int(mtx[ass_class]["id"])) #type checker hint - int(var)
-                    self.emme_project.create_matrix(
-                        matrix_id=mtx[ass_class]["id"],
-                        matrix_name="{}_{}_{}".format(mtx_type, ass_class, tag),
-                        matrix_description="{} {}".format(
-                            mtx[ass_class]["description"], tag),
-                        default_value=999999, overwrite=True)
-            if not self.save_matrices:
-                break
         self._create_attributes(self.day_scenario, self._extra)
         for ap in self.assignment_periods:
             if car_dist_unit_cost is not None:
@@ -174,7 +157,8 @@ class EmmeAssignmentModel(AssignmentModel):
                 if res != "transit_volumes":
                     self._node_24h(
                         transit_class, param.segment_results[res])
-        ass_classes = list(param.emme_demand_mtx) + ["bus", "aux_transit"]
+        ass_classes = list(param.emme_matrices) + ["bus", "aux_transit"]
+        ass_classes.remove("walk")
         for ass_class in ass_classes:
             self._link_24h(ass_class)
 
@@ -297,7 +281,7 @@ class EmmeAssignmentModel(AssignmentModel):
             cost = default_cost
         for ap in self.assignment_periods:
             for transit_class in param.transit_classes:
-                idx = ap.result_mtx["cost"][transit_class]["id"]
+                idx = ap.emme_matrices[transit_class]["cost"]
                 emmebank.matrix(idx).set_numpy_data(cost, ap.emme_scenario.id)
             if not self.save_matrices:
                 break
@@ -307,12 +291,11 @@ class EmmeAssignmentModel(AssignmentModel):
                      ass_class: str, 
                      ass_period_1: AssignmentPeriod, 
                      ass_period_2: AssignmentPeriod):
-        from_mtx = ass_period_1.result_mtx[mtx_type][ass_class]
-        to_mtx = ass_period_2.result_mtx[mtx_type][ass_class]
+        from_mtx = ass_period_1.emme_matrices[ass_class][mtx_type]
+        to_mtx = ass_period_2.emme_matrices[ass_class][mtx_type]
+        description = f"{mtx_type}_{ass_class}_{ass_period_2.name}"
         self.emme_project.copy_matrix(
-            from_mtx["id"], to_mtx["id"],
-            "{}_{}_{}".format(mtx_type, ass_class, ass_period_2.name),
-            "{} {}".format(to_mtx["description"], ass_period_2.name))
+            from_mtx, to_mtx, description, description)
 
     def _extra(self, attr: str) -> str:
         """Add prefix "@" and suffix "_vrk".
@@ -355,6 +338,62 @@ class EmmeAssignmentModel(AssignmentModel):
                         segment.allow_boardings = is_stop
         self.mod_scenario.publish_network(network)
 
+    def _create_matrices(self, time_period, id_hundred, id_ten):
+        """Create EMME matrices for storing demand and impedance.
+
+        Parameters
+        ----------
+        time_period : str
+            Time period name (aht, pt, iht)
+        id_hundred : int
+            A new hundred in the matrix id space marks new assignment period
+        id_ten : dict
+            key : str
+                Matrix type (demand/time/cost/dist/...)
+            value : int
+                A new ten in the matrix id space marks new type of matrix
+
+        Returns
+        -------
+        dict
+            key : str
+                Assignment class (car_work/transit_leisure/...)
+            value : dict
+                key : str
+                    Matrix type (demand/time/cost/dist/...)
+                value : str
+                    EMME matrix id
+        """
+        tag = time_period if self.save_matrices else ""
+        emme_matrices = {}
+        for i, ass_class in enumerate(param.emme_matrices, start=1):
+            matrix_ids = {}
+            for mtx_type in param.emme_matrices[ass_class]:
+                matrix_ids[mtx_type] = "mf{}".format(
+                    id_hundred + id_ten[mtx_type] + i)
+                description = f"{mtx_type}_{ass_class}_{tag}"
+                default_value = 0 if mtx_type == "demand" else 999999
+                self.emme_project.create_matrix(
+                    matrix_id=matrix_ids[mtx_type],
+                    matrix_name=description, matrix_description=description,
+                    default_value=default_value, overwrite=True)
+            if ass_class in param.transit_classes:
+                j = 0
+                for subset, parts in param.transit_impedance_matrices.items():
+                    matrix_ids[subset] = {}
+                    for mtx_type, longer_name in parts.items():
+                        j += 1
+                        id = f"mf{id_hundred + id_ten[ass_class] + j}"
+                        matrix_ids[subset][longer_name] = id
+                        matrix_ids[longer_name] = id
+                        self.emme_project.create_matrix(
+                            matrix_id=id,
+                            matrix_name=f"{mtx_type}_{ass_class}_{tag}",
+                            matrix_description=longer_name,
+                            default_value=999999, overwrite=True)
+            emme_matrices[ass_class] = matrix_ids
+        return emme_matrices
+
     def _create_attributes(self, 
                            scenario: Any, 
                            extra: Callable[[str], str]) -> Dict[str,Dict[str,str]]:
@@ -369,8 +408,10 @@ class EmmeAssignmentModel(AssignmentModel):
             (e.g., self._extra)
         """
         # Create link attributes
+        ass_classes = list(param.emme_matrices) + ["bus"]
+        ass_classes.remove("walk")
         if TYPE_CHECKING: scenario = cast(Scenario, scenario)
-        for ass_class in list(param.emme_demand_mtx) + ["bus"]:
+        for ass_class in ass_classes:
             self.emme_project.create_extra_attribute(
                 "LINK", extra(ass_class), ass_class + " volume",
                 overwrite=True, scenario=scenario)

@@ -71,11 +71,14 @@ class MockProject:
                       default_value=0, 
                       overwrite=False):
         try:
-            self.modeller.emmebank.create_matrix(matrix_id, default_value)
+            mtx = self.modeller.emmebank.create_matrix(
+                matrix_id, default_value)
         except ExistenceError:
             if overwrite:
-                self.modeller.emmebank.matrix(matrix_id).set_numpy_data(
-                    default_value)
+                mtx = self.modeller.emmebank.matrix(matrix_id)
+                mtx.set_numpy_data(default_value)
+        mtx.name = matrix_name
+        mtx.description = matrix_description
 
     def create_extra_attribute(self, 
                                extra_attribute_type: str,
@@ -480,6 +483,32 @@ class Matrix:
     def __init__(self, idx: int, dim: int, default_value: Union[int, float]):
         self.id = idx
         self._data = numpy.full((dim, dim), default_value, dtype=float)
+        self._name = ""
+        self._description = ""
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, matrix_name):
+        if len(matrix_name) > 40:
+            raise ArgumentError(
+                "matrix_name: expected a string with maximum length 40")
+        else:
+            self._name = matrix_name
+
+    @property
+    def description(self):
+        return self._description
+
+    @description.setter
+    def description(self, matrix_description):
+        if len(matrix_description) > 80:
+            raise ArgumentError(
+                "matrix_description: expected a string with maximum length 80")
+        else:
+            self._description = matrix_description
 
     def get_numpy_data(self, scenario_id: Optional[int]=None):
         return self._data
