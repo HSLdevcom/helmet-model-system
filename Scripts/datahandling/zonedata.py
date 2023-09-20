@@ -33,7 +33,7 @@ class ZoneData:
         parkdata = read_csv_file(data_dir, ".prk", self.zone_numbers, dtype)
         self.externalgrowth = read_csv_file(
             data_dir, ".ext",
-            all_zone_numbers[all_zone_numbers.searchsorted(external[0]):],
+            all_zone_numbers[all_zone_numbers.searchsorted(external[0]):all_zone_numbers.searchsorted(external[1],side='right')],
             dtype)
         transit = read_csv_file(data_dir, ".tco")
         try:
