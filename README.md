@@ -144,7 +144,8 @@ Alternatively, you can run the mock assignment with the help of command line
     - `"RESULTS_PATH": "YOUR_PATH\\helmet-model-system\\Scripts\\tests\\test_data\\Results"`,
     - `"BASELINE_DATA_PATH": "YOUR_PATH\\helmet-model-system\\Scripts\\tests\\test_data\\Base_input_data"`,
     - `"FORECAST_DATA_PATH": "YOUR_PATH\\helmet-model-system\\Scripts\\tests\\test_data\\Scenario_input_data\\2030_test"`,
-3. Type the following to the command line: `pipenv run python helmet.py -m`
+3. Type the following to the command line: `pipenv run python helmet.py --do-not-use-emme`.
+    You can also use the shorter `pipenv run python helmet.py -m`.
 
 
 ### Visual Studio Code
