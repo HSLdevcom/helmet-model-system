@@ -32,7 +32,7 @@ Emme assignment can be tested without further configuration.
 Open command line to your local Scripts folder and write:
 
 ```
-python test_assignment.py
+python -m tests.emme_only.test_assignment
 ```
 
 This will create a small EMME test network and run test assignments on it.
@@ -144,8 +144,7 @@ Alternatively, you can run the mock assignment with the help of command line
     - `"RESULTS_PATH": "YOUR_PATH\\helmet-model-system\\Scripts\\tests\\test_data\\Results"`,
     - `"BASELINE_DATA_PATH": "YOUR_PATH\\helmet-model-system\\Scripts\\tests\\test_data\\Base_input_data"`,
     - `"FORECAST_DATA_PATH": "YOUR_PATH\\helmet-model-system\\Scripts\\tests\\test_data\\Scenario_input_data\\2030_test"`,
-    - `"OPTIONAL_FLAGS": ["DO_NOT_USE_EMME"]`
-3. Type the following to the command line: `pipenv run python helmet.py`
+3. Type the following to the command line: `pipenv run python helmet.py -m`
 
 
 ### Visual Studio Code
