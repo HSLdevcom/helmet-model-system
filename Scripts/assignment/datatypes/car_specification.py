@@ -10,49 +10,33 @@ class CarSpecification:
 
     Parameters
     ----------
-    extra: AssignmentPeriod method
-    demand_mtx : dict
+    extra : assignment_period.AssignmentPeriod.extra()
+        Function for generating extra attribute name
+        for specific assignment period
+    emme_matrices : dict
         key : str
-            Assignment class (transit_work/transit_leisure)
-        value : dict
-            id : str
-                Emme matrix id
-            description : dict
-                Matrix description
-    result_mtx : dict
-        key : str
-            Impedance type (time/cost/dist)
+                Assignment class (car_work/transit_leisure/...)
         value : dict
             key : str
-                Assignment class (transit_work/transit_leisure)
-            value : dict
-                id : str
-                    Emme matrix id
-                description : dict
-                    Matrix description
+                Impedance type (time/cost/dist/...)
+            value : str
+                Emme matrix id
     """
-    def __init__(self, 
+    def __init__(self,
                  extra: Callable, 
-                 demand_mtx: Dict[str, Dict[str, Dict[str, Union[int, str]]]], 
-                 result_mtx: Dict[str, Dict[str, Dict[str, Union[int, str]]]]):
-        self.car_work = Car(
-            "car_work", extra, demand_mtx, result_mtx,
-            link_costs=extra("total_cost"))
-        self.car_leisure = Car(
-            "car_leisure", extra, demand_mtx, result_mtx,
-            link_costs=extra("total_cost"))
-        self.van = Car(
-            "van", extra, demand_mtx, result_mtx,
-            link_costs=extra("total_cost"))
-        self.truck = Car(
-            "truck", extra, demand_mtx, result_mtx,
-            value_of_time_inv=param.freight_dist_unit_time,
-            link_costs="length")
-        self.trailer_truck = Car(
-            "trailer_truck", extra, demand_mtx, result_mtx,
-            value_of_time_inv=param.freight_dist_unit_time,
-            link_costs="length")
-        self._spec: Dict[str, Any]= {
+                 emme_matrices: Dict[str, Union[str, Dict[str, str]]]):
+        self._modes = {}
+        self._freight_modes = list(param.freight_dist_unit_cost)
+        for mode in param.assignment_modes:
+            if mode in self._freight_modes:
+                kwargs = {
+                    "link_costs": "length",
+                    "value_of_time_inv": param.freight_dist_unit_time,
+                }
+            else:
+                kwargs = {"link_costs": extra("total_cost")}
+            self._modes[mode] = Car(mode, extra, emme_matrices[mode], **kwargs)
+        self._spec: Dict[str, Any] = {
             "type": "SOLA_TRAFFIC_ASSIGNMENT",
             "background_traffic": {
                 "link_component": param.background_traffic_attr,
@@ -62,20 +46,7 @@ class CarSpecification:
             "stopping_criteria": None, # This is defined later
         }
 
-    def spec (self, 
-              lightweight: bool = False) -> Dict[str, Any]:
-        if lightweight:
-            self._spec["classes"] = [
-                self.car_work.spec,
-                self.car_leisure.spec,
-                self.van.spec,
-            ]
-        else:
-            self._spec["classes"] = [
-                self.car_work.spec,
-                self.car_leisure.spec,
-                self.trailer_truck.spec,
-                self.truck.spec,
-                self.van.spec,
-            ]
+    def spec(self, lightweight: bool = False) -> Dict[str, Any]:
+        self._spec["classes"] = [self._modes[mode].spec for mode in self._modes
+            if not lightweight or mode not in self._freight_modes]
         return self._spec
