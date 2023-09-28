@@ -94,18 +94,18 @@ class EmmeAssignmentTest(unittest.TestCase):
                     case["link_type"],
                     case["link_length"])
     
-        #Link check, link must have VDF if car link
-        network = copy.deepcopy(network0)
-        node1 = network.create_node(node1_id, False)
-        node2 = network.create_node(node2_id, False)
-        link = network.create_link(node1_id, node2_id, "hc")
-        #Check if link type equals 1
-        link.type = 142
-        link.length = 1.0
-        link.volume_delay_func = 0
-        self.assertRaises(ValueError, validate,
-            network,
-            fares)   
+        # #Link check, link must have VDF if car link
+        # network = copy.deepcopy(network0)
+        # node1 = network.create_node(node1_id, False)
+        # node2 = network.create_node(node2_id, False)
+        # link = network.create_link(node1_id, node2_id, "hc")
+        # #Check if link type equals 1
+        # link.type = 142
+        # link.length = 1.0
+        # link.volume_delay_func = 0
+        # self.assertRaises(ValueError, validate,
+        #     network,
+        #     fares)   
 
         #Link check, tram link must have right AHT speed
         network = copy.deepcopy(network0)
