@@ -133,7 +133,7 @@ def main(args):
             }
             nr_transit_classes = len(param.transit_classes)
             nr_segment_results = len(param.segment_results)
-            nr_vehicle_classes = len(param.emme_demand_mtx) + 1
+            nr_vehicle_classes = len(param.emme_matrices)
             nr_new_attr = {
                 "nodes": nr_transit_classes * (nr_segment_results-1),
                 "links": nr_vehicle_classes + 4,

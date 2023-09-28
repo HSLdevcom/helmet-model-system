@@ -16,7 +16,6 @@ class MockAssignmentModel(AssignmentModel):
     def __init__(self, matrices: MatrixData, time_periods: List[str]=param.time_periods):
         self.matrices = matrices
         log.info("Reading matrices from " + str(self.matrices.path))
-        self.result_mtx=param.emme_result_mtx
         self.time_periods = time_periods
         self.assignment_periods = [MockPeriod(tp, matrices)
                                    for tp in time_periods]
