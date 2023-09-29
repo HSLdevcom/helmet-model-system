@@ -9,6 +9,7 @@
 ~#    Lisattu pyoraverkon (s=19) yhteenvedon tulostus (TE 22.1.2019)
 ~#    lisatty ratikoiden nopeuden ja junaliikenteen pysahtymisten testaus (19.11.2020)
 ~#    Muutettu testeja makron 4verkkoa_HM40.mac mukaisiksi (1.12.2020)
+~#    Poistettiin jo Pythonissa olevia tsekkeja (18.4.2023)
 ~#
 ~t1=%1%
 ~?t1=
@@ -48,108 +49,6 @@
 ~$OHI
 ~#
 ~! ECHO * >> %t1%
-~! ECHO *** Linkilta puuttuu kapasiteetti, jos alla on riveja, joilla ul1=0 *** >> %t1%
- 2.14
- 2
- n
- mod=c
- and ul1=0
-
-~?q=2
- 2
- q
-~#
-~! ECHO * >> %t1%
-~! ECHO *** Linkilta puuttuu vapaa nopeus, jos alla on riveja, joilla ul2=0 *** >> %t1%
- 2.14
- 2
- n
- mod=c
- and ul2=0
-
-~?q=2
- 2
- q
-~#
-~! ECHO * >> %t1%
-~! ECHO *** Linkilta puuttuu autoliikenteen viivytysfunktio, jos alla on riveja, joilla vdf=0 *** >> %t1%
- 2.14
- 2
- n
- mod=c
- and vdf=0
-
-~?q=2
- 2
- q
-~#
-~! ECHO * >> %t1%
-~! ECHO *** Linkin ul1-kentassa olevan raitiovaunuliikenteen nopeuden minimi- ja maksimiarvot, AHT *** >> %t1%
- 2.41
- 1
- n
- int(ul1/10000)
-
- mod=tp
-
- 2
-~?q=2
- 2
- q
-~#
-~! ECHO * >> %t1%
-~! ECHO *** Linkin ul1-kentassa olevan raitiovaunuliikenteen nopeuden minimi- ja maksimiarvot, PT *** >> %t1%
- 2.41
- 1
- n
- int(ul1/100) .mod. 100
-
- mod=tp
-
- 2
-~?q=2
- 2
- q
-~#
-~! ECHO * >> %t1%
-~! ECHO *** Linkin ul1-kentassa olevan raitiovaunuliikenteen nopeuden minimi- ja maksimiarvot, IHT *** >> %t1%
- 2.41
- 1
- n
- ul1 .mod. 100
-
- mod=tp
-
- 2
-~?q=2
- 2
- q
-~#
-~! ECHO * >> %t1%
-~! ECHO *** Linkin ul1-kentassa olevan raitiovaunuliikenteen nopeus on nolla ainakin yhdella aikajaksolla *** >> %t1%
-~! ECHO *** jos alla on muitakin kuin tyhjia riveja. Tarkista linkin koodaus, jos aa=0 tai pp=0 tai ii=0, kun ul1=aappii ** >> %t1%
- 2.41
- 1
- y
- @lvari
- n
- (int(ul1/10000).eq.0) + ((int(ul1/100) .mod. 100).eq.0) + 
- ((ul1 .mod. 100).eq.0)
-
- mod=tp
-
- 4
- q
-~#
- 2.14
- 2
- n
- mod=tp
- and not @lvari=0
-
-~?q=2
- 2
- q
 ~#
 ~! ECHO * >> %t1%
 ~! ECHO *** Juna- tai metroliikenteen matka-aika us1=0 ennen pysahtymista (noalin=0 tai noboan=0), jos rivin "line inode jnode..." ** >> %t1%
@@ -239,14 +138,6 @@
 ~#
 ~:OHI
 ~! ECHO * >> %t1%
-~! ECHO *** Linjalta puuttuu vuorovali, jos alla on riveja, joilla hdwy=0.01 *** >> %t1%
- 2.24
- 1
- hdwy=0,1
-
-~?q=2
- 2
- q
 ~#
 ~:LOPPU
 ~! ECHO ****** SKENAARION %s% TARKISTUS PAATTYY ****** >> %t1%
