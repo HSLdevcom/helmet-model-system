@@ -112,7 +112,7 @@ purpose_areas: Dict[str, Union[Tuple[int,int],Tuple[int,int,int]]] = {
     "metropolitan": (0, 6000, 16000),
     "peripheral": (16000, 31000),
     "all": (0, 6000, 31000),
-    "external": (31031, 40000),
+    "external": (31031, 34999),
 }
 areas = {
     "helsinki_cbd": (0, 999),
@@ -132,7 +132,7 @@ areas = {
         (15000, 15499),
     ),
     "peripheral": (16000, 30999),
-    "external": (31031, None),
+    "external": (31031, 34999),
 }
 municipalities = {
     "Helsinki": (0, 1999),
