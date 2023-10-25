@@ -182,7 +182,7 @@ class Tour:
         if (self.mode != "walk" and is_in_area
                 and self._sec_dest_gen_draw < self.sec_dest_prob[self.mode]):
             orig_rel_idx = orig_idx - bounds.start
-            dest_idx =- bounds.start
+            dest_idx -= bounds.start
             sec_dest_tours[self.mode][orig_rel_idx][dest_idx].append(self)
 
     def choose_secondary_destination(self, cumulative_probs: numpy.ndarray):
