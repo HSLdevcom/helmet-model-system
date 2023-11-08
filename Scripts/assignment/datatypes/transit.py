@@ -101,6 +101,8 @@ class TransitSpecification:
             jlevel1 = JourneyLevel(headway_attribute, boarded=False)
             jlevel2 = JourneyLevel(headway_attribute, boarded=True)
             self.transit_result_spec["total_impedance"] = emme_matrices["time"]
+            (self.transit_result_spec[subset]
+                                     ["modes"]) = param.transit_assignment_modes
             for trip_part, matrix_id in emme_matrices["total"].items():
                 self.transit_result_spec[trip_part] = matrix_id
             for trip_part, matrix_id in emme_matrices[subset].items():
