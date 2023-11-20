@@ -1,6 +1,6 @@
 import parameters.assignment as param
 
-# Functions that modify a network. Functions take a network as input and return the modified network
+# Utility functions that modify a network. Functions take a network as input and return the modified network
 
 def add_bus_stops(network):
     for line in network.transit_lines():

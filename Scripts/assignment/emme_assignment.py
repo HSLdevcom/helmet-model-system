@@ -4,7 +4,7 @@ import pandas
 from math import log10
 
 import utils.log as log
-import utils.update_network as nw
+import utils.modify_network as mnw
 from utils.zone_interval import belongs_to_area, faulty_kela_code_nodes
 import parameters.assignment as param
 import parameters.zone as zone_param
@@ -315,7 +315,7 @@ class EmmeAssignmentModel(AssignmentModel):
 
     def _add_bus_stops(self):
         network: Network = self.mod_scenario.get_network()
-        modified_network = nw.add_bus_stops(network)
+        modified_network: Network = mnw.add_bus_stops(network)
         self.mod_scenario.publish_network(modified_network)
 
     def _create_matrices(self, time_period, id_hundred, id_ten):
