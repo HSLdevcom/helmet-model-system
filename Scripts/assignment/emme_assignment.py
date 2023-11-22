@@ -336,6 +336,7 @@ class EmmeAssignmentModel(AssignmentModel):
                     else:
                         segment.allow_alightings = is_stop
                         segment.allow_boardings = is_stop
+
         self.mod_scenario.publish_network(network)
 
     def _create_matrices(self, time_period, id_hundred, id_ten):

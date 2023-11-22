@@ -1,15 +1,14 @@
+from argparse import ArgumentTypeError
 import unittest, os, pandas
-from assignment.emme_bindings.mock_project import MockProject
+from assignment.emme_bindings.mock_project import MockProject, MODE_TYPES
 from assignment.datatypes.transit_fare import TransitFareZoneSpecification
+from assignment.mock_assignment import MockAssignmentModel
+from datahandling.matrixdata import MatrixData
 from utils.validate_network import validate
+from utils.validate_loaded_network import validate_loaded
+from parameters.assignment import time_periods
+import parameters.zone as zone_param
 import copy
-
-MODE_TYPES = {
-    "1": "AUTO",
-    "2": "TRANSIT",
-    "3": "AUX_TRANSIT",
-    "4": "AUX_AUTO",
-}
 
 class EmmeAssignmentTest(unittest.TestCase):
     def test_assignment(self):
@@ -27,7 +26,12 @@ class EmmeAssignmentTest(unittest.TestCase):
                 "start": 35,
             },
         }))
+
+        # mock_result_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+        #     "..", "test_data", "Results","test")
+        #ass_model = MockAssignmentModel(MatrixData(mock_result_path))
         network0 = context.modeller.emmebank.scenario(scenario_id).get_network()
+        #ass_model.prepare_network(network = network0) #the number is the car cost per km
 
         #Mode check
         network1 = copy.deepcopy(network0)
@@ -36,100 +40,203 @@ class EmmeAssignmentTest(unittest.TestCase):
             network1,
             fares)
         
-        #Link check, link type should not be one
-        network2 = copy.deepcopy(network0)
-        node1 = network2.create_node(800900, False)
-        node2 = network2.create_node(800901, False)
-        link = network2.create_link(800900, 800901, "haf")
+        #Link check cases
+        cases = [#Link check, link type should not be one
+                {"node1_centroid":False,
+                  "node2_centroid":False,
+                  "link_modes":"haf",
+                  "link_type":1,
+                  "link_length":1.0},
+                #Link check, link modes must not be empty
+                {"node1_centroid":False,
+                  "node2_centroid":False,
+                  "link_modes":"",
+                  "link_type":142,
+                  "link_length":1.0},
+                #Link check, link modes must not be just h
+                {"node1_centroid":False,
+                  "node2_centroid":False,
+                  "link_modes":"h",
+                  "link_type":142,
+                  "link_length":1.0},
+                #Link check, if link type is not 70 (vaihtokävely), then length must not be zero
+                {"node1_centroid":False,
+                  "node2_centroid":False,
+                  "link_modes":"haf",
+                  "link_type":142,
+                  "link_length":0},
+                #Link check, link should not have type 100
+                {"node1_centroid":False,
+                  "node2_centroid":False,
+                  "link_modes":"haf",
+                  "link_type":100,
+                  "link_length":1.0},
+                #Link check, link should not have type 999
+                {"node1_centroid":False,
+                  "node2_centroid":False,
+                  "link_modes":"haf",
+                  "link_type":999,
+                  "link_length":1.0},
+                #Link check, link must not directly connect two centroids
+                {"node1_centroid":True,
+                  "node2_centroid":True,
+                  "link_modes":"haf",
+                  "link_type":142,
+                  "link_length":1.0},
+                  ]
+        node1_id = 800900
+        node2_id = 800901
+        for case in cases:
+            self.link_check_network(network0, fares, 
+                    node1_id, case["node1_centroid"], 
+                    node2_id, case["node2_centroid"], 
+                    case["link_modes"],
+                    case["link_type"],
+                    case["link_length"])
+    
+        # #Link check, link must have VDF if car link
+        # network = copy.deepcopy(network0)
+        # node1 = network.create_node(node1_id, False)
+        # node2 = network.create_node(node2_id, False)
+        # link = network.create_link(node1_id, node2_id, "hc")
+        # #Check if link type equals 1
+        # link.type = 142
+        # link.length = 1.0
+        # link.volume_delay_func = 0
+        # self.assertRaises(ValueError, validate,
+        #     network,
+        #     fares)   
+
+        #Link check, tram link must have right AHT speed
+        network = copy.deepcopy(network0)
+        node1 = network.create_node(node1_id, False)
+        node2 = network.create_node(node2_id, False)
+        link = network.create_link(node1_id, node2_id, "pt")
         #Check if link type equals 1
-        link.type = 1
+        link.type = 2
         link.length = 1.0
+        link.data1 = 1122 #meaning 001122 - aappii format, refer to network description
         self.assertRaises(ValueError, validate,
-            network2,
-            fares)
+            network,
+            fares)  
         
-        #Link check, link modes must be h at minimum
-        network3 = copy.deepcopy(network0)
-        node1 = network3.create_node(800902, False)
-        node2 = network3.create_node(800903, False)
-        link2 = network3.create_link(800902, 800903, "")
-        link2.type = 142
-        link2.length = 1.0
-
+        #Link check, tram link must have right PT speed
+        network = copy.deepcopy(network0)
+        node1 = network.create_node(node1_id, False)
+        node2 = network.create_node(node2_id, False)
+        link = network.create_link(node1_id, node2_id, "pt")
+        #Check if link type equals 1
+        link.type = 2
+        link.length = 1.0
+        link.data1 = 220022
         self.assertRaises(ValueError, validate,
-            network3,
-            fares)
+            network,
+            fares)  
         
-        #Link check, link modes must be h at minimum
-        network4 = copy.deepcopy(network0)
-        node1 = network4.create_node(800904, False)
-        node2 = network4.create_node(800905, False)
-        link3 = network4.create_link(800904, 800905, "h")
-        link3.type = 142
-        link3.length = 1.0
-
+        #Link check, tram link must have right IHT speed
+        network = copy.deepcopy(network0)
+        node1 = network.create_node(node1_id, False)
+        node2 = network.create_node(node2_id, False)
+        link = network.create_link(node1_id, node2_id, "pt")
+        #Check if link type equals 1
+        link.type = 2
+        link.length = 1.0
+        link.data1 = 221100
         self.assertRaises(ValueError, validate,
-            network4,
-            fares)
+            network,
+            fares) 
         
-        #Link check, if link type is not 70 (vaihtokävely), then length must not be zero
-        network5 = copy.deepcopy(network0)
-        node1 = network5.create_node(800906, False)
-        node2 = network5.create_node(800907, False)
-        link4 = network5.create_link(800906, 800907, "haf")
-        link4.type = 142
-        link4.length = 0.0
-
-        self.assertRaises(ValueError, validate,
-            network5,
-            fares)
-
-        #Link check, link should not have only mode h, because it is removed later during the assignment
-        network6 = copy.deepcopy(network0)
-        node1 = network6.create_node(800909, False)
-        node2 = network6.create_node(800910, False)
-        link5 = network6.create_link(800909, 800910, "h")
-        link5.type = 142
-        link5.length = 1.0
-
-        self.assertRaises(ValueError, validate,
-            network6,
-            fares)
+        #Segment check, train or metro travel time us1=0 before stopping (noalin=0 or noboan=0)
+        # Check line encoding, if row's @ccost=1
+        # only if mode is type mr
+        network = copy.deepcopy(network0)
+        itinerary = []
+        node1_id = "802118"
+        node2_id = "802119"
+        node3_id = "802120"
+        itinerary.append(node1_id)
+        itinerary.append(node2_id)
+        itinerary.append(node3_id)
+        node1 = network.create_node(node1_id, False)
+        node2 = network.create_node(node2_id, False)
+        node3 = network.create_node(node3_id, False)
+        link = network.create_link(node1_id, node2_id, "mr")
+        link = network.create_link(node2_id, node3_id, "mr")
+        line = network.create_transit_line(
+                            '3002A3', 5, itinerary)
+        hdw_attrs = [f"@hw_{tp}" for tp in time_periods]
+        for hdwy in hdw_attrs:
+            line[hdwy] = 5.0
+        line._segments[0].data1 = 0
+        line._segments[1].data1 = 0
+        line._segments[0].allow_boardings = 0
+        line._segments[0].allow_alightings = 0
+        line._segments[1].allow_boardings = 1
+        line._segments[1].allow_alightings = 1
+        self.assertRaises(ValueError, validate_loaded,
+            network,
+            fares) 
         
-        #Link check, link should not have type 100
-        network7 = copy.deepcopy(network0)
-        node1 = network7.create_node(800911, False)
-        node2 = network7.create_node(800912, False)
-        link6 = network7.create_link(800911, 800912, "haf")
-        link6.type = 100
-        link6.length = 1.0
+        #Segment check, train or metro travel time us1 is not 0 before stopping (noalin=1 and noboan=1)
+        # Check line encoding, if row's @ccost=1
+        # only if mode is type mr
+        network = copy.deepcopy(network0)
+        itinerary = []
+        node1_id = "802121"
+        node2_id = "802122"
+        node3_id = "802123"
+        itinerary.append(node1_id)
+        itinerary.append(node2_id)
+        itinerary.append(node3_id)
+        node1 = network.create_node(node1_id, False)
+        node2 = network.create_node(node2_id, False)
+        node3 = network.create_node(node3_id, False)
+        link = network.create_link(node1_id, node2_id, "mr")
+        link = network.create_link(node2_id, node3_id, "mr")
+        line = network.create_transit_line(
+                            '3002A4', 5, itinerary)
+        hdw_attrs = [f"@hw_{tp}" for tp in time_periods]
+        for hdwy in hdw_attrs:
+            line[hdwy] = 5.0
+        line._segments[0].data1 = 5
+        line._segments[1].data1 = 0
+        line._segments[0].allow_boardings = 0
+        line._segments[0].allow_alightings = 0
+        line._segments[1].allow_boardings = 0
+        line._segments[1].allow_alightings = 0
+        self.assertRaises(ValueError, validate_loaded,
+            network,
+            fares) 
 
+        #Line check, headway should not be 0,1
+        network = copy.deepcopy(network0)
+        itinerary = []
+        itinerary.append("802113")
+        itinerary.append("802114")
+        line = network.create_transit_line(
+                            '3002A2', 5, itinerary)
+        hdw_attrs = [f"@hw_{tp}" for tp in time_periods]
+        for hdwy in hdw_attrs:
+            line[hdwy] = 0.001
         self.assertRaises(ValueError, validate,
-            network7,
-            fares)
+            network,
+            fares) 
         
-        #Link check, link should not have type 999
-        network8 = copy.deepcopy(network0)
-        node1 = network8.create_node(800913, False)
-        node2 = network8.create_node(800914, False)
-        link7 = network8.create_link(800913, 800914, "haf")
-        link7.type = 999
-        link7.length = 1.0
 
-        self.assertRaises(ValueError, validate,
-            network8,
-            fares)
         
-        #Link check, link must not directly connect two centroids
-        network9 = copy.deepcopy(network0)
-        node1 = network9.create_node(800915, True)
-        node2 = network9.create_node(800916, True)
-        link8 = network9.create_link(800915, 800916, "haf")
-        link8.type = 142
-        link8.length = 1.0
+    def link_check_network(self, network0, fares, node1_id, 
+                           node1_iscentroid, node2_id, node2_iscentroid, 
+                           link_modes, link_type, link_length):
 
+        network = copy.deepcopy(network0)
+        node1 = network.create_node(node1_id, node1_iscentroid)
+        node2 = network.create_node(node2_id, node2_iscentroid)
+        link = network.create_link(node1_id, node2_id, link_modes)
+        #Check if link type equals 1
+        link.type = link_type
+        link.length = link_length
         self.assertRaises(ValueError, validate,
-            network9,
+            network,
             fares)
 
         
