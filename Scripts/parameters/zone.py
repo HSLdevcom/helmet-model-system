@@ -1,4 +1,7 @@
 # Share of demand that will be simulated in agent model
+from typing import Any, Dict, List, Tuple, Union
+
+
 agent_demand_fraction = 1.0
 
 # Seed number for population attributes:
@@ -7,17 +10,17 @@ agent_demand_fraction = 1.0
 population_draw = 31
 
 # Age groups in zone data
-age_groups = (
+age_groups: List[Tuple[int, int]] = [ #changed to list for type checker
         (7, 17),
         (18, 29),
         (30, 49),
         (50, 64),
         (65, 99),
-    )
+]
 
 ### DEMAND MODEL REFERENCES ###
 
-tour_purposes = (
+tour_purposes: List[Dict[str, Any]] = [ #changed to list for type checker
     {
         "name": "hw",
         "orig": "home",
@@ -101,15 +104,15 @@ tour_purposes = (
         "source": ("sop",),
         "area": "all",
     },
-)
+]
 # Tour purpose zone intervals
 # Some demand models have separate sub-region parameters,
 # hence need sub-intervals defined.
-purpose_areas = {
+purpose_areas: Dict[str, Union[Tuple[int,int],Tuple[int,int,int]]] = {
     "metropolitan": (0, 6000, 16000),
     "peripheral": (16000, 31000),
     "all": (0, 6000, 31000),
-    "external": (31031, 40000),
+    "external": (31031, 34999),
 }
 areas = {
     "helsinki_cbd": (0, 999),
@@ -129,7 +132,7 @@ areas = {
         (15000, 15499),
     ),
     "peripheral": (16000, 30999),
-    "external": (31031, None),
+    "external": (31031, 34999),
 }
 municipalities = {
     "Helsinki": (0, 1999),

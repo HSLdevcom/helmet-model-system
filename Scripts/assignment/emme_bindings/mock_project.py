@@ -1,4 +1,6 @@
-import numpy
+from __future__ import annotations
+from typing import Dict, Iterable, List, Optional, Tuple, Union
+import numpy # type: ignore
 from collections import namedtuple
 import copy
 import os
@@ -21,8 +23,13 @@ class MockProject:
     def __init__(self):
         self.modeller = Modeller(EmmeBank())
 
-    def copy_scenario(self, from_scenario, scenario_id, scenario_title,
-                      overwrite=False, copy_paths=True, copy_strategies=True):
+    def copy_scenario(self, 
+                      from_scenario, 
+                      scenario_id: int, 
+                      scenario_title: str,
+                      overwrite: bool = False, 
+                      copy_paths: bool = True, 
+                      copy_strategies: bool = True):
         if overwrite:
             try:
                 self.modeller.emmebank.delete_scenario(scenario_id)
@@ -57,20 +64,29 @@ class MockProject:
                 self.import_extra_attributes(
                     os.path.join(scenario_dir, file_name), scenario=scenario)
 
-    def create_matrix(self, matrix_id, matrix_name, matrix_description,
-                      default_value=0, overwrite=False):
+    def create_matrix(self, 
+                      matrix_id: int, 
+                      matrix_name, 
+                      matrix_description,
+                      default_value=0, 
+                      overwrite=False):
         try:
-            self.modeller.emmebank.create_matrix(matrix_id, default_value)
+            mtx = self.modeller.emmebank.create_matrix(
+                matrix_id, default_value)
         except ExistenceError:
             if overwrite:
-                self.modeller.emmebank.matrix(matrix_id).set_numpy_data(
-                    default_value)
+                mtx = self.modeller.emmebank.matrix(matrix_id)
+                mtx.set_numpy_data(default_value)
+        mtx.name = matrix_name
+        mtx.description = matrix_description
 
-    def create_extra_attribute(self, extra_attribute_type,
-                               extra_attribute_name,
-                               extra_attribute_description,
-                               extra_attribute_default_value=0.0,
-                               overwrite=False, scenario=None):
+    def create_extra_attribute(self, 
+                               extra_attribute_type: str,
+                               extra_attribute_name: str,
+                               extra_attribute_description: str,
+                               extra_attribute_default_value: float = 0.0,
+                               overwrite: bool = False, 
+                               scenario: Optional[Scenario] = None):
         try:
             scenario.create_extra_attribute(
                 extra_attribute_type, extra_attribute_name,
@@ -225,10 +241,7 @@ class MockProject:
                         vehicle_id = int(rec[3])
                         headway = float(rec[4])
                         itinerary = []
-                        ttf = []
-                        data1 = []
-                        data2 = []
-                        data3 = []
+                        segment_data = []
                         while True:
                             segrec = f.readline().replace("'", " ").split()
                             if not segrec or segrec[0] in "amd":
@@ -237,21 +250,24 @@ class MockProject:
                             elif segrec[0] not in ("c", "path=no"):
                                 itinerary.append(segrec[0])
                                 try:
-                                    ttf.append(int(segrec[2][4:]))
-                                    data1.append(float(segrec[3][4:]))
-                                    data2.append(float(segrec[4][4:]))
-                                    data3.append(float(segrec[5][4:]))
+                                    symbol = segrec[1][4]
+                                    segment_data.append({
+                                        "allow_alightings": symbol in ">+",
+                                        "allow_boardings": symbol in "<+",
+                                        "transit_time_func": int(segrec[2][4:]),
+                                        "data1": float(segrec[3][4:]),
+                                        "data2": float(segrec[4][4:]),
+                                        "data3": float(segrec[5][4:]),
+                                    })
                                 except IndexError:
                                     pass
                         line = network.create_transit_line(
                             line_id, vehicle_id, itinerary)
-                        for i, segment in enumerate(line.segments()):
-                            segment.transit_time_func = ttf[i]
-                            segment.data1 = data1[i]
-                            segment.data2 = data2[i]
-                            segment.data3 = data3[i]
+                        for data, segment in zip(segment_data, line.segments()):
+                            segment.__dict__.update(data)
                     elif rec[0] == "m":
                         line = network.transit_line(idx=rec[1])
+                        vehicle_id = int(rec[3])
                         headway = float(rec[4])
                     else:
                         raise SyntaxError("Unknown update code")
@@ -346,14 +362,14 @@ class EmmeBank:
         self._matrices = {}
         self._functions = {}
 
-    def scenario(self, idx):
+    def scenario(self, idx: int):
         if idx in self._scenarios:
             return self._scenarios[idx]
 
     def scenarios(self):
         return iter(self._scenarios.values())
 
-    def create_scenario(self, idx):
+    def create_scenario(self, idx: int):
         if idx in self._scenarios:
             raise ExistenceError("Scenario already exists: {}".format(idx))
         else:
@@ -361,7 +377,7 @@ class EmmeBank:
             self._scenarios[idx] = scenario
             return scenario
 
-    def copy_scenario(self, source_id, destination_id):
+    def copy_scenario(self, source_id: int, destination_id: int):
         if self.scenario(source_id) is None:
             raise ExistenceError("Scenario does not exist: {}".format(
                 source_id))
@@ -371,14 +387,14 @@ class EmmeBank:
                 copy.deepcopy(self.scenario(source_id).get_network()))
             return dest
 
-    def delete_scenario(self, idx):
+    def delete_scenario(self, idx: int):
         del self._scenarios[idx]
 
-    def matrix(self, idx):
+    def matrix(self, idx: int):
         if idx in self._matrices:
             return self._matrices[idx]
 
-    def create_matrix(self, idx, default_value=0.0):
+    def create_matrix(self, idx: int, default_value=0.0):
         if idx in self._matrices:
             raise ExistenceError("Matrix already exists: {}".format(idx))
         else:
@@ -387,14 +403,14 @@ class EmmeBank:
             self._matrices[idx] = matrix
             return matrix
 
-    def function(self, idx):
+    def function(self, idx: int):
         if idx in self._functions:
             return self._functions[idx]
 
     def functions(self):
         return iter(self._functions.values())
 
-    def create_function(self, idx, expression):
+    def create_function(self, idx: int, expression: Dict[str,str]):
         if idx in self._functions:
             raise ExistenceError("Function already exists: {}".format(idx))
         else:
@@ -402,7 +418,7 @@ class EmmeBank:
             self._functions[idx] = func
             return func
 
-    def delete_function(self, idx):
+    def delete_function(self, idx: int):
         try:
             del self._functions[idx]
         except KeyError:
@@ -410,7 +426,7 @@ class EmmeBank:
 
 
 class Scenario:
-    def __init__(self, idx):
+    def __init__(self, idx: int):
         self.id = str(idx)
         self.number = int(idx)
         self.title = ""
@@ -420,13 +436,16 @@ class Scenario:
     def zone_numbers(self):
         return sorted(self._network._centroids)
 
-    def extra_attribute(self, idx):
+    def extra_attribute(self, idx: int):
         network = self.get_network()
         for attr_type in network._extra_attr:
             if idx in network._extra_attr[attr_type]:
                 return network._extra_attr[attr_type][idx]
 
-    def create_extra_attribute(self, attr_type, idx, default_value=0.0):
+    def create_extra_attribute(self, 
+                               attr_type, 
+                               idx: int, 
+                               default_value: float=0.0):
         network = self.get_network()
         if idx in network._extra_attr[attr_type]:
             raise ExistenceError("Extra attribute already exists: {}".format(
@@ -461,19 +480,45 @@ class ExtraAttribute:
 
 
 class Matrix:
-    def __init__(self, idx, dim, default_value):
+    def __init__(self, idx: int, dim: int, default_value: Union[int, float]):
         self.id = idx
         self._data = numpy.full((dim, dim), default_value, dtype=float)
+        self._name = ""
+        self._description = ""
 
-    def get_numpy_data(self, scenario_id=None):
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, matrix_name):
+        if len(matrix_name) > 40:
+            raise ArgumentError(
+                "matrix_name: expected a string with maximum length 40")
+        else:
+            self._name = matrix_name
+
+    @property
+    def description(self):
+        return self._description
+
+    @description.setter
+    def description(self, matrix_description):
+        if len(matrix_description) > 80:
+            raise ArgumentError(
+                "matrix_description: expected a string with maximum length 80")
+        else:
+            self._description = matrix_description
+
+    def get_numpy_data(self, scenario_id: Optional[int]=None):
         return self._data
 
-    def set_numpy_data(self, data, scenario_id=None):
+    def set_numpy_data(self, data, scenario_id: Optional[int]=None):
         self._data[:,:] = data
 
 
 class Function:
-    def __init__(self, idx, expression):
+    def __init__(self, idx: int, expression: Dict[str,str]):
         self.id = idx
         self.expression = expression
 
@@ -487,7 +532,6 @@ class Network:
         self._links = {}
         self._vehicles = {}
         self._lines = {}
-        self._segments = []
         self._objects = {
             "NODE": self.nodes,
             "LINK": self.links,
@@ -496,35 +540,35 @@ class Network:
         }
         self._extra_attr = {attr_type: {} for attr_type in self._objects}
 
-    def mode(self, idx):
+    def mode(self, idx: int) -> 'Mode':
         if idx in self._modes:
             return self._modes[idx]
 
-    def modes(self):
+    def modes(self) -> Iterable:
         return iter(self._modes.values())
 
-    def create_mode(self, mode_type, idx):
+    def create_mode(self, mode_type: str, idx: str) -> 'Mode':
         if not isinstance(idx, str) or len(idx) != 1:
             raise Exception("Invalid mode ID: " + idx)
         mode = Mode(idx, mode_type)
         self._modes[idx] = mode
         return mode
 
-    def node(self, idx):
+    def node(self, idx: int) -> 'Node':
         idx = int(idx)
         if idx in self._nodes:
             return self._nodes[idx]
 
-    def nodes(self):
+    def nodes(self) -> Iterable:
         return iter(self._nodes.values())
 
-    def centroids(self):
+    def centroids(self) -> Iterable:
         return iter(self._centroids.values())
 
-    def regular_nodes(self):
+    def regular_nodes(self) -> Iterable:
         return iter(self._regular_nodes.values())
 
-    def create_node(self, idx, is_centroid):
+    def create_node(self, idx: int, is_centroid: bool) -> 'Node':
         idx = int(idx)
         node = Node(self, idx, is_centroid)
         self._nodes[idx] = node
@@ -534,15 +578,15 @@ class Network:
             self._regular_nodes[idx] = node
         return node
 
-    def link(self, i_node_id, j_node_id):
+    def link(self, i_node_id: int, j_node_id: int) -> 'Link':
         idx = "{}-{}".format(i_node_id, j_node_id)
         if idx in self._links:
             return self._links[idx]
 
-    def links(self):
+    def links(self) -> Iterable:
         return iter(self._links.values())
 
-    def create_link(self, i_node_id, j_node_id, modes):
+    def create_link(self, i_node_id: int, j_node_id: int, modes: str) -> 'Link':
         modes = [self.mode(str(mode)) for mode in modes]
         link = Link(
             self, self._nodes[int(i_node_id)], self._nodes[int(j_node_id)],
@@ -550,66 +594,68 @@ class Network:
         self._links["{}-{}".format(i_node_id, j_node_id)] = link
         return link
 
-    def transit_vehicle(self, idx):
+    def transit_vehicle(self, idx: int) -> 'TransitVehicle':
         if idx in self._vehicles:
             return self._vehicles[idx]
 
-    def transit_vehicles(self):
+    def transit_vehicles(self) -> Iterable:
         return iter(self._vehicles.values())
 
-    def create_transit_vehicle(self, idx, mode_id):
+    def create_transit_vehicle(self, idx: int, mode_id: str) -> 'TransitVehicle':
         vehicle = TransitVehicle(idx, self.mode(mode_id))
         self._vehicles[idx] = vehicle
         return vehicle
 
-    def transit_line(self, idx):
+    def transit_line(self, idx) -> 'TransitLine':
         if idx in self._lines:
             return self._lines[idx]
 
-    def transit_lines(self):
+    def transit_lines(self) -> Iterable['TransitLine']:
         return iter(self._lines.values())
 
-    def transit_segments(self):
-        return iter(self._segments)
+    def transit_segments(self, include_hidden=False) -> Tuple['Segment']:
+        return (segment for line in self.transit_lines()
+            for segment in line.segments(include_hidden))
 
-    def create_transit_line(self, idx, transit_vehicle_id, itinerary):
+    def create_transit_line(self, idx: str, transit_vehicle_id: int, itinerary: List[List[str]]) -> 'TransitLine':
         line = TransitLine(self, idx, transit_vehicle_id)
         self._lines[idx] = line
         for i in range(len(itinerary) - 1):
             link = self.link(itinerary[i], itinerary[i + 1])
             segment = TransitSegment(self, line, link)
-            self._segments.append(segment)
             line._segments.append(segment)
             link._segments.append(segment)
+        line._segments.append(
+            HiddenSegment(self, line, self.node(itinerary[-1])))
         return line
 
 
 class Mode:
-    def __init__(self, idx, mode_type):
+    def __init__(self, idx: str, mode_type: str):
         self.id = idx
         self.type = mode_type
         self.description = ""
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.id
 
 
 class TransitVehicle:
-    def __init__(self, idx, mode):
+    def __init__(self, idx: int, mode: str):
         self.number = idx
         self.mode = mode
         self.description = ""
 
     @property
-    def id(self):
+    def id(self) -> str:
         return str(self.number)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.id
 
 
 class NetworkObject:
-    def __init__(self, network, extra_attr):
+    def __init__(self, network: Network, extra_attr: Dict[str, Dict[str, Union['Link', 'Node', 'TransitLine', 'TransitSegment']]]):
         self.network = network
         self._extra_attr = {idx: extra_attr[idx].default_value
             for idx in extra_attr}
@@ -640,7 +686,10 @@ class NetworkObject:
 
 
 class Node(NetworkObject):
-    def __init__(self, network, idx, is_centroid=False):
+    def __init__(self, 
+                 network: Network, 
+                 idx: int, 
+                 is_centroid: bool = False):
         NetworkObject.__init__(self, network, network._extra_attr["NODE"])
         self.is_centroid = is_centroid
         self.number = idx
@@ -652,9 +701,16 @@ class Node(NetworkObject):
     def id(self):
         return str(self.number)
 
+    def outgoing_segments(self, include_hidden=False):
+        return (s for s in self.network.transit_segments(include_hidden)
+            if s.i_node is self)
 
 class Link(NetworkObject):
-    def __init__(self, network, i_node, j_node, modes):
+    def __init__(self, 
+                 network: Network, 
+                 i_node: Node, 
+                 j_node: Node, 
+                 modes):
         NetworkObject.__init__(self, network, network._extra_attr["LINK"])
         self.i_node = i_node
         self.j_node = j_node
@@ -668,22 +724,22 @@ class Link(NetworkObject):
         self._segments = []
 
     @property
-    def id(self):
+    def id(self) -> str:
         return "{}-{}".format(self.i_node, self.j_node)
 
     @property
-    def reverse_link(self):
+    def reverse_link(self) -> Optional[Link]:
         try:
             return self.network.link(self.j_node, self.i_node)
         except KeyError:
             return None
 
-    def segments(self):
+    def segments(self) -> Iterable:
         return iter(self._segments)
 
 
 class TransitLine(NetworkObject):
-    def __init__(self, network, idx, vehicle):
+    def __init__(self, network: Network, idx: str, vehicle: TransitVehicle):
         NetworkObject.__init__(
             self, network, network._extra_attr["TRANSIT_LINE"])
         self.id = idx
@@ -692,52 +748,75 @@ class TransitLine(NetworkObject):
         self._segments = []
 
     @property
-    def id(self):
+    def id(self) -> str:
         return self._id
 
     @id.setter
-    def id(self, idx):
+    def id(self, idx: str):
         self._id = idx
 
     @property
-    def vehicle(self):
+    def vehicle(self) -> TransitVehicle:
         return self._vehicle
 
     @vehicle.setter
-    def vehicle(self, vehicle_id):
+    def vehicle(self, vehicle_id: int):
         self._vehicle = self.network._vehicles[vehicle_id]
 
     @property
-    def mode(self):
+    def mode(self) -> Mode:
         return self.vehicle.mode
 
-    def segment(self, idx):
+    def segment(self, idx) -> 'TransitSegment':
         return self._segments[idx]
 
-    def segments(self):
-        return iter(self._segments)
+    def segments(self, include_hidden=False) -> Iterable:
+        if include_hidden:
+            return iter(self._segments)
+        else:
+            return iter(self._segments[:-1])
 
 
 class TransitSegment(NetworkObject):
-    def __init__(self, network, line, link):
+    def __init__(self, network: Network, line: TransitLine, link: Link):
         NetworkObject.__init__(
             self, network, network._extra_attr["TRANSIT_SEGMENT"])
         self.line = line
         self.link = link
+        self.allow_alightings = False
+        self.allow_boardings = False
         self.transit_time_func = 0
         self.dwell_time = 0.01
 
     @property
-    def id(self):
+    def id(self) -> str:
         return "{}-{}".format(self.line, self.link)
 
     @property
-    def i_node(self):
+    def i_node(self) -> Node:
         return self.link.i_node
 
     @property
-    def j_node(self):
+    def j_node(self) -> Node:
         return self.link.j_node
+
+
+class HiddenSegment(TransitSegment):
+    def __init__(self, network, line, node):
+        TransitSegment.__init__(self, network, line, None)
+        self._node = node
+
+    @property
+    def id(self):
+        return "{}-{}".format(self.line, self.i_node)
+
+    @property
+    def i_node(self):
+        return self._node
+
+    @property
+    def j_node(self):
+        return None
 
 
 class ExistenceError(Exception):

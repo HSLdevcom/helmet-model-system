@@ -1,10 +1,14 @@
 import threading
 import multiprocessing
 import os
-import numpy
+from typing import Any, Callable, Dict, List, Set, Union, cast
+import numpy # type: ignore
 import pandas
 import random
 from collections import defaultdict
+from assignment.abstract_assignment import AssignmentModel
+from assignment.emme_assignment import EmmeAssignmentModel
+from assignment.mock_assignment import MockAssignmentModel
 
 import utils.log as log
 from utils.zone_interval import ArrayAggregator
@@ -45,11 +49,16 @@ class ModelSystem:
         Name of scenario, used for results subfolder
     """
 
-    def __init__(self, zone_data_path, base_zone_data_path, base_matrices_path,
-                 results_path, assignment_model, name):
-        self.ass_model = assignment_model
-        self.zone_numbers = self.ass_model.zone_numbers
-        self.travel_modes = {}  # Dict instead of set, to preserve order
+    def __init__(self, 
+                 zone_data_path: str, 
+                 base_zone_data_path: str, 
+                 base_matrices_path: str,
+                 results_path: str, 
+                 assignment_model: AssignmentModel, 
+                 name: str):
+        self.ass_model = cast(Union[MockAssignmentModel,EmmeAssignmentModel], assignment_model) #type checker hint
+        self.zone_numbers: numpy.array = self.ass_model.zone_numbers
+        self.travel_modes: Dict[str, bool] = {}  # Dict instead of set, to preserve order
 
         # Input data
         self.zdata_base = BaseZoneData(
@@ -74,7 +83,7 @@ class ModelSystem:
         bounds = slice(0, self.zdata_forecast.nr_zones)
         self.cdm = CarDensityModel(
             self.zdata_base, self.zdata_forecast, bounds, self.resultdata)
-        self.mode_share = []
+        self.mode_share: List[Dict[str,Any]] = []
         self.convergence = pandas.DataFrame()
         self.trucks = self.fm.calc_freight_traffic("truck")
         self.trailer_trucks = self.fm.calc_freight_traffic("trailer_truck")
@@ -143,7 +152,9 @@ class ModelSystem:
         log.info("Demand calculation completed")
 
     # possibly merge with init
-    def assign_base_demand(self, use_fixed_transit_cost=False, is_end_assignment=False):
+    def assign_base_demand(self, 
+                           use_fixed_transit_cost: bool = False, 
+                           is_end_assignment: bool = False) -> Dict[str, Dict[str, numpy.ndarray]]:
         """Assign base demand to network (before first iteration).
 
         Parameters
@@ -195,6 +206,7 @@ class ModelSystem:
         for ap in self.ass_model.assignment_periods:
             tp = ap.name
             log.info("Assigning period {}...".format(tp))
+            self.dtm.demand = cast(Dict[str, Any], self.dtm.demand) #type check hint
             with demand.open("demand", tp, self.ass_model.zone_numbers) as mtx:
                 for ass_class in param.transport_classes:
                     self.dtm.demand[tp][ass_class] = mtx[ass_class]

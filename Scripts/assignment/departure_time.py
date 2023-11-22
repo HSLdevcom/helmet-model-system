@@ -1,4 +1,8 @@
-import numpy
+from __future__ import annotations
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
+import numpy # type: ignore
+from datatypes.demand import Demand
+from datatypes.tour import Tour
 
 import utils.log as log
 import parameters.departure_time as param
@@ -15,14 +19,16 @@ class DepartureTimeModel:
     time_periods : list of str (optional)
         Time period names, default is aht, pt, iht
     """
-    def __init__(self, nr_zones, time_periods=list(param.backup_demand_share)):
+    def __init__(self, 
+                 nr_zones: int, 
+                 time_periods: List[str]=list(param.backup_demand_share)):
         self.nr_zones = nr_zones
         self.time_periods = time_periods
-        self.demand = None
-        self.old_car_demand = 0
+        self.demand: Optional[Union[int,Dict[str,Dict[str,numpy.ndarray]]]] = None
+        self.old_car_demand: Union[int,numpy.ndarray] = 0
         self.init_demand()
 
-    def init_demand(self):
+    def init_demand(self) -> Dict[str,float]:
         """Initialize/reset demand for all time periods.
 
         Includes all transport classes, each being set to zero.
@@ -39,11 +45,13 @@ class DepartureTimeModel:
         """
         # Calculate gaps
         try:
+            self.demand = cast(Dict[str,Dict[str,numpy.ndarray]], self.demand) #type checker hint
             car_demand = self.demand[self.time_periods[0]]["car_work"]
         except TypeError:
             car_demand = 0
         max_gap = numpy.abs(car_demand - self.old_car_demand).max()
         try:
+            self.old_car_demand = cast(numpy.ndarray, self.old_car_demand) #type checker hint
             old_sum = self.old_car_demand.sum()
             relative_gap = abs((car_demand.sum()-old_sum) / old_sum)
         except AttributeError:
@@ -58,7 +66,7 @@ class DepartureTimeModel:
 
         return {"rel_gap": relative_gap, "max_gap": max_gap}
 
-    def add_demand(self, demand):
+    def add_demand(self, demand: Union[Demand, Tour]):
         """Add demand matrix for whole day.
         
         Parameters
@@ -66,6 +74,7 @@ class DepartureTimeModel:
         demand : Demand or Tour
             Travel demand matrix or number of travellers
         """
+        demand.purpose.name = cast(str,demand.purpose.name) #type checker hint
         if demand.mode != "walk" and not demand.is_car_passenger:
             if demand.mode in param.divided_classes:
                 ass_class = "{}_{}".format(
@@ -73,23 +82,30 @@ class DepartureTimeModel:
             else:
                 ass_class = demand.mode
             if len(demand.position) == 2:
-                share = param.demand_share[demand.purpose.name][demand.mode]
+                position2 = cast(Tuple[int,int], demand.position) #type checker hint
+                share: Dict[str, Any] = param.demand_share[demand.purpose.name][demand.mode]
                 for time_period in self.time_periods:
                     self._add_2d_demand(
                         share[time_period], ass_class, time_period,
-                        demand.matrix, demand.position)
+                        demand.matrix, position2)
             elif len(demand.position) == 3:
                 for time_period in self.time_periods:
                     self._add_3d_demand(demand, ass_class, time_period)
             else:
                 raise IndexError("Tuple position has wrong dimensions.")
 
-    def _add_2d_demand(self, demand_share, ass_class, time_period, mtx, mtx_pos):
-        """Slice demand, include transpose and add for one time period."""
+    def _add_2d_demand(self, 
+                       demand_share: Any, 
+                       ass_class: str, 
+                       time_period: str, 
+                       mtx: numpy.ndarray, 
+                       mtx_pos: Tuple[int, int]):
+        """Slice demand, include transpose and add for one time period. ???types"""
         r_0 = mtx_pos[0]
         c_0 = mtx_pos[1]
         r_n = r_0 + mtx.shape[0]
         c_n = c_0 + mtx.shape[1]
+        self.demand = cast(Dict[str, Dict[str, Any]], self.demand) #type checker help
         large_mtx = self.demand[time_period][ass_class]
         try:
             large_mtx[r_0:r_n, c_0:c_n] += demand_share[0] * mtx
@@ -101,13 +117,18 @@ class DepartureTimeModel:
             log.warn("{} {} matrix not matching {} demand shares. Resorted to backup demand shares.".format(
                 mtx.shape, ass_class, len(demand_share[0])))
 
-    def _add_3d_demand(self, demand, ass_class, time_period):
+    def _add_3d_demand(self, 
+                       demand: Union[Demand, Tour], 
+                       ass_class: str, 
+                       time_period: str):
         """Add three-way demand."""
+        demand_position = cast(Tuple[int,int,int],demand.position) #type checker hint
+        demand.purpose.name = cast(str,demand.purpose.name) #type checker hint
         mtx = demand.matrix
         tp = time_period
-        o = demand.position[0]
-        d1 = demand.position[1]
-        d2 = demand.position[2]
+        o = demand_position[0]
+        d1 = demand_position[1]
+        d2 = demand_position[2]
         share = param.demand_share[demand.purpose.name][demand.mode][tp]
         if demand.dest is not None:
             # For agent simulation
@@ -118,7 +139,7 @@ class DepartureTimeModel:
         self._add_2d_demand(share[0], ass_class, tp, mtx, (d1, d2))
         self._add_2d_demand(share[1], ass_class, tp, colsum, (d2, o))
     
-    def add_vans(self, time_period, nr_zones):
+    def add_vans(self, time_period: str, nr_zones: int):
         """Add vans as a share of private car trips for one time period.
         
         Parameters
@@ -128,8 +149,9 @@ class DepartureTimeModel:
         nr_zones : int
             Number of zones in model area (metropolitan + peripheral)
         """
+        demand = cast(Dict[str, Dict[str, numpy.ndarray]],self.demand)
         n = nr_zones
-        mtx = self.demand[time_period]
+        mtx = demand[time_period]
         car_demand = (mtx["car_work"][0:n, 0:n] + mtx["car_leisure"][0:n, 0:n])
         share = param.demand_share["freight"]["van"][time_period]
         self._add_2d_demand(share, "van", time_period, car_demand, (0, 0))

@@ -1,11 +1,18 @@
-import numpy
+from __future__ import annotations
+from typing import TYPE_CHECKING, Dict, Tuple, Union, cast
+import numpy # type: ignore
 import pandas
+if TYPE_CHECKING:
+    from datahandling.resultdata import ResultsData
+    from datahandling.zonedata import ZoneData
+    from datatypes.purpose import Purpose
+from datatypes.person import Person
 
 import utils.log as log
 import parameters.zone as param
 from datatypes.purpose import TourPurpose, SecDestPurpose
 from models import car_use, linear, tour_combinations
-from datatypes.person import Person
+
 
 
 class DemandModel:
@@ -21,11 +28,14 @@ class DemandModel:
         Whether the model is used for agent-based simulation
     """
     
-    def __init__(self, zone_data, resultdata, is_agent_model=False):
+    def __init__(self, 
+                 zone_data: ZoneData, 
+                 resultdata: ResultsData, 
+                 is_agent_model: bool=False):
         self.resultdata = resultdata
         self.zone_data = zone_data
         self.tour_purposes = []
-        self.purpose_dict = {}
+        self.purpose_dict: Dict[str,Purpose] = {}
         for purpose_spec in param.tour_purposes:
             args = (purpose_spec, zone_data, resultdata)
             purpose = (SecDestPurpose(*args) if "sec_dest" in purpose_spec
@@ -38,7 +48,8 @@ class DemandModel:
                 for source in purpose_spec["source"]:
                     purpose.sources.append(self.purpose_dict[source])
                     if "sec_dest" in purpose_spec:
-                        self.purpose_dict[source].sec_dest_purpose = purpose
+                        tour_purpose = cast(TourPurpose, self.purpose_dict[source]) #type checker hint
+                        tour_purpose.sec_dest_purpose = purpose
         bounds = param.purpose_areas["metropolitan"]
         self.bounds = slice(*zone_data.all_zone_numbers.searchsorted(
             [bounds[0], bounds[-1]]))
@@ -158,7 +169,7 @@ class DemandModel:
         self.resultdata.print_matrix(
             result_data, "tour_combinations", "tour_combinations")
 
-    def generate_tour_probs(self):
+    def generate_tour_probs(self) -> Dict[Tuple[int,int], numpy.ndarray]:
         """Generate matrices of cumulative tour combination probabilities.
 
         Used in agent-based simulation.
@@ -177,7 +188,7 @@ class DemandModel:
                 for is_car_user in (False, True)]
         return probs
 
-    def _get_probs(self, age, is_car_user):
+    def _get_probs(self, age: str, is_car_user: bool) -> pandas.DataFrame:
         probs = self.tour_generation_model.calc_prob(
             age, is_car_user, self.bounds)
         return pandas.DataFrame(probs).to_numpy().cumsum(axis=1)

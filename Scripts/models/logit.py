@@ -1,6 +1,12 @@
-import numpy
+from __future__ import annotations
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, cast
+import numpy # type: ignore
 import pandas
 import math
+if TYPE_CHECKING:
+    from datahandling.resultdata import ResultsData
+    from datahandling.zonedata import ZoneData
+    from datatypes.purpose import TourPurpose
 
 from parameters.destination_choice import destination_choice, distance_boundary
 from parameters.mode_choice import mode_choice
@@ -21,16 +27,20 @@ class LogitModel:
         Writer object to result directory
     """
 
-    def __init__(self, zone_data, purpose, resultdata):
+    def __init__(self, 
+                 zone_data: ZoneData, 
+                 purpose: TourPurpose, 
+                 resultdata: ResultsData):
         self.resultdata = resultdata
         self.purpose = purpose
         self.bounds = purpose.bounds
         self.sub_bounds = purpose.sub_bounds
         self.zone_data = zone_data
-        self.dest_exps = {}
-        self.mode_exps = {}
-        self.dest_choice_param = destination_choice[purpose.name]
-        self.mode_choice_param = mode_choice[purpose.name]
+        self.dest_exps: Dict[str, numpy.array] = {}
+        self.mode_exps: Dict[str, numpy.array] = {}
+        purpose.name = cast(str, purpose.name) #type checker help
+        self.dest_choice_param: Dict[str, Dict[str, Any]] = destination_choice[purpose.name]
+        self.mode_choice_param: Optional[Dict[str, Dict[str, Any]]] = mode_choice[purpose.name]
 
     def _calc_mode_util(self, impedance):
         expsum = numpy.zeros_like(
@@ -51,7 +61,7 @@ class LogitModel:
     
     def _calc_dest_util(self, mode, impedance):
         b = self.dest_choice_param[mode]
-        utility = numpy.zeros_like(next(iter(impedance.values())))
+        utility: numpy.array = numpy.zeros_like(next(iter(impedance.values())))
         self._add_zone_util(utility, b["attraction"])
         self._add_impedance(utility, impedance, b["impedance"])
         self.dest_exps[mode] = numpy.exp(utility)
@@ -276,7 +286,7 @@ class ModeDestModel(LogitModel):
             Mode (car/transit/bike/walk) : numpy 2-d matrix
                 Choice probabilities
         """
-        prob = self.calc_basic_prob(impedance)
+        prob = self._calc_prob(self._calc_utils(impedance))
         for mod_mode in self.mode_choice_param:
             for i in self.mode_choice_param[mod_mode]["individual_dummy"]:
                 dummy_share = self.zone_data.get_data(
@@ -289,8 +299,9 @@ class ModeDestModel(LogitModel):
         return prob
     
     def calc_basic_prob(self, impedance):
-        """Calculate matrix of mode and destination choice probabilities.
+        """Calculate utilities and cumulative destination choice probabilities.
 
+        Only used in agent simulation.
         Individual dummy variables are not included.
         
         Parameters
@@ -299,14 +310,12 @@ class ModeDestModel(LogitModel):
             Mode (car/transit/bike/walk) : dict
                 Type (time/cost/dist) : numpy 2-d matrix
                     Impedances
-        
-        Returns
-        -------
-        dict
-            Mode (car/transit/bike/walk) : numpy 2-d matrix
-                Choice probabilities
         """
-        return self._calc_prob(self._calc_utils(impedance))
+        self._calc_utils(impedance)
+        self.cumul_dest_prob = {}
+        for mode in self.mode_choice_param:
+            cumsum = self.dest_exps[mode].T.cumsum(axis=0)
+            self.cumul_dest_prob[mode] = cumsum / cumsum[-1]
     
     def calc_individual_prob(self, mod_mode, dummy):
         """Calculate matrix of probabilities with individual dummies.
@@ -338,7 +347,9 @@ class ModeDestModel(LogitModel):
             mode_expsum += self.mode_exps[mode]
         return self._calc_prob(mode_expsum)
     
-    def calc_individual_mode_prob(self, is_car_user, zone):
+    def calc_individual_mode_prob(self, 
+                                  is_car_user: bool, 
+                                  zone: int) -> Tuple[numpy.array, float]:
         """Calculate individual choice probabilities with individual dummies.
         
         Calculate mode choice probabilities for individual
@@ -366,6 +377,7 @@ class ModeDestModel(LogitModel):
         modes = self.purpose.modes
         for mode in modes:
             mode_exps[mode] = self.mode_exps[mode][zone]
+            self.mode_choice_param = cast(Dict[str, Dict[str, Any]], self.mode_choice_param) #type checker help
             b = self.mode_choice_param[mode]["individual_dummy"]
             if is_car_user and "car_users" in b:
                 try:
@@ -389,6 +401,7 @@ class ModeDestModel(LogitModel):
             # Separate sub-region parameters
             i = self.purpose.sub_intervals.searchsorted(zone, side="right")
             money_utility = 1 / b[i]
+        self.mode_choice_param = cast(Dict[str, Dict[str, Any]], self.mode_choice_param) #type checker help
         money_utility /= self.mode_choice_param["car"]["log"]["logsum"]
         accessibility = -money_utility * logsum
         return probs, accessibility
@@ -413,14 +426,11 @@ class ModeDestModel(LogitModel):
 
     def _calc_prob(self, mode_expsum):
         prob = {}
-        self.mode_prob = {}
-        self.cumul_dest_prob = {}
         for mode in self.mode_choice_param:
-            self.mode_prob[mode] = self.mode_exps[mode] / mode_expsum
-            dest_expsum = self.dest_expsums[mode]["logsum"]
-            dest_prob = self.dest_exps[mode].T / dest_expsum
-            prob[mode] = self.mode_prob[mode] * dest_prob
-            self.cumul_dest_prob[mode] = dest_prob.cumsum(axis=0)
+            mode_prob = self.mode_exps[mode] / mode_expsum
+            dest_prob = (self.dest_exps[mode].T
+                         / self.dest_expsums[mode]["logsum"])
+            prob[mode] = mode_prob * dest_prob
         return prob
 
     def _get_cost_util_coefficient(self):
