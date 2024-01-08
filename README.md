@@ -84,19 +84,20 @@ or [Jonathan Cutrer's blog](https://jcutrer.com/python/pipenv-pipfile).
 2. Install `pipenv` by running `python -m pip install --user pipenv`.
    `pipenv` should now be installed in `%APPDATA%\Python\Python37\Scripts`
    (e.g. `C:\Users\USERNAME\AppData\Roaming\Python\Python37\Scripts`).
-4. Add `%APPDATA%\Python\Python37\Scripts` to your local PATH variable.
+3. Add `%APPDATA%\Python\Python37\Scripts` to your local PATH variable.
     1. Open Control Panel.
     2. Go to User Accounts, then click again User Accounts, then select from the left hand menu "Change my environment variables".
     3. From the top box ("User variables for USERNAME"), find and select "Path" variable, and click "Edit...".
     4. Click "New" and write `%APPDATA%\Python\Python37\Scripts`.
     5. Click OK in the "Edit environment variable" window, and then click OK again in the "Environment Variables" window.
-5. Close and reopen Command Prompt and check that `pipenv` is recognised by typing `pipenv --version`.
+4. Close and reopen Command Prompt and check that `pipenv` is recognised by typing `pipenv --version`.
    It should return `pipenv, version 2020.11.15` (`pipenv` version may vary).
-6. Download [helmet-model-system](https://github.com/HSLdevcom/helmet-model-system) repository and open a Command Prompt to its "Scripts" folder.
-7. Install dependencies from `Pipfile`:
+5. Download [helmet-model-system](https://github.com/HSLdevcom/helmet-model-system) repository
+   and open a Command Prompt to its "Scripts" folder.
+6. Install dependencies from `Pipfile`:
     - First setup: `pipenv --python 3.7 install --dev`
     - Additional syncing if new packages are added: `pipenv --python 3.7 sync --dev`
-8. Depending on your operating system, rename either `.env-win` (Windows) or `.env-nix` (Linux) to `.env`. 
+7. Depending on your operating system, rename either `.env-win` (Windows) or `.env-nix` (Linux) to `.env`.
    In Windows, you can do this in Command Propmpt by typing `copy .env-win .env`.
 
 Now, you should have a virtual environment in `C:\Users\USERNAME\.virtualenvs\Scripts-xxxxxxxx\Lib\site-packages`.
