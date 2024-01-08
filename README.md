@@ -67,8 +67,10 @@ Although not covered here, installing [Git](https://git-scm.com/downloads) is hi
 We are using Python 3.7 because it is supported by INRO Emme 4.5 software.
 
 1. Install Python 3.7.
-2. Add the path were you installed python (e.g., `C:\Python37`) and `C:\Python37\Scripts` to your local PATH variable in "Environment Variables".
-3. Open a new Command Prompt and type `python --version`. You should get `Python 3.7.9` or some other Python 3.7 version.
+2. Add the path were you installed python (e.g., `C:\Python37`) and `C:\Python37\Scripts`
+   to your local PATH variable in "Environment Variables".
+3. Open a new Command Prompt and type `python --version`.
+   You should get `Python 3.7.9` or some other Python 3.7 version.
 
 `pip` is the recommended package installer for Python.
 The normal Python installation routine installs `pip` to `C:\Python37\Scripts`.
