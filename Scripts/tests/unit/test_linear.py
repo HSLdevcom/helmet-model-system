@@ -9,7 +9,7 @@ import os
 
 TEST_DATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "test_data")
 INTERNAL_ZONES = [102, 103, 244, 1063, 1531, 2703, 2741, 6272, 6291, 19071]
-EXTERNAL_ZONES = [31102, 31500]
+EXTERNAL_ZONES = [34102, 34500]
 
 
 class LinearModelTest(unittest.TestCase):
