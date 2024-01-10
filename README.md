@@ -16,6 +16,8 @@ If you do not have an Emme license or you wish to develop HELMET 4.1 further, pl
 
 From this repository, copy the contents of the [Scripts](Scripts) folder to your computer.
 
+From this repository, copy the contents of the [Scripts](Scripts) folder to your computer.
+
 In production, we are using Python 3.7 which is supported by and installed together with INRO Emme software.
 We are using those Python dependencies that come with Inro EMME installation.
 To get access to these dependencies, you need to add them to your local PATH variable:
