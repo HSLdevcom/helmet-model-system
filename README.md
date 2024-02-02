@@ -32,7 +32,7 @@ Emme assignment can be tested without further configuration.
 Open command line to your local Scripts folder and write:
 
 ```
-python test_assignment.py
+python -m tests.emme_only.test_assignment
 ```
 
 This will create a small EMME test network and run test assignments on it.
@@ -67,8 +67,10 @@ Although not covered here, installing [Git](https://git-scm.com/downloads) is hi
 We are using Python 3.7 because it is supported by INRO Emme 4.5 software.
 
 1. Install Python 3.7.
-2. Add `C:\Python37` and `C:\Python37\Scripts` to your local PATH variable in "Environment Variables".
-3. Open a new Command Prompt and type `python --version`. You should get `Python 3.7.9` or some other Python 3.7 version.
+2. Add the path were you installed python (e.g., `C:\Python37`) and `C:\Python37\Scripts`
+   to your local PATH variable in "Environment Variables".
+3. Open a new Command Prompt and type `python --version`.
+   You should get `Python 3.7.9` or some other Python 3.7 version.
 
 `pip` is the recommended package installer for Python.
 The normal Python installation routine installs `pip` to `C:\Python37\Scripts`.
@@ -82,19 +84,22 @@ or [Jonathan Cutrer's blog](https://jcutrer.com/python/pipenv-pipfile).
 
 1. Open Command Prompt.
 2. Install `pipenv` by running `python -m pip install --user pipenv`.
-   `pipenv` should now be installed in `%APPDATA%\Python\Scripts` (e.g. `C:\Users\USERNAME\AppData\Roaming\Python\Scripts`).
-3. Add `%APPDATA%\Python\Scripts` to your local PATH variable.
+   `pipenv` should now be installed in `%APPDATA%\Python\Python37\Scripts`
+   (e.g. `C:\Users\USERNAME\AppData\Roaming\Python\Python37\Scripts`).
+3. Add `%APPDATA%\Python\Python37\Scripts` to your local PATH variable.
     1. Open Control Panel.
     2. Go to User Accounts, then click again User Accounts, then select from the left hand menu "Change my environment variables".
     3. From the top box ("User variables for USERNAME"), find and select "Path" variable, and click "Edit...".
-    4. Click "New" and write `%APPDATA%\Python\Scripts`.
+    4. Click "New" and write `%APPDATA%\Python\Python37\Scripts`.
     5. Click OK in the "Edit environment variable" window, and then click OK again in the "Environment Variables" window.
-4. Close and reopen Command Prompt and check that `pipenv` is recognised by typing `pipenv --version`. It should return `pipenv, version 2020.11.15`.
-5. Download [helmet-model-system](https://github.com/HSLdevcom/helmet-model-system) repository and open a Command Prompt to its "Scripts" folder.
+4. Close and reopen Command Prompt and check that `pipenv` is recognised by typing `pipenv --version`.
+   It should return `pipenv, version 2020.11.15` (`pipenv` version may vary).
+5. Download [helmet-model-system](https://github.com/HSLdevcom/helmet-model-system) repository
+   and open a Command Prompt to its "Scripts" folder.
 6. Install dependencies from `Pipfile`:
     - First setup: `pipenv --python 3.7 install --dev`
     - Additional syncing if new packages are added: `pipenv --python 3.7 sync --dev`
-7. Depending on your operating system, rename either `.env-win` (Windows) or `.env-nix` (Linux) to `.env`. 
+7. Depending on your operating system, rename either `.env-win` (Windows) or `.env-nix` (Linux) to `.env`.
    In Windows, you can do this in Command Propmpt by typing `copy .env-win .env`.
 
 Now, you should have a virtual environment in `C:\Users\USERNAME\.virtualenvs\Scripts-xxxxxxxx\Lib\site-packages`.
@@ -144,8 +149,8 @@ Alternatively, you can run the mock assignment with the help of command line
     - `"RESULTS_PATH": "YOUR_PATH\\helmet-model-system\\Scripts\\tests\\test_data\\Results"`,
     - `"BASELINE_DATA_PATH": "YOUR_PATH\\helmet-model-system\\Scripts\\tests\\test_data\\Base_input_data"`,
     - `"FORECAST_DATA_PATH": "YOUR_PATH\\helmet-model-system\\Scripts\\tests\\test_data\\Scenario_input_data\\2030_test"`,
-    - `"OPTIONAL_FLAGS": ["DO_NOT_USE_EMME"]`
-3. Type the following to the command line: `pipenv run python helmet.py`
+3. Type the following to the command line: `pipenv run python helmet.py --do-not-use-emme`.
+    You can also use the shorter `pipenv run python helmet.py -m`.
 
 
 ### Visual Studio Code

@@ -1,8 +1,8 @@
-import os
-import numpy
+from __future__ import annotations
+import numpy # type: ignore
 import pandas
-import copy
 
+from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 import utils.log as log
 import parameters.assignment as param
 import parameters.zone as zone_param
@@ -10,28 +10,55 @@ from assignment.datatypes.car_specification import CarSpecification
 from assignment.datatypes.transit import TransitSpecification
 from assignment.datatypes.path_analysis import PathAnalysis
 from assignment.abstract_assignment import Period
+if TYPE_CHECKING:
+    from assignment.emme_bindings.emme_project import EmmeProject
+    from assignment.datatypes.transit_fare import TransitFareZoneSpecification
+    from emme_context.modeller.emmebank import Scenario # type: ignore
 
 
 class AssignmentPeriod(Period):
-    def __init__(self, name, emme_scenario, emme_context,
-                 demand_mtx=param.emme_demand_mtx,
-                 result_mtx=param.emme_result_mtx, save_matrices=False,
-                 separate_emme_scenarios=False):
+    """
+    EMME assignment period definition.
+
+    This typically represents an hour of the day, which may or may not
+    have a dedicated EMME scenario. In case it does not have its own
+    EMME scenario, assignment results are stored only in extra attributes.
+
+    Parameters
+    ----------
+    name : str
+        Time period name (aht/pt/iht)
+    emme_scenario : int
+        EMME scenario linked to the time period
+    emme_context : assignment.emme_bindings.emme_project.EmmeProject
+        Emme project to connect to this assignment
+    emme_matrices : dict
+        key : str
+                Assignment class (car_work/transit_leisure/...)
+            value : dict
+                key : str
+                    Matrix type (demand/time/c
+                    
+                    t/dist/...)
+                value : str
+                    EMME matrix id
+    separate_emme_scenarios : bool (optional)
+        Whether separate scenarios have been created in EMME
+        for storing time-period specific network results.
+    """
+    def __init__(self, name: str, emme_scenario: int,
+                 emme_context: EmmeProject,
+                 emme_matrices: Dict[str, Dict[str, Any]],
+                 separate_emme_scenarios: bool = False):
         self.name = name
-        self.emme_scenario = emme_context.modeller.emmebank.scenario(
+        self.emme_scenario: Scenario = emme_context.modeller.emmebank.scenario(
             emme_scenario)
         self.emme_project = emme_context
         self._separate_emme_scenarios = separate_emme_scenarios
-        if save_matrices:
-            self.demand_mtx = copy.deepcopy(demand_mtx)
-            self.result_mtx = copy.deepcopy(result_mtx)
-        else:
-            # Refer to the same matrices for all time periods
-            self.demand_mtx = demand_mtx
-            self.result_mtx = result_mtx
+        self.emme_matrices = emme_matrices
         self.dist_unit_cost = param.dist_unit_cost
 
-    def extra(self, attr):
+    def extra(self, attr: str) -> str:
         """Add prefix "@" and time-period suffix.
 
         Parameters
@@ -46,7 +73,7 @@ class AssignmentPeriod(Period):
         """
         return "@{}_{}".format(attr, self.name)
 
-    def prepare(self, segment_results):
+    def prepare(self, segment_results: Dict[str,Dict[str,str]]):
         """Prepare network for assignment.
 
         Calculate road toll cost, set boarding penalties,
@@ -69,7 +96,7 @@ class AssignmentPeriod(Period):
         self._calc_background_traffic()
         self._specify()
 
-    def assign(self, matrices, iteration):
+    def assign(self, matrices: dict, iteration: Union[int,str]) -> Dict:
         """Assign cars, bikes and transit for one time period.
 
         Get travel impedance matrices for one time period from assignment.
@@ -91,7 +118,7 @@ class AssignmentPeriod(Period):
         if iteration=="init":
             self._assign_pedestrians()
             self._set_bike_vdfs()
-            self._assign_bikes(self.result_mtx["dist"]["bike"]["id"], "all")
+            self._assign_bikes(self.emme_matrices["bike"]["dist"], "all")
             self._set_car_and_transit_vdfs()
             if not self._separate_emme_scenarios:
                 self._calc_background_traffic()
@@ -123,7 +150,7 @@ class AssignmentPeriod(Period):
             self._assign_transit()
         elif iteration=="last":
             self._set_bike_vdfs()
-            self._assign_bikes(self.result_mtx["dist"]["bike"]["id"], "all")
+            self._assign_bikes(self.emme_matrices["bike"]["dist"], "all")
             self._set_car_and_transit_vdfs()
             self._calc_background_traffic()
             self._assign_cars(param.stopping_criteria_fine)
@@ -156,7 +183,10 @@ class AssignmentPeriod(Period):
                 mtxs["cost"][ass_cl] += self.dist_unit_cost * mtxs["dist"][ass_cl]
         return mtxs
 
-    def calc_transit_cost(self, fares, peripheral_cost, mapping):
+    def calc_transit_cost(self, 
+                          fares: TransitFareZoneSpecification, 
+                          peripheral_cost: numpy.ndarray, 
+                          mapping: dict):
         """Calculate transit zone cost matrix.
         
         Perform multiple transit assignments.
@@ -186,11 +216,7 @@ class AssignmentPeriod(Period):
         tc = "transit_work"
         spec = TransitSpecification(
             self._segment_results[tc], self.extra("hw"),
-            self.demand_mtx[tc]["id"],
-            self.result_mtx["time"][tc]["id"],
-            self.result_mtx["dist"][tc]["id"],
-            self.result_mtx["trip_part_"+tc],
-            count_zone_boardings=True)
+            self.emme_matrices[tc], count_zone_boardings=True)
         is_in_transit_zone_attr = param.is_in_transit_zone_attr.replace(
             "ui", "data")
         for transit_zone in transit_zones:
@@ -205,7 +231,7 @@ class AssignmentPeriod(Period):
             self.emme_project.matrix_results(
                 spec.transit_result_spec, self.emme_scenario)
             nr_visits = self._get_matrix(
-                "trip_part_transit_work", "board_cost")
+                tc, "actual_total_boarding_costs")
             # If the number of visits is less than 1, there seems to
             # be an easy way to avoid visiting this transit zone
             has_visited[transit_zone] = (nr_visits > 0.99)
@@ -243,7 +269,7 @@ class AssignmentPeriod(Period):
         cost[l:u, :u] = peripheral_cost
         cost[:u, l:u] = peripheral_cost.T
         # Calculate distance-based cost from inv-distance
-        dist = self._get_matrix("dist", "transit_work")
+        dist = self._get_matrix(tc, "dist")
         dist_cost = fares.start_fare + fares.dist_fare*dist
         cost[cost>=maxfare] = dist_cost[cost>=maxfare]
         # Reset boarding penalties
@@ -372,7 +398,9 @@ class AssignmentPeriod(Period):
                 link.modes -= {main_mode}
         self.emme_scenario.publish_network(network)
 
-    def _set_emmebank_matrices(self, matrices, is_last_iteration):
+    def _set_emmebank_matrices(self, 
+                               matrices: Dict[str,numpy.ndarray], 
+                               is_last_iteration: bool):
         """Set matrices in emmebank.
 
         Bike matrices are added together, so that only one matrix is to be
@@ -403,22 +431,23 @@ class AssignmentPeriod(Period):
             else:
                 self._set_matrix(mtx, matrices[mtx])
 
-    def _set_matrix(self, mtx_label, matrix, result_type=None):
+    def _set_matrix(self,
+                    ass_class: str,
+                    matrix: numpy.ndarray,
+                    matrix_type: Optional[str] = "demand"):
         if numpy.isnan(matrix).any():
-            msg = ("NAs in demand matrix {}. ".format(mtx_label)
-                   + "Would cause infinite loop in Emme assignment.")
+            msg = ("NAs in demand matrix {} ".format(ass_class)
+                   + "would cause infinite loop in Emme assignment.")
             log.error(msg)
             raise ValueError(msg)
-        elif result_type is None:
-            self.emme_project.modeller.emmebank.matrix(
-                self.demand_mtx[mtx_label]["id"]).set_numpy_data(
-                    matrix, scenario_id=self.emme_scenario.id)
         else:
             self.emme_project.modeller.emmebank.matrix(
-                self.result_mtx[result_type][mtx_label]["id"]).set_numpy_data(
+                self.emme_matrices[ass_class][matrix_type]).set_numpy_data(
                     matrix, scenario_id=self.emme_scenario.id)
 
-    def _get_matrices(self, mtx_type, is_last_iteration=False):
+    def _get_matrices(self, 
+                      mtx_type: str, 
+                      is_last_iteration: bool=False) -> Dict[str,numpy.ndarray]:
         """Get all matrices of specified type.
 
         Parameters
@@ -435,57 +464,60 @@ class AssignmentPeriod(Period):
             Subtype (car_work/truck/inv_time/...) : numpy 2-d matrix
                 Matrix of the specified type
         """
-        last_iteration_classes = param.freight_classes + ("transit_leisure",)
+        last_iter_classes = param.freight_classes + ("transit_leisure",)
         matrices = {}
-        for subtype in self.result_mtx[mtx_type]:
-            if is_last_iteration or subtype not in last_iteration_classes:
-                if mtx_type == "time" and subtype in param.assignment_modes:
-                    mtx = self._extract_timecost_from_gcost(subtype)
-                elif mtx_type == "time" and subtype in param.transit_classes:
-                    mtx = self._damp_travel_time(subtype)
+        for ass_class, mtx_types in self.emme_matrices.items():
+            if (mtx_type in mtx_types and
+                    (is_last_iteration or ass_class not in last_iter_classes)):
+                if mtx_type == "time" and ass_class in param.assignment_modes:
+                    mtx = self._extract_timecost_from_gcost(ass_class)
+                elif mtx_type == "time" and ass_class in param.transit_classes:
+                    mtx = self._damp_travel_time(ass_class)
                 else:
-                    mtx = self._get_matrix(mtx_type, subtype)
-                matrices[subtype] = mtx
+                    mtx = self._get_matrix(ass_class, mtx_type)
+                matrices[ass_class] = mtx
         if not is_last_iteration:
             matrices["transit_leisure"] = matrices["transit_work"]
         return matrices
 
-    def _get_matrix(self, assignment_result_type, subtype):
+    def _get_matrix(self, 
+                    ass_class: str, 
+                    matrix_type: str) -> numpy.ndarray:
         """Get matrix with type pair (e.g., demand, car_work).
 
         Parameters
         ----------
-        assignment_result_type : str
-            Type (demand/time/transit/...)
-        subtype : str
-            Subtype (car_work/truck/inv_time/...)
+        ass_class : str
+            Assignment class (car_work/transit_leisure/truck/...)
+        matrix_type : str
+            Type (demand/time/cost/...)
 
         Return
         ------
         numpy 2-d matrix
             Matrix of the specified type
         """
-        emme_id = self.result_mtx[assignment_result_type][subtype]["id"]
+        emme_id = self.emme_matrices[ass_class][matrix_type]
         return (self.emme_project.modeller.emmebank.matrix(emme_id)
                 .get_numpy_data(scenario_id=self.emme_scenario.id))
 
-    def _damp_travel_time(self, demand_type):
+    def _damp_travel_time(self, demand_type: str):
         """Reduce the impact from first waiting time on total travel time."""
-        travel_time = self._get_matrix("time", demand_type)
-        fw_time = self._get_matrix("trip_part_"+demand_type, "fw_time")
+        travel_time = self._get_matrix(demand_type, "time")
+        fw_time = self._get_matrix(demand_type, "actual_first_waiting_times")
         wt_weight = param.waiting_time_perception_factor
         return travel_time + wt_weight*((5./3.*fw_time)**0.8 - fw_time)
 
-    def _extract_timecost_from_gcost(self, ass_class):
+    def _extract_timecost_from_gcost(self, ass_class: str):
         """Remove monetary cost from generalized cost.
 
         Traffic assignment produces a generalized cost matrix.
         To get travel time, monetary cost is removed from generalized cost.
         """
         vot_inv = param.vot_inv[param.vot_classes[ass_class]]
-        gcost = self._get_matrix("gen_cost", ass_class)
-        cost = self._get_matrix("cost", ass_class)
-        dist = self._get_matrix("dist", ass_class)
+        gcost = self._get_matrix(ass_class, "gen_cost")
+        cost = self._get_matrix(ass_class, "cost")
+        dist = self._get_matrix(ass_class, "dist")
         if ass_class in ("trailer_truck", "truck"):
             # toll costs are not applied to freight
             time = gcost - vot_inv*param.freight_dist_unit_cost[ass_class]*dist
@@ -494,7 +526,7 @@ class AssignmentPeriod(Period):
         self._set_matrix(ass_class, time, "time")
         return time
 
-    def _calc_background_traffic(self, include_trucks=False):
+    def _calc_background_traffic(self, include_trucks: bool=False):
         """Calculate background traffic (buses)."""
         network = self.emme_scenario.get_network()
         # emme api has name "data3" for ul3
@@ -531,7 +563,9 @@ class AssignmentPeriod(Period):
             link[self.extra("total_cost")] = toll_cost + dist_cost
         self.emme_scenario.publish_network(network)
 
-    def _calc_boarding_penalties(self, extra_penalty=0, is_last_iteration=False):
+    def _calc_boarding_penalties(self, 
+                                 extra_penalty: int = 0, 
+                                 is_last_iteration: bool = False):
         """Calculate boarding penalties for transit assignment."""
         # Definition of line specific boarding penalties
         network = self.emme_scenario.get_network()
@@ -547,29 +581,25 @@ class AssignmentPeriod(Period):
             except KeyError:
                 missing_penalties.add(line.mode.id)
         if missing_penalties:
-            missing_penalties = ", ".join(missing_penalties)
-            log.warn("No boarding penalty found for transit modes " + missing_penalties)
+            missing_penalties_str: str = ", ".join(missing_penalties)
+            log.warn("No boarding penalty found for transit modes " + missing_penalties_str)
         self.emme_scenario.publish_network(network)
 
     def _specify(self):
-        self._car_spec = CarSpecification(
-            self.extra, self.demand_mtx, self.result_mtx)
+        self._car_spec = CarSpecification(self.extra, self.emme_matrices)
         self._transit_specs = {tc: TransitSpecification(
                 self._segment_results[tc], self.extra("hw"),
-                self.demand_mtx[tc]["id"],
-                self.result_mtx["time"][tc]["id"],
-                self.result_mtx["dist"][tc]["id"],
-                self.result_mtx["trip_part_"+tc])
+                self.emme_matrices[tc])
             for tc in param.transit_classes}
         self.bike_spec = {
             "type": "STANDARD_TRAFFIC_ASSIGNMENT",
             "classes": [
                 {
                     "mode": param.main_mode,
-                    "demand": self.demand_mtx["bike"]["id"],
+                    "demand": self.emme_matrices["bike"]["demand"],
                     "results": {
                         "od_travel_times": {
-                            "shortest_paths": self.result_mtx["time"]["bike"]["id"],
+                            "shortest_paths": self.emme_matrices["bike"]["time"],
                         },
                         "link_volumes": None, # This is defined later
                     },
@@ -592,7 +622,7 @@ class AssignmentPeriod(Period):
         self.walk_spec = {
             "type": "STANDARD_TRANSIT_ASSIGNMENT",
             "modes": param.aux_modes,
-            "demand": self.demand_mtx["bike"]["id"],
+            "demand": self.emme_matrices["bike"]["demand"],
             "waiting_time": {
                 "headway_fraction": 0.01,
                 "effective_headways": "hdw",
@@ -606,7 +636,7 @@ class AssignmentPeriod(Period):
                 "perception_factor": 1,
             },
             "od_results": {
-                "transit_times": self.result_mtx["time"]["walk"]["id"],
+                "transit_times": self.emme_matrices["walk"]["time"],
             },
             "strategy_analysis": {
                 "sub_path_combination_operator": "+",
@@ -622,12 +652,14 @@ class AssignmentPeriod(Period):
                     },
                 },
                 "results": {
-                    "od_values": self.result_mtx["dist"]["walk"]["id"],
+                    "od_values": self.emme_matrices["walk"]["dist"],
                 },
             },
         }
 
-    def _assign_cars(self, stopping_criteria, lightweight=False):
+    def _assign_cars(self, 
+                     stopping_criteria: Dict[str, Union[int, float]], 
+                     lightweight: bool=False):
         """Perform car_work traffic assignment for one scenario."""
         log.info("Car assignment started...")
         car_spec = self._car_spec.spec(lightweight)
@@ -649,8 +681,10 @@ class AssignmentPeriod(Period):
         if assign_report["stopping_criterion"] == "MAX_ITERATIONS":
             log.warn("Car assignment not fully converged.")
     
-    def _assign_bikes(self, length_mat_id, length_for_links):
-        """Perform bike traffic assignment for one scenario."""
+    def _assign_bikes(self, 
+                      length_mat_id: Union[float, int, str], 
+                      length_for_links: str):
+        """Perform bike traffic assignment for one scenario.???TYPES"""
         scen = self.emme_scenario
         spec = self.bike_spec
         spec["classes"][0]["results"]["link_volumes"] = self.extra("bike")

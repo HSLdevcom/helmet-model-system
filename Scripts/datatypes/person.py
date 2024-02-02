@@ -1,7 +1,14 @@
-import numpy
+from __future__ import annotations
+from typing import Dict, List, Tuple
+import numpy # type: ignore
 import random
+from datatypes.purpose import TourPurpose
 
 from datatypes.tour import Tour
+from datatypes.zone import Zone
+from models.car_use import CarUseModel
+from models.linear import IncomeModel
+from models.tour_combinations import TourCombinationModel
 
 
 class Person:
@@ -18,6 +25,7 @@ class Person:
         Model used to create tours
     car_use_model : models.logit.CarUseModel
         Model used to decide if car user
+    income_model : models.linear.IncomeModel
     """
 
     id_counter = 0
@@ -27,15 +35,19 @@ class Person:
     zone_attr =  ["number", "area", "municipality"]
     attr = person_attr + zone_attr
     
-    def __init__(self, zone, age_group, 
-                 generation_model, car_use_model, income_model):
+    def __init__(self, 
+                 zone: Zone, 
+                 age_group: Tuple[int,int], 
+                 generation_model: TourCombinationModel, 
+                 car_use_model: CarUseModel, 
+                 income_model: IncomeModel):
         self.id = Person.id_counter
         Person.id_counter += 1
         self.zone = zone
         self.age = random.randint(age_group[0], age_group[1])
         self.age_group = "age_" + str(age_group[0]) + "-" + str(age_group[1])
         self.sex = random.random() < 0.5
-        self.tours = []
+        self.tours: List[Tour] = []
         self.generation_model = generation_model
         self._cm = car_use_model
         self._im = income_model
@@ -63,7 +75,7 @@ class Person:
             self.income = numpy.exp(log_income)
 
     @property
-    def gender(self):
+    def gender(self) -> str:
         """Returns the person's gender.
 
         Returns
@@ -73,7 +85,9 @@ class Person:
         """
         return "female" if self.sex == Person.FEMALE else "male"
 
-    def add_tours(self, purposes, tour_probs):
+    def add_tours(self, 
+                  purposes: Dict[str,TourPurpose], 
+                  tour_probs: Dict[str,numpy.ndarray]):
         """Initilize tour list and add new tours.
 
         Parameters
@@ -125,7 +139,7 @@ class Person:
                     non_home_tour = Tour(purposes["oo"], tour, self.id)
                     self.tours.append(non_home_tour)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """ Return person attributes as string.
 
         Returns

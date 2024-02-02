@@ -1,5 +1,5 @@
 import pandas
-import numpy
+import numpy # type: ignore
 
 from parameters.zone import tour_length_intervals as intervals
 
