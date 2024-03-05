@@ -96,6 +96,7 @@ vdf_temp = ("(put(60/ul2)*(1+{}*put((volau+volad)/{})/"
             + "(ul1-get(2))))*(get(2).le.put(ul1*{}))*length+(get(2).gt."
             + "get(3))*({}*get(1)*length+{}*(get(2)-get(3))*length)")
 buslane = "((lanes-1).max.0.8)"
+vdf_bikes = ("length*(60/((3.max.({} + (@gradient.lt.0) * (1.56 * @gradient) + (@gradient.gt.0) * (1.3 * @gradient))).min.35))")
 volume_delay_funcs = {
     # Car functions
     "fd1": vdf_temp.format(0.02, "lanes", 0.975, 1.78, 0.0075),
@@ -110,16 +111,16 @@ volume_delay_funcs = {
     "fd10": vdf_temp.format(0.3, buslane, 0.810, 2.28, 0.0170),
     "fd99": "length * 1.3",
     # Bike functions
-    "fd70": "length*(60/19)",
-    "fd71": "length*(60/17)",
-    "fd72": "length*(60/17)",
-    "fd73": "length*(60/16)",
-    "fd74": "length*(60/15)",
-    "fd75": "length*(60/15)",
-    "fd76": "length*(60/12)",
-    "fd77": "length*(60/10)",
-    "fd78": "length*(60/12)",
-    "fd98": "length*(60/12)",
+    "fd70": vdf_bikes.format(19),
+    "fd71": vdf_bikes.format(17),
+    "fd72": vdf_bikes.format(17),
+    "fd73": vdf_bikes.format(16),
+    "fd74": vdf_bikes.format(15),
+    "fd75": vdf_bikes.format(15),
+    "fd76": vdf_bikes.format(12),
+    "fd77": vdf_bikes.format(10),
+    "fd78": vdf_bikes.format(12),
+    "fd98": vdf_bikes.format(12),
     # Transit functions
     ## Bus, no bus lane
     "ft01": "us2*length+timau",
