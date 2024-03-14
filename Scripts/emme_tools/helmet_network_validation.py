@@ -6,7 +6,7 @@ from collections import namedtuple
 import inro.modeller as _m
 
 # TODO Could this be done more elegantly?
-sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),"../"))
 from utils.validate_network import validate
 
 
