@@ -15,7 +15,7 @@ def print_links(network, resultdata):
     """
     attr_names = network.attributes("LINK")
     resultdata.print_line(
-        "Link\t" + "\t".join(attr_names) + "\tNoise_zone_width", "links")
+        "Link\tnode_i\tnode_j" + "\t".join(attr_names) + "\tNoise_zone_width", "links")
     noisemodel = NoiseModel(
         network, ("@car_work_vrk", "@car_leisure_vrk", "@van_vrk"),
         ("@truck_vrk", "@trailer_truck_vrk"))
@@ -25,5 +25,5 @@ def print_links(network, resultdata):
         attrs = "\t".join([str(link[attr]) for attr in attr_names])
         noise_zone_width = noisemodel.calc_noise(link)
         resultdata.print_line(
-            wkt + "\t" + attrs + "\t" + str(noise_zone_width), "links")
+            wkt + "\t" + str(link.i_node.id) + "\t" + str(link.j_node.id) + "\t" + attrs + "\t" + str(noise_zone_width), "links")
     resultdata.flush()
