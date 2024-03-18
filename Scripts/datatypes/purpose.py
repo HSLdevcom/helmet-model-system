@@ -184,6 +184,8 @@ class TourPurpose(Purpose):
         tours = self.gen_model.get_tours()
         demand = {}
         for mode in self.modes:
+            import utils.log as log
+            log.debug(str(self.name) + "::" + str(self.prob[mode].shape)+"=>"+str(tours.shape))
             mtx = (self.prob.pop(mode) * tours).T
             try:
                 self.sec_dest_purpose.gen_model.add_tours(mtx, mode, self)
