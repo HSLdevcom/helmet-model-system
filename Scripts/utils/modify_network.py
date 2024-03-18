@@ -19,6 +19,11 @@ def add_bus_stops(network):
                             # Line ends in HSL area
                             segment.allow_alightings = is_stop
                             segment.allow_boardings = not_hsl and is_stop
+                        elif line.id[-1] == '3':
+                            #Line is circular and possibly goes through HSL area
+                            #not perfect solution, out-in-in-out allows for in-in routes as well
+                            segment.allow_alightings = is_stop
+                            segment.allow_boardings = is_stop
                         else:
                             raise ValueError(
                                 "Unknown direction code for line " + line.id)
