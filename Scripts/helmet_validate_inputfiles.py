@@ -140,6 +140,12 @@ def main(args):
                 "transit_lines": 0,
                 "transit_segments": nr_transit_classes*nr_segment_results + 1,
             }
+            sc_name = emmebank.scenario(first_scenario_ids[i]).title
+            if len(sc_name)>56:
+                msg = "Scenario name: {} too long, time period extension might exceed Emme's 60 characters limit.".format(
+                    sc_name)
+                log.error(msg)
+                raise ValueError(msg)     
             if not args.separate_emme_scenarios:
                 # If results from all time periods are stored in same
                 # EMME scenario
@@ -162,7 +168,7 @@ def main(args):
                     log.warn("Scenarios with different zones found in EMME bank!")
             scen = emmebank.scenario(first_scenario_ids[i])
             if scen is None:
-                msg = "Project {} has no scenario {}".format(emp_path, first_scenario_ids[0])
+                msg = "Project {} has no scenario {}".format(emp_path, first_scenario_ids[i])
                 log.error(msg)
                 raise ValueError(msg)
             elif scen.zone_numbers != zone_numbers:

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, Iterable, List, Optional, Union
+from typing import Dict, Iterable, List, Optional, Tuple, Union
 import numpy # type: ignore
 from collections import namedtuple
 import copy
@@ -241,10 +241,7 @@ class MockProject:
                         vehicle_id = int(rec[3])
                         headway = float(rec[4])
                         itinerary = []
-                        ttf = []
-                        data1 = []
-                        data2 = []
-                        data3 = []
+                        segment_data = []
                         while True:
                             segrec = f.readline().replace("'", " ").split()
                             if not segrec or segrec[0] in "amd":
@@ -253,21 +250,24 @@ class MockProject:
                             elif segrec[0] not in ("c", "path=no"):
                                 itinerary.append(segrec[0])
                                 try:
-                                    ttf.append(int(segrec[2][4:]))
-                                    data1.append(float(segrec[3][4:]))
-                                    data2.append(float(segrec[4][4:]))
-                                    data3.append(float(segrec[5][4:]))
+                                    symbol = segrec[1][4]
+                                    segment_data.append({
+                                        "allow_alightings": symbol in ">+",
+                                        "allow_boardings": symbol in "<+",
+                                        "transit_time_func": int(segrec[2][4:]),
+                                        "data1": float(segrec[3][4:]),
+                                        "data2": float(segrec[4][4:]),
+                                        "data3": float(segrec[5][4:]),
+                                    })
                                 except IndexError:
                                     pass
                         line = network.create_transit_line(
                             line_id, vehicle_id, itinerary)
-                        for i, segment in enumerate(line.segments()):
-                            segment.transit_time_func = ttf[i]
-                            segment.data1 = data1[i]
-                            segment.data2 = data2[i]
-                            segment.data3 = data3[i]
+                        for data, segment in zip(segment_data, line.segments()):
+                            segment.__dict__.update(data)
                     elif rec[0] == "m":
                         line = network.transit_line(idx=rec[1])
+                        vehicle_id = int(rec[3])
                         headway = float(rec[4])
                     else:
                         raise SyntaxError("Unknown update code")
@@ -532,7 +532,6 @@ class Network:
         self._links = {}
         self._vehicles = {}
         self._lines = {}
-        self._segments = []
         self._objects = {
             "NODE": self.nodes,
             "LINK": self.links,
@@ -614,8 +613,9 @@ class Network:
     def transit_lines(self) -> Iterable['TransitLine']:
         return iter(self._lines.values())
 
-    def transit_segments(self) -> Iterable:
-        return iter(self._segments)
+    def transit_segments(self, include_hidden=False) -> Tuple['Segment']:
+        return (segment for line in self.transit_lines()
+            for segment in line.segments(include_hidden))
 
     def create_transit_line(self, idx: str, transit_vehicle_id: int, itinerary: List[List[str]]) -> 'TransitLine':
         line = TransitLine(self, idx, transit_vehicle_id)
@@ -623,9 +623,10 @@ class Network:
         for i in range(len(itinerary) - 1):
             link = self.link(itinerary[i], itinerary[i + 1])
             segment = TransitSegment(self, line, link)
-            self._segments.append(segment)
             line._segments.append(segment)
             link._segments.append(segment)
+        line._segments.append(
+            HiddenSegment(self, line, self.node(itinerary[-1])))
         return line
 
 
@@ -700,6 +701,9 @@ class Node(NetworkObject):
     def id(self):
         return str(self.number)
 
+    def outgoing_segments(self, include_hidden=False):
+        return (s for s in self.network.transit_segments(include_hidden)
+            if s.i_node is self)
 
 class Link(NetworkObject):
     def __init__(self, 
@@ -766,8 +770,11 @@ class TransitLine(NetworkObject):
     def segment(self, idx) -> 'TransitSegment':
         return self._segments[idx]
 
-    def segments(self) -> Iterable:
-        return iter(self._segments)
+    def segments(self, include_hidden=False) -> Iterable:
+        if include_hidden:
+            return iter(self._segments)
+        else:
+            return iter(self._segments[:-1])
 
 
 class TransitSegment(NetworkObject):
@@ -776,6 +783,8 @@ class TransitSegment(NetworkObject):
             self, network, network._extra_attr["TRANSIT_SEGMENT"])
         self.line = line
         self.link = link
+        self.allow_alightings = False
+        self.allow_boardings = False
         self.transit_time_func = 0
         self.dwell_time = 0.01
 
@@ -790,6 +799,24 @@ class TransitSegment(NetworkObject):
     @property
     def j_node(self) -> Node:
         return self.link.j_node
+
+
+class HiddenSegment(TransitSegment):
+    def __init__(self, network, line, node):
+        TransitSegment.__init__(self, network, line, None)
+        self._node = node
+
+    @property
+    def id(self):
+        return "{}-{}".format(self.line, self.i_node)
+
+    @property
+    def i_node(self):
+        return self._node
+
+    @property
+    def j_node(self):
+        return None
 
 
 class ExistenceError(Exception):
