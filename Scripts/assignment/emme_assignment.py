@@ -4,6 +4,7 @@ import pandas
 from math import log10
 
 import utils.log as log
+import utils.modify_network as mnw
 from utils.zone_interval import belongs_to_area, faulty_kela_code_nodes
 import parameters.assignment as param
 import parameters.zone as zone_param
@@ -314,35 +315,8 @@ class EmmeAssignmentModel(AssignmentModel):
 
     def _add_bus_stops(self):
         network: Network = self.mod_scenario.get_network()
-        for line in network.transit_lines():
-            if line.mode.id in param.stop_codes:
-                stop_codes = param.stop_codes[line.mode.id]
-                for segment in line.segments():
-                    is_stop = segment.i_node.data2 in stop_codes
-                    if line.mode.id in "de":
-                        # Non-HSL bus lines
-                        not_hsl = segment.i_node.label not in param.hsl_area
-                        if line.id[-1] == '1':
-                            # Line starts in HSL area
-                            segment.allow_alightings = not_hsl and is_stop
-                            segment.allow_boardings = is_stop
-                        elif line.id[-1] == '2':
-                            # Line ends in HSL area
-                            segment.allow_alightings = is_stop
-                            segment.allow_boardings = not_hsl and is_stop
-                        elif line.id[-1] == '3':
-                            #Line is circular and possibly goes through HSL area
-                            #not perfect solution, out-in-in-out allows for in-in routes as well
-                            segment.allow_alightings = is_stop
-                            segment.allow_boardings = is_stop
-                        else:
-                            raise ValueError(
-                                "Unknown direction code for line " + line.id)
-                    else:
-                        segment.allow_alightings = is_stop
-                        segment.allow_boardings = is_stop
-
-        self.mod_scenario.publish_network(network)
+        modified_network: Network = mnw.add_bus_stops(network)
+        self.mod_scenario.publish_network(modified_network)
 
     def _create_matrices(self, time_period, id_hundred, id_ten):
         """Create EMME matrices for storing demand and impedance.
