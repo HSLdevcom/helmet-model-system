@@ -110,9 +110,9 @@ tour_purposes: List[Dict[str, Any]] = [ #changed to list for type checker
 # hence need sub-intervals defined.
 purpose_areas: Dict[str, Union[Tuple[int,int],Tuple[int,int,int]]] = {
     "metropolitan": (0, 6000, 16000),
-    "peripheral": (16000, 31000),
-    "all": (0, 6000, 31000),
-    "external": (31031, 34999),
+    "peripheral": (16000, 32000),
+    "all": (0, 6000, 32000),
+    "external": (34031, 34999),
 }
 areas = {
     "helsinki_cbd": (0, 999),
