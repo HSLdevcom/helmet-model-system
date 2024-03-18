@@ -157,9 +157,13 @@ Alternatively, you can run the mock assignment with the help of command line
 
 The following extensions are recommended when developing with Visual Studio Code:
 
-- [Python extension version<2024.0.0](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
+- [Python extension v2023.25.XXX](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
   (version >=2024.0.0 comes with pytest 8, which does not support python 3.7)
 - [Python Debugger v2024.0.XXX](https://marketplace.visualstudio.com/items?itemName=ms-python.debugpy)
+
+Alternatively, these test views seem to work with any version of the Python and Python Debugger extensions:
+
+- [Test Explorer UI](https://marketplace.visualstudio.com/items?itemName=hbenl.vscode-test-explorer)
 - [Python Test Explorer for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=LittleFoxTeam.vscode-python-test-adapter)
 
 A couple of tips to get it all working:
