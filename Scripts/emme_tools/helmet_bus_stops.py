@@ -1,13 +1,14 @@
 import os
 import sys
 import logging
-import utils.modify_network as mnw
+
 
 import inro.modeller as _m
 
 # TODO Could this be done more elegantly?
-sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),"../"))
 from assignment.emme_assignment import EmmeAssignmentModel
+import utils.modify_network as mnw
 
 
 class LinkPrinting(_m.Tool()):
@@ -22,7 +23,7 @@ class LinkPrinting(_m.Tool()):
 
     def page(self):
         pb = _m.ToolPageBuilder(self)
-        pb.title = "Code bus stops"
+        pb.title = "Run bus stop macro"
         if self.tool_run_msg:
             pb.add_html(self.tool_run_msg)
         return pb.render()
@@ -36,7 +37,7 @@ class LinkPrinting(_m.Tool()):
         scen = _m.Modeller().scenario
         modified_network = mnw.add_bus_stops(scen.get_network())
         _m.Modeller().scenario.publish_network(modified_network)
-        msg = "Bus stops for scenario {} coded successfully.".format(
+        msg = "Bus stops for scenario {} assigned successfully.".format(
             scen.id)
         self.write(msg)
 
