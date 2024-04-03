@@ -66,6 +66,8 @@ class EmmeProject:
             "inro.emme.transit_assignment.extended.network_results")
         self.create_extra_attribute = self.modeller.tool(
             "inro.emme.data.extra_attribute.create_extra_attribute")
+        self.create_extra_function_parameters = self.modeller.tool(
+            "inro.emme.traffic_assignment.set_extra_function_parameters")
     
     def write(self, message: str):
         """Write to logbook."""
