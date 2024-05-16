@@ -104,8 +104,8 @@ vdf_bikes_baana = ("length*(60/((3.max.({} + (el1.lt.0) * (1.56 * el1) +"
                    +" (el1.gt.0) * (1.3 * el1))).min.35))")
 vdf_bikes_mixed_lane = "(length * (60/((3.max.({flat} + (el1.lt.0) * (1.56 * el1) + (el1.gt.0) * (1.3 * el1)) + {vol}).min.({flat}*1.5))))"
 
-b_volume_mixed = "(-1.962 * ln(4*volau/1000) * 0.689)"
-b_volume_lane = "(-1.962 * ln(4*volau/1000) * 0.807)"
+b_volume_mixed = "(-1.962 * ln(4*(volau+volad+1)/1000) * 0.689)"
+b_volume_lane = "(-1.962 * ln(4*(volau+volad+1)/1000) * 0.807)"
 volume_delay_funcs = {
     # Car functions
     "fd1": vdf_temp.format(0.02, "lanes", 0.975, 1.78, 0.0075),
