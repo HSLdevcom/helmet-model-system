@@ -85,7 +85,7 @@ class ModelSystem:
             self.basematrices, self.zdata_forecast, self.zone_numbers)
         self.dtm = dt.DepartureTimeModel(
             self.ass_model.nr_zones, self.ass_model.time_periods)
-        self.imptrans = ImpedanceTransformer()
+        self.imptrans = ImpedanceTransformer(export_path=estimation_data_path)
         bounds = slice(0, self.zdata_forecast.nr_zones)
         self.cdm = CarDensityModel(
             self.zdata_base, self.zdata_forecast, bounds, self.resultdata)

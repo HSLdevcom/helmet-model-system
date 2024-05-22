@@ -1,13 +1,17 @@
 from collections import defaultdict
+from pathlib import Path
+from typing import Dict
 import numpy # type: ignore
+import openmatrix as omx
 
+from Scripts.datatypes.purpose import Purpose
 import parameters.impedance_transformation as param
 from parameters.assignment import assignment_classes
 
 
 class ImpedanceTransformer:
-    def __init__(self):
-        pass
+    def __init__(self, export_path: Path = None):
+        self._export_path = export_path
 
     def transform(self, purpose, impedance):
         """Perform transformation from time period dependent matrices 
@@ -55,4 +59,23 @@ class ImpedanceTransformer:
         for i in range(1, len(purpose.sub_bounds)):
             trips_per_month[purpose.sub_bounds[i], :] = trips_month[i]
         day_imp["transit"]["cost"] /= trips_per_month
+        
+        # Optionally export impedance data for estimation
+        if self._export_path:
+            self.export_day_impedance(purpose, day_imp)
+        
         return day_imp
+
+    def export_day_impedance(self, purpose: Purpose, day_imp: Dict[str, Dict[str, numpy.ndarray]]) -> None:
+        """Export day impedance matrices to OMX files. Used for estimation process.
+
+        Args:
+            purpose (Purpose): Trip purpose
+            day_imp (Dict[str, Dict[str, np.ndarray]]): Daily impedances in a dict 
+                {mode: {impedance_type: array}}
+
+        """
+        with omx.open_file(self._export_path / (purpose.name + '.omx'), mode='w') as omx_file:
+            for mode_name, mode_imp in day_imp.items():
+                for type_name, type_imp in mode_imp.items():
+                    omx_file[mode_name + '_' + type_name] = type_imp
