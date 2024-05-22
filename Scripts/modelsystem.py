@@ -55,7 +55,8 @@ class ModelSystem:
                  base_matrices_path: str,
                  results_path: str, 
                  assignment_model: AssignmentModel, 
-                 name: str):
+                 name: str,
+                 estimation_data_path: Path = None):
         self.ass_model = cast(Union[MockAssignmentModel,EmmeAssignmentModel], assignment_model) #type checker hint
         self.zone_numbers: numpy.array = self.ass_model.zone_numbers
         self.travel_modes: Dict[str, bool] = {}  # Dict instead of set, to preserve order

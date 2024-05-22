@@ -1,4 +1,5 @@
 from argparse import ArgumentParser, ArgumentTypeError
+from pathlib import Path
 import sys
 import os
 from glob import glob
@@ -49,6 +50,12 @@ def main(args):
         raise NameError(
             "Forecast data directory '{}' does not exist.".format(
                 forecast_zonedata_path))
+    
+    estimation_data_path = None
+    if args.export_estimation_data:
+        estimation_data_path = Path(results_path) / 'estimation'
+        estimation_data_path.mkdir(parents=True, exist_ok=True)
+    
     # Choose and initialize the Traffic Assignment (supply)model
     if args.do_not_use_emme:
         log.info("Initializing MockAssignmentModel...")
@@ -79,11 +86,11 @@ def main(args):
     if args.is_agent_model:
         model = AgentModelSystem(
             forecast_zonedata_path, base_zonedata_path, base_matrices_path,
-            results_path, ass_model, args.scenario_name)
+            results_path, ass_model, args.scenario_name, estimation_data_path)
     else:
         model = ModelSystem(
             forecast_zonedata_path, base_zonedata_path, base_matrices_path,
-            results_path, ass_model, args.scenario_name)
+            results_path, ass_model, args.scenario_name, estimation_data_path)
     log_extra["status"]["results"] = model.mode_share
 
     # Run traffic assignment simulation for N iterations,
@@ -198,6 +205,12 @@ if __name__ == "__main__":
         action="store_true",
         default=config.DELETE_STRATEGY_FILES,
         help="Using this flag deletes strategy files from Emme-project Database folder.",
+    )
+    parser.add_argument(
+        "-E", "--export-estimation-data",
+        action="store_true",
+        default=config.EXPORT_ESTIMATION_DATA,
+        help="Export zone data and per purpose impedance matrices into the result folder.",
     )
     parser.add_argument(
         "--scenario-name",
