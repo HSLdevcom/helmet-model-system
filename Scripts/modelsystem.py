@@ -1,3 +1,4 @@
+from pathlib import Path
 import threading
 import multiprocessing
 import os
@@ -68,6 +69,10 @@ class ModelSystem:
         self.zdata_forecast = ZoneData(
             zone_data_path, self.zone_numbers)
 
+        if estimation_data_path:
+            self.zdata_base.export_data(estimation_data_path / 'zonedata_base.csv')
+            self.zdata_forecast.export_data(estimation_data_path / 'zonedata_forecast.csv')
+         
         # Output data
         self.resultmatrices = MatrixData(
             os.path.join(results_path, name, "Matrices"))

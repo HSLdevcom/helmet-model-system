@@ -1,4 +1,5 @@
 from __future__ import annotations
+from pathlib import Path
 from typing import Any, Dict, List, Tuple, Union
 import numpy # type: ignore
 import pandas
@@ -215,6 +216,15 @@ class ZoneData:
                 return val.values
         else:  # Return matrix (purpose zones -> all zones)
             return val[bounds, :]
+
+    def export_data(self, export_file: Path):
+        """Export Pandas Series zone data into a single CSV file
+
+        Args:
+            export_file (Path): Path to the destination file
+        """
+        df = pandas.DataFrame({k:v for k,v in self._values.items() if isinstance(v, pandas.Series)})
+        df.to_csv(export_file)
 
 
 class BaseZoneData(ZoneData):
