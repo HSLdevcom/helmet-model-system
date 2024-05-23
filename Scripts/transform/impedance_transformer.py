@@ -4,7 +4,7 @@ from typing import Dict
 import numpy # type: ignore
 import openmatrix as omx
 
-from Scripts.datatypes.purpose import Purpose
+from datatypes.purpose import Purpose
 import parameters.impedance_transformation as param
 from parameters.assignment import assignment_classes
 
