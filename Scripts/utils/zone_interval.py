@@ -4,7 +4,7 @@ from shapely.geometry import Point, Polygon # type: ignore
 
 import parameters.zone as param
 import utils.log as log
-from utils import read_zone_file
+from utils.read_zone_file import read_zone_file
 
 
 def zone_interval(division_type, name):
