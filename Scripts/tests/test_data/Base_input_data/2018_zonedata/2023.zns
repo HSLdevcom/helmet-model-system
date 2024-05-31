@@ -1,0 +1,71 @@
+{
+    "purpose_areas": {
+        "metropolitan": [0, 6000, 16000],
+        "peripheral": [16000, 32000],
+        "all": [0, 6000, 32000],
+        "external": [34031, 34999]
+    },
+    
+    "areas":{
+        "helsinki_cbd": [0, 999],
+        "helsinki_other": [1000, 1999],
+        "lauttasaari": [1000, 1014],
+        "espoo_vant_kau": [2000, 5999],
+        "surrounding": [6000, 15999],
+        "surround_train": [
+            [6000, 6999],
+            [10000, 11999],
+            [13000, 14999],
+            [15500, 15999]
+        ],
+        "surround_other": [
+            [7000, 9999],
+            [12000, 12999],
+            [15000, 15499]
+        ],
+        "peripheral": [16000, 31999],
+        "external": [34031, 34999]
+    },
+
+    "municipalities": {
+        "Helsinki": [0, 1999],
+        "Espoo": [2000, 3499],
+        "Kauniainen": [3500, 3999],
+        "Vantaa": [4000, 5999],
+        "Kirkkonummi": [6000, 6999],
+        "Vihti": [7000, 7999],
+        "Nurmijarvi": [8000, 8999],
+        "Tuusula": [9000, 9999],
+        "Kerava": [10000, 10999],
+        "Jarvenpaa": [11000, 11999],
+        "Sipoo": [12000, 12999],
+        "Mantsala": [13000, 13999],
+        "Hyvinkaa": [14000, 14999],
+        "Pornainen": [15000, 15499],
+        "Siuntio": [15500, 15999],
+        "Raasepori": [17000, 17499],
+        "Hanko": [17500, 17999],
+        "Inkoo": [18000, 18499],
+        "Karkkila": [18500, 18999],
+        "Lohja": [19000, 19999],
+        "Porvoo": [20000, 20999],
+        "Pukkila": [21000, 21499],
+        "Askola": [21500, 21999],
+        "Myrskyla": [22000, 22499],
+        "Lapinjarvi": [22500, 22999],
+        "Loviisa": [23000, 23999],
+        "Salo": [24000, 24499],
+        "Somero": [24500, 24999],
+        "Hameenlinna": [25000, 25999],
+        "Janakkala": [26000, 26499],
+        "Hattula": [26500, 26999],
+        "Loppi": [27000, 27499],
+        "Tammela": [27500, 27999],
+        "Riihimaki": [28000, 28999],
+        "Hausjarvi": [29000, 29499],
+        "Karkola": [29500, 29999],
+        "Orimattila": [30000, 30499],
+        "Hollola": [30500, 30999],
+        "Lahti": [31000, 31999]
+    }
+}

@@ -4,6 +4,7 @@ from shapely.geometry import Point, Polygon # type: ignore
 
 import parameters.zone as param
 import utils.log as log
+from utils import read_zone_file
 
 
 def zone_interval(division_type, name):
@@ -96,7 +97,11 @@ class ZoneIntervals:
     """
 
     def __init__(self, division_type):
-        self._intervals = param.__dict__[division_type]
+        zonedata = read_zone_file()
+        if zonedata:
+            self._intervals = zonedata[division_type]
+        else:
+            self._intervals = param.__dict__[division_type]
         if division_type == "areas":
             self.keys = param.area_aggregation
         else:

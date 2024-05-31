@@ -17,9 +17,14 @@ class ZoneData:
         self.share = ShareChecker(self)
         all_zone_numbers = numpy.array(zone_numbers)
         self.all_zone_numbers = all_zone_numbers
-        surrounding = param.areas["surrounding"]
-        peripheral = param.areas["peripheral"]
-        external = param.areas["external"]
+        # surrounding = param.areas["surrounding"]
+        # peripheral = param.areas["peripheral"]
+        # external = param.areas["external"]
+        # Trying to mask the zone area divisions behind ZoneIntervals class
+        zone_areas = ZoneIntervals("areas")
+        surrounding = zone_areas["surrounding"]
+        peripheral = zone_areas["peripheral"]
+        external = zone_areas["external"]
         self.zone_numbers = all_zone_numbers[:all_zone_numbers.searchsorted(
             peripheral[1], "right")]
         Zone.counter = 0
