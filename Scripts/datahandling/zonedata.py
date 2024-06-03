@@ -25,9 +25,7 @@ class ZoneData:
         surrounding = self.zone_areas["surrounding"]
         peripheral = self.zone_areas["peripheral"]
         external = self.zone_areas["external"]
-        log.debug(peripheral)
-        log.debug(external)
-        log.debug(self.zone_areas)
+        print(peripheral)
         self.zone_numbers = all_zone_numbers[:all_zone_numbers.searchsorted(
             peripheral[1], "right")]
         Zone.counter = 0
