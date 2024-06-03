@@ -22,10 +22,9 @@ class ZoneData:
         # external = param.areas["external"]
         # Trying to mask the zone area divisions behind ZoneIntervals class
         self.zone_areas = ZoneIntervals("areas", data_dir)
-        surrounding = self.zone_areas["surrounding"]
-        peripheral = self.zone_areas["peripheral"]
-        external = self.zone_areas["external"]
-        print(peripheral)
+        surrounding = self.zone_areas._intervals["surrounding"]
+        peripheral = self.zone_areas._intervals["peripheral"]
+        external = self.zone_areas._intervals["external"]
         self.zone_numbers = all_zone_numbers[:all_zone_numbers.searchsorted(
             peripheral[1], "right")]
         Zone.counter = 0
@@ -108,7 +107,7 @@ class ZoneData:
         # same municipality
         own_municipality = pandas.DataFrame(
             False, self.zone_numbers, self.zone_numbers)
-        self.intervals = ZoneIntervals("municipalities", data_dir)
+        self.intervals = ZoneIntervals("municipalities", data_dir)._intervals
         for i in self.intervals:
             own_municipality.loc[self.intervals[i], self.intervals[i]] = True
         self["own"] = own_municipality.values
