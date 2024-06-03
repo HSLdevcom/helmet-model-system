@@ -107,7 +107,7 @@ class ZoneData:
         # same municipality
         own_municipality = pandas.DataFrame(
             False, self.zone_numbers, self.zone_numbers)
-        self.intervals = ZoneIntervals("municipalities", data_dir)._intervals
+        self.intervals = ZoneIntervals("municipalities", data_dir)
         for i in self.intervals:
             own_municipality.loc[self.intervals[i], self.intervals[i]] = True
         self["own"] = own_municipality.values
