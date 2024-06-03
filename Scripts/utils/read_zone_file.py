@@ -4,7 +4,7 @@ import json
 import utils.log as log 
 import numpy # type: ignore
 
-def read_json_file(data_dir: str, 
+def read_zone_file(data_dir: str, 
                   file_end: str, 
                   dtype: Optional[numpy.dtype] = None):
     """Read (zone) data from space-separated file.
