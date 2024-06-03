@@ -8,7 +8,6 @@ if TYPE_CHECKING:
 
 from models.logit import LogitModel
 from parameters.car import car_usage
-from utils.zone_interval import ZoneIntervals
 
 
 class CarUseModel(LogitModel):
@@ -35,6 +34,8 @@ class CarUseModel(LogitModel):
                  resultdata: ResultsData):
         self.resultdata = resultdata
         self.zone_data = zone_data
+        self.municipalities = zone_data.intervals
+        self.areas = zone_data.zone_areas
         self.bounds = bounds
         self.genders = ("female", "male")
         self.age_groups = age_groups
@@ -153,7 +154,9 @@ class CarUseModel(LogitModel):
             population_7_99 = (self.zone_data["population"][self.bounds]
                                * self.zone_data["share_age_7-99"])
         # print car use share by municipality and area
-        for area_type in ("municipalities", "areas"):
-            prob_area = ZoneIntervals(area_type).averages(prob, population_7_99)
-            self.resultdata.print_data(
-                prob_area, "car_use_{}.txt".format(area_type), "car_use")
+        prob_areas = self.areas.averages(prob, population_7_99)
+        self.resultdata.print_data(
+            prob_areas, "car_use_areas.txt", "car_use")
+        prob_munic = self.municipalities.averages(prob, population_7_99)
+        self.resultdata.print_data(
+            prob_munic, "car_use_municipalities.txt", "car_use")

@@ -4,9 +4,7 @@ import json
 import utils.log as log 
 import numpy # type: ignore
 
-def read_zone_file(data_dir: str, 
-                  file_end: str, 
-                  dtype: Optional[numpy.dtype] = None):
+def read_json_file(data_dir: str):
     """Read (zone) data from space-separated file.
     
     Parameters
@@ -34,10 +32,9 @@ def read_zone_file(data_dir: str,
 
     file_found = False
     for file_name in os.listdir(data_dir):
-        if file_name.endswith(file_end):
+        if file_name.endswith(".zns"):
             if file_found:
-                msg = "Multiple {} files found in folder {}".format(
-                    file_end, data_dir)
+                msg = "Multiple .zns files found in folder {}".format(data_dir)
                 log.error(msg)
                 raise NameError(msg)
             else:
@@ -46,7 +43,7 @@ def read_zone_file(data_dir: str,
                 path = os.path.join(data_dir, file_name)
                 file_found = True
     if not file_found:
-        msg = "No {} file found in folder {}, assuming HELMET4 zone intervals".format(file_end, data_dir)
+        msg = "No .zns file found in folder {}, assuming HELMET4 zone intervals".format(data_dir)
         log.info(msg)
         return None
     with open(path, 'r') as f:

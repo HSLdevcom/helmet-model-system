@@ -11,7 +11,6 @@ if TYPE_CHECKING:
 from parameters.destination_choice import destination_choice, distance_boundary
 from parameters.mode_choice import mode_choice
 import parameters.zone as zone_params
-from utils.zone_interval import ZoneIntervals
 
 
 class LogitModel:
@@ -490,7 +489,7 @@ class AccessibilityModel(ModeDestModel):
             self.resultdata.print_data(
                 workforce, "workplace_accessibility.txt", self.purpose.name)
             workplaces = self.zone_data["workplaces"][self.bounds]
-            aggregate = ZoneIntervals("areas").averages(workforce, workplaces)
+            aggregate = self.zone_data.zone_areas.averages(workforce, workplaces)
             self.resultdata.print_data(
                 aggregate, "workplace_accessibility_areas.txt",
                 self.purpose.name)

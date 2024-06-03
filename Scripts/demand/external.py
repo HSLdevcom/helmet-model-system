@@ -8,7 +8,6 @@ if TYPE_CHECKING:
 
 from datatypes.demand import Demand
 from datatypes.purpose import Purpose
-from utils.zone_interval import ZoneIntervals
 
 
 class ExternalModel:
@@ -31,6 +30,7 @@ class ExternalModel:
         self.base_demand = base_demand
         self.all_zone_numbers = zone_numbers
         self.growth = zone_data.externalgrowth
+        self.municipalities = zone_data.intervals
         spec = {
             "name": "external",
             "orig": None,
@@ -56,12 +56,11 @@ class ExternalModel:
         """
         base_mtx = self.base_demand.get_external(mode)
         mtx = pandas.DataFrame(0, self.all_zone_numbers, self.growth.index)
-        municipalities = ZoneIntervals("municipalities")
         # Base matrix is aggregated to municipality level,
         # so we need to disaggregate it
         for target, base_vector in base_mtx.iterrows():
-            if target in municipalities:
-                i = municipalities[target]
+            if target in self.municipalities:
+                i = self.municipalities[target]
                 zone_trips = internal_trips.loc[i].to_numpy()
                 zone_weights = zone_trips / zone_trips.sum()
                 # Disaggregate base matrix to zone level and 

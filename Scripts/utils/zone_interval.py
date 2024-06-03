@@ -96,8 +96,8 @@ class ZoneIntervals:
         Type of zone division (municipalities/areas)
     """
 
-    def __init__(self, division_type):
-        zonedata = read_zone_file()
+    def __init__(self, division_type, data_dir=None):
+        zonedata = read_zone_file(data_dir)
         if zonedata:
             self._intervals = zonedata[division_type]
         else:
