@@ -1,16 +1,19 @@
 import os
 import sys
 import logging
-from collections import namedtuple
+
 
 import inro.modeller as _m
 
 # TODO Could this be done more elegantly?
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),"../"))
-from utils.validate_network import validate
+from assignment.emme_assignment import EmmeAssignmentModel
+import utils.modify_network as mnw
 
 
-class Validation(_m.Tool()):
+class LinkPrinting(_m.Tool()):
+    results_path = _m.Attribute(str)
+
     def __init__(self):
         """Tool with click-button that can be imported in the Modeller GUI.
         """
@@ -20,7 +23,7 @@ class Validation(_m.Tool()):
 
     def page(self):
         pb = _m.ToolPageBuilder(self)
-        pb.title = "Validate network"
+        pb.title = "Run bus stop macro"
         if self.tool_run_msg:
             pb.add_html(self.tool_run_msg)
         return pb.render()
@@ -29,13 +32,15 @@ class Validation(_m.Tool()):
         self()
 
     def __call__(self):
-        """Perform a network validation for current scenario.
+        """Implement bus stopping behaviour for current scenario.
         """
-        modeller = _m.Modeller()
-        scen = modeller.scenario
-        validate(scen.get_network())
-        msg = "Network validation finished for scenario {}!".format(scen.id)
+        scen = _m.Modeller().scenario
+        modified_network = mnw.add_bus_stops(scen.get_network())
+        _m.Modeller().scenario.publish_network(modified_network)
+        msg = "Bus stops for scenario {} assigned successfully.".format(
+            scen.id)
         self.write(msg)
+
         self.tool_run_msg = _m.PageBuilder.format_info(msg)
 
     def write(self, message):
