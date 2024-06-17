@@ -124,7 +124,7 @@ def validate(network, fares=None):
                 unofficial_nodes.add(node.id)
     if unofficial_nodes:
         log.warn(
-            "Node number(s) {} not consistent with official HSL network".format(
+            "Node number(s) {} not consistent with official HSL network. Make sure that connectors do not allow transit.".format(
                 ', '.join(unofficial_nodes)
         ))
     hdw_attrs = [f"@hw_{tp}" for tp in param.time_periods]

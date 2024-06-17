@@ -103,7 +103,10 @@ class ZoneIntervals:
         else:
             self._intervals = param.__dict__[division_type]
         if division_type == "areas":
-            self.keys = param.area_aggregation
+            if zonedata:
+                self.keys = zonedata['area_aggregation']
+            else:
+                self.keys = param.area_aggregation
         else:
             self.keys = self._intervals.keys()
 
