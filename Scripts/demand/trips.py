@@ -106,7 +106,7 @@ class DemandModel:
         numpy.random.seed(param.population_draw)
         self.population = []
         zone_numbers = self.zone_data.zone_numbers[self.bounds]
-        self.zone_population = pandas.Series(0.0, zone_numbers)
+        self.zone_population = pandas.Series(0, zone_numbers)
         # Group -1 is under-7-year-olds
         age_range = numpy.arange(-1, len(param.age_groups))
         for zone_number in zone_numbers:
