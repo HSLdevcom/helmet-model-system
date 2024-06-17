@@ -31,6 +31,7 @@ roadclasses = {
     40: RoadClass("collector", "any", 5, 900, 36, 0.833),
     41: RoadClass("local", "any", 5, 600, 30, 1.000),
     42: RoadClass("local", "any", 5, 500, 23, 1.304),
+    43: RoadClass("collector", "any", 5, 750, 30, 0.833),
 }
 connector_link_types = (84, 85, 86, 87, 88, 98, 99)
 connector = RoadClass("connector", "any", 99, 0, 0, 0)
