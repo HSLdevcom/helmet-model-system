@@ -411,7 +411,7 @@ class ModelSystem:
             "result_summary")
 
     def _sum_trips_per_zone(self, mode, include_dests=True):
-        int_demand = pandas.Series(0, self.zdata_base.zone_numbers)
+        int_demand = pandas.Series(0.0, self.zdata_base.zone_numbers)
         for purpose in self.dm.tour_purposes:
             if mode in purpose.modes and purpose.dest != "source":
                 bounds = (next(iter(purpose.sources)).bounds
