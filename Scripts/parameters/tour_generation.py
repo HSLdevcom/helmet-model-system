@@ -1,8 +1,8 @@
 
 ### TOUR GENERATION PARAMETERS ####
+# Initial model, not calibrated
 
 # Scale parameter used in upper level of tour pattern model
-#tour_number_scale = 0.622253957 #2018
 tour_number_scale = 0.671569412046 #2024
 # Calibration of tour numbers
 tour_number_increase = {
@@ -11,7 +11,7 @@ tour_number_increase = {
     3: 1.05446538,
     4: 1.2455917 + 0.1043963,
 }
-# Tour combinations 2024 (calibrated)
+# Tour combinations 2024 (initial model)
 tour_combinations = {
     0: {
         (): {
