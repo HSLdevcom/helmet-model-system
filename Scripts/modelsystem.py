@@ -3,7 +3,7 @@ import threading
 import multiprocessing
 import os
 from typing import Any, Callable, Dict, List, Set, Union, cast
-import numpy # type: ignore
+import numpy
 import pandas
 import random
 from collections import defaultdict
@@ -11,6 +11,7 @@ from assignment.abstract_assignment import AssignmentModel
 from assignment.emme_assignment import EmmeAssignmentModel
 from assignment.mock_assignment import MockAssignmentModel
 
+from transform.park_and_ride_transformer import ParkAndRideTransformer
 import utils.log as log
 from utils.zone_interval import ArrayAggregator
 import assignment.departure_time as dt
@@ -85,7 +86,12 @@ class ModelSystem:
             self.basematrices, self.zdata_forecast, self.zone_numbers)
         self.dtm = dt.DepartureTimeModel(
             self.ass_model.nr_zones, self.ass_model.time_periods)
-        self.imptrans = ImpedanceTransformer(export_path=estimation_data_path)
+
+        #init Impedance transformers
+        pnr_transformer = ParkAndRideTransformer(self.zdata_forecast)
+        self.imptrans = ImpedanceTransformer(extra_transformers=[pnr_transformer],
+                                             export_path=estimation_data_path)
+        
         bounds = slice(0, self.zdata_forecast.nr_zones)
         self.cdm = CarDensityModel(
             self.zdata_base, self.zdata_forecast, bounds, self.resultdata)

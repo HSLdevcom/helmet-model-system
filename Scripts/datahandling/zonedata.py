@@ -32,6 +32,10 @@ class ZoneData:
         schooldata = read_csv_file(data_dir, ".edu", self.zone_numbers, dtype)
         landdata = read_csv_file(data_dir, ".lnd", self.zone_numbers, dtype)
         parkdata = read_csv_file(data_dir, ".prk", self.zone_numbers, dtype)
+        try:
+            pnrdata = read_csv_file(data_dir, ".pnr")
+        except NameError:
+            pnrdata = pandas.DataFrame(0, columns=['capacity', 'cost'], index=popdata.index)
         self.externalgrowth = read_csv_file(
             data_dir, ".ext",
             all_zone_numbers[all_zone_numbers.searchsorted(external[0]):all_zone_numbers.searchsorted(external[1],side='right')],
@@ -54,6 +58,10 @@ class ZoneData:
         truckdata = read_csv_file(data_dir, ".trk", squeeze=True)
         self.trailers_prohibited = list(map(int, truckdata.loc[0, :]))
         self.garbage_destination = list(map(int, truckdata.loc[1, :].dropna()))
+
+        self['pnr_capacity'] = pnrdata['capacity']
+        self['pnr_cost'] = pnrdata['cost']
+
         pop = popdata["total"]
         self["population"] = pop
         self.share["share_age_7-17"] = popdata["sh_7-17"][:first_peripheral]
