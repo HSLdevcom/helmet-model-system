@@ -53,7 +53,7 @@ def main(args):
     
     estimation_data_path = None
     if args.export_estimation_data:
-        estimation_data_path = Path(results_path) / 'estimation'
+        estimation_data_path = Path(results_path) / args.scenario_name / 'estimation'
         estimation_data_path.mkdir(parents=True, exist_ok=True)
     
     # Choose and initialize the Traffic Assignment (supply)model
