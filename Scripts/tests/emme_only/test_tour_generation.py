@@ -1,5 +1,4 @@
 #from models.tour_combinations import TourCombinationModel
-from assignment.emme_bindings.emme_project import EmmeProject
 from demand.trips import DemandModel
 from datatypes.purpose import SecDestPurpose
 from datahandling.zonedata import ZoneData, BaseZoneData
@@ -10,6 +9,12 @@ from models.linear import CarDensityModel
 import parameters.tour_generation as param
 import assignment.departure_time as dt
 import os, numpy, pandas
+try:
+    from assignment.emme_bindings.emme_project import EmmeProject
+    import inro.emme.desktop.app as _app
+    import inro.emme.database.emmebank as _eb
+except ImportError:
+    exit(0)
 
 class TourCombinationModel:
     """Nested logit model for tour combination choice.
