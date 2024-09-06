@@ -13,8 +13,9 @@ try:
     from assignment.emme_bindings.emme_project import EmmeProject
     import inro.emme.desktop.app as _app
     import inro.emme.database.emmebank as _eb
+    emme_available = True
 except ImportError:
-    exit(0)
+    emme_available = False
 
 class TourCombinationModel:
     """Nested logit model for tour combination choice.
@@ -126,67 +127,67 @@ class TourCombinationModel:
         return prob
     
 
-purpose_areas = {
-    "metropolitan": (0, 6000, 16000),
-    "peripheral": (16000, 32000),
-    "all": (0, 6000, 32000),
-    "external": (34031, 34999),
-}
 
-emme_dir = "~/Emme_Helmet5/"
-project_dir = emme_dir + "Projektit/"
-project_name = "Helmet5_nightly"
-results_dir = emme_dir+"Tulokset"
-db_dir = os.path.join(project_dir, project_name, "Database","emmebank")
-# try:
-#     from assignment.emme_bindings.emme_project import EmmeProject
-#     import inro.emme.desktop.app as _app
-#     import inro.emme.database.emmebank as _eb
-#     emme_available = True
-# except ImportError:
-#     emme_available = False
-
-# dim = {
-#     "scalar_matrices": 100,
-#     "origin_matrices": 100,
-#     "destination_matrices": 100,
-#     "full_matrices": 400,
-#     "scenarios": 5,
-#     "centroids": 20,
-#     "regular_nodes": 1000,
-#     "links": 2000,
-#     "turn_entries": 100,
-#     "transit_vehicles": 30,
-#     "transit_lines": 20,
-#     "transit_segments": 2000,
-#     "extra_attribute_values": 300000,
-#     "functions": 99,
-#     "operators": 5000,
-#     "sola_analyses": 240,
-# }
-scenario_num = 1
-# try:
-#     eb = _eb.create(os.path.join(db_dir, "emmebank"), dim)
-#     eb.create_scenario(scenario_num)
-#     emmebank_path = eb.path
-#     eb.dispose()
-# except RuntimeError:
-#     emmebank_path = None
-
-emme_project_path = os.path.join(project_dir, project_name, project_name+".emp")
-print(emme_project_path)
-print(db_dir)
-emme_project = EmmeProject(emme_project_path)
-emme_available = True
-
-ass_model = EmmeAssignmentModel(
-            emme_project,
-            first_scenario_id=scenario_num,
-            separate_emme_scenarios=False,
-            save_matrices=False,
-            first_matrix_id=100)
 
 if emme_available:
+    purpose_areas = {
+        "metropolitan": (0, 6000, 16000),
+        "peripheral": (16000, 32000),
+        "all": (0, 6000, 32000),
+        "external": (34031, 34999),
+    }
+
+    emme_dir = "~/Emme_Helmet5/"
+    project_dir = emme_dir + "Projektit/"
+    project_name = "Helmet5_nightly"
+    results_dir = emme_dir+"Tulokset"
+    db_dir = os.path.join(project_dir, project_name, "Database","emmebank")
+    # try:
+    #     from assignment.emme_bindings.emme_project import EmmeProject
+    #     import inro.emme.desktop.app as _app
+    #     import inro.emme.database.emmebank as _eb
+    #     emme_available = True
+    # except ImportError:
+    #     emme_available = False
+
+    # dim = {
+    #     "scalar_matrices": 100,
+    #     "origin_matrices": 100,
+    #     "destination_matrices": 100,
+    #     "full_matrices": 400,
+    #     "scenarios": 5,
+    #     "centroids": 20,
+    #     "regular_nodes": 1000,
+    #     "links": 2000,
+    #     "turn_entries": 100,
+    #     "transit_vehicles": 30,
+    #     "transit_lines": 20,
+    #     "transit_segments": 2000,
+    #     "extra_attribute_values": 300000,
+    #     "functions": 99,
+    #     "operators": 5000,
+    #     "sola_analyses": 240,
+    # }
+    scenario_num = 1
+    # try:
+    #     eb = _eb.create(os.path.join(db_dir, "emmebank"), dim)
+    #     eb.create_scenario(scenario_num)
+    #     emmebank_path = eb.path
+    #     eb.dispose()
+    # except RuntimeError:
+    #     emmebank_path = None
+
+    emme_project_path = os.path.join(project_dir, project_name, project_name+".emp")
+    print(emme_project_path)
+    print(db_dir)
+    emme_project = EmmeProject(emme_project_path)
+
+    ass_model = EmmeAssignmentModel(
+                emme_project,
+                first_scenario_id=scenario_num,
+                separate_emme_scenarios=False,
+                save_matrices=False,
+                first_matrix_id=100)
 
     mod_scenario = emme_project.modeller.emmebank.scenario(scenario_num)
     #Helmet 4
