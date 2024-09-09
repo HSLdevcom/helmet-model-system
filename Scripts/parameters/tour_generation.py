@@ -10,7 +10,7 @@ tour_number_increase = {
     3: 1.05446538,
     4: 1.2455917 + 0.1043963,
 }
-# Tour combinations (generated)
+# Tour combinations (calibrated)
 tour_combinations = {
     0: {
         (): {
