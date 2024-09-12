@@ -298,16 +298,17 @@ destination_choice = {
     "ho": {
         "car": {
             "impedance": {
-                "time": (0.000895, 0.000895),
-                "cost": (0.01, 0.01)
+                "time": (-0.02685, -0.02685),
+                "cost": (-0.3, -0.3)
             },
             "log": {
                 "size": 1.0
             },
             "size": {
-                "population": 1.0,
-                "service": 20.085536923187668,
-                "shops": 7.38905609893065,
+                "cbd": 8568.994235814573,
+                "population": 0.08443759373342159,
+                "service": 2.0923264184900696,
+                "shops": 2.104153325681309,
                 "zone_area": 1.0
             },
             "attraction": {
@@ -316,16 +317,17 @@ destination_choice = {
         },
         "transit": {
             "impedance": {
-                "cost": (0.01, 0.01),
-                "time": -0.024812532636
+                "cost": (-0.3, -0.3),
+                "time": -0.0234162793932
             },
             "log": {
                 "size": 1.0
             },
             "size": {
-                "population": 1.0,
-                "service": 20.085536923187668,
-                "shops": 7.38905609893065,
+                "cbd": 8568.994235814573,
+                "population": 0.08443759373342159,
+                "service": 2.0923264184900696,
+                "shops": 2.104153325681309,
                 "zone_area": 1.0
             },
             "attraction": {
@@ -334,15 +336,16 @@ destination_choice = {
         },
         "bike": {
             "impedance": {
-                "dist": -0.390121359793
+                "dist": -0.425923735841
             },
             "log": {
                 "size": 1.0
             },
             "size": {
-                "population": 1.0,
-                "service": 20.085536923187668,
-                "shops": 7.38905609893065,
+                "cbd": 8568.994235814573,
+                "population": 0.08443759373342159,
+                "service": 2.0923264184900696,
+                "shops": 2.104153325681309,
                 "zone_area": 1.0
             },
             "attraction": {
@@ -351,15 +354,16 @@ destination_choice = {
         },
         "walk": {
             "impedance": {
-                "dist": -1.32830205317
+                "dist": -1.42917432164
             },
             "log": {
                 "size": 1.0
             },
             "size": {
-                "population": 1.0,
-                "service": 20.085536923187668,
-                "shops": 7.38905609893065,
+                "cbd": 8568.994235814573,
+                "population": 0.08443759373342159,
+                "service": 2.0923264184900696,
+                "shops": 2.104153325681309,
                 "zone_area": 1.0
             },
             "attraction": {
