@@ -117,12 +117,12 @@ class AssignmentPeriod(Period):
         self._set_emmebank_matrices(matrices, iteration=="last")
         if iteration=="init":
             self._assign_pedestrians()
-            self._set_bike_vdfs()
-            self._assign_bikes(self.emme_matrices["bike"]["dist"], "all")
             self._set_car_and_transit_vdfs()
             if not self._separate_emme_scenarios:
                 self._calc_background_traffic()
             self._assign_cars(param.stopping_criteria_coarse)
+            self._set_bike_vdfs()
+            self._assign_bikes(self.emme_matrices["bike"]["dist"], "all")
             self._calc_extra_wait_time()
             self._assign_transit()
         elif iteration==0:
@@ -149,11 +149,12 @@ class AssignmentPeriod(Period):
             self._calc_extra_wait_time()
             self._assign_transit()
         elif iteration=="last":
-            self._set_bike_vdfs()
-            self._assign_bikes(self.emme_matrices["bike"]["dist"], "all")
+            self._assign_pedestrians()
             self._set_car_and_transit_vdfs()
             self._calc_background_traffic()
             self._assign_cars(param.stopping_criteria_fine)
+            self._set_bike_vdfs()
+            self._assign_bikes(self.emme_matrices["bike"]["dist"], "all")
             self._calc_boarding_penalties(is_last_iteration=True)
             self._calc_extra_wait_time()
             self._assign_congested_transit()
