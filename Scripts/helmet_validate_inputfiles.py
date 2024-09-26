@@ -60,10 +60,10 @@ def main(args):
         mock_result_path = os.path.join(
             args.results_path, args.scenario_name, "Matrices")
         if not os.path.exists(mock_result_path):
-            msg = "Mock Results directory {} does not exist.".format(
-                mock_result_path)
-            log.error(msg)
-            raise NameError(msg)
+            log.info("Matrices folder does not exist, copying the folder from test scenario")
+            test_path = os.path.join(args.results_path,"test","Matrices")
+            import shutil
+            shutil.copytree(test_path, mock_result_path)
         assignment_model = MockAssignmentModel(MatrixData(mock_result_path))
         zone_numbers = assignment_model.zone_numbers
     else:
