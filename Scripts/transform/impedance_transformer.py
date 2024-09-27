@@ -131,16 +131,4 @@ class ImpedanceTransformer(ImpedanceTransformerBase):
         
         return day_imp
 
-    def export_day_impedance(self, purpose: Purpose, day_imp: Dict[str, Dict[str, numpy.ndarray]]) -> None:
-        """Export day impedance matrices to OMX files. Used for estimation process.
 
-        Args:
-            purpose (Purpose): Trip purpose
-            day_imp (Dict[str, Dict[str, np.ndarray]]): Daily impedances in a dict 
-                {mode: {impedance_type: array}}
-
-        """
-        with omx.open_file(self._export_path / (purpose.name + '.omx'), mode='w') as omx_file:
-            for mode_name, mode_imp in day_imp.items():
-                for type_name, type_imp in mode_imp.items():
-                    omx_file[mode_name + '_' + type_name] = type_imp
