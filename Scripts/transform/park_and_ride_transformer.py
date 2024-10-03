@@ -32,6 +32,7 @@ class ParkAndRideTransformer(ImpedanceTransformerBase):
                                                 zone_data['pnr_cost'].loc[num],
                                                 0.0)
                             for i, num in pnr_centroids]
+
     
     def transform(self,
                   purpose: Purpose,
@@ -72,6 +73,22 @@ class ParkAndRideTransformer(ImpedanceTransformerBase):
         cols = (purpose.bounds if purpose.name == "hoo"
             else slice(0, purpose.zone_data.nr_zones))
 
+        if len(self._facilities) == 0: #if there are no P+R facilities (mostly for testing)
+            rows = sum([1 for _ in purpose.zone_numbers])
+            cols = purpose.zone_data.nr_zones
+            inf_mat = np.full((rows,cols), 999.)
+            return {
+                
+                'park_and_ride': {
+                    'cost': inf_mat,
+                    'time': inf_mat,
+                    'dist': inf_mat,
+                    'gen_cost': inf_mat,
+                    'used_facility': np.full((rows, cols), None)
+                }
+            }
+            
+
         day_imp = {}
         for mode in [car_mode, transit_mode]:
             day_imp[mode] = defaultdict(float)
@@ -102,6 +119,7 @@ class ParkAndRideTransformer(ImpedanceTransformerBase):
             'park_and_ride': {
                 'cost': (np.take_along_axis(cost, min_index, axis=0)[0]),
                 'time': np.take_along_axis(time, min_index, axis=0)[0],
+                #'dist': np.take_along_axis(time, min_index, axis=0)[0], #TODO: Fix this?
                 'gen_cost': np.take_along_axis(generalized_cost, min_index, axis=0)[0],
                 'used_facility': np.take_along_axis(f_zones, min_index, axis=0)[0]
             }

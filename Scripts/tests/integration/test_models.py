@@ -1,6 +1,9 @@
 import unittest
 import numpy
 
+from datahandling.zonedata import ZoneData
+from transform.impedance_transformer import ImpedanceTransformer
+from transform.park_and_ride_transformer import ParkAndRideTransformer
 import utils.log as log
 from modelsystem import ModelSystem, AgentModelSystem
 from assignment.mock_assignment import MockAssignmentModel
@@ -53,7 +56,7 @@ class ModelTest(unittest.TestCase):
         self._validate_impedances(impedance["iht"])
 
         # Check that model result does not change
-        self.assertAlmostEquals(model.mode_share[0]["car"], 0.22489513375983478)
+        self.assertAlmostEquals(model.mode_share[0]["car"], 0.20118578339940527)
         
         print("Model system test done")
     

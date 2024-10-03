@@ -159,7 +159,10 @@ class ModelSystem:
                     demand = purpose.calc_demand()
                 if purpose.dest != "source":
                     for mode in demand:
-                        self.dtm.add_demand(demand[mode])
+                        if mode == "park_and_ride":
+                            self.dtm.split_park_and_ride(demand["park_and_ride"],purpose_impedance["park_and_ride"])
+                        else:
+                            self.dtm.add_demand(demand[mode])
                         self.travel_modes[mode] = True
         log.info("Demand calculation completed")
 
@@ -234,6 +237,7 @@ class ModelSystem:
             self._calculate_noise_areas()
             self.resultdata.flush()
         self.dtm.init_demand()
+        print("IMP KEYS", impedance["aht"]["dist"].keys())
         return impedance
 
     def run_iteration(self, previous_iter_impedance, iteration=None):
