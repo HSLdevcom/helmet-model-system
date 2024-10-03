@@ -237,7 +237,6 @@ class ModelSystem:
             self._calculate_noise_areas()
             self.resultdata.flush()
         self.dtm.init_demand()
-        print("IMP KEYS", impedance["aht"]["dist"].keys())
         return impedance
 
     def run_iteration(self, previous_iter_impedance, iteration=None):
