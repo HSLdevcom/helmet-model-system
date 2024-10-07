@@ -1,3 +1,6 @@
 c Modeller - Link Shape Transaction
+c Date: 2024-10-04 12:59:17
+c Project:        Testi_tietokanta                                            
+c Scenario 100:   H5_testiverkko
 c I_Node J_Node Vertex_No. X-Coord Y-Coord
 t linkvertices
