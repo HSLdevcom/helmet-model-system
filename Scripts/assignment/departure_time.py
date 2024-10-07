@@ -69,6 +69,7 @@ class DepartureTimeModel:
         return {"rel_gap": relative_gap, "max_gap": max_gap}
 
     def split_park_and_ride(self, demand: Union[Demand, Tour], park_and_ride_impedance:Dict[str, numpy.ndarray], park_and_ride_facility_map: Dict[int,int], zone_data: ZoneData):
+        log.info("Splitting park and ride demand to cars and public transport for {} facilities".format(len(park_and_ride_facility_map)))
         position2 = cast(Tuple[int,int], demand.position) #type checker hint
         share: Dict[str, Any] = param.demand_share[demand.purpose.name][demand.mode]
         used_facility = park_and_ride_impedance["used_facility"]
