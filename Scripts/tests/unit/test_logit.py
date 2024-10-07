@@ -43,6 +43,11 @@ class LogitModelTest(unittest.TestCase):
             "walk": {
                 "dist": mtx,
             },
+            "park_and_ride": {
+                "time": mtx,
+                "cost": mtx,
+                "dist": mtx,
+            }
         }
         pur.bounds = slice(0, 9)
         pur.sub_bounds = [slice(0, 7), slice(7, 9)]

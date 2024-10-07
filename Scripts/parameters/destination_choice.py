@@ -796,6 +796,7 @@ distance_boundary = {
     "transit": 9999,
     "bike": 60,
     "walk": 15,
+    "park_and_ride": 9999,
 }
 # O-D pairs with demand below threshold are neglected in sec dest calculation
 secondary_destination_threshold = 0.1

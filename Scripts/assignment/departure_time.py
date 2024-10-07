@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 import numpy # type: ignore
+from datahandling.zonedata import ZoneData
 from datatypes.demand import Demand
 from datatypes.tour import Tour
 
@@ -67,18 +68,19 @@ class DepartureTimeModel:
 
         return {"rel_gap": relative_gap, "max_gap": max_gap}
 
-    def split_park_and_ride(self, demand: Union[Demand, Tour], park_and_ride_impedance:Dict[str, numpy.ndarray]):
+    def split_park_and_ride(self, demand: Union[Demand, Tour], park_and_ride_impedance:Dict[str, numpy.ndarray], park_and_ride_facility_map: Dict[int,int], zone_data: ZoneData):
         position2 = cast(Tuple[int,int], demand.position) #type checker hint
         share: Dict[str, Any] = param.demand_share[demand.purpose.name][demand.mode]
         used_facility = park_and_ride_impedance["used_facility"]
 
-        car_matrix = numpy.zeros_like(demand.matrix)
-        transit_matrix = numpy.zeros_like(demand.matrix)
+        all_zones_len = len(zone_data.all_zone_numbers)
+        car_matrix = numpy.zeros((all_zones_len,all_zones_len))
+        transit_matrix = numpy.zeros((all_zones_len,all_zones_len))
 
         #move car journeys to park and ride facilities
-        for i in range(demand.matrix.shape[0]): #TODO: handle the zone spaces correctly
-            for j in range(demand.matrix.shape[1]):
-                target_cell = used_facility[i, j]
+        for i in range(zone_data.nr_zones_hs15): #TODO: handle the zone spaces correctly
+            for j in range(zone_data.nr_zones_hs15):
+                target_cell = park_and_ride_facility_map[used_facility[i, j]]
                 car_matrix[i, target_cell] += demand.matrix[i, j] #for cars Park and ride is target only
                 transit_matrix[target_cell, j] += demand.matrix[i,j] #for transit Park and ride is source only
 

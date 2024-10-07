@@ -127,12 +127,15 @@ class ModelSystem:
         # Mode and destination probability matrices are calculated first,
         # as logsums from probability calculation are used in tour generation.
         self.dm.create_population_segments()
+        pnr_impedances = {}
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
                 purpose.gen_model.init_tours()
             else:
                 purpose_impedance = self.imptrans.transform(
                     purpose, previous_iter_impedance)
+                if "park_and_ride" in purpose_impedance:
+                    pnr_impedances[purpose.name] = purpose_impedance["park_and_ride"]
                 purpose.calc_prob(purpose_impedance)
                 if is_last_iteration and purpose.name not in ("sop", "so"):
                     purpose.accessibility_model.calc_accessibility(
@@ -160,7 +163,14 @@ class ModelSystem:
                 if purpose.dest != "source":
                     for mode in demand:
                         if mode == "park_and_ride":
-                            self.dtm.split_park_and_ride(demand["park_and_ride"],purpose_impedance["park_and_ride"])
+                            pnr_transformer = None
+                            for et in self.imptrans._extra_transformers:
+                                if type(et) == ParkAndRideTransformer:
+                                    pnr_transformer = et
+                                    break
+                            else:
+                                log.error(f"No park and ride transformer found for {purpose.name} model")
+                            self.dtm.split_park_and_ride(demand["park_and_ride"],pnr_impedances[purpose.name],pnr_transformer.get_pnr_map(),self.zdata_forecast)
                         else:
                             self.dtm.add_demand(demand[mode])
                         self.travel_modes[mode] = True

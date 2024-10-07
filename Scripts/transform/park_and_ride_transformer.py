@@ -33,6 +33,11 @@ class ParkAndRideTransformer(ImpedanceTransformerBase):
                                                 0.0)
                             for i, num in pnr_centroids]
 
+    def get_pnr_map(self) -> Dict[int,int]:
+        """
+        Get mapping pnr_zone_emme_number -> pnr_zone_order_index
+        """
+        return {f.zone_id: f.zone_offset for f in self._facilities}
     
     def transform(self,
                   purpose: Purpose,
@@ -68,7 +73,7 @@ class ParkAndRideTransformer(ImpedanceTransformerBase):
         transit_mode = 'transit_' + assignment_class
         inverse_value_of_time = vot_inv[assignment_class]
         
-        types = ['cost', 'time']
+        types = ['cost', 'time','dist']
         rows = purpose.bounds
         cols = (purpose.bounds if purpose.name == "hoo"
             else slice(0, purpose.zone_data.nr_zones))
@@ -108,6 +113,12 @@ class ParkAndRideTransformer(ImpedanceTransformerBase):
                          day_imp[transit_mode]['time'][f.zone_offset, :][None,:]
                                     for f in self._facilities])[:, rows, cols]
         time = time[:,rows,cols]
+        dist = np.stack([day_imp[car_mode]['dist'][:,f.zone_offset][:,None] +
+                         day_imp[transit_mode]['dist'][f.zone_offset, :][None,:]
+                                    for f in self._facilities])[:, rows, cols]
+        dist = dist[:,rows,cols]
+
+        #Adding the cost and time experienced at the facility
         cost += np.array([f.cost for f in self._facilities])[:,None,None]
         time += np.array([f.time for f in self._facilities])[:,None,None]
         
@@ -119,7 +130,7 @@ class ParkAndRideTransformer(ImpedanceTransformerBase):
             'park_and_ride': {
                 'cost': (np.take_along_axis(cost, min_index, axis=0)[0]),
                 'time': np.take_along_axis(time, min_index, axis=0)[0],
-                #'dist': np.take_along_axis(time, min_index, axis=0)[0], #TODO: Fix this?
+                'dist': np.take_along_axis(dist, min_index, axis=0)[0], #TODO: Fix this?
                 'gen_cost': np.take_along_axis(generalized_cost, min_index, axis=0)[0],
                 'used_facility': np.take_along_axis(f_zones, min_index, axis=0)[0]
             }
