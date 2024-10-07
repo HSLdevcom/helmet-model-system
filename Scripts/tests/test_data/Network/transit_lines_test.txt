@@ -1,4 +1,7 @@
 c Modeller - Transit Line Transaction
+c Date: 2024-10-04 12:59:17
+c Project:        Testi_tietokanta                                            
+c Scenario 100:   H5_testiverkko
 t lines
 c Transit Lines
 c Line  Mod Veh Headwy Speed Description             Data1  Data2  Data3
@@ -46,7 +49,7 @@ a'10101' t   7   6.00  30.00 'Katajan-Pikku-Huopal'      0      0      1
    802233      dwt=+0.01   ttf=3   us1=0   us2=0   us3=0
    802234      dwt=+0.01   ttf=3   us1=0   us2=0   us3=0
    802235        lay=0.00
-c 10101 first:      dwt=+0.01 hidden:    us1=0   us2=0   us3=0
+c '10101' first:      dwt=+0.01 hidden:    us1=0   us2=0   us3=0
 a'10102' t   7   6.00  30.00 'Pikku-Huopal-Katajan'      0      0      1
   path=no
    802235      dwt=+0.01   ttf=3   us1=0   us2=0   us3=0
@@ -90,17 +93,17 @@ a'10102' t   7   6.00  30.00 'Pikku-Huopal-Katajan'      0      0      1
    802115      dwt=+0.01   ttf=3   us1=0   us2=0   us3=0
    802114      dwt=+0.01   ttf=3   us1=0   us2=0   us3=0
    802113        lay=0.00
-c 10102 first:      dwt=+0.01 hidden:    us1=0   us2=0   us3=0
+c '10102' first:      dwt=+0.01 hidden:    us1=0   us2=0   us3=0
 a'10191' w   9  40.00  30.00 'Kauppatori-Suomenli'      0      0      1
   path=no
    201074      dwt=+0.01   ttf=6  us1=15   us2=0   us3=0
    205050        lay=0.00
-c 10191 first:      dwt=+0.01 hidden:    us1=0   us2=0   us3=0
+c '10191' first:      dwt=+0.01 hidden:    us1=0   us2=0   us3=0
 a'10192' w   9  40.00  30.00 'Suomenli-Kauppatori'      0      0      1
   path=no
    205050      dwt=+0.01   ttf=6  us1=15   us2=0   us3=0
    201074        lay=0.00
-c 10192 first:      dwt=+0.01 hidden:    us1=0   us2=0   us3=0
+c '10192' first:      dwt=+0.01 hidden:    us1=0   us2=0   us3=0
 a'22001' g   8  10.00  30.00 'Eliel-Espoonkeskus'      0      0      2
   path=no
    221900      dwt=#0.01   ttf=1   us1=0       us2=1.304   us3=0
@@ -300,7 +303,7 @@ a'22001' g   8  10.00  30.00 'Eliel-Espoonkeskus'      0      0      2
    235827      dwt=#0.01   ttf=1   us1=0     us2=.732000   us3=0
    235826      dwt=+0.01   ttf=1   us1=0     us2=.732000   us3=0
    235825        lay=0.00
-c 22001 first:      dwt=+0.01 hidden:    us1=0   us2=0   us3=0
+c '22001' first:      dwt=+0.01 hidden:    us1=0   us2=0   us3=0
 a'22002' g   8  10.00  30.00 'Espoonkeskus-Eliel'      0      0      2
   path=no
    235825      dwt=#0.01   ttf=1   us1=0     us2=.732000   us3=0
@@ -497,7 +500,7 @@ a'22002' g   8  10.00  30.00 'Espoonkeskus-Eliel'      0      0      2
    221612      dwt=#0.01   ttf=1   us1=0   us2=1   us3=0
    221611      dwt=+0.01   ttf=1   us1=0       us2=1.304   us3=0
    221900        lay=0.00
-c 22002 first:      dwt=+0.01 hidden:    us1=0   us2=0   us3=0
+c '22002' first:      dwt=+0.01 hidden:    us1=0   us2=0   us3=0
 a'3002A1' r   5  10.00  30.00 'Hki-Kauklahti'           0      0      2
   path=no
    801000      dwt=+0.01   ttf=6   us1=5   us2=0   us3=0
@@ -515,7 +518,7 @@ a'3002A1' r   5  10.00  30.00 'Hki-Kauklahti'           0      0      2
    801040      dwt=+0.01   ttf=6   us1=2   us2=0   us3=0
    801041      dwt=>0.01   ttf=6 us1=3.5   us2=0   us3=0
    801042        lay=0.00
-c 3002A1 first:      dwt=+0.01 hidden:    us1=0   us2=0   us3=0
+c '3002A1' first:      dwt=+0.01 hidden:    us1=0   us2=0   us3=0
 a'3002A2' r   5  10.00  30.00 'Kauklahti-Hki'           0      0      2
   path=no
    801042      dwt=+0.01   ttf=6 us1=3.5   us2=0   us3=0
@@ -533,7 +536,7 @@ a'3002A2' r   5  10.00  30.00 'Kauklahti-Hki'           0      0      2
    801030      dwt=+0.01   ttf=6   us1=2   us2=0   us3=0
    801029      dwt=>0.01   ttf=6   us1=5   us2=0   us3=0
    801000        lay=0.00
-c 3002A2 first:      dwt=+0.01 hidden:    us1=0   us2=0   us3=0
+c '3002A2' first:      dwt=+0.01 hidden:    us1=0   us2=0   us3=0
 a'72801' b   3  30.00  30.00 'Hki-Veikkola'            0      0      5
   path=no
     40704      dwt=#0.01   ttf=2   us1=0       us2=2.125   us3=0
@@ -664,7 +667,7 @@ a'72801' b   3  30.00  30.00 'Hki-Veikkola'            0      0      5
     40881      dwt=+0.01   ttf=1   us1=0     us2=.625000   us3=0
     40877      dwt=+0.01   ttf=1   us1=0     us2=.625000   us3=0
    182046        lay=0.00
-c 72801 first:      dwt=+0.01 hidden:    us1=0   us2=0   us3=0
+c '72801' first:      dwt=+0.01 hidden:    us1=0   us2=0   us3=0
 a'72802' b   3  15.00  30.00 'Veikkola-Hki'            0      0      5
   path=no
    182046      dwt=+0.01   ttf=1   us1=0     us2=.625000   us3=0
@@ -787,7 +790,7 @@ a'72802' b   3  15.00  30.00 'Veikkola-Hki'            0      0      5
    213802      dwt=#0.01   ttf=1   us1=0       us2=1.304   us3=0
    213801      dwt=+0.01   ttf=2   us1=0       us2=2.125   us3=0
     40704        lay=0.00
-c 72802 first:      dwt=+0.01 hidden:    us1=0   us2=0   us3=0
+c '72802' first:      dwt=+0.01 hidden:    us1=0   us2=0   us3=0
 a'V18761' e   2 180.00  80.00 'Hki-Lansivayla-Turku'      0      0      5
   path=no
     40704      dwt=#0.01   ttf=2   us1=0       us2=2.125   us3=0
@@ -936,7 +939,7 @@ a'V18761' e   2 180.00  80.00 'Hki-Lansivayla-Turku'      0      0      5
    321465      dwt=#0.01   ttf=1   us1=0     us2=.265000   us3=0
    321094      dwt=+0.01   ttf=1   us1=0     us2=.265000   us3=0
    321095        lay=0.00
-c V18761 first:      dwt=+0.01 hidden:    us1=0   us2=0   us3=0
+c 'V18761' first:      dwt=+0.01 hidden:    us1=0   us2=0   us3=0
 a'V18762' e   2 180.00  80.00 'Turku-Lansivayla-Hki'      0      0      5
   path=no
    321095         dwt=#0   ttf=1   us1=0     us2=.265000   us3=0
@@ -1075,4 +1078,4 @@ a'V18762' e   2 180.00  80.00 'Turku-Lansivayla-Hki'      0      0      5
    213802         dwt=#0   ttf=1   us1=0       us2=1.304   us3=0
    213801      dwt=+0.01   ttf=2   us1=0       us2=2.125   us3=0
     40704        lay=0.00
-c V18762 first:      dwt=+0.01 hidden:    us1=0   us2=0   us3=0
+c 'V18762' first:      dwt=+0.01 hidden:    us1=0   us2=0   us3=0

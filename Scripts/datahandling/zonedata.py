@@ -23,6 +23,8 @@ class ZoneData:
         external = param.areas["external"]
         self.zone_numbers = all_zone_numbers[:all_zone_numbers.searchsorted(
             peripheral[1], "right")]
+        self.zone_numbers_hs15 = all_zone_numbers[:all_zone_numbers.searchsorted(
+            surrounding[1], "right")]
         Zone.counter = 0
         self.zones = {number: Zone(number) for number in self.zone_numbers}
         first_peripheral = self.zone_numbers.searchsorted(peripheral[0])
@@ -79,6 +81,7 @@ class ZoneData:
         self.share["share_female"] = pandas.Series(0.5, self.zone_numbers)
         self.share["share_male"] = pandas.Series(0.5, self.zone_numbers)
         self.nr_zones = len(self.zone_numbers)
+        self.nr_zones_hs15 = len(self.zone_numbers_hs15)
         self["population_density"] = pop / landdata["builtar"]
         wp = workdata["total"]
         self["workplaces"] = wp

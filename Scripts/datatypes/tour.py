@@ -179,7 +179,7 @@ class Tour:
                 is_in_area = False
         except AttributeError:
             is_in_area = False
-        if (self.mode != "walk" and is_in_area
+        if (self.mode != "walk" and self.mode != "park_and_ride" and is_in_area
                 and self._sec_dest_gen_draw < self.sec_dest_prob[self.mode]):
             orig_rel_idx = orig_idx - bounds.start
             dest_idx -= bounds.start

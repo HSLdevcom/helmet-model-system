@@ -1,4 +1,7 @@
 c Modeller - Vehicle Transaction
+c Date: 2024-10-04 12:59:17
+c Project:        Testi_tietokanta                                            
+c Scenario 100:   H5_testiverkko
 t vehicles
 c  id description mode fleet_size seated_capacity total_capacity cost_time_coeff cost_distance_coeff energy_time_coeff energy_distance_coeff auto_equivalent
 a   1 'ValluVakio' d      1    49    78   0.00   0.00   0.00   0.00   0.00
