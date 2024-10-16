@@ -13,7 +13,7 @@ pandas = "==2.0.2"
 openpyxl = "*"
 openmatrix = "==0.3.5"
 numpy = "==1.26.2"
-numexpr = "==2.8.4"
+numexpr = "==2.8.5"
 tables = "==3.8.0"
 shapely = "==2.0.1"
 
