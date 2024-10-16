@@ -173,30 +173,37 @@ dist_unit_cost = 0.12
 freight_dist_unit_time = 0.2
 # Boarding penalties for different transit modes
 boarding_penalty = {
-    'b': 3, # Bus
-    'g': 3, # Trunk bus
+    'b': 1, # Bus #Having to show the ticket to the bus driver
+    'g': 0, # Trunk bus
     'd': 5, # Long-distance bus
     'e': 5, # Express bus
     't': 0, # Tram
     'p': 0, # Light rail
     'm': 0, # Metro
-    'w': 0, # Ferry
-    'r': 2, # Commuter train
-    'j': 2, # Long-distance train
+    'w': 1, # Ferry
+    'r': 0, # Commuter train
+    'j': 5, # Long-distance train
 }
 # Boarding penalties for end assignment
-last_boarding_penalty = {
-    'b': 5, # Bus
-    'g': 2, # Trunk bus
-    'd': 5, # Long-distance bus
-    'e': 5, # Express bus
-    't': 0, # Tram
-    'p': 0, # Light rail
-    'm': 0, # Metro
-    'w': 0, # Ferry
-    'r': 2, # Commuter train
-    'j': 2, # Long-distance train
+last_boarding_penalty = boarding_penalty
+
+#Perception in_vehicle times for different modes
+#Simulates comfort and image
+#Needs to be justified with LT data (probably different walking speeds need to be simulated as well)
+#Buses need to follow link specification as well (slow local roads typically cause more discomfort)
+in_vehicle_times_perception = {
+    'b': 1.5, # Bus
+    'g': 1.5, # Trunk bus
+    'd': 1.2, # Long-distance bus
+    'e': 1.1, # Express bus
+    't': 1.5, # Tram
+    'p': 1.3, # Light rail
+    'm': 1.2, # Metro
+    'w': 1.2, # Ferry
+    'r': 1.1, # Commuter train
+    'j': 1.0, # Long-distance train
 }
+#TODO: find attr to store in_vehicle_perception times
 # Headway standard deviation function parameters for different transit modes
 headway_sd_func = {
     'b': {
@@ -480,6 +487,7 @@ transit_impedance_matrices = {
 background_traffic_attr = "ul3"
 inactive_line_penalty_attr = "ut1"
 boarding_penalty_attr = "ut3"
+in_vehicle_time_perception_attr = "@in_veh_time_p"
 is_in_transit_zone_attr = "ui1"
 railtypes = {
     2: "tram",

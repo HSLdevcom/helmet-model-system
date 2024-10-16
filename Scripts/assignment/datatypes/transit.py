@@ -63,7 +63,7 @@ class TransitSpecification:
             # so here we just set the default to zero.
             "boarding_cost": no_penalty,
             "in_vehicle_time": {
-                "perception_factor": 1
+                "perception_factor": param.in_vehicle_time_perception_attr
             },
             "aux_transit_time": param.aux_transit_time,
             "flow_distribution_at_origins": {

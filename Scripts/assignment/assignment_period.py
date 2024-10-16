@@ -93,6 +93,7 @@ class AssignmentPeriod(Period):
         self._segment_results = segment_results
         self._calc_road_cost()
         self._calc_boarding_penalties()
+        self._calc_travel_time_perception()
         self._calc_background_traffic()
         self._specify()
 
@@ -583,6 +584,19 @@ class AssignmentPeriod(Period):
         if missing_penalties:
             missing_penalties_str: str = ", ".join(missing_penalties)
             log.warn("No boarding penalty found for transit modes " + missing_penalties_str)
+        self.emme_scenario.publish_network(network)
+
+    def _calc_travel_time_perception(self):
+        perceptions = param.in_vehicle_times_perception
+        road_classes = param.roadclasses
+        network = self.emme_scenario.get_network()
+        for segment in network.transit_segments():
+            smode = segment.line.mode
+            if smode not in ["b","g","d","e"]: #if not bus
+                segment[param.in_vehicle_time_perception_attr] = perception[segment.mode]
+            else:
+                link_penalty = (2100-road_classes[segment.link.type].lane_capacity)*0.2
+                segment[param.in_vehicle_time_perception_attr] = perception[segment.mode] + link_penalty #TODO: improve this?
         self.emme_scenario.publish_network(network)
 
     def _specify(self):
