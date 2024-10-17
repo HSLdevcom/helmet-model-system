@@ -1,13 +1,21 @@
-import numpy
+from __future__ import annotations
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, cast
 import pandas
 from math import log10
 
 import utils.log as log
+import utils.modify_network as mnw
 from utils.zone_interval import belongs_to_area, faulty_kela_code_nodes
 import parameters.assignment as param
 import parameters.zone as zone_param
 from assignment.abstract_assignment import AssignmentModel
 from assignment.assignment_period import AssignmentPeriod
+if TYPE_CHECKING:
+    from assignment.emme_bindings.emme_project import EmmeProject
+    from assignment.datatypes.transit_fare import TransitFareZoneSpecification
+    from datahandling.resultdata import ResultsData
+    from inro.emme.database.scenario import Scenario # type: ignore
+    from inro.emme.network.Network import Network # type: ignore
 
 
 class EmmeAssignmentModel(AssignmentModel):
@@ -28,23 +36,37 @@ class EmmeAssignmentModel(AssignmentModel):
     save_matrices : bool (optional)
         Whether matrices will be saved in Emme format for all time periods.
         If false, Emme matrix ids 0-99 will be used for all time periods.
+    time_periods : list of str (optional)
+            Time period names, default is aht, pt, iht
     first_matrix_id : int (optional)
         Where to save matrices (if saved),
         300 matrix ids will be reserved, starting from first_matrix_id.
         Default is 100(-399).
     """
-    def __init__(self, emme_context, first_scenario_id,
-                 separate_emme_scenarios=False, save_matrices=False,
-                 first_matrix_id=100):
+    def __init__(self, 
+                 emme_context: EmmeProject, 
+                 first_scenario_id: int,
+                 separate_emme_scenarios: bool=False, 
+                 save_matrices: bool=False,
+                 time_periods: List[str]=param.time_periods, 
+                 first_matrix_id: int=100):
         self.separate_emme_scenarios = separate_emme_scenarios
         self.save_matrices = save_matrices
+        self.time_periods = time_periods
         self.first_matrix_id = first_matrix_id if save_matrices else 0
         self.emme_project = emme_context
         self.mod_scenario = self.emme_project.modeller.emmebank.scenario(
             first_scenario_id)
 
-    def prepare_network(self, car_dist_unit_cost=None):
-        """Create matrices, extra attributes and calc background variables."""
+    def prepare_network(self, 
+                        car_dist_unit_cost: Optional[float]=None):
+        """Create matrices, extra attributes and calc background variables.
+
+        Parameters
+        ----------
+        car_dist_unit_cost : float (optional)
+            Car cost per km in euros
+        """
         self._add_bus_stops()
         if self.separate_emme_scenarios:
             self.day_scenario = self.emme_project.copy_scenario(
@@ -53,8 +75,14 @@ class EmmeAssignmentModel(AssignmentModel):
                 overwrite=True, copy_paths=False, copy_strategies=False)
         else:
             self.day_scenario = self.mod_scenario
+        matrix_types = tuple({mtx_type: None for ass_class
+            in param.emme_matrices.values() for mtx_type in ass_class})
+        ten = max(10, len(param.emme_matrices))
+        id_ten = {result_type: i*ten for i, result_type
+            in enumerate(matrix_types + param.transit_classes)}
+        hundred = max(100, ten*len(matrix_types + param.transit_classes))
         self.assignment_periods = []
-        for i, tp in enumerate(["aht", "pt", "iht"]):
+        for i, tp in enumerate(self.time_periods):
             if self.separate_emme_scenarios:
                 scen_id = self.mod_scenario.number + i + 2
                 self.emme_project.copy_scenario(
@@ -63,34 +91,12 @@ class EmmeAssignmentModel(AssignmentModel):
                     overwrite=True, copy_paths=False, copy_strategies=False)
             else:
                 scen_id = self.mod_scenario.number
+            if i == 0 or self.save_matrices:
+                emme_matrices = self._create_matrices(
+                    tp, i*hundred + self.first_matrix_id, id_ten)
             self.assignment_periods.append(AssignmentPeriod(
-                tp, scen_id, self.emme_project,
-                save_matrices=self.save_matrices,
+                tp, scen_id, self.emme_project, emme_matrices,
                 separate_emme_scenarios=self.separate_emme_scenarios))
-        for i, ap in enumerate(self.assignment_periods):
-            tag = ap.name if self.save_matrices else ""
-            id_hundred = 100*i + self.first_matrix_id
-            for ass_class in ap.demand_mtx:
-                mtx = ap.demand_mtx[ass_class]
-                mtx["id"] = "mf{}".format(id_hundred + mtx["id"])
-                self.emme_project.create_matrix(
-                    matrix_id=mtx["id"],
-                    matrix_name="demand_{}_{}".format(ass_class, tag),
-                    matrix_description="{} {}".format(mtx["description"], tag),
-                    default_value=0, overwrite=True)
-            for mtx_type in ap.result_mtx:
-                mtx = ap.result_mtx[mtx_type]
-                for ass_class in mtx:
-                    mtx[ass_class]["id"] = "mf{}".format(
-                        id_hundred + mtx[ass_class]["id"])
-                    self.emme_project.create_matrix(
-                        matrix_id=mtx[ass_class]["id"],
-                        matrix_name="{}_{}_{}".format(mtx_type, ass_class, tag),
-                        matrix_description="{} {}".format(
-                            mtx[ass_class]["description"], tag),
-                        default_value=999999, overwrite=True)
-            if not self.save_matrices:
-                break
         self._create_attributes(self.day_scenario, self._extra)
         for ap in self.assignment_periods:
             if car_dist_unit_cost is not None:
@@ -104,7 +110,9 @@ class EmmeAssignmentModel(AssignmentModel):
             self.emme_project.modeller.emmebank.create_function(
                 idx, param.volume_delay_funcs[idx])
 
-    def init_assign(self, demand):
+    def init_assign(self, 
+                    demand: Dict[str,List[numpy.ndarray]]):
+        """??? types"""
         ap0 = self.assignment_periods[0]
         ap0.assign(demand, iteration="init")
         if self.save_matrices:
@@ -115,12 +123,12 @@ class EmmeAssignmentModel(AssignmentModel):
                 self._copy_matrix("dist", "walk", ap0, ap)
 
     @property
-    def zone_numbers(self):
-        """List of all zone numbers."""
+    def zone_numbers(self) -> List[int]:
+        """List of all zone numbers. ???types"""
         return self.mod_scenario.zone_numbers
 
     @property
-    def mapping(self):
+    def mapping(self) -> Dict[int, int]:
         """dict: Dictionary of zone numbers and corresponding indices."""
         mapping = {}
         for idx, zone in enumerate(self.zone_numbers):
@@ -128,11 +136,11 @@ class EmmeAssignmentModel(AssignmentModel):
         return mapping
 
     @property
-    def nr_zones(self):
+    def nr_zones(self) -> int:
         """int: Number of zones in assignment model."""
         return len(self.zone_numbers)
 
-    def aggregate_results(self, resultdata):
+    def aggregate_results(self, resultdata: ResultsData):
         """Aggregate results to 24h and print vehicle kms.
 
         Parameters
@@ -150,7 +158,8 @@ class EmmeAssignmentModel(AssignmentModel):
                 if res != "transit_volumes":
                     self._node_24h(
                         transit_class, param.segment_results[res])
-        ass_classes = list(param.emme_demand_mtx) + ["bus", "aux_transit"]
+        ass_classes = list(param.emme_matrices) + ["bus", "aux_transit"]
+        ass_classes.remove("walk")
         for ass_class in ass_classes:
             self._link_24h(ass_class)
 
@@ -165,11 +174,8 @@ class EmmeAssignmentModel(AssignmentModel):
         area_kms = {ass_class: pandas.Series(0.0, areas)
             for ass_class in ass_classes}
         vdf_area_kms = {vdf: pandas.Series(0.0, areas) for vdf in vdfs}
-        linktypes = set()
-        for linktype in param.railtypes:
-            linktypes.add(param.railtypes[linktype])
-        for linktype in param.roadtypes:
-            linktypes.add(param.roadtypes[linktype])
+        #The following line only works well in Python 3.7+
+        linktypes = list(dict.fromkeys(param.roadtypes.values())) + list(dict.fromkeys(param.railtypes.values()))
         linklengths = pandas.Series(0.0, linktypes)
         soft_modes = param.transit_classes + ("bike",)
         network = self.day_scenario.get_network()
@@ -244,7 +250,10 @@ class EmmeAssignmentModel(AssignmentModel):
         resultdata.print_data(dists, "transit_kms.txt", "dist")
         resultdata.print_data(times, "transit_kms.txt", "time")
 
-    def calc_transit_cost(self, fares, peripheral_cost, default_cost=None):
+    def calc_transit_cost(self, 
+                          fares: TransitFareZoneSpecification, 
+                          peripheral_cost: numpy.ndarray, 
+                          default_cost: numpy.ndarray = None):
         """Calculate transit zone cost matrix.
         
         Perform multiple transit assignments.
@@ -273,20 +282,23 @@ class EmmeAssignmentModel(AssignmentModel):
             cost = default_cost
         for ap in self.assignment_periods:
             for transit_class in param.transit_classes:
-                idx = ap.result_mtx["cost"][transit_class]["id"]
-                emmebank.matrix(idx).set_numpy_data(cost)
+                idx = ap.emme_matrices[transit_class]["cost"]
+                emmebank.matrix(idx).set_numpy_data(cost, ap.emme_scenario.id)
             if not self.save_matrices:
                 break
 
-    def _copy_matrix(self, mtx_type, ass_class, ass_period_1, ass_period_2):
-        from_mtx = ass_period_1.result_mtx[mtx_type][ass_class]
-        to_mtx = ass_period_2.result_mtx[mtx_type][ass_class]
+    def _copy_matrix(self, 
+                     mtx_type: str, 
+                     ass_class: str, 
+                     ass_period_1: AssignmentPeriod, 
+                     ass_period_2: AssignmentPeriod):
+        from_mtx = ass_period_1.emme_matrices[ass_class][mtx_type]
+        to_mtx = ass_period_2.emme_matrices[ass_class][mtx_type]
+        description = f"{mtx_type}_{ass_class}_{ass_period_2.name}"
         self.emme_project.copy_matrix(
-            from_mtx["id"], to_mtx["id"],
-            "{}_{}_{}".format(mtx_type, ass_class, ass_period_2.name),
-            "{} {}".format(to_mtx["description"], ass_period_2.name))
+            from_mtx, to_mtx, description, description)
 
-    def _extra(self, attr):
+    def _extra(self, attr: str) -> str:
         """Add prefix "@" and suffix "_vrk".
 
         Parameters
@@ -302,32 +314,69 @@ class EmmeAssignmentModel(AssignmentModel):
         return "@{}_{}".format(attr, "vrk")
 
     def _add_bus_stops(self):
-        network = self.mod_scenario.get_network()
-        for line in network.transit_lines():
-            if line.mode.id in param.stop_codes:
-                stop_codes = param.stop_codes[line.mode.id]
-                for segment in line.segments():
-                    is_stop = segment.i_node.data2 in stop_codes
-                    if line.mode.id in "de":
-                        # Non-HSL bus lines
-                        not_hsl = segment.i_node.label not in param.hsl_area
-                        if line.id[-1] == '1':
-                            # Line starts in HSL area
-                            segment.allow_alightings = not_hsl and is_stop
-                            segment.allow_boardings = is_stop
-                        elif line.id[-1] == '2':
-                            # Line ends in HSL area
-                            segment.allow_alightings = is_stop
-                            segment.allow_boardings = not_hsl and is_stop
-                        else:
-                            raise ValueError(
-                                "Unknown direction code for line " + line.id)
-                    else:
-                        segment.allow_alightings = is_stop
-                        segment.allow_boardings = is_stop
-        self.mod_scenario.publish_network(network)
+        network: Network = self.mod_scenario.get_network()
+        modified_network: Network = mnw.add_bus_stops(network)
+        self.mod_scenario.publish_network(modified_network)
 
-    def _create_attributes(self, scenario, extra):
+    def _create_matrices(self, time_period, id_hundred, id_ten):
+        """Create EMME matrices for storing demand and impedance.
+
+        Parameters
+        ----------
+        time_period : str
+            Time period name (aht, pt, iht)
+        id_hundred : int
+            A new hundred in the matrix id space marks new assignment period
+        id_ten : dict
+            key : str
+                Matrix type (demand/time/cost/dist/...)
+            value : int
+                A new ten in the matrix id space marks new type of matrix
+
+        Returns
+        -------
+        dict
+            key : str
+                Assignment class (car_work/transit_leisure/...)
+            value : dict
+                key : str
+                    Matrix type (demand/time/cost/dist/...)
+                value : str
+                    EMME matrix id
+        """
+        tag = time_period if self.save_matrices else ""
+        emme_matrices = {}
+        for i, ass_class in enumerate(param.emme_matrices, start=1):
+            matrix_ids = {}
+            for mtx_type in param.emme_matrices[ass_class]:
+                matrix_ids[mtx_type] = "mf{}".format(
+                    id_hundred + id_ten[mtx_type] + i)
+                description = f"{mtx_type}_{ass_class}_{tag}"
+                default_value = 0 if mtx_type == "demand" else 999999
+                self.emme_project.create_matrix(
+                    matrix_id=matrix_ids[mtx_type],
+                    matrix_name=description, matrix_description=description,
+                    default_value=default_value, overwrite=True)
+            if ass_class in param.transit_classes:
+                j = 0
+                for subset, parts in param.transit_impedance_matrices.items():
+                    matrix_ids[subset] = {}
+                    for mtx_type, longer_name in parts.items():
+                        j += 1
+                        id = f"mf{id_hundred + id_ten[ass_class] + j}"
+                        matrix_ids[subset][longer_name] = id
+                        matrix_ids[longer_name] = id
+                        self.emme_project.create_matrix(
+                            matrix_id=id,
+                            matrix_name=f"{mtx_type}_{ass_class}_{tag}",
+                            matrix_description=longer_name,
+                            default_value=999999, overwrite=True)
+            emme_matrices[ass_class] = matrix_ids
+        return emme_matrices
+
+    def _create_attributes(self, 
+                           scenario: Any, 
+                           extra: Callable[[str], str]) -> Dict[str,Dict[str,str]]:
         """Create extra attributes needed in assignment.
 
         Parameters
@@ -339,13 +388,16 @@ class EmmeAssignmentModel(AssignmentModel):
             (e.g., self._extra)
         """
         # Create link attributes
-        for ass_class in list(param.emme_demand_mtx) + ["bus"]:
+        ass_classes = list(param.emme_matrices) + ["bus"]
+        ass_classes.remove("walk")
+        if TYPE_CHECKING: scenario = cast(Scenario, scenario)
+        for ass_class in ass_classes:
             self.emme_project.create_extra_attribute(
                 "LINK", extra(ass_class), ass_class + " volume",
                 overwrite=True, scenario=scenario)
-        for attr in ("total_cost", "toll_cost", "car_time", "aux_transit"):
+        for attr_s in ("total_cost", "toll_cost", "car_time", "aux_transit"): #attr_s tp make difference for type checker
             self.emme_project.create_extra_attribute(
-                "LINK", extra(attr), attr,
+                "LINK", extra(attr_s), attr_s,
                 overwrite=True, scenario=scenario)
         # Create node and transit segment attributes
         attr = param.segment_results
@@ -377,7 +429,7 @@ class EmmeAssignmentModel(AssignmentModel):
             scenario))
         return seg_results
 
-    def calc_noise(self):
+    def calc_noise(self) -> pandas.Series:
         """Calculate noise according to Road Traffic Noise Nordic 1996.
 
         Returns
@@ -445,7 +497,7 @@ class EmmeAssignmentModel(AssignmentModel):
                 noise_areas[area] += 0.001 * zone_width * link.length
         return noise_areas
 
-    def _link_24h(self, attr):
+    def _link_24h(self, attr: str):
         """ 
         Sums and expands link volumes to 24h.
 
@@ -474,7 +526,7 @@ class EmmeAssignmentModel(AssignmentModel):
         log.info("Link attribute {} aggregated to 24h (scenario {})".format(
             extra, self.day_scenario.id))
 
-    def _node_24h(self, transit_class, attr):
+    def _node_24h(self, transit_class: str, attr: str):
         """ 
         Sums and expands node attributes to 24h.
 
@@ -506,7 +558,7 @@ class EmmeAssignmentModel(AssignmentModel):
         log.info("Node attribute {} aggregated to 24h (scenario {})".format(
             extra, self.day_scenario.id))
 
-    def _transit_segment_24h(self, transit_class, attr):
+    def _transit_segment_24h(self, transit_class: str, attr: str):
         """ 
         Sums and expands transit attributes to 24h.
 

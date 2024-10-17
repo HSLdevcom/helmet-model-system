@@ -1,16 +1,18 @@
 import os
 import sys
 import logging
-from collections import namedtuple
 
 import inro.modeller as _m
 
 # TODO Could this be done more elegantly?
-sys.path.append(os.path.dirname(os.path.realpath(__file__)))
-from utils.validate_network import validate
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),"../"))
+from utils.print_links import print_links
+from datahandling.resultdata import ResultsData
 
 
-class Validation(_m.Tool()):
+class LinkPrinting(_m.Tool()):
+    results_path = _m.Attribute(str)
+
     def __init__(self):
         """Tool with click-button that can be imported in the Modeller GUI.
         """
@@ -20,7 +22,10 @@ class Validation(_m.Tool()):
 
     def page(self):
         pb = _m.ToolPageBuilder(self)
-        pb.title = "Validate network"
+        pb.title = "Print link attributes to file"
+        pb.add_select_file(
+            "results_path", "directory", file_filter="", start_path="",
+            title="Directory to save file in:")
         if self.tool_run_msg:
             pb.add_html(self.tool_run_msg)
         return pb.render()
@@ -29,12 +34,12 @@ class Validation(_m.Tool()):
         self()
 
     def __call__(self):
-        """Perform a network validation for current scenario.
+        """Print link attributes for current scenario.
         """
-        modeller = _m.Modeller()
-        scen = modeller.scenario
-        validate(scen.get_network())
-        msg = "Network validation finished for scenario {}!".format(scen.id)
+        scen = _m.Modeller().scenario
+        print_links(scen.get_network(), ResultsData(self.results_path))
+        msg = "Link attributes for scenario {} printed to links.txt!".format(
+            scen.id)
         self.write(msg)
         self.tool_run_msg = _m.PageBuilder.format_info(msg)
 

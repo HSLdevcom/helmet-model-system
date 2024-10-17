@@ -1,11 +1,18 @@
+from decimal import DivisionByZero
+from itertools import groupby
 import os
+from typing import Optional
 import pandas
-import numpy
+import numpy # type: ignore
 
 import utils.log as log
 
 
-def read_csv_file(data_dir, file_end, zone_numbers=None, dtype=None, squeeze=False):
+def read_csv_file(data_dir: str, 
+                  file_end: str, 
+                  zone_numbers: Optional[numpy.ndarray] = None, 
+                  dtype: Optional[numpy.dtype] = None, 
+                  squeeze: bool=False) -> pandas.DataFrame:
     """Read (zone) data from space-separated file.
     
     Parameters
@@ -40,14 +47,11 @@ def read_csv_file(data_dir, file_end, zone_numbers=None, dtype=None, squeeze=Fal
         msg = "No {} file found in folder {}".format(file_end, data_dir)
         # This error should not be logged, as it is sometimes excepted
         raise NameError(msg)
-    if squeeze:
-        header = None
-    else:
-        header = "infer"
-    data = pandas.read_csv(
+    header: Optional[str] = None if squeeze else "infer"
+    data: pandas.DataFrame = pandas.read_csv(
         path, delim_whitespace=True, squeeze=squeeze, keep_default_na=False,
         na_values="", comment='#', header=header)
-    if data.index.is_numeric() and data.index.hasnans:
+    if data.index.is_numeric() and data.index.hasnans: # type: ignore
         msg = "Row with only spaces or tabs in file {}".format(path)
         log.error(msg)
         raise IndexError(msg)
@@ -67,19 +71,40 @@ def read_csv_file(data_dir, file_end, zone_numbers=None, dtype=None, squeeze=Fal
         if not data.index.is_monotonic:
             data.sort_index(inplace=True)
             log.warn("File {} is not sorted in ascending order".format(path))
+        map_path = os.path.join(data_dir, "zone_mapping.txt")
+        if os.path.exists(map_path):
+            log_path = map_path
+            mapping = pandas.read_csv(map_path, delim_whitespace=True).squeeze()
+            if "total" in data.columns:
+                # If file contains total and shares of total,
+                # shares are aggregated as averages with total as weight
+                data = data.groupby(mapping).agg(avg, weights=data["total"])
+            elif "detach" in data.columns:
+                funcs = dict.fromkeys(data.columns, "sum")
+                funcs["detach"] = "mean"
+                data = data.groupby(mapping).agg(funcs)
+            else:
+                data = data.groupby(mapping).sum()
+            data.index = data.index.astype(int)
+        else:
+            log_path = path
         if data.index.size != zone_numbers.size or (data.index != zone_numbers).any():
             for i in data.index:
                 if int(i) not in zone_numbers:
                     msg = "Zone number {} from file {} not found in network".format(
-                        i, path)
+                        i, log_path)
                     log.error(msg)
                     raise IndexError(msg)
             for i in zone_numbers:
                 if i not in data.index:
-                    msg = "Zone number {} not found in file {}".format(i, path)
+                    if log_path == map_path and i in mapping.array:
+                        # If mapping is ok, then error must be in data file
+                        log_path = path
+                        i = mapping[mapping == i].index[0]
+                    msg = "Zone number {} not found in file {}".format(i, log_path)
                     log.error(msg)
                     raise IndexError(msg)
-            msg = "Zone numbers did not match for file {}".format(path)
+            msg = "Zone numbers did not match for file {}".format(log_path)
             log.error(msg)
             raise IndexError(msg)
     if dtype is not None:
@@ -91,3 +116,11 @@ def read_csv_file(data_dir, file_end, zone_numbers=None, dtype=None, squeeze=Fal
             log.error(msg)
             raise ValueError(msg)
     return data
+
+def avg (data, weights):
+    if data.name == weights.name:
+        return sum(data)
+    try:
+        return numpy.average(data, weights=weights[data.index])
+    except ZeroDivisionError:
+        return 0

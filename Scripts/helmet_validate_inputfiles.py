@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 import os
 import sys
+from typing import List, Union
 
 import utils.config
 import utils.log as log
@@ -12,11 +13,11 @@ import parameters.assignment as param
 
 
 def main(args):
-    base_zonedata_path = os.path.join(args.baseline_data_path, "2018_zonedata")
+    base_zonedata_path = os.path.join(args.baseline_data_path, "2023_zonedata")
     base_matrices_path = os.path.join(args.baseline_data_path, "base_matrices")
-    emme_paths = args.emme_paths
-    first_scenario_ids = args.first_scenario_ids
-    forecast_zonedata_paths = args.forecast_data_paths
+    emme_paths: Union[str,List[str]] = args.emme_paths
+    first_scenario_ids: Union[int,List[int]] = args.first_scenario_ids
+    forecast_zonedata_paths: Union[str,List[str]] = args.forecast_data_paths
 
     if not emme_paths:
         msg = "Missing required argument 'emme-paths'."
@@ -72,13 +73,13 @@ def main(args):
                 emp_path)
             log.error(msg)
             raise ValueError(msg)
-        import inro.emme.desktop.app as _app
+        import inro.emme.desktop.app as _app # type: ignore
         app = _app.start_dedicated(
             project=emp_path, visible=False, user_initials="HSL")
         scen = app.data_explorer().active_database().core_emmebank.scenario(
             first_scenario_ids[0])
         if scen is None:
-            msg = "Project {} has no scenario {}".format(emp_path, scen.id)
+            msg = "Project {} has no scenario {}".format(emp_path, first_scenario_ids[0])
             log.error(msg)
             raise ValueError(msg)
         else:
@@ -88,7 +89,7 @@ def main(args):
     base_zonedata = ZoneData(base_zonedata_path, zone_numbers)
     # Check base matrices
     matrixdata = MatrixData(base_matrices_path)
-    for tp in ("aht", "pt", "iht"):
+    for tp in param.time_periods:
         with matrixdata.open("demand", tp, zone_numbers) as mtx:
             for ass_class in param.transport_classes:
                 a = mtx[ass_class]
@@ -116,24 +117,35 @@ def main(args):
             app = _app.start_dedicated(
                 project=emp_path, visible=False, user_initials="HSL")
             emmebank = app.data_explorer().active_database().core_emmebank
+            link_attrs = ["@pyoratieluokka"]
+            line_attrs = []
+            for tp in param.time_periods:
+                link_attrs.append(f"@hinta_{tp}")
+                line_attrs.append(f"@hw_{tp}")
             nr_attr = {
                 # Number of existing extra attributes
                 # TODO Count existing extra attributes which are NOT included
                 # in the set of attributes created during model run
                 "nodes": 0,
-                "links": 4,
-                "transit_lines": 3,
+                "links": len(link_attrs),
+                "transit_lines": len(line_attrs),
                 "transit_segments": 0,
             }
             nr_transit_classes = len(param.transit_classes)
             nr_segment_results = len(param.segment_results)
-            nr_vehicle_classes = len(param.emme_demand_mtx) + 1
+            nr_vehicle_classes = len(param.emme_matrices)
             nr_new_attr = {
                 "nodes": nr_transit_classes * (nr_segment_results-1),
                 "links": nr_vehicle_classes + 4,
                 "transit_lines": 0,
                 "transit_segments": nr_transit_classes*nr_segment_results + 1,
             }
+            sc_name = emmebank.scenario(first_scenario_ids[i]).title
+            if len(sc_name)>56:
+                msg = "Scenario name: {} too long, time period extension might exceed Emme's 60 characters limit.".format(
+                    sc_name)
+                log.error(msg)
+                raise ValueError(msg)     
             if not args.separate_emme_scenarios:
                 # If results from all time periods are stored in same
                 # EMME scenario
@@ -151,9 +163,12 @@ def main(args):
                     attr_space)
                 log.error(msg)
                 raise ValueError(msg)
+            for scen in emmebank.scenarios():
+                if scen.zone_numbers != zone_numbers:
+                    log.warn("Scenarios with different zones found in EMME bank!")
             scen = emmebank.scenario(first_scenario_ids[i])
             if scen is None:
-                msg = "Project {} has no scenario {}".format(emp_path, scen.id)
+                msg = "Project {} has no scenario {}".format(emp_path, first_scenario_ids[i])
                 log.error(msg)
                 raise ValueError(msg)
             elif scen.zone_numbers != zone_numbers:
@@ -161,19 +176,12 @@ def main(args):
                     scen.id)
                 log.error(msg)
                 raise ValueError(msg)
-            attrs = (
-                "@pyoratieluokka",
-                "@hinta_aht",
-                "@hinta_pt",
-                "@hinta_iht",
-                "@hw_aht",
-                "@hw_pt",
-                "@hw_iht",
-            )
-            for attr in attrs:
+            for attr in link_attrs + line_attrs:
                 if scen.extra_attribute(attr) is None:
                     msg = "Extra attribute {} missing from scenario {}".format(
                         attr, scen.id)
+                    log.error(msg)
+                    raise ValueError(msg)
             validate(scen.get_network(), forecast_zonedata.transit_zone)
             app.close()
 

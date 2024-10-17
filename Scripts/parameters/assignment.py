@@ -1,6 +1,7 @@
 ### ASSIGNMENT PARAMETERS ###
 
 from collections import namedtuple
+from typing import Dict, List, Union
 RoadClass = namedtuple(
     "RoadClass",
     (
@@ -31,6 +32,7 @@ roadclasses = {
     40: RoadClass("collector", "any", 5, 900, 36, 0.833),
     41: RoadClass("local", "any", 5, 600, 30, 1.000),
     42: RoadClass("local", "any", 5, 500, 23, 1.304),
+    43: RoadClass("collector", "any", 5, 750, 30, 0.833),
 }
 connector_link_types = (84, 85, 86, 87, 88, 98, 99)
 connector = RoadClass("connector", "any", 99, 0, 0, 0)
@@ -91,38 +93,22 @@ official_node_numbers = {
     "htpaf": (802000, 806000),
     "hpaf": (810000, 816000),
 }
+vdf_temp = ("(put(60/ul2)*(1+{}*put((volau+volad)/{})/"
+            + "(ul1-get(2))))*(get(2).le.put(ul1*{}))*length+(get(2).gt."
+            + "get(3))*({}*get(1)*length+{}*(get(2)-get(3))*length)")
+buslane = "((lanes-1).max.0.8)"
 volume_delay_funcs = {
     # Car functions
-    "fd1": "(put(60/ul2)*(1+0.02*put((volau+volad)/lanes)/"
-            + "(ul1-get(2))))*(get(2).le.put(ul1*0.975))*length+(get(2).gt."
-            + "get(3))*(1.78*get(1)*length+0.0075*(get(2)-get(3))*length)",
-    "fd2": "(put(60/ul2)*(1+0.09*put((volau+volad)/lanes)/"
-            + "(ul1-get(2))))*(get(2).le.put(ul1*0.935))*length+(get(2).gt."
-            + "get(3))*(2.29*get(1)*length+0.0085*(get(2)-get(3))*length)",
-    "fd3": "(put(60/ul2)*(1+0.1*put((volau+volad)/lanes)/"
-            + "(ul1-get(2))))*(get(2).le.put(ul1*0.915))*length+(get(2).gt."
-            + "get(3))*(2.08*get(1)*length+0.011*(get(2)-get(3))*length)",
-    "fd4": "(put(60/ul2)*(1+0.2*put((volau+volad)/lanes)/"
-            + "(ul1-get(2))))*(get(2).le.put(ul1*0.87))*length+(get(2).gt."
-            + "get(3))*(2.34*get(1)*length+0.014*(get(2)-get(3))*length)",
-    "fd5": "(put(60/ul2)*(1+0.3*put((volau+volad)/lanes)/"
-            + "(ul1-get(2))))*(get(2).le.put(ul1*0.81))*length+(get(2).gt."
-            + "get(3))*(2.28*get(1)*length+0.017*(get(2)-get(3))*length)",
-    "fd6": "(put(60/ul2)*(1+0.02*put((volau+volad)/((lanes-1).max.0.8))/"
-            + "(ul1-get(2))))*(get(2).le.put(ul1*0.975))*length+(get(2).gt."
-            + "get(3))*(1.78*get(1)*length+0.0075*(get(2)-get(3))*length)",
-    "fd7": "(put(60/ul2)*(1+0.09*put((volau+volad)/((lanes-1).max.0.8))/"
-            + "(ul1-get(2))))*(get(2).le.put(ul1*0.935))*length+(get(2).gt."
-            + "get(3))*(2.29*get(1)*length+0.0085*(get(2)-get(3))*length)",
-    "fd8": "(put(60/ul2)*(1+0.1*put((volau+volad)/((lanes-1).max.0.8))/"
-            + "(ul1-get(2))))*(get(2).le.put(ul1*0.915))*length+(get(2).gt."
-            + "get(3))*(2.08*get(1)*length+0.011*(get(2)-get(3))*length)",
-    "fd9": "(put(60/ul2)*(1+0.2*put((volau+volad)/((lanes-1).max.0.8))/"
-            + "(ul1-get(2))))*(get(2).le.put(ul1*0.87))*length+(get(2).gt."
-            + "get(3))*(2.34*get(1)*length+0.014*(get(2)-get(3))*length)",
-    "fd10": "(put(60/ul2)*(1+0.3*put((volau+volad)/((lanes-1).max.0.8))/"
-            + "(ul1-get(2))))*(get(2).le.put(ul1*0.81))*length+(get(2).gt."
-            + "get(3))*(2.28*get(1)*length+0.017*(get(2)-get(3))*length)",
+    "fd1": vdf_temp.format(0.02, "lanes", 0.975, 1.78, 0.0075),
+    "fd2": vdf_temp.format(0.09, "lanes", 0.935, 2.29, 0.0085),
+    "fd3": vdf_temp.format(0.10, "lanes", 0.915, 2.08, 0.0110),
+    "fd4": vdf_temp.format(0.20, "lanes", 0.870, 2.34, 0.0140),
+    "fd5": vdf_temp.format(0.30, "lanes", 0.810, 2.28, 0.0170),
+    "fd6": vdf_temp.format(0.02, buslane, 0.975, 1.78, 0.0075),
+    "fd7": vdf_temp.format(0.09, buslane, 0.935, 2.29, 0.0085),
+    "fd8": vdf_temp.format(0.10, buslane, 0.915, 2.08, 0.0110),
+    "fd9": vdf_temp.format(0.20, buslane, 0.870, 2.34, 0.0140),
+    "fd10": vdf_temp.format(0.3, buslane, 0.810, 2.28, 0.0170),
     "fd99": "length * 1.3",
     # Bike functions
     "fd70": "length*(60/19)",
@@ -150,6 +136,8 @@ volume_delay_funcs = {
     "ft6": "us1",
     ## Escape function, speed 40 km/h
     "ft7": "length/(40/60)",
+    ## Turn penalty function for bikes
+    "fp1": "0",
 }
 # Code derived from three-digit link type xyz, where x is the bus lane code,
 # 2 means that bus lane is active during aht and iht periods, etc.
@@ -183,6 +171,8 @@ vot_inv = {
 }
 # Default distance unit cost [eur/km]
 dist_unit_cost = 0.12
+# Default distance unit time for trucks and trailer trucks [min/km]
+freight_dist_unit_time = 0.2
 # Boarding penalties for different transit modes
 boarding_penalty = {
     'b': 3, # Bus
@@ -239,14 +229,14 @@ headway_sd_func = {
 }
 # Stopping criteria for last traffic assignment
 stopping_criteria_fine = {
-    "max_iterations": 200,
+    "max_iterations": 400,
     "relative_gap": 0.00001,
     "best_relative_gap": 0.001,
     "normalized_gap": 0.0005,
 }
 # Stopping criteria for traffic assignment in loop
 stopping_criteria_coarse = {
-    "max_iterations": 100,
+    "max_iterations": 200,
     "relative_gap": 0.0001,
     "best_relative_gap": 0.01,
     "normalized_gap": 0.005,
@@ -375,6 +365,7 @@ noise_zone_width = {
 }
 
 ### ASSIGNMENT REFERENCES ###
+time_periods: List[str] = ["aht", "pt", "iht"]
 transport_classes = (
     "car_work",
     "car_leisure",
@@ -427,6 +418,11 @@ vot_classes = {
     "truck": "business",
     "van": "business",
 }
+# Distance unit cost for freight [eur/km]
+freight_dist_unit_cost = {
+    "truck": freight_dist_unit_time / vot_inv[vot_classes["truck"]],
+    "trailer_truck": freight_dist_unit_time / vot_inv[vot_classes["trailer_truck"]],
+}
 transit_modes = [
     'b',
     'd',
@@ -458,237 +454,29 @@ segment_results = {
 # Hard-coded in Emme congested transit assignment
 congestion_cost = "ccost"
 uncongested_transit_time = "base_timtr"
-# Emme matrix IDs
-emme_demand_mtx = {
-    "car_work": {
-        "id": 1,
-        "description": "car work demand",
-    },
-    "car_leisure": {
-        "id": 2,
-        "description": "car leisure demand",
-    },
-    "transit_work":  {
-        "id": 3,
-        "description": "transit demand",
-    },
-    "transit_leisure":  {
-        "id": 4,
-        "description": "transit demand",
-    },
-    "bike":  {
-        "id": 5,
-        "description": "bicyclist demand",
-    },
-    "trailer_truck": {
-        "id": 7,
-        "description": "trailer truck demand",
-    },
-    "truck":  {
-        "id": 8,
-        "description": "truck demand",
-    },
-    "van":  {
-        "id": 9,
-        "description": "van demand",
-    },
+emme_matrices = {
+    "car_work": ("demand", "time", "dist", "cost", "gen_cost"),
+    "car_leisure": ("demand", "time", "dist", "cost", "gen_cost"),
+    "transit_work": ("demand", "time", "dist", "cost"),
+    "transit_leisure": ("demand", "time", "dist", "cost"),
+    "bike": ("demand", "time", "dist"),
+    "walk": ("time", "dist"),
+    "trailer_truck": ("demand", "time", "dist", "cost", "gen_cost"),
+    "truck": ("demand", "time", "dist", "cost", "gen_cost"),
+    "van": ("demand", "time", "dist", "cost", "gen_cost"),
 }
-emme_result_mtx = {
-    "time": {
-        "car_work": {
-            "id": 11,
-            "description": "car work travel time",
-        },
-        "car_leisure": {
-            "id": 12,
-            "description": "car leisure travel time",
-        },
-        "transit_work": {
-            "id": 13,
-            "description": "transit travel time",
-        },
-        "transit_leisure": {
-            "id": 14,
-            "description": "transit travel time",
-        },
-        "bike": {
-            "id": 15,
-            "description": "bike travel time",
-        },
-        "walk": {
-            "id": 16,
-            "description": "walk travel time",
-        },
-        "trailer_truck": {
-            "id": 17,
-            "description": "trailer truck time",
-        },
-        "truck":  {
-            "id": 18,
-            "description": "truck time",
-        },
-        "van":  {
-            "id": 19,
-            "description": "van time",
-        },
+transit_impedance_matrices = {
+    "total": {
+        "total_time": "total_travel_time",
+        "tw_time": "actual_total_waiting_times",
+        "fw_time": "actual_first_waiting_times",
     },
-    "dist": {
-        "car_work": {
-            "id": 21,
-            "description": "car work travel distance",
-        },
-        "car_leisure": {
-            "id": 22,
-            "description": "car leisure travel distance",
-        },
-        "transit_work": {
-            "id": 23,
-            "description": "transit in-vehicle distance",
-        },
-        "transit_leisure": {
-            "id": 24,
-            "description": "transit in-vehicle distance",
-        },
-        "bike": {
-            "id": 25,
-            "description": "bike travel distance",
-        },
-        "walk": {
-            "id": 26,
-            "description": "walk travel distance",
-        },
-        "trailer_truck": {
-            "id": 27,
-            "description": "trailer truck distance",
-        },
-        "truck":  {
-            "id": 28,
-            "description": "truck distance",
-        },
-        "van":  {
-            "id": 29,
-            "description": "van distance",
-        },
-    },
-    "cost": {
-        "car_work": {
-            "id": 31,
-            "description": "car work travel cost",
-        },
-        "car_leisure": {
-            "id": 32,
-            "description": "car leisure travel cost",
-        },
-        "transit_work": {
-            "id": 33,
-            "description": "transit travel cost",
-        },
-        "transit_leisure": {
-            "id": 34,
-            "description": "transit travel cost",
-        },
-        "trailer_truck": {
-            "id": 37,
-            "description": "trailer truck cost",
-        },
-        "truck":  {
-            "id": 38,
-            "description": "truck cost",
-        },
-        "van":  {
-            "id": 39,
-            "description": "van cost",
-        },
-    },
-    "gen_cost": {
-        "car_work": {
-            "id": 41,
-            "description": "car work travel generalized cost",
-        },
-        "car_leisure": {
-            "id": 42,
-            "description": "car leisure travel generalized cost",
-        },
-        "trailer_truck": {
-            "id": 47,
-            "description": "trailer truck travel generalized cost",
-        },
-        "truck":  {
-            "id": 48,
-            "description": "truck travel generalized cost",
-        },
-        "van":  {
-            "id": 49,
-            "description": "van travel generalized cost",
-        },
-    },
-    "trip_part_transit_work":{
-        "inv_time": {
-            "id": 51,
-            "description": "transit in-vehicle time",
-        },
-        "aux_time": {
-            "id": 52,
-            "description": "transit auxilliary time",
-        },
-        "tw_time": {
-            "id": 53,
-            "description": "transit total waiting time",
-        },
-        "fw_time": {
-            "id": 54,
-            "description": "transit first waiting time",
-        },
-        "board_time": {
-            "id": 55,
-            "description": "transit boarding time",
-        },
-        "total_time": {
-            "id": 56,
-            "description": "transit unweighted travel time",
-        },
-        "num_board": {
-            "id": 57,
-            "description": "transit trip number of boardings",
-        },
-        "board_cost": {
-            "id": 58,
-            "description": "transit boarding cost",
-        },
-    },
-    "trip_part_transit_leisure":{
-        "inv_time": {
-            "id": 61,
-            "description": "transit in-vehicle time",
-        },
-        "aux_time": {
-            "id": 62,
-            "description": "transit auxilliary time",
-        },
-        "tw_time": {
-            "id": 63,
-            "description": "transit total waiting time",
-        },
-        "fw_time": {
-            "id": 64,
-            "description": "transit first waiting time",
-        },
-        "board_time": {
-            "id": 65,
-            "description": "transit boarding time",
-        },
-        "total_time": {
-            "id": 66,
-            "description": "transit unweighted travel time",
-        },
-        "num_board": {
-            "id": 67,
-            "description": "transit trip number of boardings",
-        },
-        "board_cost": {
-            "id": 68,
-            "description": "transit boarding cost",
-        },
+    "by_mode_subset": {
+        "inv_time": "actual_in_vehicle_times",
+        "aux_time": "actual_aux_transit_times",
+        "board_time": "actual_total_boarding_times",
+        "num_board": "avg_boardings",
+        "board_cost": "actual_total_boarding_costs",
     },
 }
 background_traffic_attr = "ul3"

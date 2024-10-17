@@ -1,8 +1,21 @@
 ### IMPEDANCE TRANSFORMATION PARAMETERS ###
 
-trips_month = {
-    "transit_work": (60.0, 44.0),
-    "transit_leisure": (30.0, 30.0),
+from typing import Dict, Tuple, Union
+
+
+transit_trips_per_month: Dict[str,Dict[str,Union[Tuple[float],Tuple[float,float]]]] = {
+    "metropolitan": {
+        "work": (60.0, 44.0),
+        "leisure": (30.0, 30.0),
+    },
+    "peripheral": {
+        "work": (44.0,),
+        "leisure": (30.0,),
+    },
+    "all": {
+        "work": (60.0, 44.0),
+        "leisure": (30.0, 30.0),
+    },
 }
 
 impedance_share = {

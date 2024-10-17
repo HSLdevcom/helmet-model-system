@@ -29,7 +29,7 @@ class ModelTest(unittest.TestCase):
         zone_data_path = os.path.join(
             TEST_DATA_PATH, "Scenario_input_data", "2030_test")
         base_zone_data_path = os.path.join(
-            TEST_DATA_PATH, "Base_input_data", "2018_zonedata")
+            TEST_DATA_PATH, "Base_input_data", "2023_zonedata")
         base_matrices_path = os.path.join(
             TEST_DATA_PATH, "Base_input_data", "base_matrices")
         model = ModelSystem(
@@ -65,7 +65,7 @@ class ModelTest(unittest.TestCase):
         zone_data_path = os.path.join(
             TEST_DATA_PATH, "Scenario_input_data", "2030_test")
         base_zone_data_path = os.path.join(
-            TEST_DATA_PATH, "Base_input_data", "2018_zonedata")
+            TEST_DATA_PATH, "Base_input_data", "2023_zonedata")
         base_matrices_path = os.path.join(
             TEST_DATA_PATH, "Base_input_data", "base_matrices")
         model = AgentModelSystem(

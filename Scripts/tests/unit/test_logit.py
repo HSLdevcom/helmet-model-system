@@ -11,7 +11,7 @@ import os
 TEST_DATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "test_data")
 METROPOLITAN_ZONES = [102, 103, 244, 1063, 1531, 2703, 2741, 6272, 6291]
 PERIPHERAL_ZONES = [19071]
-EXTERNAL_ZONES = [31102, 31500]
+EXTERNAL_ZONES = [34102, 34500]
 
 
 class LogitModelTest(unittest.TestCase):
@@ -21,7 +21,7 @@ class LogitModelTest(unittest.TestCase):
             pass
         pur = Purpose()
         zi = numpy.array(METROPOLITAN_ZONES + PERIPHERAL_ZONES + EXTERNAL_ZONES)
-        zd = BaseZoneData(os.path.join(TEST_DATA_PATH, "Base_input_data", "2018_zonedata"), zi)
+        zd = BaseZoneData(os.path.join(TEST_DATA_PATH, "Base_input_data", "2023_zonedata"), zi)
         zd["car_users"] = pandas.Series(0.5, zd.zone_numbers)
         mtx = numpy.arange(90, dtype=numpy.float32)
         mtx.shape = (9, 10)
@@ -45,29 +45,28 @@ class LogitModelTest(unittest.TestCase):
             },
         }
         pur.bounds = slice(0, 9)
-        pur.lbounds = slice(0, 7)
-        pur.ubounds = slice(7, 9)
+        pur.sub_bounds = [slice(0, 7), slice(7, 9)]
         pur.zone_numbers = METROPOLITAN_ZONES
         for i in ("hw", "hc", "hu", "hs", "ho"):
             pur.name = i
-            model = ModeDestModel(zd, pur, resultdata, is_agent_model=False)
+            model = ModeDestModel(zd, pur, resultdata)
             prob = model.calc_prob(impedance)
             for mode in ("car", "transit", "bike", "walk"):
                 self._validate(prob[mode])
         for i in ("wo", "oo"):
             pur.name = i
-            model = ModeDestModel(zd, pur, resultdata, is_agent_model=False)
+            model = ModeDestModel(zd, pur, resultdata)
             prob = model.calc_prob(impedance)
             for mode in ("car", "transit", "bike", "walk"):
                 self._validate(prob[mode])
         pur.name = "oop"
-        model = ModeDestModel(zd, pur, resultdata, is_agent_model=False)
+        model = ModeDestModel(zd, pur, resultdata)
         prob = model.calc_prob(impedance)
         for mode in ("car", "transit"):
             self._validate(prob[mode])
         for i in ("hwp", "hop"):
             pur.name = i
-            model = ModeDestModel(zd, pur, resultdata, is_agent_model=False)
+            model = ModeDestModel(zd, pur, resultdata)
             prob = model.calc_prob(impedance)
             for mode in ("car", "transit"):
                 self._validate(prob[mode])

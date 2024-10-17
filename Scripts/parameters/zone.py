@@ -1,4 +1,7 @@
 # Share of demand that will be simulated in agent model
+from typing import Any, Dict, List, Tuple, Union
+
+
 agent_demand_fraction = 1.0
 
 # Seed number for population attributes:
@@ -6,9 +9,18 @@ agent_demand_fraction = 1.0
 # None = different population for each run
 population_draw = 31
 
+# Age groups in zone data
+age_groups: List[Tuple[int, int]] = [ #changed to list for type checker
+        (7, 17),
+        (18, 29),
+        (30, 49),
+        (50, 64),
+        (65, 99),
+]
+
 ### DEMAND MODEL REFERENCES ###
 
-tour_purposes = (
+tour_purposes: List[Dict[str, Any]] = [ #changed to list for type checker
     {
         "name": "hw",
         "orig": "home",
@@ -92,7 +104,16 @@ tour_purposes = (
         "source": ("sop",),
         "area": "all",
     },
-)
+]
+# Tour purpose zone intervals
+# Some demand models have separate sub-region parameters,
+# hence need sub-intervals defined.
+purpose_areas: Dict[str, Union[Tuple[int,int],Tuple[int,int,int]]] = {
+    "metropolitan": (0, 6000, 16000),
+    "peripheral": (16000, 32000),
+    "all": (0, 6000, 32000),
+    "external": (34031, 34999),
+}
 areas = {
     "helsinki_cbd": (0, 999),
     "helsinki_other": (1000, 1999),
@@ -110,8 +131,8 @@ areas = {
         (12000, 12999),
         (15000, 15499),
     ),
-    "peripheral": (16000, 30999),
-    "external": (31031, None),
+    "peripheral": (16000, 31999),
+    "external": (34031, 34999),
 }
 municipalities = {
     "Helsinki": (0, 1999),
@@ -129,30 +150,30 @@ municipalities = {
     "Hyvinkaa": (14000, 14999),
     "Pornainen": (15000, 15499),
     "Siuntio": (15500, 15999),
-    "Salo": (16000, 16499),
-    "Somero": (16500, 16999),
     "Raasepori": (17000, 17499),
     "Hanko": (17500, 17999),
     "Inkoo": (18000, 18499),
     "Karkkila": (18500, 18999),
     "Lohja": (19000, 19999),
-    "Hameenlinna": (20000, 20999),
-    "Janakkala": (21000, 21499),
-    "Hattula": (21500, 21999),
-    "Loppi": (22000, 22499),
-    "Tammela": (22500, 22999),
-    "Riihimaki": (23000, 23999),
-    "Hausjarvi": (24000, 24499),
-    "Karkola": (24500, 24999),
-    "Orimattila": (25000, 25499),
-    "Hollola": (25500, 25999),
-    "Lahti": (26000, 26999),
-    "Porvoo": (27000, 27999),
-    "Pukkila": (28000, 28499),
-    "Askola": (28500, 28999),
-    "Myrskyla": (29000, 29499),
-    "Lapinjarvi": (29500, 29999),
-    "Loviisa": (30000, 30999),
+    "Porvoo": (20000, 20999),
+    "Pukkila": (21000, 21499),
+    "Askola": (21500, 21999),
+    "Myrskyla": (22000, 22499),
+    "Lapinjarvi": (22500, 22999),
+    "Loviisa": (23000, 23999),
+    "Salo": (24000, 24499),
+    "Somero": (24500, 24999),
+    "Hameenlinna": (25000, 25999),
+    "Janakkala": (26000, 26499),
+    "Hattula": (26500, 26999),
+    "Loppi": (27000, 27499),
+    "Tammela": (27500, 27999),
+    "Riihimaki": (28000, 28999),
+    "Hausjarvi": (29000, 29499),
+    "Karkola": (29500, 29999),
+    "Orimattila": (30000, 30499),
+    "Hollola": (30500, 30999),
+    "Lahti": (31000, 31999),
 }
 kela_codes = {
     18: "Askola",

@@ -1,0 +1,2 @@
+python -m mypy helmet_validate_inputfiles.py
+python -m mypy helmet.py

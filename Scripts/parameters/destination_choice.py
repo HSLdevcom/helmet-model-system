@@ -1,10 +1,11 @@
-import numpy
+from typing import Any, Dict
+import numpy # type: ignore
 
 
 ### DESTINATION CHOICE PARAMETERS ###
 
 # Destination choice (calibrated 02.10.2020)
-destination_choice = {
+destination_choice: Dict[str, Dict[str, Dict[str, Any]]] = {
     "hw": {
         "car": {
             "attraction": {

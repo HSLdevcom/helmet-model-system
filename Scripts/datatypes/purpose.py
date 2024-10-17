@@ -1,6 +1,11 @@
-import numpy
+from __future__ import annotations
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, cast
+import numpy # type: ignore
 import pandas
+from datahandling.resultdata import ResultsData
+from datahandling.zonedata import ZoneData
 
+import parameters.zone as param
 from parameters.destination_choice import secondary_destination_threshold
 import models.logit as logit
 import models.generation as generation
@@ -29,37 +34,31 @@ class Purpose:
         Data used for all demand calculations
     """
 
-    def __init__(self, specification, zone_data, resultdata=None):
+    def __init__(self, 
+                 specification: Dict[str,Optional[str]], 
+                 zone_data: ZoneData, 
+                 resultdata: Optional[ResultsData]=None):
         self.name = specification["name"]
         self.orig = specification["orig"]
         self.dest = specification["dest"]
         self.area = specification["area"]
-        self.sources = []
-        if self.area == "metropolitan":
-            l = 0
-            m = zone_data.first_surrounding_zone
-            u = zone_data.first_peripheral_zone
-        if self.area == "peripheral":
-            l = zone_data.first_peripheral_zone
-            m = None
-            u = zone_data.nr_zones
-        if self.area == "all":
-            l = 0
-            m = zone_data.first_surrounding_zone
-            u = zone_data.nr_zones
-        if self.area == "external":
-            l = zone_data.first_external_zone
-            m = None
-            u = None
-        self.bounds = slice(l, u)
-        self.lbounds = slice(l, m)
-        self.ubounds = slice(m, u)
+        self.name = cast(str, self.name) #type checker help
+        self.area = cast(str, self.area) #type checker help
+        self.sources: List[Any] = []
+        zone_numbers = zone_data.all_zone_numbers
+        zone_intervals = param.purpose_areas[self.area]
+        self.bounds = slice(*zone_numbers.searchsorted(
+            [zone_intervals[0], zone_intervals[-1]]))
+        sub_intervals = zone_numbers[self.bounds].searchsorted(zone_intervals)
+        self.sub_bounds = [slice(sub_intervals[i-1], sub_intervals[i])
+            for i in range(1, len(sub_intervals))]
+        self.sub_intervals = sub_intervals[1:]
         self.zone_data = zone_data
         self.resultdata = resultdata
         self.model = None
-        self.modes = []
-        self.generated_tours = {}
-        self.attracted_tours = {}
+        self.modes: List[str] = []
+        self.generated_tours: Dict[str, numpy.array] = {}
+        self.attracted_tours: Dict[str, numpy.array] = {}
 
     @property
     def zone_numbers(self):
@@ -102,27 +101,22 @@ class TourPurpose(Purpose):
         Data used for all demand calculations
     resultdata : ResultData
         Writer object for result directory
-    is_agent_model : bool (optional)
-        Whether the model is used for agent-based simulation
     """
 
-    def __init__(self, specification, zone_data, resultdata, is_agent_model):
+    def __init__(self, specification, zone_data, resultdata):
         Purpose.__init__(self, specification, zone_data, resultdata)
         if self.orig == "source":
             self.gen_model = generation.NonHomeGeneration(self, resultdata)
         else:
             self.gen_model = generation.GenerationModel(self, resultdata)
         if self.name == "sop":
-            self.model = logit.OriginModel(
-                zone_data, self, resultdata, is_agent_model)
+            self.model: Union[logit.OriginModel, logit.DestModeModel, logit.ModeDestModel] = logit.OriginModel(zone_data, self, resultdata)
         elif self.name == "so":
-            self.model = logit.DestModeModel(
-                zone_data, self, resultdata, is_agent_model)
+            self.model = logit.DestModeModel(zone_data, self, resultdata)
         else:
-            self.model = logit.ModeDestModel(
-                zone_data, self, resultdata, is_agent_model)
+            self.model = logit.ModeDestModel(zone_data, self, resultdata)
             self.accessibility_model = logit.AccessibilityModel(
-                zone_data, self, resultdata, is_agent_model)
+                zone_data, self, resultdata)
         self.modes = list(self.model.mode_choice_param)
         self.histograms = {mode: TourLengthHistogram() for mode in self.modes}
         self.aggregates = {mode: MatrixAggregator(zone_data.zone_numbers)
@@ -225,15 +219,12 @@ class SecDestPurpose(Purpose):
         Data used for all demand calculations
     resultdata : ResultData
         Writer object to result directory
-    is_agent_model : bool (optional)
-        Whether the model is used for agent-based simulation
     """
 
-    def __init__(self, specification, zone_data, resultdata, is_agent_model):
+    def __init__(self, specification, zone_data, resultdata):
         Purpose.__init__(self, specification, zone_data, resultdata)
         self.gen_model = generation.SecDestGeneration(self, resultdata)
-        self.model = logit.SecDestModel(
-            zone_data, self, resultdata, is_agent_model)
+        self.model = logit.SecDestModel(zone_data, self, resultdata)
         self.modes = self.model.dest_choice_param.keys()
 
     def init_sums(self):

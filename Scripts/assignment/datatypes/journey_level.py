@@ -1,8 +1,13 @@
+from __future__ import annotations
+from typing import Any, Dict
 import parameters.assignment as param
 
 
 class JourneyLevel:
-    def __init__(self, headway_attribute, boarded, count_zone_boardings=False):
+    def __init__(self, 
+                 headway_attribute: str, 
+                 boarded: bool, 
+                 count_zone_boardings: bool = False):
         # Definition of transition rules: all modes are allowed
         transitions = []
         for mode in param.transit_modes:
@@ -10,7 +15,7 @@ class JourneyLevel:
                 "mode": mode,
                 "next_journey_level": 1
             })
-        self.spec = {
+        self.spec: Dict[str, Any] = {
             "transition_rules": transitions,
             "boarding_time": None,
             "boarding_cost": dict.fromkeys([

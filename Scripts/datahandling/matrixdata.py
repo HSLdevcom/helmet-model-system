@@ -1,55 +1,66 @@
+from __future__ import annotations
 import os
-import openmatrix as omx
-import numpy
+from typing import TYPE_CHECKING, Optional
+import openmatrix as omx # type: ignore
+import numpy # type: ignore
 import pandas
 from contextlib import contextmanager
+if TYPE_CHECKING:
+    from datahandling.zonedata import BaseZoneData
 
 import utils.log as log
 from utils.read_csv_file import read_csv_file
 from utils.zone_interval import zone_interval
 import parameters.assignment as param
+import parameters.zone as zone_param
 
 
 class MatrixData:
-    def __init__(self, path):
+    def __init__(self, path: str):
         self.path = path
         if not os.path.exists(self.path):
             os.makedirs(self.path)
     
     @contextmanager
-    def open(self, mtx_type, time_period, zone_numbers=None, m='r'):
+    def open(self, 
+             mtx_type: str, 
+             time_period: str, 
+             zone_numbers: Optional[numpy.ndarray] = None, 
+             m: str = 'r'):
         file_name = os.path.join(self.path, mtx_type+'_'+time_period+".omx")
         mtxfile = MatrixFile(omx.open_file(file_name, m), zone_numbers)
         yield mtxfile
         mtxfile.close()
 
-    def get_external(self, transport_mode):
+    def get_external(self, transport_mode: str):
         return read_csv_file(self.path, "external_"+transport_mode+".txt")
 
-    def peripheral_transit_cost(self, zonedata):
+    def peripheral_transit_cost(self, zonedata: BaseZoneData):
         filename = "transit_cost_peripheral.txt"
         try:
             aggr_mtx = read_csv_file(self.path, filename)
-            log.info("Using aggregated transit cost data {}".format(filename))
-            mtx = pandas.DataFrame(
-                0, zonedata.zone_numbers[zonedata.first_peripheral_zone:],
-                zonedata.zone_numbers)
-            for periph_municipality in aggr_mtx.index:
-                i = zone_interval("municipalities", periph_municipality)
-                for municipality in aggr_mtx.columns:
-                    j = zone_interval("municipalities", municipality)
-                    mtx.loc[i, j] = aggr_mtx.loc[periph_municipality, municipality]
-            return mtx.values
         except NameError:
             log.warn("Aggregated data {} missing".format(filename))
             log.info("Using disaggregated transit cost data cost_peripheral.omx")
             with self.open("cost", "peripheral") as peripheral_mtx:
                 peripheral_cost = numpy.array(peripheral_mtx._file["transit"])
             return peripheral_cost
+        else:
+            log.info("Using aggregated transit cost data {}".format(filename))
+            first_zone = zonedata.all_zone_numbers.searchsorted(
+                zone_param.areas["peripheral"][0])
+            mtx = pandas.DataFrame(
+                0, zonedata.zone_numbers[first_zone:], zonedata.zone_numbers)
+            for periph_municipality in aggr_mtx.index:
+                i = zone_interval("municipalities", periph_municipality)
+                for municipality in aggr_mtx.columns:
+                    j = zone_interval("municipalities", municipality)
+                    mtx.loc[i, j] = aggr_mtx.loc[periph_municipality, municipality]
+            return mtx.values
 
 
 class MatrixFile:
-    def __init__(self, omx_file, zone_numbers):
+    def __init__(self, omx_file: omx.File, zone_numbers: numpy.ndarray):
         self._file = omx_file
         self.missing_zones = []
         if zone_numbers is None:
@@ -92,7 +103,7 @@ class MatrixFile:
     def close(self):
         self._file.close()
     
-    def __getitem__(self, mode):
+    def __getitem__(self, mode: str):
         mtx = numpy.array(self._file[mode])
         nr_zones = len(self.zone_numbers)
         dim = (nr_zones, nr_zones)

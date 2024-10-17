@@ -1,5 +1,6 @@
+from __future__ import annotations
+from typing import Any, Dict, Union
 import parameters.assignment as param
-from assignment.datatypes.path_analysis import PathAnalysis
 from assignment.datatypes.journey_level import JourneyLevel
 
 
@@ -21,35 +22,28 @@ class TransitSpecification:
             Extra attribute name (@transit_work_vol_aht/...)
     headway_attribute : str
         Line attribute where headway is stored
-    demand_mtx_id : str
-        Emme matrix id for demand matrix
-    time_mtx_id : str
-        Emme matrix id for time matrix
-    dist_mtx_id : str
-        Emme matrix id for distance matrix
-    trip_part : dict
+    emme_matrices : dict
         key : str
-            Impedance type (inv_time/aux_time/num_board/...)
-        value : dict
-            id : str
-                Emme matrix id
-            description : dict
-                Matrix description
+            Impedance type (time/cost/dist/...)
+        value : str
+            Emme matrix id
     count_zone_boardings : bool (optional)
         Whether assignment is performed only to count fare zone boardings
     """
-    def __init__(self, segment_results, headway_attribute,
-                 demand_mtx_id, time_mtx_id, dist_mtx_id, trip_part,
-                 count_zone_boardings=False):
+    def __init__(self, 
+                 segment_results: Dict[str,str], 
+                 headway_attribute: str,
+                 emme_matrices: Dict[str, Union[str, Dict[str, str]]], 
+                 count_zone_boardings: bool = False):
         no_penalty = dict.fromkeys(["at_nodes", "on_lines", "on_segments"])
         no_penalty["global"] = {
             "penalty": 0, 
             "perception_factor": 1,
         }
-        self.transit_spec = {
+        self.transit_spec: Dict[str, Any] = {
             "type": "EXTENDED_TRANSIT_ASSIGNMENT",
             "modes": param.transit_assignment_modes,
-            "demand": demand_mtx_id,
+            "demand": emme_matrices["demand"],
             "waiting_time": {
                 "headway_fraction": param.standard_headway_fraction,
                 "effective_headways": headway_attribute,
@@ -88,38 +82,29 @@ class TransitSpecification:
             "type": "EXTENDED_TRANSIT_NETWORK_RESULTS",
             "on_segments": segment_results,
             }
+        subset = "by_mode_subset"
+        self.transit_result_spec = {
+            "type": "EXTENDED_TRANSIT_MATRIX_RESULTS",
+            subset: {
+                "modes": param.transit_modes,
+                "distance": emme_matrices["dist"],
+            },
+        }
         if count_zone_boardings:
             jlevel1 = JourneyLevel(
                 headway_attribute, boarded=False, count_zone_boardings=True)
             jlevel2 = JourneyLevel(
                 headway_attribute, boarded=True, count_zone_boardings=True)
-            mtx_results_spec = {
-                "type": "EXTENDED_TRANSIT_MATRIX_RESULTS",
-                "by_mode_subset": {
-                    "modes": param.transit_modes,
-                    "distance": dist_mtx_id,
-                    "actual_total_boarding_costs": trip_part["board_cost"]["id"],
-                },
-            }
+            bcost = "actual_total_boarding_costs"
+            self.transit_result_spec[subset][bcost] = emme_matrices[bcost]
         else:
             jlevel1 = JourneyLevel(headway_attribute, boarded=False)
             jlevel2 = JourneyLevel(headway_attribute, boarded=True)
-            mtx_results_spec = {
-                "type": "EXTENDED_TRANSIT_MATRIX_RESULTS",
-                "total_impedance": time_mtx_id,
-                "total_travel_time": trip_part["total_time"]["id"],
-                "actual_first_waiting_times": trip_part["fw_time"]["id"],
-                "actual_total_waiting_times": trip_part["tw_time"]["id"],
-                "by_mode_subset": {
-                    "modes": param.transit_assignment_modes,
-                    "distance": dist_mtx_id,
-                    "avg_boardings": trip_part["num_board"]["id"],
-                    "actual_total_boarding_times": trip_part["board_time"]["id"],
-                    "actual_in_vehicle_times": trip_part["inv_time"]["id"],
-                    "actual_aux_transit_times": trip_part["aux_time"]["id"],
-                },
-            }
-
+            self.transit_result_spec["total_impedance"] = emme_matrices["time"]
+            (self.transit_result_spec[subset]
+                                     ["modes"]) = param.transit_assignment_modes
+            for trip_part, matrix_id in emme_matrices["total"].items():
+                self.transit_result_spec[trip_part] = matrix_id
+            for trip_part, matrix_id in emme_matrices[subset].items():
+                self.transit_result_spec[subset][trip_part] = matrix_id
         self.transit_spec["journey_levels"] = [jlevel1.spec, jlevel2.spec]
-        self.transit_result_spec = mtx_results_spec
-

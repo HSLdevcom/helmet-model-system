@@ -1,5 +1,10 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
 import pandas
-import numpy
+import numpy # type: ignore
+if TYPE_CHECKING:
+    from datahandling.matrixdata import MatrixData
+    from datahandling.zonedata import ZoneData
 
 from datatypes.demand import Demand
 from datatypes.purpose import Purpose
@@ -19,7 +24,10 @@ class ExternalModel:
         Zone numbers from assignment model
     """
 
-    def __init__(self, base_demand, zone_data, zone_numbers):
+    def __init__(self, 
+                 base_demand: MatrixData, 
+                 zone_data: ZoneData, 
+                 zone_numbers: numpy.array):
         self.base_demand = base_demand
         self.all_zone_numbers = zone_numbers
         self.growth = zone_data.externalgrowth
@@ -31,7 +39,7 @@ class ExternalModel:
         }
         self.purpose = Purpose(spec, zone_data)
 
-    def calc_external(self, mode, internal_trips):
+    def calc_external(self, mode: str, internal_trips: pandas.Series) -> Demand:
         """Calculate external traffic.
 
         Parameters

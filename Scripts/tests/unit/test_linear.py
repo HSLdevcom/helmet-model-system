@@ -9,7 +9,7 @@ import os
 
 TEST_DATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "test_data")
 INTERNAL_ZONES = [102, 103, 244, 1063, 1531, 2703, 2741, 6272, 6291, 19071]
-EXTERNAL_ZONES = [31102, 31500]
+EXTERNAL_ZONES = [34102, 34500]
 
 
 class LinearModelTest(unittest.TestCase):
@@ -19,7 +19,7 @@ class LinearModelTest(unittest.TestCase):
             pass
         pur = Purpose()
         zi = numpy.array(INTERNAL_ZONES + EXTERNAL_ZONES)
-        zd = BaseZoneData(os.path.join(TEST_DATA_PATH, "Base_input_data", "2018_zonedata"), zi)
+        zd = BaseZoneData(os.path.join(TEST_DATA_PATH, "Base_input_data", "2023_zonedata"), zi)
         zd["time_ratio"] = pandas.Series(
             [0.9, 1.5, 1.3, 1.9, 2.0, 3.1, 1.3, 1.9, 2.0, 3.1, 0.0, 0.0],
             zi)
