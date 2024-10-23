@@ -270,7 +270,7 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
                     revenue = calc_revenue(demand, cost)
                     if transport_class in param.transit_classes:
                         revenues_transit += revenue
-                        results["transit_revenue"] += vol_fac * revenues_transit
+                        results["transit_revenue"] += vol_fac * revenue
                     if transport_class in param.assignment_modes:
                         revenues_car += revenue
                         results["car_revenue"] += vol_fac * revenues_car
