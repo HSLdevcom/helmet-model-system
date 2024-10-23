@@ -273,7 +273,7 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
                         results["transit_revenue"] += vol_fac * revenue
                     if transport_class in param.assignment_modes:
                         revenues_car += revenue
-                        results["car_revenue"] += vol_fac * revenues_car
+                        results["car_revenue"] += vol_fac * revenue
         ws = workbook["Tuottajahyodyt"]
         rows = CELL_INDICES["transit_revenue"]["rows"][year]
         ws[cols[timeperiod]+rows] = revenues_transit.sum()
