@@ -60,7 +60,10 @@ def validate(network, fares=None):
         modesets.append({network.mode(m) for m in modes})
         intervals += param.official_node_numbers[modes]
     unofficial_nodes = set()
+    nr_links = 0
+    nr_zero_gradients = 0
     for link in network.links():
+        nr_links += 1
         if not link.modes:
             msg = "No modes defined for link {}. At minimum mode h and one more mode needs to be defined for the simulation to work".format(link.id)
             log.error(msg)
@@ -122,6 +125,19 @@ def validate(network, fares=None):
             elif not link.modes <= modesets[i // 2]:
                 # If link has unallowed modes
                 unofficial_nodes.add(node.id)
+        try:
+            if link['@kaltevuus'] == 0:
+                nr_zero_gradients += 1
+        except KeyError:
+            raise ValueError("Gradients not defined. Use an extra_links file with @kaltevuus,\
+ or create extra attribute @kaltevuus with zeros.\
+ @kaltevuus is used to model the effect of hills on bicycle route choice,\
+ setting @kaltevuus to 0 on links will ignore hills.")
+    zero_gradient_ratio = (nr_zero_gradients/nr_links)*100
+    if zero_gradient_ratio > 20:
+        msg = "{} % of links have a gradient of 0.".format(zero_gradient_ratio)
+        log.warn(msg)
+
     if unofficial_nodes:
         log.warn(
             "Node number(s) {} not consistent with official HSL network".format(

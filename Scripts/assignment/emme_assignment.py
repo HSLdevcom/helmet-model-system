@@ -109,6 +109,7 @@ class EmmeAssignmentModel(AssignmentModel):
                 pass
             self.emme_project.modeller.emmebank.create_function(
                 idx, param.volume_delay_funcs[idx])
+        self.emme_project.create_extra_function_parameters(el1="@kaltevuus")
 
     def init_assign(self, 
                     demand: Dict[str,List[numpy.ndarray]]):
