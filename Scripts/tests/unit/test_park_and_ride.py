@@ -20,7 +20,7 @@ class ParkAndRideTest(unittest.TestCase):
         zi_w_liipy = numpy.array(METROPOLITAN_ZONES + PERIPHERAL_ZONES + EXTERNAL_ZONES + PR_ZONES) #zone indices with park and ride facilities
         
         zone_data = ZoneData(
-            os.path.join(TEST_DATA_PATH, "Base_input_data", "2018_zonedata"), zi_w_liipy)
+            os.path.join(TEST_DATA_PATH, "Base_input_data", "2023_zonedata"), zi_w_liipy)
     
         dtm = DepartureTimeModel(len(zi_w_liipy)) #TODO: This will cause problems, make sure the zones include external and pnr zones
         mtx = numpy.arange(len(zi)*len(zi))
