@@ -83,8 +83,9 @@ class ZoneData:
         self.nr_zones = len(self.zone_numbers)
         self.nr_zones_hs15 = len(self.zone_numbers_hs15)
         self["population_density"] = pop / landdata["builtar"]
-        wp = workdata["total"]
+        wp = workdata.pop("total")
         self["workplaces"] = wp
+        ShareChecker({})["Workplace shares"] = workdata.sum(axis="columns")
         self["service"] = workdata["sh_serv"] * wp
         self["shops"] = workdata["sh_shop"] * wp
         self["logistics"] = workdata["sh_logi"] * wp

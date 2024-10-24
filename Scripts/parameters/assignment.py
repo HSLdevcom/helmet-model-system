@@ -136,6 +136,8 @@ volume_delay_funcs = {
     "ft6": "us1",
     ## Escape function, speed 40 km/h
     "ft7": "length/(40/60)",
+    ## Turn penalty function for bikes
+    "fp1": "0",
 }
 # Code derived from three-digit link type xyz, where x is the bus lane code,
 # 2 means that bus lane is active during aht and iht periods, etc.

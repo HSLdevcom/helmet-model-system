@@ -96,7 +96,7 @@ class ModelSystem:
         self.cdm = CarDensityModel(
             self.zdata_base, self.zdata_forecast, bounds, self.resultdata)
         self.mode_share: List[Dict[str,Any]] = []
-        self.convergence = pandas.DataFrame()
+        self.convergence = []
         self.trucks = self.fm.calc_freight_traffic("truck")
         self.trailer_trucks = self.fm.calc_freight_traffic("trailer_truck")
 
@@ -365,8 +365,8 @@ class ModelSystem:
         gap = self.dtm.init_demand()
         log.info("Demand model convergence in iteration {} is {:1.5f}".format(
             iteration, gap["rel_gap"]))
-        self.convergence = self.convergence.append(gap, ignore_index=True)
-        self.resultdata._df_buffer["demand_convergence.txt"] = self.convergence
+        self.convergence.append(gap)
+        self.resultdata._df_buffer["demand_convergence.txt"] = pandas.DataFrame(self.convergence)
         self.resultdata.flush()
         return impedance
 
@@ -436,7 +436,7 @@ class ModelSystem:
             "result_summary")
 
     def _sum_trips_per_zone(self, mode, include_dests=True):
-        int_demand = pandas.Series(0, self.zdata_base.zone_numbers)
+        int_demand = pandas.Series(0.0, self.zdata_base.zone_numbers)
         for purpose in self.dm.tour_purposes:
             if mode in purpose.modes and purpose.dest != "source":
                 bounds = (next(iter(purpose.sources)).bounds
