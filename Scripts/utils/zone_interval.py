@@ -171,7 +171,7 @@ class MatrixAggregator(AreaAggregator):
         self.init_matrix()
 
     def init_matrix(self):
-        self.matrix = pandas.DataFrame(0, self.keys, self.keys)
+        self.matrix = pandas.DataFrame(0.0, self.keys, self.keys)
 
     def add(self, orig, dest):
         """Add individual tour to aggregated matrix.
@@ -183,7 +183,7 @@ class MatrixAggregator(AreaAggregator):
         dest : int
             Tour destination zone number
         """
-        self.matrix.at[self.mapping[orig], self.mapping[dest]] += 1
+        self.matrix.at[self.mapping[orig], self.mapping[dest]] += 1.0
 
     def aggregate(self, matrix):
         """Aggregate (tour demand) matrix to larger areas.
@@ -194,7 +194,7 @@ class MatrixAggregator(AreaAggregator):
             Disaggregated matrix with zone indices and columns
         """
         self.init_matrix()
-        tmp_mtx = pandas.DataFrame(0, self.keys, matrix.columns)
+        tmp_mtx = pandas.DataFrame(0.0, self.keys, matrix.columns)
         for area in self:
             i = self._get_slice(area, matrix.index)
             tmp_mtx.loc[area] = matrix.loc[i].sum(0).values
@@ -210,7 +210,7 @@ class ArrayAggregator(AreaAggregator):
         self.init_array()
 
     def init_array(self):
-        self.array = pandas.Series(0, self.keys)
+        self.array = pandas.Series(0.0, self.keys)
 
     def add(self, zone):
         """Add individual tour to aggregated array.

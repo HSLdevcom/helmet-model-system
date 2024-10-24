@@ -26,7 +26,7 @@ class GenerationModel:
 
     def init_tours(self):
         """Initialize `tours` vector to 0."""
-        self.tours = pandas.Series(0, self.purpose.zone_numbers)
+        self.tours = pandas.Series(0.0, self.purpose.zone_numbers)
 
     def add_tours(self):
         """Generate and add (peripheral) tours to zone vector."""

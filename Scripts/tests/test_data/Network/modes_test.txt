@@ -1,4 +1,7 @@
 c Modeller - Mode Transaction
+c Date: 2024-10-04 12:59:17
+c Project:        Testi_tietokanta                                            
+c Scenario 100:   H5_testiverkko
 t modes
 c id description mode_type colour cost_time_coeff cost_distance_coeff energy_time_coeff energy_distance_coeff speed_factor
 a h 'Paamuoto' 1   1   0.00   0.00   0.00   0.00

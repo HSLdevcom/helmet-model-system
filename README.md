@@ -7,30 +7,28 @@ This repository contains python files for Helmet 4.1 Model System. Source codes 
 ## Usage
 
 You can run HELMET 5 from the command line or by using [helmet-ui](https://github.com/HSLdevcom/helmet-ui).
-In this chapter, we will guide you how to install HELMET 4.1 to work with Inro EMME software from the command line.
-The user is not expected to install any new software apart from [helmet-model-system](https://github.com/HSLdevcom/helmet-model-system) and EMME.
+In this chapter, we will guide you how to install HELMET 4.1 to work with Bentley OpenPaths EMME software from the command line.
+The user is not expected to install any new software apart from [helmet-model-system](https://github.com/HSLdevcom/helmet-model-system) and OpenPaths EMME.
 
-If you do not have an Emme license or you wish to develop HELMET 4.1 further, please scroll down to [Development](#development) chapter.
+If you do not have an Bentley OpenPaths license or you wish to develop HELMET 4.1 further, please scroll down to [Development](#development) chapter.
 
 ### Setup
 
 From this repository, copy the contents of the [Scripts](Scripts) folder to your computer.
 
-From this repository, copy the contents of the [Scripts](Scripts) folder to your computer.
-
-In production, we are using Python 3.7 which is supported by and installed together with INRO Emme software.
-We are using those Python dependencies that come with Inro EMME installation.
+In production, we are using Python 3.11 which is supported by and installed together with Bentley OpenPaths EMME software.
+We are using those Python dependencies that come with Bentley OpenPaths EMME installation.
 To get access to these dependencies, you need to add them to your local PATH variable:
 
 1. Open Control Panel.
 2. Go to User Accounts, then click again User Accounts, then select from the left hand menu "Change my environment variables".
 3. From the top box ("User variables for USERNAME"), find and select "Path" variable, and click "Edit...".
 4. Click "New" and write `%EMMEPATH%\Programs`.
-5. Click "New" and write `%EMMEPATH%\Python37`.
-6. Click "New" and write `%EMMEPATH%\Python37\Scripts`.
+5. Click "New" and write `%EMMEPATH%\Python311`.
+6. Click "New" and write `%EMMEPATH%\Python311\Scripts`.
 7. Click OK in the "Edit environment variable" window, and then click OK again in the "Environment Variables" window.
 
-Emme assignment can be tested without further configuration.
+EMME assignment can be tested without further configuration.
 Open command line to your local Scripts folder and write:
 
 ```
@@ -39,12 +37,12 @@ python -m tests.emme_only.test_assignment
 
 This will create a small EMME test network and run test assignments on it.
 
-You can also initialize a proper Emme project (if you do not want to use the test network):
+You can also initialize a proper EMME project (if you do not want to use the test network):
 
-1. Open Emme desktop application.
+1. Open OpenPaths EMME desktop application.
 2. Create new project in which the path should match your project name and path.
-3. Follow [external instructions](https://hsldevcom.github.io/helmet-ui/sijopankki.html) to configure the details of the Emme project.
-   Now, your working folder is filled with Emme project specific folders and files.
+3. Follow [external instructions](https://hsldevcom.github.io/helmet-ui/sijopankki.html) to configure the details of the EMME project.
+   Now, your working folder is filled with EMME project specific folders and files.
 
 ### Running
 
@@ -61,46 +59,46 @@ Run `python helmet.py --help` to see parameter syntax.
 
 ## Development
 
-If you do not have INRO Emme license or you wish to develop HELMET 4.1 source code, you need to set up a development environment. 
+If you do not have Bentley OpenPaths license or you wish to develop HELMET 4.1 source code, you need to set up a development environment. 
 Although not covered here, installing [Git](https://git-scm.com/downloads) is highly recommended!
 
 ### Environment and dependencies
 
-We are using Python 3.7 because it is supported by INRO Emme 4.5 software.
+We are using Python 3.11 because it is supported by Bentley OpenPaths EMME 24 software.
 
-1. Install Python 3.7.
-2. Add the path were you installed python (e.g., `C:\Python37`) and `C:\Python37\Scripts`
+1. Install Python 3.11.
+2. Add the path were you installed python (e.g., `C:\Python311`) and `C:\Python311\Scripts`
    to your local PATH variable in "Environment Variables".
 3. Open a new Command Prompt and type `python --version`.
-   You should get `Python 3.7.9` or some other Python 3.7 version.
+   You should get `Python 3.11.9` or some other Python 3.11 version.
 
 `pip` is the recommended package installer for Python.
-The normal Python installation routine installs `pip` to `C:\Python37\Scripts`.
+The normal Python installation routine installs `pip` to `C:\Python311\Scripts`.
 Type `pip --version` to Command Prompt to check if `pip` is installed and in your PATH.
-The command should return `pip 20.1.1 from c:\python38\lib\site-packages\pip (python 3.7)` (`pip` version may vary).
+The command should return `pip 24.1 from c:\python311\lib\site-packages\pip (python 3.11)` (`pip` version may vary).
 
-We are using `pipenv` to import the same open source libraries which INRO Emme software uses.
+We are using `pipenv` to import the same open source libraries which Bentley OpenPaths EMME software uses.
 `pipenv` isolates our environment from the other global Python modules and makes sure we don't break anything with our setup.
 Optional introduction to `pipenv` can be found from [Python docs](https://docs.python-guide.org/dev/virtualenvs/)
 or [Jonathan Cutrer's blog](https://jcutrer.com/python/pipenv-pipfile).
 
 1. Open Command Prompt.
 2. Install `pipenv` by running `python -m pip install --user pipenv`.
-   `pipenv` should now be installed in `%APPDATA%\Python\Python37\Scripts`
-   (e.g. `C:\Users\USERNAME\AppData\Roaming\Python\Python37\Scripts`).
-3. Add `%APPDATA%\Python\Python37\Scripts` to your local PATH variable.
+   `pipenv` should now be installed in `%APPDATA%\Python\Python311\Scripts`
+   (e.g. `C:\Users\USERNAME\AppData\Roaming\Python\Python311\Scripts`).
+3. Add `%APPDATA%\Python\Python311\Scripts` to your local PATH variable.
     1. Open Control Panel.
     2. Go to User Accounts, then click again User Accounts, then select from the left hand menu "Change my environment variables".
     3. From the top box ("User variables for USERNAME"), find and select "Path" variable, and click "Edit...".
-    4. Click "New" and write `%APPDATA%\Python\Python37\Scripts`.
+    4. Click "New" and write `%APPDATA%\Python\Python311\Scripts`.
     5. Click OK in the "Edit environment variable" window, and then click OK again in the "Environment Variables" window.
 4. Close and reopen Command Prompt and check that `pipenv` is recognised by typing `pipenv --version`.
-   It should return `pipenv, version 2020.11.15` (`pipenv` version may vary).
+   It should return `pipenv, version 2024.0.1` (`pipenv` version may vary).
 5. Download [helmet-model-system](https://github.com/HSLdevcom/helmet-model-system) repository
    and open a Command Prompt to its "Scripts" folder.
 6. Install dependencies from `Pipfile`:
-    - First setup: `pipenv --python 3.7 install --dev`
-    - Additional syncing if new packages are added: `pipenv --python 3.7 sync --dev`
+    - First setup: `pipenv --python 3.11 install --dev`
+    - Additional syncing if new packages are added: `pipenv --python 3.11 sync --dev`
 7. Depending on your operating system, rename either `.env-win` (Windows) or `.env-nix` (Linux) to `.env`.
    In Windows, you can do this in Command Propmpt by typing `copy .env-win .env`.
 
@@ -141,7 +139,7 @@ Refer to this manual: [https://hsldevcom.github.io/helmet-docs/kaytto-ohje.html#
 	
 #### Run your first demo model run
 1. In case your scenario name is not `test`, copy the `helmet-model-system\tests\test_data\Results\test\Matrices` folder to `[your-result-folder]\[your-scenario-name]\Matrices`.
-2. Select scenario with checkbox and click `Käynnistä (1) skenaariota`. When running the first model run again and again, just do #2. When you create more scenarios, always copy matrices (#1) first to a new location. (This is a demo model thing that needs to be done because we are independent of Emme.)
+2. Select scenario with checkbox and click `Käynnistä (1) skenaariota`. When running the first model run again and again, just do #2. When you create more scenarios, always copy matrices (#1) first to a new location. (This is a demo model thing that needs to be done because we are independent of EMME.)
 	
 #### Running mock assignment in command line
 Alternatively, you can run the mock assignment with the help of command line
@@ -159,7 +157,11 @@ Alternatively, you can run the mock assignment with the help of command line
 
 The following extensions are recommended when developing with Visual Studio Code:
 
-- [Python](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
+- [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
+- [Python Debugger](https://marketplace.visualstudio.com/items?itemName=ms-python.debugpy)
+
+Alternatively, these test views seem to work with any version of the Python and Python Debugger extensions:
+
 - [Test Explorer UI](https://marketplace.visualstudio.com/items?itemName=hbenl.vscode-test-explorer)
 - [Python Test Explorer for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=LittleFoxTeam.vscode-python-test-adapter)
 
@@ -172,7 +174,7 @@ A couple of tips to get it all working:
 
 ### OMX 
 
-Emme supports OpenMatrix library for exporting matrices. 
+OpenPaths EMME supports OpenMatrix library for exporting matrices. 
 
 - More info here: https://github.com/osPlanning/omx/wiki/EMME 
 - Python source codes: https://github.com/osPlanning/omx-python

@@ -301,6 +301,9 @@ class AssignmentPeriod(Period):
             for modes in param.transit_delay_funcs}
         main_mode = network.mode(param.main_mode)
         car_mode = network.mode(param.assignment_modes["car_work"])
+        for turn in network.turns():
+            if turn.penalty_func == 1:
+                turn.penalty_func = 0
         for link in network.links():
             # Car volume delay function definition
             linktype = link.type % 100
@@ -372,6 +375,9 @@ class AssignmentPeriod(Period):
         network = self.emme_scenario.get_network()
         main_mode = network.mode(param.main_mode)
         bike_mode = network.mode(param.bike_mode)
+        for turn in network.turns():
+            if turn.penalty_func == 0:
+                turn.penalty_func = 1
         for link in network.links():
             linktype = link.type % 100
             if linktype in param.roadclasses:

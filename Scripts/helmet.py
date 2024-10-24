@@ -20,7 +20,7 @@ def main(args):
     else:
         raise ArgumentTypeError(
             "Iteration number {} not valid".format(args.iterations))
-    base_zonedata_path: str = os.path.join(args.baseline_data_path, "2018_zonedata")
+    base_zonedata_path: str = os.path.join(args.baseline_data_path, "2023_zonedata")
     base_matrices_path: str = os.path.join(args.baseline_data_path, "base_matrices")
     forecast_zonedata_path: str = args.forecast_data_path
     results_path: str = args.results_path
@@ -117,7 +117,7 @@ def main(args):
             log.error(
                 "Fatal error occured, simulation aborted.", extra=log_extra)
             break
-        gap = model.convergence.iloc[-1, :] # Last iteration convergence
+        gap = model.convergence[-1] # Last iteration convergence
         convergence_criteria_fulfilled = gap["max_gap"] < args.max_gap or gap["rel_gap"] < args.rel_gap
         if i == iterations:
             log_extra["status"]['state'] = 'finished'

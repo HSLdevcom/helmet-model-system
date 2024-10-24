@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import numpy
-import pandas
 import unittest
 from datatypes.person import Person
 
@@ -24,6 +23,7 @@ class PersonTest(unittest.TestCase):
         class Purpose:
             zone_data = ZoneData()
             gen_model = GenMod()
+            modes = ["car", "transit"]
             def __init__(self, name):
                 self.name = name
         class Zone:

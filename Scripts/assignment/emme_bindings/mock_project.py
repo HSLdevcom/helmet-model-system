@@ -530,6 +530,7 @@ class Network:
         self._centroids = {}
         self._regular_nodes = {}
         self._links = {}
+        self._turns = {}
         self._vehicles = {}
         self._lines = {}
         self._objects = {
@@ -537,12 +538,16 @@ class Network:
             "LINK": self.links,
             "TRANSIT_LINE": self.transit_lines,
             "TRANSIT_SEGMENT": self.transit_segments,
+            "TURN": self.turns
         }
         self._extra_attr = {attr_type: {} for attr_type in self._objects}
 
     def mode(self, idx: int) -> 'Mode':
         if idx in self._modes:
             return self._modes[idx]
+    
+    def turns(self) -> Iterable[Turn]:
+        return self._turns
 
     def modes(self) -> Iterable:
         return iter(self._modes.values())
@@ -736,6 +741,40 @@ class Link(NetworkObject):
 
     def segments(self) -> Iterable:
         return iter(self._segments)
+
+class Turn(NetworkObject):
+    def __init__(self, 
+                 network: Network, 
+                 at_node_id: int, 
+                 from_node_id: int,
+                 to_node_id: int,
+                 penalty_func: int
+                ):
+        NetworkObject.__init__(self, network, network._extra_attr["TURN"])
+        self.from_link = Network.link(from_node_id, at_node_id)
+        self.to_link = Network.link(at_node_id, to_node_id)
+        self.penalty_func = penalty_func
+        
+    def __str__(self):
+        self.id
+
+    @property
+    def id(self) -> str:
+        return "{}-{}-{}".format(self.from_link.i_node.id,
+                              self.from_link.j_node.id,
+                              self.to_link.j_node.id)
+    
+    @property
+    def i_node(self) -> Node:
+        return self.from_link.i_node
+    
+    @property
+    def j_node(self) -> Node:
+        return self.from_link.j_node
+    
+    @property
+    def k_node(self) -> Node:
+        return self.to_link.j_node
 
 
 class TransitLine(NetworkObject):

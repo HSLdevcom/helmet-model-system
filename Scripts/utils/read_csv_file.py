@@ -1,9 +1,7 @@
-from decimal import DivisionByZero
-from itertools import groupby
 import os
 from typing import Optional
 import pandas
-import numpy # type: ignore
+import numpy
 
 import utils.log as log
 
@@ -49,9 +47,11 @@ def read_csv_file(data_dir: str,
         raise NameError(msg)
     header: Optional[str] = None if squeeze else "infer"
     data: pandas.DataFrame = pandas.read_csv(
-        path, delim_whitespace=True, squeeze=squeeze, keep_default_na=False,
+        path, sep='\s+', keep_default_na=False,
         na_values="", comment='#', header=header)
-    if data.index.is_numeric() and data.index.hasnans: # type: ignore
+    if squeeze:
+        data = data.squeeze()
+    if pandas.api.types.is_numeric_dtype(data.index) and data.index.hasnans:
         msg = "Row with only spaces or tabs in file {}".format(path)
         log.error(msg)
         raise IndexError(msg)
@@ -68,17 +68,17 @@ def read_csv_file(data_dir: str,
     if data.index.has_duplicates:
         raise IndexError("Index in file {} has duplicates".format(path))
     if zone_numbers is not None:
-        if not data.index.is_monotonic:
+        if not data.index.is_monotonic_increasing:
             data.sort_index(inplace=True)
             log.warn("File {} is not sorted in ascending order".format(path))
         map_path = os.path.join(data_dir, "zone_mapping.txt")
         if os.path.exists(map_path):
             log_path = map_path
-            mapping = pandas.read_csv(map_path, delim_whitespace=True).squeeze()
+            mapping = pandas.read_csv(map_path, sep='\s+').squeeze()
             if "total" in data.columns:
                 # If file contains total and shares of total,
                 # shares are aggregated as averages with total as weight
-                data = data.groupby(mapping).agg(avg, weights=data["total"])
+                data = data.groupby(mapping).agg(lambda ser: avg(ser, weights=data["total"]))
             elif "detach" in data.columns:
                 funcs = dict.fromkeys(data.columns, "sum")
                 funcs["detach"] = "mean"

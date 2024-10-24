@@ -1,9 +1,11 @@
 from __future__ import annotations
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 import numpy # type: ignore
+from datahandling.zonedata import ZoneData
 from datatypes.demand import Demand
 from datatypes.tour import Tour
 
+from transform.park_and_ride_transformer import ParkAndRideTransformer
 import utils.log as log
 import parameters.departure_time as param
 from parameters.assignment import transport_classes, assignment_classes
@@ -66,6 +68,32 @@ class DepartureTimeModel:
 
         return {"rel_gap": relative_gap, "max_gap": max_gap}
 
+    def split_park_and_ride(self, demand: Union[Demand, Tour], park_and_ride_impedance:Dict[str, numpy.ndarray], park_and_ride_facility_map: Dict[int,int], zone_data: ZoneData):
+        log.info("Splitting park and ride demand to cars and public transport for {} facilities".format(len(park_and_ride_facility_map)))
+        position2 = cast(Tuple[int,int], demand.position) #type checker hint
+        share: Dict[str, Any] = param.demand_share[demand.purpose.name][demand.mode]
+        used_facility = park_and_ride_impedance["used_facility"]
+
+        all_zones_len = len(zone_data.all_zone_numbers)
+        car_matrix = numpy.zeros((all_zones_len,all_zones_len))
+        transit_matrix = numpy.zeros((all_zones_len,all_zones_len))
+
+        #move car journeys to park and ride facilities
+        for i in range(zone_data.nr_zones_hs15): #TODO: handle the zone spaces correctly
+            for j in range(zone_data.nr_zones_hs15):
+                target_cell = park_and_ride_facility_map[used_facility[i, j]]
+                car_matrix[i, target_cell] += demand.matrix[i, j] #for cars Park and ride is target only
+                transit_matrix[target_cell, j] += demand.matrix[i,j] #for transit Park and ride is source only
+
+
+        for time_period in self.time_periods:
+            self._add_2d_demand(
+                share[time_period], "car_work", time_period,
+                car_matrix, position2)
+            self._add_2d_demand(
+                share[time_period], "transit_work", time_period,
+                transit_matrix, position2)
+
     def add_demand(self, demand: Union[Demand, Tour]):
         """Add demand matrix for whole day.
         
@@ -75,7 +103,8 @@ class DepartureTimeModel:
             Travel demand matrix or number of travellers
         """
         demand.purpose.name = cast(str,demand.purpose.name) #type checker hint
-        if demand.mode != "walk" and not demand.is_car_passenger:
+
+        if demand.mode != "walk" and demand.mode != "park_and_ride" and not demand.is_car_passenger:
             if demand.mode in param.divided_classes:
                 ass_class = "{}_{}".format(
                     demand.mode, assignment_classes[demand.purpose.name])

@@ -1,6 +1,9 @@
 import unittest
 import numpy
 
+from datahandling.zonedata import ZoneData
+from transform.impedance_transformer import ImpedanceTransformer
+from transform.park_and_ride_transformer import ParkAndRideTransformer
 import utils.log as log
 from modelsystem import ModelSystem, AgentModelSystem
 from assignment.mock_assignment import MockAssignmentModel
@@ -29,7 +32,7 @@ class ModelTest(unittest.TestCase):
         zone_data_path = os.path.join(
             TEST_DATA_PATH, "Scenario_input_data", "2030_test")
         base_zone_data_path = os.path.join(
-            TEST_DATA_PATH, "Base_input_data", "2018_zonedata")
+            TEST_DATA_PATH, "Base_input_data", "2023_zonedata")
         base_matrices_path = os.path.join(
             TEST_DATA_PATH, "Base_input_data", "base_matrices")
         model = ModelSystem(
@@ -53,7 +56,7 @@ class ModelTest(unittest.TestCase):
         self._validate_impedances(impedance["iht"])
 
         # Check that model result does not change
-        self.assertAlmostEquals(model.mode_share[0]["car"], 0.22489513375983478)
+        self.assertAlmostEquals(model.mode_share[0]["car"], 0.19439048477671417)
         
         print("Model system test done")
     
@@ -65,7 +68,7 @@ class ModelTest(unittest.TestCase):
         zone_data_path = os.path.join(
             TEST_DATA_PATH, "Scenario_input_data", "2030_test")
         base_zone_data_path = os.path.join(
-            TEST_DATA_PATH, "Base_input_data", "2018_zonedata")
+            TEST_DATA_PATH, "Base_input_data", "2023_zonedata")
         base_matrices_path = os.path.join(
             TEST_DATA_PATH, "Base_input_data", "base_matrices")
         model = AgentModelSystem(
@@ -87,7 +90,7 @@ class ModelTest(unittest.TestCase):
         self.assertIsNotNone(impedances["time"]["transit_work"])
         self.assertIs(type(impedances["time"]["transit_work"]), numpy.ndarray)
         self.assertEquals(impedances["time"]["transit_work"].ndim, 2)
-        self.assertEquals(len(impedances["time"]["transit_work"]), 12)
+        self.assertEquals(len(impedances["time"]["transit_work"]), 13)
 
     def _validate_demand(self, demand):
         self.assertIsNotNone(demand)

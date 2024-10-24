@@ -21,7 +21,7 @@ class LogitModelTest(unittest.TestCase):
             pass
         pur = Purpose()
         zi = numpy.array(METROPOLITAN_ZONES + PERIPHERAL_ZONES + EXTERNAL_ZONES)
-        zd = BaseZoneData(os.path.join(TEST_DATA_PATH, "Base_input_data", "2018_zonedata"), zi)
+        zd = BaseZoneData(os.path.join(TEST_DATA_PATH, "Base_input_data", "2023_zonedata"), zi)
         zd["car_users"] = pandas.Series(0.5, zd.zone_numbers)
         mtx = numpy.arange(90, dtype=numpy.float32)
         mtx.shape = (9, 10)
@@ -43,6 +43,11 @@ class LogitModelTest(unittest.TestCase):
             "walk": {
                 "dist": mtx,
             },
+            "park_and_ride": {
+                "time": mtx,
+                "cost": mtx,
+                "dist": mtx,
+            }
         }
         pur.bounds = slice(0, 9)
         pur.sub_bounds = [slice(0, 7), slice(7, 9)]
