@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Dict, Tuple, Union, cast
+from typing import TYPE_CHECKING, Dict, List, Tuple, cast
 import numpy # type: ignore
 import pandas
 if TYPE_CHECKING:
@@ -34,7 +34,9 @@ class DemandModel:
                  is_agent_model: bool=False):
         self.resultdata = resultdata
         self.zone_data = zone_data
-        self.tour_purposes = []
+        self.population: List[Person] = []
+        self.zone_population = pandas.Series(0, zone_data.zone_numbers)
+        self.tour_purposes: List[Purpose] = []
         self.purpose_dict: Dict[str,Purpose] = {}
         for purpose_spec in param.tour_purposes:
             args = (purpose_spec, zone_data, resultdata)
@@ -48,7 +50,7 @@ class DemandModel:
                 for source in purpose_spec["source"]:
                     purpose.sources.append(self.purpose_dict[source])
                     if "sec_dest" in purpose_spec:
-                        tour_purpose = cast(TourPurpose, self.purpose_dict[source]) #type checker hint
+                        tour_purpose = self.purpose_dict[source]
                         tour_purpose.sec_dest_purpose = purpose
         bounds = param.purpose_areas["metropolitan"]
         self.bounds = slice(*zone_data.all_zone_numbers.searchsorted(
@@ -103,7 +105,7 @@ class DemandModel:
 
         Store list of `Person` instances in `self.population`.
         """
-        numpy.random.seed(param.population_draw)
+        rng = numpy.random.default_rng(param.population_draw)
         self.population = []
         zone_numbers = self.zone_data.zone_numbers[self.bounds]
         self.zone_population = pandas.Series(0, zone_numbers)
@@ -124,15 +126,12 @@ class DemandModel:
                                  * param.agent_demand_fraction))
             zone = self.zone_data.zones[zone_number]
             incmod = self._income_models[zone.municipality == "Helsinki"]
-            for _ in range(zone_pop):
-                i = numpy.random.choice(a=age_range, p=weights)
-                if i != -1:
-                    self.population.append(Person(
-                        zone, param.age_groups[i], self.tour_generation_model,
-                        self.car_use_model, incmod))
-                    self.zone_population[zone_number] += 1
-        numpy.random.seed(None)
-
+            age_groups = [Person(zone, param.age_groups[i],
+                self.tour_generation_model, self.car_use_model, incmod)
+                for i in rng.choice(a=age_range, size=zone_pop, p=weights) if i != -1]
+            self.population.extend(age_groups)
+            self.zone_population[zone_number] = len(age_groups)
+            
     def predict_income(self):
         for model in self._income_models:
             model.predict()
