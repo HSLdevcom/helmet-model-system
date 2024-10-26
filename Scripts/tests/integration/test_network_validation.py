@@ -1,5 +1,7 @@
 from argparse import ArgumentTypeError
-import unittest, os, pandas
+import unittest
+import pandas
+from pathlib import Path
 from assignment.emme_bindings.mock_project import MockProject, MODE_TYPES
 from assignment.datatypes.transit_fare import TransitFareZoneSpecification
 from assignment.mock_assignment import MockAssignmentModel
@@ -13,9 +15,7 @@ import copy
 class EmmeAssignmentTest(unittest.TestCase):
     def test_assignment(self):
         context = MockProject()
-        scenario_dir = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
-            "..", "test_data", "Network")
+        scenario_dir = Path(__file__).resolve().parent.parent / "test_data" / "Network"
         scenario_id = 19
         context.import_scenario(scenario_dir, scenario_id, "test")
         fares = TransitFareZoneSpecification(pandas.DataFrame({
@@ -27,8 +27,7 @@ class EmmeAssignmentTest(unittest.TestCase):
             },
         }))
 
-        # mock_result_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-        #     "..", "test_data", "Results","test")
+        # mock_result_path = Path(__file__).resolve().parent.parent / "test_data" / "Results" / "test"
         #ass_model = MockAssignmentModel(MatrixData(mock_result_path))
         network0 = context.modeller.emmebank.scenario(scenario_id).get_network()
         #ass_model.prepare_network(network = network0) #the number is the car cost per km

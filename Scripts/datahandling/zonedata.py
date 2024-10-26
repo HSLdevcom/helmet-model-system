@@ -1,4 +1,5 @@
 from __future__ import annotations
+from pathlib import Path
 from typing import Any, Dict, List, Tuple, Union
 import numpy # type: ignore
 import pandas
@@ -12,7 +13,7 @@ from assignment.datatypes.transit_fare import TransitFareZoneSpecification
 
 
 class ZoneData:
-    def __init__(self, data_dir: str, zone_numbers: numpy.array):
+    def __init__(self, data_dir: Path, zone_numbers: numpy.array):
         self._values: Dict[str,Any]= {}
         self.share = ShareChecker(self)
         all_zone_numbers = numpy.array(zone_numbers)
@@ -219,7 +220,7 @@ class ZoneData:
 
 
 class BaseZoneData(ZoneData):
-    def __init__(self, data_dir: str, zone_numbers: numpy.array):
+    def __init__(self, data_dir: Path, zone_numbers: numpy.array):
         ZoneData.__init__(self, data_dir, zone_numbers)
         cardata = read_csv_file(data_dir, ".car", self.zone_numbers)
         self["car_density"] = cardata["cardens"]

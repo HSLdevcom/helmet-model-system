@@ -6,35 +6,32 @@ from modelsystem import ModelSystem, AgentModelSystem
 from assignment.mock_assignment import MockAssignmentModel
 from datahandling.matrixdata import MatrixData
 from datatypes.demand import Demand
-import parameters
-import os
 
-TEST_DATA_PATH = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), "..", "test_data")
+from pathlib import Path
+
+TEST_DATA_PATH = Path(__file__).resolve().parent.parent / "test_data"
+TEST_RESULTS_PATH = TEST_DATA_PATH / 'Results'
+TEST_MATRICES_PATH = TEST_RESULTS_PATH / "test" / "Matrices"
+TEST_2030_ZONEDATA = TEST_DATA_PATH / "Scenario_input_data" / "2030_test"
+TEST_2023_ZONEDATA = TEST_DATA_PATH / "Base_input_data" / "2023_zonedata"
+TEST_BASE_MATRICES = TEST_DATA_PATH / "Base_input_data" / "base_matrices"
 
 class Config():
     log_format = None
     log_level = "DEBUG"
     scenario_name = "TEST"
-    results_path = os.path.join(TEST_DATA_PATH, "Results")
+    results_path = TEST_RESULTS_PATH
 
 class ModelTest(unittest.TestCase):
     
     def test_models(self):
         print("Testing assignment..")
         log.initialize(Config())
-        results_path = os.path.join(TEST_DATA_PATH, "Results")
-        ass_model = MockAssignmentModel(
-            MatrixData(os.path.join(results_path, "test", "Matrices")))
-        zone_data_path = os.path.join(
-            TEST_DATA_PATH, "Scenario_input_data", "2030_test")
-        base_zone_data_path = os.path.join(
-            TEST_DATA_PATH, "Base_input_data", "2023_zonedata")
-        base_matrices_path = os.path.join(
-            TEST_DATA_PATH, "Base_input_data", "base_matrices")
+        ass_model = MockAssignmentModel(MatrixData(TEST_MATRICES_PATH))
+
         model = ModelSystem(
-            zone_data_path, base_zone_data_path, base_matrices_path,
-            results_path, ass_model, "test")
+            TEST_2030_ZONEDATA, TEST_2023_ZONEDATA, TEST_BASE_MATRICES,
+            TEST_RESULTS_PATH, ass_model, "test")
         impedance = model.assign_base_demand()
         for ap in ass_model.assignment_periods:
             tp = ap.name
@@ -59,18 +56,10 @@ class ModelTest(unittest.TestCase):
     
     def test_agent_model(self):
         log.initialize(Config())
-        results_path = os.path.join(TEST_DATA_PATH, "Results")
-        ass_model = MockAssignmentModel(MatrixData(
-            os.path.join(results_path, "test", "Matrices")))
-        zone_data_path = os.path.join(
-            TEST_DATA_PATH, "Scenario_input_data", "2030_test")
-        base_zone_data_path = os.path.join(
-            TEST_DATA_PATH, "Base_input_data", "2023_zonedata")
-        base_matrices_path = os.path.join(
-            TEST_DATA_PATH, "Base_input_data", "base_matrices")
+        ass_model = MockAssignmentModel(MatrixData(TEST_MATRICES_PATH))
         model = AgentModelSystem(
-            zone_data_path, base_zone_data_path, base_matrices_path,
-            results_path, ass_model, "test")
+            TEST_2030_ZONEDATA, TEST_2023_ZONEDATA, TEST_BASE_MATRICES,
+            TEST_RESULTS_PATH, ass_model, "test")
         impedance = model.assign_base_demand()
         impedance = model.run_iteration(impedance)
         impedance = model.run_iteration(impedance, "last")

@@ -1,10 +1,10 @@
 from argparse import ArgumentParser, ArgumentTypeError
+from pathlib import Path
 import sys
-import os
-from glob import glob
 
 import utils.config
 import utils.log as log
+from assignment.emme_bindings.emme_project import EmmeProject
 from assignment.emme_assignment import EmmeAssignmentModel
 from assignment.mock_assignment import MockAssignmentModel
 from modelsystem import ModelSystem, AgentModelSystem
@@ -19,11 +19,13 @@ def main(args):
     else:
         raise ArgumentTypeError(
             "Iteration number {} not valid".format(args.iterations))
-    base_zonedata_path: str = os.path.join(args.baseline_data_path, "2023_zonedata")
-    base_matrices_path: str = os.path.join(args.baseline_data_path, "base_matrices")
-    forecast_zonedata_path: str = args.forecast_data_path
-    results_path: str = args.results_path
-    emme_project_path: str = args.emme_path
+    
+    base_zonedata_path = Path(args.baseline_data_path) / "2023_zonedata"
+    base_matrices_path = Path(args.baseline_data_path) / "base_matrices"
+    forecast_zonedata_path = Path(args.forecast_data_path)
+    results_path = Path(args.results_path)
+    emme_project_path = Path(args.emme_path)
+    
     log_extra = {
         "status": {
             "name": args.scenario_name,
@@ -36,42 +38,39 @@ def main(args):
             "converged": 0,
         }
     }
+    
     # Check input data folders/files exist
-    if not os.path.exists(base_zonedata_path):
+    if not base_zonedata_path.is_dir():
         raise NameError(
-            "Baseline zonedata directory '{}' does not exist.".format(
-                base_zonedata_path))
-    if not os.path.exists(base_matrices_path):
+            f"Baseline zonedata directory '{base_zonedata_path}' does not exist.")
+    if not base_matrices_path.is_dir():
         raise NameError(
-            "Baseline zonedata directory '{}' does not exist.".format(
-                base_matrices_path))
-    if not os.path.exists(forecast_zonedata_path):
+            f"Baseline matrices directory '{base_matrices_path}' does not exist.")
+    if not forecast_zonedata_path.is_dir():
         raise NameError(
-            "Forecast data directory '{}' does not exist.".format(
-                forecast_zonedata_path))
+            f"Forecast data directory '{forecast_zonedata_path}' does not exist.")
+    
     # Choose and initialize the Traffic Assignment (supply)model
     if args.do_not_use_emme:
         log.info("Initializing MockAssignmentModel...")
-        mock_result_path = os.path.join(
-            results_path, args.scenario_name, "Matrices")
-        if not os.path.exists(mock_result_path):
+        mock_result_path = results_path / args.scenario_name / "Matrices"
+        if not mock_result_path.is_dir():
             raise NameError(
-                "Mock Results directory {} does not exist.".format(
-                    mock_result_path))
+                f"Mock Results directory {mock_result_path} does not exist.")
         ass_model = MockAssignmentModel(MatrixData(mock_result_path))
     else:
-        if not os.path.isfile(emme_project_path):
+        if not emme_project_path.is_file():
             raise NameError(
-                ".emp project file not found in given '{}' location.".format(
-                    emme_project_path))
+                f".emp project file not found in given '{emme_project_path}' location.")
         log.info("Initializing Emme...")
-        from assignment.emme_bindings.emme_project import EmmeProject
+        
         ass_model = EmmeAssignmentModel(
             EmmeProject(emme_project_path),
             first_scenario_id=args.first_scenario_id,
             separate_emme_scenarios=args.separate_emme_scenarios,
             save_matrices=args.save_matrices,
             first_matrix_id=args.first_matrix_id)
+    
     # Initialize model system (wrapping Assignment-model,
     # and providing demand calculations as Python modules)
     # Read input matrices (.omx) and zonedata (.csv)
@@ -101,8 +100,8 @@ def main(args):
         try:
             log.info("Starting iteration {}".format(i), extra=log_extra)
             impedance = (model.run_iteration(impedance, "last")
-                         if i == iterations
-                         else model.run_iteration(impedance, i))
+                            if i == iterations
+                            else model.run_iteration(impedance, i))
             log_extra["status"]["completed"] += 1
         except Exception as error:
             log_extra["status"]["failed"] += 1
@@ -121,24 +120,29 @@ def main(args):
             log_extra["status"]["converged"] = 1
         i += 1
     
-    if not log_extra["status"]["converged"]: log.warn("Model has not converged")
+    if not log_extra["status"]["converged"]:
+        log.warn("Model has not converged")
 
     # delete emme strategy files for scenarios
     if args.del_strat_files:
-        dbase_path = os.path.join(os.path.dirname(emme_project_path), "database")
-        filepath = os.path.join(dbase_path, "STRAT_s{}*")
-        dirpath = os.path.join(dbase_path, "STRATS_s{}", "*")
-        scenario_ids = range(args.first_scenario_id, args.first_scenario_id+5)
-        for s in scenario_ids:
-            strategy_files = glob(filepath.format(s)) + glob(dirpath.format(s))
-            for f in strategy_files:
-                try:
-                    os.remove(f)
-                except:
-                    log.info("Not able to remove file {}.".format(f))
-        log.info("Removed strategy files in {}".format(dbase_path))
+        delete_strat_files(emme_project_path, args.first_scenario_id)
     log.info("Simulation ended.", extra=log_extra)
 
+def delete_strat_files(emme_project_path: Path, first_scenario_id: int):
+    dbase_path = emme_project_path.parent / "database"
+    for s in range(first_scenario_id, first_scenario_id + 5):
+        files_and_dirs_to_remove = list(dbase_path.glob(f"STRAT_s{s}*")) + list(dbase_path.glob(f"STRATS_s{s}/*"))
+        for f in filter(lambda x: x.is_file(), files_and_dirs_to_remove):
+            try:
+                f.unlink()
+            except OSError as e:
+                log.info(f"Not able to remove file {f}. Exception: {e}")
+        for d in filter(lambda x: x.is_dir(), files_and_dirs_to_remove):
+            try:
+                d.rmdir()
+            except OSError as e:
+                log.info(f"Not able to remove directory {d}. Exception: {e}")
+    log.info(f"Removed strategy files in {dbase_path}")
 
 if __name__ == "__main__":
     # Initially read defaults from config file ("dev-config.json")

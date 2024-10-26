@@ -1,16 +1,19 @@
 import unittest
 import pandas
-import os
 import numpy
 
 import utils.log as log
 from datahandling.zonedata import ZoneData
 from datahandling.matrixdata import MatrixData
+from pathlib import Path
 import parameters.assignment as param
 
 
-TEST_DATA_PATH = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), "..", "test_data")
+TEST_DATA_PATH = Path(__file__).resolve().parent.parent / "test_data"
+TEST_BASE_MATRICES = TEST_DATA_PATH / "Base_input_data" / "base_matrices"
+TEST_2023_ZONEDATA = TEST_DATA_PATH / "Base_input_data" / "2023_zonedata"
+TEST_2030_ZONEDATA = TEST_DATA_PATH / "Scenario_input_data" / "2030_test"
+
 INTERNAL_ZONES = [102, 103, 244, 1063, 1531, 2703, 2741, 6272, 6291, 19071]
 EXTERNAL_ZONES = [34102, 34500]
 ZONE_INDEXES = numpy.array(INTERNAL_ZONES + EXTERNAL_ZONES)
@@ -23,21 +26,19 @@ class Config():
     log_format = None
     log_level = "DEBUG"
     scenario_name = "TEST"
-    results_path = os.path.join(TEST_DATA_PATH, "Results")
+    results_path = TEST_DATA_PATH / "Results"
 
 class MatrixDataTest(unittest.TestCase):
     
     def test_constructor(self):
         log.initialize(Config())
-        m = MatrixData(
-            os.path.join(TEST_DATA_PATH, "Base_input_data", "base_matrices"))
+        m = MatrixData(TEST_BASE_MATRICES)
         # Verify that the base folder exists
-        self.assertTrue(os.path.isdir(m.path))
+        self.assertTrue(m.path.is_dir())
 
     def test_matrix_operations(self):
         log.initialize(Config())
-        m = MatrixData(
-            os.path.join(TEST_DATA_PATH, "Base_input_data", "base_matrices"))
+        m = MatrixData(TEST_BASE_MATRICES)
         MATRIX_TYPES = ["demand"]
         for matrix_type in MATRIX_TYPES:
             print("validating matrix type", matrix_type)
@@ -56,23 +57,17 @@ class MatrixDataTest(unittest.TestCase):
 class ZoneDataTest(unittest.TestCase):
 
     def _get_freight_data(self):
-        zdata = ZoneData(
-            os.path.join(TEST_DATA_PATH, "Base_input_data", "2023_zonedata"),
-            ZONE_INDEXES)
+        zdata = ZoneData(TEST_2023_ZONEDATA, ZONE_INDEXES)
         df = zdata.get_freight_data()
         self.assertIsNotNone(df)
         return df
 
     def test_csv_file_read(self):
-        zdata2016 = ZoneData(
-            os.path.join(TEST_DATA_PATH, "Base_input_data", "2023_zonedata"),
-            ZONE_INDEXES)
+        zdata2016 = ZoneData(TEST_2023_ZONEDATA, ZONE_INDEXES)
         self.assertIsNotNone(zdata2016["population"])
         self.assertIsNotNone(zdata2016["workplaces"])
 
-        zdata2030 = ZoneData(
-            os.path.join(TEST_DATA_PATH, "Scenario_input_data", "2030_test"),
-            ZONE_INDEXES)
+        zdata2030 = ZoneData(TEST_2030_ZONEDATA, ZONE_INDEXES)
         self.assertIsNotNone(zdata2030["population"])
         self.assertIsNotNone(zdata2030["workplaces"])
 

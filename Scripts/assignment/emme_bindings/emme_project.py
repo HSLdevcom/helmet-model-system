@@ -1,5 +1,6 @@
 from __future__ import annotations
 import os
+from pathlib import Path
 from typing import Any, Optional, cast, TYPE_CHECKING
 import utils.log as log
 import logging
@@ -24,14 +25,14 @@ class EmmeProject:
         Path to emmebank file (if EMME project is not initialized)
     """
     def __init__(self, 
-                 project_path: str, 
-                 emmebank_path: Optional[str] = None):
+                 project_path: Path, 
+                 emmebank_path: Optional[Path] = None):
         log.info("Starting Emme...")
         if TYPE_CHECKING: self.cm: Optional[ContentManager] = None #type checker hint
         emme_desktop = _app.start_dedicated(
-            project=project_path, visible=False, user_initials="HSL")
+            project=str(project_path), visible=False, user_initials="HSL")
         if emmebank_path is not None:
-            db = emme_desktop.data_explorer().add_database(emmebank_path)
+            db = emme_desktop.data_explorer().add_database(str(emmebank_path))
             db.open()
             emme_desktop.project.save()
         # Add logging to EMME

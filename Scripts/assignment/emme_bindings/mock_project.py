@@ -4,6 +4,7 @@ import numpy # type: ignore
 from collections import namedtuple
 import copy
 import os
+from pathlib import Path
 
 
 MODE_TYPES = {
@@ -40,29 +41,21 @@ class MockProject:
         scenario.title = scenario_title
         return scenario
 
-    def import_scenario(self, scenario_dir, scenario_id, scenario_title):
+    def import_scenario(self, scenario_path: Path, scenario_id, scenario_title):
+
         scenario = self.modeller.emmebank.create_scenario(scenario_id)
         scenario.title = scenario_title
-        for file_name in os.listdir(scenario_dir):
-            if file_name.startswith("modes"):
-                self.mode_transaction(
-                    os.path.join(scenario_dir, file_name), scenario=scenario)
-        for file_name in os.listdir(scenario_dir):
-            if file_name.startswith("base_network"):
-                self.base_network_transaction(
-                    os.path.join(scenario_dir, file_name), scenario=scenario)
-        for file_name in os.listdir(scenario_dir):
-            if file_name.startswith("vehicles"):
-                self.vehicle_transaction(
-                    os.path.join(scenario_dir, file_name), scenario=scenario)
-        for file_name in os.listdir(scenario_dir):
-            if file_name.startswith("transit_lines"):
-                self.transit_line_transaction(
-                    os.path.join(scenario_dir, file_name), scenario=scenario)
-        for file_name in os.listdir(scenario_dir):
-            if file_name.startswith("extra"):
-                self.import_extra_attributes(
-                    os.path.join(scenario_dir, file_name), scenario=scenario)
+
+        for file_path in scenario_path.glob("modes*"):
+            self.mode_transaction(file_path, scenario=scenario)
+        for file_path in scenario_path.glob("base_network*"):
+            self.base_network_transaction(file_path, scenario=scenario)
+        for file_path in scenario_path.glob("vehicles*"):
+            self.vehicle_transaction(file_path, scenario=scenario)
+        for file_path in scenario_path.glob("transit_lines*"):
+            self.transit_line_transaction(file_path, scenario=scenario)
+        for file_path in scenario_path.glob("extra*"):
+            self.import_extra_attributes(file_path, scenario=scenario)
 
     def create_matrix(self, 
                       matrix_id: int, 
@@ -103,10 +96,10 @@ class MockProject:
         eb.matrix(matrix_id).set_numpy_data(
             eb.matrix(from_matrix).get_numpy_data())
 
-    def mode_transaction(self, transaction_file, revert_on_error=True,
+    def mode_transaction(self, transaction_file: Path, revert_on_error=True,
                          scenario=None):
         network = scenario.get_network()
-        with open(transaction_file) as f:
+        with transaction_file.open(encoding='utf-8') as f:
             while True:
                 if f.readline() == "t modes\n":
                     break
@@ -135,10 +128,10 @@ class MockProject:
                         raise SyntaxError("Unknown update code")
                     mode.description = rec[2]
 
-    def base_network_transaction(self, transaction_file, revert_on_error=True,
+    def base_network_transaction(self, transaction_file: Path, revert_on_error=True,
                                  scenario=None):
         network = scenario.get_network()
-        with open(transaction_file) as f:
+        with transaction_file.open(encoding='utf-8') as f:
             while True:
                 if f.readline() == "t nodes\n":
                     break
@@ -193,10 +186,10 @@ class MockProject:
                     link.data2 = float(rec[9])
                     link.data3 = float(rec[10])
 
-    def vehicle_transaction(self, transaction_file, revert_on_error=True,
+    def vehicle_transaction(self, transaction_file: Path, revert_on_error=True,
                             scenario=None):
         network = scenario.get_network()
-        with open(transaction_file) as f:
+        with transaction_file.open(encoding='utf-8') as f:
             while True:
                 if f.readline() == "t vehicles\n":
                     break
@@ -219,10 +212,12 @@ class MockProject:
                         raise SyntaxError("Unknown update code")
                     vehicle.description = rec[2][1:-1]
 
-    def transit_line_transaction(self, transaction_file, revert_on_error=True,
+
+
+    def transit_line_transaction(self, transaction_file: Path, revert_on_error=True,
                             scenario=None):
         network = scenario.get_network()
-        with open(transaction_file) as f:
+        with transaction_file.open(encoding='utf-8') as f:
             while True:
                 if f.readline() == "t lines\n":
                     break
@@ -274,9 +269,9 @@ class MockProject:
                     line.vehicle = vehicle_id
                     line.headway = headway
 
-    def import_extra_attributes(self, file_path, revert_on_error=True,
+    def import_extra_attributes(self, file_path: Path, revert_on_error=True,
                                 scenario=None, import_definitions=False):
-        with open(file_path) as f:
+        with file_path.open(encoding='utf-8') as f:
             f.readline()
             while True:
                 rec = f.readline().split()

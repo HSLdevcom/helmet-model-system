@@ -3,21 +3,19 @@
 import unittest
 import numpy
 import pandas
-import os
 
 from utils.validate_network import validate
 from assignment.emme_bindings.mock_project import MockProject
 from assignment.emme_assignment import EmmeAssignmentModel
 from datahandling.resultdata import ResultsData
 from assignment.datatypes.transit_fare import TransitFareZoneSpecification
+from pathlib import Path
 
 
 class EmmeAssignmentTest(unittest.TestCase):
     def test_assignment(self):
         context = MockProject()
-        scenario_dir = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
-            "..", "test_data", "Network")
+        scenario_dir = Path(__file__).resolve().parent / ".." / "test_data" / "Network"
         scenario_id = 19
         context.import_scenario(scenario_dir, scenario_id, "test")
         fares = TransitFareZoneSpecification(pandas.DataFrame({
@@ -50,9 +48,9 @@ class EmmeAssignmentTest(unittest.TestCase):
         }
         ass_model.init_assign(demand)
         ass_model.assignment_periods[0].assign(demand, "last")
-        resultdata = ResultsData(os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
-            "..", "test_data", "Results", "test"))
+        resultdata = ResultsData(
+            Path(__file__).resolve().parent / ".." / "test_data" / "Results" / "test"
+        )
         ass_model.aggregate_results(resultdata)
         ass_model.calc_noise()
         resultdata.flush()

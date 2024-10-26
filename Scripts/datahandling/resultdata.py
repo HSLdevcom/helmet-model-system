@@ -1,7 +1,8 @@
 from __future__ import annotations
-import os
+
 from typing import Any, Dict
 import pandas
+from pathlib import Path
 try:
     from openpyxl import Workbook, load_workbook
     _use_txt = False
@@ -13,27 +14,25 @@ class ResultsData:
     """
     Saves all result data to same folder.
     """
-    def __init__(self, results_directory_path: str):
-        if not os.path.exists(results_directory_path):
-            os.makedirs(results_directory_path)
+    def __init__(self, results_directory_path: Path):
         self.path = results_directory_path
+        self.path.mkdir(parents=True, exist_ok=True)
         self._line_buffer: Dict[str, Any] = {}
         self._df_buffer: Dict[str, Any] = {}
         self._xlsx_buffer: Dict[str, Any] = {}
 
     def flush(self):
         """Save to files and empty buffers."""
-        for filename in self._line_buffer:
-            self._line_buffer[filename].close()
+        for filename, buffer in self._line_buffer.items():
+            buffer.close()
         self._line_buffer = {}
-        for filename in self._df_buffer:
-            self._df_buffer[filename].to_csv(
-                os.path.join(self.path, filename),
-                sep='\t', float_format="%1.5f")
+
+        for filename, df in self._df_buffer.items():
+            df.to_csv(self.path / filename, sep='\t', float_format="%1.5f")
         self._df_buffer = {}
-        for filename in self._xlsx_buffer:
-            self._xlsx_buffer[filename].save(
-                os.path.join(self.path, "{}.xlsx".format(filename)))
+
+        for filename, wb in self._xlsx_buffer.items():
+            wb.save(self.path / f"{filename}.xlsx")
         self._xlsx_buffer = {}
 
     def print_data(self, data: pandas.Series, filename: str, colname: str):
@@ -69,8 +68,7 @@ class ResultsData:
         try:
             buffer = self._line_buffer[filename]
         except KeyError:
-            buffer = open(
-                os.path.join(self.path, "{}.txt".format(filename)), 'w')
+            buffer = (self.path / f"{filename}.txt").open(mode='w', encoding='utf-8')
             self._line_buffer[filename] = buffer
         buffer.write(line + "\n")
 
@@ -91,7 +89,7 @@ class ResultsData:
         if _use_txt:
             # If no Workbook module available (= _use_txt), save data to csv
             data.to_csv(
-                os.path.join(self.path, "{}_{}.txt".format(filename, sheetname)),
+                self.path / f"{filename}_{sheetname}.txt",
                 sep='\t', float_format="%8.1f")
         else:
             # Get/create new worksheet

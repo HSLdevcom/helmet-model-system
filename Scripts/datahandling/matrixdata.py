@@ -1,5 +1,4 @@
-from __future__ import annotations
-import os
+from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 import openmatrix as omx # type: ignore
 import numpy # type: ignore
@@ -16,10 +15,9 @@ import parameters.zone as zone_param
 
 
 class MatrixData:
-    def __init__(self, path: str):
+    def __init__(self, path: Path):
         self.path = path
-        if not os.path.exists(self.path):
-            os.makedirs(self.path)
+        self.path.mkdir(parents=True, exist_ok=True)
     
     @contextmanager
     def open(self, 
@@ -27,7 +25,7 @@ class MatrixData:
              time_period: str, 
              zone_numbers: Optional[numpy.ndarray] = None, 
              m: str = 'r'):
-        file_name = os.path.join(self.path, mtx_type+'_'+time_period+".omx")
+        file_name = self.path / f"{mtx_type}_{time_period}.omx"
         mtxfile = MatrixFile(omx.open_file(file_name, m), zone_numbers)
         yield mtxfile
         mtxfile.close()
@@ -35,7 +33,7 @@ class MatrixData:
     def get_external(self, transport_mode: str):
         return read_csv_file(self.path, "external_"+transport_mode+".txt")
 
-    def peripheral_transit_cost(self, zonedata: BaseZoneData):
+    def peripheral_transit_cost(self, zonedata: 'BaseZoneData'):
         filename = "transit_cost_peripheral.txt"
         try:
             aggr_mtx = read_csv_file(self.path, filename)

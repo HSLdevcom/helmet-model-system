@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 import sys
 import logging
 from collections import namedtuple
@@ -6,7 +6,7 @@ from collections import namedtuple
 import inro.modeller as _m
 
 # TODO Could this be done more elegantly?
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),"../"))
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 from utils.validate_network import validate
 
 

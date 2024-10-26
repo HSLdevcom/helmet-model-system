@@ -1,5 +1,4 @@
 from argparse import ArgumentParser
-import os
 import sys
 from typing import List, Union
 
@@ -9,15 +8,16 @@ from utils.validate_network import validate
 from assignment.mock_assignment import MockAssignmentModel
 from datahandling.matrixdata import MatrixData
 from datahandling.zonedata import ZoneData
+from pathlib import Path
 import parameters.assignment as param
 
 
 def main(args):
-    base_zonedata_path = os.path.join(args.baseline_data_path, "2023_zonedata")
-    base_matrices_path = os.path.join(args.baseline_data_path, "base_matrices")
-    emme_paths: Union[str,List[str]] = args.emme_paths
-    first_scenario_ids: Union[int,List[int]] = args.first_scenario_ids
-    forecast_zonedata_paths: Union[str,List[str]] = args.forecast_data_paths
+    base_zonedata_path = Path(args.baseline_data_path) / "2023_zonedata"
+    base_matrices_path = Path(args.baseline_data_path) / "base_matrices"
+    emme_paths = [Path(p) for p in args.emme_paths]
+    first_scenario_ids: Union[int, List[int]] = args.first_scenario_ids
+    forecast_zonedata_paths: Union[Path, List[Path]] = [Path(p) for p in args.forecast_data_paths]
 
     if not emme_paths:
         msg = "Missing required argument 'emme-paths'."
@@ -46,31 +46,26 @@ def main(args):
     # Check basedata input
     log.info("Checking base inputdata...")
     # Check filepaths (& first .emp path for zone_numbers in base zonedata)
-    if not os.path.exists(base_zonedata_path):
-        msg = "Baseline zonedata directory '{}' does not exist.".format(
-            base_zonedata_path)
+    if not base_zonedata_path.is_dir():
+        msg = f"Baseline zonedata directory '{base_zonedata_path}' does not exist."
         log.error(msg)
         raise ValueError(msg)
-    if not os.path.exists(base_matrices_path):
-        msg = "Baseline matrices' directory '{}' does not exist.".format(
-            base_matrices_path)
+    if not base_matrices_path.is_dir():
+        msg = f"Baseline matrices' directory '{base_matrices_path}' does not exist."
         log.error(msg)
         raise ValueError(msg)
     if args.do_not_use_emme:
-        mock_result_path = os.path.join(
-            args.results_path, args.scenario_name, "Matrices")
-        if not os.path.exists(mock_result_path):
-            msg = "Mock Results directory {} does not exist.".format(
-                mock_result_path)
+        mock_result_path = Path(args.results_path) / args.scenario_name / "Matrices"
+        if not mock_result_path.is_dir():
+            msg = f"Mock Results directory {mock_result_path} does not exist."
             log.error(msg)
             raise NameError(msg)
         assignment_model = MockAssignmentModel(MatrixData(mock_result_path))
         zone_numbers = assignment_model.zone_numbers
     else:
         emp_path = emme_paths[0]
-        if not os.path.isfile(emp_path):
-            msg = ".emp project file not found in given '{}' location.".format(
-                emp_path)
+        if not emp_path.is_file():
+            msg = f".emp project file not found in given '{emp_path}' location."
             log.error(msg)
             raise ValueError(msg)
         import inro.emme.desktop.app as _app # type: ignore
@@ -79,7 +74,7 @@ def main(args):
         scen = app.data_explorer().active_database().core_emmebank.scenario(
             first_scenario_ids[0])
         if scen is None:
-            msg = "Project {} has no scenario {}".format(emp_path, first_scenario_ids[0])
+            msg = f"Project {emp_path} has no scenario {first_scenario_ids[0]}"
             log.error(msg)
             raise ValueError(msg)
         else:
@@ -100,18 +95,16 @@ def main(args):
         log.info("Checking input data for scenario #{} ...".format(i))
 
         # Check forecasted zonedata
-        if not os.path.exists(forecast_zonedata_paths[i]):
-            msg = "Forecast data directory '{}' does not exist.".format(
-                forecast_zonedata_paths[i])
+        if not forecast_zonedata_paths[i].is_dir():
+            msg = f"Forecast data directory '{forecast_zonedata_paths[i]}' does not exist."
             log.error(msg)
             raise ValueError(msg)
         forecast_zonedata = ZoneData(forecast_zonedata_paths[i], zone_numbers)
 
         # Check network
         if not args.do_not_use_emme:
-            if not os.path.isfile(emp_path):
-                msg = ".emp project file not found in given '{}' location.".format(
-                    emp_path)
+            if not emp_path.is_file():
+                msg = f".emp project file not found in given '{emp_path}' location."
                 log.error(msg)
                 raise ValueError(msg)
             app = _app.start_dedicated(

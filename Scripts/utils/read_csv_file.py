@@ -1,7 +1,7 @@
-import os
 from typing import Optional
 import pandas
 import numpy
+from pathlib import Path
 
 import utils.log as log
 
@@ -30,21 +30,20 @@ def read_csv_file(data_dir: str,
     -------
     pandas DataFrame
     """
-    file_found = False
-    for file_name in os.listdir(data_dir):
-        if file_name.endswith(file_end):
-            if file_found:
-                msg = "Multiple {} files found in folder {}".format(
-                    file_end, data_dir)
-                log.error(msg)
-                raise NameError(msg)
-            else:
-                path = os.path.join(data_dir, file_name)
-                file_found = True
-    if not file_found:
-        msg = "No {} file found in folder {}".format(file_end, data_dir)
-        # This error should not be logged, as it is sometimes excepted
+    data_dir_path = Path(data_dir)
+    files = list(data_dir_path.glob(f'*{file_end}'))
+    
+    if len(files) > 1:
+        msg = "Multiple {} files found in folder {}".format(file_end, data_dir)
+        log.error(msg)
         raise NameError(msg)
+    elif not files:
+        msg = "No {} file found in folder {}".format(file_end, data_dir)
+        # This error should not be logged, as it is sometimes expected
+        raise NameError(msg)
+    else:
+        path = files[0]
+    
     header: Optional[str] = None if squeeze else "infer"
     data: pandas.DataFrame = pandas.read_csv(
         path, sep='\s+', keep_default_na=False,
@@ -71,8 +70,8 @@ def read_csv_file(data_dir: str,
         if not data.index.is_monotonic_increasing:
             data.sort_index(inplace=True)
             log.warn("File {} is not sorted in ascending order".format(path))
-        map_path = os.path.join(data_dir, "zone_mapping.txt")
-        if os.path.exists(map_path):
+        map_path = data_dir_path / "zone_mapping.txt"
+        if map_path.is_file():
             log_path = map_path
             mapping = pandas.read_csv(map_path, sep='\s+').squeeze()
             if "total" in data.columns:

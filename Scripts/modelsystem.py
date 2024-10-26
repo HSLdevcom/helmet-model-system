@@ -1,6 +1,7 @@
+from pathlib import Path
 import threading
 import multiprocessing
-import os
+
 from typing import Any, Callable, Dict, List, Set, Union, cast
 import numpy # type: ignore
 import pandas
@@ -34,13 +35,13 @@ class ModelSystem:
     
     Parameters
     ----------
-    zone_data_path : str
+    zone_data_path : Path
         Directory path where input data for forecast year are found
-    base_zone_data_path : str
+    base_zone_data_path : Path
         Directory path where input data for base year are found
-    base_matrices_path : str
+    base_matrices_path : Path
         Directory path where base demand matrices are found
-    results_path : str
+    results_path : Path
         Directory path where to store results
     assignment_model : assignment.abstract_assignment.AssignmentModel
         Assignment model wrapper used in model runs,
@@ -50,10 +51,10 @@ class ModelSystem:
     """
 
     def __init__(self, 
-                 zone_data_path: str, 
-                 base_zone_data_path: str, 
-                 base_matrices_path: str,
-                 results_path: str, 
+                 zone_data_path: Path, 
+                 base_zone_data_path: Path, 
+                 base_matrices_path: Path,
+                 results_path: Path, 
                  assignment_model: AssignmentModel, 
                  name: str):
         self.ass_model = cast(Union[MockAssignmentModel,EmmeAssignmentModel], assignment_model) #type checker hint
@@ -68,9 +69,8 @@ class ModelSystem:
             zone_data_path, self.zone_numbers)
 
         # Output data
-        self.resultmatrices = MatrixData(
-            os.path.join(results_path, name, "Matrices"))
-        self.resultdata = ResultsData(os.path.join(results_path, name))
+        self.resultmatrices = MatrixData(results_path / name / "Matrices")
+        self.resultdata = ResultsData(results_path / name)
 
         self.dm = self._init_demand_model()
         self.fm = FreightModel(
@@ -503,13 +503,13 @@ class AgentModelSystem(ModelSystem):
     
     Parameters
     ----------
-    zone_data_path : str
+    zone_data_path : Path
         Directory path where input data for forecast year are found
-    base_zone_data_path : str
+    base_zone_data_path : Path
         Directory path where input data for base year are found
-    base_matrices_path : str
+    base_matrices_path : Path
         Directory path where base demand matrices are found
-    results_path : str
+    results_path : Path
         Directory path where to store results
     assignment_model : assignment.abstract_assignment.AssignmentModel
         Assignment model wrapper used in model runs,

@@ -10,9 +10,10 @@ import utils.log as log
 import parameters.assignment as param
 import parameters.zone as zone_param
 from datahandling.matrixdata import MatrixData
+from pathlib import Path
 
 
-SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
+SCRIPT_DIR = Path(__file__).resolve().parent
 
 VEHICLE_KMS_FILE = "vehicle_kms_vdfs.txt"
 TRANSIT_KMS_FILE = "transit_kms.txt"
@@ -165,15 +166,15 @@ CELL_INDICES = {
     },
 }
 
-def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
+def run_cost_benefit_analysis(scenario_0: Path, scenario_1: Path, year, workbook):
     """Runs CBA and writes the results to excel file.
 
     Parameters
     ----------
-    scenario_0 : str
+    scenario_0 : Path
         Name of do-nothing scenario, for which
         forecast results are available in Results folder
-    scenario_1 : str
+    scenario_1 : Path
         Name of project scenario, for which
         forecast results are available in Results folder
     year : int
@@ -241,8 +242,8 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
     results = defaultdict(float)
     for timeperiod in ["aht", "pt", "iht"]:
         data = {
-            "scen_1": MatrixData(os.path.join(scenario_1, "Matrices")),
-            "scen_0": MatrixData(os.path.join(scenario_0, "Matrices")),
+            "scen_1": MatrixData(scenario_1 / "Matrices"),
+            "scen_0": MatrixData(scenario_0 / "Matrices"),
         }
         revenues_transit = 0
         revenues_car = 0
@@ -286,10 +287,10 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
     return pandas.DataFrame(results, zone_numbers)
 
 
-def read(file_name, scenario_path):
+def read(file_name, scenario_path: Path):
     """Read data from file."""
     return pandas.read_csv(
-        os.path.join(scenario_path, file_name), delim_whitespace=True)
+        scenario_path / file_name, delim_whitespace=True)
 
 
 def read_costs(matrixdata, time_period, transport_class, mtx_type):
@@ -418,7 +419,7 @@ if __name__ == "__main__":
         help="Path to Results directory.")
     args = parser.parse_args()
     log.initialize(args)
-    wb = load_workbook(os.path.join(SCRIPT_DIR, "CBA_kehikko.xlsx"))
+    wb = load_workbook(SCRIPT_DIR / "CBA_kehikko.xlsx")
     results = run_cost_benefit_analysis(
         args.baseline_scenario, args.projected_scenario, 1, wb)
     if (args.baseline_scenario_2 is not None
@@ -426,10 +427,10 @@ if __name__ == "__main__":
         run_cost_benefit_analysis(
             args.baseline_scenario_2, args.projected_scenario_2, 2, wb)
     results_filename = "cba_{}_{}".format(
-        os.path.basename(args.projected_scenario),
-        os.path.basename(args.baseline_scenario))
-    wb.save(os.path.join(args.results_path, results_filename + ".xlsx"))
+        Path(args.projected_scenario).name,
+        Path(args.baseline_scenario).name)
+    wb.save(Path(args.results_path) / (results_filename + ".xlsx"))
     results.to_csv(
-        os.path.join(args.results_path, results_filename + ".txt"),
+        Path(args.results_path) / (results_filename + ".txt"),
         sep='\t', float_format="%8.1f")
     log.info("CBA results saved to file: {}".format(results_filename))

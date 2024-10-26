@@ -1,24 +1,23 @@
 import os
 import json
 import subprocess
+from pathlib import Path
 
 
-def read_from_file(
-        path=os.path.join(os.path.dirname(
-            os.path.realpath(__file__)), "..", "dev-config.json")):
+def read_from_file(path: Path = Path(__file__).resolve().parent.parent / "dev-config.json") -> 'Config':
     """Read config parameters from json file.
 
     Parameters
     ----------
-    path : str (optional)
-        Path where json file is found (default: Scripts/dev-config.json)
+    path : str or Path (optional)
+    Path where json file is found (default: Scripts/dev-config.json)
 
     Returns
     -------
     Config
-        Config object with parameters set from file
+    Config object with parameters set from file
     """
-    with open(path, 'r') as file:
+    with path.open('r', encoding='utf-8') as file:
         config = json.load(file)
     return Config(config)
 
@@ -70,12 +69,12 @@ class Config:
     @property
     def VERSION(self):
         """HELMET version number from git tag or dev_config.json."""
-        os.chdir(os.path.dirname(os.path.realpath(__file__)))
+        os.chdir(Path(__file__).resolve().parent)
         try:
             # If model system is in a git repo
             return subprocess.check_output(
                 ["git", "describe", "--tags"], stderr=subprocess.STDOUT,
                 text=True)
-        except (subprocess.CalledProcessError, WindowsError):
+        except (subprocess.CalledProcessError, OSError):
             # If model system is downloaded with helmet-ui
             return self.HELMET_VERSION
