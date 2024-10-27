@@ -5,7 +5,7 @@ import numpy # type: ignore
 import pandas
 
 import parameters.zone as param
-from utils.read_csv_file import read_csv_file
+from utils.read_csv_file import read_csv_file, read_csv_file_series
 from utils.zone_interval import ZoneIntervals, zone_interval
 import utils.log as log
 from datatypes.zone import Zone
@@ -49,9 +49,9 @@ class ZoneData:
             self["parking_norm"] = cardata["prknorm"]
         except (NameError, KeyError):
             self._values["parking_norm"] = None
-        car_cost = read_csv_file(data_dir, ".cco", squeeze=False)
+        car_cost = read_csv_file(data_dir, ".cco")
         self.car_dist_cost = car_cost["dist_cost"][0]
-        truckdata = read_csv_file(data_dir, ".trk", squeeze=True)
+        truckdata = read_csv_file_series(data_dir, ".trk")
         self.trailers_prohibited = list(map(int, truckdata.loc[0, :]))
         self.garbage_destination = list(map(int, truckdata.loc[1, :].dropna()))
         pop = popdata["total"]
