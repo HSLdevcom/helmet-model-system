@@ -242,14 +242,21 @@ stopping_criteria_coarse = {
     "normalized_gap": 0.005,
 }
 # Congestion function for congested transit assignment
+congestion_func = '''
+def calc_segment_cost(transit_volume, line_capacity, segment):
+    if transit_volume < segment.line.seated_capacity:
+        return 0.0
+    return 0.8 * (transit_volume - segment.line.seated_capacity) / transit_volume
+'''
 trass_func = {
-    "type": "BPR",
-    "weight": 1.23,
-    "exponent": 3,
-    "assignment_period": 1,
-    "orig_func": False,
-    "congestion_attribute": "us3",
+    'type': 'CUSTOM',
+    'assignment_period': 1,
+    'orig_func': False,
+    'congestion_attribute': 'us3',
+    'python_function': congestion_func
 }
+always_congested = True
+
 # Stopping criteria for congested transit assignment
 trass_stop = {
     "max_iterations": 50,
