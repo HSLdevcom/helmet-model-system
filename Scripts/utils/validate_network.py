@@ -94,7 +94,7 @@ def validate(network, fares=None):
         if network.mode('c') in link.modes:
             if (linktype not in param.roadclasses
                     and linktype not in param.custom_roadtypes):
-                msg = "Link type missing for link {}".format(link.id)
+                msg = "Link type missing for link {} with type {} and modes {}".format(link.id, linktype, str(link.modes))
                 log.error(msg)
                 raise ValueError(msg)
         if network.mode('t') in link.modes or network.mode('p') in link.modes:
@@ -125,6 +125,12 @@ def validate(network, fares=None):
             elif not link.modes <= modesets[i // 2]:
                 # If link has unallowed modes
                 unofficial_nodes.add(node.id)
+                
+        if link["@pyoratieluokka"]>4:
+            msg = "Link {} with modes {} has attribute @pyoratieluokka set to {}. Maximum is 4.".format(link.id,str(link.modes),link["@pyoratieluokka"])
+            log.error(msg)
+            raise ValueError(msg)
+
         try:
             if link['@kaltevuus'] == 0:
                 nr_zero_gradients += 1

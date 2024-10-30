@@ -87,7 +87,7 @@ transit_delay_funcs = {
 }
 # Node numbers used in HSL official networks and their allowed modes
 official_node_numbers = {
-    "hcvkyasf": (1, 35000),
+    "hcvkyasf": (1, 35500), #park and ride included
     "hcvkybgdewasf": (40000, 600000),
     "hmaf": (800000, 800500),
     "hrjasf": (801000, 801500),
