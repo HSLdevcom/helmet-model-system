@@ -150,7 +150,7 @@ class ModelSystem:
                 purpose_impedance = self.imptrans.transform(
                     purpose, previous_iter_impedance)
                 purpose.generate_tours()
-                if is_last_iteration:
+                if param.always_congested or is_last_iteration:
                     for mode in purpose.model.dest_choice_param:
                         self._distribute_sec_dests(
                             purpose, mode, purpose_impedance)
@@ -347,7 +347,8 @@ class ModelSystem:
             impedance[tp] = ap.assign(self.dtm.demand[tp], iteration)
             if tp == "aht":
                 self._update_ratios(impedance[tp], tp)
-            if iteration=="last":
+            if iteration=="last": # TODO: Get uncongested time from assignment results
+                log.warn('TODO: Get uncongested transit time from the assignment results')
                 impedance[tp]["time"]["transit_uncongested"] = previous_iter_impedance[tp]["time"]["transit_work"]
                 self._save_to_omx(impedance[tp], tp)
         if iteration=="last":
@@ -619,7 +620,7 @@ class AgentModelSystem(ModelSystem):
         elif nr_threads <= 0:
             nr_threads = 1
         bounds = next(iter(purpose.sources)).bounds
-        modes = purpose.modes if is_last_iteration else ["car"]
+        modes = purpose.modes if param.always_congested or is_last_iteration else ["car"]
         for mode in modes:
             threads = []
             for i in range(nr_threads):

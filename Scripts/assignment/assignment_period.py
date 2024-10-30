@@ -124,22 +124,22 @@ class AssignmentPeriod(Period):
                 self._calc_background_traffic()
             self._assign_cars(param.stopping_criteria_coarse)
             self._calc_extra_wait_time()
-            self._assign_transit()
+            self._assign_congested_transit() if param.always_congested else self._assign_transit()
         elif iteration==0:
             self._set_car_and_transit_vdfs()
             if not self._separate_emme_scenarios:
                 self._calc_background_traffic()
             self._assign_cars(param.stopping_criteria_coarse)
             self._calc_extra_wait_time()
-            self._assign_transit()
+            self._assign_congested_transit() if param.always_congested else self._assign_transit()
         elif iteration==1:
             if not self._separate_emme_scenarios:
                 self._set_car_and_transit_vdfs()
                 self._calc_background_traffic()
             self._assign_cars(param.stopping_criteria_coarse)
             self._calc_extra_wait_time()
-            self._assign_transit()
-            self._calc_background_traffic(include_trucks=True)
+            self._assign_congested_transit()
+            self._assign_congested_transit() if param.always_congested else self._assign_transit()
         elif isinstance(iteration, int) and iteration>1:
             if not self._separate_emme_scenarios:
                 self._set_car_and_transit_vdfs()
@@ -147,7 +147,7 @@ class AssignmentPeriod(Period):
             self._assign_cars(
                 param.stopping_criteria_coarse, lightweight=True)
             self._calc_extra_wait_time()
-            self._assign_transit()
+            self._assign_congested_transit() if param.always_congested else self._assign_transit()
         elif iteration=="last":
             self._set_bike_vdfs()
             self._assign_bikes(self.emme_matrices["bike"]["dist"], "all")
@@ -424,7 +424,7 @@ class AssignmentPeriod(Period):
         tmp_mtx = {
             "bike": 0,
         }
-        if not is_last_iteration:
+        if not (param.always_congested or is_last_iteration):
             tmp_mtx["transit"] = 0
         for mtx in matrices:
             mode = mtx.split('_')[0]
@@ -474,7 +474,7 @@ class AssignmentPeriod(Period):
         matrices = {}
         for ass_class, mtx_types in self.emme_matrices.items():
             if (mtx_type in mtx_types and
-                    (is_last_iteration or ass_class not in last_iter_classes)):
+                    (param.always_congested or is_last_iteration or ass_class not in last_iter_classes)):
                 if mtx_type == "time" and ass_class in param.assignment_modes:
                     mtx = self._extract_timecost_from_gcost(ass_class)
                 elif mtx_type == "time" and ass_class in param.transit_classes:
@@ -482,7 +482,7 @@ class AssignmentPeriod(Period):
                 else:
                     mtx = self._get_matrix(ass_class, mtx_type)
                 matrices[ass_class] = mtx
-        if not is_last_iteration:
+        if not (param.always_congested or is_last_iteration):
             matrices["transit_leisure"] = matrices["transit_work"]
         return matrices
 
