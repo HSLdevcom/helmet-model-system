@@ -8,7 +8,7 @@ RoadClass = namedtuple(
         "type", "num_lanes", "volume_delay_func", "lane_capacity",
         "free_flow_speed", "bus_delay",
     ))
-# Code derived from three-digit link type xyz, where yz is the road class code
+# Code derived from three-digit link type xyz, where yz is the road class code. See dictionary volume_delay_funcs below.
 roadclasses = {
     21: RoadClass("motorway", "<3", 1, 2100, 113, 0.265),
     22: RoadClass("motorway", ">=3", 1, 1900, 113, 0.265),
@@ -44,7 +44,7 @@ custom_roadtypes = {
     94: "arterial",
     95: "local",
 }
-# Bike delay function ids
+# Bike delay function ids, defaults to None. See dictionary volume_delay_funcs below.
 bikepath_vdfs = (
     {  # 0 - Mixed traffic
         None: 78,
@@ -67,6 +67,7 @@ bikepath_vdfs = (
         None: 70,
     }
 )
+
 # Transit delay function ids
 transit_delay_funcs = {
     ("bus", "bgde"): {
@@ -97,6 +98,14 @@ vdf_temp = ("(put(60/ul2)*(1+{}*put((volau+volad)/{})/"
             + "(ul1-get(2))))*(get(2).le.put(ul1*{}))*length+(get(2).gt."
             + "get(3))*({}*get(1)*length+{}*(get(2)-get(3))*length)")
 buslane = "((lanes-1).max.0.8)"
+vdf_bikes = ("length * (60/((5.max.({} + (el1.lt.0) * (1.56 * el1) +"
+             +" (el1.gt.0) * (1.3 * el1))).min.({}*1.3)))")
+vdf_bikes_baana = ("length*(60/((5.max.({} + (el1.lt.0) * (1.56 * el1) +"
+                   +" (el1.gt.0) * (1.3 * el1))).min.35))")
+vdf_bikes_mixed_lane = "(length * (60/((5.max.({flat} + (el1.lt.0) * (1.56 * el1) + (el1.gt.0) * (1.3 * el1)) + (-5).max.{vol}.min.5).min.({flat}*1.5))))"
+
+b_volume_mixed = "(-1.962 * ln(4*(el2+el3+el4+el5+el6+10)/1000) * 0.689)"
+b_volume_lane = "(-1.962 * ln(4*(el2+el3+el4+el5+el6+10)/1000) * 0.807)"
 volume_delay_funcs = {
     # Car functions
     "fd1": vdf_temp.format(0.02, "lanes", 0.975, 1.78, 0.0075),
@@ -111,16 +120,16 @@ volume_delay_funcs = {
     "fd10": vdf_temp.format(0.3, buslane, 0.810, 2.28, 0.0170),
     "fd99": "length * 1.3",
     # Bike functions
-    "fd70": "length*(60/19)",
-    "fd71": "length*(60/17)",
-    "fd72": "length*(60/17)",
-    "fd73": "length*(60/16)",
-    "fd74": "length*(60/15)",
-    "fd75": "length*(60/15)",
-    "fd76": "length*(60/12)",
-    "fd77": "length*(60/10)",
-    "fd78": "length*(60/12)",
-    "fd98": "length*(60/12)",
+    "fd70": vdf_bikes_baana.format(19),
+    "fd71": vdf_bikes.format(17, 17),
+    "fd72": vdf_bikes.format(17, 17),
+    "fd73": vdf_bikes.format(16, 16),
+    "fd74": vdf_bikes.format(15, 15),
+    "fd75": vdf_bikes_mixed_lane.format(flat=12, vol=b_volume_lane),
+    "fd76": vdf_bikes_mixed_lane.format(flat=12, vol=b_volume_mixed),
+    "fd77": vdf_bikes_mixed_lane.format(flat=10, vol=b_volume_mixed),
+    "fd78": vdf_bikes_mixed_lane.format(flat=10, vol=b_volume_mixed),
+    "fd98": vdf_bikes.format(12, 12),
     # Transit functions
     ## Bus, no bus lane
     "ft01": "us2*length+timau",

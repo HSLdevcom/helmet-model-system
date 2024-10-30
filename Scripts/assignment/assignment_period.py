@@ -126,6 +126,8 @@ class AssignmentPeriod(Period):
             self._calc_extra_wait_time()
             self._assign_congested_transit() if param.always_congested else self._assign_transit()
         elif iteration==0:
+            self._set_bike_vdfs()
+            self._assign_bikes(self.emme_matrices["bike"]["dist"], "all")
             self._set_car_and_transit_vdfs()
             if not self._separate_emme_scenarios:
                 self._calc_background_traffic()
@@ -372,6 +374,13 @@ class AssignmentPeriod(Period):
     def _set_bike_vdfs(self):
         log.info("Sets bike functions for scenario {}".format(
             self.emme_scenario.id))
+        # Create time period specific extra function parameters for bike assignment
+        # TODO: create a combined extra atrribute and use a single extra function parameter
+        self.emme_project.create_extra_function_parameters(el2=self.extra('car_work'), 
+                                                           el3=self.extra('car_leisure'), 
+                                                           el4=self.extra('van'),
+                                                           el5=self.extra('truck'),
+                                                           el6=self.extra('trailer_truck'))
         network = self.emme_scenario.get_network()
         main_mode = network.mode(param.main_mode)
         bike_mode = network.mode(param.bike_mode)
