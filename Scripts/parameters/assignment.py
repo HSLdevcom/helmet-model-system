@@ -141,7 +141,7 @@ volume_delay_funcs = {
     "ft04": "(length / ((int(ul1 / 100)) .mod. 100)) * 60",
     ## Tram iht
     "ft05": "(length / (ul1 .mod. 100)) * 60",
-    ## Train functions
+    ## Train and metro functions
     "ft6": "us1",
     ## Escape function, speed 40 km/h
     "ft7": "length/(40/60)",

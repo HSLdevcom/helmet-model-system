@@ -209,61 +209,77 @@ class AssignmentPeriod(Period):
         mapping : dict
             Dictionary of zone numbers and corresponding indices
         """
-        # Move transfer penalty to boarding penalties,
-        # a side effect is that it then also affects first boarding
-        self._calc_boarding_penalties(5)
+        #Calculate boarding penalties in the standard way
+        self._calc_boarding_penalties()
         has_visited = {}
         network = self.emme_scenario.get_network()
         transit_zones = {node.label for node in network.nodes()}
         tc = "transit_work"
         spec = TransitSpecification(
             self._segment_results[tc], self.extra("hw"),
-            self.emme_matrices[tc], count_zone_boardings=True)
-        is_in_transit_zone_attr = param.is_in_transit_zone_attr.replace(
-            "ui", "data")
-        for transit_zone in transit_zones:
-            # Set tag to 1 for nodes in transit zone and 0 elsewhere
-            for node in network.nodes():
-                node[is_in_transit_zone_attr] = (node.label == transit_zone)
+            self.emme_matrices[tc])
+        vot_inv = param.vot_inv["work"]*(1/44) #44 because it is monthly cost
+
+        #just for getting the matrix size
+        self.emme_project.transit_assignment(
+            specification=spec.transit_spec, scenario=self.emme_scenario,
+            save_strategies=True)
+        self.emme_project.matrix_results(
+            spec.transit_result_spec, self.emme_scenario)
+        nr_visits = self._get_matrix(
+            tc, "actual_total_boarding_costs")
+        #matrix size obtained
+        maxfare = 999
+        cost = numpy.full_like(nr_visits, maxfare)
+        tot_time = numpy.full_like(nr_visits, maxfare)
+
+        #preserve original attributes:
+        allow_boardings = {}
+        allow_alightings = {}
+        for segment in network.transit_segments():
+                allow_boardings[segment.id] = segment.allow_boardings
+                allow_alightings[segment.id] = segment.allow_alightings
+
+        #TODO: Jarvenpaa exclusive fare is now not exclusive
+        for zone_combination in fares.zone_fares:
+            log.debug("Handling zone combination: "+str(zone_combination))
+            fare = fares.zone_fares[zone_combination]
+            #filter and cut lines so that we have only those within the zone by disabling boarding elsewhere
+            for segment in network.transit_segments():
+                is_zone = segment.i_node.label in zone_combination
+                #allow boardings and alightings if in zone combination and previously allowed
+                if is_zone:
+                    segment.allow_alightings = allow_alightings[segment.id]
+                    segment.allow_boardings = allow_boardings[segment.id]
+                else:
+                    segment.allow_alightings = False
+                    segment.allow_boardings = False
+
             self.emme_scenario.publish_network(network)
-            # Transit assignment with zone tag as weightless boarding cost
+
+            #perform transit assignment
             self.emme_project.transit_assignment(
                 specification=spec.transit_spec, scenario=self.emme_scenario,
                 save_strategies=True)
             self.emme_project.matrix_results(
                 spec.transit_result_spec, self.emme_scenario)
-            nr_visits = self._get_matrix(
-                tc, "actual_total_boarding_costs")
-            # If the number of visits is less than 1, there seems to
-            # be an easy way to avoid visiting this transit zone
-            has_visited[transit_zone] = (nr_visits > 0.99)
-        for centroid in network.centroids():
-            # Add transit zone of destination to visited
-            has_visited[centroid.label][:, mapping[centroid.number]] = True
-        maxfare = 999
-        cost = numpy.full_like(nr_visits, maxfare)
-        mtx = next(iter(has_visited.values()))
-        for zone_combination in fares.zone_fares:
-            goes_outside = numpy.full_like(mtx, False)
-            for transit_zone in has_visited:
-                # Check if the OD-flow has been at a node that is
-                # outside of this zone combination
-                if transit_zone not in zone_combination:
-                    goes_outside |= has_visited[transit_zone]
-            is_inside = ~goes_outside
-            if zone_combination in fares.exclusive:
-                # Calculate fares exclusive for municipality citizens
-                exclusion = pandas.DataFrame(
-                    is_inside, self.emme_scenario.zone_numbers,
-                    self.emme_scenario.zone_numbers)
-                municipality = fares.exclusive[zone_combination]
-                inclusion = zone_param.municipalities[municipality]
-                exclusion.loc[:inclusion[0]-1] = False
-                exclusion.loc[inclusion[1]+1:] = False
-                is_inside = exclusion.values
-            zone_fare = fares.zone_fares[zone_combination]
-            # If OD-flow matches several combinations, pick cheapest
-            cost[is_inside] = numpy.minimum(cost[is_inside], zone_fare)
+            gen_cost_matrix = self._get_matrix(
+                tc, "time")+vot_inv*fare #total cost in minutes
+            cost[gen_cost_matrix<tot_time] = fare #apply fare if this ticket is the best
+            tot_time[gen_cost_matrix<tot_time] = gen_cost_matrix[gen_cost_matrix<tot_time] #update the best total time
+
+        #revert back to its original state
+        for segment in network.transit_segments():
+                segment.allow_boardings = allow_boardings[segment.id]
+                segment.allow_alightings = allow_alightings[segment.id]
+        self.emme_scenario.publish_network(network) #resetting network to its original state
+        # Rerun again for matkahuolto prices
+        self.emme_project.transit_assignment(
+            specification=spec.transit_spec, scenario=self.emme_scenario,
+            save_strategies=True)
+        self.emme_project.matrix_results(
+            spec.transit_result_spec, self.emme_scenario)
+        
         # Replace fare for peripheral zones with fixed matrix
         bounds = zone_param.areas["peripheral"]
         zn = pandas.Index(self.emme_scenario.zone_numbers)
