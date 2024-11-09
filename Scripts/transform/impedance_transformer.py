@@ -3,6 +3,10 @@ import numpy # type: ignore
 
 import parameters.impedance_transformation as param
 from parameters.assignment import assignment_classes
+try:
+    from parameters.assignment import parking_time
+except ImportError:
+    parking_time = None
 
 
 class ImpedanceTransformer:
@@ -55,4 +59,11 @@ class ImpedanceTransformer:
         for i in range(1, len(purpose.sub_bounds)):
             trips_per_month[purpose.sub_bounds[i], :] = trips_month[i]
         day_imp["transit"]["cost"] /= trips_per_month
+        # Add parking time to car matrices
+        if parking_time is not None:
+            ptime = parking_time(purpose.zone_data).to_numpy()[cols]
+            ptime = numpy.clip(ptime, 0, 30)
+            car_modes = [k for k in day_imp.keys() if k in ('car', 'car_work', 'car_transit')]
+            for k in car_modes:
+                day_imp[k]['time'] += ptime[None,:]
         return day_imp
