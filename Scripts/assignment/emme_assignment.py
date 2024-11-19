@@ -471,18 +471,27 @@ class EmmeAssignmentModel(AssignmentModel):
                 speed = (0.3*(60*link.length/link["@car_time_aht"])
                          + 0.7*link.data2)
             speed = max(speed, 50.0)
-
+            
             # Calculate start noise
-            if speed <= 90:
-                heavy_correction = (10*log10((1-heavy_share)
-                                    + 500*heavy_share/speed))
+            log.info("NEW FORMULA FOR NOISE CALC")
+            if speed >= 50:
+                LAE_light = 73.5 + 25*log10(speed/50) 
+                LAE_heavy = 80.5 + 30*log10(speed/50)
+            elif speed >= 40:
+                LAE_light = 73.5 + 25*log10(speed/50)
+                LAE_heavy = 80.5
+            elif speed < 40:
+                LAE_light = 71.1
+                LAE_heavy = 80.5
+            if cross_traffic > 0:
+                LAeq_light = LAE_light + 10*log10(cross_traffic/15/3600)
+                LAeq_heavy = LAE_heavy + 10*log10(heavy_share*cross_traffic/15/3600) if heavy_share > 0 else 0
+                start_noise = 10*log10(10**(LAeq_light/10)+10**(LAeq_heavy/10)) if LAeq_heavy > 0 else LAeq_light
             else:
-                heavy_correction = (10*log10((1-heavy_share)
-                                    + 5.6*heavy_share*(90/speed)**3))
-            start_noise = ((68 + 30*log10(speed/50)
-                           + 10*log10(cross_traffic/15/1000)
-                           + heavy_correction)
-                if cross_traffic > 0 else 0)
+                start_noise = 0
+            log.info(start_noise)
+
+
 
             # Calculate noise zone width
             func = param.noise_zone_width
