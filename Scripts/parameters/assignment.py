@@ -2,6 +2,11 @@
 
 from collections import namedtuple
 from typing import Dict, List, Union
+
+import numpy as np
+import pandas as pd
+
+from datahandling.zonedata import ZoneData
 RoadClass = namedtuple(
     "RoadClass",
     (
@@ -180,6 +185,11 @@ vot_inv = {
 }
 # Default distance unit cost [eur/km]
 dist_unit_cost = 0.12
+# Parking time function
+def parking_time(zone_data: ZoneData) -> pd.Series:
+    density: pd.Series = (zone_data['population'] + zone_data['workplaces']) / zone_data['zone_area']
+    return 0.05993817*np.sqrt(density) + 5.24176150
+
 # Default distance unit time for trucks and trailer trucks [min/km]
 freight_dist_unit_time = 0.2
 # Boarding penalties for different transit modes
