@@ -89,7 +89,9 @@ class ParkAndRideTransformer(ImpedanceTransformerBase):
                     'time': inf_mat,
                     'dist': inf_mat,
                     'gen_cost': inf_mat,
-                    'used_facility': np.full((rows, cols), None)
+                    'used_facility': np.full((rows, cols), None),
+                    'delta_impedance': {},
+                    'one_km_radius': inf_mat,
                 }
             }
             
@@ -105,6 +107,7 @@ class ParkAndRideTransformer(ImpedanceTransformerBase):
         
         day_imp[transit_mode]['cost'] = transit_cost_to_per_day(day_imp[transit_mode]['cost'], purpose)
         
+
         cost = np.stack([day_imp[car_mode]['cost'][:,f.zone_offset][:,None] +
                          day_imp[transit_mode]['cost'][f.zone_offset, :][None,:]
                                     for f in self._facilities])
@@ -118,6 +121,18 @@ class ParkAndRideTransformer(ImpedanceTransformerBase):
                                     for f in self._facilities])[:, rows, cols]
         dist = dist[:,rows,cols]
 
+        delta_impedance = {}
+        for f in self._facilities:
+            delta_impedance[f] = day_imp[car_mode]['dist'][:,f.zone_offset][:,None] \
+            + day_imp[transit_mode]['dist'][f.zone_offset, :][None,:] \
+            - day_imp[car_mode]['dist']
+
+        one_km_mask_matrix = day_imp[car_mode]['dist']>1 #if closer than one km
+
+        one_km_mask = {}
+        for f in self._facilities:
+            one_km_mask[f] = one_km_mask_matrix[f,:]
+            
         #Adding the cost and time experienced at the facility
         cost += np.array([f.cost for f in self._facilities])[:,None,None]
         time += np.array([f.time for f in self._facilities])[:,None,None]
@@ -132,7 +147,9 @@ class ParkAndRideTransformer(ImpedanceTransformerBase):
                 'time': np.take_along_axis(time, min_index, axis=0)[0],
                 'dist': np.take_along_axis(dist, min_index, axis=0)[0], #TODO: Fix this?
                 'gen_cost': np.take_along_axis(generalized_cost, min_index, axis=0)[0],
-                'used_facility': np.take_along_axis(f_zones, min_index, axis=0)[0]
+                'used_facility': np.take_along_axis(f_zones, min_index, axis=0)[0],
+                'delta_impedance': delta_impedance,
+                'one_km_radius': one_km_mask,
             }
         }
         return day_impedance

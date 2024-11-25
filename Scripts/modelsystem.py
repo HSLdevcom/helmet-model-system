@@ -11,6 +11,7 @@ from assignment.abstract_assignment import AssignmentModel
 from assignment.emme_assignment import EmmeAssignmentModel
 from assignment.mock_assignment import MockAssignmentModel
 
+from models.park_and_ride_logit import ParkAndRidePurpose
 from transform.park_and_ride_transformer import ParkAndRideTransformer
 import utils.log as log
 from utils.zone_interval import ArrayAggregator
@@ -89,6 +90,7 @@ class ModelSystem:
 
         #init Impedance transformers
         pnr_transformer = ParkAndRideTransformer(self.zdata_forecast)
+        self.pnr_distribution = ParkAndRidePurpose(self.zdata_forecast, self.resultdata)
         self.imptrans = ImpedanceTransformer(extra_transformers=[pnr_transformer],
                                              export_path=estimation_data_path)
         
@@ -170,7 +172,7 @@ class ModelSystem:
                                     break
                             else:
                                 log.error(f"No park and ride transformer found for {purpose.name} model")
-                            self.dtm.split_park_and_ride(demand["park_and_ride"],pnr_impedances[purpose.name],pnr_transformer.get_pnr_map(),self.zdata_forecast)
+                            self.dtm.split_park_and_ride(demand["park_and_ride"],pnr_impedances[purpose.name],pnr_transformer.get_pnr_map(),self.pnr_distribution)
                         else:
                             self.dtm.add_demand(demand[mode])
                         self.travel_modes[mode] = True

@@ -5,6 +5,9 @@
 from typing import Any, Dict, Optional
 
 mode_choice = {
+    "pnr": {
+        "park_and_ride": None
+    },
     "hw": {
         "car": {
             "generation": {
