@@ -128,6 +128,13 @@ class ImpedanceTransformer(ImpedanceTransformerBase):
         for i in range(1, len(purpose.sub_bounds)):
             trips_per_month[purpose.sub_bounds[i], :] = trips_month[i]
         day_imp["transit"]["cost"] /= trips_per_month
+
+        # Process possible extra transformers (eg. P&R impedance)
+        for transformer in self._extra_transformers:
+            extra_results = transformer.transform(purpose, impedance)
+            for result_name, result in extra_results.items():
+                day_imp[result_name] = result
+                
         # Add parking time to car matrices
         if parking_time is not None:
             ptime = parking_time(purpose.zone_data).to_numpy()[cols]

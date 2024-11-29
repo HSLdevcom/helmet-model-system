@@ -39,6 +39,7 @@ class LogitModelTest(unittest.TestCase):
             },
             "bike": {
                 "dist": mtx,
+                "time": mtx,
             },
             "walk": {
                 "dist": mtx,
