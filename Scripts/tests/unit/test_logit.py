@@ -39,14 +39,14 @@ class LogitModelTest(unittest.TestCase):
             },
             "bike": {
                 "dist": mtx,
+                "time": mtx,
             },
             "walk": {
                 "dist": mtx,
             },
             "park_and_ride": {
-                "time": mtx,
-                "cost": mtx,
                 "dist": mtx,
+                "utility": mtx,
             }
         }
         pur.bounds = slice(0, 9)

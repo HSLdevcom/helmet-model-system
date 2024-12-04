@@ -7,19 +7,6 @@ import numpy as np # type: ignore
 
 # Destination choice (generated 2.9.2024)
 destination_choice = {
-    "pnr": {
-        "park_and_ride": {
-            "impedance": {
-                "delta_time": (-0.1,-0.1),
-            },
-            "log": {
-                "size": 1.0
-            },
-            "attraction": {
-                "shops": (0.1, 0.1)
-            },
-        },
-    },
     "hw": {
         "car": {
             "attraction": {
@@ -84,8 +71,23 @@ destination_choice = {
             }
         },
         "park_and_ride": {
+            "utility": {
+                "facility": {
+                    "shops": 0.01,
+                    "cost": -0.1,
+                    "time": -0.1
+                },
+                "car_impedance": {
+                    "time": -0.019273809692544004,
+                    "cost": -0.146013709792
+                },
+                "transit_impedance": {
+                    "time": -0.146013709792,
+                    "cost": -0.0174294749661
+                }
+            },          
             "impedance": {
-                "cost": -0.00770353464125
+                "utility": 0.00770353464125
             },
             "attraction": {
                 "parking_cost_work": (0.771663871487, 0.771663871487)

@@ -5,8 +5,9 @@ import pandas
 from datahandling.resultdata import ResultsData
 from datahandling.zonedata import ZoneData
 
+from models.park_and_ride_model import ParkAndRideModel, ParkAndRidePseudoPurpose
 import parameters.zone as param
-from parameters.destination_choice import secondary_destination_threshold
+from parameters.destination_choice import secondary_destination_threshold, destination_choice
 import models.logit as logit
 import models.generation as generation
 from datatypes.demand import Demand
@@ -59,6 +60,7 @@ class Purpose:
         self.modes: List[str] = []
         self.generated_tours: Dict[str, numpy.array] = {}
         self.attracted_tours: Dict[str, numpy.array] = {}
+        self.park_and_ride_model: ParkAndRideModel = None
 
     @property
     def zone_numbers(self):
@@ -124,6 +126,12 @@ class TourPurpose(Purpose):
         self.own_zone_aggregates = {mode: ArrayAggregator(zone_data.zone_numbers)
             for mode in self.modes}
         self.sec_dest_purpose = None
+        self.park_and_ride_model = None
+        if "park_and_ride" in destination_choice[self.name]:
+            self.park_and_ride_model = ParkAndRideModel(
+                zone_data, self)
+        else:
+            self.park_and_ride_model = None
 
     def print_data(self):
         Purpose.print_data(self)
@@ -155,6 +163,10 @@ class TourPurpose(Purpose):
             Mode (car/transit/bike/walk) : dict
                 Type (time/cost/dist) : numpy 2d matrix
         """
+        if self.park_and_ride_model is not None:
+            pnr_utility = self.park_and_ride_model.get_logsum()
+            impedance['park_and_ride'] = {'utility': pnr_utility,
+                                          'dist': impedance['car']['dist']}
         self.prob = self.model.calc_prob(impedance)
         self.dist = impedance["car"]["dist"]
 
@@ -169,6 +181,10 @@ class TourPurpose(Purpose):
             Mode (car/transit/bike/walk) : dict
                 Type (time/cost/dist) : numpy 2d matrix
         """
+        if self.park_and_ride_model is not None:
+            pnr_utility = self.park_and_ride_model.get_logsum()
+            impedance['park_and_ride'] = {'utility': pnr_utility,
+                                          'dist': impedance['car']['dist']}
         self.model.calc_basic_prob(impedance)
         self.dist = impedance["car"]["dist"]
 
@@ -189,7 +205,13 @@ class TourPurpose(Purpose):
                 self.sec_dest_purpose.gen_model.add_tours(mtx, mode, self)
             except AttributeError:
                 pass
-            demand[mode] = Demand(self, mode, mtx)
+            if mode == "park_and_ride":
+                car_demand, transit_demand = self.park_and_ride_model.distribute_demand(mtx)
+                pnr_purpose = ParkAndRidePseudoPurpose(self)
+                demand["pnr_car"] = Demand(pnr_purpose, "car", car_demand)
+                demand["pnr_transit"] = Demand(pnr_purpose, "transit", transit_demand)
+            else:
+                demand[mode] = Demand(self, mode, mtx)
             self.attracted_tours[mode] = mtx.sum(0)
             self.generated_tours[mode] = mtx.sum(1)
             self.histograms[mode].count_tour_dists(mtx, self.dist)

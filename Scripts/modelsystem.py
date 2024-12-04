@@ -11,8 +11,6 @@ from assignment.abstract_assignment import AssignmentModel
 from assignment.emme_assignment import EmmeAssignmentModel
 from assignment.mock_assignment import MockAssignmentModel
 
-from models.park_and_ride_logit import ParkAndRidePurpose
-from transform.park_and_ride_transformer import ParkAndRideTransformer
 import utils.log as log
 from utils.zone_interval import ArrayAggregator
 import assignment.departure_time as dt
@@ -89,9 +87,7 @@ class ModelSystem:
             self.ass_model.nr_zones, self.ass_model.time_periods)
 
         #init Impedance transformers
-        pnr_transformer = ParkAndRideTransformer(self.zdata_forecast)
-        self.pnr_distribution = ParkAndRidePurpose(self.zdata_forecast, self.resultdata)
-        self.imptrans = ImpedanceTransformer(extra_transformers=[pnr_transformer],
+        self.imptrans = ImpedanceTransformer(extra_transformers=[],
                                              export_path=estimation_data_path)
         
         bounds = slice(0, self.zdata_forecast.nr_zones)
@@ -129,15 +125,16 @@ class ModelSystem:
         # Mode and destination probability matrices are calculated first,
         # as logsums from probability calculation are used in tour generation.
         self.dm.create_population_segments()
-        pnr_impedances = {}
+        saved_pnr_impedance = {}
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
                 purpose.gen_model.init_tours()
             else:
                 purpose_impedance = self.imptrans.transform(
                     purpose, previous_iter_impedance)
-                if "park_and_ride" in purpose_impedance:
-                    pnr_impedances[purpose.name] = purpose_impedance["park_and_ride"]
+                if purpose.park_and_ride_model is not None:
+                    saved_pnr_impedance[purpose.name] = purpose_impedance
+                    purpose.park_and_ride_model.set_impedance(previous_iter_impedance)
                 purpose.calc_prob(purpose_impedance)
                 if is_last_iteration and purpose.name not in ("sop", "so"):
                     purpose.accessibility_model.calc_accessibility(
@@ -162,19 +159,20 @@ class ModelSystem:
             else:
                 if purpose.name != "wh":
                     demand = purpose.calc_demand()
+                    if purpose.park_and_ride_model is not None:
+                        # Apply penalty for overcrowded park and ride facilities.
+                        MAX_PNR_ITERATIONS = 5 # Maximum number of iterations. Set to 0 for no penalty
+                        for i in range(MAX_PNR_ITERATIONS):
+                            modified = purpose.park_and_ride_model.apply_crowding_penalty()
+                            purpose.calc_prob(saved_pnr_impedance[purpose.name])
+                            demand = purpose.calc_demand()
+                            log.debug(f"Park and ride crowding penalty iteration {i+1} modified {modified} facilities.")
+                            if modified < 1:
+                                break
+
                 if purpose.dest != "source":
                     for mode in demand:
-                        if mode == "park_and_ride":
-                            pnr_transformer = None
-                            for et in self.imptrans._extra_transformers:
-                                if type(et) == ParkAndRideTransformer:
-                                    pnr_transformer = et
-                                    break
-                            else:
-                                log.error(f"No park and ride transformer found for {purpose.name} model")
-                            self.dtm.split_park_and_ride(demand["park_and_ride"],pnr_impedances[purpose.name],pnr_transformer.get_pnr_map(),self.pnr_distribution)
-                        else:
-                            self.dtm.add_demand(demand[mode])
+                        self.dtm.add_demand(demand[mode])
                         self.travel_modes[mode] = True
         log.info("Demand calculation completed")
 
@@ -572,12 +570,17 @@ class AgentModelSystem(ModelSystem):
         log.info("Demand calculation started...")
         random.seed(None)
         self.dm.car_use_model.calc_basic_prob()
+        saved_pnr_impedance = {}
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
                 purpose.init_sums()
             else:
                 purpose_impedance = self.imptrans.transform(
                     purpose, previous_iter_impedance)
+                if purpose.park_and_ride_model is not None:
+                    saved_pnr_impedance[purpose.name] = purpose_impedance
+                    purpose.park_and_ride_model.set_impedance(previous_iter_impedance)
+
                 if (purpose.area == "peripheral" or purpose.dest == "source"
                         or purpose.name == "oop"):
                     purpose.calc_prob(purpose_impedance)

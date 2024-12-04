@@ -5,8 +5,6 @@ from datahandling.zonedata import ZoneData
 from datatypes.demand import Demand
 from datatypes.tour import Tour
 
-from models.park_and_ride_logit import ParkAndRidePurpose
-from transform.park_and_ride_transformer import ParkAndRideTransformer
 import utils.log as log
 import parameters.departure_time as param
 from parameters.assignment import transport_classes, assignment_classes
@@ -68,38 +66,6 @@ class DepartureTimeModel:
             for tp in self.time_periods}
 
         return {"rel_gap": relative_gap, "max_gap": max_gap}
-
-    def split_park_and_ride(self, demand: Union[Demand, Tour], park_and_ride_impedance:Dict[str, numpy.ndarray], park_and_ride_facility_map: Dict[int,int], pr_purpose: ParkAndRidePurpose):
-        log.info("Splitting park and ride demand to cars and public transport for {} facilities".format(len(park_and_ride_facility_map)))
-        position2 = cast(Tuple[int,int], demand.position) #type checker hint
-
-        zone_data = pr_purpose.zone_data
-        share: Dict[str, Any] = param.demand_share[demand.purpose.name][demand.mode]
-        all_zones_len = len(zone_data.all_zone_numbers)
-        car_matrix = numpy.zeros((all_zones_len,all_zones_len))
-        transit_matrix = numpy.zeros((all_zones_len,all_zones_len))
-
-        #used_facility = park_and_ride_impedance["used_facility"]
-        #target_cell = park_and_ride_facility_map[used_facility]
-        pr_purpose.calc_park_and_ride_expsum("park_and_ride", park_and_ride_impedance, zone_data) #calculate the logsum for all facilities
-        used_facilities_probs = pr_purpose.get_park_and_ride_routes() #probabilities of using a facility, dict[matrix] target_cell:n*n
-        for target_cell in used_facilities_probs:
-            #move car journeys to park and ride facilities
-            pr_facility_demand = used_facilities_probs[target_cell] * demand.matrix #demand matrix
-            source_zones = [j for j in range(zone_data.nr_zones_hs15)]
-            target_zones = [j for j in range(zone_data.nr_zones_hs15)]
-            
-            car_matrix[source_zones, target_cell] += pr_facility_demand.sum(axis=1) #for cars Park and ride is target only
-            transit_matrix[target_cell, target_zones] += pr_facility_demand.sum(axis=0) #for transit Park and ride is source only
-
-
-        for time_period in self.time_periods:
-            self._add_2d_demand(
-                share[time_period], "car_work", time_period,
-                car_matrix, position2)
-            self._add_2d_demand(
-                share[time_period], "transit_work", time_period,
-                transit_matrix, position2)
 
     def add_demand(self, demand: Union[Demand, Tour]):
         """Add demand matrix for whole day.

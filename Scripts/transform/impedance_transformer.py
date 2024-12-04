@@ -1,11 +1,12 @@
 from abc import ABC
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, TYPE_CHECKING
 import numpy
 import openmatrix as omx
 
-from datatypes.purpose import Purpose
+if TYPE_CHECKING:
+    from datatypes.purpose import Purpose
 import parameters.impedance_transformation as param
 from parameters.assignment import assignment_classes
 try:
@@ -16,7 +17,7 @@ except ImportError:
 import numpy as np
 import openmatrix as omx
 
-def transit_cost_to_per_day(cost: np.ndarray, purpose: Purpose) -> None:
+def transit_cost_to_per_day(cost: np.ndarray, purpose: 'Purpose') -> None:
     """Converts monthly transit ticket cost to daily cost.
 
     Args:
@@ -32,7 +33,7 @@ def transit_cost_to_per_day(cost: np.ndarray, purpose: Purpose) -> None:
 
 class ImpedanceTransformerBase(ABC):
     def transform(self,
-                  purpose: Purpose,
+                  purpose: 'Purpose',
                   impedance: Dict[str, Dict[str, Dict[str, np.ndarray]]]
                   ) -> Dict[str, Dict[str, np.ndarray]]:
         """Perform transformation from time period dependent matrices 
@@ -65,7 +66,7 @@ class ImpedanceTransformer(ImpedanceTransformerBase):
         self._extra_transformers = extra_transformers
         self._export_path = export_path
     
-    def export_day_impedance(self, purpose: Purpose, day_imp: Dict[str, Dict[str, np.ndarray]]):
+    def export_day_impedance(self, purpose: 'Purpose', day_imp: Dict[str, Dict[str, np.ndarray]]):
         """Export day impedance matrices to OMX files. Used for estimation process.
 
         Args:
