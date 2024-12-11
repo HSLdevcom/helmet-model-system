@@ -73,17 +73,17 @@ destination_choice = {
         "park_and_ride": {
             "utility": {
                 "facility": {
-                    "shops": 0.01,
-                    "cost": -0.1,
-                    "time": -0.1
+                    "shops": 0.00001,
+                    "cost": -0.146013709792,
+                    "time": -0.019273809692544004
                 },
                 "car_impedance": {
                     "time": -0.019273809692544004,
                     "cost": -0.146013709792
                 },
                 "transit_impedance": {
-                    "time": -0.146013709792,
-                    "cost": -0.0174294749661
+                    "time": -0.0174294749661,
+                    "cost": -0.146013709792
                 }
             },          
             "impedance": {

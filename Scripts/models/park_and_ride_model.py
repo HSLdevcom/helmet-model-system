@@ -268,7 +268,9 @@ class ParkAndRideModel(ImpedanceTransformerBase):
         np.ndarray: A 3D array where each slice along the third axis represents the combined utility 
                     for a specific facility offset. shape (slice, nr_zones, nr_facilities)
         """
-        return u.car_utility[s,:,:] + u.transit_utility + u.facility_utility            
+        res = u.car_utility[s,:,:] + u.transit_utility + u.facility_utility
+        res = np.clip(res,-50,None) #TODO: Hotfix, car utility sometimes not reasonable
+        return res            
 
             
 
@@ -319,7 +321,7 @@ class ParkAndRideModel(ImpedanceTransformerBase):
         """
         
         # Enable or disable multithreading
-        MULTITHREADING = True
+        MULTITHREADING = False
         MIN_SLICE_SIZE = 5
         MAX_SLICE_SIZE = 10000
         if MULTITHREADING:
