@@ -1,8 +1,10 @@
 from __future__ import annotations
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, cast
 import numpy # type: ignore
 import pandas
 from datahandling.resultdata import ResultsData
+import openmatrix as omx
 from datahandling.zonedata import ZoneData
 
 from models.park_and_ride_model import ParkAndRideModel, ParkAndRidePseudoPurpose
@@ -163,10 +165,17 @@ class TourPurpose(Purpose):
             Mode (car/transit/bike/walk) : dict
                 Type (time/cost/dist) : numpy 2d matrix
         """
+        def print_pnr_utility(pnr_utility: numpy.ndarray, result_path: Path):
+            # TODO: This is a temporary solution to print the park and ride utility
+            omx_file = omx.open_file(result_path / 'park_and_ride_utility.omx', 'w')
+            omx_file.create_mapping('zone_mapping', self.zone_data.zone_numbers)
+            omx_file['park_and_ride_utility'] = pnr_utility
+            omx_file.close()
         if self.park_and_ride_model is not None:
             pnr_utility = self.park_and_ride_model.get_logsum()
             impedance['park_and_ride'] = {'utility': pnr_utility,
                                           'dist': impedance['car']['dist']}
+            print_pnr_utility(pnr_utility, Path(self.resultdata.path))
         self.prob = self.model.calc_prob(impedance)
         self.dist = impedance["car"]["dist"]
 
