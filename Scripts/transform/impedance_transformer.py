@@ -120,15 +120,16 @@ class ImpedanceTransformer(ImpedanceTransformerBase):
                         imp = impedance[time_period][mtx_type][ass_class]
                         day_imp[mode][mtx_type] += share[0] * imp[rows, cols]
                         day_imp[mode][mtx_type] += share[1] * imp[cols, rows].T
-                
-        # transit cost to eur per day
-        trips_month = (param.transit_trips_per_month
-            [purpose.area][assignment_classes[purpose.name]])
-        trips_per_month = numpy.full_like(
-            day_imp["transit"]["cost"], trips_month[0])
-        for i in range(1, len(purpose.sub_bounds)):
-            trips_per_month[purpose.sub_bounds[i], :] = trips_month[i]
-        day_imp["transit"]["cost"] /= trips_per_month
+        
+         # transit cost to eur per day
+        day_imp['transit']['cost'] = transit_cost_to_per_day(day_imp['transit']['cost'], purpose)
+
+        # Process possible extra transformers (eg. P&R impedance)
+        for transformer in self._extra_transformers:
+            extra_results = transformer.transform(purpose, impedance)
+            for result_name, result in extra_results.items():
+                day_imp[result_name] = result
+
         # Add parking time to car matrices
         if parking_time is not None:
             ptime = parking_time(purpose.zone_data).to_numpy()[cols]
@@ -136,6 +137,11 @@ class ImpedanceTransformer(ImpedanceTransformerBase):
             car_modes = [k for k in day_imp.keys() if k in ('car', 'car_work', 'car_transit')]
             for k in car_modes:
                 day_imp[k]['time'] += ptime[None,:]
+
+        # Optionally export impedance data for estimation
+        if self._export_path:
+            self.export_day_impedance(purpose, day_imp)
+
         return day_imp
 
 
