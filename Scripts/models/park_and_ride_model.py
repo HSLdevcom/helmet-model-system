@@ -33,6 +33,7 @@ class ParkAndRideFacility:
     time: float
     used_capacity: float
     adjustments: int
+    shops: int = 0
     extra_utility: float = None
 
 class ParkAndRideUtilities(NamedTuple):
@@ -255,6 +256,7 @@ class ParkAndRideModel(ImpedanceTransformerBase):
                                      
         for facility in self._facilities:
             dist_mask = impedance['aht']['dist']['walk'][facility.zone_offset,0:self._zone_data.nr_zones] < SHOP_SEARCH_RADIUS
+            facility.shops = self._zone_data['shops'][dist_mask].sum()
             facility.extra_utility = self._zone_data['shops'][dist_mask].sum() * shop_weight
 
     @staticmethod

@@ -10,6 +10,7 @@ from collections import defaultdict
 from assignment.abstract_assignment import AssignmentModel
 from assignment.emme_assignment import EmmeAssignmentModel
 from assignment.mock_assignment import MockAssignmentModel
+from dataclasses import asdict
 
 import utils.log as log
 from utils.zone_interval import ArrayAggregator
@@ -167,14 +168,15 @@ class ModelSystem:
                             purpose.calc_prob(saved_pnr_impedance[purpose.name])
                             demand = purpose.calc_demand()
                             log.debug(f"Park and ride crowding penalty iteration {i+1} modified {modified} facilities.")
-                            if modified < 1:
+                            if modified < 1:                                
                                 break
+                        log.debug(f"Park and ride demand calculation completed.")
 
                 if purpose.dest != "source":
                     for mode in demand:
                         self.dtm.add_demand(demand[mode])
                         self.travel_modes[mode] = True
-        log.info("Demand calculation completed")
+        log.info("Demand calculation completed")            
 
     # possibly merge with init
     def assign_base_demand(self, 
@@ -353,6 +355,7 @@ class ModelSystem:
                 self._save_to_omx(impedance[tp], tp)
         if iteration=="last":
             self.ass_model.aggregate_results(self.resultdata)
+            self._save_pnr_facility_info()
             self._calculate_noise_areas()
             self._calculate_accessibility_and_savu_zones()
             self.resultdata.print_line("\nMode shares", "result_summary")
@@ -388,6 +391,23 @@ class ModelSystem:
             with self.resultmatrices.open(mtx_type, tp, zone_numbers, 'w') as mtx:
                 for ass_class in impedance[mtx_type]:
                     mtx[ass_class] = impedance[mtx_type][ass_class]
+
+    def _save_pnr_facility_info(self):
+        pnr_data = []
+        for facility in self.dm.purpose_dict['hw'].park_and_ride_model._facilities:
+            pnr_data.append({k: str(v) for k, v in asdict(facility).items()})
+
+        pnr_results = pandas.DataFrame(pnr_data)
+        print(pnr_results.head())
+        pnr_results['used_capacity'] = pnr_results['used_capacity'].astype(float).round().astype(int)
+        pnr_results['shops'] = pnr_results['shops'].astype(float).round().astype(int)
+        pnr_results.index = pnr_results['zone_id']
+        pnr_results.index.name = None
+        pnr_results = pnr_results[['cost','shops','capacity','used_capacity','time']]
+        print(pnr_results.head())
+        for col in pnr_results.columns:
+            self.resultdata.print_data(pnr_results[col], "pnr_facilities.txt", col)
+
 
     def _calculate_noise_areas(self):
         noise_areas = self.ass_model.calc_noise()
