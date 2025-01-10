@@ -62,6 +62,24 @@ def validate(network, fares=None):
     unofficial_nodes = set()
     nr_links = 0
     nr_zero_gradients = 0
+    
+    # Make sure that cars, pedestrians cyclists can access all centroids
+    unaccessible_centroids = []
+
+    required_modes = {'a', 'f', 'c'}  # Modes for pedestrians, cyclists, and cars
+
+    for centroid in network.centroids():
+        accessible_modes = {mode for link in centroid.incoming_links() for mode in link.modes}
+
+        if not required_modes.issubset(accessible_modes):
+            unaccessible_centroids.append(centroid.id)
+    
+    if unaccessible_centroids:
+        msg = f"Centroids {unaccessible_centroids} are not accessible by pedestrians, cyclists and/or passenger cars."
+        log.error(msg)
+        raise ValueError(msg)
+
+    
     for link in network.links():
         nr_links += 1
         if not link.modes:
@@ -132,13 +150,13 @@ def validate(network, fares=None):
             raise ValueError(msg)
 
         try:
-            if link['@kaltevuus'] == 0:
+            if link['@kaltevuus'] == 0 and not link.i_node.is_centroid and not link.j_node.is_centroid:
                 nr_zero_gradients += 1
         except KeyError:
-            raise ValueError("Gradients not defined. Use an extra_links file with @kaltevuus,\
- or create extra attribute @kaltevuus with zeros.\
- @kaltevuus is used to model the effect of hills on bicycle route choice,\
- setting @kaltevuus to 0 on links will ignore hills.")
+            raise ValueError("Gradients not defined. Use an extra_links file with @kaltevuus, " +
+                             "or create extra attribute @kaltevuus with zeros. " +
+                             "@kaltevuus is used to model the effect of hills on bicycle route choice, " +
+                             "setting @kaltevuus to 0 on links will ignore hills.")
     zero_gradient_ratio = (nr_zero_gradients/nr_links)*100
     if zero_gradient_ratio > 20:
         msg = "{} % of links have a gradient of 0.".format(zero_gradient_ratio)
