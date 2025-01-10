@@ -66,6 +66,8 @@ class EmmeProject:
             "inro.emme.transit_assignment.extended.network_results")
         self.create_extra_attribute = self.modeller.tool(
             "inro.emme.data.extra_attribute.create_extra_attribute")
+        self.strategy_analysis = self.modeller.tool(
+            "inro.emme.transit_assignment.extended.strategy_based_analysis")
     
     def write(self, message: str):
         """Write to logbook."""

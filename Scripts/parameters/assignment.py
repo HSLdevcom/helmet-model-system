@@ -464,8 +464,8 @@ uncongested_transit_time = "base_timtr"
 emme_matrices = {
     "car_work": ("demand", "time", "dist", "cost", "gen_cost"),
     "car_leisure": ("demand", "time", "dist", "cost", "gen_cost"),
-    "transit_work": ("demand", "time", "dist", "cost"),
-    "transit_leisure": ("demand", "time", "dist", "cost"),
+    "transit_work": ("demand", "time", "dist", "cost", "congest_time"),
+    "transit_leisure": ("demand", "time", "dist", "cost", "congest_time"),
     "bike": ("demand", "time", "dist"),
     "walk": ("time", "dist"),
     "trailer_truck": ("demand", "time", "dist", "cost", "gen_cost"),

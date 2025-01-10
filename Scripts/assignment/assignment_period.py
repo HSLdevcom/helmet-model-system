@@ -161,7 +161,7 @@ class AssignmentPeriod(Period):
             raise ValueError("Iteration number not valid")
 
         mtxs = {imp_type: self._get_matrices(imp_type, iteration=="last")
-            for imp_type in ("time", "cost", "dist")}
+            for imp_type in ("time", "cost", "dist", "congest_time")}
         # fix the emme path analysis results
         # (dist and cost are zero if path not found but we want it to
         # be the default value 999999)
@@ -831,6 +831,11 @@ class AssignmentPeriod(Period):
             stopping_criteria=param.trass_stop,
             log_worksheets=False, scenario=self.emme_scenario,
             save_strategies=True)
+        # save uncongested results for both both classes
+        for tc in specs:
+            self.emme_project.strategy_analysis(
+                specs[tc].strategy_analysis_spec, scenario=self.emme_scenario,
+                class_name=tc)
         # save results for both classes
         for tc in specs:
             self.emme_project.matrix_results(

@@ -322,8 +322,11 @@ class ModelSystem:
             impedance[tp] = ap.assign(self.dtm.demand[tp], iteration)
             if tp == "aht":
                 self._update_ratios(impedance[tp], tp)
-            if iteration=="last": # TODO: Get uncongested time from assignment results
-                log.warn('TODO: Get uncongested transit time from the assignment results')
+            if iteration=="last" and param.always_congested:
+                impedance[tp]["time"]["transit_uncongested_work"] = impedance[tp]["time"]["transit_work"] - impedance[tp]["congest_time"]["transit_work"]
+                impedance[tp]["time"]["transit_uncongested_leisure"] = impedance[tp]["time"]["transit_leisure"] - impedance[tp]["congest_time"]["transit_leisure"]
+                self._save_to_omx(impedance[tp], tp)
+            elif iteration=="last":
                 impedance[tp]["time"]["transit_uncongested"] = previous_iter_impedance[tp]["time"]["transit_work"]
                 self._save_to_omx(impedance[tp], tp)
         if iteration=="last":
