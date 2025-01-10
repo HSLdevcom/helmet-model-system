@@ -83,6 +83,10 @@ class ZoneData:
         self.nr_zones = len(self.zone_numbers)
         self.nr_zones_hs15 = len(self.zone_numbers_hs15)
         self["population_density"] = pop / landdata["builtar"]
+        # Filter indexes where population_density > 50000
+        high_population_density = self["population_density"].index[self["population_density"] > 50000]
+        if len(high_population_density) > 0:
+            log.warn(f"Zone(s) {list(high_population_density)} have an abnormally high population density. Make sure that the builtar values in the .lnd file are calculated correctly.")
         wp = workdata.pop("total")
         self["workplaces"] = wp
         ShareChecker({})["Workplace shares"] = workdata.sum(axis="columns")
