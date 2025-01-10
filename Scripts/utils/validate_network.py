@@ -70,8 +70,6 @@ def validate(network, fares=None):
 
     for centroid in network.centroids():
         accessible_modes = {mode.id for link in centroid.incoming_links() for mode in link.modes}
-        print(accessible_modes)
-
         if not required_modes.issubset(accessible_modes):
             unaccessible_centroids.append(centroid.id)
     

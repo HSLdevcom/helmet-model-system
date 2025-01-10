@@ -828,6 +828,7 @@ class TransitSegment(NetworkObject):
             self, network, network._extra_attr["TRANSIT_SEGMENT"])
         self.line = line
         self.link = link
+        self.loop_index = 1
         self.allow_alightings = False
         self.allow_boardings = False
         self.transit_time_func = 0
