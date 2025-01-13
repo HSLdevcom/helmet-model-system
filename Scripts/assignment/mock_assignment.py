@@ -91,7 +91,7 @@ class MockPeriod(Period):
                 mtx[ass_class] = matrices[ass_class]
         log.info("Saved demand matrices for " + str(self.name))
         mtxs = {mtx_type: self._get_matrices(mtx_type)
-            for mtx_type in ("time", "cost", "dist")}
+            for mtx_type in ("time", "cost", "dist", "congest_time")}
         for ass_cl in ("transit_work", "transit_leisure"):
             mtxs["time"][ass_cl] = mtxs["time"]["transit_uncongested"]
         if iteration != "last":

@@ -352,6 +352,9 @@ class MockProject:
     def network_results(self, *args, **kwargs):
         pass
 
+    def strategy_analysis(self, *args, **kwargs):
+        pass
+
 
 Modeller = namedtuple("Modeller", "emmebank")
 
