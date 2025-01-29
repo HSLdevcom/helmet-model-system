@@ -168,7 +168,7 @@ class TourPurpose(Purpose):
         def print_pnr_utility(pnr_utility: numpy.ndarray, result_path: Path):
             # TODO: This is a temporary solution to print the park and ride utility
             omx_file = omx.open_file(result_path / 'park_and_ride_utility.omx', 'w')
-            omx_file.create_mapping('zone_mapping', self.zone_data.zone_numbers)
+            omx_file.create_mapping('zone_number', self.zone_data.zone_numbers)
             omx_file['park_and_ride_utility'] = pnr_utility
             omx_file.close()
         if self.park_and_ride_model is not None:
@@ -208,6 +208,8 @@ class TourPurpose(Purpose):
         """
         tours = self.gen_model.get_tours()
         demand = {}
+        omx_file = omx.open_file(f"{self.resultdata.path}/estimation/demand_{self.name}.omx","w")
+        omx_file.create_mapping("zone_number",self.zone_data.all_zone_numbers)
         for mode in self.modes:
             mtx = (self.prob.pop(mode) * tours).T
             try:
@@ -219,8 +221,12 @@ class TourPurpose(Purpose):
                 pnr_purpose = ParkAndRidePseudoPurpose(self)
                 demand["pnr_car"] = Demand(pnr_purpose, "car", car_demand)
                 demand["pnr_transit"] = Demand(pnr_purpose, "transit", transit_demand)
+                # if True: 
+                #     omx_file["pnr_car"] = car_demand
+                #     omx_file["pnr_transit"] = transit_demand
             else:
                 demand[mode] = Demand(self, mode, mtx)
+                omx_file[mode] = mtx
             self.attracted_tours[mode] = mtx.sum(0)
             self.generated_tours[mode] = mtx.sum(1)
             self.histograms[mode].count_tour_dists(mtx, self.dist)
@@ -229,6 +235,7 @@ class TourPurpose(Purpose):
             self.own_zone_aggregates[mode].aggregate(pandas.Series(
                 numpy.diag(mtx), self.zone_numbers))
         self.print_data()
+        omx_file.close()
         return demand
 
 

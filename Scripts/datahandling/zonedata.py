@@ -214,11 +214,11 @@ class ZoneData:
             val = self._values[key]
         except KeyError as err:
             keyl: List[str] = key.split('_')
-            if keyl[1] in ("own", "other"):
+            if keyl[-1] in ("own", "other"):
                 # If parameter is only for own municipality or for all
                 # municipalities except own, array is multiplied by
                 # bool matrix
-                return (self[keyl[1]] * self._values[keyl[0]].values)[bounds, :]
+                return (self[keyl[-1]] * self._values["_".join(keyl[0:-1])].values)[bounds, :]
             else:
                 raise KeyError(err)
         if val.ndim == 1: # If not a compound (i.e., matrix)
