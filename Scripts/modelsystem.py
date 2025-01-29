@@ -102,7 +102,7 @@ class ModelSystem:
     def _init_demand_model(self):
         return DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=False)
 
-    def _add_internal_demand(self, previous_iter_impedance, is_last_iteration):
+    def _add_internal_demand(self, previous_iter_impedance, is_last_iteration, estimation_mode=False):
         """Produce mode-specific demand matrices.
 
         Add them for each time-period to container in departure time model.
@@ -159,14 +159,14 @@ class ModelSystem:
                         purpose, "car", purpose_impedance)
             else:
                 if purpose.name != "wh":
-                    demand = purpose.calc_demand()
+                    demand = purpose.calc_demand(estimation_mode)
                     if purpose.park_and_ride_model is not None:
                         # Apply penalty for overcrowded park and ride facilities.
                         MAX_PNR_ITERATIONS = 5 # Maximum number of iterations. Set to 0 for no penalty
                         for i in range(MAX_PNR_ITERATIONS):
                             modified = purpose.park_and_ride_model.apply_crowding_penalty()
                             purpose.calc_prob(saved_pnr_impedance[purpose.name])
-                            demand = purpose.calc_demand()
+                            demand = purpose.calc_demand(estimation_mode)
                             log.debug(f"Park and ride crowding penalty iteration {i+1} modified {modified} facilities.")
                             if modified < 1:                                
                                 break
@@ -251,7 +251,7 @@ class ModelSystem:
         self.dtm.init_demand()
         return impedance
 
-    def run_iteration(self, previous_iter_impedance, iteration=None):
+    def run_iteration(self, previous_iter_impedance, iteration=None, estimation_mode=False):
         """Calculate demand and assign to network.
 
         Parameters
@@ -294,7 +294,7 @@ class ModelSystem:
         self.zdata_forecast["cars_per_1000"] = 1000 * prediction
 
         # Calculate internal demand
-        self._add_internal_demand(previous_iter_impedance, iteration=="last")
+        self._add_internal_demand(previous_iter_impedance, iteration=="last", estimation_mode)
 
         # Calculate external demand
         for mode in param.external_modes:
@@ -339,8 +339,9 @@ class ModelSystem:
         # Add vans and save demand matrices
         for ap in self.ass_model.assignment_periods:
             self.dtm.add_vans(ap.name, self.zdata_forecast.nr_zones)
-            if iteration=="last":
-                self._save_demand_to_omx(ap.name)
+            if estimation_mode:
+                if iteration=="last":
+                    self._save_demand_to_omx(ap.name)
 
         # Calculate and return traffic impedance
         for ap in self.ass_model.assignment_periods:
@@ -569,7 +570,7 @@ class AgentModelSystem(ModelSystem):
         random.seed(zone_param.population_draw)
         return DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=True)
 
-    def _add_internal_demand(self, previous_iter_impedance, is_last_iteration):
+    def _add_internal_demand(self, previous_iter_impedance, is_last_iteration, estimation_mode=False):
         """Produce tours and add fractions of them
         for each time-period to container in departure time model.
 
@@ -606,7 +607,7 @@ class AgentModelSystem(ModelSystem):
                     purpose.calc_prob(purpose_impedance)
                     purpose.gen_model.init_tours()
                     purpose.gen_model.add_tours()
-                    demand = purpose.calc_demand()
+                    demand = purpose.calc_demand(estimation_mode)
                     if purpose.dest != "source":
                         for mode in demand:
                             self.travel_modes[mode] = True

@@ -107,9 +107,9 @@ def main(args):
         log_extra["status"]["current"] = i
         try:
             log.info("Starting iteration {}".format(i), extra=log_extra)
-            impedance = (model.run_iteration(impedance, "last")
+            impedance = (model.run_iteration(impedance, "last",args.export_estimation_data)
                          if i == iterations
-                         else model.run_iteration(impedance, i))
+                         else model.run_iteration(impedance, i,args.export_estimation_data))
             log_extra["status"]["completed"] += 1
         except Exception as error:
             log_extra["status"]["failed"] += 1

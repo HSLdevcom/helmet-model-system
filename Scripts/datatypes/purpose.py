@@ -197,7 +197,7 @@ class TourPurpose(Purpose):
         self.model.calc_basic_prob(impedance)
         self.dist = impedance["car"]["dist"]
 
-    def calc_demand(self):
+    def calc_demand(self, estimation_mode=False):
         """Calculate purpose specific demand matrices.
               
         Returns
@@ -208,8 +208,9 @@ class TourPurpose(Purpose):
         """
         tours = self.gen_model.get_tours()
         demand = {}
-        omx_file = omx.open_file(f"{self.resultdata.path}/estimation/demand_{self.name}.omx","w")
-        omx_file.create_mapping("zone_number",self.zone_data.all_zone_numbers)
+        if estimation_mode:
+            omx_file = omx.open_file(f"{self.resultdata.path}/estimation/demand_{self.name}.omx","w")
+            omx_file.create_mapping("zone_number",self.zone_data.all_zone_numbers)
         for mode in self.modes:
             mtx = (self.prob.pop(mode) * tours).T
             try:
@@ -226,7 +227,8 @@ class TourPurpose(Purpose):
                 #     omx_file["pnr_transit"] = transit_demand
             else:
                 demand[mode] = Demand(self, mode, mtx)
-                omx_file[mode] = mtx
+                if estimation_mode:
+                    omx_file[mode] = mtx
             self.attracted_tours[mode] = mtx.sum(0)
             self.generated_tours[mode] = mtx.sum(1)
             self.histograms[mode].count_tour_dists(mtx, self.dist)
@@ -235,7 +237,8 @@ class TourPurpose(Purpose):
             self.own_zone_aggregates[mode].aggregate(pandas.Series(
                 numpy.diag(mtx), self.zone_numbers))
         self.print_data()
-        omx_file.close()
+        if estimation_mode:
+            omx_file.close()
         return demand
 
 
