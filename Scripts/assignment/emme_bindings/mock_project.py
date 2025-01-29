@@ -712,6 +712,9 @@ class Node(NetworkObject):
     def outgoing_segments(self, include_hidden=False):
         return (s for s in self.network.transit_segments(include_hidden)
             if s.i_node is self)
+    
+    def incoming_links(self):
+        return (l for l in self.network.links() if l.j_node is self)
 
 class Link(NetworkObject):
     def __init__(self, 
@@ -825,6 +828,7 @@ class TransitSegment(NetworkObject):
             self, network, network._extra_attr["TRANSIT_SEGMENT"])
         self.line = line
         self.link = link
+        self.loop_index = 1
         self.allow_alightings = False
         self.allow_boardings = False
         self.transit_time_func = 0
