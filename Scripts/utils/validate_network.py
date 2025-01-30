@@ -73,6 +73,8 @@ def validate(network, fares=None):
         if not required_modes.issubset(accessible_modes):
             unaccessible_centroids.append(centroid.id)
     
+    #filter unnacessible centroids for transit external centroids
+    unaccessible_centroids = [uc for uc in unaccessible_centroids if int(uc)<34300 or int(uc)>34399]
     if unaccessible_centroids:
         msg = f"Centroids {unaccessible_centroids} are not accessible by pedestrians, cyclists and/or passenger cars."
         log.error(msg)
