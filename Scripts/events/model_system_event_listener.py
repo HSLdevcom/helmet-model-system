@@ -1,0 +1,205 @@
+from abc import ABC
+from typing import TYPE_CHECKING, Dict, Union
+from sys import gettrace
+from utils import log
+import numpy as np
+from pathlib import Path
+import importlib.util
+
+from demand.trips import DemandModel
+if TYPE_CHECKING:
+    from datahandling.zonedata import ZoneData
+    from modelsystem import ModelSystem
+    from datatypes.purpose import TourPurpose
+    from datatypes.demand import Demand
+    from assignment.departure_time import DepartureTimeModel
+    from assignment.abstract_assignment import Period
+    import pandas as pd
+
+class ModelSystemEventListener(ABC):
+   
+    def __init__(self):
+        pass
+
+    def on_zone_data_loaded(self, base_data: 'ZoneData', forecast_data: 'ZoneData') -> None:
+        """
+        Event handler that is called when zone data is loaded.
+
+        Args:
+            data (ZoneData): The loaded zone data.
+        """
+        pass
+
+    def on_model_system_initialized(self, model_system: 'ModelSystem') -> None:
+        """
+        Event handler that is called when the model system is initialized.
+
+        Args:
+            model_system (ModelSystem): The model system.
+        """
+        pass
+    
+    def on_iteration_started(self, iteration: Union[int, str], previous_impedance: Dict[str, Dict[str, np.ndarray]]) -> None:
+        """
+        Event handler that is called when an iteration is started.
+
+        Args:
+            iteration (int | str): The iteration number.
+        """
+        pass
+
+    def on_car_density_updated(self, iteration: Union[int, str], prediction: 'pd.Series' ) -> None:
+        """
+        Event handler that is called when car density is updated.
+
+        Args:
+            iteration (int | str): The iteration number.
+            prediction (pandas.Series): The updated car density prediction.
+        """
+        pass
+    
+    def on_base_demand_assigned(self, impedance: Dict[str, Dict[str, np.ndarray]]) -> None:
+        """
+        Event handler that is called when base demand has been assigned.
+
+        Args:
+            impedance (dict): The impedance matrices.
+        """
+        pass
+
+    def on_population_segments_created(self, dm: DemandModel) -> None:
+        """
+        Event handler that is called when population segments have been created.
+
+        Args:
+            dm (DemandModel): The demand model.
+        """
+        pass
+    
+    def on_demand_model_tours_generated(self, dm: 'DemandModel') -> None:
+        """
+        Event handler that is called when demand model tours have been generated.
+
+        Args:
+            dm (DemandModel): The demand model.
+        """
+        pass
+    
+    def on_purpose_demand_calculated(self, purpose: 'TourPurpose', demand: Dict[str, 'Demand']) -> None:
+        """
+        Event handler that is called when purpose demand has been calculated.
+
+        Args:
+            dm (DemandModel): The demand model.
+        """
+        pass
+
+    def on_internal_demand_added(self, dtm: 'DepartureTimeModel') -> None:
+        """
+        Event handler that is called when internal demand has been calculated.
+
+        Args:
+            dtm (DepartureTimeModel): The departure time model.
+        """
+        pass
+
+    def on_external_demand_calculated(self, demand: Dict[str, 'Demand']) -> None:
+        """
+        Event handler that is called when external demand has been calculated.
+
+        Args:
+            dtm (DepartureTimeModel): The departure time model.
+        """
+        pass
+    
+    def on_demand_calculated(self, iteration: Union[int, str], dtm: 'DepartureTimeModel') -> None:
+        """
+        Event handler that is called when all demands has been added to the DTM.
+
+        Args:
+            iteration (int | str): The iteration number.
+            dtm (DepartureTimeModel): The departure time model.
+        """
+        pass
+    
+    def on_time_period_assigned(self, iteration: Union[int, str], ap: 'Period', impedance: Dict[str, Dict[str, np.ndarray]]) -> None:
+        """
+        Event handler that is called when time period has been assigned.
+
+        Args:
+            iteration (int | str): The iteration number.
+            ap (Period): The assignment period.
+            impedance (dict): The impedance matrices.
+        """
+        pass
+
+    def on_iteration_complete(self, iteration: Union[int, str], impedance: Dict[str, Dict[str, np.ndarray]], gap: Dict[str, float]) -> None:
+        """
+        Event handler that is called when an iteration is complete.
+
+        Args:
+            iteration (int | str): The iteration number.
+        """
+        pass
+
+    def on_emme_assignment_complete(self) -> None:
+        pass
+
+
+class EventHandler(ModelSystemEventListener):
+    """Event handler that calls all equivalent methods in all other ModelSystemEventListener classes."""
+    def __init__(self):
+        """Initialize the EventHandler.
+
+        Args:
+            model_system (ModelSystem): ModelSystem instance.
+        """
+        super().__init__()
+        self.listeners = []
+        self._create_methods()
+
+    def register_listener(self, listener: ModelSystemEventListener):
+        self.listeners.append(listener)
+
+    def load_listeners(self, listener_path: Path):
+        """Load all listeners from a given path.
+
+        Args:
+            listener_path (str): The path to the listeners.
+        """
+        for file_path in listener_path.glob("*.py"):
+            if file_path.name != "__init__.py":
+                module_name = file_path.stem
+                spec = importlib.util.spec_from_file_location(module_name, file_path)
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                for attr_name in dir(module):
+                    attr = getattr(module, attr_name)
+                    if isinstance(attr, type) and issubclass(attr, ModelSystemEventListener) and attr is not ModelSystemEventListener:
+                        self.register_listener(attr())
+                        log.info(f"Loaded listener {attr.__name__} from {file_path}")
+
+
+    def _create_methods(self):
+        """Create methods that call all equivalent methods in all other ModelSystemEventListener classes.
+        Methods area automatically created for all methods that start with "on_" in all ModelSystemEventListener classes.
+        """
+        for method_name in dir(ModelSystemEventListener):
+            if method_name.startswith("on_") and callable(getattr(ModelSystemEventListener, method_name)):
+                setattr(self, method_name, self._create_method(method_name))
+                
+    def _create_method(self, method_name):
+        """Create a method that calls all equivalent methods in all other ModelSystemEventListener classes.
+
+        Args:
+            method_name (str): name of the method to create.
+        """
+        def method(*args, **kwargs):
+            for listener in self.listeners:
+                try:
+                    getattr(listener, method_name)(*args, **kwargs)
+                except Exception as e:
+                    if gettrace() is not None:
+                        raise e
+                    log.error(f"Error in {listener.__class__.__name__}.{method_name}: {e}")
+        return method
