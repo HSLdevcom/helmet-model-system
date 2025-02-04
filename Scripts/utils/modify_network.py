@@ -19,6 +19,18 @@ except ImportError:
 
 # Utility functions that modify a network. Functions take a network as input and return the modified network
 
+def calculate_gradients(network):
+    for link in network.links():
+        if link['@kaltevuus'] == 0 and not link.i_node.is_centroid and not link.j_node.is_centroid:
+            try:
+                if link.i_node['@korkeus'] != 0 and link.j_node['@korkeus'] != 0:
+                    gradient = ((link.i_node['@korkeus'] - link.j_node['@korkeus']) / link.length)*0.1
+                    link['@kaltevuus'] = gradient
+                    log.debug(f"Calculated @kaltevuus for link {link.id}: {gradient}")
+            except KeyError:
+                log.info("@korkeus extra_attribute has not been defined. Skipping adjustment of @kaltevuus values")
+    return network
+
 def add_bus_stops(network):
     # Initialize an empty dictionary to store line IDs and maximum stop distances
     data = {"line_id": [], "maximum_stop_distance": [], "is_motorway": [], "loops": []}

@@ -109,6 +109,7 @@ class EmmeAssignmentModel(AssignmentModel):
                 pass
             self.emme_project.modeller.emmebank.create_function(
                 idx, param.volume_delay_funcs[idx])
+        self._calculate_gradients()
         self.emme_project.create_extra_function_parameters(el1="@kaltevuus")
 
     def init_assign(self, 
@@ -317,6 +318,11 @@ class EmmeAssignmentModel(AssignmentModel):
     def _add_bus_stops(self):
         network: Network = self.mod_scenario.get_network()
         modified_network: Network = mnw.add_bus_stops(network)
+        self.mod_scenario.publish_network(modified_network)
+
+    def _calculate_gradients(self):
+        network: Network = self.mod_scenario.get_network()
+        modified_network: Network = mnw.calculate_gradients(network)
         self.mod_scenario.publish_network(modified_network)
 
     def _create_matrices(self, time_period, id_hundred, id_ten):
