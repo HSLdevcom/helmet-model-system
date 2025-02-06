@@ -5,6 +5,7 @@ import numpy
 import pandas
 import os
 
+from events.model_system_event_listener import EventHandler
 from utils.validate_network import validate
 from assignment.emme_bindings.mock_project import MockProject
 from assignment.emme_assignment import EmmeAssignmentModel
@@ -32,7 +33,7 @@ class EmmeAssignmentTest(unittest.TestCase):
             context.modeller.emmebank.scenario(scenario_id).get_network(),
             fares)
         ass_model = EmmeAssignmentModel(
-            context, scenario_id)
+            context, scenario_id, EventHandler())
         ass_model.prepare_network()
         peripheral_cost = numpy.arange(10).reshape((1, 10))
         ass_model.calc_transit_cost(fares, peripheral_cost)

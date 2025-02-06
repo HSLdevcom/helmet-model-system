@@ -26,6 +26,7 @@ from datatypes.person import Person
 from datatypes.tour import Tour
 from transform.impedance_transformer import ImpedanceTransformer
 from models.linear import CarDensityModel
+from events.model_system_event_listener import EventHandler
 import parameters.assignment as param
 import parameters.zone as zone_param
 import parameters.tour_generation as gen_param
@@ -58,7 +59,9 @@ class ModelSystem:
                  results_path: str, 
                  assignment_model: AssignmentModel, 
                  name: str,
+                 event_handler: EventHandler,
                  estimation_data_path: Path = None):
+        self.event_handler = event_handler
         self.ass_model = cast(Union[MockAssignmentModel,EmmeAssignmentModel], assignment_model) #type checker hint
         self.zone_numbers: numpy.array = self.ass_model.zone_numbers
         self.travel_modes: Dict[str, bool] = {}  # Dict instead of set, to preserve order
@@ -73,7 +76,8 @@ class ModelSystem:
         if estimation_data_path:
             self.zdata_base.export_data(estimation_data_path / 'zonedata_base.csv')
             self.zdata_forecast.export_data(estimation_data_path / 'zonedata_forecast.csv')
-         
+        self.event_handler.on_zone_data_loaded(self.zdata_base, self.zdata_forecast)
+        
         # Output data
         self.resultmatrices = MatrixData(
             os.path.join(results_path, name, "Matrices"))
@@ -98,6 +102,7 @@ class ModelSystem:
         self.convergence = []
         self.trucks = self.fm.calc_freight_traffic("truck")
         self.trailer_trucks = self.fm.calc_freight_traffic("trailer_truck")
+        self.event_handler.on_model_system_initialized(self)
 
     def _init_demand_model(self):
         return DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=False)
@@ -127,6 +132,7 @@ class ModelSystem:
         # as logsums from probability calculation are used in tour generation.
         self.dm.create_population_segments()
         saved_pnr_impedance = {}
+        self.event_handler.on_population_segments_created(self.dm)
         for purpose in self.dm.tour_purposes:
             if isinstance(purpose, SecDestPurpose):
                 purpose.gen_model.init_tours()
@@ -143,6 +149,7 @@ class ModelSystem:
         
         # Tour generation
         self.dm.generate_tours()
+        self.event_handler.on_demand_model_tours_generated(self.dm)
         
         # Assigning of tours to mode, destination and time period
         for purpose in self.dm.tour_purposes:
@@ -172,6 +179,7 @@ class ModelSystem:
                                 break
                         log.debug(f"Park and ride demand calculation completed.")
 
+                self.event_handler.on_purpose_demand_calculated(purpose, demand)
                 if purpose.dest != "source":
                     for mode in demand:
                         self.dtm.add_demand(demand[mode])
@@ -249,9 +257,13 @@ class ModelSystem:
             self._calculate_noise_areas()
             self.resultdata.flush()
         self.dtm.init_demand()
+        self.event_handler.on_base_demand_assigned(impedance)
         return impedance
 
-    def run_iteration(self, previous_iter_impedance, iteration=None, estimation_mode=False):
+    def run_iteration(self,
+                      previous_iter_impedance: Dict[str, Dict[str, numpy.ndarray]],
+                      iteration: Union[int, str] = None,
+                      estimation_mode=False):
         """Calculate demand and assign to network.
 
         Parameters
@@ -281,6 +293,7 @@ class ModelSystem:
                 value : numpy.ndarray
                     Impedance (float 2-d matrix)
         """
+        self.event_handler.on_iteration_started(iteration, previous_iter_impedance)
         impedance = {}
 
         # Add truck and trailer truck demand, to time-period specific
@@ -292,9 +305,11 @@ class ModelSystem:
         prediction = self.cdm.predict()
         self.zdata_forecast["car_density"] = prediction
         self.zdata_forecast["cars_per_1000"] = 1000 * prediction
+        self.event_handler.on_car_density_updated(iteration, prediction)
 
         # Calculate internal demand
         self._add_internal_demand(previous_iter_impedance, iteration=="last", estimation_mode)
+        self.event_handler.on_internal_demand_added(self.dtm)
 
         # Calculate external demand
         for mode in param.external_modes:
@@ -310,8 +325,9 @@ class ModelSystem:
             else:
                 int_demand = self._sum_trips_per_zone(mode)
             ext_demand = self.em.calc_external(mode, int_demand)
+            self.event_handler.on_external_demand_calculated(ext_demand)
             self.dtm.add_demand(ext_demand)
-
+        
         # Calculate tour sums and mode shares
         tour_sum = {mode: self._sum_trips_per_zone(mode, include_dests=False)
             for mode in self.travel_modes}
@@ -343,11 +359,14 @@ class ModelSystem:
                 if iteration=="last":
                     self._save_demand_to_omx(ap.name)
 
+        self.event_handler.on_demand_calculated(iteration, self.dtm)
+
         # Calculate and return traffic impedance
         for ap in self.ass_model.assignment_periods:
             tp = ap.name
             log.info("Assigning period " + tp)
             impedance[tp] = ap.assign(self.dtm.demand[tp], iteration)
+            self.event_handler.on_time_period_assigned(iteration, ap, impedance[tp])
             if tp == "aht":
                 self._update_ratios(impedance[tp], tp)
             if iteration=="last": # TODO: Get uncongested time from assignment results
@@ -373,6 +392,7 @@ class ModelSystem:
         self.convergence.append(gap)
         self.resultdata._df_buffer["demand_convergence.txt"] = pandas.DataFrame(self.convergence)
         self.resultdata.flush()
+        self.event_handler.on_iteration_complete(iteration, impedance, gap)
         return impedance
 
     def _save_demand_to_omx(self, tp):

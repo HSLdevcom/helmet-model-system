@@ -3,6 +3,7 @@
 
 import os
 import logging
+from events.model_system_event_listener import EventHandler
 import utils.log as log
 import numpy
 
@@ -70,7 +71,7 @@ class EmmeAssignmentTest:
         emme_context.import_scenario(
             os.path.join(project_dir, "..", "Network"), scenario_num, "test",
             overwrite=True)
-        self.ass_model = ass.EmmeAssignmentModel(emme_context, scenario_num)
+        self.ass_model = ass.EmmeAssignmentModel(emme_context, scenario_num, EventHandler())
         self.ass_model.prepare_network()
     
     def test_assignment(self):

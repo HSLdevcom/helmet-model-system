@@ -8,6 +8,7 @@ import utils.config
 import utils.log as log
 from assignment.emme_assignment import EmmeAssignmentModel
 from assignment.mock_assignment import MockAssignmentModel
+from events.model_system_event_listener import EventHandler
 from modelsystem import ModelSystem, AgentModelSystem
 from datahandling.matrixdata import MatrixData
 
@@ -56,6 +57,11 @@ def main(args):
         estimation_data_path = Path(results_path) / args.scenario_name / 'estimation'
         estimation_data_path.mkdir(parents=True, exist_ok=True)
     
+    # Initialize event handler and load event listeners
+    event_handler = EventHandler()
+    # Load event listeners from 'events/examples' folder
+    event_handler.load_listeners(Path(__file__).parent / 'events' / 'examples')
+    
     # Choose and initialize the Traffic Assignment (supply)model
     if args.do_not_use_emme:
         log.info("Initializing MockAssignmentModel...")
@@ -76,6 +82,7 @@ def main(args):
         ass_model = EmmeAssignmentModel(
             EmmeProject(emme_project_path),
             first_scenario_id=args.first_scenario_id,
+            event_handler=event_handler,
             separate_emme_scenarios=args.separate_emme_scenarios,
             save_matrices=args.save_matrices,
             first_matrix_id=args.first_matrix_id)
@@ -90,7 +97,8 @@ def main(args):
     else:
         model = ModelSystem(
             forecast_zonedata_path, base_zonedata_path, base_matrices_path,
-            results_path, ass_model, args.scenario_name, estimation_data_path)
+            results_path, ass_model, args.scenario_name, event_handler,
+            estimation_data_path)
     log_extra["status"]["results"] = model.mode_share
 
     # Run traffic assignment simulation for N iterations,
@@ -128,7 +136,8 @@ def main(args):
             log_extra["status"]["converged"] = 1
         i += 1
     
-    if not log_extra["status"]["converged"]: log.warn("Model has not converged")
+    if not log_extra["status"]["converged"]:
+        log.warn("Model has not converged")
 
     # delete emme strategy files for scenarios
     if args.del_strat_files:

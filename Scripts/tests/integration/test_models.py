@@ -2,6 +2,7 @@ import unittest
 import numpy
 
 from datahandling.zonedata import ZoneData
+from events.model_system_event_listener import EventHandler
 import utils.log as log
 from modelsystem import ModelSystem, AgentModelSystem
 from assignment.mock_assignment import MockAssignmentModel
@@ -35,7 +36,8 @@ class ModelTest(unittest.TestCase):
             TEST_DATA_PATH, "Base_input_data", "base_matrices")
         model = ModelSystem(
             zone_data_path, base_zone_data_path, base_matrices_path,
-            results_path, ass_model, "test")
+            results_path, ass_model, "test",
+            EventHandler())
         impedance = model.assign_base_demand()
         for ap in ass_model.assignment_periods:
             tp = ap.name
@@ -71,7 +73,7 @@ class ModelTest(unittest.TestCase):
             TEST_DATA_PATH, "Base_input_data", "base_matrices")
         model = AgentModelSystem(
             zone_data_path, base_zone_data_path, base_matrices_path,
-            results_path, ass_model, "test")
+            results_path, ass_model, "test", EventHandler())
         impedance = model.assign_base_demand()
         impedance = model.run_iteration(impedance)
         impedance = model.run_iteration(impedance, "last")
