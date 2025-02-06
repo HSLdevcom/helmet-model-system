@@ -14,7 +14,9 @@ if TYPE_CHECKING:
     from datatypes.demand import Demand
     from assignment.departure_time import DepartureTimeModel
     from assignment.abstract_assignment import Period
-    import pandas as pd
+    from assignment.emme_bindings.mock_project import Network
+    from assignment.emme_bindings.mock_project import Scenario
+    from assignment.assignment_period import AssignmentPeriod
 
 class ModelSystemEventListener(ABC):
    
@@ -26,7 +28,8 @@ class ModelSystemEventListener(ABC):
         Event handler that is called when zone data is loaded.
 
         Args:
-            data (ZoneData): The loaded zone data.
+            base_data (ZoneData): The loaded base zone data.
+            forecast_data (ZoneData): The loaded forecast zone data.
         """
         pass
 
@@ -142,7 +145,106 @@ class ModelSystemEventListener(ABC):
         """
         pass
 
-    def on_emme_assignment_complete(self) -> None:
+    def on_emme_assignment_period_initialized(self, assignment_period: 'AssignmentPeriod'):
+        """
+        Event handler for when an EMME assignment period is initialized.
+        Args:
+            assignment_period (AssignmentPeriod): The assignment period that has been initialized.
+        """
+        pass
+
+    def on_emme_pedestrian_assignment_complete(self, assignment_period: 'AssignmentPeriod', emme_scenario: 'Scenario') -> None:
+        """
+        Event handler for when an EMME pedestrian assignment is complete.
+        Args:
+            assignment_period (AssignmentPeriod): The assignment period that has been initialized.
+            emme_scenario (inro.emme.scenario.Scenario): The EMME scenario.
+        """
+        pass
+ 
+    def on_emme_transit_wait_time_calculated(self, assignment_period: 'AssignmentPeriod' ,network: 'Network') -> None:
+        """
+        Event handler for when the extra transit wait time has been calculated.
+        Args:
+            assignment_period (AssignmentPeriod): The period during which the assignment is being calculated.
+            network (inro.emme.network.Network): The network object representing the transit network.
+        """
+        pass
+    
+    def on_emme_background_traffic_calculated(self, assignment_period: 'AssignmentPeriod' ,network: 'Network') -> None:
+        """
+        Event handler for when background traffic has been calculated.
+        Args:
+            assignment_period (AssignmentPeriod): The period for which the traffic assignment is calculated.
+            network (Network): The network on which the traffic is calculated.
+        """        
+        pass
+    
+    def on_emme_assignment_started(self,
+                                   assignment_period: 'AssignmentPeriod',
+                                   iteration: Union[int, str],
+                                   demand: Dict[str, np.ndarray]) -> None:
+        """
+        Event handler for when Emme assignment is started.
+        Args:
+            assignment_period (AssignmentPeriod): The period during which the assignment was performed.
+            iteration (Union[int, str]): The iteration number or identifier.
+            demand (Dict[str, np.ndarray]): The demand data, represented as a dictionary where keys are strings and values are numpy arrays.
+        """
+        pass
+    
+    def on_emme_assignment_complete(self,
+                                    assignment_period: 'AssignmentPeriod',
+                                    iteration: Union[int, str],
+                                    demand: Dict[str, np.ndarray],
+                                    impedance: Dict[str, Dict[str, np.ndarray]],
+                                    scenario: 'Scenario') -> None:
+        """
+        Event handler for when Emme assignment is complete.
+        Args:
+            assignment_period (AssignmentPeriod): The period during which the assignment was performed.
+            iteration (Union[int, str]): The iteration number or identifier.
+            demand (Dict[str, np.ndarray]): The demand data, represented as a dictionary where keys are strings and values are numpy arrays.
+            impedance (Dict[str, Dict[str, np.ndarray]]): The impedance data, represented as a nested dictionary where the outer keys are strings, 
+                                                        the inner keys are also strings, and the values are numpy arrays.
+            scenario (Scenario): The scenario for which the assignment was performed.
+        """
+        pass
+
+    def on_emme_car_and_transit_vdfs_set(self, assignment_period: 'AssignmentPeriod', network: 'Network') -> None:
+        """
+        Event handler for when car and transit VDFs have been set.
+        Args:
+            assignment_period (AssignmentPeriod): The period during which the assignment is being calculated.
+            network (inro.emme.network.Network): The network object representing the transit network.
+        """
+        pass
+    
+    def on_emme_bike_vdfs_set(self, assignment_period: 'AssignmentPeriod', network: 'Network') -> None:
+        """
+        Event handler for when bike VDFs have been set.
+        Args:
+            assignment_period (AssignmentPeriod): The period during which the assignment is being calculated.
+            network (inro.emme.network.Network): The network object representing the transit network.
+        """
+        pass
+    
+    def on_emme_road_cost_calculated(self, assignment_period: 'AssignmentPeriod', network: 'Network') -> None:
+        """
+        Event handler for when road costs have been calculated.
+        Args:
+            assignment_period (AssignmentPeriod): The period during which the assignment is being calculated.
+            network (inro.emme.network.Network): The network object representing the transit network.
+        """
+        pass
+    
+    def on_emme_boarding_penalties_calculated(self, assignment_period: 'AssignmentPeriod', network: 'Network') -> None:
+        """
+        Event handler for when boarding penalties have been calculated.
+        Args:
+            assignment_period (AssignmentPeriod): The period during which the assignment is being calculated.
+            network (inro.emme.network.Network): The network object representing the transit network.
+        """
         pass
 
 
@@ -200,6 +302,7 @@ class EventHandler(ModelSystemEventListener):
                     getattr(listener, method_name)(*args, **kwargs)
                 except Exception as e:
                     if gettrace() is not None:
+                        # Re-raise exception if debugger is attached
                         raise e
                     log.error(f"Error in {listener.__class__.__name__}.{method_name}: {e}")
         return method
