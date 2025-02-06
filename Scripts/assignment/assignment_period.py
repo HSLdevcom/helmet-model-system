@@ -60,7 +60,7 @@ class AssignmentPeriod(Period):
         self._separate_emme_scenarios = separate_emme_scenarios
         self.emme_matrices = emme_matrices
         self.dist_unit_cost = param.dist_unit_cost
-        self.on_emme_assignment_period_initialized(self)
+        self.event_handler.on_assignment_period_initialized(self)
 
     def extra(self, attr: str) -> str:
         """Add prefix "@" and time-period suffix.
@@ -118,7 +118,7 @@ class AssignmentPeriod(Period):
             Type (time/cost/dist) : dict
                 Assignment class (car_work/transit/...) : numpy 2-d matrix
         """
-        self.event_handler.on_emme_assignment_started(self, iteration, matrices, self.emme_scenario)
+        self.event_handler.on_assignment_started(self, iteration, matrices, self.emme_scenario)
         self._set_emmebank_matrices(matrices, iteration=="last")
         if iteration=="init":
             self._assign_pedestrians()
@@ -189,7 +189,7 @@ class AssignmentPeriod(Period):
         if iteration != "last":
             for ass_cl in ("car_work", "car_leisure"):
                 mtxs["cost"][ass_cl] += self.dist_unit_cost * mtxs["dist"][ass_cl]
-        self.event_handler.on_emme_assignment_complete(self, iteration, matrices, mtxs, self.emme_scenario)
+        self.event_handler.on_assignment_complete(self, iteration, matrices, mtxs, self.emme_scenario)
         return mtxs
 
     def calc_transit_cost(self, 
@@ -376,7 +376,7 @@ class AssignmentPeriod(Period):
                 link.modes |= {main_mode}
             elif main_mode in link.modes:
                 link.modes -= {main_mode}
-        self.event_handler.on_emme_car_and_transit_vdfs_set(self, network)
+        self.event_handler.on_car_and_transit_vdfs_set(self, network)
         self.emme_scenario.publish_network(network)
 
     def _set_bike_vdfs(self):
@@ -419,7 +419,7 @@ class AssignmentPeriod(Period):
                 link.modes |= {main_mode}
             elif main_mode in link.modes:
                 link.modes -= {main_mode}
-        self.event_handler.on_emme_bike_vdfs_set(self, network)
+        self.event_handler.on_bike_vdfs_set(self, network)
         self.emme_scenario.publish_network(network)
 
     def _set_emmebank_matrices(self, 
@@ -574,7 +574,7 @@ class AssignmentPeriod(Period):
                 if include_trucks:
                     for ass_class in heavy:
                         link[background_traffic] += link[ass_class]
-        self.event_handler.on_emme_background_traffic_calculated(self, network)
+        self.event_handler.on_background_traffic_calculated(self, network)
         self.emme_scenario.publish_network(network)
 
     def _calc_road_cost(self):
@@ -586,7 +586,7 @@ class AssignmentPeriod(Period):
             dist_cost = self.dist_unit_cost * link.length
             link[self.extra("toll_cost")] = toll_cost
             link[self.extra("total_cost")] = toll_cost + dist_cost
-        self.event_handler.on_emme_road_cost_calculated(self, network)
+        self.event_handler.on_road_cost_calculated(self, network)
         self.emme_scenario.publish_network(network)
 
     def _calc_boarding_penalties(self, 
@@ -609,7 +609,7 @@ class AssignmentPeriod(Period):
         if missing_penalties:
             missing_penalties_str: str = ", ".join(missing_penalties)
             log.warn("No boarding penalty found for transit modes " + missing_penalties_str)
-        self.event_handler.on_emme_boarding_penalties_calculated(self, network)
+        self.event_handler.on_boarding_penalties_calculated(self, network)
         self.emme_scenario.publish_network(network)
 
     def _specify(self):
@@ -748,7 +748,7 @@ class AssignmentPeriod(Period):
         log.info("Pedestrian assignment started...")
         self.emme_project.pedestrian_assignment(
             specification=self.walk_spec, scenario=self.emme_scenario)
-        self.event_handler.on_emme_pedestrian_assignment_complete(self, self.emme_scenario)
+        self.event_handler.on_pedestrian_assignment_complete(self, self.emme_scenario)
         log.info("Pedestrian assignment performed for scenario " + str(self.emme_scenario.id))
 
     def _calc_extra_wait_time(self):
@@ -809,7 +809,7 @@ class AssignmentPeriod(Period):
                                   + b["cspeed"]*cumulative_speed)
                 # Estimated waiting time addition caused by headway deviation
                 segment["@wait_time_dev"] = headway_sd**2 / (2.0*line[headway_attr])
-        self.event_handler.on_emme_transit_wait_time_calculated(self, network)
+        self.event_handler.on_transit_wait_time_calculated(self, network)
         self.emme_scenario.publish_network(network)
 
     def _assign_transit(self):

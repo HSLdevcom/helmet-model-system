@@ -48,7 +48,7 @@ class EmmeAssignmentModel(AssignmentModel):
     def __init__(self, 
                  emme_context: EmmeProject, 
                  first_scenario_id: int,
-                 event_handler: EventHandler=None,
+                 event_handler: EventHandler,
                  separate_emme_scenarios: bool=False, 
                  save_matrices: bool=False,
                  time_periods: List[str]=param.time_periods, 
@@ -100,7 +100,7 @@ class EmmeAssignmentModel(AssignmentModel):
                     tp, i*hundred + self.first_matrix_id, id_ten)
             self.assignment_periods.append(AssignmentPeriod(
                 tp, scen_id, self.emme_project, emme_matrices,
-                separate_emme_scenarios=self.separate_emme_scenarios))
+                self._event_handler, separate_emme_scenarios=self.separate_emme_scenarios))
         self._create_attributes(self.day_scenario, self._extra)
         for ap in self.assignment_periods:
             if car_dist_unit_cost is not None:

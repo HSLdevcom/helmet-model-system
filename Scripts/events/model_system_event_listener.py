@@ -145,7 +145,7 @@ class ModelSystemEventListener(ABC):
         """
         pass
 
-    def on_emme_assignment_period_initialized(self, assignment_period: 'AssignmentPeriod'):
+    def on_assignment_period_initialized(self, assignment_period: 'AssignmentPeriod'):
         """
         Event handler for when an EMME assignment period is initialized.
         Args:
@@ -153,7 +153,7 @@ class ModelSystemEventListener(ABC):
         """
         pass
 
-    def on_emme_pedestrian_assignment_complete(self, assignment_period: 'AssignmentPeriod', emme_scenario: 'Scenario') -> None:
+    def on_pedestrian_assignment_complete(self, assignment_period: 'AssignmentPeriod', emme_scenario: 'Scenario') -> None:
         """
         Event handler for when an EMME pedestrian assignment is complete.
         Args:
@@ -162,7 +162,7 @@ class ModelSystemEventListener(ABC):
         """
         pass
  
-    def on_emme_transit_wait_time_calculated(self, assignment_period: 'AssignmentPeriod' ,network: 'Network') -> None:
+    def on_transit_wait_time_calculated(self, assignment_period: 'AssignmentPeriod' ,network: 'Network') -> None:
         """
         Event handler for when the extra transit wait time has been calculated.
         Args:
@@ -171,7 +171,7 @@ class ModelSystemEventListener(ABC):
         """
         pass
     
-    def on_emme_background_traffic_calculated(self, assignment_period: 'AssignmentPeriod' ,network: 'Network') -> None:
+    def on_background_traffic_calculated(self, assignment_period: 'AssignmentPeriod' ,network: 'Network') -> None:
         """
         Event handler for when background traffic has been calculated.
         Args:
@@ -180,7 +180,7 @@ class ModelSystemEventListener(ABC):
         """        
         pass
     
-    def on_emme_assignment_started(self,
+    def on_assignment_started(self,
                                    assignment_period: 'AssignmentPeriod',
                                    iteration: Union[int, str],
                                    demand: Dict[str, np.ndarray]) -> None:
@@ -193,7 +193,7 @@ class ModelSystemEventListener(ABC):
         """
         pass
     
-    def on_emme_assignment_complete(self,
+    def on_assignment_complete(self,
                                     assignment_period: 'AssignmentPeriod',
                                     iteration: Union[int, str],
                                     demand: Dict[str, np.ndarray],
@@ -211,7 +211,7 @@ class ModelSystemEventListener(ABC):
         """
         pass
 
-    def on_emme_car_and_transit_vdfs_set(self, assignment_period: 'AssignmentPeriod', network: 'Network') -> None:
+    def on_car_and_transit_vdfs_set(self, assignment_period: 'AssignmentPeriod', network: 'Network') -> None:
         """
         Event handler for when car and transit VDFs have been set.
         Args:
@@ -220,7 +220,7 @@ class ModelSystemEventListener(ABC):
         """
         pass
     
-    def on_emme_bike_vdfs_set(self, assignment_period: 'AssignmentPeriod', network: 'Network') -> None:
+    def on_bike_vdfs_set(self, assignment_period: 'AssignmentPeriod', network: 'Network') -> None:
         """
         Event handler for when bike VDFs have been set.
         Args:
@@ -229,7 +229,7 @@ class ModelSystemEventListener(ABC):
         """
         pass
     
-    def on_emme_road_cost_calculated(self, assignment_period: 'AssignmentPeriod', network: 'Network') -> None:
+    def on_road_cost_calculated(self, assignment_period: 'AssignmentPeriod', network: 'Network') -> None:
         """
         Event handler for when road costs have been calculated.
         Args:
@@ -238,7 +238,7 @@ class ModelSystemEventListener(ABC):
         """
         pass
     
-    def on_emme_boarding_penalties_calculated(self, assignment_period: 'AssignmentPeriod', network: 'Network') -> None:
+    def on_boarding_penalties_calculated(self, assignment_period: 'AssignmentPeriod', network: 'Network') -> None:
         """
         Event handler for when boarding penalties have been calculated.
         Args:
