@@ -118,7 +118,7 @@ class AssignmentPeriod(Period):
             Type (time/cost/dist) : dict
                 Assignment class (car_work/transit/...) : numpy 2-d matrix
         """
-        self.event_handler.on_assignment_started(self, iteration, matrices, self.emme_scenario)
+        self.event_handler.on_assignment_started(self, iteration, matrices)
         self._set_emmebank_matrices(matrices, iteration=="last")
         if iteration=="init":
             self._assign_pedestrians()

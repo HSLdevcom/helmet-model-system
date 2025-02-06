@@ -181,9 +181,9 @@ class ModelSystemEventListener(ABC):
         pass
     
     def on_assignment_started(self,
-                                   assignment_period: 'AssignmentPeriod',
-                                   iteration: Union[int, str],
-                                   demand: Dict[str, np.ndarray]) -> None:
+                              assignment_period: 'AssignmentPeriod',
+                              iteration: Union[int, str],
+                              demand: Dict[str, np.ndarray]) -> None:
         """
         Event handler for when Emme assignment is started.
         Args:
