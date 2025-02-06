@@ -10,47 +10,47 @@ destination_choice = {
     "hw": {
         "car": {
             "attraction": {
-                "parking_cost_work": (-0.342515069907, -0.342515069907)
+                "parking_cost_work": (-0.342801966916, -0.342801966916)
             },
             "impedance": {
-                "time": (-0.018463012860336, -0.018463012860336),
-                "cost": (-0.139871309548, -0.139871309548)
+                "time": (-0.018423150225612, -0.018423150225612),
+                "cost": (-0.139569319891, -0.139569319891)
             },
             "log": {
                 "size": 1.0
             },
             "size": {
                 "workplaces": 1.0,
-                "shops": 0.6272981122453887
+                "shops": 0.6272936133911192
             }
         },
         "transit": {
             "impedance": {
-                "cost": (-0.139871309548, -0.139871309548),
-                "time": -0.0165872750829
+                "cost": (-0.139569319891, -0.139569319891),
+                "time": -0.0165513077356
             },
             "attraction": {
-                "parking_cost_work": (0.101880829735, 0.101880829735)
+                "parking_cost_work": (0.101374043468, 0.101374043468)
             },
             "log": {
                 "size": 1.0
             },
             "size": {
                 "workplaces": 1.0,
-                "shops": 0.6272981122453887
+                "shops": 0.6272936133911192
             }
         },
         "bike": {
             "impedance": {
-                "time": -0.0322129518382
+                "time": -0.032173039701
             },
             "log": {
-                "time": -0.0296380230616,
+                "time": -0.0307997853003,
                 "size": 1.0
             },
             "size": {
                 "workplaces": 1.0,
-                "shops": 0.6272981122453887
+                "shops": 0.6272936133911192
             },
             "attraction": {
 
@@ -58,15 +58,15 @@ destination_choice = {
         },
         "walk": {
             "impedance": {
-                "time": -0.0453525121887
+                "time": -0.0444302985424
             },
             "log": {
-                "time": -0.144203513552,
+                "time": -0.139324323742,
                 "size": 1.0
             },
             "size": {
                 "workplaces": 1.0,
-                "shops": 0.6272981122453887
+                "shops": 0.6272936133911192
             },
             "attraction": {
 
@@ -74,24 +74,24 @@ destination_choice = {
         },
         "park_and_ride": {
             "impedance": {
-                "utility": 0.162806259982
+                "utility": 0.421733941529
             },
             "attraction": {
-                "parking_cost_work": (0.750052854068, 0.750052854068)
+                "parking_cost_work": (0.717914956147, 0.717914956147)
             },
             "utility": {
                 "facility": {
                     "shops": 1e-05,
-                    "cost": -0.139871309548,
-                    "time": -0.018463012860336
+                    "cost": -0.139569319891,
+                    "time": -0.018423150225612
                 },
                 "car_impedance": {
-                    "time": -0.018463012860336,
-                    "cost": -0.139871309548
+                    "time": -0.018423150225612,
+                    "cost": -0.139569319891
                 },
                 "transit_impedance": {
-                    "time": -0.0165872750829,
-                    "cost": -0.139871309548
+                    "time": -0.0165513077356,
+                    "cost": -0.139569319891
                 }
             },
             "log": {
@@ -99,17 +99,17 @@ destination_choice = {
             },
             "size": {
                 "workplaces": 1.0,
-                "shops": 0.6272981122453887
+                "shops": 0.6272936133911192
             }
         }
     },
     "hc": {
         "car": {
             "impedance": {
-                "time": (-0.0354638078517, -0.0354638078517)
+                "time": (-0.038866205867, -0.038866205867)
             },
             "log": {
-                "transform": -2.09144887123,
+                "transform": -1.98391717293,
                 "size": 1.0
             },
             "transform": {
@@ -122,8 +122,8 @@ destination_choice = {
             },
             "size": {
                 "comprehensive_schools_own": 1.0,
-                "comprehensive_schools_other": 0.1333390853310356,
-                "secondary_schools": 0.5050821783216296
+                "comprehensive_schools_other": 0.13201422705816748,
+                "secondary_schools": 0.21254782920548704
             },
             "attraction": {
 
@@ -131,7 +131,7 @@ destination_choice = {
         },
         "transit": {
             "log": {
-                "transform": -2.09144887123,
+                "transform": -1.98391717293,
                 "size": 1.0
             },
             "transform": {
@@ -143,12 +143,12 @@ destination_choice = {
                 }
             },
             "impedance": {
-                "time": -0.0225341436648
+                "time": -0.0232623436293
             },
             "size": {
                 "comprehensive_schools_own": 1.0,
-                "comprehensive_schools_other": 0.1333390853310356,
-                "secondary_schools": 0.5050821783216296
+                "comprehensive_schools_other": 0.13201422705816748,
+                "secondary_schools": 0.21254782920548704
             },
             "attraction": {
 
@@ -156,16 +156,16 @@ destination_choice = {
         },
         "bike": {
             "impedance": {
-                "time": -0.0989728207693
+                "time": -0.100395150823
             },
             "log": {
-                "time": 0.566792062632,
+                "time": 0.608074963508,
                 "size": 1.0
             },
             "size": {
                 "comprehensive_schools_own": 1.0,
-                "comprehensive_schools_other": 0.1333390853310356,
-                "secondary_schools": 0.5050821783216296
+                "comprehensive_schools_other": 0.13201422705816748,
+                "secondary_schools": 0.21254782920548704
             },
             "attraction": {
                 "cbd": -1.0
@@ -173,16 +173,16 @@ destination_choice = {
         },
         "walk": {
             "impedance": {
-                "time": -0.121823411404
+                "time": -0.114899693423
             },
             "log": {
-                "time": 0.323242691676,
+                "time": 0.380588529472,
                 "size": 1.0
             },
             "size": {
                 "comprehensive_schools_own": 1.0,
-                "comprehensive_schools_other": 0.1333390853310356,
-                "secondary_schools": 0.5050821783216296
+                "comprehensive_schools_other": 0.13201422705816748,
+                "secondary_schools": 0.21254782920548704
             },
             "attraction": {
 
@@ -192,31 +192,31 @@ destination_choice = {
     "hu": {
         "car": {
             "attraction": {
-                "parking_cost_work": (-1.22065217547, -1.22065217547)
+                "parking_cost_work": (-1.42765645207, -1.42765645207)
             },
             "impedance": {
-                "time": (-0.033734239934868, -0.033734239934868),
-                "cost": (-0.255562423749, -0.255562423749)
+                "time": (-0.030841014066588002, -0.030841014066588002),
+                "cost": (-0.233644045959, -0.233644045959)
             },
             "log": {
                 "size": 1.0
             },
             "size": {
                 "secondary_schools": 1.0,
-                "tertiary_education": 1.8687634921828995
+                "tertiary_education": 2.6736687422544825
             }
         },
         "transit": {
             "impedance": {
-                "cost": (-0.255562423749, -0.255562423749),
-                "time": -0.0210012747331
+                "cost": (-0.233644045959, -0.233644045959),
+                "time": -0.0188876272346
             },
             "log": {
                 "size": 1.0
             },
             "size": {
                 "secondary_schools": 1.0,
-                "tertiary_education": 1.8687634921828995
+                "tertiary_education": 2.6736687422544825
             },
             "attraction": {
 
@@ -224,15 +224,15 @@ destination_choice = {
         },
         "bike": {
             "impedance": {
-                "time": -0.0895283563094
+                "time": -0.070615606487
             },
             "log": {
-                "time": 1.38459887003,
+                "time": 0.468789517309,
                 "size": 1.0
             },
             "size": {
                 "secondary_schools": 1.0,
-                "tertiary_education": 1.8687634921828995
+                "tertiary_education": 2.6736687422544825
             },
             "attraction": {
 
@@ -240,15 +240,15 @@ destination_choice = {
         },
         "walk": {
             "impedance": {
-                "time": -0.125303041384
+                "time": -0.0773388967016
             },
             "log": {
-                "time": 0.629022905602,
+                "time": 0.171771530565,
                 "size": 1.0
             },
             "size": {
                 "secondary_schools": 1.0,
-                "tertiary_education": 1.8687634921828995
+                "tertiary_education": 2.6736687422544825
             },
             "attraction": {
 
@@ -258,35 +258,35 @@ destination_choice = {
     "hs": {
         "car": {
             "attraction": {
-                "parking_cost_errand": (-0.216893455253, -0.216893455253)
+                "parking_cost_errand": (-0.215549007064, -0.215549007064)
             },
             "impedance": {
-                "time": (-0.0436816541396775, -0.0436816541396775),
-                "cost": (-0.488063174745, -0.488063174745)
+                "time": (-0.043105319120677, -0.043105319120677),
+                "cost": (-0.481623677326, -0.481623677326)
             },
             "log": {
                 "size": 1.0
             },
             "size": {
                 "population": 1.0,
-                "service_own": 3.6719688394365027,
-                "service_other": 8.469208553137102,
-                "shops": 131.71316047456068
+                "service_own": 8.476983667496237,
+                "service_other": 3.6848164284437015,
+                "shops": 131.76425689582217
             }
         },
         "transit": {
             "impedance": {
-                "cost": (-0.488063174745, -0.488063174745),
-                "time": -0.0314514200469
+                "cost": (-0.481623677326, -0.481623677326),
+                "time": -0.031412409441
             },
             "log": {
                 "size": 1.0
             },
             "size": {
                 "population": 1.0,
-                "service_own": 3.6719688394365027,
-                "service_other": 8.469208553137102,
-                "shops": 131.71316047456068
+                "service_own": 8.476983667496237,
+                "service_other": 3.6848164284437015,
+                "shops": 131.76425689582217
             },
             "attraction": {
 
@@ -294,17 +294,17 @@ destination_choice = {
         },
         "bike": {
             "impedance": {
-                "time": -0.0847216033539
+                "time": -0.0846487231504
             },
             "log": {
-                "time": 0.190532678912,
+                "time": 0.189334335073,
                 "size": 1.0
             },
             "size": {
                 "population": 1.0,
-                "service_own": 3.6719688394365027,
-                "service_other": 8.469208553137102,
-                "shops": 131.71316047456068
+                "service_own": 8.476983667496237,
+                "service_other": 3.6848164284437015,
+                "shops": 131.76425689582217
             },
             "attraction": {
 
@@ -312,17 +312,17 @@ destination_choice = {
         },
         "walk": {
             "impedance": {
-                "time": -0.0881879206739
+                "time": -0.0861843771012
             },
             "log": {
-                "time": 0.151299874148,
+                "time": 0.151580581494,
                 "size": 1.0
             },
             "size": {
                 "population": 1.0,
-                "service_own": 3.6719688394365027,
-                "service_other": 8.469208553137102,
-                "shops": 131.71316047456068
+                "service_own": 8.476983667496237,
+                "service_other": 3.6848164284437015,
+                "shops": 131.76425689582217
             },
             "attraction": {
 
@@ -332,54 +332,54 @@ destination_choice = {
     "ho": {
         "car": {
             "attraction": {
-                "parking_cost_errand": (-0.242043274399, -0.242043274399)
+                "parking_cost_errand": (-0.241008933466, -0.241008933466)
             },
             "impedance": {
-                "time": (-0.041855820669452, -0.041855820669452),
-                "cost": (-0.46766280077600003, -0.46766280077600003)
+                "time": (-0.0416219908437375, -0.0416219908437375),
+                "cost": (-0.465050177025, -0.465050177025)
             },
             "log": {
                 "size": 1.0
             },
             "size": {
-                "population": 0.2685443681333689,
+                "population": 0.268340957927158,
                 "service_own": 1.0,
-                "service_other": 0.30698758271050564,
-                "shops": 2.272130355918152
+                "service_other": 0.3094036540736867,
+                "shops": 2.271315144501449
             }
         },
         "transit": {
             "impedance": {
-                "cost": (-0.267662800776, -0.267662800776),
-                "time": -0.0215584748662
+                "cost": (-0.265050177025, -0.265050177025),
+                "time": -0.0215683966038
             },
             "attraction": {
-                "cbd": 0.780330855558,
-                "own_zone": -7.89782713084
+                "cbd": 0.775238355801,
+                "own_zone": -7.92522524459
             },
             "log": {
                 "size": 1.0
             },
             "size": {
-                "population": 0.2685443681333689,
+                "population": 0.268340957927158,
                 "service_own": 1.0,
-                "service_other": 0.30698758271050564,
-                "shops": 2.272130355918152
+                "service_other": 0.3094036540736867,
+                "shops": 2.271315144501449
             }
         },
         "bike": {
             "impedance": {
-                "time": -0.0879826791601
+                "time": -0.0879887012872
             },
             "log": {
-                "time": 0.599625961983,
+                "time": 0.599588470694,
                 "size": 1.0
             },
             "size": {
-                "population": 0.2685443681333689,
+                "population": 0.268340957927158,
                 "service_own": 1.0,
-                "service_other": 0.30698758271050564,
-                "shops": 2.272130355918152
+                "service_other": 0.3094036540736867,
+                "shops": 2.271315144501449
             },
             "attraction": {
 
@@ -387,17 +387,17 @@ destination_choice = {
         },
         "walk": {
             "impedance": {
-                "time": -0.0604420957549
+                "time": -0.0593521910839
             },
             "log": {
-                "time": 0.0602321247351,
+                "time": 0.0629334313695,
                 "size": 1.0
             },
             "size": {
-                "population": 0.2685443681333689,
+                "population": 0.268340957927158,
                 "service_own": 1.0,
-                "service_other": 0.30698758271050564,
-                "shops": 2.272130355918152
+                "service_other": 0.3094036540736867,
+                "shops": 2.271315144501449
             },
             "attraction": {
 
@@ -411,14 +411,14 @@ destination_choice = {
             },
             "size": {
                 "population": 1.0,
-                "service": 4.483830444198899,
-                "shops": 19.014887841870237
+                "service": 1.5616937845874477,
+                "shops": 18.177881093790372
             },
             "impedance": {
-                "time": -0.167802825326
+                "time": -0.13295314811
             },
             "attraction": {
-                "parking_cost_errand": -0.204598505332
+                "parking_cost_errand": -0.262354727472
             }
         },
         "transit": {
@@ -427,11 +427,11 @@ destination_choice = {
             },
             "size": {
                 "population": 1.0,
-                "service": 4.483830444198899,
-                "shops": 19.014887841870237
+                "service": 1.5616937845874477,
+                "shops": 18.177881093790372
             },
             "impedance": {
-                "time": -0.0464553991994
+                "time": -0.0603680486607
             },
             "attraction": {
 
@@ -443,11 +443,11 @@ destination_choice = {
             },
             "size": {
                 "population": 1.0,
-                "service": 4.483830444198899,
-                "shops": 19.014887841870237
+                "service": 1.5616937845874477,
+                "shops": 18.177881093790372
             },
             "impedance": {
-                "dist": -0.847308504612
+                "dist": -0.515531341887
             },
             "attraction": {
 
@@ -540,33 +540,33 @@ destination_choice = {
     "oo": {
         "car": {
             "attraction": {
-                "parking_cost_errand": (-0.143364715541, -0.143364715541)
+                "parking_cost_errand": (-0.144317572278, -0.144317572278)
             },
             "impedance": {
-                "time": (-0.030217135667246497, -0.030217135667246497),
-                "cost": (-0.337621627567, -0.337621627567)
+                "time": (-0.029901260285165498, -0.029901260285165498),
+                "cost": (-0.334092293689, -0.334092293689)
             },
             "log": {
                 "size": 1.0
             },
             "size": {
                 "population": 1.0,
-                "service": 5.99638688387262,
-                "shops": 33.847956331783536
+                "service": 6.034287177221872,
+                "shops": 33.86903793259901
             }
         },
         "transit": {
             "impedance": {
-                "cost": (-0.337621627567, -0.337621627567),
-                "time": -0.0188789753296
+                "cost": (-0.334092293689, -0.334092293689),
+                "time": -0.0188573282936
             },
             "log": {
                 "size": 1.0
             },
             "size": {
                 "population": 1.0,
-                "service": 5.99638688387262,
-                "shops": 33.847956331783536
+                "service": 6.034287177221872,
+                "shops": 33.86903793259901
             },
             "attraction": {
 
@@ -574,16 +574,16 @@ destination_choice = {
         },
         "bike": {
             "impedance": {
-                "time": -0.0857607900308
+                "time": -0.0847828015863
             },
             "log": {
-                "time": 0.0799687416129,
+                "time": 0.0651388569873,
                 "size": 1.0
             },
             "size": {
                 "population": 1.0,
-                "service": 5.99638688387262,
-                "shops": 33.847956331783536
+                "service": 6.034287177221872,
+                "shops": 33.86903793259901
             },
             "attraction": {
 
@@ -591,16 +591,16 @@ destination_choice = {
         },
         "walk": {
             "impedance": {
-                "time": -0.0782333623268
+                "time": -0.0766208960579
             },
             "log": {
-                "time": -0.133569594496,
+                "time": -0.124099280361,
                 "size": 1.0
             },
             "size": {
                 "population": 1.0,
-                "service": 5.99638688387262,
-                "shops": 33.847956331783536
+                "service": 6.034287177221872,
+                "shops": 33.86903793259901
             },
             "attraction": {
 
