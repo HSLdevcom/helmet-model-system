@@ -1,3 +1,4 @@
+from pathlib import Path
 import unittest
 import numpy
 
@@ -25,6 +26,10 @@ class ModelTest(unittest.TestCase):
     def test_models(self):
         print("Testing assignment..")
         log.initialize(Config())
+        event_handler = EventHandler()
+        # Load event listeners from 'events/examples' folder
+        event_handler.load_listeners(Path(__file__).parent.parent.parent / 'events' / 'examples')
+
         results_path = os.path.join(TEST_DATA_PATH, "Results")
         ass_model = MockAssignmentModel(
             MatrixData(os.path.join(results_path, "test", "Matrices")))
@@ -37,7 +42,7 @@ class ModelTest(unittest.TestCase):
         model = ModelSystem(
             zone_data_path, base_zone_data_path, base_matrices_path,
             results_path, ass_model, "test",
-            EventHandler())
+            event_handler)
         impedance = model.assign_base_demand()
         for ap in ass_model.assignment_periods:
             tp = ap.name

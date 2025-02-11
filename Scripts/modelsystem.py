@@ -2,7 +2,7 @@ from pathlib import Path
 import threading
 import multiprocessing
 import os
-from typing import Any, Callable, Dict, List, Set, Union, cast
+from typing import Any, Dict, List, Union, cast
 import numpy
 import pandas
 import random
@@ -92,7 +92,8 @@ class ModelSystem:
             self.ass_model.nr_zones, self.ass_model.time_periods)
 
         #init Impedance transformers
-        self.imptrans = ImpedanceTransformer(extra_transformers=[],
+        self.imptrans = ImpedanceTransformer(self.event_handler,
+                                             extra_transformers=[],
                                              export_path=estimation_data_path)
         
         bounds = slice(0, self.zdata_forecast.nr_zones)
@@ -177,7 +178,7 @@ class ModelSystem:
                             log.debug(f"Park and ride crowding penalty iteration {i+1} modified {modified} facilities.")
                             if modified < 1:                                
                                 break
-                        log.debug(f"Park and ride demand calculation completed.")
+                        log.debug("Park and ride demand calculation completed.")
 
                 self.event_handler.on_purpose_demand_calculated(purpose, demand)
                 if purpose.dest != "source":

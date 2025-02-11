@@ -2,12 +2,12 @@ from abc import ABC
 from typing import TYPE_CHECKING, Dict, Union
 from sys import gettrace
 from utils import log
-import numpy as np
 from pathlib import Path
 import importlib.util
 
-from demand.trips import DemandModel
 if TYPE_CHECKING:
+    import pandas as pd
+    import numpy as np
     from datahandling.zonedata import ZoneData
     from modelsystem import ModelSystem
     from datatypes.purpose import TourPurpose
@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from assignment.emme_bindings.mock_project import Network
     from assignment.emme_bindings.mock_project import Scenario
     from assignment.assignment_period import AssignmentPeriod
+    from demand.trips import DemandModel
 
 class ModelSystemEventListener(ABC):
    
@@ -42,7 +43,7 @@ class ModelSystemEventListener(ABC):
         """
         pass
     
-    def on_iteration_started(self, iteration: Union[int, str], previous_impedance: Dict[str, Dict[str, np.ndarray]]) -> None:
+    def on_iteration_started(self, iteration: Union[int, str], previous_impedance: Dict[str, Dict[str, 'np.ndarray']]) -> None:
         """
         Event handler that is called when an iteration is started.
 
@@ -61,7 +62,7 @@ class ModelSystemEventListener(ABC):
         """
         pass
     
-    def on_base_demand_assigned(self, impedance: Dict[str, Dict[str, np.ndarray]]) -> None:
+    def on_base_demand_assigned(self, impedance: Dict[str, Dict[str, 'np.ndarray']]) -> None:
         """
         Event handler that is called when base demand has been assigned.
 
@@ -70,7 +71,7 @@ class ModelSystemEventListener(ABC):
         """
         pass
 
-    def on_population_segments_created(self, dm: DemandModel) -> None:
+    def on_population_segments_created(self, dm: 'DemandModel') -> None:
         """
         Event handler that is called when population segments have been created.
 
@@ -125,7 +126,7 @@ class ModelSystemEventListener(ABC):
         """
         pass
     
-    def on_time_period_assigned(self, iteration: Union[int, str], ap: 'Period', impedance: Dict[str, Dict[str, np.ndarray]]) -> None:
+    def on_time_period_assigned(self, iteration: Union[int, str], ap: 'Period', impedance: Dict[str, Dict[str, 'np.ndarray']]) -> None:
         """
         Event handler that is called when time period has been assigned.
 
@@ -136,7 +137,7 @@ class ModelSystemEventListener(ABC):
         """
         pass
 
-    def on_iteration_complete(self, iteration: Union[int, str], impedance: Dict[str, Dict[str, np.ndarray]], gap: Dict[str, float]) -> None:
+    def on_iteration_complete(self, iteration: Union[int, str], impedance: Dict[str, Dict[str, 'np.ndarray']], gap: Dict[str, float]) -> None:
         """
         Event handler that is called when an iteration is complete.
 
@@ -183,29 +184,29 @@ class ModelSystemEventListener(ABC):
     def on_assignment_started(self,
                               assignment_period: 'AssignmentPeriod',
                               iteration: Union[int, str],
-                              demand: Dict[str, np.ndarray]) -> None:
+                              demand: Dict[str, 'np.ndarray']) -> None:
         """
         Event handler for when Emme assignment is started.
         Args:
             assignment_period (AssignmentPeriod): The period during which the assignment was performed.
             iteration (Union[int, str]): The iteration number or identifier.
-            demand (Dict[str, np.ndarray]): The demand data, represented as a dictionary where keys are strings and values are numpy arrays.
+            demand (Dict[str, 'np.ndarray']): The demand data, represented as a dictionary where keys are strings and values are numpy arrays.
         """
         pass
     
     def on_assignment_complete(self,
                                     assignment_period: 'AssignmentPeriod',
                                     iteration: Union[int, str],
-                                    demand: Dict[str, np.ndarray],
-                                    impedance: Dict[str, Dict[str, np.ndarray]],
+                                    demand: Dict[str, 'np.ndarray'],
+                                    impedance: Dict[str, Dict[str, 'np.ndarray']],
                                     scenario: 'Scenario') -> None:
         """
         Event handler for when Emme assignment is complete.
         Args:
             assignment_period (AssignmentPeriod): The period during which the assignment was performed.
             iteration (Union[int, str]): The iteration number or identifier.
-            demand (Dict[str, np.ndarray]): The demand data, represented as a dictionary where keys are strings and values are numpy arrays.
-            impedance (Dict[str, Dict[str, np.ndarray]]): The impedance data, represented as a nested dictionary where the outer keys are strings, 
+            demand (Dict[str, 'np.ndarray']): The demand data, represented as a dictionary where keys are strings and values are numpy arrays.
+            impedance (Dict[str, Dict[str, 'np.ndarray']]): The impedance data, represented as a nested dictionary where the outer keys are strings, 
                                                         the inner keys are also strings, and the values are numpy arrays.
             scenario (Scenario): The scenario for which the assignment was performed.
         """
@@ -244,6 +245,15 @@ class ModelSystemEventListener(ABC):
         Args:
             assignment_period (AssignmentPeriod): The period during which the assignment is being calculated.
             network (inro.emme.network.Network): The network object representing the transit network.
+        """
+        pass
+    
+    def on_parking_time_calculated(self, purpose: 'TourPurpose', parking_time: 'np.ndarray') -> None:
+        """
+        Event handler for when parking time has been calculated.
+        Args:
+            purpose (Purpose): The purpose for which parking time has been calculated.
+            parking_time ('np.ndarray'): The parking time data.
         """
         pass
 

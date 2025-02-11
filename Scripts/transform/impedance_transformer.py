@@ -2,11 +2,13 @@ from abc import ABC
 from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, TYPE_CHECKING
-import numpy
+import numpy as np
+
 import openmatrix as omx
 
 if TYPE_CHECKING:
     from datatypes.purpose import Purpose
+from events.model_system_event_listener import EventHandler
 import parameters.impedance_transformation as param
 from parameters.assignment import assignment_classes
 try:
@@ -14,8 +16,6 @@ try:
 except ImportError:
     parking_time = None
 
-import numpy as np
-import openmatrix as omx
 
 def transit_cost_to_per_day(cost: np.ndarray, purpose: 'Purpose') -> None:
     """Converts monthly transit ticket cost to daily cost.
@@ -26,7 +26,7 @@ def transit_cost_to_per_day(cost: np.ndarray, purpose: 'Purpose') -> None:
     """
     trips_month = (param.transit_trips_per_month
         [purpose.area][assignment_classes[purpose.name]])
-    trips_per_month = numpy.full_like(cost, trips_month[0])
+    trips_per_month = np.full_like(cost, trips_month[0])
     for i in range(1, len(purpose.sub_bounds)):
         trips_per_month[purpose.sub_bounds[i], :] = trips_month[i]
     return cost / trips_per_month
@@ -59,10 +59,13 @@ class ImpedanceTransformerBase(ABC):
 class ImpedanceTransformer(ImpedanceTransformerBase):
     _export_path: Path
     _extra_transformers: List[ImpedanceTransformerBase]
+    _event_handler: EventHandler
     
     def __init__(self,
+                 event_handler: EventHandler,
                  extra_transformers: List[ImpedanceTransformerBase] = [],
                  export_path: Path = None):
+        self._event_handler = event_handler
         self._extra_transformers = extra_transformers
         self._export_path = export_path
     
@@ -124,7 +127,7 @@ class ImpedanceTransformer(ImpedanceTransformerBase):
         # transit cost to eur per day
         trips_month = (param.transit_trips_per_month
             [purpose.area][assignment_classes[purpose.name]])
-        trips_per_month = numpy.full_like(
+        trips_per_month = np.full_like(
             day_imp["transit"]["cost"], trips_month[0])
         for i in range(1, len(purpose.sub_bounds)):
             trips_per_month[purpose.sub_bounds[i], :] = trips_month[i]
@@ -132,8 +135,10 @@ class ImpedanceTransformer(ImpedanceTransformerBase):
 
         # Add parking time to car matrices
         if parking_time is not None:
-            ptime = parking_time(purpose.zone_data).to_numpy()[cols]
-            ptime = numpy.clip(ptime, 0, 30)
+            ptime = parking_time(purpose.zone_data).to_numpy()
+            ptime = np.clip(ptime, 0, 30)
+            self._event_handler.on_parking_time_calculated(purpose, ptime)
+            ptime = ptime[cols]
             car_modes = [k for k in day_imp.keys() if k in ('car', 'car_work', 'car_transit')]
             for k in car_modes:
                 day_imp[k]['time'] += ptime[None,:]
