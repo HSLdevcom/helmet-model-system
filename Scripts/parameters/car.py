@@ -19,31 +19,31 @@ car_driver_share = {
     "oop": 0.784781268,
 }
 car_usage: Dict[str,Any] = {
-    "constant": -11.2296,
+    "constant": -0.8551,
     "generation": {},
     "log": {
-        "cars_per_1000": 2.0804,
-        "population_density": -0.1471,
+        "cars_per_1000": 0.6490,
+        "population_density": -0.3684,
     },
     "individual_dummy": {
         "age_7-17": -9999,
-        ("age_18-29", "male"): 0.2969,
-        ("age_30-49", "female"): 1.1019,
-        ("age_30-49", "male"): 1.4157,
-        ("age_50-64", "female"): 0.8173,
-        ("age_50-64", "male"): 1.9978,
-        ("age_65-99", "male"): 1.8737,
+        ("age_18-29", "male"): 0.0,
+        ("age_30-49", "female"): 0.6795,
+        ("age_30-49", "male"): 1.1779,
+        ("age_50-64", "female"): 0.7980,
+        ("age_50-64", "male"): 1.6197,
+        ("age_65-99", "male"): 1.4483,
     },
 }
 car_density = {
     "constant": 0.0,
     "generation": {
-        "share_detached_houses_new": 2.523e-01, # Originally estimated for percentages (0-100), here transformed
-        "helsinki": 3.782e-02,
-        "surrounding": 5.043e-02,
+        "share_detached_houses_new": 3.500e-01, # Originally estimated for percentages (0-100), here transformed
+        "helsinki": 1.411e-01,
+        "surrounding": 1.823e-01,
     },
     "log": {
-        "time_ratio": 1.708e-01,
-        "cost_ratio": 1.708e-01,
+        "time_ratio": 1.273e-01,
+        "cost_ratio": 1.273e-01,
     },
 }

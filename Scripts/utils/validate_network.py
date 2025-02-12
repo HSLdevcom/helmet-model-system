@@ -60,7 +60,29 @@ def validate(network, fares=None):
         modesets.append({network.mode(m) for m in modes})
         intervals += param.official_node_numbers[modes]
     unofficial_nodes = set()
+    nr_links = 0
+    nr_zero_gradients = 0
+    
+    # Make sure that cars, pedestrians cyclists can access all centroids
+    unaccessible_centroids = []
+
+    required_modes = {'a', 'f', 'c'}  # Modes for pedestrians, cyclists, and cars
+
+    for centroid in network.centroids():
+        accessible_modes = {mode.id for link in centroid.incoming_links() for mode in link.modes}
+        if not required_modes.issubset(accessible_modes):
+            unaccessible_centroids.append(centroid.id)
+    
+    #filter unnacessible centroids for transit external centroids
+    unaccessible_centroids = [uc for uc in unaccessible_centroids if int(uc)<34300 or int(uc)>34399]
+    if unaccessible_centroids:
+        msg = f"Centroids {unaccessible_centroids} are not accessible by pedestrians, cyclists and/or passenger cars."
+        log.error(msg)
+        raise ValueError(msg)
+
+    
     for link in network.links():
+        nr_links += 1
         if not link.modes:
             msg = "No modes defined for link {}. At minimum mode h and one more mode needs to be defined for the simulation to work".format(link.id)
             log.error(msg)
@@ -91,7 +113,7 @@ def validate(network, fares=None):
         if network.mode('c') in link.modes:
             if (linktype not in param.roadclasses
                     and linktype not in param.custom_roadtypes):
-                msg = "Link type missing for link {}".format(link.id)
+                msg = "Link type missing for link {} with type {} and modes {}".format(link.id, linktype, str(link.modes))
                 log.error(msg)
                 raise ValueError(msg)
         if network.mode('t') in link.modes or network.mode('p') in link.modes:
@@ -122,6 +144,25 @@ def validate(network, fares=None):
             elif not link.modes <= modesets[i // 2]:
                 # If link has unallowed modes
                 unofficial_nodes.add(node.id)
+                
+        if link["@pyoratieluokka"]>4:
+            msg = "Link {} with modes {} has attribute @pyoratieluokka set to {}. Maximum is 4.".format(link.id,str(link.modes),link["@pyoratieluokka"])
+            log.error(msg)
+            raise ValueError(msg)
+
+        try:
+            if link['@kaltevuus'] == 0 and not link.i_node.is_centroid and not link.j_node.is_centroid:
+                nr_zero_gradients += 1
+        except KeyError:
+            raise ValueError("Gradients not defined. Use an extra_links file with @kaltevuus, " +
+                             "or create extra attribute @kaltevuus with zeros. " +
+                             "@kaltevuus is used to model the effect of hills on bicycle route choice, " +
+                             "setting @kaltevuus to 0 on links will ignore hills.")
+    zero_gradient_ratio = (nr_zero_gradients/nr_links)*100
+    if zero_gradient_ratio > 20:
+        msg = "{} % of links have a gradient of 0.".format(zero_gradient_ratio)
+        log.warn(msg)
+
     if unofficial_nodes:
         log.warn(
             "Node number(s) {} not consistent with official HSL network".format(

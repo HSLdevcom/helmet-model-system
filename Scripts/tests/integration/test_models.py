@@ -1,6 +1,9 @@
+from pathlib import Path
 import unittest
 import numpy
 
+from datahandling.zonedata import ZoneData
+from events.model_system_event_listener import EventHandler
 import utils.log as log
 from modelsystem import ModelSystem, AgentModelSystem
 from assignment.mock_assignment import MockAssignmentModel
@@ -23,6 +26,10 @@ class ModelTest(unittest.TestCase):
     def test_models(self):
         print("Testing assignment..")
         log.initialize(Config())
+        event_handler = EventHandler()
+        # Load event listeners from 'events/examples' folder
+        event_handler.load_listeners(Path(__file__).parent.parent.parent / 'events' / 'examples')
+
         results_path = os.path.join(TEST_DATA_PATH, "Results")
         ass_model = MockAssignmentModel(
             MatrixData(os.path.join(results_path, "test", "Matrices")))
@@ -34,7 +41,8 @@ class ModelTest(unittest.TestCase):
             TEST_DATA_PATH, "Base_input_data", "base_matrices")
         model = ModelSystem(
             zone_data_path, base_zone_data_path, base_matrices_path,
-            results_path, ass_model, "test")
+            results_path, ass_model, "test",
+            event_handler)
         impedance = model.assign_base_demand()
         for ap in ass_model.assignment_periods:
             tp = ap.name
@@ -53,7 +61,7 @@ class ModelTest(unittest.TestCase):
         self._validate_impedances(impedance["iht"])
 
         # Check that model result does not change
-        self.assertAlmostEquals(model.mode_share[0]["car"], 0.22489513375983478)
+        self.assertAlmostEquals(model.mode_share[0]["car"], 0.3038856437557159)
         
         print("Model system test done")
     
@@ -70,7 +78,7 @@ class ModelTest(unittest.TestCase):
             TEST_DATA_PATH, "Base_input_data", "base_matrices")
         model = AgentModelSystem(
             zone_data_path, base_zone_data_path, base_matrices_path,
-            results_path, ass_model, "test")
+            results_path, ass_model, "test", EventHandler())
         impedance = model.assign_base_demand()
         impedance = model.run_iteration(impedance)
         impedance = model.run_iteration(impedance, "last")
@@ -87,7 +95,7 @@ class ModelTest(unittest.TestCase):
         self.assertIsNotNone(impedances["time"]["transit_work"])
         self.assertIs(type(impedances["time"]["transit_work"]), numpy.ndarray)
         self.assertEquals(impedances["time"]["transit_work"].ndim, 2)
-        self.assertEquals(len(impedances["time"]["transit_work"]), 12)
+        self.assertEquals(len(impedances["time"]["transit_work"]), 13)
 
     def _validate_demand(self, demand):
         self.assertIsNotNone(demand)

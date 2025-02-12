@@ -2,7 +2,7 @@ import utils.log as log
 
 def validate_loaded(network, fares=None):
     for line in network.transit_lines():
-        if str(line.vehicle.mode) in "mr":
+        if str(line.vehicle.mode) in "mrj":
             segments = list(line.segments())
             for seg1,seg2 in zip(segments[:-1],segments[1:]):
                 if seg1.data1 == 0 and (seg2.allow_boardings == 1 or seg2.allow_alightings ==1):

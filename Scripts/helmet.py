@@ -1,4 +1,5 @@
 from argparse import ArgumentParser, ArgumentTypeError
+from pathlib import Path
 import sys
 import os
 from glob import glob
@@ -7,6 +8,7 @@ import utils.config
 import utils.log as log
 from assignment.emme_assignment import EmmeAssignmentModel
 from assignment.mock_assignment import MockAssignmentModel
+from events.model_system_event_listener import EventHandler
 from modelsystem import ModelSystem, AgentModelSystem
 from datahandling.matrixdata import MatrixData
 
@@ -49,6 +51,17 @@ def main(args):
         raise NameError(
             "Forecast data directory '{}' does not exist.".format(
                 forecast_zonedata_path))
+    
+    estimation_data_path = None
+    if args.export_estimation_data:
+        estimation_data_path = Path(results_path) / args.scenario_name / 'estimation'
+        estimation_data_path.mkdir(parents=True, exist_ok=True)
+    
+    # Initialize event handler and load event listeners
+    event_handler = EventHandler()
+    # Load event listeners from 'events/examples' folder
+    event_handler.load_listeners(Path(__file__).parent / 'events' / 'examples')
+    
     # Choose and initialize the Traffic Assignment (supply)model
     if args.do_not_use_emme:
         log.info("Initializing MockAssignmentModel...")
@@ -69,6 +82,7 @@ def main(args):
         ass_model = EmmeAssignmentModel(
             EmmeProject(emme_project_path),
             first_scenario_id=args.first_scenario_id,
+            event_handler=event_handler,
             separate_emme_scenarios=args.separate_emme_scenarios,
             save_matrices=args.save_matrices,
             first_matrix_id=args.first_matrix_id)
@@ -79,11 +93,12 @@ def main(args):
     if args.is_agent_model:
         model = AgentModelSystem(
             forecast_zonedata_path, base_zonedata_path, base_matrices_path,
-            results_path, ass_model, args.scenario_name)
+            results_path, ass_model, args.scenario_name, estimation_data_path)
     else:
         model = ModelSystem(
             forecast_zonedata_path, base_zonedata_path, base_matrices_path,
-            results_path, ass_model, args.scenario_name)
+            results_path, ass_model, args.scenario_name, event_handler,
+            estimation_data_path)
     log_extra["status"]["results"] = model.mode_share
 
     # Run traffic assignment simulation for N iterations,
@@ -100,9 +115,9 @@ def main(args):
         log_extra["status"]["current"] = i
         try:
             log.info("Starting iteration {}".format(i), extra=log_extra)
-            impedance = (model.run_iteration(impedance, "last")
+            impedance = (model.run_iteration(impedance, "last",args.export_estimation_data)
                          if i == iterations
-                         else model.run_iteration(impedance, i))
+                         else model.run_iteration(impedance, i,args.export_estimation_data))
             log_extra["status"]["completed"] += 1
         except Exception as error:
             log_extra["status"]["failed"] += 1
@@ -121,7 +136,8 @@ def main(args):
             log_extra["status"]["converged"] = 1
         i += 1
     
-    if not log_extra["status"]["converged"]: log.warn("Model has not converged")
+    if not log_extra["status"]["converged"]:
+        log.warn("Model has not converged")
 
     # delete emme strategy files for scenarios
     if args.del_strat_files:
@@ -198,6 +214,12 @@ if __name__ == "__main__":
         action="store_true",
         default=config.DELETE_STRATEGY_FILES,
         help="Using this flag deletes strategy files from Emme-project Database folder.",
+    )
+    parser.add_argument(
+        "-E", "--export-estimation-data",
+        action="store_true",
+        default=config.EXPORT_ESTIMATION_DATA,
+        help="Export zone data and per purpose impedance matrices into the result folder.",
     )
     parser.add_argument(
         "--scenario-name",

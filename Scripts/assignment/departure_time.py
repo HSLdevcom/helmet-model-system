@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 import numpy # type: ignore
+from datahandling.zonedata import ZoneData
 from datatypes.demand import Demand
 from datatypes.tour import Tour
 
@@ -75,7 +76,8 @@ class DepartureTimeModel:
             Travel demand matrix or number of travellers
         """
         demand.purpose.name = cast(str,demand.purpose.name) #type checker hint
-        if demand.mode != "walk" and not demand.is_car_passenger:
+
+        if demand.mode != "walk" and demand.mode != "park_and_ride" and not demand.is_car_passenger:
             if demand.mode in param.divided_classes:
                 ass_class = "{}_{}".format(
                     demand.mode, assignment_classes[demand.purpose.name])

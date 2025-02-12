@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, cast
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 import pandas
 from math import log10
 
@@ -10,12 +10,14 @@ import parameters.assignment as param
 import parameters.zone as zone_param
 from assignment.abstract_assignment import AssignmentModel
 from assignment.assignment_period import AssignmentPeriod
+from events.model_system_event_listener import EventHandler
 if TYPE_CHECKING:
     from assignment.emme_bindings.emme_project import EmmeProject
     from assignment.datatypes.transit_fare import TransitFareZoneSpecification
     from datahandling.resultdata import ResultsData
     from inro.emme.database.scenario import Scenario # type: ignore
     from inro.emme.network.Network import Network # type: ignore
+    import numpy
 
 
 class EmmeAssignmentModel(AssignmentModel):
@@ -46,6 +48,7 @@ class EmmeAssignmentModel(AssignmentModel):
     def __init__(self, 
                  emme_context: EmmeProject, 
                  first_scenario_id: int,
+                 event_handler: EventHandler,
                  separate_emme_scenarios: bool=False, 
                  save_matrices: bool=False,
                  time_periods: List[str]=param.time_periods, 
@@ -57,6 +60,7 @@ class EmmeAssignmentModel(AssignmentModel):
         self.emme_project = emme_context
         self.mod_scenario = self.emme_project.modeller.emmebank.scenario(
             first_scenario_id)
+        self._event_handler = event_handler
 
     def prepare_network(self, 
                         car_dist_unit_cost: Optional[float]=None):
@@ -96,7 +100,7 @@ class EmmeAssignmentModel(AssignmentModel):
                     tp, i*hundred + self.first_matrix_id, id_ten)
             self.assignment_periods.append(AssignmentPeriod(
                 tp, scen_id, self.emme_project, emme_matrices,
-                separate_emme_scenarios=self.separate_emme_scenarios))
+                self._event_handler, separate_emme_scenarios=self.separate_emme_scenarios))
         self._create_attributes(self.day_scenario, self._extra)
         for ap in self.assignment_periods:
             if car_dist_unit_cost is not None:
@@ -109,9 +113,11 @@ class EmmeAssignmentModel(AssignmentModel):
                 pass
             self.emme_project.modeller.emmebank.create_function(
                 idx, param.volume_delay_funcs[idx])
+        self._calculate_gradients()
+        self.emme_project.create_extra_function_parameters(el1="@kaltevuus")
 
     def init_assign(self, 
-                    demand: Dict[str,List[numpy.ndarray]]):
+                    demand: Dict[str,List['numpy.ndarray']]):
         """??? types"""
         ap0 = self.assignment_periods[0]
         ap0.assign(demand, iteration="init")
@@ -252,8 +258,8 @@ class EmmeAssignmentModel(AssignmentModel):
 
     def calc_transit_cost(self, 
                           fares: TransitFareZoneSpecification, 
-                          peripheral_cost: numpy.ndarray, 
-                          default_cost: numpy.ndarray = None):
+                          peripheral_cost: 'numpy.ndarray', 
+                          default_cost: 'numpy.ndarray' = None):
         """Calculate transit zone cost matrix.
         
         Perform multiple transit assignments.
@@ -316,6 +322,11 @@ class EmmeAssignmentModel(AssignmentModel):
     def _add_bus_stops(self):
         network: Network = self.mod_scenario.get_network()
         modified_network: Network = mnw.add_bus_stops(network)
+        self.mod_scenario.publish_network(modified_network)
+
+    def _calculate_gradients(self):
+        network: Network = self.mod_scenario.get_network()
+        modified_network: Network = mnw.calculate_gradients(network)
         self.mod_scenario.publish_network(modified_network)
 
     def _create_matrices(self, time_period, id_hundred, id_ten):
@@ -390,7 +401,6 @@ class EmmeAssignmentModel(AssignmentModel):
         # Create link attributes
         ass_classes = list(param.emme_matrices) + ["bus"]
         ass_classes.remove("walk")
-        if TYPE_CHECKING: scenario = cast(Scenario, scenario)
         for ass_class in ass_classes:
             self.emme_project.create_extra_attribute(
                 "LINK", extra(ass_class), ass_class + " volume",

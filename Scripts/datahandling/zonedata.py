@@ -1,4 +1,5 @@
 from __future__ import annotations
+from pathlib import Path
 from typing import Any, Dict, List, Tuple, Union
 import numpy # type: ignore
 import pandas
@@ -22,6 +23,8 @@ class ZoneData:
         external = param.areas["external"]
         self.zone_numbers = all_zone_numbers[:all_zone_numbers.searchsorted(
             peripheral[1], "right")]
+        self.zone_numbers_hs15 = all_zone_numbers[:all_zone_numbers.searchsorted(
+            surrounding[1], "right")]
         Zone.counter = 0
         self.zones = {number: Zone(number) for number in self.zone_numbers}
         first_peripheral = self.zone_numbers.searchsorted(peripheral[0])
@@ -31,6 +34,10 @@ class ZoneData:
         schooldata = read_csv_file(data_dir, ".edu", self.zone_numbers, dtype)
         landdata = read_csv_file(data_dir, ".lnd", self.zone_numbers, dtype)
         parkdata = read_csv_file(data_dir, ".prk", self.zone_numbers, dtype)
+        try:
+            pnrdata = read_csv_file(data_dir, ".pnr")
+        except NameError:
+            pnrdata = pandas.DataFrame(0, columns=['capacity', 'cost'], index=popdata.index)
         self.externalgrowth = read_csv_file(
             data_dir, ".ext",
             all_zone_numbers[all_zone_numbers.searchsorted(external[0]):all_zone_numbers.searchsorted(external[1],side='right')],
@@ -53,6 +60,10 @@ class ZoneData:
         truckdata = read_csv_file(data_dir, ".trk", squeeze=True)
         self.trailers_prohibited = list(map(int, truckdata.loc[0, :]))
         self.garbage_destination = list(map(int, truckdata.loc[1, :].dropna()))
+
+        self['pnr_capacity'] = pnrdata['capacity']
+        self['pnr_cost'] = pnrdata['cost']
+
         pop = popdata["total"]
         self["population"] = pop
         self.share["share_age_7-17"] = popdata["sh_7-17"][:first_peripheral]
@@ -70,7 +81,12 @@ class ZoneData:
         self.share["share_female"] = pandas.Series(0.5, self.zone_numbers)
         self.share["share_male"] = pandas.Series(0.5, self.zone_numbers)
         self.nr_zones = len(self.zone_numbers)
+        self.nr_zones_hs15 = len(self.zone_numbers_hs15)
         self["population_density"] = pop / landdata["builtar"]
+        # Filter indexes where population_density > 50000
+        high_population_density = self["population_density"].index[self["population_density"] > 50000]
+        if len(high_population_density) > 0:
+            log.warn(f"Zone(s) {list(high_population_density)} have an abnormally high population density. Make sure that the builtar values in the .lnd file are calculated correctly.")
         wp = workdata.pop("total")
         self["workplaces"] = wp
         ShareChecker({})["Workplace shares"] = workdata.sum(axis="columns")
@@ -202,11 +218,11 @@ class ZoneData:
             val = self._values[key]
         except KeyError as err:
             keyl: List[str] = key.split('_')
-            if keyl[1] in ("own", "other"):
+            if keyl[-1] in ("own", "other"):
                 # If parameter is only for own municipality or for all
                 # municipalities except own, array is multiplied by
                 # bool matrix
-                return (self[keyl[1]] * self._values[keyl[0]].values)[bounds, :]
+                return (self[keyl[-1]] * self._values["_".join(keyl[0:-1])].values)[bounds, :]
             else:
                 raise KeyError(err)
         if val.ndim == 1: # If not a compound (i.e., matrix)
@@ -216,6 +232,15 @@ class ZoneData:
                 return val.values
         else:  # Return matrix (purpose zones -> all zones)
             return val[bounds, :]
+
+    def export_data(self, export_file: Path):
+        """Export Pandas Series zone data into a single CSV file
+
+        Args:
+            export_file (Path): Path to the destination file
+        """
+        df = pandas.DataFrame({k:v for k,v in self._values.items() if isinstance(v, pandas.Series)})
+        df.to_csv(export_file)
 
 
 class BaseZoneData(ZoneData):
