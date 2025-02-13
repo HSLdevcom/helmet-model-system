@@ -141,16 +141,18 @@ class AssignmentPeriod(Period):
             self._assign_congested_transit() if param.always_congested else self._assign_transit()
         elif iteration==1:
             self._set_bike_vdfs()
+            self._assign_bikes(self.emme_matrices["bike"]["dist"], "all")
+            self._set_car_and_transit_vdfs()
             if not self._separate_emme_scenarios:
-                self._set_car_and_transit_vdfs()
                 self._calc_background_traffic()
             self._assign_cars(param.stopping_criteria_coarse)
             self._calc_extra_wait_time()
             self._assign_congested_transit() if param.always_congested else self._assign_transit()
         elif isinstance(iteration, int) and iteration>1:
             self._set_bike_vdfs()
+            self._assign_bikes(self.emme_matrices["bike"]["dist"], "all")
+            self._set_car_and_transit_vdfs()
             if not self._separate_emme_scenarios:
-                self._set_car_and_transit_vdfs()
                 self._calc_background_traffic(include_trucks=True)
             self._assign_cars(
                 param.stopping_criteria_coarse, lightweight=True)
