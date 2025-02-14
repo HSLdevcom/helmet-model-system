@@ -356,9 +356,7 @@ class ModelSystem:
         # Add vans and save demand matrices
         for ap in self.ass_model.assignment_periods:
             self.dtm.add_vans(ap.name, self.zdata_forecast.nr_zones)
-            if estimation_mode:
-                if iteration=="last":
-                    self._save_demand_to_omx(ap.name)
+            self._save_demand_to_omx(ap.name)
 
         self.event_handler.on_demand_calculated(iteration, self.dtm)
 
