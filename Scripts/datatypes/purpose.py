@@ -197,7 +197,7 @@ class TourPurpose(Purpose):
         self.model.calc_basic_prob(impedance)
         self.dist = impedance["car"]["dist"]
 
-    def calc_demand(self, estimation_mode=False):
+    def calc_demand(self, estimation_mode=False, add_sec_dest: bool = True):
         """Calculate purpose specific demand matrices.
               
         Returns
@@ -213,10 +213,6 @@ class TourPurpose(Purpose):
             omx_file.create_mapping("zone_number",self.zone_data.all_zone_numbers)
         for mode in self.modes:
             mtx = (self.prob.pop(mode) * tours).T
-            try:
-                self.sec_dest_purpose.gen_model.add_tours(mtx, mode, self)
-            except AttributeError:
-                pass
             if mode == "park_and_ride":
                 car_demand, transit_demand = self.park_and_ride_model.distribute_demand(mtx)
                 pnr_purpose = ParkAndRidePseudoPurpose(self)
@@ -226,6 +222,11 @@ class TourPurpose(Purpose):
                 #     omx_file["pnr_car"] = car_demand
                 #     omx_file["pnr_transit"] = transit_demand
             else:
+                if add_sec_dest:
+                    try:
+                        self.sec_dest_purpose.gen_model.add_tours(mtx, mode, self)
+                    except AttributeError:
+                        pass
                 demand[mode] = Demand(self, mode, mtx)
                 if estimation_mode:
                     omx_file[mode] = mtx
