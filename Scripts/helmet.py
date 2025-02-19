@@ -154,7 +154,7 @@ def main(args):
     if not log_extra["status"]["converged"]:
         log.warn("Model has not converged")
 
-    event_handler.on_simulation_end()
+    event_handler.on_simulation_complete()
     # delete emme strategy files for scenarios
     if args.del_strat_files:
         dbase_path = os.path.join(os.path.dirname(emme_project_path), "database")
