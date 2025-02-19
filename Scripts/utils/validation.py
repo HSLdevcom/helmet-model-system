@@ -93,7 +93,7 @@ class ValidationGroup:
 class Validation:
     groups: Dict[str, ValidationGroup]
     
-    def __init__(self, name: str):
+    def __init__(self):
         """
         Initializes a new instance of the class.
         """
@@ -119,7 +119,7 @@ class Validation:
         self.groups[name] = group
         return group
 
-    def run_all_aggregations(self) -> Dict[str, float]:
+    def run_all_aggregations(self) -> Dict[str, Dict[str, float]]:
         """
         Executes the run_all_aggregations method for each group in self.groups and 
         collects the results in a dictionary.
@@ -167,10 +167,11 @@ def mae(df: pd.DataFrame) -> float:
     return ((df["observation"] - df["expected"]) * df['weight']).abs().mean()
 def max_error(df: pd.DataFrame) -> float:
     return ((df["observation"] - df["expected"]) * df['weight']).abs().max()
-
+def mean_error(df: pd.DataFrame) -> float:
+    return ((df["observation"] - df["expected"]) * df['weight']).mean()
 
 # # Usage example
-# test_valid = Validation('root')
+# test_valid = Validation()
 
 # # Create a group
 # group = test_valid.create_group("test")

@@ -11,6 +11,7 @@ from assignment.mock_assignment import MockAssignmentModel
 from events.model_system_event_listener import EventHandler
 from modelsystem import ModelSystem, AgentModelSystem
 from datahandling.matrixdata import MatrixData
+from utils.validation import Validation
 
 
 def main(args):
@@ -61,6 +62,20 @@ def main(args):
     event_handler = EventHandler()
     # Load event listeners from 'events/examples' folder
     event_handler.load_listeners(Path(__file__).parent / 'events' / 'examples')
+
+    # Setup validation if validation folder exists
+    validation = Validation()
+    validation_path = Path(forecast_zonedata_path) / 'validation'
+    validation_path = Path(__file__).parent / 'validation' # TODO: Delete this line
+    if validation_path.exists():
+        # Load event listeners from 'forecast/validation' folder
+        event_handler.load_listeners(validation_path)
+        event_handler.on_validation_initialized(validation, validation_path)
+    
+    # Notify event listeners that simulation is starting    
+    event_handler.on_simulation_started(Path(forecast_zonedata_path),
+                                        Path(results_path) / args.scenario_name,
+                                        args)
     
     # Choose and initialize the Traffic Assignment (supply)model
     if args.do_not_use_emme:
@@ -139,6 +154,7 @@ def main(args):
     if not log_extra["status"]["converged"]:
         log.warn("Model has not converged")
 
+    event_handler.on_simulation_end()
     # delete emme strategy files for scenarios
     if args.del_strat_files:
         dbase_path = os.path.join(os.path.dirname(emme_project_path), "database")
@@ -153,6 +169,9 @@ def main(args):
                 except:
                     log.info("Not able to remove file {}.".format(f))
         log.info("Removed strategy files in {}".format(dbase_path))
+    if validation is not None:
+        validation.run_all_aggregations_to_html(
+            Path(results_path) / args.scenario_name / 'validation.html')
     log.info("Simulation ended.", extra=log_extra)
 
 

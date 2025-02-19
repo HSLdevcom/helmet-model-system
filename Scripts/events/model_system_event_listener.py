@@ -18,11 +18,38 @@ if TYPE_CHECKING:
     from assignment.emme_bindings.mock_project import Scenario
     from assignment.assignment_period import AssignmentPeriod
     from demand.trips import DemandModel
+    from argparse import Namespace
+    from utils.validation import Validation
 
 class ModelSystemEventListener(ABC):
    
     def __init__(self):
         pass
+    
+    def on_simulation_started(self, forecastdata_path: Path, result_path: Path, args: 'Namespace') -> None:
+        """
+        Event handler for when a simulation starts.
+        Args:
+            forecastdata (Path): The path to the forecast data file.
+            result_path (Path): The path where the simulation results will be stored.
+            args (Namespace): Additional arguments for the simulation.
+        """
+        pass
+    
+    def on_simulation_complete(self) -> None:
+        """
+        Event handler that is called when simulation is complete.
+        """
+        pass
+
+    def on_validation_initialized(self, validation: 'Validation', validation_path: Path) -> None:
+        """
+        Event handler that is called when validation is initialized.
+
+        Args:
+            validation (Validation): The validation object.
+            validation_path (Path): The path to the validation data.
+        """
 
     def on_zone_data_loaded(self, base_data: 'ZoneData', forecast_data: 'ZoneData') -> None:
         """
