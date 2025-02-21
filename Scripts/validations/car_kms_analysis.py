@@ -1,10 +1,9 @@
 from pathlib import Path
 import pandas as pd
-import numpy as np
 from events.model_system_event_listener import ModelSystemEventListener
 
 from utils import log
-from utils.validation import Validation, mean_error
+from utils.validation import Validation, bar_plot, weighted_mean
 
 class TripLengthAnalysis(ModelSystemEventListener):
     """
@@ -34,13 +33,14 @@ class TripLengthAnalysis(ModelSystemEventListener):
         car_kms_helmet4 = self.get_helmet_car_kms(self.data_path / 'vehicle_kms_areas.txt')
         car_kms_helmet5 = self.get_helmet_car_kms(self.result_path / 'vehicle_kms_areas.txt')
 
-        validations = [{'name': 'Trip Lengths vs survey', 'data': car_kms_helmet5['total_car']},
+        validations = [{'name': 'Trip Lengths vs survey', 'data': car_kms['kokonaissuorite']},
                         {'name': 'Trip Lengths vs helmet4', 'data': car_kms_helmet4['total_car']}]
         for v in validations:
             group = self.validation.create_group(v['name'])
             for i, row in car_kms.iterrows():
-                group.add_item(v['data'][i], row['kokonaissuorite'], alue=row['alue'])
-            group.add_aggregation('mean_error', mean_error, group_by='alue')
+                group.add_item(row['alue'], car_kms_helmet5['total_car'][i], v['data'][i])
+            group.add_aggregation('weighted relative error', weighted_mean('relative_error', weight='expected'))
+            group.add_visualization('Vehicle kilometres', bar_plot())
         
     def get_helmet_car_kms(self, path: Path) -> pd.DataFrame:
         car_kms_helmet = pd.read_csv(path, sep='\t')
