@@ -4,6 +4,9 @@ from typing import Dict, List, NamedTuple
 
 import pandas as pd
 from typing import Callable, Optional, Union
+import random
+import pickle
+import gzip
 
 class ValidationAggregator(NamedTuple):
     name: str
@@ -12,39 +15,102 @@ class ValidationAggregator(NamedTuple):
     group_by: Optional[Union[str, List[str]]] = None
 
 class ValidationGroup:
-    items: pd.DataFrame
-    aggregations: List[ValidationAggregator]
+    _items: pd.DataFrame
+    _aggregations: List[ValidationAggregator]
+    _error_terms: Dict[str, Callable[[pd.DataFrame], pd.Series]]
+    _errors_ok: bool
+    _visualizations: Dict[str, Callable[[pd.DataFrame], str]]
     
     def __init__(self):
         """
         Initializes the Validation class.
         """
-        self.items = pd.DataFrame()
-        self.aggregations = []
+        self._items = pd.DataFrame()
+        self._aggregations = []
+        self._error_terms = {}
+        self._visualizations = {}
+        self._errors_ok = False
     
-    def add_item(self, observation: float, expected: float, weight: float=1.0, **metadata):
+    def __getstate__(self):
         """
-        Adds an item to the collection with the given observation, expected value, weight, and additional metadata.
+        Prepares the state for pickling by excluding error terms and aggregations.
+        """
+        state = self.__dict__.copy()
+        state['_aggregations'] = []
+        state['_error_terms'] = {}
+        state['_visualizations'] = {}
+        return state
+
+    def __setstate__(self, state):
+        """
+        Restores the state from the unpickled data.
+        """
+        self.__dict__.update(state)
+        self._aggregations = []
+        self._error_terms = {}
+        self._visualizations = {}
+    
+    def add_item(self, id: str, prediction: float, expected: float, weight: float=1.0, **metadata):
+        """
+        Adds an item to the collection with the given prediction, 
+        expected value, weight, and additional metadata.
 
         Args:
-            observation (float): The observed value.
+            id (str): The identifier of the item.
+            prediction (float): The predicted value.
             expected (float): The expected value.
-            weight (float, optional): The weight of the observation. Defaults to 1.0.
+            weight (float, optional): The weight of the prediction. Defaults to 1.0.
             **metadata: Additional metadata to be included with the item.
 
         Returns:
             None
         """
+        self._errors_ok = False
         item = pd.DataFrame([{
-            "observation": observation,
+            "id": id,
+            "prediction": prediction,
             "expected": expected,
             "weight": weight,
             **metadata
         }])
-        self.items = pd.concat([self.items, item], ignore_index=True)
+        self._items = pd.concat([self._items, item], ignore_index=True)
+ 
+    def add_error_terms(self, error_funcs: Dict[str, Callable[[pd.DataFrame], pd.Series]]) -> None:
+        """
+        Adds error functions to the validation group.
+
+        Args:
+            error_funcs (Dict[str, Callable[[pd.DataFrame], pd.Series]]): 
+                A dictionary where the keys are error term names and the values are 
+                functions that take a pandas DataFrame and return a pandas Series 
+                representing the error term.
+
+        Returns:
+            None
+        """
+        self._errors_ok = False
+        self._error_terms.update(error_funcs)
+    
+    def _update_errors(self) -> None:
+        if self._errors_ok:
+            return
+        for name, error_func in self._error_terms.items():
+            self._items[name] = error_func(self._items)
+        self._errors_ok = True
+    
+    def get_items(self) -> pd.DataFrame:
+        """
+        Retrieves the items DataFrame after updating error terms.
+
+        Returns:
+            pd.DataFrame: The DataFrame containing the items.
+        """
+        self._update_errors()
+        return self._items
  
     def _run_aggregation(self, aggregator: ValidationAggregator) -> Dict[str, float]:
-        filtered_items = self.items.query(aggregator.filter) if aggregator.filter is not None else self.items
+        self._update_errors()
+        filtered_items = self._items.query(aggregator.filter) if aggregator.filter is not None else self._items
         results: Dict[str, float] = {}
         if aggregator.group_by:
             grouped = filtered_items.groupby(aggregator.group_by)
@@ -68,27 +134,56 @@ class ValidationGroup:
 
         Args:
             name (str): The name of the aggregation.
-            aggregation (Callable[[pd.DataFrame], float]): A function that takes a pandas DataFrame and returns a float.
+            aggregation (Callable[[pd.DataFrame], float]): A function that takes a pandas
+                DataFrame and returns a float.
             filter (Optional[str]): An optional filter to apply before aggregation. Defaults to None.
-            group_by (Optional[Union[str, List[str]]]): An optional column or list of columns to group by before aggregation. Defaults to None.
+            group_by (Optional[Union[str, List[str]]]): An optional column or list of columns to 
+                group by before aggregation. Defaults to None.
 
         Returns:
             None
         """
-        self.aggregations.append(ValidationAggregator(name, aggregation, filter, group_by))
+        self._aggregations.append(ValidationAggregator(name, aggregation, filter, group_by))
 
-    def run_all_aggregations(self) -> Dict[str, float]:
+    def get_aggregations(self) -> Dict[str, float]:
         """
-        Executes all aggregation functions stored in the `aggregations` attribute and combines their results.
+        Executes all aggregation functions stored in the `aggregations`
+        attribute and combines their results.
 
         Returns:
             Dict[str, float]: A dictionary containing the combined results of all aggregation functions.
         """
+        self._update_errors()
         all_results = {}
-        for aggregator in self.aggregations:
+        for aggregator in self._aggregations:
             results = self._run_aggregation(aggregator)
             all_results.update(results)
         return all_results
+    
+    def add_visualization(self, name: str, visualization: Callable[[pd.DataFrame], str]) -> None:
+        """
+        Adds a visualization function to the list of visualizations.
+
+        Args:
+            name (str): The name of the visualization.
+            visualization (Callable[[pd.DataFrame], str]): A function that takes a pandas
+                DataFrame and returns a html string.
+
+        Returns:
+            None
+        """
+        self._visualizations[name] = visualization
+
+    def run_visualizations(self) -> Dict[str, str]:
+        """
+        Executes all visualization functions stored in the `visualizations`
+        attribute and combines their results.
+
+        Returns:
+            Dict[str, str]: A dictionary containing the combined results of all visualization functions.
+        """
+        self._update_errors()
+        return {k: v(self._items) for k, v in self._visualizations.items()}
 
 class Validation:
     groups: Dict[str, ValidationGroup]
@@ -99,7 +194,7 @@ class Validation:
         """
         self.groups = {}
     
-    def create_group(self, name: str):
+    def create_group(self, name: str, add_default_error_terms: bool = True) -> ValidationGroup:
         """
         Create or retrieve a validation group by name.
 
@@ -109,6 +204,8 @@ class Validation:
 
         Args:
             name (str): The name of the validation group.
+            add_default_error_terms (bool, optional): Whether to add default error terms to the
+                group. Defaults to True.
 
         Returns:
             ValidationGroup: The existing or newly created validation group.
@@ -117,77 +214,323 @@ class Validation:
             return self.groups[name]
         group = ValidationGroup()
         self.groups[name] = group
+        if add_default_error_terms:
+            group.add_error_terms(default_error_terms)
         return group
-
-    def run_all_aggregations(self) -> Dict[str, Dict[str, float]]:
+    
+    def save_to_file(self, file_path: Path) -> None:
         """
-        Executes the run_all_aggregations method for each group in self.groups and 
-        collects the results in a dictionary.
-
-        Returns:
-            Dict[str, float]: A dictionary where the keys are group names and the 
-                values are the results of the run_all_aggregations method for each group.
-        """
-        all_results = {}
-        for group_name, group in self.groups.items():
-            all_results[group_name] = group.run_all_aggregations()
-        return all_results
-
-    def run_all_aggregations_to_html(self, file_path: Path):
-        """
-        Runs all aggregations and writes the results to an HTML file.
-        This method executes all aggregation functions, collects their results,
-        and formats them into an HTML document. The HTML document includes a 
-        title, a header, and a table for each validation group, displaying 
-        metrics and their corresponding values.
+        Saves the content of the Validation object to a file.
 
         Args:
-            file_path (Path): The file path where the HTML document will be saved.
+            file_path (Path): The file path where the content should be saved.
 
         Returns:
             None
         """
-        all_results = self.run_all_aggregations()
-        html_content = "<html><head><title>Validation Results</title></head><body>"
-        html_content += "<h1>Validation Results</h1>"
-        for group_name, results in all_results.items():
-            html_content += f"<h2>Validation group: {group_name}</h2><table border='0'><tr><th>Metric</th><th>Value</th></tr>"
-            for metric_name, value in results.items():
+        with gzip.open(file_path, 'wb') as file:
+            pickle.dump(self, file)
+
+    @classmethod
+    def load_from_file(cls, file_path: Path) -> Validation:
+        """
+        Loads the content of a Validation object from a file.
+
+        Args:
+            file_path (Path): The file path from where the content should be loaded.
+
+        Returns:
+            Validation: The loaded Validation object.
+        """
+        with gzip.open(file_path, 'rb') as file:
+            return pickle.load(file)
+
+    def to_html(self, file_path: Path = None) -> str:
+        """
+        Generates an HTML representation of validation items and optionally writes it to a file.
+        The generated HTML includes collapsible sections for each group of validation items,
+        with a table displaying the predictions, expected values, weights, and any additional columns.
+
+        Args:
+            file_path (Path, optional): The file path where the HTML content should be written. 
+                                        If not provided, the HTML content is not written to a file.
+
+        Returns:
+            str: The generated HTML content as a string.
+        """
+        html_content = """
+        <html>
+        <head>
+            <title>Validation Results</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                }
+                .collapsible {
+                    background-color: #4CAF50;
+                    color: white;
+                    cursor: pointer;
+                    padding: 10px;
+                    width: 100%;
+                    border: none;
+                    text-align: left;
+                    outline: none;
+                    font-size: 15px;
+                    margin-bottom: 5px;
+                }
+                .active, .collapsible:hover {
+                    background-color: #45a049;
+                }
+                .content {
+                    padding: 0 18px;
+                    display: none;
+                    overflow: hidden;
+                    background-color: #f9f9f9;
+                    margin-bottom: 10px;
+                }
+                table {
+                    border-collapse: collapse;
+                    width: 100%;
+                    margin-bottom: 20px;
+                }
+                th, td {
+                    text-align: left;
+                    padding: 8px;
+                    border: 1px solid #ddd;
+                }
+                th {
+                    background-color: #f2f2f2;
+                    cursor: pointer;
+                }
+                th.sortable:hover {
+                    background-color: #ddd;
+                }
+                h2 {
+                    color: #333;
+                }
+                h3 {
+                    color: #555;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>Validation Results</h1>
+        """
+
+        for group_name, group in self.groups.items():
+            items = group.get_items()
+            html_content += f"""
+            <h2>{group_name}</h2>
+            <button class="collapsible">Items</button>
+            <div class="content">
+                <table>
+                    <thead>
+                        <tr>
+                            {''.join(f'<th class="sortable" onclick="sortTable(this, {i})">{col}</th>' for i, col in enumerate(items.columns))}
+                        </tr>
+                    </thead>
+                    <tbody>
+            """
+            for _, row in items.iterrows():
+                html_content += "<tr>"
+                html_content += ''.join(f"<td>{row[col]}</td>" for col in items.columns)
+                html_content += "</tr>"
+            html_content += "</tbody></table></div>"
+
+            visualizations = group.run_visualizations()
+            if visualizations:
+                html_content += """
+                <button class="collapsible">Visualizations</button>
+                <div class="content" style="display: block;">
+                """
+                for viz_name, viz_content in visualizations.items():
+                    html_content += f"<h3>{viz_name}</h3><div>{viz_content}</div>"
+                html_content += " </div>"
+
+            aggregation_results = group.get_aggregations()
+            html_content += """
+            <button class="collapsible">Aggregation Results</button>
+            <div class="content" style="display: block;">
+                <table>
+                    <tr><th>Metric</th><th>Value</th></tr>
+            """
+            for metric_name, value in aggregation_results.items():
                 html_content += f"<tr><td>{metric_name}</td><td>{value}</td></tr>"
-            html_content += "</table>"
-        html_content += "</body></html>"
-        
-        with open(file_path, 'w') as file:
-            file.write(html_content)
+            html_content += "</table></div>"
+
+        html_content += """
+        <script>
+            var coll = document.getElementsByClassName("collapsible");
+            for (var i = 0; i < coll.length; i++) {
+                coll[i].addEventListener("click", function() {
+                    this.classList.toggle("active");
+                    var content = this.nextElementSibling;
+                    if (content.style.display === "block") {
+                        content.style.display = "none";
+                    } else {
+                        content.style.display = "block";
+                    }
+                });
+            }
+
+            function sortTable(header, colIndex) {
+                var table = header.closest('table');
+                var rows = Array.from(table.querySelectorAll('tbody > tr'));
+                var isAsc = header.classList.toggle('asc');
+                rows.sort((rowA, rowB) => {
+                    var cellA = rowA.children[colIndex].textContent.trim();
+                    var cellB = rowB.children[colIndex].textContent.trim();
+                    
+                    var numA = parseFloat(cellA);
+                    var numB = parseFloat(cellB);
+                    
+                    if (!isNaN(numA) && !isNaN(numB)) {
+                        // Both values are numbers
+                        return isAsc ? numA - numB : numB - numA;
+                    } else {
+                        // At least one value is not a number, compare as strings
+                        return isAsc ? cellA.localeCompare(cellB, undefined, {numeric: true}) : cellB.localeCompare(cellA, undefined, {numeric: true});
+                    }
+                });
+                rows.forEach(row => table.querySelector('tbody').appendChild(row));
+            }
+        </script>
+        </body>
+        </html>
+        """
+        if file_path:
+            with open(file_path, 'w', encoding='utf8') as file:
+                file.write(html_content)
+        return html_content
+
+# Predefined error terms
+def basic_error(df: pd.DataFrame) -> pd.Series:
+    return df["prediction"] - df["expected"]
+def absolute_error(df: pd.DataFrame) -> pd.Series:
+    return (df["prediction"] - df["expected"]).abs()
+def relative_error(df: pd.DataFrame) -> pd.Series:
+    return (df["prediction"] - df["expected"]) / df["expected"]
+def squared_error(df: pd.DataFrame) -> pd.Series:
+    return (df["prediction"] - df["expected"]) ** 2
+
+default_error_terms = {
+    "basic_error": basic_error,
+    "absolute_error": absolute_error,
+    "relative_error": relative_error,
+    "squared_error": squared_error
+}
 
 # Predefined aggregation functions
 def mse(df: pd.DataFrame) -> float:
-    return ((df["observation"] - df["expected"]) ** 2 * df['weight']).mean()
+    return ((df["prediction"] - df["expected"]) ** 2 * df['weight']).mean()
 def mae(df: pd.DataFrame) -> float:
-    return ((df["observation"] - df["expected"]) * df['weight']).abs().mean()
+    return ((df["prediction"] - df["expected"]) * df['weight']).abs().mean()
 def max_error(df: pd.DataFrame) -> float:
-    return ((df["observation"] - df["expected"]) * df['weight']).abs().max()
+    return ((df["prediction"] - df["expected"]) * df['weight']).abs().max()
 def mean_error(df: pd.DataFrame) -> float:
-    return ((df["observation"] - df["expected"]) * df['weight']).mean()
+    return ((df["prediction"] - df["expected"]) * df['weight']).mean()
+def relative_error(df: pd.DataFrame) -> float:
+    return ((df["prediction"] - df["expected"]) / df["expected"] * df['weight']).mean()
+
+def mean(source: str):
+    return lambda df: df[source].mean()
+def sum(source: str):
+    return lambda df: df[source].sum()
+def count(source: str):
+    return lambda df: df[source].count()
+def weighted_mean(source: str, weight: str = 'weight'):
+    return lambda df: (df[source] * df[weight]).sum() / df[weight].sum()
+
+# Visualizations
+def scatter_plot(x: str = 'expected',
+                 y: str = 'prediction',
+                 color:str=None,
+                 colormap: str='viridis',
+                 show_diagonal: bool=True) -> Callable[[pd.DataFrame], str]:
+    def _scatter_plot(df: pd.DataFrame) -> str:
+        try:
+            import plotly.express as px
+            import plotly.graph_objects as go
+        except ImportError:
+            return "Plotly is not installed. Please install it using 'pip install plotly'"
+        
+        fig = px.scatter(df, x=x, y=y, color=color, color_continuous_scale=colormap)
+        if show_diagonal:
+            min_val = min(df[x].min(), df[y].min())
+            max_val = max(df[x].max(), df[y].max())
+            fig.add_trace(go.Scatter(x=[min_val, max_val],
+                                     y=[min_val, max_val],
+                                     mode='lines',
+                                     line=dict(color='red', dash='dash'),
+                                     showlegend=False))
+        
+        return fig.to_html()
+    return _scatter_plot
+
+def bar_plot(x: str = 'id', y: Union[str, List[str]] = None) -> Callable[[pd.DataFrame], str]:
+    if y is None:
+        y = ['prediction', 'expected']
+    if isinstance(y, str):
+        y = [y]
+
+    def _bar_plot(df: pd.DataFrame) -> str:
+        try:
+            import plotly.graph_objects as go
+        except ImportError:
+            return "Plotly is not installed. Please install it using 'pip install plotly'"
+        
+        fig = go.Figure()
+        colors = ['blue', 'orange', 'green', 'red', 'purple', 'brown', 'pink', 'gray', 'cyan', 'magenta']
+        
+        for i, y_col in enumerate(y):
+            fig.add_trace(go.Bar(name=y_col, x=df[x], y=df[y_col], marker_color=colors[i % len(colors)]))
+        
+        fig.update_layout(barmode='group', xaxis_title=x, yaxis_title='Value')
+        return fig.to_html()
+    
+    return _bar_plot
 
 # # Usage example
 # test_valid = Validation()
 
-# # Create a group
-# group = test_valid.create_group("test")
+# # Create a group without default error terms
+# group = test_valid.create_group("test", add_default_error_terms=False)
 
-# # Add sample items to the group
-# group.add_item(1, 1,   test1='a'  , te=1)
-# group.add_item(2, 2.5, test1='a'  , te=2)
-# group.add_item(3, 4,   test1='b')
-# group.add_item(4, 6,   test1='c'  , te=2)
-# group.add_item(5, 7,   test1='b'  , te=1)
+# # Add sample predictions to the group
+# # use arbitrary "example1" and "example2" columns for grouping
+# group.add_item('s1', 1, 1,   example1='a'  , example2=1)
+# group.add_item('s2', 2, 2.5, example1='a'  , example2=2)
+# group.add_item('s3', 3, 4,   example1='b')
+# group.add_item('s4', 4, 6,   example1='c'  , example2=2)
+# group.add_item('s5', 5, 7,   example1='b'  , example2=1)
+
+# # Add error terms
+# group.add_error_terms({'squared_error': squared_error})
 
 # # Add aggregations to the group
-# group.add_aggregation("max_error", max_error)
-# group.add_aggregation("mse_error", mse, filter='observation>=3', group_by='test1')
+# # Mean absolute error for all items
 # group.add_aggregation('mae', mae)
-# group.add_aggregation('max', max_error, group_by='te')
+# # Maximum error for all items, grouped by test_val
+# group.add_aggregation('max', max_error, group_by='example2')
+
+# # mean squared error for predictions >= 3, grouped by test1
+# group.add_aggregation("mse_error", mse, filter='prediction>=3', group_by='example1')
+# # Same as above but using a precalculated error term
+# group.add_aggregation('mse_error2', mean('squared_error'), filter='prediction>=3', group_by='example1')
+
+# group2 = test_valid.create_group("test2")
+# # Add larget dataset of random points
+# for i in range(1, 1000):
+#     group2.add_item(f'point{i}', i**1.02 + random.random()*200-150, i, even='even' if i % 2 == 0 else 'odd')
+# group2.add_aggregation('mse', mean('squared_error'), group_by='even')
+
+# group.add_visualization('test bar plot', bar_plot(y=['prediction', 'expected', 'squared_error']))
+# group2.add_visualization('test scatter plot', scatter_plot(color='absolute_error'))
 
 # # Run all aggregations and print the results
-# test_valid.run_all_aggregations_to_html('test.html')
+# test_valid.to_html('test_validation.html')
+# # Save the validation object to a file
+# test_valid.save_to_file('test_validation.pklz')
+# # Load the validation object from a file
+# loaded_valid = Validation.load_from_file('test_validation.pklz')
+# loaded_valid.to_html('test_validation_loaded.html')
