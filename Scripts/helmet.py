@@ -172,6 +172,8 @@ def main(args):
     if validation is not None:
         validation.run_all_aggregations_to_html(
             Path(results_path) / args.scenario_name / 'validation.html')
+        validation.save_to_file(
+            Path(results_path) / args.scenario_name / 'validation.pklz')
     log.info("Simulation ended.", extra=log_extra)
 
 
