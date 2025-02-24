@@ -5,7 +5,7 @@ from events.model_system_event_listener import ModelSystemEventListener
 from utils import log
 from utils.validation import Validation, bar_plot, weighted_mean
 
-class TripLengthAnalysis(ModelSystemEventListener):
+class VehicleKmsValidation(ModelSystemEventListener):
     """
     A class to analyze trip lengths in a model system by listening to specific events.
     """

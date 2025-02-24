@@ -5,7 +5,7 @@ from utils import log
 from utils.validation import Validation, bar_plot, mae
 
 
-class TripLengthAnalysis(ModelSystemEventListener):
+class ModeAreasValidation(ModelSystemEventListener):
     """
     A class to analyze trip lengths in a model system by listening to specific events.
     """

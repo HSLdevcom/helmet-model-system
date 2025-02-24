@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 
-class TripLengthAnalysis(ModelSystemEventListener):
+class VolumesAndSpeedsValidation(ModelSystemEventListener):
     """
     A class to analyze trip lengths in a model system by listening to specific events.
     """
