@@ -1,6 +1,7 @@
 from pathlib import Path
 from events.model_system_event_listener import EventHandler
 from utils.validation import Validation
+import webbrowser
 
 if __name__ == '__main__':
     event_handler = EventHandler()
@@ -12,4 +13,6 @@ if __name__ == '__main__':
     event_handler.on_validation_initialized(validation, Path(__file__).parent)
     event_handler.on_simulation_complete()
 
-    validation.to_html(Path(__file__).parent / 'test_validation.html')
+    output_path = Path(__file__).parent / 'test_validation.html'
+    validation.to_html(output_path)
+    webbrowser.open(output_path.as_uri())
