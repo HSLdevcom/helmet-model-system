@@ -170,7 +170,7 @@ def main(args):
                     log.info("Not able to remove file {}.".format(f))
         log.info("Removed strategy files in {}".format(dbase_path))
     if validation is not None:
-        validation.run_all_aggregations_to_html(
+        validation.to_html(
             Path(results_path) / args.scenario_name / 'validation.html')
         validation.save_to_file(
             Path(results_path) / args.scenario_name / 'validation.pklz')
