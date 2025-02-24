@@ -33,14 +33,14 @@ class TripLengthAnalysis(ModelSystemEventListener):
         car_kms_helmet4 = self.get_helmet_car_kms(self.data_path / 'vehicle_kms_areas.txt')
         car_kms_helmet5 = self.get_helmet_car_kms(self.result_path / 'vehicle_kms_areas.txt')
 
-        validations = [{'name': 'Trip Lengths vs survey', 'data': car_kms['kokonaissuorite']},
-                        {'name': 'Trip Lengths vs helmet4', 'data': car_kms_helmet4['total_car']}]
-        for v in validations:
-            group = self.validation.create_group(v['name'])
-            for i, row in car_kms.iterrows():
-                group.add_item(row['alue'], car_kms_helmet5['total_car'][i], v['data'][i])
-            group.add_aggregation('weighted relative error', weighted_mean('relative_error', weight='expected'))
-            group.add_visualization('Vehicle kilometres', bar_plot())
+        group = self.validation.create_group('Trip Lengths (vehicle_kms_areas.txt)')
+        for i, row in car_kms.iterrows():
+            group.add_item(id=row['alue'],
+                           prediction=car_kms_helmet5['total_car'][i],
+                           expected=row['kokonaissuorite'],
+                           helmet4=car_kms_helmet4['total_car'][i])
+        group.add_aggregation('weighted relative error', weighted_mean('relative_error', weight='expected'))
+        group.add_visualization('Vehicle kilometres', bar_plot(y=['prediction', 'expected', 'helmet4']))
         
     def get_helmet_car_kms(self, path: Path) -> pd.DataFrame:
         car_kms_helmet = pd.read_csv(path, sep='\t')

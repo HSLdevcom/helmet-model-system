@@ -32,11 +32,11 @@ class TripLengthAnalysis(ModelSystemEventListener):
         header, data = parse_trips_areas(self.result_path / 'trips_areas.txt')
         _, data_helmet4 = parse_trips_areas(self.data_path / 'trips_areas_helmet4.txt')
 
-        group = self.validation.create_group('Trip areas vs helmet4')
+        group = self.validation.create_group('Trip areas vs helmet4 (trips_areas.txt)')
         for area, values in data.items():
             for mode, value in values.items():
                 group.add_item(area, value, data_helmet4[area].get(mode, 0), mode=mode)
-        group.add_visualization('Trip lengths', bar_plot(color='mode'))
+        group.add_visualization('Trip lengths', bar_plot())
         group.add_aggregation('mean absolute error', mae, group_by='mode')
 
 def parse_trips_areas(filepath):

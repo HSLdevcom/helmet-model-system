@@ -33,14 +33,14 @@ class TripLengthAnalysis(ModelSystemEventListener):
         length_distribution_helmet4 = self.get_helmet_length_distribution(self.data_path / 'trip_lengths_helmet4.txt')
         length_distribution_helmet5 = self.get_helmet_length_distribution(self.result_path / 'trip_lengths.txt')
 
-        validations = [{'name': 'Length distribution vs survey', 'data': length_distribution['osuus']},
-                        {'name': 'Length distribution vs helmet4', 'data': length_distribution_helmet4['length_percentages']},]
-        for v in validations:
-            group = self.validation.create_group(v['name'])
-            for i, row in length_distribution.iterrows():
-                group.add_item(row['pituusjakauma'], length_distribution_helmet5['length_percentages'][i], v['data'][i])
-            group.add_aggregation('mean absolute error', mae)
-            group.add_visualization('Trip lengths', bar_plot())
+        group = self.validation.create_group('Trip length distribution (trip_lengths.txt)')
+        for i, row in length_distribution.iterrows():
+            group.add_item(id=row['pituusjakauma'],
+                           prediction=length_distribution_helmet5['length_percentages'][i],
+                           expected=row['osuus'],
+                           helmet4=length_distribution_helmet4['length_percentages'][i])
+        group.add_aggregation('mean absolute error', mae)
+        group.add_visualization('Trip lengths', bar_plot(y=['prediction', 'expected', 'helmet4']))
 
             
     def get_helmet_length_distribution(self, path):

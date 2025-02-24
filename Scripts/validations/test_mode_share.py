@@ -30,14 +30,14 @@ class ModeShareAnalysis(ModelSystemEventListener):
         model_mode_shares = parse_mode_shares(self.result_path / 'result_summary.txt')
         survey_mode_shares = parse_mode_shares(self.data_path / 'result_summary_lt23.txt')
         helmet4_mode_shares = parse_mode_shares(self.data_path / 'result_summary_helmet4.txt')
-        validations = [{'name': 'Mode shares vs survey', 'data': survey_mode_shares},
-                {'name': 'Mode shares vs helmet4', 'data': helmet4_mode_shares}]
-        for v in validations:
-            group = self.validation.create_group(v['name'])
-            for mode, share in model_mode_shares.items():
-                group.add_item(mode, share, v['data'].get(mode, 0))
-            group.add_aggregation('mean_error', mean('absolute_error'))
-            group.add_visualization('Mode shares', bar_plot())
+        group = self.validation.create_group('Mode shares (result_summary.txt)')
+        for mode, share in model_mode_shares.items():
+            group.add_item(id=mode,
+                           prediction=share,
+                           expected=survey_mode_shares.get(mode, 0),
+                           helmet4=helmet4_mode_shares.get(mode, 0))
+        group.add_aggregation('mean_error', mean('absolute_error'))
+        group.add_visualization('Mode shares', bar_plot(y=['prediction', 'expected', 'helmet4']))
 
 def parse_mode_shares(filepath):
     """
