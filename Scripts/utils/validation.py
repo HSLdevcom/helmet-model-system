@@ -92,7 +92,7 @@ class ValidationGroup:
         self._error_terms.update(error_funcs)
     
     def _update_errors(self) -> None:
-        if self._errors_ok:
+        if self._items.empty or self._errors_ok:
             return
         for name, error_func in self._error_terms.items():
             self._items[name] = error_func(self._items)
@@ -109,6 +109,8 @@ class ValidationGroup:
         return self._items
  
     def _run_aggregation(self, aggregator: ValidationAggregator) -> Dict[str, float]:
+        if self._items.empty:
+            return {}
         self._update_errors()
         filtered_items = self._items.query(aggregator.filter) if aggregator.filter is not None else self._items
         results: Dict[str, float] = {}
