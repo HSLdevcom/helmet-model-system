@@ -209,6 +209,9 @@ class EmmeAssignmentModel(AssignmentModel):
                 linklengths[param.railtypes[linktype]] += link.length
             else:
                 linklengths[param.roadtypes[vdf]] += link.length / 2
+
+        self._event_handler.on_daily_results_aggregated(self, network)
+
         if faulty_kela_code_nodes:
             s = "Municipality KELA code not found for nodes: " + ", ".join(
                 faulty_kela_code_nodes)
