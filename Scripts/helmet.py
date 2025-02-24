@@ -65,8 +65,8 @@ def main(args):
 
     # Setup validation if validation folder exists
     validation = Validation()
-    validation_path = Path(forecast_zonedata_path) / 'validation'
-    validation_path = Path(__file__).parent / 'validation' # TODO: Delete this line
+    validation_path = Path(forecast_zonedata_path) / 'validations'
+    validation_path = Path(__file__).parent / 'validations' # TODO: Delete this line
     if validation_path.exists():
         # Load event listeners from 'forecast/validation' folder
         event_handler.load_listeners(validation_path)
