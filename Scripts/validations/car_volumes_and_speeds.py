@@ -62,8 +62,10 @@ class VolumesAndSpeedsValidation(ModelSystemEventListener):
     def on_assignment_complete(self, assignment_period, iteration, demand, impedance, scenario):
         if self.is_disabled():
             return
-        df = self._get_data()
         suffix = assignment_period.name
+        if suffix not in ['aht', 'iht']:
+            return
+        df = self._get_data()
         network = scenario.get_network()
         vol_group = self.create_vol_group(f'{suffix.capitalize()} Volumes')
         _add_to_validation_group(vol_group,
@@ -72,8 +74,6 @@ class VolumesAndSpeedsValidation(ModelSystemEventListener):
                                  lambda x: _sum_volumes(x, suffix),
                                  f'{suffix}_laskenta',
                                  f'{suffix}_helmet4')
-        if suffix not in ['aht', 'iht']:
-            return
         speed_group = self.create_speed_group(f'{suffix.capitalize()} Speeds')
         speed_tag = f'{suffix}_keskinopeus'
         _add_to_validation_group(speed_group,
@@ -117,7 +117,7 @@ def _add_to_validation_group(group: ValidationGroup,
                 continue
             if row_filter is not None and not row_filter(row):
                 continue
-            group.add_item(id=f'{i[0]-i[1]}',
+            group.add_item(id=f'{i[0]}-{i[1]}',
                              prediction=prediction_func(link),
                              expected=row[expected],
                              helmet4=row[helmet4] if helmet4 is not None else None,
@@ -125,7 +125,7 @@ def _add_to_validation_group(group: ValidationGroup,
                              kuntaryhma=row['kuntaryhma'])
 
 def _sum_volumes(link, suffix: str) -> float:
-    attributes = ['car_work', 'car_leisure', 'truck', 'trailer_truck', 'van', 'bus']
+    attributes = ['@car_work', '@car_leisure', '@truck', '@trailer_truck', '@van', '@bus']
     return sum(link[f'{attr}_{suffix}'] for attr in attributes)
 
 def _get_link(network: 'Network', id: Tuple[int, int]) -> 'Link':
