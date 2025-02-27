@@ -90,6 +90,34 @@ class TransitSpecification:
                 "distance": emme_matrices["dist"],
             },
         }
+        self.strategy_analysis_spec = {
+            "type": "EXTENDED_TRANSIT_STRATEGY_ANALYSIS",
+            "trip_components": {
+                "boarding": None,
+                "in_vehicle": "@ccost",
+                "alighting": None,
+                "aux_transit": None,
+            },
+            "sub_path_combination_operator": "+",
+            "sub_strategy_combination_operator": "average",
+            "selected_demand_and_transit_volumes": {
+                "sub_strategies_to_retain": "ALL",
+                "selection_threshold": {
+                    "lower": -999999,
+                    "upper": 999999
+                }
+            },
+            "analyzed_demand": None,
+            "constraint": None,
+            "results": {
+                "strategy_values": emme_matrices["congest_time"],
+                "selected_demand": None,
+                "transit_volumes": None,
+                "aux_transit_volumes": None,
+                "total_boardings": None,
+                "total_alightings": None
+            }
+        }
         if count_zone_boardings:
             jlevel1 = JourneyLevel(
                 headway_attribute, boarded=False, count_zone_boardings=True)

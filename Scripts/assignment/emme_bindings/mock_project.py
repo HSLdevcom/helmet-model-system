@@ -352,6 +352,9 @@ class MockProject:
     def network_results(self, *args, **kwargs):
         pass
 
+    def strategy_analysis(self, *args, **kwargs):
+        pass
+
     def create_extra_function_parameters(self, *args, **kwargs):
         pass
 

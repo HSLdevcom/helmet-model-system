@@ -263,9 +263,13 @@ stopping_criteria_coarse = {
 # Congestion function for congested transit assignment
 congestion_func = '''
 def calc_segment_cost(transit_volume, line_capacity, segment):
-    if transit_volume < segment.line.seated_capacity:
-        return 0.0
-    return 0.8 * (transit_volume - segment.line.seated_capacity) / transit_volume
+    seated_capacity = segment.line.seated_capacity
+    fill_ratio = transit_volume / seated_capacity
+    seated_weight = max(0.86, 0.38*fill_ratio + 0.67)
+    standing_weight = max(1.79, 0.82*fill_ratio + 0.765)
+    if fill_ratio < 1.0:
+        return seated_weight - 1.0
+    return (seated_weight + (fill_ratio-1.0) * standing_weight) / fill_ratio - 1.0
 '''
 trass_func = {
     'type': 'CUSTOM',
@@ -483,8 +487,8 @@ uncongested_transit_time = "base_timtr"
 emme_matrices = {
     "car_work": ("demand", "time", "dist", "cost", "gen_cost"),
     "car_leisure": ("demand", "time", "dist", "cost", "gen_cost"),
-    "transit_work": ("demand", "time", "dist", "cost"),
-    "transit_leisure": ("demand", "time", "dist", "cost"),
+    "transit_work": ("demand", "time", "dist", "cost", "congest_time"),
+    "transit_leisure": ("demand", "time", "dist", "cost", "congest_time"),
     "bike": ("demand", "time", "dist"),
     "walk": ("time", "dist"),
     "trailer_truck": ("demand", "time", "dist", "cost", "gen_cost"),
