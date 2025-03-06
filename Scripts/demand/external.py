@@ -47,7 +47,7 @@ class ExternalModel:
             Matrix of whole day trips from external to internal zones
         """
         base_mtx = self.base_demand.get_external(mode)
-        mtx = pandas.DataFrame(0, self.all_zone_numbers, self.growth.index)
+        mtx = pandas.DataFrame(0.0, self.all_zone_numbers, self.growth.index)
         municipalities = ZoneIntervals("municipalities")
         # Base matrix is aggregated to municipality level,
         # so we need to disaggregate it

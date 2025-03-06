@@ -62,7 +62,7 @@ class MatrixFile:
                     path)
                 log.error(msg)
                 raise IndexError(msg)
-            if mtx_numbers != zone_numbers:
+            if not numpy.array_equal(mtx_numbers, zone_numbers):
                 for i in mtx_numbers:
                     if i not in zone_numbers:
                         msg = "Zone number {} from file {} not found in network".format(
