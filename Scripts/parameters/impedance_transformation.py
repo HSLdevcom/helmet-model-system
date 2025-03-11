@@ -134,6 +134,28 @@ impedance_share = {
             "iht": (0, 0),
         },
     },
+    "hh": {
+        "car": {
+            "aht": (0.129790, 0.034834),
+            "pt":  (0.573629, 0.778648),
+            "iht": (0.296581, 0.186519),
+        },
+        "transit": {
+            "aht": (0.129790, 0.034834),
+            "pt":  (0.573629, 0.778648),
+            "iht": (0.296581, 0.186519),
+        },
+        "bike": {
+            "aht": (0, 0),
+            "pt":  (1, 1),
+            "iht": (0, 0),
+        },
+        "walk": {
+            "aht": (0, 0),
+            "pt":  (1, 1),
+            "iht": (0, 0),
+        },
+    },
     "hoo": {
         # Only un-transposed afternoon matrices are used.
         # However, the secondary destination choice is done "backwards",

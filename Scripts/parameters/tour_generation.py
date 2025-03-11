@@ -625,6 +625,9 @@ tour_generation = {
         # Every sop trip continues with oop trip
         "sop": 1,
     },
+    "hh": {
+        "population": (1-0.0619) * 0.524683573054545,
+    },
     "truck": {
         "population": 0.01,
         "workplaces": 0.025,

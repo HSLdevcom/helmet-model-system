@@ -623,7 +623,7 @@ class AgentModelSystem(ModelSystem):
                     purpose.park_and_ride_model.set_impedance(previous_iter_impedance)
 
                 if (purpose.area == "peripheral" or purpose.dest == "source"
-                        or purpose.name == "oop"):
+                        or purpose.name in ["oop","hh"]):
                     purpose.calc_prob(purpose_impedance)
                     purpose.gen_model.init_tours()
                     purpose.gen_model.add_tours()

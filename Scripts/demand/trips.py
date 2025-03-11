@@ -149,7 +149,7 @@ class DemandModel:
         """
         for purpose in self.tour_purposes:
             purpose.gen_model.init_tours()
-            if purpose.area == "peripheral" or purpose.dest == "source":
+            if purpose.area == "peripheral" or purpose.dest == "source" or purpose.name == "hh":
                 purpose.gen_model.add_tours()
         result_data = pandas.DataFrame()  # For printing of results
         gm = self.tour_generation_model
