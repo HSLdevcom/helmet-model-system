@@ -28,6 +28,9 @@ class TripLengthAnalysis(ModelSystemEventListener):
         if self.validation is None:
             log.warn("Validation not initialized, skipping trip length analysis")
             return
+        if not self.data_path.is_dir():
+            log.warn(f"Validation data directory not found at {self.data_path}, skipping trip length analysis")
+            return
         
         length_distribution = pd.read_csv(self.data_path / 'pituusjakauma.csv', sep=';')
         length_distribution_helmet4 = self.get_helmet_length_distribution(self.data_path / 'trip_lengths_helmet4.txt')

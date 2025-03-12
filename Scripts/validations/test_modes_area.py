@@ -7,7 +7,7 @@ from utils.validation import Validation, bar_plot, mae
 
 class ModeAreasValidation(ModelSystemEventListener):
     """
-    A class to analyze trip lengths in a model system by listening to specific events.
+    A class to analyze mode areas in a model system by listening to specific events.
     """
     data_path: Path
     result_path: Path
@@ -26,7 +26,10 @@ class ModeAreasValidation(ModelSystemEventListener):
 
     def on_simulation_complete(self):
         if self.validation is None:
-            log.warn("Validation not initialized, skipping trip length analysis")
+            log.warn("Validation not initialized, skipping mode area analysis")
+            return
+        if not self.data_path.is_dir():
+            log.warn(f"Validation data directory not found at {self.data_path}, skipping mode area analysis")
             return
         
         header, data = parse_trips_areas(self.result_path / 'trips_areas.txt')
@@ -36,7 +39,7 @@ class ModeAreasValidation(ModelSystemEventListener):
         for area, values in data.items():
             for mode, value in values.items():
                 group.add_item(area, value, data_helmet4[area].get(mode, 0), mode=mode)
-        group.add_visualization('Trip lengths', bar_plot())
+        group.add_visualization('mode areas', bar_plot())
         group.add_aggregation('mean absolute error', mae, group_by='mode')
 
 def parse_trips_areas(filepath):

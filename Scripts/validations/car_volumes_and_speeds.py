@@ -41,7 +41,10 @@ class VolumesAndSpeedsValidation(ModelSystemEventListener):
         if not self.active:
             return True
         if self.validation is None:
-            log.warn("Validation not initialized, skipping trip length analysis")
+            log.warn("Validation not initialized, skipping volume and speed analysis")
+            return True
+        if not self.data_path.is_dir():
+            log.warn(f"Validation data directory not found at {self.data_path}, skipping volume and speed analysis")
             return True
         return False
     

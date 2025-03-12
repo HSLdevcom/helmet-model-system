@@ -24,7 +24,10 @@ class ModeShareAnalysis(ModelSystemEventListener):
 
     def on_simulation_complete(self):
         if self.validation is None:
-            log.warn("Validation not initialized, skipping trip length analysis")
+            log.warn("Validation not initialized, skipping mode share analysis")
+            return
+        if not self.data_path.is_dir():
+            log.warn(f"Validation data directory not found at {self.data_path}, skipping mode share analysis")
             return
 
         model_mode_shares = parse_mode_shares(self.result_path / 'result_summary.txt')

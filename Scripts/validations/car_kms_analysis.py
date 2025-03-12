@@ -29,6 +29,10 @@ class VehicleKmsValidation(ModelSystemEventListener):
             log.warn("Validation not initialized, skipping trip length analysis")
             return
 
+        if not self.data_path.is_dir():
+            log.warn(f"Validation data directory not found at {self.data_path}, skipping trip length analysis")
+            return
+        
         car_kms = pd.read_csv(self.data_path / 'suoritteet.csv', sep=';')
         car_kms_helmet4 = self.get_helmet_car_kms(self.data_path / 'vehicle_kms_areas.txt')
         car_kms_helmet5 = self.get_helmet_car_kms(self.result_path / 'vehicle_kms_areas.txt')
