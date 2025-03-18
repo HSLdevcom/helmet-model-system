@@ -407,7 +407,7 @@ destination_choice = {
     "hh": {
         "car": {
             "attraction": {
-                "own_zone": 9.,
+                "own_zone": 12.,
             },
             "impedance": {
             },
@@ -420,7 +420,7 @@ destination_choice = {
             "impedance": {
             },
             "attraction": {
-                "own_zone": 9.,
+                "own_zone": 12.,
             },
             "log": {
             },
@@ -435,7 +435,7 @@ destination_choice = {
             "size": {
             },
             "attraction": {
-                "own_zone": 9.,
+                "own_zone": 12.,
             },
         },
         "walk": {
@@ -446,7 +446,7 @@ destination_choice = {
             "size": {
             },
             "attraction": {
-                "own_zone": 9.,
+                "own_zone": 12.,
             },
         }
     },
