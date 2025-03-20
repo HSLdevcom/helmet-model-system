@@ -626,7 +626,9 @@ tour_generation = {
         "sop": 1,
     },
     "hh": {
-        "population": (1-0.0619) * 0.524683573054545,
+        #0.25 seems to work with most municipalities
+        #should only generate one trip though
+        "population": 0.232, 
     },
     "truck": {
         "population": 0.01,

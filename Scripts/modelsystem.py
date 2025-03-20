@@ -144,7 +144,7 @@ class ModelSystem:
                     saved_pnr_impedance[purpose.name] = purpose_impedance
                     purpose.park_and_ride_model.set_impedance(previous_iter_impedance)
                 purpose.calc_prob(purpose_impedance)
-                if is_last_iteration and purpose.name not in ("sop", "so"):
+                if is_last_iteration and purpose.name not in ("sop", "so", "hh"):
                     purpose.accessibility_model.calc_accessibility(
                         purpose_impedance)
         
@@ -445,7 +445,7 @@ class ModelSystem:
         car_logsum = 0
         for purpose in self.dm.tour_purposes:
             if (purpose.area == "metropolitan" and purpose.orig == "home"
-                    and purpose.dest != "source"
+                    and purpose.dest != "source" and purpose.dest != "home"
                     and not isinstance(purpose, SecDestPurpose)):
                 zone_numbers = purpose.zone_numbers
                 bounds = purpose.bounds

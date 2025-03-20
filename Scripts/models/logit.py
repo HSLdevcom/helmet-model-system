@@ -80,6 +80,8 @@ class LogitModel:
         if mode != "logsum":
             threshold = distance_boundary[mode]
             self.dest_exps[mode][impedance["dist"] > threshold] = 0
+            if self.purpose.name == "hh": #home-home trips
+                self.dest_exps[mode][impedance["dist"] > 0] = 0
         try:
             return self.dest_exps[mode].sum(1)
         except ValueError:
