@@ -625,6 +625,11 @@ tour_generation = {
         # Every sop trip continues with oop trip
         "sop": 1,
     },
+    "hh": {
+        #0.25 seems to work with most municipalities
+        #should only generate one trip though
+        "population": 0.232, 
+    },
     "truck": {
         "population": 0.01,
         "workplaces": 0.025,

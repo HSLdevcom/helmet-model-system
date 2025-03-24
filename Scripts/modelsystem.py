@@ -144,7 +144,7 @@ class ModelSystem:
                     saved_pnr_impedance[purpose.name] = purpose_impedance
                     purpose.park_and_ride_model.set_impedance(previous_iter_impedance)
                 purpose.calc_prob(purpose_impedance)
-                if is_last_iteration and purpose.name not in ("sop", "so"):
+                if is_last_iteration and purpose.name not in ("sop", "so", "hh"):
                     purpose.accessibility_model.calc_accessibility(
                         purpose_impedance)
         
@@ -360,6 +360,25 @@ class ModelSystem:
 
         self.event_handler.on_demand_calculated(iteration, self.dtm)
 
+        #Modes for HS15 region
+        hs15_modes_total = {mode: 0 for mode in self.dm.purpose_dict["hw"].modes}
+        for pur in self.dm.purpose_dict:
+            purpose = self.dm.purpose_dict[pur]
+            if purpose.name in ["hw","hc","hu","hs","ho","hh","wo","oo"]: 
+                for mode in purpose.modes:
+                    demsum = purpose.generated_tours[mode].sum()
+                    if purpose.name == "hh":
+                        hs15_modes_total[mode] += 0.5*demsum
+                    else:
+                        hs15_modes_total[mode] += demsum
+        hs15_modes_shares = {m: hs15_modes_total[m]/sum(hs15_modes_total.values()) for m in hs15_modes_total}
+        hs15_modes = [m for m in hs15_modes_total]
+        self.resultdata.print_line("\nHS15 mode shares (tour-based)", "result_summary")
+        for m in hs15_modes:
+            self.resultdata.print_line(
+                "{}\t{:1.2%}".format(m, hs15_modes_shares[m]),
+                "result_summary")
+
         # Calculate and return traffic impedance
         for ap in self.ass_model.assignment_periods:
             tp = ap.name
@@ -445,7 +464,7 @@ class ModelSystem:
         car_logsum = 0
         for purpose in self.dm.tour_purposes:
             if (purpose.area == "metropolitan" and purpose.orig == "home"
-                    and purpose.dest != "source"
+                    and purpose.dest != "source" and purpose.dest != "home"
                     and not isinstance(purpose, SecDestPurpose)):
                 zone_numbers = purpose.zone_numbers
                 bounds = purpose.bounds
@@ -623,7 +642,7 @@ class AgentModelSystem(ModelSystem):
                     purpose.park_and_ride_model.set_impedance(previous_iter_impedance)
 
                 if (purpose.area == "peripheral" or purpose.dest == "source"
-                        or purpose.name == "oop"):
+                        or purpose.name in ["oop","hh"]):
                     purpose.calc_prob(purpose_impedance)
                     purpose.gen_model.init_tours()
                     purpose.gen_model.add_tours()

@@ -80,6 +80,8 @@ class LogitModel:
         if mode != "logsum":
             threshold = distance_boundary[mode]
             self.dest_exps[mode][impedance["dist"] > threshold] = 0
+            if self.purpose.name == "hh": #home-home trips
+                self.dest_exps[mode][impedance["dist"] > 0] = 0
         try:
             return self.dest_exps[mode].sum(1)
         except ValueError:
@@ -190,9 +192,9 @@ class LogitModel:
         """
         zdata = self.zone_data
         for i in b:
-            try: # If only one parameter
+            if not isinstance(b[i], tuple): # If only one parameter
                 utility += b[i] * zdata.get_data(i, self.bounds, generation)
-            except ValueError: # Separate sub-region parameters
+            else: # Separate sub-region parameters
                 for j, bounds in enumerate(self.sub_bounds):
                     data = zdata.get_data(i, bounds, generation)
                     if utility.ndim == 1: # 1-d array calculation
@@ -277,7 +279,8 @@ class ModeDestModel(LogitModel):
         except TypeError:
             # Separate sub-region parameters
             money_utility = 1 / b[0]
-        money_utility /= self.mode_choice_param["car"]["log"]["logsum"]
+        if "logsum" in self.mode_choice_param["car"]["log"]:
+            money_utility /= self.mode_choice_param["car"]["log"]["logsum"]
         self.money_utility = money_utility
 
     def calc_prob(self, impedance):

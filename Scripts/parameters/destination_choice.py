@@ -404,6 +404,52 @@ destination_choice = {
             }
         }
     },
+    "hh": {
+        "car": {
+            "attraction": {
+                "own_zone": 12.,
+            },
+            "impedance": {
+            },
+            "log": {
+            },
+            "size": {
+            }
+        },
+        "transit": {
+            "impedance": {
+            },
+            "attraction": {
+                "own_zone": 12.,
+            },
+            "log": {
+            },
+            "size": {
+            }
+        },
+        "bike": {
+            "impedance": {
+            },
+            "log": {
+            },
+            "size": {
+            },
+            "attraction": {
+                "own_zone": 12.,
+            },
+        },
+        "walk": {
+            "impedance": {
+            },
+            "log": {
+            },
+            "size": {
+            },
+            "attraction": {
+                "own_zone": 12.,
+            },
+        }
+    },
     "hoo": {
         "car": {
             "log": {

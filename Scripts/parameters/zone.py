@@ -52,6 +52,12 @@ tour_purposes: List[Dict[str, Any]] = [ #changed to list for type checker
         "area": "metropolitan",
     },
     {
+        "name": "hh",
+        "orig": "home",
+        "dest": "home",
+        "area": "metropolitan",
+    },
+    {
         "name": "wo",
         "orig": "source",
         "dest": "other",

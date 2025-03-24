@@ -57,6 +57,7 @@ Scripts/.pytest_cache
 Scripts/tests/.pytest_cache
 Scripts/.env
 Scripts/tests/test_data/Results/*
+Scripts/tests/emme_only/test_command_line.py
 !Scripts/tests/test_data/Results/test/Matrices/cost*
 !Scripts/tests/test_data/Results/test/Matrices/dist*
 !Scripts/tests/test_data/Results/test/Matrices/time*

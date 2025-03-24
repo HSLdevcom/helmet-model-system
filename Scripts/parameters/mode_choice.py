@@ -438,6 +438,70 @@ mode_choice = {
             }
         }
     },
+    "hh": {
+        "car": {
+            "constant": 0.,
+            "generation": {
+            },
+            "individual_dummy": {
+            },
+            "log": {
+            },
+
+            "attraction": {
+            },
+            "impedance": {
+
+            }
+        },
+        "transit": {
+            "constant": 0.,
+            "log": {
+            },
+            "generation": {
+            },
+            "attraction": {
+                #left empty on purpose
+            },
+            "impedance": {
+
+            },
+            "individual_dummy": {
+
+            }
+        },
+        "bike": {
+            "constant": 1.,
+            "log": {
+            },
+            "generation": {
+            },
+            "attraction": {
+            },
+            "impedance": {
+
+            },
+            "individual_dummy": {
+
+            }
+        },
+        "walk": {
+            "constant": 10.,
+            "log": {
+            },
+            "generation": {
+
+            },
+            "attraction": {
+            },
+            "impedance": {
+
+            },
+            "individual_dummy": {
+
+            }
+        }
+    },
     "hoo": None,
     "wo": {
         "car": {
