@@ -36,9 +36,9 @@ class TripLengthAnalysis(ModelSystemEventListener):
         group = self.validation.create_group('Trip length distribution (trip_lengths.txt)')
         for i, row in length_distribution.iterrows():
             group.add_item(id=row['pituusjakauma'],
-                           prediction=length_distribution_helmet5['length_percentages'][i],
-                           expected=row['osuus'],
-                           helmet4=length_distribution_helmet4['length_percentages'][i])
+                           prediction=float(length_distribution_helmet5['length_percentages'][i]),
+                           expected=float(row['osuus']),
+                           helmet4=float(length_distribution_helmet4['length_percentages'][i]))
         group.add_aggregation('mean absolute error', mae)
         group.add_visualization('Trip lengths', bar_plot(y=['prediction', 'expected', 'helmet4']))
 
