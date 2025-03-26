@@ -628,7 +628,12 @@ tour_generation = {
     "hh": {
         #0.25 seems to work with most municipalities
         #should only generate one trip though
-        "population": 0.232, 
+        #"population": 0.232, 
+        "age_7-17":0.08382,
+        "age_18-29":0.14951,
+        "age_30-49":0.27961,
+        "age_50-64":0.29491,
+        "age_65-99":0.35336
     },
     "truck": {
         "population": 0.01,

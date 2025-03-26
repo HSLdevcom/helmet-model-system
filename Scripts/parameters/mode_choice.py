@@ -440,7 +440,7 @@ mode_choice = {
     },
     "hh": {
         "car": {
-            "constant": 0.,
+            "constant": -4.193566283037721,
             "generation": {
             },
             "individual_dummy": {
@@ -455,7 +455,7 @@ mode_choice = {
             }
         },
         "transit": {
-            "constant": 0.,
+            "constant": -6.219339088071782,
             "log": {
             },
             "generation": {
@@ -471,7 +471,7 @@ mode_choice = {
             }
         },
         "bike": {
-            "constant": 1.,
+            "constant": -3.557848140624303,
             "log": {
             },
             "generation": {
@@ -486,7 +486,7 @@ mode_choice = {
             }
         },
         "walk": {
-            "constant": 10.,
+            "constant": -0.06238631413467127,
             "log": {
             },
             "generation": {

@@ -66,6 +66,11 @@ class ZoneData:
 
         pop = popdata["total"]
         self["population"] = pop
+        self["age_7-17"] = pop[:first_peripheral]*popdata["sh_7-17"][:first_peripheral]
+        self["age_18-29"] = pop[:first_peripheral]*popdata["sh_1829"][:first_peripheral]
+        self["age_30-49"] = pop[:first_peripheral]*popdata["sh_3049"][:first_peripheral]
+        self["age_50-64"] = pop[:first_peripheral]*popdata["sh_5064"][:first_peripheral]
+        self["age_65-99"] = pop[:first_peripheral]*popdata["sh_65-"][:first_peripheral]
         self.share["share_age_7-17"] = popdata["sh_7-17"][:first_peripheral]
         self.share["share_age_18-29"] = popdata["sh_1829"][:first_peripheral]
         self.share["share_age_30-49"] = popdata["sh_3049"][:first_peripheral]
