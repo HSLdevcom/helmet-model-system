@@ -60,9 +60,12 @@ def main(args):
     
     # Initialize event handler and load event listeners
     event_handler = EventHandler()
-    # Load event listeners from 'events/examples' folder
-    event_handler.load_listeners(Path(__file__).parent / 'events' / 'examples')
-
+    # Load standard modules
+    event_handler.load_listeners(Path(__file__).parent / 'events' / 'standard_modules')
+    custom_module_path = Path(forecast_zonedata_path) / 'custom_modules'
+    if custom_module_path.is_dir():
+        # Load custom modules from 'forecast_data/custom_modules' directory
+        event_handler.load_listeners(custom_module_path)
     # Setup validation if validation folder exists
     validation = Validation()
     validation_path = Path(forecast_zonedata_path) / 'validations'

@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from demand.trips import DemandModel
     from argparse import Namespace
     from utils.validation import Validation
-    from assignment.emme_assignment import EmmeAssignmentModel
+    from assignment.emme_assignment import EmmeAssignmentModel, AssignmentModel
 
 class ModelSystemEventListener(ABC):
    
@@ -62,12 +62,25 @@ class ModelSystemEventListener(ABC):
         """
         pass
 
-    def on_model_system_initialized(self, model_system: 'ModelSystem') -> None:
+    def on_model_system_initialized(self,
+                                    model_system: 'ModelSystem',
+                                    zone_data_path: str, 
+                                    base_zone_data_path: str, 
+                                    base_matrices_path: str,
+                                    results_path: str, 
+                                    assignment_model: 'AssignmentModel', 
+                                    name: str) -> None:
         """
         Event handler that is called when the model system is initialized.
 
         Args:
             model_system (ModelSystem): The model system.
+            zone_data_path (str): The path to the zone data.
+            base_zone_data_path (str): The path to the base zone data.
+            base_matrices_path (str): The path to the base matrices.
+            results_path (str): The path to the results.
+            assignment_model (AssignmentModel): The assignment model.
+            name (str): The name of the model system.
         """
         pass
     
