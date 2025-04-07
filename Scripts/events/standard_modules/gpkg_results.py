@@ -67,35 +67,35 @@ class GpkgResult(ModelSystemEventListener):
         zone_data_df = self.model_system.zdata_forecast.get_zone_data()
         try:
             import geopandas as gpd
-            zone_gdf = gpd.read_file(self.zone_gpkg_path, layer='polygons')
-            # Join zone_gdf and zone_data_df using the index
-            zone_gdf = zone_gdf.join(zone_data_df, how='left')
-            # Join parking_time into zone_gdf
-            zone_gdf = zone_gdf.join(self.parking_itme_df, how='left')
-            # Write the updated GeoDataFrame to the result path
-            zone_gdf.to_file(self.result_path, layer='zone_data', driver='GPKG')
         except ImportError:
             raise ImportError("geopandas is not installed. Please install it to use this feature to export GPKG data.")
+        zone_gdf = gpd.read_file(self.zone_gpkg_path, layer='polygons')
+        # Join zone_gdf and zone_data_df using the index
+        zone_gdf = zone_gdf.join(zone_data_df, how='left')
+        # Join parking_time into zone_gdf
+        zone_gdf = zone_gdf.join(self.parking_itme_df, how='left')
+        # Write the updated GeoDataFrame to the result path
+        zone_gdf.to_file(self.result_path, layer='zone_data', driver='GPKG')
         
     def on_daily_results_aggregated(self, assignment_model, day_network):
         if not self.is_last_iteration:
             return
         try:
             import geopandas as gpd
-            from .geodata_helpers import (
-                get_links,
-                get_nodes,
-                get_transit_lines,
-                get_transit_segments
-            )
         except ImportError:
             raise ImportError("geopandas is not installed. Please install it to use this feature to export GPKG data.")
+        from utils.geodata_helpers import (
+            get_links,
+            get_nodes,
+            get_transit_lines,
+            get_transit_segments
+        )
 
-        scenario = assignment_model.emme_scenario
+        scenario = assignment_model.day_scenario
         
         get_links(day_network, scenario).to_file(self.result_path, layer='links', driver='GPKG')
         get_nodes(day_network, scenario).to_file(self.result_path, layer='nodes', driver='GPKG')
         # Get the network and scenario from the assignment model
-        gpd.GeoDataFrame(get_transit_lines(day_network, scenario), geom=None).to_file(self.result_path, layer='transit_lines', driver='GPKG')
-        gpd.GeoDataFrame(get_transit_segments(day_network, scenario), geom=None).to_file(self.result_path, layer='transit_segments', driver='GPKG')
+        gpd.GeoDataFrame(get_transit_lines(day_network, scenario), geometry=None).to_file(self.result_path, layer='transit_lines', driver='GPKG')
+        gpd.GeoDataFrame(get_transit_segments(day_network, scenario), geometry=None).to_file(self.result_path, layer='transit_segments', driver='GPKG')
         # Get links and nodes from the network and scenario
