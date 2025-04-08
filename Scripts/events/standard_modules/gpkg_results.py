@@ -72,7 +72,7 @@ class GpkgResult(ModelSystemEventListener):
 
         except ImportError:
             raise ImportError("geopandas is not installed. Please install it to use this feature to export GPKG data.")
-        zone_gdf = gpd.read_file(self.zone_gpkg_path, layer='polygons')
+        zone_gdf = gpd.read_file(self.zone_gpkg_path, layer='polygons').set_index('zone_id')
         # Join zone_gdf and zone_data_df using the index
         zone_gdf = zone_gdf.join(zone_data_df, how='left')
         # Join parking_time into zone_gdf
