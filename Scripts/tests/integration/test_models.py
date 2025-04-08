@@ -3,7 +3,7 @@ import unittest
 import numpy
 
 from datahandling.zonedata import ZoneData
-from events.model_system_event_listener import EventHandler
+from events.event_handler import EventHandler
 import utils.log as log
 from modelsystem import ModelSystem, AgentModelSystem
 from assignment.mock_assignment import MockAssignmentModel

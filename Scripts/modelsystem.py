@@ -26,7 +26,7 @@ from datatypes.person import Person
 from datatypes.tour import Tour
 from transform.impedance_transformer import ImpedanceTransformer
 from models.linear import CarDensityModel
-from events.model_system_event_listener import EventHandler
+from events.event_handler import EventHandler
 import parameters.assignment as param
 import parameters.zone as zone_param
 import parameters.tour_generation as gen_param

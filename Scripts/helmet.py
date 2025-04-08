@@ -8,7 +8,7 @@ import utils.config
 import utils.log as log
 from assignment.emme_assignment import EmmeAssignmentModel
 from assignment.mock_assignment import MockAssignmentModel
-from events.model_system_event_listener import EventHandler
+from events.event_handler import EventHandler
 from modelsystem import ModelSystem, AgentModelSystem
 from datahandling.matrixdata import MatrixData
 from utils.validation import Validation

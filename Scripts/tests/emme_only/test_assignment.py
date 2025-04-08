@@ -3,7 +3,7 @@
 
 import os
 import logging
-from events.model_system_event_listener import EventHandler
+from events.event_handler import EventHandler
 import utils.log as log
 import numpy
 

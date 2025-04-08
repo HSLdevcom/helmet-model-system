@@ -5,7 +5,7 @@ import numpy
 import pandas
 import os
 
-from events.model_system_event_listener import EventHandler
+from events.event_handler import EventHandler
 from utils.validate_network import validate
 from assignment.emme_bindings.mock_project import MockProject
 from assignment.emme_assignment import EmmeAssignmentModel
