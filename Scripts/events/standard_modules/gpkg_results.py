@@ -67,6 +67,9 @@ class GpkgResult(ModelSystemEventListener):
         zone_data_df = self.model_system.zdata_forecast.get_zone_data()
         try:
             import geopandas as gpd
+            import logging
+            logging.getLogger("pyogrio").setLevel(logging.ERROR)
+
         except ImportError:
             raise ImportError("geopandas is not installed. Please install it to use this feature to export GPKG data.")
         zone_gdf = gpd.read_file(self.zone_gpkg_path, layer='polygons')
@@ -82,6 +85,8 @@ class GpkgResult(ModelSystemEventListener):
             return
         try:
             import geopandas as gpd
+            import logging
+            logging.getLogger("pyogrio").setLevel(logging.ERROR)
         except ImportError:
             raise ImportError("geopandas is not installed. Please install it to use this feature to export GPKG data.")
         from utils.geodata_helpers import (
