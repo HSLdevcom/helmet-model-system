@@ -39,6 +39,8 @@ class ValidationGroup:
         state['_aggregations'] = []
         state['_error_terms'] = {}
         state['_visualizations'] = {}
+        # Remove columns corresponding to error terms from the items DataFrame
+        state['_items'] = state['_items'].drop(columns=self._error_terms.keys(), errors='ignore')
         return state
 
     def __setstate__(self, state):
@@ -260,65 +262,7 @@ class Validation:
         Returns:
             str: The generated HTML content as a string.
         """
-        html_content = """
-        <html>
-        <head>
-            <title>Validation Results</title>
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                }
-                .collapsible {
-                    background-color: #4CAF50;
-                    color: white;
-                    cursor: pointer;
-                    padding: 10px;
-                    width: 100%;
-                    border: none;
-                    text-align: left;
-                    outline: none;
-                    font-size: 15px;
-                    margin-bottom: 5px;
-                }
-                .active, .collapsible:hover {
-                    background-color: #45a049;
-                }
-                .content {
-                    padding: 0 18px;
-                    display: none;
-                    overflow: hidden;
-                    background-color: #f9f9f9;
-                    margin-bottom: 10px;
-                }
-                table {
-                    border-collapse: collapse;
-                    width: 100%;
-                    margin-bottom: 20px;
-                }
-                th, td {
-                    text-align: left;
-                    padding: 8px;
-                    border: 1px solid #ddd;
-                }
-                th {
-                    background-color: #f2f2f2;
-                    cursor: pointer;
-                }
-                th.sortable:hover {
-                    background-color: #ddd;
-                }
-                h2 {
-                    color: #333;
-                }
-                h3 {
-                    color: #555;
-                }
-            </style>
-        </head>
-        <body>
-            <h1>Validation Results</h1>
-        """
-
+        html_content = ""
         for group_name, group in self.groups.items():
             items = group.get_items()
             html_content += f"""
@@ -360,46 +304,11 @@ class Validation:
                 html_content += f"<tr><td>{metric_name}</td><td>{value}</td></tr>"
             html_content += "</table></div>"
 
-        html_content += """
-        <script>
-            var coll = document.getElementsByClassName("collapsible");
-            for (var i = 0; i < coll.length; i++) {
-                coll[i].addEventListener("click", function() {
-                    this.classList.toggle("active");
-                    var content = this.nextElementSibling;
-                    if (content.style.display === "block") {
-                        content.style.display = "none";
-                    } else {
-                        content.style.display = "block";
-                    }
-                });
-            }
+        template_path = Path(__file__).parent / "validation_template.html"
+        with open(template_path, 'r', encoding='utf8') as template_file:
+            template_content = template_file.read()
+        html_content = template_content.replace("{{content}}", html_content)
 
-            function sortTable(header, colIndex) {
-                var table = header.closest('table');
-                var rows = Array.from(table.querySelectorAll('tbody > tr'));
-                var isAsc = header.classList.toggle('asc');
-                rows.sort((rowA, rowB) => {
-                    var cellA = rowA.children[colIndex].textContent.trim();
-                    var cellB = rowB.children[colIndex].textContent.trim();
-                    
-                    var numA = parseFloat(cellA);
-                    var numB = parseFloat(cellB);
-                    
-                    if (!isNaN(numA) && !isNaN(numB)) {
-                        // Both values are numbers
-                        return isAsc ? numA - numB : numB - numA;
-                    } else {
-                        // At least one value is not a number, compare as strings
-                        return isAsc ? cellA.localeCompare(cellB, undefined, {numeric: true}) : cellB.localeCompare(cellA, undefined, {numeric: true});
-                    }
-                });
-                rows.forEach(row => table.querySelector('tbody').appendChild(row));
-            }
-        </script>
-        </body>
-        </html>
-        """
         if file_path:
             with open(file_path, 'w', encoding='utf8') as file:
                 file.write(html_content)
@@ -536,3 +445,6 @@ def bar_plot(x: str = 'id', y: Union[str, List[str]] = None) -> Callable[[pd.Dat
 # # Load the validation object from a file
 # loaded_valid = Validation.load_from_file('test_validation.pklz')
 # loaded_valid.to_html('test_validation_loaded.html')
+# # Open the generated HTML file in the default web browser
+# import webbrowser
+# webbrowser.open('test_validation.html')

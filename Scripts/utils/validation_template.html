@@ -1,0 +1,94 @@
+<html>
+<head>
+    <title>Validation Results</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .collapsible {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+            padding: 10px;
+            width: 100%;
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 15px;
+            margin-bottom: 5px;
+        }
+        .active, .collapsible:hover {
+            background-color: #45a049;
+        }
+        .content {
+            padding: 0 18px;
+            display: none;
+            overflow: hidden;
+            background-color: #f9f9f9;
+            margin-bottom: 10px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        th, td {
+            text-align: left;
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+            cursor: pointer;
+        }
+        th.sortable:hover {
+            background-color: #ddd;
+        }
+        h2 {
+            color: #333;
+        }
+        h3 {
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+<script>
+    var coll = document.getElementsByClassName("collapsible");
+    for (var i = 0; i < coll.length; i++) {
+        coll[i].addEventListener("click", function() {
+            this.classList.toggle("active");
+            var content = this.nextElementSibling;
+            if (content.style.display === "block") {
+                content.style.display = "none";
+            } else {
+                content.style.display = "block";
+            }
+        });
+    }
+
+    function sortTable(header, colIndex) {
+        var table = header.closest('table');
+        var rows = Array.from(table.querySelectorAll('tbody > tr'));
+        var isAsc = header.classList.toggle('asc');
+        rows.sort((rowA, rowB) => {
+            var cellA = rowA.children[colIndex].textContent.trim();
+            var cellB = rowB.children[colIndex].textContent.trim();
+            
+            var numA = parseFloat(cellA);
+            var numB = parseFloat(cellB);
+            
+            if (!isNaN(numA) && !isNaN(numB)) {
+                // Both values are numbers
+                return isAsc ? numA - numB : numB - numA;
+            } else {
+                // At least one value is not a number, compare as strings
+                return isAsc ? cellA.localeCompare(cellB, undefined, {numeric: true}) : cellB.localeCompare(cellA, undefined, {numeric: true});
+            }
+        });
+        rows.forEach(row => table.querySelector('tbody').appendChild(row));
+    }
+</script>
+{{content}}
+</body>
+</html>
