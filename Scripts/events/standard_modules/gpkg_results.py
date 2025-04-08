@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Union
 import pandas as pd
 import numpy as np
-
+from utils import log
 
 from events.model_system_event_listener import ModelSystemEventListener
 
@@ -46,6 +46,8 @@ class GpkgResult(ModelSystemEventListener):
         self.model_system = model_system
         self.result_path = Path(model_system.resultdata.path) / 'model_data.gpkg'
         self.zone_gpkg_path = Path(zone_data_path) / 'zones.gpkg'
+        if not self.zone_gpkg_path.exists():
+            self.zone_gpkg_path = Path(base_zone_data_path) / 'zones.gpkg'
 
 
     def on_iteration_started(self, iteration, previous_impedance):
@@ -72,6 +74,9 @@ class GpkgResult(ModelSystemEventListener):
 
         except ImportError:
             raise ImportError("geopandas is not installed. Please install it to use this feature to export GPKG data.")
+        if not self.zone_gpkg_path.exists():
+            log.warn(f"Zone data file not found in {self.zone_gpkg_path}. Zone data export disabled.")
+            return
         zone_gdf = gpd.read_file(self.zone_gpkg_path, layer='polygons').set_index('zone_id')
         # Join zone_gdf and zone_data_df using the index
         zone_gdf = zone_gdf.join(zone_data_df, how='left')
