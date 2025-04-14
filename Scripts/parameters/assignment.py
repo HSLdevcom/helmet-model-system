@@ -435,6 +435,7 @@ assignment_classes = {
 }
 main_mode = 'h'
 bike_mode = 'f'
+bike_mode_traffic = 'F'
 assignment_modes = {
     "car_work": 'c',
     "car_leisure": 'c',

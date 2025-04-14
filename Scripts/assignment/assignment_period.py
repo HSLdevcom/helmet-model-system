@@ -121,6 +121,7 @@ class AssignmentPeriod(Period):
         self.event_handler.on_assignment_started(self, iteration, matrices)
         self._set_emmebank_matrices(matrices, iteration=="last")
         if iteration=="init":
+            self._create_bike_auto_mode()
             self._assign_pedestrians()
             self._set_bike_vdfs()
             self._assign_bikes(self.emme_matrices["bike"]["dist"], "all")
@@ -131,6 +132,7 @@ class AssignmentPeriod(Period):
             self._calc_extra_wait_time()
             self._assign_congested_transit() if param.always_congested else self._assign_transit()
         elif iteration==0:
+            self._create_bike_auto_mode()
             self._set_bike_vdfs()
             self._assign_bikes(self.emme_matrices["bike"]["dist"], "all")
             self._set_car_and_transit_vdfs()
@@ -159,6 +161,7 @@ class AssignmentPeriod(Period):
             self._calc_extra_wait_time()
             self._assign_congested_transit() if param.always_congested else self._assign_transit()
         elif iteration=="last":
+            self._create_bike_auto_mode()
             self._set_bike_vdfs()
             self._assign_bikes(self.emme_matrices["bike"]["dist"], "all")
             self._set_car_and_transit_vdfs()
@@ -167,6 +170,7 @@ class AssignmentPeriod(Period):
             self._calc_boarding_penalties(is_last_iteration=True)
             self._calc_extra_wait_time()
             self._assign_congested_transit()
+            self._delete_bike_auto_mode()
         else:
             raise ValueError("Iteration number not valid")
 
@@ -335,7 +339,7 @@ class AssignmentPeriod(Period):
                         break
             else:
                 # Link with no car traffic
-                link.volume_delay_func = 0
+                link.volume_delay_func = 10 #good enough as default function
 
             # Transit function definition
             for modeset in param.transit_delay_funcs:
@@ -376,8 +380,7 @@ class AssignmentPeriod(Period):
                 segment.transit_time_func = func
             if car_mode in link.modes:
                 link.modes |= {main_mode}
-            elif main_mode in link.modes:
-                link.modes -= {main_mode}
+            if link.num_lanes == 0: link.num_lanes = 1
         self.event_handler.on_car_and_transit_vdfs_set(self, network)
         self.emme_scenario.publish_network(network)
 
@@ -394,6 +397,7 @@ class AssignmentPeriod(Period):
         network = self.emme_scenario.get_network()
         main_mode = network.mode(param.main_mode)
         bike_mode = network.mode(param.bike_mode)
+        bike_mode_traffic = network.mode(param.bike_mode_traffic)
         for turn in network.turns():
             if turn.penalty_func == 0:
                 turn.penalty_func = 1
@@ -405,7 +409,7 @@ class AssignmentPeriod(Period):
                 roadtype = param.custom_roadtypes[linktype]
             else:
                 roadtype = None
-            if (roadtype == "motorway" and network.mode('f') in link.modes
+            if (roadtype == "motorway" and network.mode(param.bike_mode) in link.modes
                     and link["@pyoratieluokka"] == 0):
                 # Force bikes on motorways onto separate bikepaths
                 link["@pyoratieluokka"] = 3
@@ -418,10 +422,21 @@ class AssignmentPeriod(Period):
             except KeyError:
                 link.volume_delay_func = 98
             if bike_mode in link.modes:
-                link.modes |= {main_mode}
-            elif main_mode in link.modes:
-                link.modes -= {main_mode}
+                link.modes |= {bike_mode_traffic}        
         self.event_handler.on_bike_vdfs_set(self, network)
+        self.emme_scenario.publish_network(network)    
+
+    def _create_bike_auto_mode(self):
+        """Create special bike mode just for the purpose of bike assignment"""
+        network = self.emme_scenario.get_network()
+        if not any(m.id == param.bike_mode_traffic for m in network.modes()):
+            network.create_mode("AUX_AUTO", param.bike_mode_traffic)
+        self.emme_scenario.publish_network(network)
+
+    def _delete_bike_auto_mode(self):
+        """Remove special bike mode from results"""
+        network = self.emme_scenario.get_network()
+        network.delete_mode(param.bike_mode_traffic, cascade = True)
         self.emme_scenario.publish_network(network)
 
     def _set_emmebank_matrices(self, 
@@ -627,7 +642,7 @@ class AssignmentPeriod(Period):
             "type": "STANDARD_TRAFFIC_ASSIGNMENT",
             "classes": [
                 {
-                    "mode": param.main_mode,
+                    "mode": param.bike_mode_traffic,
                     "demand": self.emme_matrices["bike"]["demand"],
                     "results": {
                         "od_travel_times": {
@@ -702,6 +717,10 @@ class AssignmentPeriod(Period):
         time_attr = self.extra("car_time")
         for link in network.links():
             link[time_attr] = link.auto_time
+            #prevent errors from non-car links
+            #assignment only uses mode-based subnetworks, 
+            # these should not be used in practice
+            if link.auto_time > 1e3: link.auto_time = 1e3
         self.emme_scenario.publish_network(network)
         log.info("Car assignment performed for scenario {}".format(
             self.emme_scenario.id))
@@ -750,6 +769,13 @@ class AssignmentPeriod(Period):
 
     def _assign_pedestrians(self):
         """Perform pedestrian assignment for one scenario."""
+        #Add h mode everywhere just to be sure
+        network = self.emme_scenario.get_network()
+        main_mode = network.mode(param.main_mode)
+        for link in network.links():
+            link.modes |= {main_mode}
+        self.emme_scenario.publish_network(network)
+
         log.info("Pedestrian assignment started...")
         self.emme_project.pedestrian_assignment(
             specification=self.walk_spec, scenario=self.emme_scenario)
