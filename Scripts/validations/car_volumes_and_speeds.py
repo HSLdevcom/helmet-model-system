@@ -128,7 +128,7 @@ def _add_to_validation_group(group: ValidationGroup,
                              kuntaryhma=row['kuntaryhma'])
 
 def _sum_volumes(link, suffix: str) -> float:
-    attributes = ['@car_work', '@car_leisure', '@truck', '@trailer_truck', '@van', '@bus']
+    attributes = ['@car_work', '@car_leisure', '@van']
     return sum(link[f'{attr}_{suffix}'] for attr in attributes)
 
 def _get_link(network: 'Network', id: Tuple[int, int]) -> 'Link':
