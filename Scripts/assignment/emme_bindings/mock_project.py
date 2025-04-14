@@ -564,6 +564,13 @@ class Network:
         mode = Mode(idx, mode_type)
         self._modes[idx] = mode
         return mode
+    
+    def delete_mode(self, idx: str, cascade: bool = False):
+        mode = self._modes[idx]
+        if cascade:
+            for link in self._links:
+                self._links[link].modes -= {mode}
+        self._modes.pop(idx)
 
     def node(self, idx: int) -> 'Node':
         idx = int(idx)
