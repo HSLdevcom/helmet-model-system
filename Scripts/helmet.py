@@ -169,10 +169,13 @@ def main(args):
                     log.info("Not able to remove file {}.".format(f))
         log.info("Removed strategy files in {}".format(dbase_path))
     if validation is not None:
-        validation.to_html(
-            Path(results_path) / args.scenario_name / 'validation.html')
-        validation.save_to_file(
-            Path(results_path) / args.scenario_name / 'validation.pklz')
+        try:
+            validation.to_html(
+                Path(results_path) / args.scenario_name / 'validation.html')
+            validation.save_to_file(
+                Path(results_path) / args.scenario_name / 'validation.pklz')
+        except Exception as e:
+            log.error("Error saving validation data: {}".format(e))
     log.info("Simulation ended.", extra=log_extra)
 
 
