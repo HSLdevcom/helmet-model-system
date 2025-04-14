@@ -50,15 +50,15 @@ class VolumesAndSpeedsValidation(ModelSystemEventListener):
     
     def create_vol_group(self, name: str) -> ValidationGroup:
         vol_group = self.validation.create_group(name)
-        vol_group.add_visualization('Volumes vs survey', scatter_plot(x='expected', y='prediction'))
-        vol_group.add_visualization('Volumes vs Helmet4', scatter_plot(x='helmet4', y='prediction'))
+        vol_group.add_visualization('Volumes vs survey', scatter_plot(x='expected', y='prediction', color='kuntaryhma', discrete_colors=True))
+        vol_group.add_visualization('Volumes vs Helmet4', scatter_plot(x='helmet4', y='prediction', color='kuntaryhma', discrete_colors=True))
         vol_group.add_aggregation('mean absolute error', mae, group_by='kuntaryhma')
         vol_group.add_aggregation('mean relative error', mean('relative_error'), group_by='kuntaryhma')
         return vol_group
     
     def create_speed_group(self, name: str) -> ValidationGroup:
         speed_group = self.validation.create_group(name)
-        speed_group.add_visualization('Speed vs survey', scatter_plot(x='expected', y='prediction'))
+        speed_group.add_visualization('Speed vs survey', scatter_plot(x='expected', y='prediction', color='kuntaryhma', discrete_colors=True))
         speed_group.add_aggregation('mean relative error', mean('relative_error'), group_by='kuntaryhma')
         return speed_group
     
