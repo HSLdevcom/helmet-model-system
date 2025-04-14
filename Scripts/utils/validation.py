@@ -355,9 +355,10 @@ def weighted_mean(source: str, weight: str = 'weight'):
 # Visualizations
 def scatter_plot(x: str = 'expected',
                  y: str = 'prediction',
-                 color:str=None,
-                 colormap: str='viridis',
-                 show_diagonal: bool=True) -> Callable[[pd.DataFrame], str]:
+                 color: str = None,
+                 colormap: str = 'viridis',
+                 show_diagonal: bool = True,
+                 discrete_colors: bool = False) -> Callable[[pd.DataFrame], str]:
     def _scatter_plot(df: pd.DataFrame) -> str:
         try:
             import plotly.express as px
@@ -365,7 +366,15 @@ def scatter_plot(x: str = 'expected',
         except ImportError:
             return "Plotly is not installed. Please install it using 'pip install plotly'"
         
-        fig = px.scatter(df, x=x, y=y, color=color, color_continuous_scale=colormap)
+        if color is not None and discrete_colors:
+            # Use color_discrete_map='identity' for categorical colors
+            fig = px.scatter(df, x=x, y=y, color=color, 
+                            color_discrete_sequence=px.colors.qualitative.Plotly)
+        else:
+            # Original behavior for continuous colors
+            fig = px.scatter(df, x=x, y=y, color=color, 
+                            color_continuous_scale=colormap)
+            
         if show_diagonal:
             min_val = min(df[x].min(), df[y].min())
             max_val = max(df[x].max(), df[y].max())
