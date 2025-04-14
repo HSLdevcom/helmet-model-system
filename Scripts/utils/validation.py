@@ -387,7 +387,24 @@ def scatter_plot(x: str = 'expected',
         return fig.to_html()
     return _scatter_plot
 
-def bar_plot(x: str = 'id', y: Union[str, List[str]] = None) -> Callable[[pd.DataFrame], str]:
+def bar_plot(x: str = 'id', 
+             y: Union[str, List[str]] = None, 
+             stacked: bool = False,
+             color_palette: str = 'Plotly') -> Callable[[pd.DataFrame], str]:
+    """
+    Creates a bar plot visualization function.
+    
+    Args:
+        x (str): The column name to use for the x-axis. Defaults to 'id'.
+        y (Union[str, List[str]]): The column name(s) to plot on the y-axis.
+            If None, uses ['prediction', 'expected']. Defaults to None.
+        stacked (bool): Whether to stack the bars or group them. Defaults to False.
+        color_palette (str): The color palette to use. Options: 'Plotly', 'G10', 
+            'Dark24', 'Light24', 'Pastel', etc. Defaults to 'Plotly'.
+            
+    Returns:
+        Callable[[pd.DataFrame], str]: A function that takes a DataFrame and returns HTML.
+    """
     if y is None:
         y = ['prediction', 'expected']
     if isinstance(y, str):
@@ -396,64 +413,84 @@ def bar_plot(x: str = 'id', y: Union[str, List[str]] = None) -> Callable[[pd.Dat
     def _bar_plot(df: pd.DataFrame) -> str:
         try:
             import plotly.graph_objects as go
+            import plotly.express as px
         except ImportError:
             return "Plotly is not installed. Please install it using 'pip install plotly'"
         
+        # Get the appropriate color palette
+        try:
+            color_seq = getattr(px.colors.qualitative, color_palette)
+        except AttributeError:
+            # Fall back to default Plotly colors if the palette doesn't exist
+            color_seq = px.colors.qualitative.Plotly
+            
         fig = go.Figure()
-        colors = ['blue', 'orange', 'green', 'red', 'purple', 'brown', 'pink', 'gray', 'cyan', 'magenta']
         
         for i, y_col in enumerate(y):
-            fig.add_trace(go.Bar(name=y_col, x=df[x], y=df[y_col], marker_color=colors[i % len(colors)]))
+            fig.add_trace(go.Bar(
+                name=y_col, 
+                x=df[x], 
+                y=df[y_col], 
+                marker_color=color_seq[i % len(color_seq)]
+            ))
         
-        fig.update_layout(barmode='group', xaxis_title=x, yaxis_title='Value')
+        # Set barmode based on stacked parameter
+        barmode = 'stack' if stacked else 'group'
+        fig.update_layout(
+            barmode=barmode,
+            xaxis_title=x,
+            yaxis_title='Value',
+            legend_title_text='Metrics'
+        )
+        
         return fig.to_html()
     
     return _bar_plot
 
-# # Usage example
-# test_valid = Validation()
+# Usage example
+test_valid = Validation()
 
-# # Create a group without default error terms
-# group = test_valid.create_group("test", add_default_error_terms=False)
+# Create a group without default error terms
+group = test_valid.create_group("test", add_default_error_terms=False)
 
-# # Add sample predictions to the group
-# # use arbitrary "example1" and "example2" columns for grouping
-# group.add_item('s1', 1, 1,   example1='a'  , example2=1)
-# group.add_item('s2', 2, 2.5, example1='a'  , example2=2)
-# group.add_item('s3', 3, 4,   example1='b')
-# group.add_item('s4', 4, 6,   example1='c'  , example2=2)
-# group.add_item('s5', 5, 7,   example1='b'  , example2=1)
+# Add sample predictions to the group
+# use arbitrary "example1" and "example2" columns for grouping
+group.add_item('s1', 1, 1,   example1='a'  , example2=1)
+group.add_item('s2', 2, 2.5, example1='a'  , example2=2)
+group.add_item('s3', 3, 4,   example1='b')
+group.add_item('s4', 4, 6,   example1='c'  , example2=2)
+group.add_item('s5', 5, 7,   example1='b'  , example2=1)
 
-# # Add error terms
-# group.add_error_terms({'squared_error': squared_error})
+# Add error terms
+group.add_error_terms({'squared_error': squared_error})
 
-# # Add aggregations to the group
-# # Mean absolute error for all items
-# group.add_aggregation('mae', mae)
-# # Maximum error for all items, grouped by test_val
-# group.add_aggregation('max', max_error, group_by='example2')
+# Add aggregations to the group
+# Mean absolute error for all items
+group.add_aggregation('mae', mae)
+# Maximum error for all items, grouped by test_val
+group.add_aggregation('max', max_error, group_by='example2')
 
-# # mean squared error for predictions >= 3, grouped by test1
-# group.add_aggregation("mse_error", mse, filter='prediction>=3', group_by='example1')
-# # Same as above but using a precalculated error term
-# group.add_aggregation('mse_error2', mean('squared_error'), filter='prediction>=3', group_by='example1')
+# mean squared error for predictions >= 3, grouped by test1
+group.add_aggregation("mse_error", mse, filter='prediction>=3', group_by='example1')
+# Same as above but using a precalculated error term
+group.add_aggregation('mse_error2', mean('squared_error'), filter='prediction>=3', group_by='example1')
 
-# group2 = test_valid.create_group("test2")
-# # Add larget dataset of random points
-# for i in range(1, 1000):
-#     group2.add_item(f'point{i}', i**1.02 + random.random()*200-150, i, even='even' if i % 2 == 0 else 'odd')
-# group2.add_aggregation('mse', mean('squared_error'), group_by='even')
+group2 = test_valid.create_group("test2")
+# Add larget dataset of random points
+for i in range(1, 1000):
+    group2.add_item(f'point{i}', i**1.02 + random.random()*200-150, i, even='even' if i % 2 == 0 else 'odd')
+group2.add_aggregation('mse', mean('squared_error'), group_by='even')
 
-# group.add_visualization('test bar plot', bar_plot(y=['prediction', 'expected', 'squared_error']))
-# group2.add_visualization('test scatter plot', scatter_plot(color='absolute_error'))
+group.add_visualization('test bar plot', bar_plot(y=['prediction', 'expected', 'squared_error']))
+group2.add_visualization('test scatter plot', scatter_plot(color='absolute_error'))
 
-# # Run all aggregations and print the results
-# test_valid.to_html('test_validation.html')
-# # Save the validation object to a file
-# test_valid.save_to_file('test_validation.pklz')
-# # Load the validation object from a file
-# loaded_valid = Validation.load_from_file('test_validation.pklz')
-# loaded_valid.to_html('test_validation_loaded.html')
-# # Open the generated HTML file in the default web browser
-# import webbrowser
-# webbrowser.open('test_validation.html')
+# Run all aggregations and print the results
+test_valid.to_html('test_validation.html')
+# Save the validation object to a file
+test_valid.save_to_file('test_validation.pklz')
+# Load the validation object from a file
+loaded_valid = Validation.load_from_file('test_validation.pklz')
+loaded_valid.to_html('test_validation_loaded.html')
+# Open the generated HTML file in the default web browser
+import webbrowser
+webbrowser.open('test_validation.html')
