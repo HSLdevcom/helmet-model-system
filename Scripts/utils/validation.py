@@ -447,50 +447,50 @@ def bar_plot(x: str = 'id',
     
     return _bar_plot
 
-# Usage example
-test_valid = Validation()
+# # Usage example
+# test_valid = Validation()
 
-# Create a group without default error terms
-group = test_valid.create_group("test", add_default_error_terms=False)
+# # Create a group without default error terms
+# group = test_valid.create_group("test", add_default_error_terms=False)
 
-# Add sample predictions to the group
-# use arbitrary "example1" and "example2" columns for grouping
-group.add_item('s1', 1, 1,   example1='a'  , example2=1)
-group.add_item('s2', 2, 2.5, example1='a'  , example2=2)
-group.add_item('s3', 3, 4,   example1='b')
-group.add_item('s4', 4, 6,   example1='c'  , example2=2)
-group.add_item('s5', 5, 7,   example1='b'  , example2=1)
+# # Add sample predictions to the group
+# # use arbitrary "example1" and "example2" columns for grouping
+# group.add_item('s1', 1, 1,   example1='a'  , example2=1)
+# group.add_item('s2', 2, 2.5, example1='a'  , example2=2)
+# group.add_item('s3', 3, 4,   example1='b')
+# group.add_item('s4', 4, 6,   example1='c'  , example2=2)
+# group.add_item('s5', 5, 7,   example1='b'  , example2=1)
 
-# Add error terms
-group.add_error_terms({'squared_error': squared_error})
+# # Add error terms
+# group.add_error_terms({'squared_error': squared_error})
 
-# Add aggregations to the group
-# Mean absolute error for all items
-group.add_aggregation('mae', mae)
-# Maximum error for all items, grouped by test_val
-group.add_aggregation('max', max_error, group_by='example2')
+# # Add aggregations to the group
+# # Mean absolute error for all items
+# group.add_aggregation('mae', mae)
+# # Maximum error for all items, grouped by test_val
+# group.add_aggregation('max', max_error, group_by='example2')
 
-# mean squared error for predictions >= 3, grouped by test1
-group.add_aggregation("mse_error", mse, filter='prediction>=3', group_by='example1')
-# Same as above but using a precalculated error term
-group.add_aggregation('mse_error2', mean('squared_error'), filter='prediction>=3', group_by='example1')
+# # mean squared error for predictions >= 3, grouped by test1
+# group.add_aggregation("mse_error", mse, filter='prediction>=3', group_by='example1')
+# # Same as above but using a precalculated error term
+# group.add_aggregation('mse_error2', mean('squared_error'), filter='prediction>=3', group_by='example1')
 
-group2 = test_valid.create_group("test2")
-# Add larget dataset of random points
-for i in range(1, 1000):
-    group2.add_item(f'point{i}', i**1.02 + random.random()*200-150, i, even='even' if i % 2 == 0 else 'odd')
-group2.add_aggregation('mse', mean('squared_error'), group_by='even')
+# group2 = test_valid.create_group("test2")
+# # Add larget dataset of random points
+# for i in range(1, 1000):
+#     group2.add_item(f'point{i}', i**1.02 + random.random()*200-150, i, even='even' if i % 2 == 0 else 'odd')
+# group2.add_aggregation('mse', mean('squared_error'), group_by='even')
 
-group.add_visualization('test bar plot', bar_plot(y=['prediction', 'expected', 'squared_error']))
-group2.add_visualization('test scatter plot', scatter_plot(color='absolute_error'))
+# group.add_visualization('test bar plot', bar_plot(y=['prediction', 'expected', 'squared_error']))
+# group2.add_visualization('test scatter plot', scatter_plot(color='absolute_error'))
 
-# Run all aggregations and print the results
-test_valid.to_html('test_validation.html')
-# Save the validation object to a file
-test_valid.save_to_file('test_validation.pklz')
-# Load the validation object from a file
-loaded_valid = Validation.load_from_file('test_validation.pklz')
-loaded_valid.to_html('test_validation_loaded.html')
-# Open the generated HTML file in the default web browser
-import webbrowser
-webbrowser.open('test_validation.html')
+# # Run all aggregations and print the results
+# test_valid.to_html('test_validation.html')
+# # Save the validation object to a file
+# test_valid.save_to_file('test_validation.pklz')
+# # Load the validation object from a file
+# loaded_valid = Validation.load_from_file('test_validation.pklz')
+# loaded_valid.to_html('test_validation_loaded.html')
+# # Open the generated HTML file in the default web browser
+# import webbrowser
+# webbrowser.open('test_validation.html')
