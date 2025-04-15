@@ -320,7 +320,7 @@ def basic_error(df: pd.DataFrame) -> pd.Series:
 def absolute_error(df: pd.DataFrame) -> pd.Series:
     return (df["prediction"] - df["expected"]).abs()
 def relative_error(df: pd.DataFrame) -> pd.Series:
-    return (df["prediction"] - df["expected"]) / df["expected"]
+    return (df["prediction"] - df["expected"]).abs() / df["expected"].abs()
 def squared_error(df: pd.DataFrame) -> pd.Series:
     return (df["prediction"] - df["expected"]) ** 2
 
@@ -341,7 +341,7 @@ def max_error(df: pd.DataFrame) -> float:
 def mean_error(df: pd.DataFrame) -> float:
     return ((df["prediction"] - df["expected"]) * df['weight']).mean()
 def relative_error(df: pd.DataFrame) -> float:
-    return ((df["prediction"] - df["expected"]) / df["expected"] * df['weight']).mean()
+    return ((df["prediction"] - df["expected"]).abs() / df["expected"].abs() * df['weight']).mean()
 
 def mean(source: str):
     return lambda df: df[source].mean()
