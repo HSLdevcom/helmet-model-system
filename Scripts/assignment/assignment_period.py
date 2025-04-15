@@ -99,6 +99,7 @@ class AssignmentPeriod(Period):
         self._calc_boarding_penalties()
         self._calc_background_traffic()
         self._specify()
+        self._fill_h_mode()
 
     def assign(self, matrices: dict, iteration: Union[int,str]) -> Dict:
         """Assign cars, bikes and transit for one time period.
@@ -121,7 +122,6 @@ class AssignmentPeriod(Period):
         self.event_handler.on_assignment_started(self, iteration, matrices)
         self._set_emmebank_matrices(matrices, iteration=="last")
         if iteration=="init":
-            self._fill_h_mode()
             self._assign_pedestrians()
             self._set_bike_vdfs()
             self._assign_bikes(self.emme_matrices["bike"]["dist"], "all")
@@ -132,8 +132,6 @@ class AssignmentPeriod(Period):
             self._calc_extra_wait_time()
             self._assign_congested_transit() if param.always_congested else self._assign_transit()
         elif iteration==0:
-            if self._separate_emme_scenarios:
-                self._fill_h_mode()
             self._set_bike_vdfs()
             self._assign_bikes(self.emme_matrices["bike"]["dist"], "all")
             self._set_car_and_transit_vdfs()
