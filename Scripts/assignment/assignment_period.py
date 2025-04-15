@@ -121,7 +121,7 @@ class AssignmentPeriod(Period):
         self.event_handler.on_assignment_started(self, iteration, matrices)
         self._set_emmebank_matrices(matrices, iteration=="last")
         if iteration=="init":
-            self._create_bike_auto_mode()
+            self._fill_h_mode()
             self._assign_pedestrians()
             self._set_bike_vdfs()
             self._assign_bikes(self.emme_matrices["bike"]["dist"], "all")
@@ -132,7 +132,8 @@ class AssignmentPeriod(Period):
             self._calc_extra_wait_time()
             self._assign_congested_transit() if param.always_congested else self._assign_transit()
         elif iteration==0:
-            self._create_bike_auto_mode()
+            if self._separate_emme_scenarios:
+                self._fill_h_mode()
             self._set_bike_vdfs()
             self._assign_bikes(self.emme_matrices["bike"]["dist"], "all")
             self._set_car_and_transit_vdfs()
@@ -161,7 +162,6 @@ class AssignmentPeriod(Period):
             self._calc_extra_wait_time()
             self._assign_congested_transit() if param.always_congested else self._assign_transit()
         elif iteration=="last":
-            self._create_bike_auto_mode()
             self._set_bike_vdfs()
             self._assign_bikes(self.emme_matrices["bike"]["dist"], "all")
             self._set_car_and_transit_vdfs()
@@ -170,7 +170,6 @@ class AssignmentPeriod(Period):
             self._calc_boarding_penalties(is_last_iteration=True)
             self._calc_extra_wait_time()
             self._assign_congested_transit()
-            self._delete_bike_auto_mode()
         else:
             raise ValueError("Iteration number not valid")
 
@@ -397,7 +396,6 @@ class AssignmentPeriod(Period):
         network = self.emme_scenario.get_network()
         main_mode = network.mode(param.main_mode)
         bike_mode = network.mode(param.bike_mode)
-        bike_mode_traffic = network.mode(param.bike_mode_traffic)
         for turn in network.turns():
             if turn.penalty_func == 0:
                 turn.penalty_func = 1
@@ -420,24 +418,9 @@ class AssignmentPeriod(Period):
                 else:
                     link.volume_delay_func = pathclass[None]
             except KeyError:
-                link.volume_delay_func = 98
-            if bike_mode in link.modes:
-                link.modes |= {bike_mode_traffic}        
+                link.volume_delay_func = 98     
         self.event_handler.on_bike_vdfs_set(self, network)
         self.emme_scenario.publish_network(network)    
-
-    def _create_bike_auto_mode(self):
-        """Create special bike mode just for the purpose of bike assignment"""
-        network = self.emme_scenario.get_network()
-        if not any(m.id == param.bike_mode_traffic for m in network.modes()):
-            network.create_mode("AUX_AUTO", param.bike_mode_traffic)
-        self.emme_scenario.publish_network(network)
-
-    def _delete_bike_auto_mode(self):
-        """Remove special bike mode from results"""
-        network = self.emme_scenario.get_network()
-        network.delete_mode(param.bike_mode_traffic, cascade = True)
-        self.emme_scenario.publish_network(network)
 
     def _set_emmebank_matrices(self, 
                                matrices: Dict[str,numpy.ndarray], 
@@ -642,7 +625,7 @@ class AssignmentPeriod(Period):
             "type": "STANDARD_TRAFFIC_ASSIGNMENT",
             "classes": [
                 {
-                    "mode": param.bike_mode_traffic,
+                    "mode": param.bike_mode,
                     "demand": self.emme_matrices["bike"]["demand"],
                     "results": {
                         "od_travel_times": {
@@ -767,14 +750,16 @@ class AssignmentPeriod(Period):
             specification=spec, scenario=scen)
         log.info("Bike assignment performed for scenario " + str(scen.id))
 
-    def _assign_pedestrians(self):
-        """Perform pedestrian assignment for one scenario."""
+    def _fill_h_mode(self):
         #Add h mode everywhere just to be sure
         network = self.emme_scenario.get_network()
         main_mode = network.mode(param.main_mode)
         for link in network.links():
             link.modes |= {main_mode}
         self.emme_scenario.publish_network(network)
+
+    def _assign_pedestrians(self):
+        """Perform pedestrian assignment for one scenario."""
 
         log.info("Pedestrian assignment started...")
         self.emme_project.pedestrian_assignment(

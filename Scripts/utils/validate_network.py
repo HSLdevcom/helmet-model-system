@@ -48,11 +48,11 @@ def validate(network, fares=None):
             log.error(msg)
             raise ValueError(msg)
     validate_mode(network, param.main_mode, EMME_AUTO_MODE)
-    for m in param.assignment_modes.values():
+    for m in list(param.assignment_modes.values()) + [param.bike_mode]:
         validate_mode(network, m, EMME_AUX_AUTO_MODE)
     for m in param.transit_modes:
         validate_mode(network, m, EMME_TRANSIT_MODE)
-    for m in param.aux_modes + [param.bike_mode]:
+    for m in param.aux_modes:
         validate_mode(network, m, EMME_AUX_TRANSIT_MODE)
     modesets = []
     intervals = []
