@@ -15,18 +15,30 @@ from utils.validation import Validation
 
 
 def main(args):
+    # Set up filepaths
+    base_zonedata_path: str = os.path.join(args.baseline_data_path, "2023_zonedata")
+    base_matrices_path: str = os.path.join(args.baseline_data_path, "base_matrices")
+    forecast_zonedata_path: str = args.forecast_data_path
+    results_path: str = args.results_path
+    emme_project_path: str = args.emme_path
+
     if args.end_assignment_only:
+        # Raise error if there is no demand matrix in results folder
+        matrix_path = os.path.join(results_path, args.scenario_name, "Matrices")
+        demand_matrix_path = os.path.join(results_path, args.scenario_name, "Matrices", "demand_aht.omx")
+        if not os.path.exists(demand_matrix_path):
+            msg = "Matrices not found for this scenario. Please uncheck the " \
+            + "'Aja vain loppusijoittelu' option in Helmet UI's scenario settings, " \
+            + f"or copy the demand matrices from base scenario to [{matrix_path}]."
+            log.error(msg)
+            raise FileNotFoundError(msg)
+        # Else set iterations to 0, so that only the last iteration is run
         iterations = 0
     elif args.iterations > 0:
         iterations = args.iterations
     else:
         raise ArgumentTypeError(
             "Iteration number {} not valid".format(args.iterations))
-    base_zonedata_path: str = os.path.join(args.baseline_data_path, "2023_zonedata")
-    base_matrices_path: str = os.path.join(args.baseline_data_path, "base_matrices")
-    forecast_zonedata_path: str = args.forecast_data_path
-    results_path: str = args.results_path
-    emme_project_path: str = args.emme_path
     log_extra = {
         "status": {
             "name": args.scenario_name,
@@ -114,6 +126,16 @@ def main(args):
             results_path, ass_model, args.scenario_name, event_handler,
             estimation_data_path)
     log_extra["status"]["results"] = model.mode_share
+
+    if args.use_fixed_transit_cost:
+        # Raise error if there is no cost matrix in results folder
+        cost_matrix_path = os.path.join(results_path, args.scenario_name, "Matrices", "cost_aht.omx")
+        if not os.path.exists(cost_matrix_path):
+            msg = "Precalculated transit cost matrix not found. " \
+            + "Please uncheck the 'Käytä esilaskettua joukkoliikenteen kustannusmatriisia' " \
+            + "option in Helmet UI's scenario settings to calculate transit cost."
+            log.error(msg)
+            raise FileNotFoundError(msg)
 
     # Run traffic assignment simulation for N iterations,
     # on last iteration model-system will save the results

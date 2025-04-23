@@ -163,9 +163,12 @@ def main(args):
                     attr_space)
                 log.error(msg)
                 raise ValueError(msg)
+            scenarios_with_different_zones = 0
             for scen in emmebank.scenarios():
                 if scen.zone_numbers != zone_numbers:
-                    log.warn("Scenarios with different zones found in EMME bank!")
+                    scenarios_with_different_zones += 1
+            if scenarios_with_different_zones > 0:
+                log.warn(f"{scenarios_with_different_zones} Scenarios with different zones found in EMME bank! Matrices will not be compatible between scenarios with different zones.")
             scen = emmebank.scenario(first_scenario_ids[i])
             if scen is None:
                 msg = "Project {} has no scenario {}".format(emp_path, first_scenario_ids[i])
