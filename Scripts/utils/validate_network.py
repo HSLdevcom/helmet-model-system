@@ -99,6 +99,11 @@ def validate(network, fares=None):
             msg = "Link id {} type must not be 999, please refer to the helmet-docs manual".format(link.id)
             log.error(msg)
             raise ValueError(msg)
+        if link.length > 200:
+            log.warn(
+            "Link id {} has length {} km. Project settings might be incorrect".format(
+                link.id, link.length
+            ))
         
         linktype = link.type % 100
         if (linktype != 70 and link.length == 0): 
