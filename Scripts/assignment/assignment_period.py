@@ -99,6 +99,7 @@ class AssignmentPeriod(Period):
         self._calc_boarding_penalties()
         self._calc_background_traffic()
         self._specify()
+        self._fill_h_mode()
 
     def assign(self, matrices: dict, iteration: Union[int,str]) -> Dict:
         """Assign cars, bikes and transit for one time period.
@@ -335,7 +336,7 @@ class AssignmentPeriod(Period):
                         break
             else:
                 # Link with no car traffic
-                link.volume_delay_func = 0
+                link.volume_delay_func = 10 #good enough as default function
 
             # Transit function definition
             for modeset in param.transit_delay_funcs:
@@ -376,8 +377,7 @@ class AssignmentPeriod(Period):
                 segment.transit_time_func = func
             if car_mode in link.modes:
                 link.modes |= {main_mode}
-            elif main_mode in link.modes:
-                link.modes -= {main_mode}
+            if link.num_lanes == 0: link.num_lanes = 1
         self.event_handler.on_car_and_transit_vdfs_set(self, network)
         self.emme_scenario.publish_network(network)
 
@@ -405,7 +405,7 @@ class AssignmentPeriod(Period):
                 roadtype = param.custom_roadtypes[linktype]
             else:
                 roadtype = None
-            if (roadtype == "motorway" and network.mode('f') in link.modes
+            if (roadtype == "motorway" and network.mode(param.bike_mode) in link.modes
                     and link["@pyoratieluokka"] == 0):
                 # Force bikes on motorways onto separate bikepaths
                 link["@pyoratieluokka"] = 3
@@ -416,13 +416,9 @@ class AssignmentPeriod(Period):
                 else:
                     link.volume_delay_func = pathclass[None]
             except KeyError:
-                link.volume_delay_func = 98
-            if bike_mode in link.modes:
-                link.modes |= {main_mode}
-            elif main_mode in link.modes:
-                link.modes -= {main_mode}
+                link.volume_delay_func = 98     
         self.event_handler.on_bike_vdfs_set(self, network)
-        self.emme_scenario.publish_network(network)
+        self.emme_scenario.publish_network(network)    
 
     def _set_emmebank_matrices(self, 
                                matrices: Dict[str,numpy.ndarray], 
@@ -627,7 +623,7 @@ class AssignmentPeriod(Period):
             "type": "STANDARD_TRAFFIC_ASSIGNMENT",
             "classes": [
                 {
-                    "mode": param.main_mode,
+                    "mode": param.bike_mode,
                     "demand": self.emme_matrices["bike"]["demand"],
                     "results": {
                         "od_travel_times": {
@@ -702,6 +698,10 @@ class AssignmentPeriod(Period):
         time_attr = self.extra("car_time")
         for link in network.links():
             link[time_attr] = link.auto_time
+            #prevent errors from non-car links
+            #assignment only uses mode-based subnetworks, 
+            # these should not be used in practice
+            if link.auto_time > 1e3: link.auto_time = 1e3
         self.emme_scenario.publish_network(network)
         log.info("Car assignment performed for scenario {}".format(
             self.emme_scenario.id))
@@ -748,8 +748,17 @@ class AssignmentPeriod(Period):
             specification=spec, scenario=scen)
         log.info("Bike assignment performed for scenario " + str(scen.id))
 
+    def _fill_h_mode(self):
+        #Add h mode everywhere just to be sure
+        network = self.emme_scenario.get_network()
+        main_mode = network.mode(param.main_mode)
+        for link in network.links():
+            link.modes |= {main_mode}
+        self.emme_scenario.publish_network(network)
+
     def _assign_pedestrians(self):
         """Perform pedestrian assignment for one scenario."""
+
         log.info("Pedestrian assignment started...")
         self.emme_project.pedestrian_assignment(
             specification=self.walk_spec, scenario=self.emme_scenario)

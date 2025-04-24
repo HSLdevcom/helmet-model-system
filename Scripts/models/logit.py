@@ -59,6 +59,8 @@ class LogitModel:
             exps = numpy.exp(utility)
             self.mode_exps[mode] = exps
             expsum += exps
+        if expsum.min() == 0:
+            raise ValueError("Exponentiated utility sum must be greater than zero. The impedance might be too high.")
         return expsum
     
     def _calc_dest_util(self, mode, impedance):
