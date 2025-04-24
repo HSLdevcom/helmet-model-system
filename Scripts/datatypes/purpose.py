@@ -115,8 +115,6 @@ class TourPurpose(Purpose):
             self.gen_model = generation.GenerationModel(self, resultdata)
         if self.name == "sop":
             self.model: Union[logit.OriginModel, logit.DestModeModel, logit.ModeDestModel] = logit.OriginModel(zone_data, self, resultdata)
-        elif self.name == "so":
-            self.model = logit.DestModeModel(zone_data, self, resultdata)
         else:
             self.model = logit.ModeDestModel(zone_data, self, resultdata)
             self.accessibility_model = logit.AccessibilityModel(
