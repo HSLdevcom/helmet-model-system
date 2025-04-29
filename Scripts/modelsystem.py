@@ -381,15 +381,16 @@ class ModelSystem:
             
         #Modes for HS15 region (including secondary destination)
         hs15_modes_total = {mode: 0 for mode in self.dm.purpose_dict["hw"].modes}
+        tour_generation = gen_param.tour_generation
         for pur in self.dm.purpose_dict:
             purpose = self.dm.purpose_dict[pur]
             if purpose.name in ["hw","hc","hu","hs","ho","hh","wo","oo"]: 
                 for mode in purpose.modes:
                     demsum = purpose.generated_tours[mode].sum()
                     if purpose.name == "hh":
-                        hs15_modes_total[mode] += 0.5*demsum
+                        hs15_modes_total[mode] += demsum #one trip only
                     else:
-                        hs15_modes_total[mode] += demsum
+                        hs15_modes_total[mode] += demsum * (2+tour_generation["hoo"][purpose.name]) #sec_dest included
         hs15_modes_shares = {m: hs15_modes_total[m]/sum(hs15_modes_total.values()) for m in hs15_modes_total}
         hs15_modes = [m for m in hs15_modes_total]
         self.resultdata.print_line("\nHS15 mode shares (trip-based with secondary destinations)", "result_summary")
