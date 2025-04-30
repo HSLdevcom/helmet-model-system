@@ -389,8 +389,12 @@ class ModelSystem:
                     demsum = purpose.generated_tours[mode].sum()
                     if purpose.name == "hh":
                         hs15_modes_total[mode] += demsum #one trip only
+                    elif mode=="park_and_ride":
+                        #2 trips split by mode
+                        hs15_modes_total["transit"] += 0.5 * demsum * 2
+                        hs15_modes_total["car"] += 0.5 * demsum * 2
                     else:
-                        hs15_modes_total[mode] += demsum * (2+tour_generation["hoo"][purpose.name]) #sec_dest included
+                        hs15_modes_total[mode] += demsum * (2+tour_generation["hoo"][purpose.name][mode]) #sec_dest included
         hs15_modes_shares = {m: hs15_modes_total[m]/sum(hs15_modes_total.values()) for m in hs15_modes_total}
         hs15_modes = [m for m in hs15_modes_total]
         self.resultdata.print_line("\nHS15 mode shares (trip-based with secondary destinations)", "result_summary")
