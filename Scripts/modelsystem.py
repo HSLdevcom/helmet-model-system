@@ -406,8 +406,8 @@ class ModelSystem:
         # Reset time-period specific demand matrices (DTM),
         # and empty result buffer
         gap = self.dtm.init_demand()
-        log.info("Demand model convergence in iteration {} is {:1.5f}".format(
-            iteration, gap["rel_gap"]))
+        log.info("Demand model convergence in iteration {}: Relative gap: {:1.5f}, Max gap: {:1.5f}".format(
+            iteration, gap["rel_gap"], gap['max_gap']))
         self.convergence.append(gap)
         self.resultdata._df_buffer["demand_convergence.txt"] = pandas.DataFrame(self.convergence)
         self.resultdata.flush()
@@ -438,13 +438,11 @@ class ModelSystem:
             pnr_data.append({k: str(v) for k, v in asdict(facility).items()})
 
         pnr_results = pandas.DataFrame(pnr_data)
-        print(pnr_results.head())
         pnr_results['used_capacity'] = pnr_results['used_capacity'].astype(float).round().astype(int)
         pnr_results['shops'] = pnr_results['shops'].astype(float).round().astype(int)
         pnr_results.index = pnr_results['zone_id']
         pnr_results.index.name = None
         pnr_results = pnr_results[['cost','shops','capacity','used_capacity','time']]
-        print(pnr_results.head())
         for col in pnr_results.columns:
             self.resultdata.print_data(pnr_results[col], "pnr_facilities.txt", col)
 
