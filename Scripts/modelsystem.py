@@ -378,6 +378,30 @@ class ModelSystem:
             self.resultdata.print_line(
                 "{}\t{:1.2%}".format(m, hs15_modes_shares[m]),
                 "result_summary")
+            
+        #Modes for HS15 region (including secondary destination)
+        hs15_modes_total = {mode: 0 for mode in self.dm.purpose_dict["hw"].modes}
+        tour_generation = gen_param.tour_generation
+        for pur in self.dm.purpose_dict:
+            purpose = self.dm.purpose_dict[pur]
+            if purpose.name in ["hw","hc","hu","hs","ho","hh","wo","oo"]: 
+                for mode in purpose.modes:
+                    demsum = purpose.generated_tours[mode].sum()
+                    if purpose.name == "hh":
+                        hs15_modes_total[mode] += demsum #one trip only
+                    elif mode=="park_and_ride":
+                        #2 trips split by mode
+                        hs15_modes_total["transit"] += 0.5 * demsum * 2
+                        hs15_modes_total["car"] += 0.5 * demsum * 2
+                    else:
+                        hs15_modes_total[mode] += demsum * (2+tour_generation["hoo"][purpose.name][mode]) #sec_dest included
+        hs15_modes_shares = {m: hs15_modes_total[m]/sum(hs15_modes_total.values()) for m in hs15_modes_total}
+        hs15_modes = [m for m in hs15_modes_total]
+        self.resultdata.print_line("\nHS15 mode shares (trip-based with secondary destinations)", "result_summary")
+        for m in hs15_modes:
+            self.resultdata.print_line(
+                "{}\t{:1.2%}".format(m, hs15_modes_shares[m]),
+                "result_summary")
 
         # Calculate and return traffic impedance
         for ap in self.ass_model.assignment_periods:
