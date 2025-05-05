@@ -27,8 +27,8 @@ class ModelTest(unittest.TestCase):
         print("Testing assignment..")
         log.initialize(Config())
         event_handler = EventHandler()
-        # Load event listeners from 'events/examples' folder
-        event_handler.load_listeners(Path(__file__).parent.parent.parent / 'events' / 'examples')
+        # Load event listeners from 'events/results' folder
+        event_handler.load_listeners(Path(__file__).parent.parent.parent / 'events' / 'results')
 
         results_path = os.path.join(TEST_DATA_PATH, "Results")
         ass_model = MockAssignmentModel(

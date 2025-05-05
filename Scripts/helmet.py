@@ -72,8 +72,8 @@ def main(args):
     
     # Initialize event handler and load event listeners
     event_handler = EventHandler()
-    # Load event listeners from 'events/examples' folder
-    event_handler.load_listeners(Path(__file__).parent / 'events' / 'examples')
+    # Load event listeners from 'events/results' folder
+    event_handler.load_listeners(Path(__file__).parent / 'events' / 'results')
 
     # Setup validation if validation folder exists
     validation = Validation()
