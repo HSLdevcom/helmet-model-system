@@ -5,10 +5,10 @@
 tour_number_scale = 0.777654288490
 # Calibration of tour numbers
 tour_number_increase = {
-    1: 0.943572,
-    2: 1.086695,
-    3: 0.937479,
-    4: 1.024874,
+    1: 0.935105592,
+    2: 1.126074205,
+    3: 0.88624223,
+    4: 1.016234412,
 }
 # Tour combinations (calibrated)
 tour_combinations = {
