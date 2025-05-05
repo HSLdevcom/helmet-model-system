@@ -2,7 +2,7 @@
 ### TOUR GENERATION PARAMETERS ####
 
 # Scale parameter used in upper level of tour pattern model
-tour_number_scale = 0.777654288490
+tour_number_scale = 0.783316645662
 # Calibration of tour numbers
 tour_number_increase = {
     1: 0.935105592,
