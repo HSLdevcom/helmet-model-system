@@ -60,6 +60,7 @@ def validate(network, fares=None):
         modesets.append({network.mode(m) for m in modes})
         intervals += param.official_node_numbers[modes]
     unofficial_nodes = set()
+    disallowed_modes = set()
     nr_links = 0
     nr_zero_gradients = 0
     
@@ -148,7 +149,7 @@ def validate(network, fares=None):
                 unofficial_nodes.add(node.id)
             elif not link.modes <= modesets[i // 2]:
                 # If link has unallowed modes
-                unofficial_nodes.add(node.id)
+                disallowed_modes.add(node.id)
                 
         if link["@pyoratieluokka"]>4:
             msg = "Link {} with modes {} has attribute @pyoratieluokka set to {}. Maximum is 4.".format(link.id,str(link.modes),link["@pyoratieluokka"])
@@ -172,6 +173,11 @@ def validate(network, fares=None):
         log.warn(
             "Node number(s) {} not consistent with official HSL network".format(
                 ', '.join(unofficial_nodes)
+        ))
+    if disallowed_modes:
+        log.warn(
+            "Node number(s) {} has disallowed modes".format(
+                ', '.join(disallowed_modes)
         ))
     hdw_attrs = [f"@hw_{tp}" for tp in param.time_periods]
     for line in network.transit_lines():
