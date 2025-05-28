@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from assignment.assignment_period import AssignmentPeriod
     from assignment.emme_assignment import EmmeAssignmentModel
     from assignment.emme_bindings.mock_project import Network
+    from assignment.emme_assignment import AssignmentModel
 
 
 
@@ -31,7 +32,14 @@ class TransitResults(ModelSystemEventListener):
         super().__init__()
         self.transit_line_congestions = pd.DataFrame()
     
-    def on_model_system_initialized(self, model_system: 'ModelSystem'):
+    def on_model_system_initialized(self,
+                                    model_system: 'ModelSystem',
+                                    zone_data_path: str, 
+                                    base_zone_data_path: str, 
+                                    base_matrices_path: str,
+                                    results_path: str, 
+                                    assignment_model: 'AssignmentModel', 
+                                    name: str):
         # Get result path when model system is initialized
         self.transit_result_path = Path(model_system.resultdata.path) / 'transit_congestion.csv'
         self.transit_line_congestions = pd.DataFrame(columns=['line_id', 'congestion_max_aht', 'congestion_max_pt', 'congestion_max_iht', 'congestion_avg_aht', 'congestion_avg_pt', 'congestion_avg_iht', 'total_capacity_aht', 'total_capacity_pt', 'total_capacity_iht', 'mode']).set_index('line_id')
