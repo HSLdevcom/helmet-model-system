@@ -1,5 +1,5 @@
 from pathlib import Path
-from events.model_system_event_listener import EventHandler
+from events.event_handler import EventHandler
 from utils.validation import Validation
 import webbrowser
 

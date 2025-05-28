@@ -8,7 +8,7 @@ import openmatrix as omx
 
 if TYPE_CHECKING:
     from datatypes.purpose import Purpose
-from events.model_system_event_listener import EventHandler
+from events.event_handler import EventHandler
 import parameters.impedance_transformation as param
 from parameters.assignment import assignment_classes
 try:
