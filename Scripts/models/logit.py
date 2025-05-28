@@ -77,8 +77,9 @@ class LogitModel:
             self._add_impedance(transimp, impedance, b_transf["impedance"])
             impedance["transform"] = transimp
         self._add_log_impedance(utility, impedance, b["log"])
-        self._add_zone_log_size(utility, size, b["log"]["size"])
         self.dest_exps[mode] = numpy.exp(utility)
+        if "size" in b["log"]:
+            self._add_zone_log_size(self.dest_exps[mode], size, b["log"]["size"])
         if mode != "logsum":
             threshold = distance_boundary[mode]
             self.dest_exps[mode][impedance["dist"] > threshold] = 0
@@ -98,7 +99,8 @@ class LogitModel:
         size = numpy.zeros_like(utility)
         self._add_sec_zone_util(size, b["size"])
         self._add_log_impedance(dest_exps, impedance, b["log"])
-        self._add_zone_log_size(utility, size, b["log"]["size"])
+        if "size" in b["log"]:
+            self._add_zone_log_size(dest_exps, size, b["log"]["size"])
         if mode != "logsum":
             threshold = distance_boundary[mode]
             dest_exps[impedance["dist"] > threshold] = 0
@@ -167,6 +169,7 @@ class LogitModel:
             The parameters for different impedance matrices
         """
         for i in b:
+            if i == "size": continue
             try: # If only one parameter
                 utility += b[i] * numpy.log(impedance[i] + 1)
             except ValueError: # Separate sub-region parameters
@@ -422,7 +425,7 @@ class ModeDestModel(LogitModel):
             expsum = self._calc_dest_util(mode, impedance[mode])
             self.dest_expsums[mode] = {}
             self.dest_expsums[mode]["logsum"] = expsum
-            logsum = pandas.Series(numpy.log(expsum), self.purpose.zone_numbers)
+            logsum = pandas.Series(numpy.log(expsum, out=numpy.ones_like(expsum, dtype=numpy.float32)*(-numpy.inf), where=expsum>0), self.purpose.zone_numbers)
             label = self.purpose.name + "_" + mode[0]
             self.zone_data._values[label] = logsum
             self.resultdata.print_data(logsum, "accessibility.txt", label)
@@ -441,7 +444,7 @@ class ModeDestModel(LogitModel):
             mode_prob = numpy.divide(
                 mode_exps, mode_expsum, out=numpy.zeros_like(mode_exps),
                  where=mode_expsum!=0)
-            dest_exps = self._dest_exps[mode].T
+            dest_exps = self.dest_exps[mode].T
             dest_expsum = self.dest_expsums[mode]["logsum"]
             dest_prob = numpy.divide(
                 dest_exps, dest_expsum, out=numpy.zeros_like(dest_exps),
@@ -563,6 +566,7 @@ class AccessibilityModel(ModeDestModel):
             The parameters for different impedance matrices
         """
         for i in b:
+            if i == "size": continue
             try: # If only one parameter
                 utility += b[i] * numpy.log(impedance[i] + 1)
             except ValueError: # Separate params for cap region and surrounding
