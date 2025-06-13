@@ -195,7 +195,7 @@ class EmmeAssignmentModel(AssignmentModel):
                 vdf = 0
             area = belongs_to_area(link.i_node)
             for ass_class in ass_classes:
-                veh_kms = link[self._extra(ass_class)] * link.length
+                veh_kms = link[self._extra(ass_class[:15])] * link.length
                 kms[ass_class] += veh_kms
                 if vdf in vdfs:
                     vdf_kms[ass_class][vdf] += veh_kms
@@ -406,7 +406,7 @@ class EmmeAssignmentModel(AssignmentModel):
         ass_classes.remove("walk")
         for ass_class in ass_classes:
             self.emme_project.create_extra_attribute(
-                "LINK", extra(ass_class), ass_class + " volume",
+                "LINK", extra(ass_class[:15]), ass_class + " volume",
                 overwrite=True, scenario=scenario)
         for attr_s in ("total_cost", "toll_cost", "car_time", "aux_transit"): #attr_s tp make difference for type checker
             self.emme_project.create_extra_attribute(
@@ -414,7 +414,7 @@ class EmmeAssignmentModel(AssignmentModel):
                 overwrite=True, scenario=scenario)
         # Create node and transit segment attributes
         attr = param.segment_results
-        seg_results = {tc: {res: extra(tc[:11]+"_"+attr[res])
+        seg_results = {tc: {res: extra(tc[:10]+"_"+attr[res])
                 for res in param.segment_results}
             for tc in param.transit_classes}
         for tc in param.transit_classes:
@@ -510,7 +510,7 @@ class EmmeAssignmentModel(AssignmentModel):
                 noise_areas[area] += 0.001 * zone_width * link.length
         return noise_areas
 
-    def _link_24h(self, attr: str):
+    def _link_24h(self, orig_attr: str):
         """ 
         Sums and expands link volumes to 24h.
 
@@ -519,6 +519,7 @@ class EmmeAssignmentModel(AssignmentModel):
         attr : str
             Attribute name that is usually key in param.emme_demand_mtx
         """
+        attr = orig_attr[:15]
         networks = {ap.name: ap.emme_scenario.get_network()
             for ap in self.assignment_periods}
         extras = {ap.name: ap.extra(attr) for ap in self.assignment_periods}
@@ -531,7 +532,7 @@ class EmmeAssignmentModel(AssignmentModel):
                 try:
                     tp_link = networks[tp].link(link.i_node, link.j_node)
                     day_attr += (tp_link[extras[tp]]
-                                 * param.volume_factors[attr][tp])
+                                 * param.volume_factors[orig_attr][tp])
                 except (AttributeError, TypeError):
                     pass
             link[extra] = day_attr
@@ -582,7 +583,7 @@ class EmmeAssignmentModel(AssignmentModel):
         attr : str
             Attribute name that is usually in param.segment_results
         """
-        attr = transit_class[:11] + '_' + attr
+        attr = transit_class[:10] + '_' + attr
         networks = {ap.name: ap.emme_scenario.get_network()
             for ap in self.assignment_periods}
         extras = {ap.name: ap.extra(attr) for ap in self.assignment_periods}

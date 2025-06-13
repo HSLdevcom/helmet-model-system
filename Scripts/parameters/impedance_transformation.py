@@ -6,15 +6,36 @@ from typing import Dict, Tuple, Union
 transit_trips_per_month: Dict[str,Dict[str,Union[Tuple[float],Tuple[float,float]]]] = {
     "metropolitan": {
         "work": (60.0, 44.0),
+        "school": (60.0, 44.0),
+        "university": (60.0, 44.0),
+        "shop": (30.0, 30.0),
         "leisure": (30.0, 30.0),
+        "work2": (30.0, 30.0),
+        "wleisure": (30.0, 30.0),
+        "oleisure": (30.0, 30.0),
+        "pwork": (44.0,44.0,),
+        "pleisure": (30.0,30.0),
+        "pwleisure": (30.0,30.0),
+        "eleisure": (30.0,30.0),
     },
     "peripheral": {
-        "work": (44.0,),
-        "leisure": (30.0,),
+        "pwork": (44.0,),
+        "pleisure": (30.0,),
+        "pwleisure": (30.0,),
     },
     "all": {
         "work": (60.0, 44.0),
         "leisure": (30.0, 30.0),
+        "university": (60.0, 44.0),
+        "shop": (30.0, 30.0),
+        "leisure": (30.0, 30.0),
+        "work2": (30.0, 30.0),
+        "wleisure": (30.0, 30.0),
+        "oleisure": (30.0, 30.0),
+        "pwork": (44.0,44.0,),
+        "pleisure": (30.0,30.0),
+        "pwleisure": (30.0,30.0),
+        "eleisure": (30.0,30.0),
     },
 }
 

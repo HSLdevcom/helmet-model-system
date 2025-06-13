@@ -300,7 +300,7 @@ class AssignmentPeriod(Period):
                 for segment in network.transit_segments():
                     if res == "transit_volumes":
                         if segment.link is not None:
-                            segment.link[self.extra(tc)] += segment[segres[tc][res]]
+                            segment.link[self.extra(tc[:15])] += segment[segres[tc][res]]
                     else:
                         segment.i_node[nodeattr] += segment[segres[tc][res]]
         self.emme_scenario.publish_network(network)

@@ -290,6 +290,16 @@ trass_stop = {
 transfer_penalty = {
     "transit_work": 3,
     "transit_leisure": 5,
+    "transit_school": 5,
+    "transit_university": 5,
+    "transit_shop": 5,
+    "transit_work2": 5,
+    "transit_wleisure": 5,
+    "transit_oleisure": 5,
+    "transit_pwork": 5,
+    "transit_pleisure": 5,
+    "transit_pwleisure": 5,
+    "transit_eleisure": 5,
     "transit": 5,
 }
 extra_waiting_time = {
@@ -317,11 +327,61 @@ volume_factors = {
         "iht": 2.636256734240595
     },
     "car_work": {
+        "aht": 2.67458315281383,
+        "pt": 10.839943238646,
+        "iht": 2.64560116934211
+    },
+    "car_leisure": {
+        "aht": 2.64073625950123,
+        "pt": 18.3035280407227,
+        "iht": 2.80250942615274
+    },
+    "car_school": {
+        "aht": 1.64533016340465,
+        "pt": 6.34015563170138,
+        "iht": 2.20314615227449
+    },
+    "car_university": {
+        "aht": 1.45367141545888,
+        "pt": 7.40505257866513,
+        "iht": 4.09609568410981
+    },
+    "car_shop": {
+        "aht": 1.54419819380767,
+        "pt": 10.7615542298555,
+        "iht": 2.33041850831275
+    },
+    "car_wleisure": {
+        "aht": 1.18602841162907,
+        "pt": 6.73035230847856,
+        "iht": 1.69431287212829
+    },
+    "car_oleisure": {
+        "aht": 3.96583522738725,
+        "pt": 8.74488762678259,
+        "iht": 2.5166683105848
+    },
+    "car_work2": {
+        "aht": 1.84016571578473,
+        "pt": 9.53100486307652,
+        "iht": 2.71827672054978
+    },
+    "car_pwork": {
         "aht": 2.1511371941701443,
         "pt": 9.595261522147535,
         "iht": 2.6876828857537505
     },
-    "car_leisure": {
+    "car_pleisure": {
+        "aht": 1.822633510494245,
+        "pt": 12.416216799069286,
+        "iht": 2.567335795915922
+    },
+    "car_pwleisure": {
+        "aht": 1.822633510494245,
+        "pt": 12.416216799069286,
+        "iht": 2.567335795915922
+    },
+    "car_eleisure": {
         "aht": 1.822633510494245,
         "pt": 12.416216799069286,
         "iht": 2.567335795915922
@@ -332,14 +392,64 @@ volume_factors = {
         "iht": 2.466313449878458
     },
     "transit_work": {
-        "aht": 1.7648082264481162,
-        "pt": 9.458785710446705,
-        "iht": 2.358668559084971
+        "aht": 2.30651531889989,
+        "pt": 11.2884504237395,
+        "iht": 2.19179973195404
     },
     "transit_leisure": {
-        "aht": 1.6101278413419995,
-        "pt": 8.855898570776446,
-        "iht": 2.7822971006521318
+        "aht": 3.15317283605665,
+        "pt": 15.4660748124566,
+        "iht": 2.40082962331712
+    },
+    "transit_school": {
+        "aht": 1.34831676843537,
+        "pt": 6.07439841293742,
+        "iht": 2.52256473718891
+    },
+    "transit_university": {
+        "aht": 1.48026536383545,
+        "pt": 7.37028715172814,
+        "iht": 6.41215577759997
+    },
+    "transit_shop": {
+        "aht": 1.73907057837404,
+        "pt": 7.63825879917247,
+        "iht": 3.83136360735611
+    },
+    "transit_wleisure": {
+        "aht": 1.73000582774259,
+        "pt": 6,
+        "iht": 2.01953559805945
+    },
+    "transit_oleisure": {
+        "aht": 2.30651531889989,
+        "pt": 11.2884504237395,
+        "iht": 2.19179973195404
+    },
+    "transit_work2": {
+        "aht": 2.30651531889989,
+        "pt": 11.2884504237395,
+        "iht": 2.19179973195404
+    },
+    "transit_pwork": {
+        "aht": 2.30651531889989,
+        "pt": 11.2884504237395,
+        "iht": 2.19179973195404
+    },
+    "transit_pleisure": {
+        "aht": 3.15317283605665,
+        "pt": 15.4660748124566,
+        "iht": 2.40082962331712
+    },
+    "transit_pwleisure": {
+        "aht": 3.15317283605665,
+        "pt": 15.4660748124566,
+        "iht": 2.40082962331712
+    },
+    "transit_eleisure": {
+        "aht": 3.15317283605665,
+        "pt": 15.4660748124566,
+        "iht": 2.40082962331712
     },
     "bike": {
         "aht": 1.592424507799951,
@@ -347,14 +457,64 @@ volume_factors = {
         "iht": 2.430075096866623
     },
     "bike_work": {
-        "aht": 1.7792746478588168,
-        "pt": 9.577998573953217,
-        "iht": 2.0977940770728236
+        "aht": 2.17212694594877,
+        "pt": 10.2564215956931,
+        "iht": 1.88359046419511
     },
     "bike_leisure": {
-        "aht": 1.4153296994517823,
-        "pt": 9.921895075001368,
-        "iht": 3.003522618985676
+        "aht": 3.06092112301393,
+        "pt": 20.7267335196154,
+        "iht": 3.67747316681455
+    },
+    "bike_school": {
+        "aht": 1.35878897577707,
+        "pt": 6.01856448344864,
+        "iht": 2.03462070620008
+    },
+    "bike_university": {
+        "aht": 1,
+        "pt": 6,
+        "iht": 1
+    },
+    "bike_shop": {
+        "aht": 1.48615699154889,
+        "pt": 8.94746047748725,
+        "iht": 3.06741102112862
+    },
+    "bike_wleisure": {
+        "aht": 0,
+        "pt": 6.9,
+        "iht": 0
+    },
+    "bike_oleisure": {
+        "aht": 0,
+        "pt": 6.336,
+        "iht": 3.15717151484847
+    },
+    "bike_work2": {
+        "aht": 2.17212694594877,
+        "pt": 10.2564215956931,
+        "iht": 1.88359046419511
+    },
+    "bike_pwork": {
+        "aht": 2.17212694594877,
+        "pt": 10.2564215956931,
+        "iht": 1.88359046419511
+    },
+    "bike_pleisure": {
+        "aht": 3.06092112301393,
+        "pt": 20.7267335196154,
+        "iht": 3.67747316681455
+    },
+    "bike_pwleisure": {
+        "aht": 3.06092112301393,
+        "pt": 20.7267335196154,
+        "iht": 3.67747316681455
+    },
+    "bike_eleisure": {
+        "aht": 3.06092112301393,
+        "pt": 20.7267335196154,
+        "iht": 3.67747316681455
     },
     "trailer_truck": {
         "aht": 3.3333333333333335,
@@ -399,10 +559,40 @@ time_periods: List[str] = ["aht", "pt", "iht"]
 transport_classes = (
     "car_work",
     "car_leisure",
+    "car_school",
+    "car_university",
+    "car_shop",
+    "car_work2",
+    "car_wleisure",
+    "car_oleisure",
+    "car_pwork",
+    "car_pleisure",
+    "car_pwleisure",
+    "car_eleisure",
     "transit_work",
     "transit_leisure",
+    "transit_school",
+    "transit_university",
+    "transit_shop",
+    "transit_work2",
+    "transit_wleisure",
+    "transit_oleisure",
+    "transit_pwork",
+    "transit_pleisure",
+    "transit_pwleisure",
+    "transit_eleisure",
     "bike_work",
     "bike_leisure",
+    "bike_school",
+    "bike_university",
+    "bike_shop",
+    "bike_work2",
+    "bike_wleisure",
+    "bike_oleisure",
+    "bike_pwork",
+    "bike_pleisure",
+    "bike_pwleisure",
+    "bike_eleisure",
     "trailer_truck",
     "truck",
     "van",
@@ -410,6 +600,16 @@ transport_classes = (
 transit_classes = (
     "transit_work",
     "transit_leisure",
+    "transit_school",
+    "transit_university",
+    "transit_shop",
+    "transit_work2",
+    "transit_wleisure",
+    "transit_oleisure",
+    "transit_pwork",
+    "transit_pleisure",
+    "transit_pwleisure",
+    "transit_eleisure",
 )
 freight_classes = (
     "van",
@@ -418,26 +618,36 @@ freight_classes = (
 )
 assignment_classes = {
     "hw": "work",
-    "hc": "work",
-    "hu": "work",
-    "hs": "leisure",
+    "hc": "school",
+    "hu": "university",
+    "hs": "shop",
     "ho": "leisure",
     "hh": "leisure",
-    "hoo": "leisure",
-    "wo": "leisure",
-    "oo": "leisure",
+    "hoo": "work2",
+    "wo": "wleisure",
+    "oo": "oleisure",
     "wh": "work",
-    "hwp": "work",
-    "hop": "leisure",
-    "sop": "leisure",
-    "oop": "leisure",
-    "external": "leisure",
+    "hwp": "pwork",
+    "hop": "pleisure",
+    "sop": "pwleisure",
+    "oop": "pwleisure",
+    "external": "eleisure",
 }
 main_mode = 'h'
 bike_mode = 'f'
 assignment_modes = {
     "car_work": 'c',
     "car_leisure": 'c',
+    "car_school": 'c',
+    "car_university": 'c',
+    "car_shop": 'c',
+    "car_work2": 'c',
+    "car_wleisure": 'c',
+    "car_oleisure": 'c',
+    "car_pwork": 'c',
+    "car_pleisure": 'c',
+    "car_pwleisure": 'c',
+    "car_eleisure": 'c',
     "trailer_truck": 'y',
     "truck": 'k',
     "van": 'v',
@@ -445,6 +655,16 @@ assignment_modes = {
 vot_classes = {
     "car_work": "work",
     "car_leisure": "leisure",
+    "car_school": 'work',
+    "car_university": 'work',
+    "car_shop": 'leisure',
+    "car_work2": 'work',
+    "car_wleisure": 'leisure',
+    "car_oleisure": 'leisure',
+    "car_pwork": 'work',
+    "car_pleisure": 'leisure',
+    "car_pwleisure": 'leisure',
+    "car_eleisure": 'leisure',
     "trailer_truck": "business",
     "truck": "business",
     "van": "business",
@@ -488,8 +708,28 @@ uncongested_transit_time = "base_timtr"
 emme_matrices = {
     "car_work": ("demand", "time", "dist", "cost", "gen_cost"),
     "car_leisure": ("demand", "time", "dist", "cost", "gen_cost"),
+    "car_school": ("demand", "time", "dist", "cost", "gen_cost"),
+    "car_university": ("demand", "time", "dist", "cost", "gen_cost"),
+    "car_shop": ("demand", "time", "dist", "cost", "gen_cost"),
+    "car_work2": ("demand", "time", "dist", "cost", "gen_cost"),
+    "car_wleisure": ("demand", "time", "dist", "cost", "gen_cost"),
+    "car_oleisure": ("demand", "time", "dist", "cost", "gen_cost"),
+    "car_pwork": ("demand", "time", "dist", "cost", "gen_cost"),
+    "car_pleisure": ("demand", "time", "dist", "cost", "gen_cost"),
+    "car_pwleisure": ("demand", "time", "dist", "cost", "gen_cost"),
+    "car_eleisure": ("demand", "time", "dist", "cost", "gen_cost"),
     "transit_work": ("demand", "time", "dist", "cost", "congest_time"),
     "transit_leisure": ("demand", "time", "dist", "cost", "congest_time"),
+    "transit_school": ("demand", "time", "dist", "cost", "congest_time"),
+    "transit_university": ("demand", "time", "dist", "cost", "congest_time"),
+    "transit_shop": ("demand", "time", "dist", "cost", "congest_time"),
+    "transit_work2": ("demand", "time", "dist", "cost", "congest_time"),
+    "transit_wleisure": ("demand", "time", "dist", "cost", "congest_time"),
+    "transit_oleisure": ("demand", "time", "dist", "cost", "congest_time"),
+    "transit_pwork": ("demand", "time", "dist", "cost", "congest_time"),
+    "transit_pleisure": ("demand", "time", "dist", "cost", "congest_time"),
+    "transit_pwleisure": ("demand", "time", "dist", "cost", "congest_time"),
+    "transit_eleisure": ("demand", "time", "dist", "cost", "congest_time"),
     "bike": ("demand", "time", "dist"),
     "walk": ("time", "dist"),
     "trailer_truck": ("demand", "time", "dist", "cost", "gen_cost"),
