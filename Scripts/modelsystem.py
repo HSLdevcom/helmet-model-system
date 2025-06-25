@@ -91,7 +91,9 @@ class ModelSystem:
             self.basematrices, self.zdata_forecast, self.zone_numbers)
         self.dtm = dt.DepartureTimeModel(
             self.ass_model.nr_zones, self.ass_model.time_periods)
-
+        #departure time model for the full time windows (ah,ih,päivä)
+        self.dtm_3h = dt.DepartureTimeModel(
+            self.ass_model.nr_zones, ["ah","p","ih"])
         #init Impedance transformers
         self.imptrans = ImpedanceTransformer(self.event_handler,
                                              extra_transformers=[],
@@ -169,6 +171,8 @@ class ModelSystem:
                     for mode in purpose.model.dest_choice_param:
                         self._distribute_sec_dests(
                             purpose, mode, purpose_impedance)
+                        self._distribute_sec_dests_3h(
+                            purpose, mode, purpose_impedance)
                 else:
                     self._distribute_sec_dests(
                         purpose, "car", purpose_impedance)
@@ -192,6 +196,7 @@ class ModelSystem:
                     for mode in demand:
                         self.dtm.add_demand(demand[mode])
                         self.travel_modes[mode] = True
+                        self.dtm_3h.add_demand(demand[mode])
         log.info("Demand calculation completed")            
 
     # possibly merge with init
@@ -246,7 +251,7 @@ class ModelSystem:
         # Perform traffic assignment and get result impedance, 
         # for each time period
         demand = self.resultmatrices if is_end_assignment else self.basematrices
-        for ap in self.ass_model.assignment_periods:
+        for ap,ap3h in zip(self.ass_model.assignment_periods,self.ass_model.assignment_periods_3h):
             tp = ap.name
             log.info("Assigning period {}...".format(tp))
             self.dtm.demand = cast(Dict[str, Any], self.dtm.demand) #type check hint
@@ -254,17 +259,18 @@ class ModelSystem:
                 for ass_class in param.transport_classes:
                     self.dtm.demand[tp][ass_class] = mtx[ass_class]
             impedance[tp] = ap.assign(
-                self.dtm.demand[tp],
-                iteration=("last" if is_end_assignment else 0))
+                {"tp":self.dtm.demand[tp],"tp3h":self.dtm_3h.demand[tp[:-1]]},
+                ap3h, iteration=("last" if is_end_assignment else 0))
             if tp == time_periods[0]:
                 self._update_ratios(impedance[tp], tp)
             if is_end_assignment:
-                self._save_to_omx(impedance[tp], tp)
+                self._save_to_omx(impedance[tp], tp)        
         if is_end_assignment:
             self.ass_model.aggregate_results(self.resultdata)
             self._calculate_noise_areas()
             self.resultdata.flush()
         self.dtm.init_demand()
+        self.dtm_3h.init_demand()
         self.event_handler.on_base_demand_assigned(impedance)
         return impedance
 
@@ -307,7 +313,9 @@ class ModelSystem:
         # Add truck and trailer truck demand, to time-period specific
         # matrices (DTM), used in traffic assignment
         self.dtm.add_demand(self.trucks)
+        self.dtm_3h.add_demand(self.trucks)
         self.dtm.add_demand(self.trailer_trucks)
+        self.dtm_3h.add_demand(self.trailer_trucks)
 
         # Update car density
         prediction = self.cdm.predict()
@@ -335,6 +343,7 @@ class ModelSystem:
             ext_demand = self.em.calc_external(mode, int_demand)
             self.event_handler.on_external_demand_calculated(ext_demand)
             self.dtm.add_demand(ext_demand)
+            self.dtm_3h.add_demand(ext_demand)
         
         # Calculate tour sums and mode shares
         tour_sum = {mode: self._sum_trips_per_zone(mode, include_dests=False)
@@ -411,10 +420,10 @@ class ModelSystem:
                 "result_summary")
 
         # Calculate and return traffic impedance
-        for ap in self.ass_model.assignment_periods:
+        for ap,ap3h in zip(self.ass_model.assignment_periods,self.ass_model.assignment_periods_3h):
             tp = ap.name
             log.info("Assigning period " + tp)
-            impedance[tp] = ap.assign(self.dtm.demand[tp], iteration)
+            impedance[tp] = ap.assign({"tp":self.dtm.demand[tp],"tp3h":self.dtm_3h.demand[tp[:-1]]}, ap3h, iteration)
             self.event_handler.on_time_period_assigned(iteration, ap, impedance[tp])
             if tp == "aht":
                 self._update_ratios(impedance[tp], tp)
@@ -536,7 +545,7 @@ class ModelSystem:
                 if include_dests:
                     int_demand += purpose.attracted_tours[mode]
         return int_demand
-
+    
     def _distribute_sec_dests(self, purpose, mode, impedance):
         threads = []
         demand = []
@@ -565,6 +574,36 @@ class ModelSystem:
             for tp in dtm.demand:
                 for ass_class in dtm.demand[tp]:
                     self.dtm.demand[tp][ass_class] += dtm.demand[tp][ass_class]
+        purpose.print_data()
+
+    def _distribute_sec_dests_3h(self, purpose, mode, impedance):
+        threads = []
+        demand = []
+        nr_threads = param.performance_settings["number_of_processors"]
+        if nr_threads == "max":
+            nr_threads = multiprocessing.cpu_count()
+        elif nr_threads <= 0:
+            nr_threads = 1
+        bounds = next(iter(purpose.sources)).bounds
+        for i in range(nr_threads):
+            # Take a range of origins, for which this thread
+            # will calculate secondary destinations
+            origs = range(i, bounds.stop - bounds.start, nr_threads)
+            # Results will be saved in a temp dtm, to avoid memory clashes
+            dtm_3h = dt.DepartureTimeModel(
+                self.ass_model.nr_zones, ["ah","p","ih"])
+            demand.append(dtm_3h)
+            thread = threading.Thread(
+                target=self._distribute_tours,
+                args=(dtm_3h, purpose, mode, impedance, origs))
+            threads.append(thread)
+            thread.start()
+        for thread in threads:
+            thread.join()
+        for dtm_3h in demand:
+            for tp in dtm_3h.demand:
+                for ass_class in dtm_3h.demand[tp]:
+                    self.dtm_3h.demand[tp][ass_class] += dtm_3h.demand[tp][ass_class]
         purpose.print_data()
 
     def _distribute_tours(self, container, purpose, mode, impedance, origs):
@@ -680,6 +719,7 @@ class AgentModelSystem(ModelSystem):
                         for mode in demand:
                             self.travel_modes[mode] = True
                             self.dtm.add_demand(demand[mode])
+                            self.dtm_3h.add_demand(demand[mode])
                 else:
                     for mode in purpose.modes:
                         self.travel_modes[mode] = True
@@ -733,6 +773,7 @@ class AgentModelSystem(ModelSystem):
         for person in self.dm.population:
             for tour in person.tours:
                 self.dtm.add_demand(tour)
+                self.dtm_3h.add_demand(tour)
         if is_last_iteration:
             random.seed(zone_param.population_draw)
             self.dm.predict_income()

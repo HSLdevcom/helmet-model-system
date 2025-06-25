@@ -1,7 +1,9 @@
 from __future__ import annotations
 from typing import Any, Dict, Union
+from assignment.assignment_period import AssignmentPeriod3h
 import parameters.assignment as param
 from assignment.datatypes.journey_level import JourneyLevel
+import utils.log as log
 
 
 class TransitSpecification:
@@ -32,9 +34,12 @@ class TransitSpecification:
     """
     def __init__(self, 
                  segment_results: Dict[str,str], 
-                 headway_attribute: str,
+                 extra: callable,
                  emme_matrices: Dict[str, Union[str, Dict[str, str]]], 
+                 matrix_3h: str,
+                 ap3h: AssignmentPeriod3h,
                  count_zone_boardings: bool = False):
+        headway_attribute = extra("hw")
         no_penalty = dict.fromkeys(["at_nodes", "on_lines", "on_segments"])
         no_penalty["global"] = {
             "penalty": 0, 
@@ -118,6 +123,13 @@ class TransitSpecification:
                 "total_alightings": None
             }
         }
+
+        self.demand3h_spec = {"aggregated_from_segments": {"segment_selection": {"transit_lines": "all", "links": "all"}}, 
+                              "analyzed_demand": matrix_3h,
+                              "on_segments": ap3h._segment_results,
+                              "on_links": {"aux_transit_volumes":extra("aux_transit")[:-1]},
+                              "type": "EXTENDED_TRANSIT_NETWORK_RESULTS"} 
+        
         if count_zone_boardings:
             jlevel1 = JourneyLevel(
                 headway_attribute, boarded=False, count_zone_boardings=True)

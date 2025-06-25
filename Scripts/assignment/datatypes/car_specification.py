@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Any, Dict, List, Union
+from assignment.datatypes.path_analysis import PathAnalysis3h
 import parameters.assignment as param
 from assignment.datatypes.car import Car
 from collections.abc import Callable
@@ -27,6 +28,11 @@ class CarSpecification:
                  emme_matrices: Dict[str, Union[str, Dict[str, str]]]):
         self._modes = {}
         self._freight_modes = list(param.freight_dist_unit_cost)
+        matrices = {"car_work":"mf101",
+                    "car_leisure":"mf102",
+                    "trailer_truck":"mf107",
+                    "truck":"mf108",
+                    "van":"mf109"}
         for mode in param.assignment_modes:
             if mode in self._freight_modes:
                 kwargs = {
@@ -36,6 +42,7 @@ class CarSpecification:
             else:
                 kwargs = {"link_costs": extra("total_cost")}
             self._modes[mode] = Car(mode, extra, emme_matrices[mode], **kwargs)
+            self._modes[mode].spec["path_analyses"].append(PathAnalysis3h(extra(mode),extra(mode)[:-1],matrices[mode]).spec)
         self._spec: Dict[str, Any] = {
             "type": "SOLA_TRAFFIC_ASSIGNMENT",
             "background_traffic": {

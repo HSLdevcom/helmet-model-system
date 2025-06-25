@@ -53,7 +53,7 @@ class EmmeProject:
         self.car_assignment = self.modeller.tool(
             "inro.emme.traffic_assignment.sola_traffic_assignment")
         self.bike_assignment = self.modeller.tool(
-            "inro.emme.traffic_assignment.standard_traffic_assignment")
+            "inro.emme.traffic_assignment.sola_traffic_assignment")
         self.pedestrian_assignment = self.modeller.tool(
             "inro.emme.transit_assignment.standard_transit_assignment")
         self.transit_assignment = self.modeller.tool(

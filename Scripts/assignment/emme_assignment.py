@@ -9,7 +9,7 @@ from utils.zone_interval import belongs_to_area, faulty_kela_code_nodes
 import parameters.assignment as param
 import parameters.zone as zone_param
 from assignment.abstract_assignment import AssignmentModel
-from assignment.assignment_period import AssignmentPeriod
+from assignment.assignment_period import AssignmentPeriod, AssignmentPeriod3h
 from events.event_handler import EventHandler
 if TYPE_CHECKING:
     from assignment.emme_bindings.emme_project import EmmeProject
@@ -97,15 +97,22 @@ class EmmeAssignmentModel(AssignmentModel):
                 scen_id = self.mod_scenario.number
             if i == 0 or self.save_matrices:
                 emme_matrices = self._create_matrices(
-                    tp, i*hundred + self.first_matrix_id, id_ten)
+                    tp, i*2*hundred + self.first_matrix_id, id_ten)
+                emme_matrices_3h = self._create_matrices(
+                    tp, (i*2+1)*hundred + self.first_matrix_id, id_ten)
             self.assignment_periods.append(AssignmentPeriod(
                 tp, scen_id, self.emme_project, emme_matrices,
                 self._event_handler, separate_emme_scenarios=self.separate_emme_scenarios))
+        self.assignment_periods_3h = []
+        for i, tp in enumerate(self.time_periods):
+            tp3h = AssignmentPeriod3h(tp[:-1], scen_id, self.emme_project, emme_matrices_3h)
+            self.assignment_periods_3h.append(tp3h)
         self._create_attributes(self.day_scenario, self._extra)
-        for ap in self.assignment_periods:
+        for ap, ap3h in zip(self.assignment_periods,self.assignment_periods_3h):
             if car_dist_unit_cost is not None:
                 ap.dist_unit_cost = car_dist_unit_cost
-            ap.prepare(self._create_attributes(ap.emme_scenario, ap.extra))
+            ap.prepare(self._create_attributes(ap.emme_scenario, ap.extra), ap3h)
+            ap3h.prepare(self._create_attributes(ap.emme_scenario, ap3h.extra, is_3h_period=True))
         for idx in param.volume_delay_funcs:
             try:
                 self.emme_project.modeller.emmebank.delete_function(idx)
@@ -120,7 +127,7 @@ class EmmeAssignmentModel(AssignmentModel):
                     demand: Dict[str,List['numpy.ndarray']]):
         """??? types"""
         ap0 = self.assignment_periods[0]
-        ap0.assign(demand, iteration="init")
+        ap0.assign({"tp":demand}, None, iteration="init")
         if self.save_matrices:
             for ap in self.assignment_periods[1:]:
                 self._copy_matrix("time", "bike", ap0, ap)
@@ -155,8 +162,8 @@ class EmmeAssignmentModel(AssignmentModel):
             Result data container to print to
         """
         # Aggregate results to 24h
-        for ap in self.assignment_periods:
-            ap.transit_results_links_nodes()
+        for ap, ap3h in zip(self.assignment_periods,self.assignment_periods_3h):
+            ap.transit_results_links_nodes(ap3h)
         for transit_class in param.transit_classes:
             for res in param.segment_results:
                 self._transit_segment_24h(
@@ -390,7 +397,8 @@ class EmmeAssignmentModel(AssignmentModel):
 
     def _create_attributes(self, 
                            scenario: Any, 
-                           extra: Callable[[str], str]) -> Dict[str,Dict[str,str]]:
+                           extra: Callable[[str], str],
+                           is_3h_period=False) -> Dict[str,Dict[str,str]]:
         """Create extra attributes needed in assignment.
 
         Parameters
@@ -408,10 +416,14 @@ class EmmeAssignmentModel(AssignmentModel):
             self.emme_project.create_extra_attribute(
                 "LINK", extra(ass_class), ass_class + " volume",
                 overwrite=True, scenario=scenario)
-        for attr_s in ("total_cost", "toll_cost", "car_time", "aux_transit"): #attr_s tp make difference for type checker
-            self.emme_project.create_extra_attribute(
-                "LINK", extra(attr_s), attr_s,
-                overwrite=True, scenario=scenario)
+        if not is_3h_period:
+            for attr_s in ("total_cost", "toll_cost", "car_time"): #attr_s tp make difference for type checker
+                self.emme_project.create_extra_attribute(
+                    "LINK", extra(attr_s), attr_s,
+                    overwrite=True, scenario=scenario)
+        self.emme_project.create_extra_attribute(
+                    "LINK", extra("aux_transit"), "aux_transit",
+                    overwrite=True, scenario=scenario)
         # Create node and transit segment attributes
         attr = param.segment_results
         seg_results = {tc: {res: extra(tc[:11]+"_"+attr[res])
@@ -519,9 +531,9 @@ class EmmeAssignmentModel(AssignmentModel):
         attr : str
             Attribute name that is usually key in param.emme_demand_mtx
         """
-        networks = {ap.name: ap.emme_scenario.get_network()
-            for ap in self.assignment_periods}
-        extras = {ap.name: ap.extra(attr) for ap in self.assignment_periods}
+        networks = {ap3h.name: ap.emme_scenario.get_network()
+            for ap3h,ap in zip(self.assignment_periods_3h,self.assignment_periods)}
+        extras = {ap3h.name: ap3h.extra(attr) for ap3h in self.assignment_periods_3h}
         network = self.day_scenario.get_network()
         extra = self._extra(attr)
         # save link volumes to result network
@@ -530,8 +542,7 @@ class EmmeAssignmentModel(AssignmentModel):
             for tp in networks:
                 try:
                     tp_link = networks[tp].link(link.i_node, link.j_node)
-                    day_attr += (tp_link[extras[tp]]
-                                 * param.volume_factors[attr][tp])
+                    day_attr += tp_link[extras[tp]]
                 except (AttributeError, TypeError):
                     pass
             link[extra] = day_attr
@@ -551,9 +562,9 @@ class EmmeAssignmentModel(AssignmentModel):
             Attribute name that is usually in param.segment_results
         """
         attr = transit_class[:10] + 'n_' + attr
-        networks = {ap.name: ap.emme_scenario.get_network()
-            for ap in self.assignment_periods}
-        extras = {ap.name: ap.extra(attr) for ap in self.assignment_periods}
+        networks = {ap3h.name: ap.emme_scenario.get_network()
+            for ap3h,ap in zip(self.assignment_periods_3h,self.assignment_periods)}
+        extras = {ap3h.name: ap3h.extra(attr) for ap3h in self.assignment_periods_3h}
         network = self.day_scenario.get_network()
         extra = self._extra(attr)
         # save node volumes to result network
@@ -562,8 +573,7 @@ class EmmeAssignmentModel(AssignmentModel):
             for tp in networks:
                 try:
                     tp_node = networks[tp].node(node.id)
-                    day_attr += (tp_node[extras[tp]]
-                                 * param.volume_factors[transit_class][tp])
+                    day_attr += tp_node[extras[tp]]
                 except (AttributeError, TypeError):
                     pass
             node[extra] = day_attr
@@ -583,9 +593,9 @@ class EmmeAssignmentModel(AssignmentModel):
             Attribute name that is usually in param.segment_results
         """
         attr = transit_class[:11] + '_' + attr
-        networks = {ap.name: ap.emme_scenario.get_network()
-            for ap in self.assignment_periods}
-        extras = {ap.name: ap.extra(attr) for ap in self.assignment_periods}
+        networks = {ap3h.name: ap.emme_scenario.get_network()
+            for ap3h,ap in zip(self.assignment_periods_3h,self.assignment_periods)}
+        extras = {ap3h.name: ap3h.extra(attr) for ap3h in self.assignment_periods_3h}
         network = self.day_scenario.get_network()
         extra = self._extra(attr)
         # save segment volumes to result network
@@ -595,8 +605,7 @@ class EmmeAssignmentModel(AssignmentModel):
                 try:
                     tp_segment = networks[tp].transit_line(
                         segment.line.id).segment(segment.number)
-                    day_attr += (tp_segment[extras[tp]]
-                                 * param.volume_factors[transit_class][tp])
+                    day_attr += tp_segment[extras[tp]]
                 except (AttributeError, TypeError):
                     pass
             segment[extra] = day_attr

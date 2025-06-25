@@ -192,21 +192,9 @@ def parking_time(zone_data: ZoneData) -> pd.Series:
 
 # Default distance unit time for trucks and trailer trucks [min/km]
 freight_dist_unit_time = 0.2
-# Boarding penalties for different transit modes
-boarding_penalty = {
-    'b': 3, # Bus
-    'g': 3, # Trunk bus
-    'd': 5, # Long-distance bus
-    'e': 5, # Express bus
-    't': 0, # Tram
-    'p': 0, # Light rail
-    'm': 0, # Metro
-    'w': 0, # Ferry
-    'r': 2, # Commuter train
-    'j': 2, # Long-distance train
-}
+
 # Boarding penalties for end assignment
-last_boarding_penalty = {
+boarding_penalty = {
     'b': 5, # Bus
     'g': 2, # Trunk bus
     'd': 5, # Long-distance bus
@@ -248,14 +236,14 @@ headway_sd_func = {
 }
 # Stopping criteria for last traffic assignment
 stopping_criteria_fine = {
-    "max_iterations": 400,
+    "max_iterations": 4,
     "relative_gap": 0.00001,
     "best_relative_gap": 0.001,
     "normalized_gap": 0.0005,
 }
 # Stopping criteria for traffic assignment in loop
 stopping_criteria_coarse = {
-    "max_iterations": 200,
+    "max_iterations": 2,
     "relative_gap": 0.0001,
     "best_relative_gap": 0.01,
     "normalized_gap": 0.005,
@@ -282,7 +270,7 @@ always_congested = True
 
 # Stopping criteria for congested transit assignment
 trass_stop = {
-    "max_iterations": 50,
+    "max_iterations": 5,
     "normalized_gap": 0.01,
     "relative_gap": 0.001
 }

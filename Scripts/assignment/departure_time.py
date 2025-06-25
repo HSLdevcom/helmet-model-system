@@ -87,10 +87,16 @@ class DepartureTimeModel:
                 position2 = cast(Tuple[int,int], demand.position) #type checker hint
                 share: Dict[str, Any] = param.demand_share[demand.purpose.name][demand.mode]
                 for time_period in self.time_periods:
-                    self._add_2d_demand(
-                        share[time_period], ass_class, time_period,
-                        demand.matrix, position2)
+                    if time_period not in share:  #TODO: Remove
+                        self._add_2d_demand(
+                            share[time_period+"t"], ass_class, time_period,
+                            demand.matrix, position2)
+                    else:
+                        self._add_2d_demand(
+                            share[time_period], ass_class, time_period,
+                            demand.matrix, position2)
             elif len(demand.position) == 3:
+                share = param.demand_share[demand.purpose.name][demand.mode]
                 for time_period in self.time_periods:
                     self._add_3d_demand(demand, ass_class, time_period)
             else:
@@ -131,7 +137,10 @@ class DepartureTimeModel:
         o = demand_position[0]
         d1 = demand_position[1]
         d2 = demand_position[2]
-        share = param.demand_share[demand.purpose.name][demand.mode][tp]
+        if time_period in param.demand_share[demand.purpose.name][demand.mode]:  #TODO: Remove
+            share = param.demand_share[demand.purpose.name][demand.mode][tp]
+        else:
+            share = param.demand_share[demand.purpose.name][demand.mode][tp[:-1]]
         if demand.dest is not None:
             # For agent simulation
             self._add_2d_demand(share, ass_class, tp, mtx, (o, d1))
