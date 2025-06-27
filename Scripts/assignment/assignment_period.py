@@ -3,7 +3,7 @@ import numpy # type: ignore
 import pandas
 
 from typing import TYPE_CHECKING, Any, Dict, Optional, Union
-from events.model_system_event_listener import EventHandler
+from events.event_handler import EventHandler
 import utils.log as log
 import parameters.assignment as param
 import parameters.zone as zone_param

@@ -20,6 +20,7 @@ except ImportError:
 # Utility functions that modify a network. Functions take a network as input and return the modified network
 
 def calculate_gradients(network):
+    printed_times = 0
     for link in network.links():
         if link['@kaltevuus'] == 0 and not link.i_node.is_centroid and not link.j_node.is_centroid:
             try:
@@ -29,7 +30,9 @@ def calculate_gradients(network):
                     if gradient > 0:
                         log.debug(f"Calculated @kaltevuus for link {link.id}: {gradient}")
             except KeyError:
-                log.info("@korkeus extra_attribute has not been defined. Skipping adjustment of @kaltevuus values")
+                if printed_times<5:
+                    log.info("@korkeus extra_attribute has not been defined. Skipping adjustment of @kaltevuus values")
+                printed_times += 1
     return network
 
 def add_bus_stops(network):

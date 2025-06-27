@@ -10,7 +10,7 @@ import parameters.assignment as param
 import parameters.zone as zone_param
 from assignment.abstract_assignment import AssignmentModel
 from assignment.assignment_period import AssignmentPeriod
-from events.model_system_event_listener import EventHandler
+from events.event_handler import EventHandler
 if TYPE_CHECKING:
     from assignment.emme_bindings.emme_project import EmmeProject
     from assignment.datatypes.transit_fare import TransitFareZoneSpecification

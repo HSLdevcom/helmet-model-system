@@ -25,7 +25,14 @@ class DemandAnalysis(ModelSystemEventListener):
         super().__init__()
         self.mode_demands = []
     
-    def on_model_system_initialized(self, model_system: 'ModelSystem'):
+    def on_model_system_initialized(self,
+                                    model_system: 'ModelSystem',
+                                    zone_data_path: str, 
+                                    base_zone_data_path: str, 
+                                    base_matrices_path: str,
+                                    results_path: str, 
+                                    assignment_model: 'AssignmentModel', 
+                                    name: str) -> None:
         # Get result path when model system is initialized
         self.result_path = Path(model_system.resultdata.path) / 'mode_analysis_results.csv'
     

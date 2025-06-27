@@ -238,13 +238,25 @@ class ZoneData:
         else:  # Return matrix (purpose zones -> all zones)
             return val[bounds, :]
 
+    def get_zone_data(self) -> pandas.DataFrame:
+        """Get all zone data as Pandas DataFrame
+
+        Returns
+        -------
+        pandas DataFrame
+            All zone data
+        """
+        df = pandas.DataFrame({k:v for k,v in self._values.items() if isinstance(v, pandas.Series)})
+        df.index.name = "zone_id"
+        return df
+
     def export_data(self, export_file: Path):
         """Export Pandas Series zone data into a single CSV file
 
         Args:
             export_file (Path): Path to the destination file
         """
-        df = pandas.DataFrame({k:v for k,v in self._values.items() if isinstance(v, pandas.Series)})
+        df = self.get_zone_data()
         df.to_csv(export_file)
 
 

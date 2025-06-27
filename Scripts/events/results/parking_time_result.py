@@ -8,6 +8,7 @@ from events.model_system_event_listener import ModelSystemEventListener
 if TYPE_CHECKING:
     from modelsystem import ModelSystem
     from datatypes.purpose import TourPurpose
+    from assignment.emme_assignment import AssignmentModel
 
 
 class ParkingTimeResult(ModelSystemEventListener):
@@ -20,9 +21,16 @@ class ParkingTimeResult(ModelSystemEventListener):
     def __init__(self):
         super().__init__()
     
-    def on_model_system_initialized(self, model_system: 'ModelSystem'):
+    def on_model_system_initialized(self,
+                                    model_system: 'ModelSystem',
+                                    zone_data_path: str, 
+                                    base_zone_data_path: str, 
+                                    base_matrices_path: str,
+                                    results_path: str, 
+                                    assignment_model: 'AssignmentModel', 
+                                    name: str) -> None:
         # Get result path when model system is initialized
-        self.result_path = Path(model_system.resultdata.path) / 'parking_time.csv'
+        self.result_path = Path(results_path) / name / 'parking_time.csv'
 
     def on_parking_time_calculated(self, purpose: 'TourPurpose', parking_time: np.ndarray):
         # Create a DataFrame from parking_time using purpose.zone_data zone numbers as index

@@ -58,28 +58,29 @@ class LogitModelTest(unittest.TestCase):
             model = ModeDestModel(zd, pur, resultdata)
             prob = model.calc_prob(impedance)
             for mode in ("car", "transit", "bike", "walk"):
-                self._validate(prob[mode])
+                self._validate(prob[mode], pur.name)
         for i in ("wo", "oo"):
             pur.name = i
             model = ModeDestModel(zd, pur, resultdata)
             prob = model.calc_prob(impedance)
             for mode in ("car", "transit", "bike", "walk"):
-                self._validate(prob[mode])
+                self._validate(prob[mode], pur.name)
         pur.name = "oop"
         model = ModeDestModel(zd, pur, resultdata)
         prob = model.calc_prob(impedance)
         for mode in ("car", "transit"):
-            self._validate(prob[mode])
+            self._validate(prob[mode], pur.name)
         for i in ("hwp", "hop"):
             pur.name = i
             model = ModeDestModel(zd, pur, resultdata)
             prob = model.calc_prob(impedance)
             for mode in ("car", "transit"):
-                self._validate(prob[mode])
+                self._validate(prob[mode], pur.name)
 
-    def _validate(self, prob):
+    def _validate(self, prob, model):
         self.assertIs(type(prob), numpy.ndarray)
         self.assertEquals(prob.ndim, 2)
         self.assertEquals(prob.shape[1], 9)
-        self.assertNotEquals(prob[0, 1], 0)
+        if model not in ["hc", "hu"]:
+            self.assertNotEquals(prob[0, 1], 0)
         assert numpy.isfinite(prob).all()

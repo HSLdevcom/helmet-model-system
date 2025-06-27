@@ -1,9 +1,6 @@
 from abc import ABC
 from typing import TYPE_CHECKING, Dict, Union
-from sys import gettrace
-from utils import log
 from pathlib import Path
-import importlib.util
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -20,7 +17,7 @@ if TYPE_CHECKING:
     from demand.trips import DemandModel
     from argparse import Namespace
     from utils.validation import Validation
-    from assignment.emme_assignment import EmmeAssignmentModel
+    from assignment.emme_assignment import EmmeAssignmentModel, AssignmentModel
 
 class ModelSystemEventListener(ABC):
    
@@ -62,12 +59,25 @@ class ModelSystemEventListener(ABC):
         """
         pass
 
-    def on_model_system_initialized(self, model_system: 'ModelSystem') -> None:
+    def on_model_system_initialized(self,
+                                    model_system: 'ModelSystem',
+                                    zone_data_path: str, 
+                                    base_zone_data_path: str, 
+                                    base_matrices_path: str,
+                                    results_path: str, 
+                                    assignment_model: 'AssignmentModel', 
+                                    name: str) -> None:
         """
         Event handler that is called when the model system is initialized.
 
         Args:
             model_system (ModelSystem): The model system.
+            zone_data_path (str): The path to the zone data.
+            base_zone_data_path (str): The path to the base zone data.
+            base_matrices_path (str): The path to the base matrices.
+            results_path (str): The path to the results.
+            assignment_model (AssignmentModel): The assignment model.
+            name (str): The name of the model system.
         """
         pass
     
@@ -295,63 +305,3 @@ class ModelSystemEventListener(ABC):
         pass
 
 
-class EventHandler(ModelSystemEventListener):
-    """Event handler that calls all equivalent methods in all other ModelSystemEventListener classes."""
-    def __init__(self):
-        """Initialize the EventHandler.
-
-        Args:
-            model_system (ModelSystem): ModelSystem instance.
-        """
-        super().__init__()
-        self.listeners = []
-        self._create_methods()
-
-    def register_listener(self, listener: ModelSystemEventListener):
-        self.listeners.append(listener)
-
-    def load_listeners(self, listener_path: Path):
-        """Load all listeners from a given path.
-
-        Args:
-            listener_path (str): The path to the listeners.
-        """
-        active_listeners = []
-        for file_path in listener_path.glob("*.py"):
-            if file_path.name != "__init__.py":
-                module_name = file_path.stem
-                spec = importlib.util.spec_from_file_location(module_name, file_path)
-                module = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(module)
-                for attr_name in dir(module):
-                    attr = getattr(module, attr_name)
-                    if isinstance(attr, type) and issubclass(attr, ModelSystemEventListener) and attr is not ModelSystemEventListener:
-                        self.register_listener(attr())
-                        active_listeners.append(attr.__name__)
-        log.info(f"Loaded {len(active_listeners)} listeners: {', '.join(active_listeners)}")
-
-
-    def _create_methods(self):
-        """Create methods that call all equivalent methods in all other ModelSystemEventListener classes.
-        Methods area automatically created for all methods that start with "on_" in all ModelSystemEventListener classes.
-        """
-        for method_name in dir(ModelSystemEventListener):
-            if method_name.startswith("on_") and callable(getattr(ModelSystemEventListener, method_name)):
-                setattr(self, method_name, self._create_method(method_name))
-                
-    def _create_method(self, method_name):
-        """Create a method that calls all equivalent methods in all other ModelSystemEventListener classes.
-
-        Args:
-            method_name (str): name of the method to create.
-        """
-        def method(*args, **kwargs):
-            for listener in self.listeners:
-                try:
-                    getattr(listener, method_name)(*args, **kwargs)
-                except Exception as e:
-                    if gettrace() is not None:
-                        # Re-raise exception if debugger is attached
-                        raise e
-                    log.error(f"Error in {listener.__class__.__name__}.{method_name}: {e}")
-        return method

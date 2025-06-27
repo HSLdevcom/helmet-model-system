@@ -70,7 +70,6 @@ class LogitModel:
         self._add_impedance(utility, impedance, b["impedance"])
         size = numpy.zeros_like(utility)
         self._add_zone_util(size, b["size"])
-        impedance["size"] = size
         if "transform" in b:
             b_transf = b["transform"]
             transimp = numpy.zeros_like(utility)
@@ -79,6 +78,8 @@ class LogitModel:
             impedance["transform"] = transimp
         self._add_log_impedance(utility, impedance, b["log"])
         self.dest_exps[mode] = numpy.exp(utility)
+        if "size" in b["log"]:
+            self._add_zone_log_size(self.dest_exps[mode], size, b["log"]["size"])
         if mode != "logsum":
             threshold = distance_boundary[mode]
             self.dest_exps[mode][impedance["dist"] > threshold] = 0
@@ -97,8 +98,9 @@ class LogitModel:
         dest_exps = numpy.exp(utility)
         size = numpy.zeros_like(utility)
         self._add_sec_zone_util(size, b["size"])
-        impedance["size"] = size
         self._add_log_impedance(dest_exps, impedance, b["log"])
+        if "size" in b["log"]:
+            self._add_zone_log_size(dest_exps, size, b["log"]["size"])
         if mode != "logsum":
             threshold = distance_boundary[mode]
             dest_exps[impedance["dist"] > threshold] = 0
@@ -167,6 +169,7 @@ class LogitModel:
             The parameters for different impedance matrices
         """
         for i in b:
+            if i == "size": continue
             try: # If only one parameter
                 utility += b[i] * numpy.log(impedance[i] + 1)
             except ValueError: # Separate sub-region parameters
@@ -174,6 +177,17 @@ class LogitModel:
                     utility[bounds, :] += b[i][j] * numpy.log(
                         impedance[i][bounds, :] + 1)
         return utility
+    
+    def _add_zone_log_size(self, exps, size, phi):
+        """
+        Adds logarithmic size to linear util. Here the util is already exponentiated,
+        so we use U = e^V*(S^(phi)).
+
+        Phi is always assumed to be the same for the whole trip group model (no subregions).
+        For most models phi is equal to one.
+        """
+        exps *= numpy.power(size, phi)
+        return exps
     
     def _add_zone_util(self, utility, b, generation=False):
         """Adds simple linear zone terms to utility.
@@ -411,7 +425,7 @@ class ModeDestModel(LogitModel):
             expsum = self._calc_dest_util(mode, impedance[mode])
             self.dest_expsums[mode] = {}
             self.dest_expsums[mode]["logsum"] = expsum
-            logsum = pandas.Series(numpy.log(expsum), self.purpose.zone_numbers)
+            logsum = pandas.Series(numpy.log(expsum, out=numpy.ones_like(expsum, dtype=numpy.float32)*(-numpy.inf), where=expsum>0), self.purpose.zone_numbers)
             label = self.purpose.name + "_" + mode[0]
             self.zone_data._values[label] = logsum
             self.resultdata.print_data(logsum, "accessibility.txt", label)
@@ -426,9 +440,15 @@ class ModeDestModel(LogitModel):
     def _calc_prob(self, mode_expsum):
         prob = {}
         for mode in self.mode_choice_param:
-            mode_prob = self.mode_exps[mode] / mode_expsum
-            dest_prob = (self.dest_exps[mode].T
-                         / self.dest_expsums[mode]["logsum"])
+            mode_exps = self.mode_exps[mode]
+            mode_prob = numpy.divide(
+                mode_exps, mode_expsum, out=numpy.zeros_like(mode_exps),
+                 where=mode_expsum!=0)
+            dest_exps = self.dest_exps[mode].T
+            dest_expsum = self.dest_expsums[mode]["logsum"]
+            dest_prob = numpy.divide(
+                dest_exps, dest_expsum, out=numpy.zeros_like(dest_exps),
+                where=dest_expsum!=0)
             prob[mode] = mode_prob * dest_prob
         return prob
 
@@ -546,6 +566,7 @@ class AccessibilityModel(ModeDestModel):
             The parameters for different impedance matrices
         """
         for i in b:
+            if i == "size": continue
             try: # If only one parameter
                 utility += b[i] * numpy.log(impedance[i] + 1)
             except ValueError: # Separate params for cap region and surrounding

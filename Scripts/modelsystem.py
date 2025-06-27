@@ -26,7 +26,7 @@ from datatypes.person import Person
 from datatypes.tour import Tour
 from transform.impedance_transformer import ImpedanceTransformer
 from models.linear import CarDensityModel
-from events.model_system_event_listener import EventHandler
+from events.event_handler import EventHandler
 import parameters.assignment as param
 import parameters.zone as zone_param
 import parameters.tour_generation as gen_param
@@ -62,6 +62,7 @@ class ModelSystem:
                  event_handler: EventHandler,
                  estimation_data_path: Path = None):
         self.event_handler = event_handler
+
         self.ass_model = cast(Union[MockAssignmentModel,EmmeAssignmentModel], assignment_model) #type checker hint
         self.zone_numbers: numpy.array = self.ass_model.zone_numbers
         self.travel_modes: Dict[str, bool] = {}  # Dict instead of set, to preserve order
@@ -103,7 +104,13 @@ class ModelSystem:
         self.convergence = []
         self.trucks = self.fm.calc_freight_traffic("truck")
         self.trailer_trucks = self.fm.calc_freight_traffic("trailer_truck")
-        self.event_handler.on_model_system_initialized(self)
+        self.event_handler.on_model_system_initialized(self,
+                                                       zone_data_path, 
+                                                       base_zone_data_path, 
+                                                       base_matrices_path,
+                                                       results_path, 
+                                                       assignment_model, 
+                                                       name)
 
     def _init_demand_model(self):
         return DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=False)

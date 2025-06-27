@@ -3,7 +3,7 @@ import unittest
 import numpy
 
 from datahandling.zonedata import ZoneData
-from events.model_system_event_listener import EventHandler
+from events.event_handler import EventHandler
 import utils.log as log
 from modelsystem import ModelSystem, AgentModelSystem
 from assignment.mock_assignment import MockAssignmentModel
@@ -61,7 +61,7 @@ class ModelTest(unittest.TestCase):
         self._validate_impedances(impedance["iht"])
 
         # Check that model result does not change
-        self.assertAlmostEquals(model.mode_share[0]["car"], 0.22353677265517222)
+        self.assertAlmostEquals(model.mode_share[0]["car"], 0.21922602900734958)
         
         print("Model system test done")
     
