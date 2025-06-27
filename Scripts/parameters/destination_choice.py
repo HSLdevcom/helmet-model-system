@@ -489,7 +489,7 @@ destination_choice = {
                 "shops": 18.177881093790372
             },
             "impedance": {
-                "dist": -0.515531341887
+                "time": -0.0603680486607 #TODO: Update this
             },
             "attraction": {
 

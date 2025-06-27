@@ -620,7 +620,7 @@ class AssignmentPeriod(Period):
         self._car_spec = CarSpecification(self.extra, self.emme_matrices)
         self._transit_specs = {tc: TransitSpecification(
                 self._segment_results[tc], self.extra,
-                self.emme_matrices[tc], ap3h.emme_matrices[tc]["demand"], ap3h)
+                self.emme_matrices[tc], ap3h.emme_matrices[tc]["demand"], ap3h._segment_results[tc])
             for tc in param.transit_classes}
         self.bike_spec = {
             "type": "SOLA_TRAFFIC_ASSIGNMENT",
@@ -723,6 +723,15 @@ class AssignmentPeriod(Period):
         log.info("Bike assignment started...")
         self.emme_project.bike_assignment(
             specification=spec, scenario=scen)
+        network = self.emme_scenario.get_network()
+        time_attr = self.extra("bike_time")
+        for link in network.links():
+            link[time_attr] = link.auto_time
+            #prevent errors from non-car links
+            #assignment only uses mode-based subnetworks, 
+            # these should not be used in practice
+            if link.auto_time > 1e3: link.auto_time = 1e3
+        self.emme_scenario.publish_network(network)
         log.info("Bike assignment performed for scenario " + str(scen.id))
 
     def _fill_h_mode(self):

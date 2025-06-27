@@ -13,6 +13,7 @@ from parameters.destination_choice import secondary_destination_threshold, desti
 import models.logit as logit
 import models.generation as generation
 from datatypes.demand import Demand
+from utils import log
 from utils.zone_interval import MatrixAggregator, ArrayAggregator
 from datatypes.histogram import TourLengthHistogram
 
@@ -346,6 +347,8 @@ class SecDestPurpose(Purpose):
             dest_imp[mtx_type] = (impedance[mtx_type][dests, :]
                                   + impedance[mtx_type][:, orig]
                                   - impedance[mtx_type][dests, orig][:, numpy.newaxis])
+        if dest_imp[mtx_type].min()<-100:
+            log.warn(f"Sec_dest journey impedance (delta impedance) for mode {mode} from orig {orig} is {dest_imp[mtx_type].min()}. This might imply the impedance are not symmetric")
         return self.model.calc_prob(mode, dest_imp, orig, dests)
 
     def print_data(self):

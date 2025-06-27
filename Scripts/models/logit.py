@@ -3,6 +3,8 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, cast
 import numpy # type: ignore
 import pandas
 import math
+
+from utils import log
 if TYPE_CHECKING:
     from datahandling.resultdata import ResultsData
     from datahandling.zonedata import ZoneData
@@ -694,7 +696,10 @@ class SecDestModel(LogitModel):
                 Choice probabilities
         """
         dest_exps = self._calc_sec_dest_util(mode, impedance, origin, destination)
-        return dest_exps.T / dest_exps.sum(1)
+        if numpy.all(dest_exps.sum(1)>0):
+            return dest_exps.T / dest_exps.sum(1)
+        else: #hoo bikes on Suomenlinna seem to be causing this
+            log.error(f"Mode {mode} origin {origin} destination {destination} dest_exp_sum {dest_exps.sum(1)}")
 
 
 class OriginModel(DestModeModel):

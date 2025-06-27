@@ -111,8 +111,8 @@ class EmmeAssignmentModel(AssignmentModel):
         for ap, ap3h in zip(self.assignment_periods,self.assignment_periods_3h):
             if car_dist_unit_cost is not None:
                 ap.dist_unit_cost = car_dist_unit_cost
+            ap3h.prepare(self._create_attributes(ap.emme_scenario, ap3h.extra, is_3h_period=True)) #this needs to be initiliazed first
             ap.prepare(self._create_attributes(ap.emme_scenario, ap.extra), ap3h)
-            ap3h.prepare(self._create_attributes(ap.emme_scenario, ap3h.extra, is_3h_period=True))
         for idx in param.volume_delay_funcs:
             try:
                 self.emme_project.modeller.emmebank.delete_function(idx)
@@ -417,7 +417,7 @@ class EmmeAssignmentModel(AssignmentModel):
                 "LINK", extra(ass_class), ass_class + " volume",
                 overwrite=True, scenario=scenario)
         if not is_3h_period:
-            for attr_s in ("total_cost", "toll_cost", "car_time"): #attr_s tp make difference for type checker
+            for attr_s in ("total_cost", "toll_cost", "car_time","bike_time"): #attr_s tp make difference for type checker
                 self.emme_project.create_extra_attribute(
                     "LINK", extra(attr_s), attr_s,
                     overwrite=True, scenario=scenario)

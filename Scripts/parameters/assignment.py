@@ -107,7 +107,7 @@ vdf_bikes = ("length * (60/((5.max.({} + (el1.lt.0) * (1.56 * el1) +"
              +" (el1.gt.0) * (1.3 * el1))).min.({}*1.3)))")
 vdf_bikes_baana = ("length*(60/((5.max.({} + (el1.lt.0) * (1.56 * el1) +"
                    +" (el1.gt.0) * (1.3 * el1))).min.35))")
-vdf_bikes_mixed_lane = "(length * (60/((5.max.({flat} + (el1.lt.0) * (1.56 * el1) + (el1.gt.0) * (1.3 * el1)) + (-5).max.{vol}.min.5).min.({flat}*1.5))))"
+vdf_bikes_mixed_lane = "length * (60/((5.max.(({flat} + (el1.lt.0) * (1.56 * el1) + (el1.gt.0) * (1.3 * el1)) + (-5).max.{vol}.min.5)).min.({flat}*1.5)))"
 
 b_volume_mixed = "(-1.962 * ln(4*(el2+el3+el4+el5+el6+10)/1000) * 0.689)"
 b_volume_lane = "(-1.962 * ln(4*(el2+el3+el4+el5+el6+10)/1000) * 0.807)"
@@ -236,14 +236,14 @@ headway_sd_func = {
 }
 # Stopping criteria for last traffic assignment
 stopping_criteria_fine = {
-    "max_iterations": 4,
+    "max_iterations": 400,
     "relative_gap": 0.00001,
     "best_relative_gap": 0.001,
     "normalized_gap": 0.0005,
 }
 # Stopping criteria for traffic assignment in loop
 stopping_criteria_coarse = {
-    "max_iterations": 2,
+    "max_iterations": 200,
     "relative_gap": 0.0001,
     "best_relative_gap": 0.01,
     "normalized_gap": 0.005,
@@ -270,7 +270,7 @@ always_congested = True
 
 # Stopping criteria for congested transit assignment
 trass_stop = {
-    "max_iterations": 5,
+    "max_iterations": 50,
     "normalized_gap": 0.01,
     "relative_gap": 0.001
 }
