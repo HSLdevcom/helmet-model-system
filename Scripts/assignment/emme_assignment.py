@@ -101,11 +101,11 @@ class EmmeAssignmentModel(AssignmentModel):
             self.assignment_periods.append(AssignmentPeriod(
                 tp, scen_id, self.emme_project, emme_matrices,
                 self._event_handler, separate_emme_scenarios=self.separate_emme_scenarios))
-        self._create_attributes(self.day_scenario, self._extra)
+        self._create_attributes(self.day_scenario, self._extra, "vrk")
         for ap in self.assignment_periods:
             if car_dist_unit_cost is not None:
                 ap.dist_unit_cost = car_dist_unit_cost
-            ap.prepare(self._create_attributes(ap.emme_scenario, ap.extra))
+            ap.prepare(self._create_attributes(ap.emme_scenario, ap.extra, ap.name))
         for idx in param.volume_delay_funcs:
             try:
                 self.emme_project.modeller.emmebank.delete_function(idx)
@@ -390,7 +390,8 @@ class EmmeAssignmentModel(AssignmentModel):
 
     def _create_attributes(self, 
                            scenario: Any, 
-                           extra: Callable[[str], str]) -> Dict[str,Dict[str,str]]:
+                           extra: Callable[[str], str],
+                           time_period_name:str="") -> Dict[str,Dict[str,str]]:
         """Create extra attributes needed in assignment.
 
         Parameters
@@ -438,8 +439,7 @@ class EmmeAssignmentModel(AssignmentModel):
         self.emme_project.create_extra_attribute(
             "TRANSIT_SEGMENT", extra(param.uncongested_transit_time),
             "uncongested transit time", overwrite=True, scenario=scenario)
-        log.debug("Created extra attributes for scenario {}".format(
-            scenario))
+        log.debug(f"Created extra attributes for scenario {scenario}, time period {time_period_name}")
         return seg_results
 
     def calc_noise(self) -> pandas.Series:

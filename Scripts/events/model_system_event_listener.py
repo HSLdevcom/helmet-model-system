@@ -316,6 +316,7 @@ class EventHandler(ModelSystemEventListener):
         Args:
             listener_path (str): The path to the listeners.
         """
+        active_listeners = []
         for file_path in listener_path.glob("*.py"):
             if file_path.name != "__init__.py":
                 module_name = file_path.stem
@@ -326,7 +327,8 @@ class EventHandler(ModelSystemEventListener):
                     attr = getattr(module, attr_name)
                     if isinstance(attr, type) and issubclass(attr, ModelSystemEventListener) and attr is not ModelSystemEventListener:
                         self.register_listener(attr())
-                        log.info(f"Loaded listener {attr.__name__} from {file_path}")
+                        active_listeners.append(attr.__name__)
+        log.info(f"Loaded {len(active_listeners)} listeners: {', '.join(active_listeners)}")
 
 
     def _create_methods(self):

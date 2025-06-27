@@ -47,6 +47,7 @@ def validate(network, fares=None):
                 found_zone_share)
             log.error(msg)
             raise ValueError(msg)
+    validate_transit(network)
     validate_mode(network, param.main_mode, EMME_AUTO_MODE)
     for m in list(param.assignment_modes.values()) + [param.bike_mode]:
         validate_mode(network, m, EMME_AUX_AUTO_MODE)
@@ -187,3 +188,30 @@ def validate_mode(network, m, mode_type):
         msg = f"{m} is not {mode_type} mode"
         log.error(msg)
         raise ValueError(msg)
+    
+def validate_transit(network):
+    """Validate transit network in terms of HELMET compatibility.
+
+    Check that:
+    - all transit lines have headways defined
+    - all rail links have speed defined
+    """
+    headways_missing = []
+    for line in network.transit_lines():
+        if not(line['@hw_aht']>0 or line['@hw_pt']>0 or line['@hw_iht']>0):
+            headways_missing.append(line.id)
+        if line.mode.id in "mrj":
+            for seg1, seg2 in zip(list(line.segments()), list(line.segments())[1:]):
+                if seg1.data1 == 0 and (seg2.allow_boardings == 1 or seg2.allow_alightings == 1):
+                    msg = "Segment id {} must not have zero speed if the next segment has boarding/alighting allowed".format(seg1.id)
+                    log.error(msg)
+                    raise ValueError(msg)
+                if seg1.data1 != 0 and (seg2.allow_boardings == 0 and seg2.allow_alightings == 0):
+                    msg = "Segment id {} must not have non-zero speed if the next segment has boarding/alighting disallowed".format(seg1.id)
+                    log.error(msg)
+                    raise ValueError(msg)
+    if headways_missing:
+        msg = "Headway(s) missing for line {}".format(line.id)
+        log.error(msg)
+        raise ValueError(msg)
+

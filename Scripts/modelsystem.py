@@ -172,7 +172,7 @@ class ModelSystem:
                         # Apply penalty for overcrowded park and ride facilities.
                         MAX_PNR_ITERATIONS = 5 # Maximum number of iterations. Set to 0 for no penalty
                         for i in range(MAX_PNR_ITERATIONS):
-                            modified = purpose.park_and_ride_model.apply_crowding_penalty()
+                            modified = purpose.park_and_ride_model.apply_crowding_penalty_vectorized(alpha=5)
                             purpose.calc_prob(saved_pnr_impedance[purpose.name])
                             demand = purpose.calc_demand(estimation_mode=estimation_mode, add_sec_dest=False)
                             log.debug(f"Park and ride crowding penalty iteration {i+1} modified {modified} facilities.")
@@ -185,7 +185,6 @@ class ModelSystem:
                     for mode in demand:
                         self.dtm.add_demand(demand[mode])
                         self.travel_modes[mode] = True
-        log.info("Demand calculation completed")            
 
     # possibly merge with init
     def assign_base_demand(self, 
@@ -241,7 +240,7 @@ class ModelSystem:
         demand = self.resultmatrices if is_end_assignment else self.basematrices
         for ap in self.ass_model.assignment_periods:
             tp = ap.name
-            log.info("Assigning period {}...".format(tp))
+            log.info("Assigning base demand for period {}...".format(tp))
             self.dtm.demand = cast(Dict[str, Any], self.dtm.demand) #type check hint
             with demand.open("demand", tp, self.ass_model.zone_numbers) as mtx:
                 for ass_class in param.transport_classes:
@@ -357,7 +356,7 @@ class ModelSystem:
         for ap in self.ass_model.assignment_periods:
             self.dtm.add_vans(ap.name, self.zdata_forecast.nr_zones)
             self._save_demand_to_omx(ap.name)
-
+        log.info("Demand matrices saved")
         self.event_handler.on_demand_calculated(iteration, self.dtm)
 
         #Modes for HS15 region
@@ -430,8 +429,6 @@ class ModelSystem:
         # Reset time-period specific demand matrices (DTM),
         # and empty result buffer
         gap = self.dtm.init_demand()
-        log.info("Demand model convergence in iteration {}: Relative gap: {:1.5f}, Max gap: {:1.5f}".format(
-            iteration, gap["rel_gap"], gap['max_gap']))
         self.convergence.append(gap)
         self.resultdata._df_buffer["demand_convergence.txt"] = pandas.DataFrame(self.convergence)
         self.resultdata.flush()
@@ -447,7 +444,6 @@ class ModelSystem:
                 mtx[ass_class] = demand
                 demand_sum_string += "\t{:8.0f}".format(demand.sum())
         self.resultdata.print_line(demand_sum_string, "result_summary")
-        log.info("Saved demand matrices for " + str(tp))
 
     def _save_to_omx(self, impedance, tp):
         zone_numbers = self.ass_model.zone_numbers

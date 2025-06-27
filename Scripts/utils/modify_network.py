@@ -37,7 +37,11 @@ def add_bus_stops(network):
     data = {"line_id": [], "maximum_stop_distance": [], "is_motorway": [], "loops": []}
     high_distance_lines = []
     looped_lines = []
-
+    whitelist_segments = set(["174173-173862","173862-174376","174376-174378","174378-322531",
+                             "322531-173993","82372-83961","322451-322454","321225-322093",
+                             "53199-56670","230810-231182","231182-40353","40353-40352",
+                             "40352-231178","231178-231064","321174-321227", "194395-194397", 
+                             "194397-194395", "212415-204085", "204085-213798","93047-93048"])
     for line in network.transit_lines():
         if line.mode.id in param.stop_codes:
             stop_codes = param.stop_codes[line.mode.id]
@@ -47,9 +51,10 @@ def add_bus_stops(network):
             loop = 0
 
             for segment in line.segments():
-                if segment.loop_index > 1 and loop == 0:
-                    loop = 1
+                if segment.loop_index > 1 and loop == 0 and segment.link.id not in whitelist_segments:
+                    loop += 1
                     looped_lines.append(line.id)
+                    log.debug(segment.link.id + " is looped in line " + line.id)
                 segment_length = segment.link.length
                 linktype = segment.link.type % 100
                 if linktype in param.roadclasses and is_motorway == 0:
@@ -87,6 +92,9 @@ def add_bus_stops(network):
 
             # Append data for the current line
             data["line_id"].append(line.id)
+            # Lines in Kirkkonummi (line id starts with 6) have weird stop period
+            if line.id.startswith("6"):
+                max_stop_distance = 0
             data["maximum_stop_distance"].append(max_stop_distance)
             data["is_motorway"].append(is_motorway)
             data["loops"].append(loop)
