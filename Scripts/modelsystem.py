@@ -179,7 +179,7 @@ class ModelSystem:
                         # Apply penalty for overcrowded park and ride facilities.
                         MAX_PNR_ITERATIONS = 5 # Maximum number of iterations. Set to 0 for no penalty
                         for i in range(MAX_PNR_ITERATIONS):
-                            modified = purpose.park_and_ride_model.apply_crowding_penalty_vectorized(alpha=5)
+                            modified = purpose.park_and_ride_model.apply_crowding_penalty()
                             purpose.calc_prob(saved_pnr_impedance[purpose.name])
                             demand = purpose.calc_demand(estimation_mode=estimation_mode, add_sec_dest=False)
                             log.debug(f"Park and ride crowding penalty iteration {i+1} modified {modified} facilities.")
