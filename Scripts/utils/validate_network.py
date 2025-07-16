@@ -217,7 +217,7 @@ def validate_transit(network):
                     log.error(msg)
                     raise ValueError(msg)
     if headways_missing:
-        msg = "Headway(s) missing for line {}".format(line.id)
+        msg = "Headway(s) missing for line {}".format(headways_missing)
         log.error(msg)
         raise ValueError(msg)
 
