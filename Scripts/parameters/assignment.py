@@ -107,10 +107,10 @@ vdf_bikes = ("length * (60/((5.max.({} + (el1.lt.0) * (1.56 * el1) +"
              +" (el1.gt.0) * (1.3 * el1))).min.({}*1.3)))")
 vdf_bikes_baana = ("length*(60/((5.max.({} + (el1.lt.0) * (1.56 * el1) +"
                    +" (el1.gt.0) * (1.3 * el1))).min.35))")
-vdf_bikes_mixed_lane = "(length * (60/((5.max.({flat} + (el1.lt.0) * (1.56 * el1) + (el1.gt.0) * (1.3 * el1)) + (-5).max.{vol}.min.5).min.({flat}*1.5))))"
+vdf_bikes_mixed_lane = "length * (60/((5.max.(({flat} + (el1.lt.0) * (1.56 * el1) + (el1.gt.0) * (1.3 * el1)) + (-5).max.{vol}.min.5)).min.({flat}*1.5)))"
 
-b_volume_mixed = "(-1.962 * ln(4*(el2+el3+el4+el5+el6+10)/1000) * 0.689)"
-b_volume_lane = "(-1.962 * ln(4*(el2+el3+el4+el5+el6+10)/1000) * 0.807)"
+b_volume_lane = "(-1.962 * ln(4*(el2+el3+el4+el5+el6+10)/1000) * 0.689)"
+b_volume_mixed = "(-1.962 * ln(4*(el2+el3+el4+el5+el6+10)/1000) * 0.807)"
 volume_delay_funcs = {
     # Car functions
     "fd1": vdf_temp.format(0.02, "lanes", 0.975, 1.78, 0.0075),
@@ -264,7 +264,7 @@ stopping_criteria_coarse = {
 congestion_func = '''
 def calc_segment_cost(transit_volume, line_capacity, segment):
     seated_capacity = segment.line.seated_capacity
-    fill_ratio = transit_volume * 1.15 / seated_capacity
+    fill_ratio = transit_volume / seated_capacity
     seated_weight = max(0.86, 0.38*fill_ratio + 0.67)
     standing_weight = max(1.79, 0.82*fill_ratio + 0.765)
     if fill_ratio < 1.0:
@@ -312,34 +312,34 @@ bike_dist = {
 # TODO: Trucks and vans
 volume_factors = {
     "car": {
-        "aht": 2.036987111646262,
-        "pt": 10.99849048028689,
-        "iht": 2.623282306282788
+        "aht": 2.0622815050146266,
+        "pt": 10.87756099936012,
+        "iht": 2.636256734240595
     },
     "car_work": {
-        "aht": 2.08599193574562,
-        "pt": 9.40474097424588,
-        "iht": 2.67592532140847
+        "aht": 2.1511371941701443,
+        "pt": 9.595261522147535,
+        "iht": 2.6876828857537505
     },
     "car_leisure": {
-        "aht": 1.8277425302925,
-        "pt": 13.4076470978339,
-        "iht": 2.54471585860735
+        "aht": 1.822633510494245,
+        "pt": 12.416216799069286,
+        "iht": 2.567335795915922
     },
     "transit": {
-        "aht": 1.712612235362859,
-        "pt": 9.235476686276906,
-        "iht": 2.4626606692120068
+        "aht": 1.718651340007729,
+        "pt": 9.215218973897288,
+        "iht": 2.466313449878458
     },
     "transit_work": {
-        "aht": 1.66851107146994,
-        "pt": 8.89201758120999,
-        "iht": 2.43749545577124
+        "aht": 1.7648082264481162,
+        "pt": 9.458785710446705,
+        "iht": 2.358668559084971
     },
     "transit_leisure": {
-        "aht": 2.43754695909783,
-        "pt": 10.286053231607,
-        "iht": 2.56661832982465
+        "aht": 1.6101278413419995,
+        "pt": 8.855898570776446,
+        "iht": 2.7822971006521318
     },
     "bike": {
         "aht": 1.592424507799951,
@@ -347,14 +347,14 @@ volume_factors = {
         "iht": 2.430075096866623
     },
     "bike_work": {
-        "aht": 1.57124974015052,
-        "pt": 8.14405684001037,
-        "iht": 2.08467478781959
+        "aht": 1.7792746478588168,
+        "pt": 9.577998573953217,
+        "iht": 2.0977940770728236
     },
     "bike_leisure": {
-        "aht": 1.91962159077409,
-        "pt": 13.5349972721797,
-        "iht": 3.42677807284647
+        "aht": 1.4153296994517823,
+        "pt": 9.921895075001368,
+        "iht": 3.003522618985676
     },
     "trailer_truck": {
         "aht": 3.3333333333333335,
