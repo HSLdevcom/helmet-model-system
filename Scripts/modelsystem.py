@@ -253,7 +253,7 @@ class ModelSystem:
         demand = self.resultmatrices if is_end_assignment else self.basematrices
         for ap,ap3h in zip(self.ass_model.assignment_periods,self.ass_model.assignment_periods_3h):
             tp = ap.name
-            log.info("Assigning period {}...".format(tp))
+            log.info("Assigning base demand for period {}...".format(tp))
             self.dtm.demand = cast(Dict[str, Any], self.dtm.demand) #type check hint
             with demand.open("demand", tp, self.ass_model.zone_numbers) as mtx:
                 for ass_class in param.transport_classes:
@@ -374,7 +374,7 @@ class ModelSystem:
             self.dtm.add_vans(ap.name, self.zdata_forecast.nr_zones)
             #self.dtm_3h.add_demand(ap.name, self.zdata_forecast.nr_zones) #TODO: Add vans vrk
             self._save_demand_to_omx(ap.name)
-
+        log.info("Demand matrices saved")
         self.event_handler.on_demand_calculated(iteration, self.dtm)
 
         #Modes for HS15 region
@@ -447,8 +447,6 @@ class ModelSystem:
         # Reset time-period specific demand matrices (DTM),
         # and empty result buffer
         gap = self.dtm.init_demand()
-        log.info("Demand model convergence in iteration {}: Relative gap: {:1.5f}, Max gap: {:1.5f}".format(
-            iteration, gap["rel_gap"], gap['max_gap']))
         self.convergence.append(gap)
         self.resultdata._df_buffer["demand_convergence.txt"] = pandas.DataFrame(self.convergence)
         self.resultdata.flush()
@@ -464,7 +462,6 @@ class ModelSystem:
                 mtx[ass_class] = demand
                 demand_sum_string += "\t{:8.0f}".format(demand.sum())
         self.resultdata.print_line(demand_sum_string, "result_summary")
-        log.info("Saved demand matrices for " + str(tp))
 
     def _save_to_omx(self, impedance, tp):
         zone_numbers = self.ass_model.zone_numbers

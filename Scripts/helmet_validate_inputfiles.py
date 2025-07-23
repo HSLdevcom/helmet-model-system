@@ -18,7 +18,6 @@ def main(args):
     emme_paths: Union[str,List[str]] = args.emme_paths
     first_scenario_ids: Union[int,List[int]] = args.first_scenario_ids
     forecast_zonedata_paths: Union[str,List[str]] = args.forecast_data_paths
-
     if not emme_paths:
         msg = "Missing required argument 'emme-paths'."
         log.error(msg)
@@ -76,6 +75,7 @@ def main(args):
         import inro.emme.desktop.app as _app # type: ignore
         app = _app.start_dedicated(
             project=emp_path, visible=False, user_initials="HSL")
+        log.debug(f"Emme version: {app.version}")
         scen = app.data_explorer().active_database().core_emmebank.scenario(
             first_scenario_ids[0])
         if scen is None:
@@ -117,20 +117,27 @@ def main(args):
             app = _app.start_dedicated(
                 project=emp_path, visible=False, user_initials="HSL")
             emmebank = app.data_explorer().active_database().core_emmebank
-            link_attrs = ["@pyoratieluokka"]
-            line_attrs = []
-            for tp in param.time_periods:
-                link_attrs.append(f"@hinta_{tp}")
-                line_attrs.append(f"@hw_{tp}")
+
+            # Count extra attributes and their space requirements
             nr_attr = {
                 # Number of existing extra attributes
                 # TODO Count existing extra attributes which are NOT included
                 # in the set of attributes created during model run
                 "nodes": 0,
-                "links": len(link_attrs),
-                "transit_lines": len(line_attrs),
+                "links": 0,
+                "transit_lines": 0,
                 "transit_segments": 0,
             }
+
+            for extra_attribute in emmebank.scenario(first_scenario_ids[i]).extra_attributes():
+                if extra_attribute.type == "NODE":
+                    nr_attr["nodes"] += 1
+                elif extra_attribute.type == "LINK":
+                    nr_attr["links"] += 1
+                elif extra_attribute.type == "TRANSIT_LINE":
+                    nr_attr["transit_lines"] += 1
+                elif extra_attribute.type == "TRANSIT_SEGMENT":
+                    nr_attr["transit_segments"] += 1
             nr_transit_classes = len(param.transit_classes)
             nr_segment_results = len(param.segment_results)
             nr_vehicle_classes = len(param.emme_matrices)
@@ -140,12 +147,6 @@ def main(args):
                 "transit_lines": 0,
                 "transit_segments": nr_transit_classes*nr_segment_results + 1,
             }
-            sc_name = emmebank.scenario(first_scenario_ids[i]).title
-            if len(sc_name)>56:
-                msg = "Scenario name: {} too long, time period extension might exceed Emme's 60 characters limit.".format(
-                    sc_name)
-                log.error(msg)
-                raise ValueError(msg)     
             if not args.separate_emme_scenarios:
                 # If results from all time periods are stored in same
                 # EMME scenario
@@ -155,14 +156,31 @@ def main(args):
             nr_new_attr["transit_segments"] += 3
             dim = emmebank.dimensions
             dim["nodes"] = dim["centroids"] + dim["regular_nodes"]
-            attr_space = 0
+            attr_space_new = 0
+            attr_space_existing = 0
             for key in nr_attr:
-                attr_space += dim[key] * (nr_attr[key]+nr_new_attr[key])
+                attr_space_new += dim[key] * nr_new_attr[key]
+                attr_space_existing += dim[key] * nr_attr[key]
+            if attr_space_new < attr_space_existing:  # Model has already run and extra attributes have been created
+                attr_space = attr_space_existing
+            else:  # Model has not run yet and extra attributes need to be created
+                attr_space = attr_space_existing + attr_space_new
+            log.debug(f"Extra attributes require {attr_space} words")
             if dim["extra_attribute_values"] < attr_space:
                 msg = "At least {} words required for extra attributes".format(
                     attr_space)
                 log.error(msg)
                 raise ValueError(msg)
+            
+            # Check if scenario name is too long
+            sc_name = emmebank.scenario(first_scenario_ids[i]).title
+            if len(sc_name)>56 and args.separate_emme_scenarios:
+                msg = "Scenario name: {} too long, time period extension might exceed Emme's 60 characters limit.".format(
+                    sc_name)
+                log.error(msg)
+                raise ValueError(msg)
+
+            # Check if emmebank has scenarios with different zone numbers
             scenarios_with_different_zones = 0
             for scen in emmebank.scenarios():
                 if scen.zone_numbers != zone_numbers:
@@ -179,12 +197,6 @@ def main(args):
                     scen.id)
                 log.error(msg)
                 raise ValueError(msg)
-            for attr in link_attrs + line_attrs:
-                if scen.extra_attribute(attr) is None:
-                    msg = "Extra attribute {} missing from scenario {}".format(
-                        attr, scen.id)
-                    log.error(msg)
-                    raise ValueError(msg)
             validate(scen.get_network(), forecast_zonedata.transit_zone)
             app.close()
 

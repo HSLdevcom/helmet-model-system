@@ -107,12 +107,12 @@ class EmmeAssignmentModel(AssignmentModel):
         for i, tp in enumerate(self.time_periods):
             tp3h = AssignmentPeriod3h(tp[:-1], scen_id, self.emme_project, emme_matrices_3h)
             self.assignment_periods_3h.append(tp3h)
-        self._create_attributes(self.day_scenario, self._extra)
+        self._create_attributes(self.day_scenario, self._extra, "vrk")
         for ap, ap3h in zip(self.assignment_periods,self.assignment_periods_3h):
             if car_dist_unit_cost is not None:
                 ap.dist_unit_cost = car_dist_unit_cost
-            ap3h.prepare(self._create_attributes(ap.emme_scenario, ap3h.extra, is_3h_period=True)) #this needs to be initiliazed first
-            ap.prepare(self._create_attributes(ap.emme_scenario, ap.extra), ap3h)
+            ap3h.prepare(self._create_attributes(ap.emme_scenario, ap3h.extra, ap3h.name, is_3h_period=True)) #this needs to be initiliazed first
+            ap.prepare(self._create_attributes(ap.emme_scenario, ap.extra, ap.name), ap3h)
         for idx in param.volume_delay_funcs:
             try:
                 self.emme_project.modeller.emmebank.delete_function(idx)
@@ -398,6 +398,7 @@ class EmmeAssignmentModel(AssignmentModel):
     def _create_attributes(self, 
                            scenario: Any, 
                            extra: Callable[[str], str],
+                           time_period_name:str="",
                            is_3h_period=False) -> Dict[str,Dict[str,str]]:
         """Create extra attributes needed in assignment.
 
@@ -450,8 +451,7 @@ class EmmeAssignmentModel(AssignmentModel):
         self.emme_project.create_extra_attribute(
             "TRANSIT_SEGMENT", extra(param.uncongested_transit_time),
             "uncongested transit time", overwrite=True, scenario=scenario)
-        log.debug("Created extra attributes for scenario {}".format(
-            scenario))
+        log.debug(f"Created extra attributes for scenario {scenario}, time period {time_period_name}")
         return seg_results
 
     def calc_noise(self) -> pandas.Series:

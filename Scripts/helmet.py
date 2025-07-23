@@ -15,6 +15,10 @@ from utils.validation import Validation
 
 
 def main(args):
+    # Used to format major iteration log messages
+    def log_header(msg, log_width=72):
+        return msg.center(log_width, "-")
+
     # Set up filepaths
     base_zonedata_path: str = os.path.join(args.baseline_data_path, "2023_zonedata")
     base_matrices_path: str = os.path.join(args.baseline_data_path, "base_matrices")
@@ -143,17 +147,21 @@ def main(args):
     log.info(
         "Starting simulation with {} iterations...".format(iterations),
         extra=log_extra)
+    log.info(log_header(" Starting base demand assignment "), extra=log_extra)
     impedance = model.assign_base_demand(
         args.use_fixed_transit_cost, iterations==0)
+    log.info(log_header(" Base demand assignment completed "), extra=log_extra)
     log_extra["status"]["state"] = "running"
     i = 1
     while i <= iterations:
         log_extra["status"]["current"] = i
         try:
-            log.info("Starting iteration {}".format(i), extra=log_extra)
-            impedance = (model.run_iteration(impedance, "last",args.export_estimation_data)
-                         if i == iterations
-                         else model.run_iteration(impedance, i,args.export_estimation_data))
+            if i == iterations:
+                log.info(log_header(f" Starting final iteration "), extra=log_extra)
+                impedance = model.run_iteration(impedance, "last",args.export_estimation_data)
+            else:
+                log.info(log_header(f" Starting iteration {i} "), extra=log_extra)
+                impedance = model.run_iteration(impedance, i,args.export_estimation_data)
             log_extra["status"]["completed"] += 1
         except Exception as error:
             log_extra["status"]["failed"] += 1
@@ -166,10 +174,18 @@ def main(args):
         if i == iterations:
             log_extra["status"]['state'] = 'finished'
         elif convergence_criteria_fulfilled:
-            iterations = i + 1
+            iterations = i + 1  # Set iterations to current iteration + 1, so that the last iteration is run
         #This is here separately because the model can converge in the last iteration as well
         if convergence_criteria_fulfilled: 
             log_extra["status"]["converged"] = 1
+        if i == iterations:
+            log.info(log_header(f" Final iteration completed "))
+            log.info(log_header(f" Demand model convergence: Max gap: {gap['max_gap']:.5f}, Relative gap: {gap['rel_gap']:.5f} "), 
+                     extra=log_extra)
+        else:
+            log.info(log_header(f" Iteration {i} completed "))
+            log.info(log_header(f" Demand model convergence: Max gap: {gap['max_gap']:.5f}, Relative gap: {gap['rel_gap']:.5f} "), 
+                     extra=log_extra)
         i += 1
     
     if not log_extra["status"]["converged"]:
@@ -325,8 +341,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     log.initialize(args)
-    log.debug("helmet_version=" + str(config.VERSION))
-    log.debug('sys.version_info=' + str(sys.version_info[0]))
+    log.debug("helmet_version=" + str(config.HELMET_VERSION))
+    log.debug('sys.version_info=' + str(sys.version_info))
     log.debug('sys.path=' + str(sys.path))
     args_dict = vars(args)
     for key in args_dict:

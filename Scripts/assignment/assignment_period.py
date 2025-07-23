@@ -95,7 +95,12 @@ class AssignmentPeriod(Period):
                     Extra attribute name (@transit_work_vol_aht/...)
         """
         self._segment_results = segment_results
-        self._calc_road_cost()
+        # Only calculate road cost if road costs have been defined
+        for link in self.emme_scenario.get_network().links():
+            # If any link has a road cost, calculate road costs for entire network
+            if link[self.extra("hinta")] > 0:
+                self._calc_road_cost()
+                break
         self._calc_boarding_penalties()
         self._calc_background_traffic()
         self._specify(ap3h)
@@ -703,8 +708,7 @@ class AssignmentPeriod(Period):
             # these should not be used in practice
             if link.auto_time > 1e3: link.auto_time = 1e3
         self.emme_scenario.publish_network(network)
-        log.info("Car assignment performed for scenario {}".format(
-            self.emme_scenario.id))
+        log.info(f"Car assignment performed for time period {self.name} on scenario {self.emme_scenario.id}")
         log.info("Stopping criteria: {}, iteration {} / {}".format(
             assign_report["stopping_criterion"],
             len(assign_report["iterations"]),
@@ -732,7 +736,7 @@ class AssignmentPeriod(Period):
             # these should not be used in practice
             if link.auto_time > 1e3: link.auto_time = 1e3
         self.emme_scenario.publish_network(network)
-        log.info("Bike assignment performed for scenario " + str(scen.id))
+        log.info(f"Bike assignment performed for time period {self.name} on scenario {self.emme_scenario.id}")
 
     def _fill_h_mode(self):
         #Add h mode everywhere just to be sure
@@ -749,14 +753,14 @@ class AssignmentPeriod(Period):
         self.emme_project.pedestrian_assignment(
             specification=self.walk_spec, scenario=self.emme_scenario)
         self.event_handler.on_pedestrian_assignment_complete(self, self.emme_scenario)
-        log.info("Pedestrian assignment performed for scenario " + str(self.emme_scenario.id))
+        log.info(f"Pedestrian assignment performed for time period {self.name} on scenario {self.emme_scenario.id}")
 
     def _calc_extra_wait_time(self):
         """Calculate extra waiting time for one scenario."""
         network = self.emme_scenario.get_network()
         headway_attr = self.extra("hw")
         # Calculation of cumulative line segment travel time and speed
-        log.info("Calculates cumulative travel times for scenario " + str(self.emme_scenario.id))
+        log.info(f"Calculates cumulative travel times for time period {self.name} on scenario {self.emme_scenario.id}" )
         for line in network.transit_lines():
             cumulative_length = 0
             cumulative_time = 0
@@ -822,8 +826,7 @@ class AssignmentPeriod(Period):
             specification=spec.transit_spec, scenario=self.emme_scenario,
             save_strategies=True)
         self.emme_project.matrix_results(spec.transit_result_spec, scenario=self.emme_scenario)
-        log.info("Transit assignment performed for scenario {}".format(
-            str(self.emme_scenario.id)))
+        log.info(f"Transit assignment performed for time period {self.name} on scenario {self.emme_scenario.id}")
 
     def _assign_congested_transit(self):
         """Perform congested transit assignment for one scenario."""
@@ -880,8 +883,7 @@ class AssignmentPeriod(Period):
         for segment in network.transit_segments():
             segment[time_attr] = segment['@'+base_timtr]
         self.emme_scenario.publish_network(network)
-        log.info("Congested transit assignment performed for scenario {}".format(
-            str(self.emme_scenario.id)))
+        log.info(f"Congested transit assignment performed for time period {self.name} on scenario {self.emme_scenario.id}")
         log.info("Stopping criteria: {}, iteration {} / {}".format(
             assign_report["stopping_criteria"],
             assign_report["iterations"][-1]["number"],
