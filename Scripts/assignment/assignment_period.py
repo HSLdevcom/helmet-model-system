@@ -101,8 +101,6 @@ class AssignmentPeriod(Period):
             if link[self.extra("hinta")] >= 0:
                 self._calc_road_cost()
                 break
-        log.info(f"Prepare ap {self.name} ap3h {ap3h.name}")
-        log.info(f'{ap3h.emme_matrices["bike"]["demand"]}')
         self._calc_boarding_penalties()
         self._calc_background_traffic()
         self._specify()
