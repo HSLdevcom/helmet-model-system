@@ -86,6 +86,7 @@ class EmmeAssignmentModel(AssignmentModel):
             in enumerate(matrix_types + param.transit_classes)}
         hundred = max(100, ten*len(matrix_types + param.transit_classes))
         self.assignment_periods = []
+        self.assignment_periods_3h = []
         for i, tp in enumerate(self.time_periods):
             if self.separate_emme_scenarios:
                 scen_id = self.mod_scenario.number + i + 2
@@ -99,14 +100,13 @@ class EmmeAssignmentModel(AssignmentModel):
                 emme_matrices = self._create_matrices(
                     tp, i*2*hundred + self.first_matrix_id, id_ten)
                 emme_matrices_3h = self._create_matrices(
-                    tp, (i*2+1)*hundred + self.first_matrix_id, id_ten)
+                    tp[:-1], (i*2+1)*hundred + self.first_matrix_id, id_ten)
             self.assignment_periods.append(AssignmentPeriod(
                 tp, scen_id, self.emme_project, emme_matrices,
                 self._event_handler, separate_emme_scenarios=self.separate_emme_scenarios))
-        self.assignment_periods_3h = []
-        for i, tp in enumerate(self.time_periods):
             tp3h = AssignmentPeriod3h(tp[:-1], scen_id, self.emme_project, emme_matrices_3h)
             self.assignment_periods_3h.append(tp3h)
+            log.debug(f'ap3h {tp3h.name} matrix {tp3h.emme_matrices["bike"]["demand"]}')
         self._create_attributes(self.day_scenario, self._extra, "vrk")
         for ap, ap3h in zip(self.assignment_periods,self.assignment_periods_3h):
             if car_dist_unit_cost is not None:

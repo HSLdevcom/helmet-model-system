@@ -259,7 +259,7 @@ class ModelSystem:
                 for ass_class in param.transport_classes:
                     self.dtm.demand[tp][ass_class] = mtx[ass_class]
             impedance[tp] = ap.assign(
-                {"tp":self.dtm.demand[tp],"tp3h":self.dtm_3h.demand[tp[:-1]]},
+                {"tp":self.dtm.demand[tp],"tp3h":self.dtm_3h.demand[ap3h.name]},
                 ap3h, iteration=("last" if is_end_assignment else 0))
             if tp == time_periods[0]:
                 self._update_ratios(impedance[tp], tp)
@@ -370,9 +370,9 @@ class ModelSystem:
             "\t" + "\t".join(param.transport_classes), "result_summary")
 
         # Add vans and save demand matrices
-        for ap in self.ass_model.assignment_periods:
+        for ap,ap3h in zip(self.ass_model.assignment_periods,self.ass_model.assignment_periods_3h):
             self.dtm.add_vans(ap.name, self.zdata_forecast.nr_zones)
-            #self.dtm_3h.add_demand(ap.name, self.zdata_forecast.nr_zones) #TODO: Add vans vrk
+            self.dtm_3h.add_vans(ap3h.name, self.zdata_forecast.nr_zones) #TODO: Add vans vrk
             self._save_demand_to_omx(ap.name)
         log.info("Demand matrices saved")
         self.event_handler.on_demand_calculated(iteration, self.dtm)
@@ -424,7 +424,7 @@ class ModelSystem:
         for ap,ap3h in zip(self.ass_model.assignment_periods,self.ass_model.assignment_periods_3h):
             tp = ap.name
             log.info("Assigning period " + tp)
-            impedance[tp] = ap.assign({"tp":self.dtm.demand[tp],"tp3h":self.dtm_3h.demand[tp[:-1]]}, ap3h, iteration)
+            impedance[tp] = ap.assign({"tp":self.dtm.demand[tp],"tp3h":self.dtm_3h.demand[ap3h.name]}, ap3h, iteration)
             self.event_handler.on_time_period_assigned(iteration, ap, impedance[tp])
             if tp == "aht":
                 self._update_ratios(impedance[tp], tp)
@@ -447,6 +447,7 @@ class ModelSystem:
         # Reset time-period specific demand matrices (DTM),
         # and empty result buffer
         gap = self.dtm.init_demand()
+        self.dtm_3h.init_demand()
         self.convergence.append(gap)
         self.resultdata._df_buffer["demand_convergence.txt"] = pandas.DataFrame(self.convergence)
         self.resultdata.flush()
@@ -604,7 +605,7 @@ class ModelSystem:
                     self.dtm_3h.demand[tp][ass_class] += dtm_3h.demand[tp][ass_class]
         purpose.print_data()
 
-    def _distribute_tours(self, container, purpose, mode, impedance, origs):
+    def _distribute_tours(self, container: dt.DepartureTimeModel, purpose, mode, impedance, origs):
         for orig in origs:
             demand = purpose.distribute_tours(mode, impedance[mode], orig)
             container.add_demand(demand)

@@ -131,7 +131,7 @@ class AssignmentPeriod(Period):
         if iteration=="init":
             self._assign_pedestrians()
             self._set_bike_vdfs()
-            self._assign_bikes()
+            self._assign_bikes(ap3h)
             self._set_car_and_transit_vdfs()
             if not self._separate_emme_scenarios:
                 self._calc_background_traffic()
@@ -140,7 +140,7 @@ class AssignmentPeriod(Period):
             self._assign_congested_transit() if param.always_congested else self._assign_transit()
         elif iteration==0:
             self._set_bike_vdfs()
-            self._assign_bikes()
+            self._assign_bikes(ap3h)
             self._set_car_and_transit_vdfs()
             if not self._separate_emme_scenarios:
                 self._calc_background_traffic()
@@ -149,7 +149,7 @@ class AssignmentPeriod(Period):
             self._assign_congested_transit() if param.always_congested else self._assign_transit()
         elif iteration==1:
             self._set_bike_vdfs()
-            self._assign_bikes()
+            self._assign_bikes(ap3h)
             self._set_car_and_transit_vdfs()
             if not self._separate_emme_scenarios:
                 self._calc_background_traffic()
@@ -158,7 +158,7 @@ class AssignmentPeriod(Period):
             self._assign_congested_transit() if param.always_congested else self._assign_transit()
         elif isinstance(iteration, int) and iteration>1:
             self._set_bike_vdfs()
-            self._assign_bikes()
+            self._assign_bikes(ap3h)
             self._set_car_and_transit_vdfs()
             if not self._separate_emme_scenarios:
                 self._calc_background_traffic(include_trucks=True)
@@ -168,7 +168,7 @@ class AssignmentPeriod(Period):
             self._assign_congested_transit() if param.always_congested else self._assign_transit()
         elif iteration=="last":
             self._set_bike_vdfs()
-            self._assign_bikes()
+            self._assign_bikes(ap3h)
             self._set_car_and_transit_vdfs()
             self._calc_background_traffic()
             self._assign_cars(param.stopping_criteria_fine)
@@ -622,7 +622,7 @@ class AssignmentPeriod(Period):
         self.emme_scenario.publish_network(network)
 
     def _specify(self, ap3h: AssignmentPeriod3h):
-        self._car_spec = CarSpecification(self.extra, self.emme_matrices)
+        self._car_spec = CarSpecification(self.extra, self.emme_matrices, ap3h.emme_matrices)
         self._transit_specs = {tc: TransitSpecification(
                 self._segment_results[tc], self.extra,
                 self.emme_matrices[tc], ap3h.emme_matrices[tc]["demand"], ap3h._segment_results[tc])
@@ -717,12 +717,15 @@ class AssignmentPeriod(Period):
         if assign_report["stopping_criterion"] == "MAX_ITERATIONS":
             log.warn("Car assignment not fully converged.")
     
-    def _assign_bikes(self):
+    def _assign_bikes(self,ap3h:AssignmentPeriod3h=None):
         """Perform bike traffic assignment for one scenario.???TYPES"""
         scen = self.emme_scenario
         spec = self.bike_spec
         spec["classes"][0]["results"]["link_volumes"] = self.extra("bike")
-        spec["classes"][0]["path_analyses"].append(PathAnalysis3h(self.extra("bike"),self.extra("bike")[:-1],"mf105").spec)
+        if ap3h != None:
+            bike_demand_3h = ap3h.emme_matrices["bike"]["demand"]
+            log.info(f"bike matrix {bike_demand_3h} ap3h {ap3h.name}")
+            spec["classes"][0]["path_analyses"].append(PathAnalysis3h(self.extra("bike"),self.extra("bike")[:-1],bike_demand_3h).spec)
         
         log.info("Bike assignment started...")
         self.emme_project.bike_assignment(
@@ -965,11 +968,13 @@ class AssignmentPeriod3h:
             mode = mtx.split('_')[0]
             if mode in tmp_mtx:
                 tmp_mtx[mode] += matrices[mtx]
+                log.debug(f"Matrix {mtx} mode {mode} tmp_mtx {tmp_mtx[mode].sum()}")
                 if mode == "transit":
                     self._set_matrix("transit_work", tmp_mtx[mode])
                 else:
                     self._set_matrix(mode, tmp_mtx[mode])
             else:
+                log.debug(f"Matrix {mtx} mode {mode} tmp_mtx {matrices[mtx].sum()}")
                 self._set_matrix(mtx, matrices[mtx])
 
     def _set_matrix(self,

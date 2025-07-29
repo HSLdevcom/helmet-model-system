@@ -87,14 +87,9 @@ class DepartureTimeModel:
                 position2 = cast(Tuple[int,int], demand.position) #type checker hint
                 share: Dict[str, Any] = param.demand_share[demand.purpose.name][demand.mode]
                 for time_period in self.time_periods:
-                    if time_period not in share:  #TODO: Remove
-                        self._add_2d_demand(
-                            share[time_period+"t"], ass_class, time_period,
-                            demand.matrix, position2)
-                    else:
-                        self._add_2d_demand(
-                            share[time_period], ass_class, time_period,
-                            demand.matrix, position2)
+                    self._add_2d_demand(
+                        share[time_period], ass_class, time_period,
+                        demand.matrix, position2)
             elif len(demand.position) == 3:
                 share = param.demand_share[demand.purpose.name][demand.mode]
                 for time_period in self.time_periods:

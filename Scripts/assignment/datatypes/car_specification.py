@@ -25,14 +25,15 @@ class CarSpecification:
     """
     def __init__(self,
                  extra: Callable, 
-                 emme_matrices: Dict[str, Union[str, Dict[str, str]]]):
+                 emme_matrices: Dict[str, Union[str, Dict[str, str]]],
+                 ap3h_emme_matrices: Dict[str, Dict[str,Any]]):
         self._modes = {}
         self._freight_modes = list(param.freight_dist_unit_cost)
-        matrices = {"car_work":"mf101",
-                    "car_leisure":"mf102",
-                    "trailer_truck":"mf107",
-                    "truck":"mf108",
-                    "van":"mf109"}
+        matrices = {"car_work":ap3h_emme_matrices["car_work"]["demand"],
+                    "car_leisure":ap3h_emme_matrices["car_leisure"]["demand"],
+                    "trailer_truck":ap3h_emme_matrices["trailer_truck"]["demand"],
+                    "truck":ap3h_emme_matrices["truck"]["demand"],
+                    "van":ap3h_emme_matrices["van"]["demand"]}
         for mode in param.assignment_modes:
             if mode in self._freight_modes:
                 kwargs = {
