@@ -117,12 +117,15 @@ def validate(network, fares=None):
             msg = "Link type 1 for link {}. Link type 1 is out of use in Helmet 4+ versions".format(link.id)
             log.error(msg)
             raise ValueError(msg)
-        if network.mode('c') in link.modes:
-            if (linktype not in param.roadclasses
-                    and linktype not in param.custom_roadtypes):
-                msg = "Link type missing for link {} with type {} and modes {}".format(link.id, linktype, str(link.modes))
-                log.error(msg)
-                raise ValueError(msg)
+        for mode in link.modes:
+            if mode.id in "h": continue
+            elif str(mode.id) in "cvkybgdew": 
+                if (linktype not in param.roadclasses
+                        and linktype not in param.custom_roadtypes):
+                    msg = "Link type missing for link {} with type {} and modes {}".format(link.id, linktype, str(link.modes))
+                    log.error(msg)
+                    raise ValueError(msg)
+                break
         if network.mode('t') in link.modes or network.mode('p') in link.modes:
             speedstr = str(int(link.data1)).zfill(6)
             speed = {
