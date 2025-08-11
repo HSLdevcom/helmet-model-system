@@ -96,11 +96,7 @@ class AssignmentPeriod(Period):
         """
         self._segment_results = segment_results
         # Only calculate road cost if road costs have been defined
-        for link in self.emme_scenario.get_network().links():
-            # If any link has a road cost, calculate road costs for entire network #TODO: FIX!
-            if link[self.extra("hinta")] >= 0:
-                self._calc_road_cost()
-                break
+        self._calc_road_cost()
         self._calc_boarding_penalties()
         self._calc_background_traffic()
         self._specify(ap3h)
