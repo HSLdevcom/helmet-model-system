@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Tuple, Union
 import numpy # type: ignore
 import pandas
 
+from events.event_handler import EventHandler
 import parameters.zone as param
 from utils.read_csv_file import read_csv_file
 from utils.zone_interval import ZoneIntervals, zone_interval
@@ -11,9 +12,8 @@ import utils.log as log
 from datatypes.zone import Zone
 from assignment.datatypes.transit_fare import TransitFareZoneSpecification
 
-
 class ZoneData:
-    def __init__(self, data_dir: str, zone_numbers: numpy.array):
+    def __init__(self, data_dir: str, zone_numbers: numpy.array, eh: EventHandler):
         self._values: Dict[str,Any]= {}
         self.share = ShareChecker(self)
         all_zone_numbers = numpy.array(zone_numbers)
@@ -129,6 +129,11 @@ class ZoneData:
             own_municipality.loc[intervals[i], intervals[i]] = True
         self["own"] = own_municipality.values
         self["other"] = ~own_municipality.values
+                # Add parking time to car matrices
+        ptime = param.parking_time(self).to_numpy()
+        ptime = numpy.clip(ptime, 0, 30)
+        eh.on_parking_time_calculated(self, ptime)
+        self["parking_time"] = ptime
 
     def dummy(self, division_type, name, bounds=slice(None)):
         dummy = pandas.Series(False, self.zone_numbers[bounds])

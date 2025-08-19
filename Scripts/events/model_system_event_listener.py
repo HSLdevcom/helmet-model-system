@@ -286,7 +286,7 @@ class ModelSystemEventListener(ABC):
         """
         pass
     
-    def on_parking_time_calculated(self, purpose: 'TourPurpose', parking_time: 'np.ndarray') -> None:
+    def on_parking_time_calculated(self, zone_data: 'ZoneData', parking_time: 'np.ndarray') -> None:
         """
         Event handler for when parking time has been calculated.
         Args:

@@ -1,6 +1,9 @@
 # Share of demand that will be simulated in agent model
 from typing import Any, Dict, List, Tuple, Union
+import pandas as pd
+import numpy as np
 
+from datahandling.zonedata import ZoneData
 
 agent_demand_fraction = 1.0
 
@@ -283,3 +286,8 @@ pop_share_per_noise_area = {
     "surround_other": 0.001407824,
     "peripheral": 0,  # Not calculated
 }
+
+# Parking time function
+def parking_time(zone_data: ZoneData) -> pd.Series:
+    density: pd.Series = (zone_data['population'] + zone_data['workplaces']) / zone_data['zone_area']
+    return 0.05993817*np.sqrt(density) + 5.24176150

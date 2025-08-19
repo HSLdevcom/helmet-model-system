@@ -10,7 +10,8 @@ destination_choice = {
     "hw": {
         "car": {
             "attraction": {
-                "parking_cost_work": (-0.33192798198, -0.33192798198)
+                "parking_cost_work": (-0.33192798198, -0.33192798198),
+                "parking_time": (-0.018404991158664, -0.018404991158664)
             },
             "impedance": {
                 "time": (-0.018404991158664, -0.018404991158664),
@@ -114,7 +115,8 @@ destination_choice = {
             },
             "transform": {
                 "attraction": {
-                    "parking_cost_errand": 1
+                    "parking_cost_errand": 1,
+                    "parking_time": 1,
                 },
                 "impedance": {
                     "cost": 1
@@ -126,7 +128,6 @@ destination_choice = {
                 "secondary_schools": 0.20918368574140128
             },
             "attraction": {
-
             }
         },
         "transit": {
@@ -192,7 +193,8 @@ destination_choice = {
     "hu": {
         "car": {
             "attraction": {
-                "parking_cost_work": (-1.70498207254, -1.70498207254)
+                "parking_cost_work": (-1.70498207254, -1.70498207254),
+                "parking_time": (-0.034699351229532, -0.034699351229532),
             },
             "impedance": {
                 "time": (-0.034699351229532, -0.034699351229532),
@@ -258,7 +260,8 @@ destination_choice = {
     "hs": {
         "car": {
             "attraction": {
-                "parking_cost_errand": (-0.113009972395, -0.113009972395)
+                "parking_cost_errand": (-0.113009972395, -0.113009972395),
+                "parking_time": (-0.0447946929189585, -0.0447946929189585)
             },
             "impedance": {
                 "time": (-0.0447946929189585, -0.0447946929189585),
@@ -332,7 +335,8 @@ destination_choice = {
     "ho": {
         "car": {
             "attraction": {
-                "parking_cost_errand": (-0.189642588223, -0.189642588223)
+                "parking_cost_errand": (-0.189642588223, -0.189642588223),
+                "parking_time": (-0.023104246599918495, -0.023104246599918495),
             },
             "impedance": {
                 "time": (-0.023104246599918495, -0.023104246599918495),
@@ -460,7 +464,8 @@ destination_choice = {
                 "time": -0.13295314811
             },
             "attraction": {
-                "parking_cost_errand": -0.262354727472
+                "parking_cost_errand": -0.262354727472,
+                "parking_time": -0.13295314811
             }
         },
         "transit": {
@@ -489,7 +494,7 @@ destination_choice = {
                 "shops": 18.177881093790372
             },
             "impedance": {
-                "dist": -0.515531341887
+                "dist": -0.515531341887 #muista muuttaa
             },
             "attraction": {
 
@@ -499,7 +504,8 @@ destination_choice = {
     "wo": {
         "car": {
             "attraction": {
-                "parking_cost_errand": (-0.0782036364099, -0.0782036364099)
+                "parking_cost_errand": (-0.0782036364099, -0.0782036364099),
+                "parking_time": (-0.0311546660770915, -0.0311546660770915),
             },
             "impedance": {
                 "time": (-0.0311546660770915, -0.0311546660770915),
@@ -569,7 +575,8 @@ destination_choice = {
     "oo": {
         "car": {
             "attraction": {
-                "parking_cost_errand": (-0.0782036364099, -0.0782036364099)
+                "parking_cost_errand": (-0.0782036364099, -0.0782036364099),
+                "parking_time": (-0.0311546660770915, -0.0311546660770915),
             },
             "impedance": {
                 "time": (-0.0311546660770915, -0.0311546660770915),

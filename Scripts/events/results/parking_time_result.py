@@ -3,12 +3,13 @@ from typing import TYPE_CHECKING
 import pandas as pd
 import numpy as np
 
+
 from events.model_system_event_listener import ModelSystemEventListener
 
 if TYPE_CHECKING:
     from modelsystem import ModelSystem
-    from datatypes.purpose import TourPurpose
     from assignment.emme_assignment import AssignmentModel
+    from datahandling.zonedata import ZoneData
 
 
 class ParkingTimeResult(ModelSystemEventListener):
@@ -32,9 +33,9 @@ class ParkingTimeResult(ModelSystemEventListener):
         # Get result path when model system is initialized
         self.result_path = Path(results_path) / name / 'parking_time.csv'
 
-    def on_parking_time_calculated(self, purpose: 'TourPurpose', parking_time: np.ndarray):
+    def on_parking_time_calculated(self, zone_data: 'ZoneData', parking_time: np.ndarray):
         # Create a DataFrame from parking_time using purpose.zone_data zone numbers as index
-        df = pd.DataFrame(parking_time, index=purpose.zone_data.zone_numbers, columns=['parking_time'])
+        df = pd.DataFrame(parking_time, index=zone_data.zone_numbers, columns=['parking_time'])
         df.index.name = 'zone_id'
         # Save the DataFrame to a CSV file
         df.to_csv(self.result_path)
