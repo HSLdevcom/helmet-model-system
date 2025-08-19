@@ -11,10 +11,6 @@ if TYPE_CHECKING:
 from events.event_handler import EventHandler
 import parameters.impedance_transformation as param
 from parameters.assignment import assignment_classes
-try:
-    from parameters.assignment import parking_time
-except ImportError:
-    parking_time = None
 
 
 def transit_cost_to_per_day(cost: np.ndarray, purpose: 'Purpose') -> None:
@@ -132,16 +128,6 @@ class ImpedanceTransformer(ImpedanceTransformerBase):
         for i in range(1, len(purpose.sub_bounds)):
             trips_per_month[purpose.sub_bounds[i], :] = trips_month[i]
         day_imp["transit"]["cost"] /= trips_per_month
-
-        # Add parking time to car matrices
-        if parking_time is not None:
-            ptime = parking_time(purpose.zone_data).to_numpy()
-            ptime = np.clip(ptime, 0, 30)
-            self._event_handler.on_parking_time_calculated(purpose, ptime)
-            ptime = ptime[cols]
-            car_modes = [k for k in day_imp.keys() if k in ('car', 'car_work', 'car_transit')]
-            for k in car_modes:
-                day_imp[k]['time'] += ptime[None,:]
 
         # Optionally export impedance data for estimation
         if self._export_path:
