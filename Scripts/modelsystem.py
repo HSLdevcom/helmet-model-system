@@ -63,16 +63,24 @@ class ModelSystem:
                  estimation_data_path: Path = None):
         self.event_handler = event_handler
 
+        self.event_handler.on_model_system_initialized(self,
+                                                zone_data_path, 
+                                                base_zone_data_path, 
+                                                base_matrices_path,
+                                                results_path, 
+                                                assignment_model, 
+                                                name)
+
         self.ass_model = cast(Union[MockAssignmentModel,EmmeAssignmentModel], assignment_model) #type checker hint
         self.zone_numbers: numpy.array = self.ass_model.zone_numbers
         self.travel_modes: Dict[str, bool] = {}  # Dict instead of set, to preserve order
 
         # Input data
         self.zdata_base = BaseZoneData(
-            base_zone_data_path, self.zone_numbers)
+            base_zone_data_path, self.zone_numbers, event_handler)
         self.basematrices = MatrixData(base_matrices_path)
         self.zdata_forecast = ZoneData(
-            zone_data_path, self.zone_numbers)
+            zone_data_path, self.zone_numbers, event_handler)
 
         if estimation_data_path:
             self.zdata_base.export_data(estimation_data_path / 'zonedata_base.csv')
@@ -104,13 +112,6 @@ class ModelSystem:
         self.convergence = []
         self.trucks = self.fm.calc_freight_traffic("truck")
         self.trailer_trucks = self.fm.calc_freight_traffic("trailer_truck")
-        self.event_handler.on_model_system_initialized(self,
-                                                       zone_data_path, 
-                                                       base_zone_data_path, 
-                                                       base_matrices_path,
-                                                       results_path, 
-                                                       assignment_model, 
-                                                       name)
 
     def _init_demand_model(self):
         return DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=False)
