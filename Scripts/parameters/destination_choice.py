@@ -116,7 +116,6 @@ destination_choice = {
             "transform": {
                 "attraction": {
                     "parking_cost_errand": 1,
-                    "parking_time": 1,
                 },
                 "impedance": {
                     "cost": 1
@@ -128,6 +127,7 @@ destination_choice = {
                 "secondary_schools": 0.20918368574140128
             },
             "attraction": {
+                "parking_time": (-0.0458687875951, -0.0458687875951),
             }
         },
         "transit": {
