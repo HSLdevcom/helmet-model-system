@@ -68,7 +68,7 @@ class ModelSystemEventListener(ABC):
                                     assignment_model: 'AssignmentModel', 
                                     name: str) -> None:
         """
-        Event handler that is called when the model system is initialized.
+        Event handler that is called at the beginning of model system initialization.
 
         Args:
             model_system (ModelSystem): The model system.

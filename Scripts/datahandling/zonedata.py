@@ -13,7 +13,7 @@ from datatypes.zone import Zone
 from assignment.datatypes.transit_fare import TransitFareZoneSpecification
 
 class ZoneData:
-    def __init__(self, data_dir: str, zone_numbers: numpy.array, eh: EventHandler):
+    def __init__(self, data_dir: str, zone_numbers: numpy.array, eh: EventHandler = None):
         self._values: Dict[str,Any]= {}
         self.share = ShareChecker(self)
         all_zone_numbers = numpy.array(zone_numbers)
@@ -129,11 +129,12 @@ class ZoneData:
             own_municipality.loc[intervals[i], intervals[i]] = True
         self["own"] = own_municipality.values
         self["other"] = ~own_municipality.values
-                # Add parking time to car matrices
+        # Add parking time to car matrices
         ptime = param.parking_time(self).to_numpy()
         ptime = numpy.clip(ptime, 0, 30)
-        eh.on_parking_time_calculated(self, ptime)
-        self["parking_time"] = ptime
+        if eh is not None:
+            eh.on_parking_time_calculated(self, ptime)
+        self["parking_time"] = pandas.Series(ptime, self.zone_numbers)
 
     def dummy(self, division_type, name, bounds=slice(None)):
         dummy = pandas.Series(False, self.zone_numbers[bounds])
@@ -266,8 +267,8 @@ class ZoneData:
 
 
 class BaseZoneData(ZoneData):
-    def __init__(self, data_dir: str, zone_numbers: numpy.array):
-        ZoneData.__init__(self, data_dir, zone_numbers)
+    def __init__(self, data_dir: str, zone_numbers: numpy.array, eh: EventHandler=None):
+        ZoneData.__init__(self, data_dir, zone_numbers, eh)
         cardata = read_csv_file(data_dir, ".car", self.zone_numbers)
         self["car_density"] = cardata["cardens"]
         self["cars_per_1000"] = 1000 * self["car_density"]

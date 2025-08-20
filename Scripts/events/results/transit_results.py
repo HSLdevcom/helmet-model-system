@@ -41,7 +41,7 @@ class TransitResults(ModelSystemEventListener):
                                     assignment_model: 'AssignmentModel', 
                                     name: str):
         # Get result path when model system is initialized
-        self.transit_result_path = Path(model_system.resultdata.path) / 'transit_congestion.csv'
+        self.transit_result_path = Path(results_path) / name / 'transit_congestion.csv'
         self.transit_line_congestions = pd.DataFrame(columns=['line_id', 'congestion_max_aht', 'congestion_max_pt', 'congestion_max_iht', 'congestion_avg_aht', 'congestion_avg_pt', 'congestion_avg_iht', 'total_capacity_aht', 'total_capacity_pt', 'total_capacity_iht', 'mode']).set_index('line_id')
     
     def on_assignment_complete(self,assignment_period: 'AssignmentPeriod',

@@ -45,7 +45,7 @@ class GpkgResult(ModelSystemEventListener):
                                     name: str) -> None:
         # Get result path when model system is initialized
         self.model_system = model_system
-        self.result_path = Path(model_system.resultdata.path) / 'model_data.gpkg'
+        self.result_path = Path(results_path) / name / 'model_data.gpkg'
         self.zone_gpkg_path = Path(zone_data_path) / 'zones.gpkg'
         if not self.zone_gpkg_path.exists():
             self.zone_gpkg_path = Path(base_zone_data_path) / 'zones.gpkg'
