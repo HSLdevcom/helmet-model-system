@@ -150,7 +150,7 @@ def main(args):
     log.info(log_header(" Starting base demand assignment "), extra=log_extra)
     impedance = model.assign_base_demand(
         args.use_fixed_transit_cost, iterations==0)
-    log.info(log_header(" Base demand assignment completed "), extra=log_extra)
+    log.info(log_header(" Base demand assignment completed "))
     log_extra["status"]["state"] = "running"
     i = 1
     while i <= iterations:
@@ -170,7 +170,7 @@ def main(args):
                 "Fatal error occured, simulation aborted.", extra=log_extra)
             break
         gap = model.convergence[-1] # Last iteration convergence
-        convergence_criteria_fulfilled = gap["max_gap"] < args.max_gap or gap["rel_gap"] < args.rel_gap
+        convergence_criteria_fulfilled = gap["max_gap"] < args.max_gap and gap["rel_gap"] < args.rel_gap
         if i == iterations:
             log_extra["status"]['state'] = 'finished'
         elif convergence_criteria_fulfilled:
@@ -180,12 +180,9 @@ def main(args):
             log_extra["status"]["converged"] = 1
         if i == iterations:
             log.info(log_header(f" Final iteration completed "))
-            log.info(log_header(f" Demand model convergence: Max gap: {gap['max_gap']:.5f}, Relative gap: {gap['rel_gap']:.5f} "), 
-                     extra=log_extra)
         else:
             log.info(log_header(f" Iteration {i} completed "))
-            log.info(log_header(f" Demand model convergence: Max gap: {gap['max_gap']:.5f}, Relative gap: {gap['rel_gap']:.5f} "), 
-                     extra=log_extra)
+        log.info(log_header(f" Demand model convergence: Max gap: {gap['max_gap']:.5f}, Relative gap: {gap['rel_gap']:.5f} "))
         i += 1
     
     if not log_extra["status"]["converged"]:

@@ -56,7 +56,7 @@ def info(msg, *args, **kwargs):
     
 def warn(msg, *args, **kwargs):
     json = json_entry(msg, "WARN", *args, **kwargs)
-    logging.getLogger().warn(msg, *args, extra=json)
+    logging.getLogger().warning(msg, *args, extra=json)
 
 def error(msg, exception=None, *args, **kwargs):
     print_stacktrace = exception is not None
