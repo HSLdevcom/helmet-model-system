@@ -2,13 +2,14 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Union
 import pandas as pd
 import numpy as np
+
 from utils import log
 
 from events.model_system_event_listener import ModelSystemEventListener
 
 if TYPE_CHECKING:
     from modelsystem import ModelSystem
-    from datatypes.purpose import TourPurpose
+    from datahandling.zonedata import ZoneData
     from assignment.emme_assignment import AssignmentModel
 
 class GpkgResult(ModelSystemEventListener):
@@ -44,7 +45,7 @@ class GpkgResult(ModelSystemEventListener):
                                     name: str) -> None:
         # Get result path when model system is initialized
         self.model_system = model_system
-        self.result_path = Path(model_system.resultdata.path) / 'model_data.gpkg'
+        self.result_path = Path(results_path) / name / 'model_data.gpkg'
         self.zone_gpkg_path = Path(zone_data_path) / 'zones.gpkg'
         if not self.zone_gpkg_path.exists():
             self.zone_gpkg_path = Path(base_zone_data_path) / 'zones.gpkg'
@@ -54,11 +55,11 @@ class GpkgResult(ModelSystemEventListener):
         if iteration == 'last' or iteration is None:
             self.is_last_iteration = True
     
-    def on_parking_time_calculated(self, purpose: 'TourPurpose', parking_time: np.ndarray):
+    def on_parking_time_calculated(self, zone_data: 'ZoneData', parking_time: np.ndarray):
         if not self.is_last_iteration:
             return
         # Create a DataFrame from parking_time using purpose.zone_data zone numbers as index
-        self.parking_itme_df = pd.DataFrame(parking_time, index=purpose.zone_data.zone_numbers, columns=['parking_time'])
+        self.parking_itme_df = pd.DataFrame(parking_time, index=zone_data.zone_numbers, columns=['parking_time'])
         self.parking_itme_df.index.name = 'zone_id'
         # Save the DataFrame to a CSV file
     

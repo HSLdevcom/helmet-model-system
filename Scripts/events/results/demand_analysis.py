@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from modelsystem import ModelSystem
     from datatypes.demand import Demand
     from datatypes.purpose import TourPurpose
+    from assignment.abstract_assignment import AssignmentModel
 
 
 class DemandAnalysis(ModelSystemEventListener):
@@ -34,7 +35,7 @@ class DemandAnalysis(ModelSystemEventListener):
                                     assignment_model: 'AssignmentModel', 
                                     name: str) -> None:
         # Get result path when model system is initialized
-        self.result_path = Path(model_system.resultdata.path) / 'mode_analysis_results.csv'
+        self.result_path = Path(results_path) / name / 'mode_analysis_results.csv'
     
     def on_iteration_started(self, iteration: Union[int, str], previous_impedance: Dict[str, Dict[str, np.ndarray]]):
         # Add new row for each iteration
