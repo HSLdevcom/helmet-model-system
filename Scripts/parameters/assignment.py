@@ -260,7 +260,7 @@ stopping_criteria_coarse = {
 congestion_func = '''
 def calc_segment_cost(transit_volume, line_capacity, segment):
     seated_capacity = segment.line.seated_capacity
-    fill_ratio = transit_volume / seated_capacity
+    fill_ratio = transit_volume * 1.15 / seated_capacity
     seated_weight = max(0.86, 0.38*fill_ratio + 0.67)
     standing_weight = max(1.79, 0.82*fill_ratio + 0.765)
     if fill_ratio < 1.0:
