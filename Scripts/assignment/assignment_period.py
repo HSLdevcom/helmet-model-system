@@ -860,10 +860,16 @@ class AssignmentPeriod(Period):
                 "penalty": param.inactive_line_penalty_attr,
                 "perception_factor": 1,
             }
+        # Congestion factor only used in rush hour
+        congestion_function = param.trass_func
+        if self.name in ["aht", "iht"]:
+            congestion_function['python_function'] = param.congestion_func_aht_iht
+        else:
+            congestion_function['python_function'] = param.congestion_func
         assign_report = self.emme_project.congested_assignment(
             transit_assignment_spec=[specs[tc].transit_spec for tc in specs],
             class_names=list(specs),
-            congestion_function=param.trass_func,
+            congestion_function=congestion_function,
             stopping_criteria=param.trass_stop,
             log_worksheets=False, scenario=self.emme_scenario,
             save_strategies=True)

@@ -260,6 +260,16 @@ stopping_criteria_coarse = {
 congestion_func = '''
 def calc_segment_cost(transit_volume, line_capacity, segment):
     seated_capacity = segment.line.seated_capacity
+    fill_ratio = transit_volume / seated_capacity
+    seated_weight = max(0.86, 0.38*fill_ratio + 0.67)
+    standing_weight = max(1.79, 0.82*fill_ratio + 0.765)
+    if fill_ratio < 1.0:
+        return seated_weight - 1.0
+    return (seated_weight + (fill_ratio-1.0) * standing_weight) / fill_ratio - 1.0
+'''
+congestion_func_aht_iht = '''
+def calc_segment_cost(transit_volume, line_capacity, segment):
+    seated_capacity = segment.line.seated_capacity
     fill_ratio = transit_volume * 1.15 / seated_capacity
     seated_weight = max(0.86, 0.38*fill_ratio + 0.67)
     standing_weight = max(1.79, 0.82*fill_ratio + 0.765)
@@ -272,7 +282,7 @@ trass_func = {
     'assignment_period': 1,
     'orig_func': False,
     'congestion_attribute': 'us3',
-    'python_function': congestion_func
+    'python_function': None  # Will be set later
 }
 always_congested = True
 
