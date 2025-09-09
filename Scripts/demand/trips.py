@@ -114,16 +114,14 @@ class DemandModel:
                 for age in self._age_strings()]
             # Append under-7 weight
             weights = [max(1 - sum(weights), 0)] + weights
-            if sum(weights) > 1:
-                if sum(weights) > 1.005:
-                    msg = "Sum of age group shares for zone {} is {}".format(
-                        zone_number, sum(weights))
-                    log.error(msg)
-                    raise ValueError(msg)
-                else:
-                    weights = numpy.array(weights)
-                    rebalance = 1 / sum(weights)
-                    weights = rebalance * weights
+            if sum(weights) > 1.005 or sum(weights) < 0.995:
+                msg = "Sum of age group shares for zone {} is {}".format(
+                    zone_number, sum(weights))
+                log.error(msg)
+                raise ValueError(msg)
+            else:
+                weights = numpy.array(weights, dtype=numpy.float64)
+                weights = weights / weights.sum()
             zone_pop = int(round(self.zone_data["population"][zone_number]
                                  * param.agent_demand_fraction))
             zone = self.zone_data.zones[zone_number]

@@ -68,7 +68,7 @@ class ModelSystemEventListener(ABC):
                                     assignment_model: 'AssignmentModel', 
                                     name: str) -> None:
         """
-        Event handler that is called when the model system is initialized.
+        Event handler that is called at the beginning of model system initialization.
 
         Args:
             model_system (ModelSystem): The model system.
@@ -286,7 +286,7 @@ class ModelSystemEventListener(ABC):
         """
         pass
     
-    def on_parking_time_calculated(self, purpose: 'TourPurpose', parking_time: 'np.ndarray') -> None:
+    def on_parking_time_calculated(self, zone_data: 'ZoneData', parking_time: 'np.ndarray') -> None:
         """
         Event handler for when parking time has been calculated.
         Args:

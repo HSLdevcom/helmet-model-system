@@ -77,6 +77,12 @@ class EmmeAssignmentTest(unittest.TestCase):
                   "link_modes":"haf",
                   "link_type":999,
                   "link_length":1.0},
+                #Link check, link should not have type 613
+                {"node1_centroid":False,
+                  "node2_centroid":False,
+                  "link_modes":"hbgde",
+                  "link_type":613,
+                  "link_length":1.0},
                 #Link check, link must not directly connect two centroids
                 {"node1_centroid":True,
                   "node2_centroid":True,
