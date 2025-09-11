@@ -45,6 +45,7 @@ def add_bus_stops(network):
                              "53199-56670","230810-231182","231182-40353","40353-40352",
                              "40352-231178","231178-231064","321174-321227", "194395-194397", 
                              "194397-194395", "212415-204085", "204085-213798","93047-93048"])
+    whitelist_line_ids = set(["1094A1"])
     for line in network.transit_lines():
         if line.mode.id in param.stop_codes:
             stop_codes = param.stop_codes[line.mode.id]
@@ -56,8 +57,10 @@ def add_bus_stops(network):
             for segment in line.segments():
                 if segment.loop_index > 1 and loop == 0 and segment.link.id not in whitelist_segments:
                     loop += 1
-                    looped_lines.append(line.id)
+
                     log.debug(segment.link.id + " is looped in line " + line.id)
+                    if (line.id not in whitelist_line_ids) and (line.id not in looped_lines):
+                        looped_lines.append(line.id)
                 segment_length = segment.link.length
                 linktype = segment.link.type % 100
                 if linktype in param.roadclasses and is_motorway == 0:
