@@ -474,8 +474,8 @@ destination_choice = {
             },
             "size": {
                 "population": 1.0,
-                "service": 5.670055505151,
-                "shops": 20.96384501204548
+                "service": 3.282631049223,
+                "shops": 27.79741333933
             },
             "impedance": {
                 "time": -0.0634374771047
@@ -490,8 +490,8 @@ destination_choice = {
             },
             "size": {
                 "population": 1.0,
-                "service": 5.670055505151,
-                "shops": 20.96384501204548
+                "service": 3.82060772393,
+                "shops": 17.872812116
             },
             "impedance": {
                 "time": -0.129277012255
