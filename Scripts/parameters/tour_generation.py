@@ -651,7 +651,7 @@ tour_generation = {
     }
 }
 garbage_generation = {
-    "population": 0.000125,
-    "workplaces": 0.000025,
+    "population": 0.000104,
+    "workplaces": 0.000209,
 }
 vector_calibration_threshold = 5
