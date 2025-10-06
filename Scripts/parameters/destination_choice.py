@@ -1,7 +1,7 @@
 
 from typing import Any, Dict
 import numpy as np # type: ignore
-
+from parameters.assignment import inflation
 
 ### DESTINATION CHOICE PARAMETERS ###
 
@@ -712,13 +712,13 @@ destination_choice = {
     "hwp": {
         "car": {
             "attraction": {
-                "parking_cost_work": -0.15712387374,
+                "parking_cost_work": -0.15712387374/inflation,
                 "share_detached_houses": 0.580974879625,
                 "own_zone_area": -0.0405161484737
             },
             "impedance": {
                 "time": -0.0207403513,
-                "cost": -0.15712387374
+                "cost": -0.15712387374/inflation
             },
             "log": {
                 "size": 0.906942834933
@@ -734,7 +734,7 @@ destination_choice = {
             },
             "impedance": {
                 "time": -0.00824400763002,
-                "cost": -0.15712387374
+                "cost": -0.15712387374/inflation
             },
             "log": {
                 "size": 0.906942834933
@@ -752,7 +752,7 @@ destination_choice = {
             },
             "impedance": {
                 "time": -0.0207498305,
-                "cost": -0.231841682005
+                "cost": -0.231841682005/inflation
             },
             "log": {
                 "size": 1
@@ -772,7 +772,7 @@ destination_choice = {
             },
             "impedance": {
                 "time": -0.0050318434681,
-                "cost": -0.231841682005
+                "cost": -0.231841682005/inflation
             },
             "log": {
                 "size": 1
@@ -809,11 +809,11 @@ destination_choice = {
     "oop": {
         "car": {
             "attraction": {
-                "parking_cost_errand": -0.227398812175
+                "parking_cost_errand": -0.227398812175/inflation
             },
             "impedance": {
                 "time": (-0.0427365675012, -0.0477365675012),
-                "cost": -0.227398812175
+                "cost": -0.227398812175/inflation
             },
             "log": {
                 "size": 1
@@ -831,7 +831,7 @@ destination_choice = {
             },
             "impedance": {
                 "time": -0.00819579857062,
-                "cost": (-0.427398812175, -0.427398812175)
+                "cost": (-0.427398812175/inflation, -0.427398812175/inflation)
             },
             "log": {
                 "size": 1

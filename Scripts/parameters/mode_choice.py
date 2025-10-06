@@ -3,6 +3,7 @@
 
 # Mode choice (generated 2.9.2024)
 from typing import Any, Dict, Optional
+from parameters.assignment import inflation
 
 mode_choice = {
     "hw": {
@@ -844,7 +845,7 @@ mode_choice = {
             },
             "impedance": {
                 "time": -0.021262374,
-                "cost": -0.154340268
+                "cost": -0.154340268/inflation
             },
             "log": {
 
@@ -863,7 +864,7 @@ mode_choice = {
             },
             "impedance": {
                 "time": -0.007909217,
-                "cost": -0.0051446756
+                "cost": -0.0051446756/inflation
             },
             "log": {
 
