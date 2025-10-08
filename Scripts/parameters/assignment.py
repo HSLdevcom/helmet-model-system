@@ -177,7 +177,7 @@ hsl_area = "ABCDE HEXL"
 performance_settings = {
     "number_of_processors": "max"
 }
-#inflation between 2018 and 2023
+#inflation between 2018 and 2023, kuluttajahintaindeksi
 inflation = 1.1785
 # Inversed value of time [min/eur]
 vot_inv = {

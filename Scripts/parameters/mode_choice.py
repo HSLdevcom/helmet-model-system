@@ -9,18 +9,18 @@ mode_choice = {
     "hw": {
         "car": {
             "generation": {
-                "car_density": (1.7898027723112746, 1.7898027723112746),
-                "cbd": -0.4386459967421909,
-                "helsinki_other": -0.13959766920168454,
-                "espoo_vant_kau": -0.021439721010634266
+                "car_density": (1.7921683550474736, 1.7921683550474736),
+                "cbd": -0.438646,
+                "helsinki_other": -0.139598,
+                "espoo_vant_kau": -0.02144
             },
             "individual_dummy": {
-                "car_users": (3.6091937349063166, 3.6091937349063166)
+                "car_users": (3.6090751065009843, 3.6090751065009843)
             },
             "log": {
-                "logsum": 0.848444967824
+                "logsum": 0.847425745398
             },
-            "constant": (0.0, 0.09402604957965541),
+            "constant": (0.0, 0.094026),
             "attraction": {
 
             },
@@ -30,17 +30,17 @@ mode_choice = {
         },
         "park_and_ride": {
             "generation": {
-                "car_density": (1.7898027723112746, 1.7898027723112746),
-                "cbd": 0,
-                "helsinki_other": 0.71334350985134,
-                "espoo_vant_kau": 0.0163395627156856
+                "car_density": (1.7921683550474736, 1.7921683550474736),
+                "cbd": 0.0,
+                "helsinki_other": 0.713344,
+                "espoo_vant_kau": 0.01634
             },
             "individual_dummy": {
-                "car_users": (3.6091937349063166, 3.6091937349063166)
+                "car_users": (3.6090751065009843, 3.6090751065009843)
             },
-            "constant": (-7.161631577312682, -6.573118076639458),
+            "constant": (-7.199376254626492, -6.610862254626492),
             "log": {
-                "logsum": 0.848444967824
+                "logsum": 0.847425745398
             },
             "attraction": {
 
@@ -50,14 +50,14 @@ mode_choice = {
             }
         },
         "transit": {
-            "constant": (3.8830650314912134, 3.599435834526354),
+            "constant": (3.8276876271995444, 3.5440586271995445),
             "log": {
-                "logsum": 0.848444967824
+                "logsum": 0.847425745398
             },
             "generation": {
-                "cbd": 0.15296709802997616,
-                "helsinki_other": 0.3762622031220961,
-                "espoo_vant_kau": 0.034405207415259806
+                "cbd": 0.152967,
+                "helsinki_other": 0.376262,
+                "espoo_vant_kau": 0.034405
             },
             "attraction": {
 
@@ -70,14 +70,14 @@ mode_choice = {
             }
         },
         "bike": {
-            "constant": (3.2167179590315493, 3.96136363474956),
+            "constant": (3.17588007404681, 3.9205260740468098),
             "log": {
-                "logsum": 0.848444967824
+                "logsum": 0.847425745398
             },
             "generation": {
-                "cbd": -0.15844768684649382,
-                "helsinki_other": 0.26580689268647584,
-                "espoo_vant_kau": 0.011075956560613512
+                "cbd": -0.158448,
+                "helsinki_other": 0.265807,
+                "espoo_vant_kau": 0.011076
             },
             "attraction": {
 
@@ -90,14 +90,14 @@ mode_choice = {
             }
         },
         "walk": {
-            "constant": (4.844449835047745, 5.170252287125295),
+            "constant": (4.80073933289332, 5.1265413328933205),
             "log": {
-                "logsum": 0.848444967824
+                "logsum": 0.847425745398
             },
             "generation": {
-                "cbd": 0.06007034153469227,
-                "helsinki_other": -0.09836652729884046,
-                "espoo_vant_kau": 0.3092923514318446
+                "cbd": 0.06007,
+                "helsinki_other": -0.098367,
+                "espoo_vant_kau": 0.309292
             },
             "attraction": {
 
@@ -114,14 +114,14 @@ mode_choice = {
         "car": {
             "generation": {
                 "car_density": (2.343248935046031, 2.343248935046031),
-                "cbd": 0.31497376275167005,
-                "helsinki_other": 0.1395690723965754,
-                "espoo_vant_kau": -0.03956034657879054
+                "cbd": 0.314974,
+                "helsinki_other": 0.139569,
+                "espoo_vant_kau": -0.03956
             },
             "log": {
                 "logsum": 0.326164428873
             },
-            "constant": (0.0, 0.11317918833514666),
+            "constant": (0.0, 0.113179),
             "attraction": {
 
             },
@@ -133,14 +133,14 @@ mode_choice = {
             }
         },
         "transit": {
-            "constant": (2.23179604883763, 2.1571782905545973),
+            "constant": (2.23179604883763, 2.15717804883763),
             "log": {
                 "logsum": 0.326164428873
             },
             "generation": {
-                "cbd": -0.4056300947123598,
-                "helsinki_other": -0.031241520140850867,
-                "espoo_vant_kau": 0.15581011907082043
+                "cbd": -0.40563,
+                "helsinki_other": -0.031242,
+                "espoo_vant_kau": 0.15581
             },
             "attraction": {
 
@@ -153,14 +153,14 @@ mode_choice = {
             }
         },
         "bike": {
-            "constant": (1.4820957990801067, 1.772794601084558),
+            "constant": (1.4820957990801067, 1.7727947990801067),
             "log": {
                 "logsum": 0.326164428873
             },
             "generation": {
-                "cbd": -1.7819904175324892,
-                "helsinki_other": -0.27685271740647194,
-                "espoo_vant_kau": 0.22594147487018337
+                "cbd": -1.78199,
+                "helsinki_other": -0.276853,
+                "espoo_vant_kau": 0.225941
             },
             "attraction": {
 
@@ -173,14 +173,14 @@ mode_choice = {
             }
         },
         "walk": {
-            "constant": (2.6104495735108393, 2.2259842504704976),
+            "constant": (2.6104495735108393, 2.2259845735108392),
             "log": {
                 "logsum": 0.326164428873
             },
             "generation": {
-                "cbd": 0.17354690494677164,
-                "helsinki_other": 0.17826239463968738,
-                "espoo_vant_kau": -0.11645544110442216
+                "cbd": 0.173547,
+                "helsinki_other": 0.178262,
+                "espoo_vant_kau": -0.116455
             },
             "attraction": {
 
@@ -196,15 +196,15 @@ mode_choice = {
     "hu": {
         "car": {
             "generation": {
-                "car_density": (5.236065716890001, 5.236065716890001),
-                "cbd": 1.1995489308170169,
-                "helsinki_other": -0.8952053774452255,
-                "espoo_vant_kau": 0.6581140025810681
+                "car_density": (5.22223737983, 5.22223737983),
+                "cbd": 1.199549,
+                "helsinki_other": -0.895205,
+                "espoo_vant_kau": 0.658114
             },
             "log": {
                 "logsum": 1.0
             },
-            "constant": (0.0, -0.41935540654059456),
+            "constant": (0.0, -0.419355),
             "attraction": {
 
             },
@@ -216,14 +216,14 @@ mode_choice = {
             }
         },
         "transit": {
-            "constant": (3.55407315155, 3.275039212114848),
+            "constant": (3.42283129783, 3.14379729783),
             "log": {
                 "logsum": 1.0
             },
             "generation": {
-                "cbd": 0.005254656610773463,
-                "helsinki_other": 0.44722395156769096,
-                "espoo_vant_kau": 0.19983531341423522
+                "cbd": 0.005255,
+                "helsinki_other": 0.447224,
+                "espoo_vant_kau": 0.199835
             },
             "attraction": {
 
@@ -236,14 +236,14 @@ mode_choice = {
             }
         },
         "bike": {
-            "constant": (1.51681381373, 2.0485115150028563),
+            "constant": (1.43205591145, 1.96375391145),
             "log": {
                 "logsum": 1.0
             },
             "generation": {
-                "cbd": -1.2590463091492547,
-                "helsinki_other": -0.27271762787139603,
-                "espoo_vant_kau": 0.9382769386409968
+                "cbd": -1.259046,
+                "helsinki_other": -0.272718,
+                "espoo_vant_kau": 0.938277
             },
             "attraction": {
 
@@ -256,14 +256,14 @@ mode_choice = {
             }
         },
         "walk": {
-            "constant": (3.73925008614, 2.238242488113706),
+            "constant": (3.65353450737, 2.15252650737),
             "log": {
                 "logsum": 1.0
             },
             "generation": {
-                "cbd": 0.38565955345035613,
+                "cbd": 0.38566,
                 "helsinki_other": 0.0,
-                "espoo_vant_kau": 0.7186689952239105
+                "espoo_vant_kau": 0.718669
             },
             "attraction": {
 
@@ -279,18 +279,18 @@ mode_choice = {
     "hs": {
         "car": {
             "generation": {
-                "car_density": (5.978400838845634, 5.978400838845634),
-                "cbd": -0.523810330597562,
-                "helsinki_other": 0.12652773825211852,
-                "espoo_vant_kau": 0.030168139893990878
+                "car_density": (5.907289797779808, 5.907289797779808),
+                "cbd": -0.52381,
+                "helsinki_other": 0.126528,
+                "espoo_vant_kau": 0.030168
             },
             "individual_dummy": {
-                "car_users": (1.9069069532920093, 1.9069069532920093)
+                "car_users": (1.9070931560304134, 1.9070931560304134)
             },
             "log": {
-                "logsum": 0.566271563066
+                "logsum": 0.573330213613
             },
-            "constant": (0.0, -0.14127587811583422),
+            "constant": (0.0, -0.141276),
             "attraction": {
 
             },
@@ -299,14 +299,14 @@ mode_choice = {
             }
         },
         "transit": {
-            "constant": (3.846394306037391, 2.703191045607851),
+            "constant": (3.6878661531884274, 2.544663153188427),
             "log": {
-                "logsum": 0.566271563066
+                "logsum": 0.573330213613
             },
             "generation": {
-                "cbd": -0.10007755770116088,
-                "helsinki_other": -0.13430363594518174,
-                "espoo_vant_kau": -0.24254795376217952
+                "cbd": -0.100078,
+                "helsinki_other": -0.134304,
+                "espoo_vant_kau": -0.242548
             },
             "attraction": {
 
@@ -319,14 +319,14 @@ mode_choice = {
             }
         },
         "bike": {
-            "constant": (2.2139830946764185, 2.464245665188701),
+            "constant": (2.1441324758494504, 2.3943954758494503),
             "log": {
-                "logsum": 0.566271563066
+                "logsum": 0.573330213613
             },
             "generation": {
-                "cbd": -0.5918713758782193,
-                "helsinki_other": -0.18725375689645685,
-                "espoo_vant_kau": -0.3292275855437514
+                "cbd": -0.591871,
+                "helsinki_other": -0.187254,
+                "espoo_vant_kau": -0.329228
             },
             "attraction": {
 
@@ -339,14 +339,14 @@ mode_choice = {
             }
         },
         "walk": {
-            "constant": (4.570099600398595, 4.115452327559344),
+            "constant": (4.507839950982731, 4.053192950982732),
             "log": {
-                "logsum": 0.566271563066
+                "logsum": 0.573330213613
             },
             "generation": {
-                "cbd": -0.07066028078932787,
-                "helsinki_other": -0.35586921384799447,
-                "espoo_vant_kau": -0.022238679305560276
+                "cbd": -0.07066,
+                "helsinki_other": -0.355869,
+                "espoo_vant_kau": -0.022239
             },
             "attraction": {
 
@@ -362,18 +362,18 @@ mode_choice = {
     "ho": {
         "car": {
             "generation": {
-                "car_density": (3.6822581920944355, 3.6822581920944355),
-                "cbd": -0.15557690916492897,
-                "helsinki_other": -0.03931018932833578,
-                "espoo_vant_kau": -0.08752562380024684
+                "car_density": (3.662561532326187, 3.662561532326187),
+                "cbd": -0.155577,
+                "helsinki_other": -0.03931,
+                "espoo_vant_kau": -0.087526
             },
             "individual_dummy": {
-                "car_users": (1.1587085900464564, 1.1587085900464564)
+                "car_users": (1.1586558137394463, 1.1586558137394463)
             },
             "log": {
-                "logsum": 0.379991080528
+                "logsum": 0.381207914414
             },
-            "constant": (0.0, -0.029362887561128904),
+            "constant": (0.0, -0.029363),
             "attraction": {
 
             },
@@ -382,14 +382,14 @@ mode_choice = {
             }
         },
         "transit": {
-            "constant": (1.6907671490795977, 0.9245015400578723),
+            "constant": (1.6351725273861322, 0.8689065273861322),
             "log": {
-                "logsum": 0.379991080528
+                "logsum": 0.381207914414
             },
             "generation": {
-                "cbd": 0.29300189138793853,
-                "helsinki_other": -0.1736834847738427,
-                "espoo_vant_kau": -0.561473615846195
+                "cbd": 0.293002,
+                "helsinki_other": -0.173683,
+                "espoo_vant_kau": -0.561474
             },
             "attraction": {
 
@@ -402,14 +402,14 @@ mode_choice = {
             }
         },
         "bike": {
-            "constant": (0.8759342178056636, 1.2792047856301973),
+            "constant": (0.843779672021141, 1.247050672021141),
             "log": {
-                "logsum": 0.379991080528
+                "logsum": 0.381207914414
             },
             "generation": {
-                "cbd": -0.6640210713377779,
-                "helsinki_other": 0.0005479261583558465,
-                "espoo_vant_kau": -0.17477620977032118
+                "cbd": -0.664021,
+                "helsinki_other": 0.000548,
+                "espoo_vant_kau": -0.174776
             },
             "attraction": {
 
@@ -422,14 +422,14 @@ mode_choice = {
             }
         },
         "walk": {
-            "constant": (2.6828511778748703, 2.74932252580096),
+            "constant": (2.6527081396946057, 2.7191791396946057),
             "log": {
-                "logsum": 0.379991080528
+                "logsum": 0.381207914414
             },
             "generation": {
-                "cbd": 0.0885560773110958,
-                "helsinki_other": -0.034588327045015854,
-                "espoo_vant_kau": -0.30297267817046075
+                "cbd": 0.088556,
+                "helsinki_other": -0.034588,
+                "espoo_vant_kau": -0.302973
             },
             "attraction": {
 
@@ -520,15 +520,15 @@ mode_choice = {
     "wo": {
         "car": {
             "generation": {
-                "car_density": (4.4900540445078025, 4.4900540445078025),
-                "cbd": -0.285316026054737,
-                "helsinki_other": -0.9568039074438299,
-                "espoo_vant_kau": 0.329167896365602
+                "car_density": (4.416300680023366, 4.416300680023366),
+                "cbd": -0.285316,
+                "helsinki_other": -0.956804,
+                "espoo_vant_kau": 0.329168
             },
             "log": {
-                "logsum": 1.11333581055
+                "logsum": 1.12299531875
             },
-            "constant": (0.0, 0.3982985356153526),
+            "constant": (0.0, 0.398299),
             "attraction": {
 
             },
@@ -540,14 +540,14 @@ mode_choice = {
             }
         },
         "transit": {
-            "constant": (2.580336404612475, 2.468683629314808),
+            "constant": (2.3006034978506906, 2.1889504978506906),
             "log": {
-                "logsum": 1.11333581055
+                "logsum": 1.12299531875
             },
             "generation": {
-                "cbd": -0.20291247566643217,
-                "helsinki_other": -1.2818176323878343,
-                "espoo_vant_kau": -1.9821582803666093
+                "cbd": -0.202912,
+                "helsinki_other": -1.281818,
+                "espoo_vant_kau": -1.982158
             },
             "attraction": {
 
@@ -560,14 +560,14 @@ mode_choice = {
             }
         },
         "bike": {
-            "constant": (0.25675679866725687, 1.4543991960252027),
+            "constant": (0.1281877124330426, 1.3258297124330427),
             "log": {
-                "logsum": 1.11333581055
+                "logsum": 1.12299531875
             },
             "generation": {
-                "cbd": 0.29627761710549494,
+                "cbd": 0.296278,
                 "helsinki_other": 0.0,
-                "espoo_vant_kau": -0.41490783208972076
+                "espoo_vant_kau": -0.414908
             },
             "attraction": {
 
@@ -580,14 +580,14 @@ mode_choice = {
             }
         },
         "walk": {
-            "constant": (4.502206471590505, 4.140591735205532),
+            "constant": (4.368536806736074, 4.006921806736074),
             "log": {
-                "logsum": 1.11333581055
+                "logsum": 1.12299531875
             },
             "generation": {
-                "cbd": 0.4539380459122802,
-                "helsinki_other": 0.2190151254854164,
-                "espoo_vant_kau": 0.375855951368308
+                "cbd": 0.453938,
+                "helsinki_other": 0.219015,
+                "espoo_vant_kau": 0.375856
             },
             "attraction": {
 
@@ -603,15 +603,15 @@ mode_choice = {
     "oo": {
         "car": {
             "generation": {
-                "car_density": (4.4900540445078025, 4.4900540445078025),
-                "cbd": -0.44681424705730566,
-                "helsinki_other": -0.8672278954828966,
-                "espoo_vant_kau": -0.9137136532363077
+                "car_density": (4.416300680023366, 4.416300680023366),
+                "cbd": -0.446814,
+                "helsinki_other": -0.867228,
+                "espoo_vant_kau": -0.913714
             },
             "log": {
-                "logsum": 1.11333581055
+                "logsum": 1.12299531875
             },
-            "constant": (0.0, -0.5173689952632802),
+            "constant": (0.0, -0.517369),
             "attraction": {
 
             },
@@ -623,14 +623,14 @@ mode_choice = {
             }
         },
         "transit": {
-            "constant": (2.580336404612475, 3.3441648412947083),
+            "constant": (2.3006034978506906, 3.0644314978506904),
             "log": {
-                "logsum": 1.11333581055
+                "logsum": 1.12299531875
             },
             "generation": {
-                "cbd": -0.1966199366568429,
-                "helsinki_other": 0.07026712880761923,
-                "espoo_vant_kau": -0.5716362251302245
+                "cbd": -0.19662,
+                "helsinki_other": 0.070267,
+                "espoo_vant_kau": -0.571636
             },
             "attraction": {
 
@@ -643,13 +643,13 @@ mode_choice = {
             }
         },
         "bike": {
-            "constant": (0.25675679866725687, 1.5198541263663068),
+            "constant": (0.1281877124330426, 1.3912847124330425),
             "log": {
-                "logsum": 1.11333581055
+                "logsum": 1.12299531875
             },
             "generation": {
-                "cbd": -0.1950398886735504,
-                "helsinki_other": 0.38312754852139935,
+                "cbd": -0.19504,
+                "helsinki_other": 0.383128,
                 "espoo_vant_kau": 0.0
             },
             "attraction": {
@@ -663,14 +663,14 @@ mode_choice = {
             }
         },
         "walk": {
-            "constant": (4.502206471590505, 4.182984589518133),
+            "constant": (4.368536806736074, 4.049314806736074),
             "log": {
-                "logsum": 1.11333581055
+                "logsum": 1.12299531875
             },
             "generation": {
-                "cbd": 0.8563147197444894,
-                "helsinki_other": -0.44419988236651825,
-                "espoo_vant_kau": -0.4034908102663649
+                "cbd": 0.856315,
+                "helsinki_other": -0.4442,
+                "espoo_vant_kau": -0.403491
             },
             "attraction": {
 
@@ -864,7 +864,7 @@ mode_choice = {
             },
             "impedance": {
                 "time": -0.007909217,
-                "cost": -0.0051446756/inflation
+                "cost": -0.154340268/inflation
             },
             "log": {
 
