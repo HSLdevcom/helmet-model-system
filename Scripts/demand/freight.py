@@ -97,9 +97,9 @@ class FreightModel:
         if mode == "truck":
             b = param.garbage_generation
             garbage = ( b["population"] * zone_data_forecast["population"] 
-                      + b["workplaces"] * zone_data_forecast["workplaces"])
-            demand[self.zdata_f.garbage_destination] += garbage
-            demand.loc[self.zdata_f.garbage_destination] += garbage
+                      + b["workplaces"] * zone_data_forecast["workplaces"]) / len(self.zdata_f.garbage_destination)
+            demand.loc[:, self.zdata_f.garbage_destination] += garbage
+            demand.loc[self.zdata_f.garbage_destination, :] += garbage
         # Remove trailer truck traffic to/from (inner-city) prohibited zones
         if mode == "trailer_truck":
             demand[self.zdata_f.trailers_prohibited] = 0
