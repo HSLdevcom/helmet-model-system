@@ -294,6 +294,15 @@ class ModelSystemEventListener(ABC):
             parking_time ('np.ndarray'): The parking time data.
         """
         pass
+
+    def on_garbage_trips_generated(self, garbage_generated) -> None:
+        """
+        Event handler for when garbage trips have been generated.
+        Args:
+            zone_data (ZoneData): The zone data.
+            garbage_generated (np.ndarray): The generated garbage trips data.
+        """
+        pass
     
     def on_daily_results_aggregated(self, assignment_model: 'EmmeAssignmentModel', day_network: 'Network') -> None:
         """

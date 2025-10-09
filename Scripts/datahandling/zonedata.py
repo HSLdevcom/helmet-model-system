@@ -204,6 +204,7 @@ class ZoneData:
             "shops",
             "logistics",
             "industry",
+            "service",
         )
         data = {k: self._values[k] for k in freight_variables}
         return pandas.DataFrame(data)

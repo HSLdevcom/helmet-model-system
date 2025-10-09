@@ -10,6 +10,7 @@ import parameters.tour_generation as param
 from utils.freight import fratar, calibrate
 from datatypes.demand import Demand
 from datatypes.purpose import Purpose
+from events.event_handler import EventHandler
 
 
 class FreightModel:
@@ -28,10 +29,12 @@ class FreightModel:
     def __init__(self, 
                  zone_data_base: ZoneData, 
                  zone_data_forecast: ZoneData, 
-                 base_demand: MatrixData):
+                 base_demand: MatrixData,
+                 event_handler: EventHandler = None):
         self.zdata_b = zone_data_base
         self.zdata_f = zone_data_forecast
         self.base_demand = base_demand
+        self.event_handler = event_handler
         spec = {
             "name": "freight",
             "orig": None,
@@ -95,16 +98,48 @@ class FreightModel:
         demand = fratar(production, mtx)
         # Add garbage transport to/from garbage zone
         if mode == "truck":
-            b = param.garbage_generation
-            garbage = ( b["population"] * zone_data_forecast["population"] 
-                      + b["workplaces"] * zone_data_forecast["workplaces"]) / len(self.zdata_f.garbage_destination)
-            demand.loc[:, self.zdata_f.garbage_destination] += garbage
-            demand.loc[self.zdata_f.garbage_destination, :] += garbage
+            demand = self._generate_garbage_trips(demand, zone_data_forecast)
         # Remove trailer truck traffic to/from (inner-city) prohibited zones
         if mode == "trailer_truck":
             demand[self.zdata_f.trailers_prohibited] = 0
             demand.loc[self.zdata_f.trailers_prohibited] = 0
         return Demand(self.purpose, mode, demand.values)
+    
+    def _generate_garbage_trips(self, demand: numpy.ndarray, zone_data_forecast) -> numpy.ndarray:
+        g = param.garbage_generation
+        # Calculate yearly garbage generation per zone (kg/year) separately
+        yearly_garbage_population = g["population"] * zone_data_forecast["population"]
+        yearly_garbage_services = g["service"] * zone_data_forecast["service"]
+        yearly_garbage_shops= g["shops"] * zone_data_forecast["shops"]
+        yearly_garbage_industry = g["industry"] * zone_data_forecast["industry"]
+        yearly_garbage = yearly_garbage_population + yearly_garbage_services + yearly_garbage_shops + yearly_garbage_industry
+        # Convert to daily truckloads (8000 kg/truck, 365 days/year)
+        daily_truckloads = yearly_garbage / 365 / 8000
+
+        # Use actual zone numbers from demand DataFrame index
+        zone_numbers = demand.index
+
+        # Build garbage matrix
+        garbage_zones = self.zdata_f.garbage_destination
+        garbage_matrix = pandas.DataFrame(0.0, index=zone_numbers, columns=zone_numbers)
+
+        # Add garbage trips to/from garbage zones
+        garbage_matrix.loc[:, garbage_zones] = daily_truckloads.loc[zone_numbers].values[:, None] / len(garbage_zones)
+        garbage_matrix.loc[garbage_zones, :] += daily_truckloads.loc[zone_numbers].values[None, :] / len(garbage_zones)
+
+        demand += garbage_matrix
+
+        garbage_array = pandas.DataFrame({
+            "population_garbage": yearly_garbage_population.loc[zone_numbers],
+            "services_garbage": yearly_garbage_services.loc[zone_numbers],
+            "shops_garbage": yearly_garbage_shops.loc[zone_numbers],
+            "industry_garbage": yearly_garbage_industry.loc[zone_numbers],
+            "total_garbage": yearly_garbage.loc[zone_numbers]
+        }, index=zone_numbers)
+        if self.event_handler is not None:
+            self.event_handler.on_garbage_trips_generated(garbage_array)
+
+        return demand
 
     def _generate_trips(self, 
                         zone_data: pandas.DataFrame, 

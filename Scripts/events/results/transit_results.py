@@ -93,10 +93,8 @@ class TransitResults(ModelSystemEventListener):
 
     def on_daily_results_aggregated(self, assignment_model: 'EmmeAssignmentModel', day_network: 'Network'):
         # This will run after all the data has been collected from each assignment period
-        # congested_lines = self.transit_line_congestions[(self.transit_line_congestions['congestion_max_aht'] > 1)|(self.transit_line_congestions['congestion_max_iht'] > 1)]
-        # If there are any congested lines, print an info log
-        
         congested_lines = self.transit_line_congestions[(self.transit_line_congestions['congestion_max_aht'] > 1)|(self.transit_line_congestions['congestion_max_iht'] > 1)]
+        # If there are any congested lines, print an info log
         if not congested_lines.empty:
             log.info(f"There are {len(congested_lines)} transit lines whose ridership exceeds capacity. Turn on debug logging to see details.")
             congested_lines.apply(
