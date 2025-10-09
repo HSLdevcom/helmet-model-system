@@ -595,6 +595,10 @@ class ModelSystem:
         car_cost = numpy.ma.average(
             impedance["cost"]["car_work"], axis=1,
             weights=self.dtm.demand[tp]["car_work"])
+        dist_cost = self.zdata_forecast.car_dist_cost
+        car_cost += dist_cost * numpy.ma.average(
+            impedance["dist"]["car_work"], axis=1,
+            weights=self.dtm.demand[tp]["car_work"])
         transit_cost = numpy.ma.average(
             impedance["cost"]["transit_work"], axis=1,
             weights=self.dtm.demand[tp]["transit_work"])
