@@ -651,7 +651,10 @@ tour_generation = {
     }
 }
 garbage_generation = {
-    "population": 0.000104,
-    "workplaces": 0.000209,
+    # Kilograms per person or workplace per year
+    "population": 243,
+    "service": 169,
+    "shops": 169,
+    "industry": 2245,
 }
 vector_calibration_threshold = 5
