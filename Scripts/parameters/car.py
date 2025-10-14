@@ -39,12 +39,12 @@ car_usage: Dict[str,Any] = {
 car_density = {
     "constant": 0.0,
     "generation": {
-        "share_detached_houses_new": 4.241e-01, # Originally estimated for percentages (0-100), here transformed
-        "helsinki": 1.248e-01,
-        "surrounding": 1.733e-01,
+        "share_detached_houses_new": 4.249e-01, # Originally estimated for percentages (0-100), here transformed
+        "helsinki": 1.932e-01,
+        "surrounding": 0.0983e-01,
     },
     "log": {
-        "time_ratio": 1.284e-01,
-        "cost_ratio": 1.284e-01,
+        "time_ratio": 1.364e-01,
+        "cost_ratio": 1.364e-01,
     },
 }
