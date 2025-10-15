@@ -14,7 +14,7 @@ tour_number_increase = {
 tour_combinations = {
     0: {
         (): {
-            "constant": -0.3,
+            "constant": 0,
             "individual_dummy": {
                 "age_18-29": 0.0758624272125 + 0.3,
                 "age_50-64": 0.0243954514135 - 0.1,
