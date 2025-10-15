@@ -179,11 +179,13 @@ performance_settings = {
 }
 #inflation between 2018 and 2023, kuluttajahintaindeksi
 inflation = 1.1785
+#inflation between 2018 and 2023, kuluttajahintaindeksi
+inflation2022_2023 = 1.0617
 # Inversed value of time [min/eur]
 vot_inv = {
-    "work": 7.576 / inflation, # 1 / ((7.92 eur/h) / (60 min/h)) = 7.576 min/eur
-    "business": 2.439 / inflation, # 1 / ((24.60 eur/h) / (60 min/h)) = 2.439 min/eur
-    "leisure": 11.173 / inflation, # 1 / ((5.37 eur/h) / (60 min/h)) = 11.173 min/eur
+    "work": 6.535 / inflation2022_2023, # 1 / ((9.18 eur/h) / (60 min/h)) = 6.535 min/eur
+    "business": 2.221 / inflation2022_2023, # 1 / ((27.02 eur/h) / (60 min/h)) = 2.221 min/eur
+    "leisure": 9.646 / inflation2022_2023, # 1 / ((6.22 eur/h) / (60 min/h)) = 9.646 min/eur
 }
 # Default distance unit cost [eur/km]
 dist_unit_cost = 0.12 * inflation
