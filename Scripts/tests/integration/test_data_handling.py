@@ -89,9 +89,10 @@ class ZoneDataTest(unittest.TestCase):
 
     def test_all_cols_have_values(self):
         df = self._get_freight_data()
+        print(df)
         row = df.loc[244, :]  # Let's pick some row and validate it
         expected_row = pandas.Series(
-            [1142, 229, 3.8014, 1.8091, 2.1984],
+            [1142, 229, 3.8014, 1.8091, 2.1984, 176.490295],
             index=["population", "workplaces", "shops", "logistics", "industry", "service"],
             dtype=numpy.float32, name=244)
         pandas.testing.assert_series_equal(row, expected_row)
