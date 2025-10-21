@@ -27,8 +27,9 @@ TRANSIT_TRIPS_PER_MONTH = {
 }
 
 TRANSIT_AGGREGATIONS = {
-    "bus": ("HSL-bussi", "ValluVakio", "ValluPika"),
-    "train": ("HSL-juna", "muu_juna"),
+    "bus": ("HSL-bussi", "ValluVakio", "ValluPika","2-kerros-b"),
+    "trunk": ("HSL-runkob","nivelbussi"),
+    "train": ("HSL-juna-2", "muu_juna", "HSL-juna-1", "HSL-juna-3"),
     "tram": ("ratikka", "pikaratikk"),
 }
 
@@ -117,14 +118,14 @@ CELL_INDICES = {
         "rows": {
             1: {
                 "bus": "8",
-                "HSL-runkob": "9",
+                "trunk": "9",
                 "tram": "10",
                 "metro": "11",
                 "train": "12",
             },
             2: {
                 "bus": "16",
-                "HSL-runkob": "17",
+                "trunk": "17",
                 "tram": "18",
                 "metro": "19",
                 "train": "20",
