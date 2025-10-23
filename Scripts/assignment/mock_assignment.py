@@ -93,7 +93,7 @@ class MockPeriod(Period):
         mtxs = {mtx_type: self._get_matrices(mtx_type)
             for mtx_type in ("time", "cost", "dist")}
         for ass_cl in ("transit_work", "transit_leisure"):
-            mtxs["time"][ass_cl] = mtxs["time"]["transit_uncongested"]
+            mtxs["time"][ass_cl] = mtxs["time"][f"{ass_cl}_uncongested"]
         if iteration != "last":
             for ass_cl in ("car_work", "car_leisure"):
                 mtxs["cost"][ass_cl] += (param.dist_unit_cost
