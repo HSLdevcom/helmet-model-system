@@ -118,7 +118,7 @@ Refer to this manual: [https://hsldevcom.github.io/helmet-docs/kaytto-ohje.html#
 
 #### Change the config settings
 1. Download latest version of helmet-model-system in `Projektin asetukset` (edit: or set this manually to `helmet-model-system\Scripts` folder which you probably downloaded when installing Python environment!).
-2. Find out where that version is saved by hovering over the text box (for example: `C:\Users\xxx\helmet-model-system-v4.1.3-24-04-1684924655775`)
+2. Find out where that version is saved by hovering over the text box (for example: `C:\Users\xxx\helmet-model-system-v5.0.0-05-10-1762349833007`)
 3. Open `dev-config.json` inside that previous folder and modify OPTIONAL_FLAGS argument:
     -     `"OPTIONAL_FLAGS": ["DO_NOT_USE_EMME"]`
 	
