@@ -2,15 +2,15 @@
 
 # helmet-model-system
 
-This repository contains python files for Helmet 4.1 Model System. Source codes can be found in the [Scripts-folder](Scripts).
+This repository contains python files for Helmet 5 Model System. Source codes can be found in the [Scripts-folder](Scripts).
 
 ## Usage
 
 You can run HELMET 5 from the command line or by using [helmet-ui](https://github.com/HSLdevcom/helmet-ui).
-In this chapter, we will guide you how to install HELMET 4.1 to work with Bentley OpenPaths EMME software from the command line.
+In this chapter, we will guide you how to install HELMET 5 to work with Bentley OpenPaths EMME software from the command line.
 The user is not expected to install any new software apart from [helmet-model-system](https://github.com/HSLdevcom/helmet-model-system) and OpenPaths EMME.
 
-If you do not have an Bentley OpenPaths license or you wish to develop HELMET 4.1 further, please scroll down to [Development](#development) chapter.
+If you do not have an Bentley OpenPaths license or you wish to develop HELMET 5 further, please scroll down to [Development](#development) chapter.
 
 ### Setup
 
