@@ -59,7 +59,7 @@ Run `python helmet.py --help` to see parameter syntax.
 
 ## Development
 
-If you do not have Bentley OpenPaths license or you wish to develop HELMET 4.1 source code, you need to set up a development environment. 
+If you do not have Bentley OpenPaths license or you wish to develop HELMET 5 source code, you need to set up a development environment. 
 Although not covered here, installing [Git](https://git-scm.com/downloads) is highly recommended!
 
 ### Environment and dependencies
