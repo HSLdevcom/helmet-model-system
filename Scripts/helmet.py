@@ -123,7 +123,8 @@ def main(args):
     if args.is_agent_model:
         model = AgentModelSystem(
             forecast_zonedata_path, base_zonedata_path, base_matrices_path,
-            results_path, ass_model, args.scenario_name, estimation_data_path)
+            results_path, ass_model, args.scenario_name, event_handler, 
+            estimation_data_path)
     else:
         model = ModelSystem(
             forecast_zonedata_path, base_zonedata_path, base_matrices_path,
