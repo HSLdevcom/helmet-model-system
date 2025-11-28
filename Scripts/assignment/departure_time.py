@@ -4,6 +4,8 @@ import numpy # type: ignore
 from datahandling.zonedata import ZoneData
 from datatypes.demand import Demand
 from datatypes.tour import Tour
+from pathlib import Path
+import openmatrix as omx
 
 import utils.log as log
 import parameters.departure_time as param
@@ -67,7 +69,7 @@ class DepartureTimeModel:
 
         return {"rel_gap": relative_gap, "max_gap": max_gap}
 
-    def add_demand(self, demand: Union[Demand, Tour]):
+    def add_demand(self, demand: Union[Demand, Tour], path: str):
         """Add demand matrix for whole day.
         
         Parameters
@@ -87,12 +89,33 @@ class DepartureTimeModel:
                 position2 = cast(Tuple[int,int], demand.position) #type checker hint
                 share: Dict[str, Any] = param.demand_share[demand.purpose.name][demand.mode]
                 for time_period in self.time_periods:
+                    time_ve0 = omx.open_file(Path(path) / "ve0 time" / f"time_{time_period}.omx", "r")
+                    time_ve1 = omx.open_file(Path(path) / f"time_{time_period}.omx", "r")
+                    if demand.purpose.name in ["hw", "hc", "hu", "hwp"]:
+                        timediff = numpy.divide(numpy.array(time_ve1["transit_work"])-numpy.array(time_ve0["transit_work"]), numpy.array(time_ve0["transit_work"]), out=numpy.zeros_like(numpy.array(time_ve0["transit_work"])), where=numpy.array(time_ve0["transit_work"])!=0)
+                        worktrip = True
+                    else:
+                        timediff = numpy.divide(numpy.array(time_ve1["transit_leisure"])-numpy.array(time_ve0["transit_leisure"]), numpy.array(time_ve0["transit_leisure"]), out=numpy.zeros_like(numpy.array(time_ve0["transit_leisure"])), where=numpy.array(time_ve0["transit_leisure"])!=0)
+                        worktrip = False
+                    time_ve0.close()
+                    time_ve1.close()
+
                     self._add_2d_demand(
                         share[time_period], ass_class, time_period,
-                        demand.matrix, position2)
+                        demand.matrix, position2, timediff, worktrip, demand.purpose.name, demand.mode)
             elif len(demand.position) == 3:
                 for time_period in self.time_periods:
-                    self._add_3d_demand(demand, ass_class, time_period)
+                    time_ve0 = omx.open_file(Path(path) / "ve0 time" / f"time_{time_period}.omx", "r")
+                    time_ve1 = omx.open_file(Path(path) / f"time_{time_period}.omx", "r")
+                    if demand.purpose.name in ["hw", "hc", "hu", "hwp"]:
+                        timediff = numpy.divide(numpy.array(time_ve1["transit_work"])-numpy.array(time_ve0["transit_work"]), numpy.array(time_ve0["transit_work"]), out=numpy.zeros_like(numpy.array(time_ve0["transit_work"])), where=numpy.array(time_ve0["transit_work"])!=0)
+                        worktrip = True
+                    else:
+                        timediff = numpy.divide(numpy.array(time_ve1["transit_leisure"])-numpy.array(time_ve0["transit_leisure"]), numpy.array(time_ve0["transit_leisure"]), out=numpy.zeros_like(numpy.array(time_ve0["transit_leisure"])), where=numpy.array(time_ve0["transit_leisure"])!=0)
+                        worktrip = False
+                    time_ve0.close()
+                    time_ve1.close()
+                    self._add_3d_demand(demand, ass_class, time_period, timediff, worktrip, demand.purpose.name, demand.mode)
             else:
                 raise IndexError("Tuple position has wrong dimensions.")
 
@@ -101,8 +124,14 @@ class DepartureTimeModel:
                        ass_class: str, 
                        time_period: str, 
                        mtx: numpy.ndarray, 
-                       mtx_pos: Tuple[int, int]):
+                       mtx_pos: Tuple[int, int], timediff, worktrip, purposename, mode):
         """Slice demand, include transpose and add for one time period. ???types"""
+        if purposename in ["hw","hc","hu","hs","ho","hoo","wo","oo"] and "transit" in mode:
+            if worktrip:
+                mtx = mtx + mtx*timediff[:mtx.shape[0], :mtx.shape[1]] * -0.138
+            else:
+                mtx = mtx + mtx*timediff[:mtx.shape[0], :mtx.shape[1]] * -0.221
+        mtx = numpy.nan_to_num(mtx)
         r_0 = mtx_pos[0]
         c_0 = mtx_pos[1]
         r_n = r_0 + mtx.shape[0]
@@ -122,11 +151,17 @@ class DepartureTimeModel:
     def _add_3d_demand(self, 
                        demand: Union[Demand, Tour], 
                        ass_class: str, 
-                       time_period: str):
+                       time_period: str, timediff, worktrip, purposename, mode):
         """Add three-way demand."""
         demand_position = cast(Tuple[int,int,int],demand.position) #type checker hint
         demand.purpose.name = cast(str,demand.purpose.name) #type checker hint
         mtx = demand.matrix
+        if purposename in ["hw","hc","hu","hs","ho","hoo","wo","oo","hwp","hop","sop","oop"] and "transit" in mode:
+            if worktrip:
+                mtx = mtx + mtx*timediff[:mtx.shape[0], :mtx.shape[1]] * -0.138
+            else:
+                mtx = mtx + mtx*timediff[:mtx.shape[0], :mtx.shape[1]] * -0.221
+        mtx = numpy.nan_to_num(mtx)
         tp = time_period
         o = demand_position[0]
         d1 = demand_position[1]
@@ -134,12 +169,12 @@ class DepartureTimeModel:
         share = param.demand_share[demand.purpose.name][demand.mode][tp]
         if demand.dest is not None:
             # For agent simulation
-            self._add_2d_demand(share, ass_class, tp, mtx, (o, d1))
+            self._add_2d_demand(share, ass_class, tp, mtx, (o, d1), timediff, worktrip, purposename, demand.mode)
             sec_purpose_name = demand.purpose.sec_dest_purpose.name
             share = param.demand_share[sec_purpose_name][demand.mode][tp]
         colsum = mtx.sum(0)[:, numpy.newaxis]
-        self._add_2d_demand(share[0], ass_class, tp, mtx, (d1, d2))
-        self._add_2d_demand(share[1], ass_class, tp, colsum, (d2, o))
+        self._add_2d_demand(share[0], ass_class, tp, mtx, (d1, d2), timediff, worktrip, purposename, demand.mode)
+        self._add_2d_demand(share[1], ass_class, tp, colsum, (d2, o), timediff, worktrip, purposename, demand.mode)
     
     def add_vans(self, time_period: str, nr_zones: int):
         """Add vans as a share of private car trips for one time period.
@@ -156,5 +191,8 @@ class DepartureTimeModel:
         mtx = demand[time_period]
         car_demand = (mtx["car_work"][0:n, 0:n] + mtx["car_leisure"][0:n, 0:n])
         share = param.demand_share["freight"]["van"][time_period]
-        self._add_2d_demand(share, "van", time_period, car_demand, (0, 0))
+        timediff = 1
+        purposename = "k"
+        worktrip = True
+        self._add_2d_demand(share, "van", time_period, car_demand, (0, 0), timediff, worktrip, purposename, "car")
         mtx["van"][0:n, 0:n] += mtx["truck"][0:n, 0:n]

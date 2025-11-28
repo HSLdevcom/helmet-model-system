@@ -30,6 +30,7 @@ from events.event_handler import EventHandler
 import parameters.assignment as param
 import parameters.zone as zone_param
 import parameters.tour_generation as gen_param
+import parameters.car as param_car
 
 
 class ModelSystem:
@@ -88,6 +89,7 @@ class ModelSystem:
         self.event_handler.on_zone_data_loaded(self.zdata_base, self.zdata_forecast)
         
         # Output data
+        self.resultspath = results_path
         self.resultmatrices = MatrixData(
             os.path.join(results_path, name, "Matrices"))
         self.resultdata = ResultsData(os.path.join(results_path, name))
@@ -116,7 +118,7 @@ class ModelSystem:
     def _init_demand_model(self):
         return DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=False)
 
-    def _add_internal_demand(self, previous_iter_impedance, is_last_iteration, estimation_mode=False):
+    def _add_internal_demand(self, previous_iter_impedance, is_last_iteration:bool, estimation_mode:bool=False, summer: bool=False, disruption_mode=None, reference_scenario=None):
         """Produce mode-specific demand matrices.
 
         Add them for each time-period to container in departure time model.
@@ -156,7 +158,7 @@ class ModelSystem:
                     self.event_handler.on_calc_accessibility(purpose_impedance, purpose.accessibility_model)
         
         # Tour generation
-        self.dm.generate_tours()
+        self.dm.generate_tours(summer=summer)
         self.event_handler.on_demand_model_tours_generated(self.dm)
         
         # Assigning of tours to mode, destination and time period
@@ -175,7 +177,7 @@ class ModelSystem:
                         purpose, "car", purpose_impedance)
             else: #hw-hh, hwp-oop
                 if purpose.name != "wh":
-                    demand = purpose.calc_demand(estimation_mode)
+                    demand = purpose.calc_demand(estimation_mode)                    
                     if purpose.park_and_ride_model is not None:
                         # Apply penalty for overcrowded park and ride facilities.
                         MAX_PNR_ITERATIONS = 5 # Maximum number of iterations. Set to 0 for no penalty
@@ -189,10 +191,42 @@ class ModelSystem:
                                 break
                         pnr_it += 1
                         log.debug("Park and ride demand calculation completed.")
+                    demand_pax = demand
+                    if param_car.car_driver_share.get(purpose.name, 0.0) > 0.0:
+                        demand_pax["car"].matrix = demand_pax["car"].matrix / param_car.car_driver_share[purpose.name]
+
+                self.event_handler.on_purpose_demand_calculated(purpose, demand)
                 if purpose.dest != "source":
+                    modes = demand.keys()
+                    total_demand = numpy.stack([d.matrix for d in demand_pax.values()])
+                    if disruption_mode == "read":
+                        # Load references based on results path and reference scenario name
+                        reference_scenario_matrices = Path(self.resultspath).parent / reference_scenario / "Matrices"
+                        reference_shares = numpy.load(Path(reference_scenario_matrices) / f"saved_shares_{purpose.name}.npy")
+                        reference_demand = numpy.load(Path(reference_scenario_matrices) / f"saved_demand_{purpose.name}.npy")
+                        unmodified_demand = numpy.load(Path(self.resultmatrices)  / f"saved_demand_{purpose.name}.npy")
+                    if disruption_mode == "write":
+                        mode_sums = total_demand.sum(axis=0)
+                        mode_prob = numpy.divide(total_demand, mode_sums[None,:,:], out=numpy.zeros_like(total_demand), where=mode_sums!=0)
+                        numpy.save(Path(self.resultmatrices) / f"saved_shares_{purpose.name}.npy", mode_prob) # Tallentaa kulkutapaosuudet
+                        numpy.save(Path(self.resultmatrices) / f"saved_demand_{purpose.name}.npy", mode_sums) # Tallentaa kokonaiskysynnän - vietävä filename_d:n polulle ennen lopullisen Ve1 ajamista
+
                     for mode in demand:
-                        self.dtm.add_demand(demand[mode])
-                    for mode in purpose.modes:
+                        if disruption_mode == "read":
+                            for i, m in enumerate(modes):
+                                if "ho" in purpose.name:
+                                    prop_new = 0.5
+                                elif "hs" in purpose.name:
+                                    prop_new = 0.75
+                                else:
+                                    prop_new = 0.0
+                                combined_demand = (1 - prop_new) * reference_demand + prop_new * unmodified_demand
+                                mode_demand = combined_demand[:, :] * reference_shares[i]
+                                demand[m].matrix = mode_demand[:,:]
+                            if mode == "car" and purpose.name in param_car.car_driver_share:
+                                demand[m].matrix = demand[m].matrix * param_car.car_driver_share.get(purpose.name, 1.0)
+                    
+                        self.dtm.add_demand(demand[mode], self.resultmatrices.path)
                         self.travel_modes[mode] = True
             self.event_handler.on_purpose_demand_calculated(purpose, demand, pnr_iteration = pnr_it, estimation_mode=estimation_mode)
 
@@ -278,7 +312,8 @@ class ModelSystem:
     def run_iteration(self,
                       previous_iter_impedance: Dict[str, Dict[str, numpy.ndarray]],
                       iteration: Union[int, str] = None,
-                      estimation_mode=False):
+                      estimation_mode=False,
+                      summer=False):
         """Calculate demand and assign to network.
 
         Parameters
@@ -313,8 +348,8 @@ class ModelSystem:
 
         # Add truck and trailer truck demand, to time-period specific
         # matrices (DTM), used in traffic assignment
-        self.dtm.add_demand(self.trucks)
-        self.dtm.add_demand(self.trailer_trucks)
+        self.dtm.add_demand(self.trucks, self.resultmatrices.path)
+        self.dtm.add_demand(self.trailer_trucks, self.resultmatrices.path)
 
         # Update car density
         prediction = self.cdm.predict()
@@ -323,7 +358,7 @@ class ModelSystem:
         self.event_handler.on_car_density_updated(iteration, prediction, self.cdm)
 
         # Calculate internal demand
-        self._add_internal_demand(previous_iter_impedance, iteration=="last", estimation_mode)
+        self._add_internal_demand(previous_iter_impedance, iteration=="last", estimation_mode, summer, disruption_mode="write", reference_scenario="")
         self.event_handler.on_internal_demand_added(self.dtm)
 
         # Calculate external demand
@@ -341,7 +376,7 @@ class ModelSystem:
                 int_demand = self._sum_trips_per_zone(mode)
             ext_demand = self.em.calc_external(mode, int_demand)
             self.event_handler.on_external_demand_calculated(ext_demand)
-            self.dtm.add_demand(ext_demand)
+            self.dtm.add_demand(ext_demand, self.resultmatrices.path)
         
         # Add vans and save demand matrices
         for ap in self.ass_model.assignment_periods:
@@ -414,7 +449,7 @@ class ModelSystem:
     def _distribute_tours(self, container, purpose, mode, impedance, origs):
         for orig in origs:
             demand = purpose.distribute_tours(mode, impedance[mode], orig)
-            container.add_demand(demand)
+            container.add_demand(demand, self.resultmatrices.path)
 
     def _update_ratios(self, impedance, tp):
         """Calculate time and cost ratios.
@@ -524,7 +559,7 @@ class AgentModelSystem(ModelSystem):
                     demand = purpose.calc_demand(estimation_mode)
                     if purpose.dest != "source":
                         for mode in demand:
-                            self.dtm.add_demand(demand[mode])
+                            self.dtm.add_demand(demand[mode], self.resultmatrices.path)
                         for mode in purpose.modes:
                             self.travel_modes[mode] = True
                 else:
@@ -591,7 +626,7 @@ class AgentModelSystem(ModelSystem):
         #Add all tours to time periods
         for person in self.dm.population:
             for tour in person.tours:
-                self.dtm.add_demand(tour)
+                self.dtm.add_demand(tour, self.resultmatrices.path)
         if is_last_iteration:
             self.event_handler.on_agent_model_results_calculated(previous_iter_impedance)
         log.info("Demand calculation completed")
