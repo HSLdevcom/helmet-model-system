@@ -98,9 +98,8 @@ class DepartureTimeModel:
                             timediff = numpy.divide(numpy.array(time_ve1["transit_work"])-numpy.array(time_ve0["transit_work"]), numpy.array(time_ve0["transit_work"]), out=numpy.zeros_like(numpy.array(time_ve0["transit_work"])), where=numpy.array(time_ve0["transit_work"])!=0)
                         else:
                             timediff = numpy.divide(numpy.array(time_ve1["transit_leisure"])-numpy.array(time_ve0["transit_leisure"]), numpy.array(time_ve0["transit_leisure"]), out=numpy.zeros_like(numpy.array(time_ve0["transit_leisure"])), where=numpy.array(time_ve0["transit_leisure"])!=0)
-                    time_ve0.close()
-                    time_ve1.close()
-
+                        time_ve0.close()
+                        time_ve1.close()
                     self._add_2d_demand(
                         share[time_period], ass_class, time_period,
                         demand.matrix, position2, timediff, worktrip, demand.purpose.name, demand.mode)
