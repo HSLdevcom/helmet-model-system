@@ -492,7 +492,7 @@ segment_results = {
     "total_boardings": "boa",
     "transfer_boardings": "trb",
     "total_alightings": "ali",
-    "tranfer_alightings": "tra",
+    "transfer_alightings": "tra",
 }
 # Hard-coded in Emme congested transit assignment
 congestion_cost = "ccost"
