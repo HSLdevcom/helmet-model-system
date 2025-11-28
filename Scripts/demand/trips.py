@@ -139,7 +139,7 @@ class DemandModel:
         for model in self._income_models:
             model.predict()
 
-    def generate_tours(self):
+    def generate_tours(self, summer: bool=False):
         """Generate vector of tours for each tour purpose.
 
         Not used in agent-based simulation.
@@ -161,7 +161,19 @@ class DemandModel:
                 nr_tours = ( prob_c[combination] * segments["car_users"]
                            + prob_n[combination] * segments["no_car"])
                 for purpose in combination:
-                    self.purpose_dict[purpose].gen_model.tours += nr_tours
+                    mult = 1
+                    if summer:
+                        if purpose == "hc":
+                            mult = 0.230769
+                        if purpose == "hu":
+                            mult = 0.355534806
+                        if purpose == "hw":
+                            mult = 0.831417686
+                        if purpose == "hs":
+                            mult = 1.114468997
+                        if purpose == "ho":
+                            mult = 0.993410094
+                    self.purpose_dict[purpose].gen_model.tours += nr_tours*mult
                 nr_tours_sums["-".join(combination)] = nr_tours.sum()
             result_data[age] = nr_tours_sums.sort_index()
         self.resultdata.print_matrix(

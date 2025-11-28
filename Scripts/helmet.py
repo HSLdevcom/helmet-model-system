@@ -25,6 +25,7 @@ def main(args):
     forecast_zonedata_path: str = args.forecast_data_path
     results_path: str = args.results_path
     emme_project_path: str = args.emme_path
+    summer = False
 
     if args.end_assignment_only:
         # Raise error if there is no demand matrix in results folder
@@ -158,10 +159,10 @@ def main(args):
         try:
             if i == iterations:
                 log.info(log_header(f" Starting final iteration "), extra=log_extra)
-                impedance = model.run_iteration(impedance, "last",args.export_estimation_data)
+                impedance = model.run_iteration(impedance, "last",args.export_estimation_data, summer)
             else:
                 log.info(log_header(f" Starting iteration {i} "), extra=log_extra)
-                impedance = model.run_iteration(impedance, i,args.export_estimation_data)
+                impedance = model.run_iteration(impedance, i,args.export_estimation_data, summer)
             log_extra["status"]["completed"] += 1
         except Exception as error:
             log_extra["status"]["failed"] += 1
