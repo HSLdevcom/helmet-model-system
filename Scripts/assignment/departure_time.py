@@ -127,7 +127,7 @@ class DepartureTimeModel:
                        mtx: numpy.ndarray, 
                        mtx_pos: Tuple[int, int], timediff, worktrip, purposename, mode):
         """Slice demand, include transpose and add for one time period. ???types"""
-        if purposename in ["hw","hc","hu","hs","ho","hoo","wo","oo"] and "transit" in mode:
+        if purposename in ["hw","hc","hu","hs","ho","hoo","wo","oo"] and "transit" in mode and timediff != 1:
             if worktrip:
                 mtx = mtx + mtx*timediff[:mtx.shape[0], :mtx.shape[1]] * -0.138
             else:
@@ -157,7 +157,7 @@ class DepartureTimeModel:
         demand_position = cast(Tuple[int,int,int],demand.position) #type checker hint
         demand.purpose.name = cast(str,demand.purpose.name) #type checker hint
         mtx = demand.matrix
-        if purposename in ["hw","hc","hu","hs","ho","hoo","wo","oo","hwp","hop","sop","oop"] and "transit" in mode:
+        if purposename in ["hw","hc","hu","hs","ho","hoo","wo","oo","hwp","hop","sop","oop"] and "transit" in mode and timediff != 1:
             if worktrip:
                 mtx = mtx + mtx*timediff[:mtx.shape[0], :mtx.shape[1]] * -0.138
             else:
