@@ -24,9 +24,11 @@ class DepartureTimeModel:
     """
     def __init__(self, 
                  nr_zones: int, 
-                 time_periods: List[str]=list(param.backup_demand_share)):
+                 time_periods: List[str]=list(param.backup_demand_share),
+                 reference_scenario: str=""):
         self.nr_zones = nr_zones
         self.time_periods = time_periods
+        self.reference_scenario = reference_scenario
         self.demand: Optional[Union[int,Dict[str,Dict[str,numpy.ndarray]]]] = None
         self.old_car_demand: Union[int,numpy.ndarray] = 0
         self.init_demand()
@@ -69,7 +71,7 @@ class DepartureTimeModel:
 
         return {"rel_gap": relative_gap, "max_gap": max_gap}
 
-    def add_demand(self, demand: Union[Demand, Tour], path: str):
+    def add_demand(self, demand: Union[Demand, Tour], resultspath: str, disruption_mode: str=None):
         """Add demand matrix for whole day.
         
         Parameters
@@ -91,9 +93,9 @@ class DepartureTimeModel:
                 for time_period in self.time_periods:
                     worktrip = demand.purpose.name in ["hw", "hc", "hu", "hwp"]
                     timediff = 1
-                    if path:
-                        time_ve0 = omx.open_file(Path(path) / "ve0 time" / f"time_{time_period}.omx", "r")
-                        time_ve1 = omx.open_file(Path(path) / f"time_{time_period}.omx", "r")
+                    if disruption_mode=="read":
+                        time_ve0 = omx.open_file(Path(resultspath).parent / self.reference_scenario / "Matrices"/ f"time_{time_period}.omx", "r")
+                        time_ve1 = omx.open_file(Path(resultspath) / "Matrices" / f"time_{time_period}.omx", "r")
                         if worktrip:
                             timediff = numpy.divide(numpy.array(time_ve1["transit_work"])-numpy.array(time_ve0["transit_work"]), numpy.array(time_ve0["transit_work"]), out=numpy.zeros_like(numpy.array(time_ve0["transit_work"])), where=numpy.array(time_ve0["transit_work"])!=0)
                         else:
@@ -107,9 +109,9 @@ class DepartureTimeModel:
                 for time_period in self.time_periods:
                     worktrip = demand.purpose.name in ["hw", "hc", "hu", "hwp"]
                     timediff = 1
-                    if path:
-                        time_ve0 = omx.open_file(Path(path) / "ve0 time" / f"time_{time_period}.omx", "r")
-                        time_ve1 = omx.open_file(Path(path) / f"time_{time_period}.omx", "r")
+                    if disruption_mode=="read":
+                        time_ve0 = omx.open_file(Path(resultspath).parent / self.reference_scenario / "Matrices"/ f"time_{time_period}.omx", "r")
+                        time_ve1 = omx.open_file(Path(resultspath) / "Matrices" / f"time_{time_period}.omx", "r")
                         if worktrip:
                             timediff = numpy.divide(numpy.array(time_ve1["transit_work"])-numpy.array(time_ve0["transit_work"]), numpy.array(time_ve0["transit_work"]), out=numpy.zeros_like(numpy.array(time_ve0["transit_work"])), where=numpy.array(time_ve0["transit_work"])!=0)
                         else:
@@ -129,9 +131,13 @@ class DepartureTimeModel:
         """Slice demand, include transpose and add for one time period. ???types"""
         if purposename in ["hw","hc","hu","hs","ho","hoo","wo","oo"] and "transit" in mode and timediff != 1:
             if worktrip:
-                mtx = mtx + mtx*timediff[:mtx.shape[0], :mtx.shape[1]] * -0.138
+                mtx = mtx 
+                if timediff:
+                    mtx = mtx + mtx*timediff[:mtx.shape[0], :mtx.shape[1]] * -0.138
             else:
-                mtx = mtx + mtx*timediff[:mtx.shape[0], :mtx.shape[1]] * -0.221
+                mtx = mtx 
+                if timediff: 
+                    mtx = mtx + mtx*timediff[:mtx.shape[0], :mtx.shape[1]] * -0.221
         mtx = numpy.nan_to_num(mtx)
         r_0 = mtx_pos[0]
         c_0 = mtx_pos[1]

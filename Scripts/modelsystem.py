@@ -61,7 +61,8 @@ class ModelSystem:
                  assignment_model: AssignmentModel, 
                  name: str,
                  event_handler: EventHandler,
-                 estimation_data_path: Path = None):
+                 estimation_data_path: Path = None,
+                 reference_scenario: str=""):
         self.event_handler = event_handler
 
         self.event_handler.on_model_system_initialized(self,
@@ -76,6 +77,8 @@ class ModelSystem:
         self.zone_numbers: numpy.array = self.ass_model.zone_numbers
         self.travel_modes: Dict[str, bool] = {}  # Dict instead of set, to preserve order
 
+        self.reference_scenario = reference_scenario
+
         # Input data
         self.zdata_base = BaseZoneData(
             base_zone_data_path, self.zone_numbers, event_handler)
@@ -89,10 +92,9 @@ class ModelSystem:
         self.event_handler.on_zone_data_loaded(self.zdata_base, self.zdata_forecast)
         
         # Output data
-        self.resultspath = results_path
-        self.resultmatrices = MatrixData(
-            os.path.join(results_path, name, "Matrices"))
-        self.resultdata = ResultsData(os.path.join(results_path, name))
+        self.resultspath = Path(results_path) / name
+        self.resultmatrices = MatrixData(Path(self.resultspath) / "Matrices")
+        self.resultdata = ResultsData(self.resultspath)
 
         self.dm = self._init_demand_model()
         self.fm = FreightModel(
@@ -100,7 +102,7 @@ class ModelSystem:
         self.em = ExternalModel(
             self.basematrices, self.zdata_forecast, self.zone_numbers)
         self.dtm = dt.DepartureTimeModel(
-            self.ass_model.nr_zones, self.ass_model.time_periods)
+            self.ass_model.nr_zones, self.ass_model.time_periods, reference_scenario)
 
         #init Impedance transformers
         self.imptrans = ImpedanceTransformer(self.event_handler,
@@ -118,7 +120,7 @@ class ModelSystem:
     def _init_demand_model(self):
         return DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=False)
 
-    def _add_internal_demand(self, previous_iter_impedance, is_last_iteration:bool, estimation_mode:bool=False, summer: bool=False, disruption_mode=None, reference_scenario=None):
+    def _add_internal_demand(self, previous_iter_impedance, is_last_iteration:bool, estimation_mode:bool=False, summer: bool=False, disruption_mode=None):
         """Produce mode-specific demand matrices.
 
         Add them for each time-period to container in departure time model.
@@ -196,22 +198,31 @@ class ModelSystem:
                 self.event_handler.on_purpose_demand_calculated(purpose, demand)
                 if purpose.dest != "source":
                     modes = demand.keys()
-                    total_demand = numpy.stack([d.matrix for d in demand_pax.values()])
+                    stackable_demand = []
+                    for k, d in demand_pax.items():
+                        log.debug(f"Purpose {purpose.name} mode {k} shape: {d.matrix.shape}")
+                        if k in ["pnr_car", "pnr_transit"]:
+                            continue
+                        stackable_demand.append(d.matrix)
+                    # total_demand = numpy.stack([d.matrix for d in demand_pax.values()])
+                    total_demand = numpy.stack(stackable_demand)
                     if disruption_mode == "read":
                         # Load references based on results path and reference scenario name
-                        reference_scenario_matrices = Path(self.resultspath).parent / reference_scenario / "Matrices"
+                        reference_scenario_matrices = Path(self.resultspath).parent / self.reference_scenario / "Matrices"
                         reference_shares = numpy.load(Path(reference_scenario_matrices) / f"saved_shares_{purpose.name}.npy")
                         reference_demand = numpy.load(Path(reference_scenario_matrices) / f"saved_demand_{purpose.name}.npy")
-                        unmodified_demand = numpy.load(Path(self.resultmatrices)  / f"saved_demand_{purpose.name}.npy")
+                        unmodified_demand = numpy.load(Path(self.resultspath) / "Matrices" / f"saved_demand_{purpose.name}.npy")
                     if disruption_mode == "write":
                         mode_sums = total_demand.sum(axis=0)
                         mode_prob = numpy.divide(total_demand, mode_sums[None,:,:], out=numpy.zeros_like(total_demand), where=mode_sums!=0)
-                        numpy.save(Path(self.resultmatrices) / f"saved_shares_{purpose.name}.npy", mode_prob) # Tallentaa kulkutapaosuudet
-                        numpy.save(Path(self.resultmatrices) / f"saved_demand_{purpose.name}.npy", mode_sums) # Tallentaa kokonaiskysynnän - vietävä filename_d:n polulle ennen lopullisen Ve1 ajamista
+                        numpy.save(Path(self.resultspath) / "Matrices" / f"saved_shares_{purpose.name}.npy", mode_prob) # Tallentaa kulkutapaosuudet
+                        numpy.save(Path(self.resultspath) / "Matrices" / f"saved_demand_{purpose.name}.npy", mode_sums) # Tallentaa kokonaiskysynnän - vietävä filename_d:n polulle ennen lopullisen Ve1 ajamista
 
                     for mode in demand:
                         if disruption_mode == "read":
                             for i, m in enumerate(modes):
+                                if m in ["pnr_car", "pnr_transit"]:
+                                    continue
                                 if "ho" in purpose.name:
                                     prop_new = 0.5
                                 elif "hs" in purpose.name:
@@ -224,7 +235,7 @@ class ModelSystem:
                             if mode == "car" and purpose.name in param_car.car_driver_share:
                                 demand[m].matrix = demand[m].matrix * param_car.car_driver_share.get(purpose.name, 1.0)
                     
-                        self.dtm.add_demand(demand[mode], self.resultmatrices.path)
+                        self.dtm.add_demand(demand[mode], self.resultspath, disruption_mode=disruption_mode)
                         self.travel_modes[mode] = True
 
     # possibly merge with init
@@ -305,7 +316,8 @@ class ModelSystem:
                       previous_iter_impedance: Dict[str, Dict[str, numpy.ndarray]],
                       iteration: Union[int, str] = None,
                       estimation_mode=False,
-                      summer=False):
+                      summer=False,
+                      disruption_mode=None):
         """Calculate demand and assign to network.
 
         Parameters
@@ -340,8 +352,8 @@ class ModelSystem:
 
         # Add truck and trailer truck demand, to time-period specific
         # matrices (DTM), used in traffic assignment
-        self.dtm.add_demand(self.trucks, self.resultmatrices.path)
-        self.dtm.add_demand(self.trailer_trucks, self.resultmatrices.path)
+        self.dtm.add_demand(self.trucks, self.resultspath, disruption_mode=disruption_mode)
+        self.dtm.add_demand(self.trailer_trucks, self.resultspath, disruption_mode=disruption_mode)
 
         # Update car density
         prediction = self.cdm.predict()
@@ -350,7 +362,7 @@ class ModelSystem:
         self.event_handler.on_car_density_updated(iteration, prediction)
 
         # Calculate internal demand
-        self._add_internal_demand(previous_iter_impedance, iteration=="last", estimation_mode, summer, disruption_mode="write", reference_scenario="")
+        self._add_internal_demand(previous_iter_impedance, iteration=="last", estimation_mode, summer, disruption_mode=disruption_mode)
         self.event_handler.on_internal_demand_added(self.dtm)
 
         # Calculate external demand
@@ -368,7 +380,7 @@ class ModelSystem:
                 int_demand = self._sum_trips_per_zone(mode)
             ext_demand = self.em.calc_external(mode, int_demand)
             self.event_handler.on_external_demand_calculated(ext_demand)
-            self.dtm.add_demand(ext_demand, self.resultmatrices.path)
+            self.dtm.add_demand(ext_demand, self.resultspath)
         
         # Calculate tour sums and mode shares
         tour_sum = {mode: self._sum_trips_per_zone(mode, include_dests=False)
@@ -714,7 +726,7 @@ class AgentModelSystem(ModelSystem):
                     if purpose.dest != "source":
                         for mode in demand:
                             self.travel_modes[mode] = True
-                            self.dtm.add_demand(demand[mode], self.resultmatrices.path)
+                            self.dtm.add_demand(demand[mode], self.resultspath)
                 else:
                     for mode in purpose.modes:
                         self.travel_modes[mode] = True
@@ -767,7 +779,7 @@ class AgentModelSystem(ModelSystem):
             purpose.print_data()
         for person in self.dm.population:
             for tour in person.tours:
-                self.dtm.add_demand(tour, self.resultmatrices.path)
+                self.dtm.add_demand(tour, self.resultspath)
         if is_last_iteration:
             random.seed(zone_param.population_draw)
             self.dm.predict_income()

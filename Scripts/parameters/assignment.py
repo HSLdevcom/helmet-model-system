@@ -255,7 +255,7 @@ stopping_criteria_fine = {
 }
 # Stopping criteria for traffic assignment in loop
 stopping_criteria_coarse = {
-    "max_iterations": 200,
+    "max_iterations": 5,
     "relative_gap": 0.0001,
     "best_relative_gap": 0.01,
     "normalized_gap": 0.005,
