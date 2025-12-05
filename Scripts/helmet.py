@@ -26,6 +26,7 @@ def main(args):
     results_path: str = args.results_path
     emme_project_path: str = args.emme_path
     summer = False
+    disruption_mode = "write"
     
     # The following checks will be moved to helmet_validate_inputfiles.py at a later date
     if args.save_matrices:
@@ -173,10 +174,10 @@ def main(args):
         try:
             if i == iterations:
                 log.info(log_header(f" Starting final iteration "), extra=log_extra)
-                impedance = model.run_iteration(impedance, "last",args.export_estimation_data, summer)
+                impedance = model.run_iteration(impedance, "last",args.export_estimation_data, summer, disruption_mode)
             else:
                 log.info(log_header(f" Starting iteration {i} "), extra=log_extra)
-                impedance = model.run_iteration(impedance, i,args.export_estimation_data, summer)
+                impedance = model.run_iteration(impedance, i,args.export_estimation_data, summer, disruption_mode)
             log_extra["status"]["completed"] += 1
         except Exception as error:
             log_extra["status"]["failed"] += 1
