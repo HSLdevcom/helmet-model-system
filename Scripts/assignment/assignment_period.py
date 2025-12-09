@@ -77,7 +77,7 @@ class AssignmentPeriod(Period):
         """
         return "@{}_{}".format(attr, self.name)
 
-    def prepare(self, segment_results: Dict[str,Dict[str,str]]):
+    def prepare(self, segment_results: Dict[str,Dict[str,str]], node_results: Dict[str,Dict[str,str]]):
         """Prepare network for assignment.
 
         Calculate road toll cost, set boarding penalties,
@@ -95,6 +95,7 @@ class AssignmentPeriod(Period):
                     Extra attribute name (@transit_work_vol_aht/...)
         """
         self._segment_results = segment_results
+        self._node_results = node_results
         # Only calculate road cost if road costs have been defined
         self._calc_road_cost()
         self._calc_boarding_penalties()
@@ -228,7 +229,7 @@ class AssignmentPeriod(Period):
         transit_zones = {node.label for node in network.nodes()}
         tc = "transit_work"
         spec = TransitSpecification(
-            self._segment_results[tc], self.extra("hw"),
+            self._segment_results[tc], self._node_results[tc], self.extra("hw"),
             self.emme_matrices[tc], count_zone_boardings=True)
         is_in_transit_zone_attr = param.is_in_transit_zone_attr.replace(
             "ui", "data")
@@ -617,7 +618,7 @@ class AssignmentPeriod(Period):
     def _specify(self):
         self._car_spec = CarSpecification(self.extra, self.emme_matrices)
         self._transit_specs = {tc: TransitSpecification(
-                self._segment_results[tc], self.extra("hw"),
+                self._segment_results[tc], self._node_results, self.extra("hw"),
                 self.emme_matrices[tc])
             for tc in param.transit_classes}
         self.bike_spec = {

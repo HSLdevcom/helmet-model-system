@@ -399,8 +399,9 @@ class EmmeAssignmentModel(AssignmentModel):
         scenario : inro.modeller.emmebank.scenario
             Emme scenario to create attributes for
         extra : function
-            Small helper function which modifies string
-            (e.g., self._extra)
+            Small helper function which modifies string, 
+            adding the @ identifier, and _[time_period] suffix
+            (e.g., self._extra or assignment_period.extra)
         """
         # Create link attributes
         ass_classes = list(param.emme_matrices) + ["bus"]
@@ -413,8 +414,9 @@ class EmmeAssignmentModel(AssignmentModel):
             self.emme_project.create_extra_attribute(
                 "LINK", extra(attr_s), attr_s,
                 overwrite=True, scenario=scenario)
-        # Create node and transit segment attributes
+        # Create  transit segment attributes
         attr = param.segment_results
+        # Prepares segment extra attributes, e.g. @transit_wor_vol_aht, @transit_lei_boa_iht
         seg_results = {tc: {res: extra(tc[:11]+"_"+attr[res])
                 for res in param.segment_results}
             for tc in param.transit_classes}
@@ -427,6 +429,17 @@ class EmmeAssignmentModel(AssignmentModel):
                     self.emme_project.create_extra_attribute(
                         "NODE", extra(tc[:10]+"n_"+attr[res]),
                         tc+" "+res, overwrite=True, scenario=scenario)
+        # Create node attributes for waiting times
+        attr = param.waiting_time_results
+        node_results = {tc: {res: extra(tc[:11]+"_"+attr[res])
+                for res in param.waiting_time_results} 
+            for tc in param.transit_classes}
+        for tc in param.transit_classes:
+            for res in param.waiting_time_results:
+                self.emme_project.create_extra_attribute(
+                    "NODE", node_results[tc][res],
+                    tc+" "+res, overwrite=True, scenario=scenario)
+
         self.emme_project.create_extra_attribute(
             "TRANSIT_SEGMENT", param.extra_waiting_time["penalty"],
             "wait time st.dev.", overwrite=True, scenario=scenario)
@@ -440,7 +453,7 @@ class EmmeAssignmentModel(AssignmentModel):
             "TRANSIT_SEGMENT", extra(param.uncongested_transit_time),
             "uncongested transit time", overwrite=True, scenario=scenario)
         log.debug(f"Created extra attributes for scenario {scenario}, time period {time_period_name}")
-        return seg_results
+        return seg_results, node_results
 
     def calc_noise(self) -> pandas.Series:
         """Calculate noise according to Road Traffic Noise Nordic 1996.

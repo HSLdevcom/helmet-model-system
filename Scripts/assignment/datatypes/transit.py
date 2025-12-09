@@ -32,6 +32,7 @@ class TransitSpecification:
     """
     def __init__(self, 
                  segment_results: Dict[str,str], 
+                 node_results: Dict[str,Dict[str,str]],
                  headway_attribute: str,
                  emme_matrices: Dict[str, Union[str, Dict[str, str]]], 
                  count_zone_boardings: bool = False):
@@ -78,9 +79,14 @@ class TransitSpecification:
             "journey_levels": None,
             "performance_settings": param.performance_settings,
         }
+        waiting_times = {
+            "type": "ACTUAL"
+        }
+        waiting_times.update(node_results)
         self.ntw_results_spec = {
             "type": "EXTENDED_TRANSIT_NETWORK_RESULTS",
             "on_segments": segment_results,
+            "at_nodes": waiting_times
             }
         subset = "by_mode_subset"
         self.transit_result_spec = {

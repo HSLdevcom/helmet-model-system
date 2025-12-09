@@ -494,6 +494,11 @@ segment_results = {
     "total_alightings": "ali",
     "tranfer_alightings": "tra",
 }
+waiting_time_results = {
+    "all_boardings_minimum": "wtm",
+    "all_boardings_average": "wta",
+    "all_boardings_maximum": "wtx",
+}
 # Hard-coded in Emme congested transit assignment
 congestion_cost = "ccost"
 uncongested_transit_time = "base_timtr"
