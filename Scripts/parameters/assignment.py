@@ -492,7 +492,7 @@ segment_results = {
     "total_boardings": "boa",
     "transfer_boardings": "trb",
     "total_alightings": "ali",
-    "tranfer_alightings": "tra",
+    "transfer_alightings": "tra",
 }
 waiting_time_results = {
     "all_boardings_minimum": "wtm",
