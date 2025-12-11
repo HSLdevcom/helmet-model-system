@@ -645,7 +645,7 @@ class AssignmentPeriod(Period):
         network = self.emme_scenario.get_network()
         time_attr = self.extra("car_time")
         for link in network.links():
-            if link.auto_time > 1e4: link.auto_time = 1e4
+            if link.auto_time > 1e3: link.auto_time = 1e3
             link[time_attr] = link.auto_time
             #prevent errors from non-car links
             #assignment only uses mode-based subnetworks, 
