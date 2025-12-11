@@ -685,7 +685,7 @@ class AgentModelSystem(ModelSystem):
         random.seed(zone_param.population_draw)
         return DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=True)
 
-    def _add_internal_demand(self, previous_iter_impedance, is_last_iteration, estimation_mode=False):
+    def _add_internal_demand(self, previous_iter_impedance, is_last_iteration, estimation_mode=False, summer=False, disruption_mode=None):
         """Produce tours and add fractions of them
         for each time-period to container in departure time model.
 
