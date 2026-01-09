@@ -2,9 +2,12 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, NamedTuple, Tuple, TYPE_CHECKING
 import numpy as np
+
+from datatypes.zone import Zone
 if TYPE_CHECKING:
     from datatypes.purpose import Purpose
 
+from datatypes.tour import Tour
 from parameters.assignment import assignment_classes
 from parameters.impedance_transformation import impedance_share
 
@@ -147,6 +150,34 @@ class ParkAndRideModel(ImpedanceTransformerBase):
         results = self._process_slices(_logsum_slice, self._purpose.zone_data.nr_zones)
         logsum = np.concatenate(results, axis=0)
         return logsum
+    
+    def distribute_tour(self, tour: Tour, pnr_purpose: Purpose) -> Tuple[Tour,Tour]:
+        """Distribute tour to facilities based on utilities.
+
+        Parameters
+        ----------
+        demand : np.ndarray
+            2d numpy array of shape (nr_zones, nr_zones)
+        Return
+        ------
+        Tuple of car and transit demand matrices
+        """
+        
+        utils = np.array([self._saved_utilities.car_utility[tour.orig,f,tour.dest] \
+            + self._saved_utilities.transit_utility[f,tour.dest] \
+            + self._saved_utilities.facility_utility[f] for f in range(list(self._saved_utilities.facility_utility))])
+        fac_len = len(list(self._saved_utilities.facility_utility))
+        exps = np.exp(utils)
+        expsum = np.sum(exps)
+        probs = exps/expsum
+        chosen_facility = np.random.choice(fac_len, 1, p=probs)
+
+        car_tour = Tour(pnr_purpose, Zone(tour.orig),tour.person_id)
+        transit_tour = Tour(pnr_purpose, Zone(self._facilities[chosen_facility].zone_id),tour.person_id)
+        
+        self._facilities[chosen_facility].used_capacity += 1
+        
+        return car_tour, transit_tour
     
     def distribute_demand(self, demand: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """Distribute tour demand to facilities based on utilities.

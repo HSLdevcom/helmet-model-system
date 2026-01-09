@@ -12,6 +12,7 @@ from assignment.emme_assignment import EmmeAssignmentModel
 from assignment.mock_assignment import MockAssignmentModel
 from dataclasses import asdict
 
+from models.park_and_ride_model import ParkAndRidePseudoPurpose
 import utils.log as log
 from utils.zone_interval import ArrayAggregator
 import assignment.departure_time as dt
@@ -692,11 +693,18 @@ class AgentModelSystem(ModelSystem):
         tour_probs = self.dm.generate_tour_probs()
         log.info("Assigning mode and destination for {} agents ({} % of total population)".format(
             len(self.dm.population), int(zone_param.agent_demand_fraction*100)))
+        #Initilialize sec_dest data containers
         purpose = self.dm.purpose_dict["hoo"]
         sec_dest_tours = {mode: [defaultdict(list) for _ in purpose.zone_numbers]
             for mode in purpose.modes}
         car_users = pandas.Series(
             0, self.zdata_forecast.zone_numbers[self.dm.car_use_model.bounds])
+        #Reset park and ride used capacities to zero
+        pnr_model = self.dm.purpose_dict["hw"].park_and_ride_model
+        pnr_model.apply_crowding_penalty()
+        pnr_model._facilities = [0 for _ in pnr_model._facilities]
+        pnr_purpose = ParkAndRidePseudoPurpose(self)
+        #Add tours with mode and destination
         for person in self.dm.population:
             person.decide_car_use()
             car_users[person.zone.number] += person.is_car_user
@@ -704,6 +712,13 @@ class AgentModelSystem(ModelSystem):
             for tour in person.tours:
                 tour.choose_mode(person.is_car_user)
                 tour.choose_destination(sec_dest_tours)
+                if purpose.park_and_ride_model is not None:
+                    car_tour,transit_tour = pnr_model.distribute_tour(tour)
+                    car_tour.set_mode("pnr_car")
+                    transit_tour.set_mode("pnr_transit")
+                    person.add_tours(car_tour)
+                    person.add_tours(transit_tour)
+
         self.dm.car_use_model.print_results(
             car_users / self.dm.zone_population, self.dm.zone_population)
         log.info("Primary destinations assigned")
@@ -715,6 +730,7 @@ class AgentModelSystem(ModelSystem):
         elif nr_threads <= 0:
             nr_threads = 1
         bounds = next(iter(purpose.sources)).bounds
+        #sec_dest trips distribution
         modes = purpose.modes if param.always_congested or is_last_iteration else ["car"]
         for mode in modes:
             threads = []
@@ -731,6 +747,7 @@ class AgentModelSystem(ModelSystem):
                 thread.join()
         for purpose in self.dm.tour_purposes:
             purpose.print_data()
+        #aggregate demand to matrices
         for person in self.dm.population:
             for tour in person.tours:
                 self.dtm.add_demand(tour)
