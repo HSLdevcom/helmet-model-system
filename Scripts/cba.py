@@ -34,7 +34,6 @@ TRANSIT_AGGREGATIONS = {
 }
 TRANSIT_AGGREGATIONS_FALLBACK = {
     "bus": ("HSL-bussi", "ValluVakio", "ValluPika"),
-    "trunk": ("HSL-runkob",),
     "train": ("HSL-juna", "muu_juna"),
     "tram": ("ratikka", "pikaratikk"),
 }
@@ -222,6 +221,7 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
     transit_aggs = TRANSIT_AGGREGATIONS
     if not all(submode in transit_mile_diff.index for submodes in transit_aggs.values() for submode in submodes):
         transit_aggs = TRANSIT_AGGREGATIONS_FALLBACK
+        mal2023 = True
     for mode in transit_aggs:
         transit_mile_diff.loc[mode] = 0
         for submode in TRANSIT_AGGREGATIONS[mode]:
@@ -229,6 +229,10 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
     ws = workbook["Tuottajahyodyt"]
     cols = CELL_INDICES["transit_miles"]["cols"]
     rows = CELL_INDICES["transit_miles"]["rows"][year]
+    if mal2023:
+        log.warning("Using fallback transit aggregations for MAL2023 scenario")
+        rows["HSL-runkob"] = rows["trunk"]
+        rows.pop("trunk")
     for mode in rows:
         for imp_type in cols:
             ws[cols[imp_type]+rows[mode]] = transit_mile_diff[imp_type][mode]
