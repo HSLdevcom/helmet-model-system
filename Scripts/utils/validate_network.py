@@ -141,7 +141,7 @@ def validate(network, fares=None):
                     raise ValueError(msg)
         
         if (link.i_node.is_centroid or link.j_node.is_centroid) and link.type not in param.connector_link_types:
-            msg = "Link {} is a connector and must be of connector link type {}".format(
+            msg = "Link {} is a connector and must be one of the connector link types: {}".format(
                 link.id, param.connector_link_types)
             log.error(msg)
             raise ValueError(msg)
