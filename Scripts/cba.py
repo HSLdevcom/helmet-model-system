@@ -32,6 +32,12 @@ TRANSIT_AGGREGATIONS = {
     "train": ("HSL-juna-2", "muu_juna", "HSL-juna-1", "HSL-juna-3"),
     "tram": ("ratikka", "pikaratikk"),
 }
+TRANSIT_AGGREGATIONS_FALLBACK = {
+    "bus": ("HSL-bussi", "ValluVakio", "ValluPika"),
+    "trunk": ("HSL-runkob",),
+    "train": ("HSL-juna", "muu_juna"),
+    "tram": ("ratikka", "pikaratikk"),
+}
 
 TRANSLATIONS = {
     "car_work": "ha_tyo",
@@ -212,7 +218,11 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
     # Calculate transit mile differences
     transit_mile_diff = (read(TRANSIT_KMS_FILE, scenario_1)
                          - read(TRANSIT_KMS_FILE, scenario_0))
-    for mode in TRANSIT_AGGREGATIONS:
+    # Fallback to older aggregation if the scenario is using the old vehicles (MAL2023)
+    transit_aggs = TRANSIT_AGGREGATIONS
+    if not all(submode in transit_mile_diff.index for submodes in transit_aggs.values() for submode in submodes):
+        transit_aggs = TRANSIT_AGGREGATIONS_FALLBACK
+    for mode in transit_aggs:
         transit_mile_diff.loc[mode] = 0
         for submode in TRANSIT_AGGREGATIONS[mode]:
             transit_mile_diff.loc[mode] += transit_mile_diff.loc[submode]
