@@ -222,15 +222,15 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
     if not all(submode in transit_mile_diff.index for submodes in transit_aggs.values() for submode in submodes):
         transit_aggs = TRANSIT_AGGREGATIONS_FALLBACK
         mal2023 = True
+        log.info("Using fallback transit aggregations for MAL2023 scenario")
     for mode in transit_aggs:
         transit_mile_diff.loc[mode] = 0
-        for submode in TRANSIT_AGGREGATIONS[mode]:
+        for submode in transit_aggs[mode]:
             transit_mile_diff.loc[mode] += transit_mile_diff.loc[submode]
     ws = workbook["Tuottajahyodyt"]
     cols = CELL_INDICES["transit_miles"]["cols"]
     rows = CELL_INDICES["transit_miles"]["rows"][year]
     if mal2023:
-        log.warning("Using fallback transit aggregations for MAL2023 scenario")
         rows["HSL-runkob"] = rows["trunk"]
         rows.pop("trunk")
     for mode in rows:
