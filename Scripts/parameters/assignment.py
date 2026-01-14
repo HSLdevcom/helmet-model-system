@@ -97,7 +97,7 @@ official_node_numbers = {
     "hmaf": (800000, 800500),
     "hrjasf": (801000, 801500),
     "htpaf": (802000, 806000),
-    "hpaf": (810000, 816000),
+    "htpaf": (810000, 816000),
 }
 vdf_temp = ("(put(60/ul2)*(1+{}*put((volau+volad)/{})/"
             + "(ul1-get(2))))*(get(2).le.put(ul1*{}))*length+(get(2).gt."
