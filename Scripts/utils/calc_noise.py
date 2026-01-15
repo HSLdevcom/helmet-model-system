@@ -49,11 +49,9 @@ class NoiseModel:
         link = self.morning_network.link(link.i_node, link.j_node)
         rlink = link.reverse_link
         if reverse_traffic > 0:
-            speed = (60 * 2 * link.length
-                     / (link[self.car_morning]+rlink[self.car_morning]))
+            speed = (60 * 2 * link.length/(link[self.car_morning]+rlink[self.car_morning])) if rlink[self.car_morning] > 0 else 50.0
         else:
-            speed = (0.3*(60*link.length/link[self.car_morning])
-                     + 0.7*link.data2)
+            speed = (0.3*(60*link.length/link[self.car_morning]) + 0.7*link.data2) if link[self.car_morning] > 0 else 50.0
         speed = max(speed, 50.0)
 
         # Calculate start noise
