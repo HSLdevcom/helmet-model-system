@@ -139,7 +139,13 @@ def validate(network, fares=None):
                         timeperiod, link.id)
                     log.error(msg)
                     raise ValueError(msg)
-                
+        
+        if (link.i_node.is_centroid or link.j_node.is_centroid) and link.type not in param.connector_link_types:
+            msg = "Link {} is a connector and must be one of the connector link types: {}".format(
+                link.id, param.connector_link_types)
+            log.error(msg)
+            raise ValueError(msg)
+
         if link.i_node.is_centroid and link.j_node.is_centroid:
             msg = "Link {} is leading directly from centroid node {} to centroid node {}. This is not allowed.".format(link.id,link.i_node.number,link.j_node.number)
             log.error(msg)

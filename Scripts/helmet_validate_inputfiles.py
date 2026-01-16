@@ -183,7 +183,10 @@ def main(args):
             # Check if emmebank has scenarios with different zone numbers
             scenarios_with_different_zones = 0
             for scen in emmebank.scenarios():
-                if scen.zone_numbers != zone_numbers:
+                compared_zone_numbers = scen.zone_numbers
+                if compared_zone_numbers < 1:  # Skip empty scenarios
+                    continue
+                if compared_zone_numbers != zone_numbers:
                     scenarios_with_different_zones += 1
             if scenarios_with_different_zones > 0:
                 log.warn(f"{scenarios_with_different_zones} Scenarios with different zones found in EMME bank! Matrices will not be compatible between scenarios with different zones.")
