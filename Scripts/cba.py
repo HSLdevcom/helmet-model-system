@@ -32,6 +32,12 @@ TRANSIT_AGGREGATIONS = {
     "train": ("HSL-juna-2", "muu_juna", "HSL-juna-1", "HSL-juna-3"),
     "tram": ("ratikka", "pikaratikk"),
 }
+TRANSIT_AGGREGATIONS_FALLBACK = {
+    "bus": ("HSL-bussi", "ValluVakio", "ValluPika"),
+    "trunk": ("HSL-runkob", ),
+    "train": ("HSL-juna", "muu_juna"),
+    "tram": ("ratikka", "pikaratikk"),
+}
 
 TRANSLATIONS = {
     "car_work": "ha_tyo",
@@ -209,13 +215,18 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
     noise_diff = read(NOISE_FILE, scenario_1) - read(NOISE_FILE, scenario_0)
     ws[CELL_INDICES["noise"][year]] = sum(noise_diff["population"])
 
+    transit_vehicle_kms_tables = [read(TRANSIT_KMS_FILE, scenario_0), read(TRANSIT_KMS_FILE, scenario_1)]
+    for transit_vehicle_kms in transit_vehicle_kms_tables:
+        if all(submode in transit_vehicle_kms.index for submodes in TRANSIT_AGGREGATIONS.values() for submode in submodes):
+            transit_aggs = TRANSIT_AGGREGATIONS
+        else:
+            transit_aggs = TRANSIT_AGGREGATIONS_FALLBACK
+        for mode in transit_aggs:
+            transit_vehicle_kms.loc[mode] = 0  # Change aggregated mode to 0
+            for submode in transit_aggs[mode]:  # Go through the submodes and add their values to the aggregated mode
+                transit_vehicle_kms.loc[mode] += transit_vehicle_kms.loc[submode]
     # Calculate transit mile differences
-    transit_mile_diff = (read(TRANSIT_KMS_FILE, scenario_1)
-                         - read(TRANSIT_KMS_FILE, scenario_0))
-    for mode in TRANSIT_AGGREGATIONS:
-        transit_mile_diff.loc[mode] = 0
-        for submode in TRANSIT_AGGREGATIONS[mode]:
-            transit_mile_diff.loc[mode] += transit_mile_diff.loc[submode]
+    transit_mile_diff = transit_vehicle_kms_tables[1] - transit_vehicle_kms_tables[0]
     ws = workbook["Tuottajahyodyt"]
     cols = CELL_INDICES["transit_miles"]["cols"]
     rows = CELL_INDICES["transit_miles"]["rows"][year]
@@ -419,6 +430,13 @@ if __name__ == "__main__":
         help="Path to Results directory.")
     args = parser.parse_args()
     log.initialize(args)
+    
+    matching_vehicle_kms_cols = list(read(VEHICLE_KMS_FILE, args.baseline_scenario).columns) == list(read(VEHICLE_KMS_FILE, args.projected_scenario).columns)
+    matching_transit_kms_rows = list(read(TRANSIT_KMS_FILE, args.baseline_scenario).index) == list(read(TRANSIT_KMS_FILE, args.projected_scenario).index)
+    if not (matching_vehicle_kms_cols and matching_transit_kms_rows):
+        msg = "The data structure of transit_kms.txt or vehicle_kms_vdf.txt is different between scenarios. Check the results folders of scenarios being compared."
+        log.error(msg)
+        raise KeyError(msg)
     wb = load_workbook(os.path.join(SCRIPT_DIR, "CBA_kehikko.xlsx"))
     results = run_cost_benefit_analysis(
         args.baseline_scenario, args.projected_scenario, 1, wb)
