@@ -184,7 +184,7 @@ def main(args):
             scenarios_with_different_zones = 0
             for scen in emmebank.scenarios():
                 compared_zone_numbers = scen.zone_numbers
-                if compared_zone_numbers < 1:  # Skip empty scenarios
+                if len(compared_zone_numbers) < 1:  # Skip empty scenarios
                     continue
                 if compared_zone_numbers != zone_numbers:
                     scenarios_with_different_zones += 1
