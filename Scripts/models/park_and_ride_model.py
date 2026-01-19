@@ -240,7 +240,7 @@ class ParkAndRideModel(ImpedanceTransformerBase):
         return np.array([f.cost * facility_cost_w + f.time * facility_time_w + f.extra_utility for f in self._facilities])[None, None, :]
 
     def _calc_extra_utility(self, impedance: Dict[str, Dict[str, Dict[str, np.ndarray]]]):
-        """Calculate extra utility for each facility based on the number of shops within 1 km.
+        """Calculate extra utility for each facility based on the number of shops within x km.
         Does nothing if there are no facilities or if the extra utility has already been calculated.
 
         Args:
@@ -248,7 +248,7 @@ class ParkAndRideModel(ImpedanceTransformerBase):
         """
         if len(self._facilities) == 0 or self._facilities[0].extra_utility is not None:
             return
-        SHOP_SEARCH_RADIUS = 3.0 # Include shops within 1 km
+        SHOP_SEARCH_RADIUS = 3.0 # Include shops within x km
         try:
             shop_weight = destination_choice[self._purpose.name]['park_and_ride']['utility']['facility']['shops']
         except KeyError:
