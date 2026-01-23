@@ -7,6 +7,8 @@ from datahandling.resultdata import ResultsData
 import openmatrix as omx
 from datahandling.zonedata import ZoneData
 
+if TYPE_CHECKING:
+    from datatypes.person import Person
 from models.park_and_ride_model import ParkAndRideModel, ParkAndRidePseudoPurpose
 import parameters.zone as param
 from parameters.destination_choice import secondary_destination_threshold, destination_choice
@@ -195,6 +197,38 @@ class TourPurpose(Purpose):
         self.model.calc_basic_prob(impedance)
         self.dist = impedance["car"]["dist"]
 
+    def calc_pnr_demand(self, population, estimation_mode=False, log=None):
+        """Calculate pnr demand matrices for agent based model.
+              
+        Returns
+        -------
+        dict
+            Mode (car/transit/bike) : dict
+                Demand matrix for whole day : Demand
+        """
+        #Initiate OD matrix
+        gen_zones = numpy.zeros_like(self.zone_numbers)
+        attr_zones = numpy.zeros_like(self.zone_data.zone_numbers)
+        od_matrix = numpy.zeros((gen_zones.size,attr_zones.size))
+        #Aggregate tour to matrix
+        for person in population:
+            for tour in person.tours:
+                if tour.purpose_name == self.name and tour.mode == "park_and_ride":
+                    od_matrix[self.zone_data.zone_index(tour.orig),
+                              self.zone_data.zone_index(tour.dest)] += 1
+        log.info(f"Matrix contains {od_matrix.sum()} park and ride tours")
+        demand = {}
+        # if estimation_mode:
+        #     omx_file = omx.open_file(f"{self.resultdata.path}/estimation/demand_{self.name}.omx","w")
+        #     omx_file.create_mapping("zone_number",self.zone_data.all_zone_numbers)
+
+        car_demand, transit_demand = self.park_and_ride_model.distribute_demand(od_matrix)
+        pnr_purpose = ParkAndRidePseudoPurpose(self)
+        demand["pnr_car"] = Demand(pnr_purpose, "car", car_demand)
+        demand["pnr_transit"] = Demand(pnr_purpose, "transit", transit_demand)
+
+        return demand
+    
     def calc_demand(self, estimation_mode=False, add_sec_dest: bool = True):
         """Calculate purpose specific demand matrices.
               

@@ -731,6 +731,22 @@ class AgentModelSystem(ModelSystem):
                 thread.join()
         for purpose in self.dm.tour_purposes:
             purpose.print_data()
+            #Park and ride
+            if purpose.park_and_ride_model is not None:
+                # Apply penalty for overcrowded park and ride facilities.
+                MAX_PNR_ITERATIONS = 5 # Maximum number of iterations. Set to 0 for no penalty
+                for i in range(MAX_PNR_ITERATIONS):
+                    modified = purpose.park_and_ride_model.apply_crowding_penalty()
+                    purpose.calc_basic_prob(saved_pnr_impedance[purpose.name])
+                    demand = purpose.calc_pnr_demand(self.dm.population,estimation_mode=estimation_mode, log=log)
+                    log.debug(f"Park and ride crowding penalty iteration {i+1} modified {modified} facilities.")
+                    if modified < 1:                                
+                        break
+                log.debug("Park and ride demand calculation completed.")
+        #Add park and ride to time periods
+        self.dtm.add_demand(demand["pnr_car"])
+        self.dtm.add_demand(demand["pnr_transit"])
+        #Add all tours to time periods
         for person in self.dm.population:
             for tour in person.tours:
                 self.dtm.add_demand(tour)
