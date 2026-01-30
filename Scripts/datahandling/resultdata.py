@@ -74,7 +74,7 @@ class ResultsData:
             self._line_buffer[filename] = buffer
         buffer.write(line + "\n")
 
-    def print_matrix(self, data: pandas.DataFrame, filename: str, sheetname: str):
+    def print_matrix(self, data: pandas.DataFrame, filename: str, sheetname: str, pnr_iteration: int=0):
         """Save 2-d matrix data to buffer (printed to file when flushing).
 
         Saves matrix both in Excel format and as list in text file.
@@ -96,7 +96,11 @@ class ResultsData:
         else:
             # Get/create new worksheet
             if filename in self._xlsx_buffer:
-                ws = self._xlsx_buffer[filename].create_sheet(sheetname)
+                #Overwrite sheet if exists - only relevant to pnr iterations
+                if not sheetname in self._xlsx_buffer[filename].sheetnames:
+                    ws = self._xlsx_buffer[filename].create_sheet(sheetname)
+                else:
+                    ws = self._xlsx_buffer[filename][sheetname]
             else:
                 self._xlsx_buffer[filename] = Workbook()
                 ws = self._xlsx_buffer[filename].active
@@ -114,5 +118,5 @@ class ResultsData:
         for j in data.columns:
             for i in data.index:
                 self.print_line(
-                    "{}\t{}\t{}\t{}".format(i, j, sheetname, str(data[j][i])),
+                    "{}\t{}\t{}\t{}\t{}".format(i, j, sheetname, pnr_iteration, str(data[j][i])),
                     filename)

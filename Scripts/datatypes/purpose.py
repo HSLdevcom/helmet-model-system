@@ -135,7 +135,7 @@ class TourPurpose(Purpose):
         else:
             self.park_and_ride_model = None
 
-    def print_data(self):
+    def print_data(self, pnr_iteration=0):
         Purpose.print_data(self)
         for mode in self.histograms:
             self.resultdata.print_data(
@@ -143,7 +143,7 @@ class TourPurpose(Purpose):
                 "{}_{}".format(self.name, mode[0]))
             self.resultdata.print_matrix(
                 self.aggregates[mode].matrix, "aggregated_demand",
-                "{}_{}".format(self.name, mode))
+                "{}_{}".format(self.name, mode), pnr_iteration)
             self.resultdata.print_data(
                 self.own_zone_aggregates[mode].array,
                 "own_zone_demand.txt", "{}_{}".format(self.name, mode[0]))
@@ -229,7 +229,7 @@ class TourPurpose(Purpose):
 
         return demand
     
-    def calc_demand(self, estimation_mode=False, add_sec_dest: bool = True):
+    def calc_demand(self, estimation_mode=False, add_sec_dest: bool = True, pnr_iteration: int = 0):
         """Calculate purpose specific demand matrices.
               
         Returns
@@ -257,7 +257,7 @@ class TourPurpose(Purpose):
                 if add_sec_dest:
                     try:
                         self.sec_dest_purpose.gen_model.add_tours(mtx, mode, self)
-                    except AttributeError:
+                    except AttributeError: #If the tour does not generate sec_dest tours
                         pass
                 demand[mode] = Demand(self, mode, mtx)
                 if estimation_mode:
@@ -269,7 +269,7 @@ class TourPurpose(Purpose):
                 mtx, self.zone_numbers, self.zone_data.zone_numbers))
             self.own_zone_aggregates[mode].aggregate(pandas.Series(
                 numpy.diag(mtx), self.zone_numbers))
-        self.print_data()
+        self.print_data(pnr_iteration)
         if estimation_mode:
             omx_file.close()
         return demand
