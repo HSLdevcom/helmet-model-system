@@ -109,6 +109,7 @@ class ResultsData:
                 for j in range(0, data.shape[1]):
                     ws.cell(row=i+2, column=j+2).value = data.iloc[i, j]
         # Create text file
+        sheetname = sheetname.replace("park_and_ride", "pnr") #prevent splitting of park\tand\tride
         sheetname = sheetname.replace("_", "\t")
         for j in data.columns:
             for i in data.index:
