@@ -25,7 +25,7 @@ class MockAssignmentModel(AssignmentModel):
     def zone_numbers(self) -> list:
         """Numpy array of all zone numbers.""" 
         with self.matrices.open("time", "aht") as mtx:
-            zone_numbers = mtx.zone_numbers
+            zone_numbers = mtx.mtx_zone_numbers
         return zone_numbers
 
     @property
@@ -39,7 +39,7 @@ class MockAssignmentModel(AssignmentModel):
     def nr_zones(self) -> int:
         """int: Number of zones in assignment model."""
         return len(self.zone_numbers)
-
+    
     def calc_transit_cost(self, fare, peripheral_cost, default_cost=None):
         pass
 
@@ -65,12 +65,12 @@ class MockPeriod(Period):
     def zone_numbers(self):
         """Numpy array of all zone numbers.""" 
         with self.matrices.open("time", self.name) as mtx:
-            zone_numbers = mtx.zone_numbers
+            zone_numbers = mtx.mtx_zone_numbers
         return zone_numbers
 
     def assign(self, 
                matrices: Dict[str, numpy.ndarray], 
-               iteration: Optional[Union[int,str]]=None) -> Dict[str,Dict[str,numpy.ndarray]]:
+               iteration: int | str) -> Dict[str,Dict[str,numpy.ndarray]]:
         """Assign cars, bikes and transit for one time period.
         Get travel impedance matrices for one time period from assignment.
         

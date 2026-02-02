@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from datahandling.resultdata import ResultsData
     from inro.emme.database.scenario import Scenario # type: ignore
     from inro.emme.network.Network import Network # type: ignore
-    import numpy
+    import numpy.typing as npt
 
 
 class EmmeAssignmentModel(AssignmentModel):
@@ -261,8 +261,8 @@ class EmmeAssignmentModel(AssignmentModel):
 
     def calc_transit_cost(self, 
                           fares: TransitFareZoneSpecification, 
-                          peripheral_cost: 'numpy.ndarray', 
-                          default_cost: 'numpy.ndarray' = None):
+                          peripheral_cost: npt.NDArray, 
+                          default_cost: npt.NDArray|None = None):
         """Calculate transit zone cost matrix.
         
         Perform multiple transit assignments.

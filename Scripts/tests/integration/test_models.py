@@ -53,7 +53,7 @@ class ModelTest(unittest.TestCase):
             self.assertIsNotNone(impedance[tp]["dist"])
             
         print("Adding demand and assigning")
-        impedance = model.run_iteration(impedance)
+        impedance = model.run_iteration(impedance, 1)
 
         self.assertEquals(len(ass_model.assignment_periods), len(impedance))
         self._validate_impedances(impedance["aht"])
@@ -80,7 +80,7 @@ class ModelTest(unittest.TestCase):
             zone_data_path, base_zone_data_path, base_matrices_path,
             results_path, ass_model, "test", EventHandler())
         impedance = model.assign_base_demand()
-        impedance = model.run_iteration(impedance)
+        impedance = model.run_iteration(impedance, 1)
         impedance = model.run_iteration(impedance, "last")
 
     def _validate_impedances(self, impedances):
