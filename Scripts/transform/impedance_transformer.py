@@ -60,7 +60,7 @@ class ImpedanceTransformer(ImpedanceTransformerBase):
     def __init__(self,
                  event_handler: EventHandler,
                  extra_transformers: List[ImpedanceTransformerBase] = [],
-                 export_path: Path = None):
+                 export_path: Path | None = None):
         self._event_handler = event_handler
         self._extra_transformers = extra_transformers
         self._export_path = export_path

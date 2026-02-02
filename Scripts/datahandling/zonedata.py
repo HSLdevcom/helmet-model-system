@@ -2,6 +2,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Dict, List, Tuple, Union
 import numpy # type: ignore
+import numpy.typing as npt
 import pandas
 
 from events.event_handler import EventHandler
@@ -13,7 +14,7 @@ from datatypes.zone import Zone
 from assignment.datatypes.transit_fare import TransitFareZoneSpecification
 
 class ZoneData:
-    def __init__(self, data_dir: str, zone_numbers: numpy.array, eh: EventHandler = None):
+    def __init__(self, data_dir: str, zone_numbers: npt.ArrayLike, eh: EventHandler | None = None):
         self._values: Dict[str,Any]= {}
         self.share = ShareChecker(self)
         all_zone_numbers = numpy.array(zone_numbers)
@@ -28,7 +29,7 @@ class ZoneData:
         Zone.counter = 0
         self.zones = {number: Zone(number) for number in self.zone_numbers}
         first_peripheral = self.zone_numbers.searchsorted(peripheral[0])
-        dtype = numpy.float32
+        dtype = numpy.dtype(numpy.float32)
         popdata = read_csv_file(data_dir, ".pop", self.zone_numbers, dtype)
         workdata = read_csv_file(data_dir, ".wrk", self.zone_numbers, dtype)
         schooldata = read_csv_file(data_dir, ".edu", self.zone_numbers, dtype)
@@ -130,7 +131,7 @@ class ZoneData:
         self["own"] = own_municipality.values
         self["other"] = ~own_municipality.values
         # Add parking time to car matrices
-        ptime = param.parking_time(self).to_numpy()
+        ptime = param.parking_time(self)
         ptime = numpy.clip(ptime, 0, 30)
         if eh is not None:
             eh.on_parking_time_calculated(self, ptime)
@@ -268,7 +269,7 @@ class ZoneData:
 
 
 class BaseZoneData(ZoneData):
-    def __init__(self, data_dir: str, zone_numbers: numpy.array, eh: EventHandler=None):
+    def __init__(self, data_dir: str, zone_numbers: npt.ArrayLike, eh: EventHandler | None=None):
         ZoneData.__init__(self, data_dir, zone_numbers, eh)
         cardata = read_csv_file(data_dir, ".car", self.zone_numbers)
         self["car_density"] = cardata["cardens"]

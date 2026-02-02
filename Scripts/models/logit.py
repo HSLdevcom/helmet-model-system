@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, cast
 import numpy # type: ignore
+import numpy.typing as npt
 import pandas
 import math
 if TYPE_CHECKING:
@@ -36,36 +37,37 @@ class LogitModel:
         self.bounds = purpose.bounds
         self.sub_bounds = purpose.sub_bounds
         self.zone_data = zone_data
-        self.dest_exps: Dict[str, numpy.array] = {}
-        self.mode_exps: Dict[str, numpy.array] = {}
-        self.mode_utils: Dict[str, numpy.array] = {}
+        self.dest_exps: Dict[str, npt.ArrayLike] = {}
+        self.mode_exps: Dict[str, npt.ArrayLike] = {}
+        self.mode_utils: Dict[str, npt.ArrayLike] = {}
         purpose.name = cast(str, purpose.name) #type checker help
         self.dest_choice_param: Dict[str, Dict[str, Any]] = destination_choice[purpose.name]
-        self.mode_choice_param: Optional[Dict[str, Dict[str, Any]]] = mode_choice[purpose.name]
+        self.mode_choice_param: Dict[str, Dict[str, Any]] | None = mode_choice[purpose.name]
 
     def _calc_mode_util(self, impedance):
         expsum = numpy.zeros_like(
             next(iter(impedance["car"].values())))
-        for mode in self.mode_choice_param:
-            b = self.mode_choice_param[mode]
-            utility = numpy.zeros_like(expsum)
-            self._add_constant(utility, b["constant"])
-            utility = self._add_zone_util(
-                utility.T, b["generation"], generation=True).T
-            self._add_zone_util(utility, b["attraction"])
-            self._add_impedance(utility, impedance[mode], b["impedance"])
-            self._add_log_impedance(utility, impedance[mode], b["log"])
-            self.mode_utils[mode] = utility
-            exps = numpy.exp(utility)
-            self.mode_exps[mode] = exps
-            expsum += exps
+        if self.mode_choice_param:
+            for mode in self.mode_choice_param:
+                b = self.mode_choice_param[mode]
+                utility = numpy.zeros_like(expsum)
+                self._add_constant(utility, b["constant"])
+                utility = self._add_zone_util(
+                    utility.T, b["generation"], generation=True).T
+                self._add_zone_util(utility, b["attraction"])
+                self._add_impedance(utility, impedance[mode], b["impedance"])
+                self._add_log_impedance(utility, impedance[mode], b["log"])
+                self.mode_utils[mode] = utility
+                exps = numpy.exp(utility)
+                self.mode_exps[mode] = exps
+                expsum += exps
         if expsum.min() == 0:
             raise ValueError("Exponentiated utility sum must be greater than zero. The impedance might be too high.")
         return expsum
     
     def _calc_dest_util(self, mode, impedance):
         b = self.dest_choice_param[mode]
-        utility: numpy.array = numpy.zeros_like(next(iter(impedance.values())))
+        utility: npt.ArrayLike = numpy.zeros_like(next(iter(impedance.values())))
         self._add_zone_util(utility, b["attraction"])
         self._add_impedance(utility, impedance, b["impedance"])
         size = numpy.zeros_like(utility)
@@ -381,7 +383,7 @@ class ModeDestModel(LogitModel):
     
     def calc_individual_mode_prob(self, 
                                   is_car_user: bool, 
-                                  zone: int) -> Tuple[numpy.array, float]:
+                                  zone: int) -> Tuple[npt.ArrayLike, float]:
         """Calculate individual choice probabilities with individual dummies.
         
         Calculate mode choice probabilities for individual

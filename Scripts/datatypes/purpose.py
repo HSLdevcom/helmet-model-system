@@ -2,6 +2,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, cast
 import numpy # type: ignore
+import numpy.typing as npt
 import pandas
 from datahandling.resultdata import ResultsData
 import openmatrix as omx
@@ -62,8 +63,8 @@ class Purpose:
         self.resultdata = resultdata
         self.model = None
         self.modes: List[str] = []
-        self.generated_tours: Dict[str, numpy.array] = {}
-        self.attracted_tours: Dict[str, numpy.array] = {}
+        self.generated_tours: Dict[str, npt.ArrayLike] = {}
+        self.attracted_tours: Dict[str, npt.ArrayLike] = {}
         self.park_and_ride_model: ParkAndRideModel = None
 
     @property

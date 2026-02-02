@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
 import numpy # type: ignore
+import numpy.typing as npt
 import pandas
 if TYPE_CHECKING:
     from datahandling.matrixdata import MatrixData
@@ -21,7 +22,7 @@ class MockAssignmentModel(AssignmentModel):
                                    for tp in time_periods]
 
     @property
-    def zone_numbers(self) -> numpy.array:
+    def zone_numbers(self) -> list:
         """Numpy array of all zone numbers.""" 
         with self.matrices.open("time", "aht") as mtx:
             zone_numbers = mtx.zone_numbers

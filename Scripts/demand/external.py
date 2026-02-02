@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 import pandas
 import numpy # type: ignore
+import numpy.typing as npt
 if TYPE_CHECKING:
     from datahandling.matrixdata import MatrixData
     from datahandling.zonedata import ZoneData
@@ -27,7 +28,7 @@ class ExternalModel:
     def __init__(self, 
                  base_demand: MatrixData, 
                  zone_data: ZoneData, 
-                 zone_numbers: numpy.array):
+                 zone_numbers: npt.ArrayLike):
         self.base_demand = base_demand
         self.all_zone_numbers = zone_numbers
         self.growth = zone_data.externalgrowth

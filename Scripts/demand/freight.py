@@ -30,7 +30,7 @@ class FreightModel:
                  zone_data_base: ZoneData, 
                  zone_data_forecast: ZoneData, 
                  base_demand: MatrixData,
-                 event_handler: EventHandler = None):
+                 event_handler: EventHandler | None = None):
         self.zdata_b = zone_data_base
         self.zdata_f = zone_data_forecast
         self.base_demand = base_demand
@@ -58,10 +58,10 @@ class FreightModel:
         """
         zone_data_base = self.zdata_b.get_freight_data()
         zone_data_forecast = self.zdata_f.get_freight_data()
-        production_base: numpy.ndarray = self._generate_trips(zone_data_base, mode)
-        production_forecast: numpy.ndarray = self._generate_trips(zone_data_forecast, mode)
+        production_base: pandas.Series = self._generate_trips(zone_data_base, mode)
+        production_forecast: pandas.Series = self._generate_trips(zone_data_forecast, mode)
         zone_numbers = self.zdata_b.zone_numbers
-        with self.base_demand.open("freight", "vrk", list(zone_numbers)) as mtx:
+        with self.base_demand.open("freight", "vrk", zone_numbers.tolist()) as mtx:
             # Remove zero values
             base_mtx = mtx[mode].clip(0.000001, None)
         production = calibrate(
@@ -72,7 +72,8 @@ class FreightModel:
         # If forecast>5*base, destination choice is replaced by area average
         # For simplicity, areas are zone numbers in the same thousand
         threshold = param.vector_calibration_threshold
-        cond = production_forecast < threshold*production_base
+        condition = production_forecast < threshold*production_base
+        cond = pandas.Series(condition, zone_numbers)
         last1000 = zone_numbers[-1] // 1000
         for i in range(0, last1000):
             l = i * 1000
@@ -101,11 +102,11 @@ class FreightModel:
             demand = self._generate_garbage_trips(demand, zone_data_forecast)
         # Remove trailer truck traffic to/from (inner-city) prohibited zones
         if mode == "trailer_truck":
-            demand[self.zdata_f.trailers_prohibited] = 0
-            demand.loc[self.zdata_f.trailers_prohibited] = 0
+            demand.loc[self.zdata_f.trailers_prohibited, :] = 0
+            demand.loc[:, self.zdata_f.trailers_prohibited] = 0
         return Demand(self.purpose, mode, demand.values)
     
-    def _generate_garbage_trips(self, demand: numpy.ndarray, zone_data_forecast) -> numpy.ndarray:
+    def _generate_garbage_trips(self, demand: pandas.DataFrame, zone_data_forecast) -> pandas.DataFrame:
         g = param.garbage_generation
         # Calculate yearly garbage generation per zone (kg/year) separately
         yearly_garbage_population = g["population"] * zone_data_forecast["population"]
@@ -143,6 +144,6 @@ class FreightModel:
 
     def _generate_trips(self, 
                         zone_data: pandas.DataFrame, 
-                        mode: str) -> numpy.ndarray:
+                        mode: str) -> pandas.Series:
         b = pandas.Series(param.tour_generation[mode])
         return (b * zone_data).sum(1) + 0.001

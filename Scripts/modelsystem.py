@@ -4,6 +4,7 @@ import multiprocessing
 import os
 from typing import Any, Dict, List, Union, cast
 import numpy
+import numpy.typing as npt
 import pandas
 import random
 from collections import defaultdict
@@ -60,7 +61,7 @@ class ModelSystem:
                  assignment_model: AssignmentModel, 
                  name: str,
                  event_handler: EventHandler,
-                 estimation_data_path: Path = None):
+                 estimation_data_path: Path | None = None):
         self.event_handler = event_handler
 
         self.event_handler.on_model_system_initialized(self,
@@ -72,7 +73,7 @@ class ModelSystem:
                                                 name)
 
         self.ass_model = cast(Union[MockAssignmentModel,EmmeAssignmentModel], assignment_model) #type checker hint
-        self.zone_numbers: numpy.array = self.ass_model.zone_numbers
+        self.zone_numbers: npt.ArrayLike = self.ass_model.zone_numbers
         self.travel_modes: Dict[str, bool] = {}  # Dict instead of set, to preserve order
 
         # Input data
@@ -270,7 +271,7 @@ class ModelSystem:
 
     def run_iteration(self,
                       previous_iter_impedance: Dict[str, Dict[str, numpy.ndarray]],
-                      iteration: Union[int, str] = None,
+                      iteration: Union[int, str],
                       estimation_mode=False):
         """Calculate demand and assign to network.
 
@@ -540,8 +541,10 @@ class ModelSystem:
         nr_threads = param.performance_settings["number_of_processors"]
         if nr_threads == "max":
             nr_threads = multiprocessing.cpu_count()
-        elif nr_threads <= 0:
+        elif int(nr_threads) <= 0:
             nr_threads = 1
+        else:
+            nr_threads = int(nr_threads)
         bounds = next(iter(purpose.sources)).bounds
         for i in range(nr_threads):
             # Take a range of origins, for which this thread
@@ -712,8 +715,10 @@ class AgentModelSystem(ModelSystem):
         nr_threads = param.performance_settings["number_of_processors"]
         if nr_threads == "max":
             nr_threads = multiprocessing.cpu_count()
-        elif nr_threads <= 0:
+        elif int(nr_threads) <= 0:
             nr_threads = 1
+        else:
+            nr_threads = int(nr_threads)
         bounds = next(iter(purpose.sources)).bounds
         modes = purpose.modes if param.always_congested or is_last_iteration else ["car"]
         for mode in modes:
