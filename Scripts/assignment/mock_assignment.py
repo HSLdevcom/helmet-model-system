@@ -11,22 +11,27 @@ import utils.log as log
 import parameters.assignment as param
 import parameters.zone as zone_param
 from assignment.abstract_assignment import AssignmentModel, Period
+from assignment.emme_bindings.mock_project import MockProject
 
 
 class MockAssignmentModel(AssignmentModel):
-    def __init__(self, matrices: MatrixData, time_periods: List[str]=param.time_periods):
+    def __init__(self, 
+                 emme_context: MockProject, 
+                 first_scenario_id: int, 
+                 matrices: MatrixData, 
+                 time_periods: List[str]=param.time_periods):
         self.matrices = matrices
         log.info("Reading matrices from " + str(self.matrices.path))
+        self.mock_project = emme_context
+        self.mod_scenario = self.mock_project.modeller.emmebank.scenario(first_scenario_id)
         self.time_periods = time_periods
-        self.assignment_periods = [MockPeriod(tp, matrices)
+        self.assignment_periods = [MockPeriod(tp, first_scenario_id, self.mock_project, matrices)
                                    for tp in time_periods]
 
     @property
     def zone_numbers(self) -> list:
         """Numpy array of all zone numbers.""" 
-        with self.matrices.open("time", "aht") as mtx:
-            zone_numbers = mtx.mtx_zone_numbers
-        return zone_numbers
+        return self.mod_scenario.zone_numbers
 
     @property
     def mapping(self):
@@ -57,16 +62,15 @@ class MockAssignmentModel(AssignmentModel):
 
 
 class MockPeriod(Period):
-    def __init__(self, name: str, matrices: MatrixData):
+    def __init__(self, name: str, scen_id: int, mock_project: MockProject, matrices: MatrixData):
         self.name = name
         self.matrices = matrices
+        self.scenario = mock_project.modeller.emmebank.scenario(scen_id)
 
     @property
     def zone_numbers(self):
         """Numpy array of all zone numbers.""" 
-        with self.matrices.open("time", self.name) as mtx:
-            zone_numbers = mtx.mtx_zone_numbers
-        return zone_numbers
+        return self.scenario.zone_numbers
 
     def assign(self, 
                matrices: Dict[str, numpy.ndarray], 
@@ -115,6 +119,6 @@ class MockPeriod(Period):
             Subtype (car_work/truck/inv_time/...) : numpy 2-d matrix
                 Matrix of the specified type
         """
-        with self.matrices.open(mtx_type, self.name) as mtx:
+        with self.matrices.open(mtx_type, self.name, self.zone_numbers) as mtx:
             matrices = {mode: mtx[mode] for mode in mtx.matrix_list}
         return matrices

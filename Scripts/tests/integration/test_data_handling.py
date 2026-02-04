@@ -76,9 +76,9 @@ class ZoneDataTest(unittest.TestCase):
         self.assertIsNotNone(zdata2030["population"])
         self.assertIsNotNone(zdata2030["workplaces"])
 
-        self.assertEquals(
+        self.assertEqual(
             len(zdata2016["population"]), len(zdata2030["population"]))
-        self.assertEquals(
+        self.assertEqual(
             len(zdata2016["workplaces"]), len(zdata2030["workplaces"]))
         # Assert that data content is a bit different so we know we're
         # not reading the same file all over again

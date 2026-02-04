@@ -1,5 +1,6 @@
 from __future__ import annotations
 import numpy # type: ignore
+import numpy.typing as npt
 import pandas
 
 from typing import TYPE_CHECKING, Any, Dict, Optional, Union
@@ -422,7 +423,7 @@ class AssignmentPeriod(Period):
         self.emme_scenario.publish_network(network)    
 
     def _set_emmebank_matrices(self, 
-                               matrices: Dict[str,numpy.ndarray], 
+                               matrices: Dict[str, npt.NDArray], 
                                is_last_iteration: bool):
         """Set matrices in emmebank.
 
@@ -439,10 +440,10 @@ class AssignmentPeriod(Period):
             Whether this is the end (multiclass congested transit) assignment
         """
         tmp_mtx = {
-            "bike": 0,
+            "bike": numpy.zeros_like(matrices["car_work"]),
         }
         if not (param.always_congested or is_last_iteration):
-            tmp_mtx["transit"] = 0
+            tmp_mtx["transit"] = numpy.zeros_like(matrices["car_work"])
         for mtx in matrices:
             mode = mtx.split('_')[0]
             if mode in tmp_mtx:

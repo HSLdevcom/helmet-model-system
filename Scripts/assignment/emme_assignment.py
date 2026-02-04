@@ -117,7 +117,7 @@ class EmmeAssignmentModel(AssignmentModel):
         self.emme_project.create_extra_function_parameters(el1="@kaltevuus")
 
     def init_assign(self, 
-                    demand: Dict[str,List['numpy.ndarray']]):
+                    demand: Dict[str,List[npt.NDArray]]):
         """??? types"""
         ap0 = self.assignment_periods[0]
         ap0.assign(demand, iteration="init")

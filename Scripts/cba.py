@@ -2,6 +2,7 @@ import os
 from argparse import ArgumentParser
 from collections import defaultdict
 import numpy
+import numpy.typing as npt
 import pandas
 from openpyxl import load_workbook
 
@@ -265,7 +266,7 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
             for scenario in data:
                 with data[scenario].open("demand", timeperiod) as mtx:
                     demand[scenario] = mtx[transport_class]
-                    zone_numbers = mtx.zone_numbers
+                    zone_numbers = mtx.mtx_zone_numbers
             vol_fac = param.volume_factors[transport_class][timeperiod]
             for mtx_type in ["time", "cost", "dist"]:
                 cost = {scenario: read_costs(
@@ -326,7 +327,7 @@ def read_costs(matrixdata, time_period, transport_class, mtx_type):
     return matrix
 
 
-def calc_gains(demands, costs):
+def calc_gains(demands: dict[str, npt.NDArray], costs: dict[str, npt.NDArray]):
     """Calculate difference in consumer surplus between scen_1 and scen_0.
 
     Parameters
@@ -362,7 +363,7 @@ def calc_gains(demands, costs):
     return gains_existing.sum(0), gains_additional.sum(0)
 
 
-def calc_revenue(demands, costs):
+def calc_revenue(demands: dict[str, npt.NDArray], costs: dict[str, npt.NDArray]):
     """Calculate difference in producer revenue between scen_1 and scen_0.
 
     Parameters

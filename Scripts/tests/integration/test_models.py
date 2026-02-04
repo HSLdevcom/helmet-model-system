@@ -7,6 +7,7 @@ from events.event_handler import EventHandler
 import utils.log as log
 from modelsystem import ModelSystem, AgentModelSystem
 from assignment.mock_assignment import MockAssignmentModel
+from assignment.emme_bindings.mock_project import MockProject
 from datahandling.matrixdata import MatrixData
 from datatypes.demand import Demand
 import parameters
@@ -31,8 +32,16 @@ class ModelTest(unittest.TestCase):
         event_handler.load_listeners(Path(__file__).parent.parent.parent / 'events' / 'results')
 
         results_path = os.path.join(TEST_DATA_PATH, "Results")
-        ass_model = MockAssignmentModel(
-            MatrixData(os.path.join(results_path, "test", "Matrices")))
+        test_network_path = os.path.join(TEST_DATA_PATH, "Network")
+        scenario_id = 1
+        emme_project = MockProject()
+        emme_project.import_scenario(test_network_path, scenario_id, "test_scenario")
+        ass_model = MockAssignmentModel(emme_project, scenario_id, MatrixData(
+            os.path.join(results_path, "test", "Matrices")))
+        zone_numbers = ass_model.zone_numbers
+        print(f"Zone numbers: {zone_numbers}")
+
+
         zone_data_path = os.path.join(
             TEST_DATA_PATH, "Scenario_input_data", "2030_test")
         base_zone_data_path = os.path.join(
@@ -55,20 +64,24 @@ class ModelTest(unittest.TestCase):
         print("Adding demand and assigning")
         impedance = model.run_iteration(impedance, 1)
 
-        self.assertEquals(len(ass_model.assignment_periods), len(impedance))
+        self.assertEqual(len(ass_model.assignment_periods), len(impedance))
         self._validate_impedances(impedance["aht"])
         self._validate_impedances(impedance["pt"])
         self._validate_impedances(impedance["iht"])
 
         # Check that model result does not change
-        self.assertAlmostEquals(model.mode_share[0]["car"], 0.21777550284903216)
+        self.assertAlmostEqual(model.mode_share[0]["car"], 0.21777550284903216)
         
         print("Model system test done")
     
     def test_agent_model(self):
         log.initialize(Config())
         results_path = os.path.join(TEST_DATA_PATH, "Results")
-        ass_model = MockAssignmentModel(MatrixData(
+        test_network_path = os.path.join(TEST_DATA_PATH, "Network")
+        scenario_id = 1
+        emme_project = MockProject()
+        emme_project.import_scenario(test_network_path, scenario_id, "test_scenario")
+        ass_model = MockAssignmentModel(emme_project, scenario_id, MatrixData(
             os.path.join(results_path, "test", "Matrices")))
         zone_data_path = os.path.join(
             TEST_DATA_PATH, "Scenario_input_data", "2030_test")
@@ -86,21 +99,21 @@ class ModelTest(unittest.TestCase):
     def _validate_impedances(self, impedances):
         self.assertIsNotNone(impedances)
         self.assertIs(type(impedances), dict)
-        self.assertEquals(len(impedances), 3)
+        self.assertEqual(len(impedances), 3)
         self.assertIsNotNone(impedances["time"])
         self.assertIsNotNone(impedances["cost"])
         self.assertIsNotNone(impedances["dist"])
         self.assertIs(type(impedances["time"]), dict)
-        self.assertEquals(len(impedances["time"]), 11)
+        self.assertEqual(len(impedances["time"]), 11)
         self.assertIsNotNone(impedances["time"]["transit_work"])
         self.assertIs(type(impedances["time"]["transit_work"]), numpy.ndarray)
-        self.assertEquals(impedances["time"]["transit_work"].ndim, 2)
-        self.assertEquals(len(impedances["time"]["transit_work"]), 13)
+        self.assertEqual(impedances["time"]["transit_work"].ndim, 2)
+        self.assertEqual(len(impedances["time"]["transit_work"]), 13)
 
     def _validate_demand(self, demand):
         self.assertIsNotNone(demand)
         self.assertIsNotNone(demand)
         self.assertIsInstance(demand, Demand)
         self.assertIs(type(demand.matrix), numpy.ndarray)
-        self.assertEquals(demand.matrix.ndim, 2)
-        self.assertEquals(demand.matrix.shape[1], 6)
+        self.assertEqual(demand.matrix.ndim, 2)
+        self.assertEqual(demand.matrix.shape[1], 6)

@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 from parameters.destination_choice import destination_choice, distance_boundary
 from parameters.mode_choice import mode_choice
 import parameters.zone as zone_params
+import utils.log as log
 from utils.zone_interval import ZoneIntervals
 
 
@@ -37,9 +38,9 @@ class LogitModel:
         self.bounds = purpose.bounds
         self.sub_bounds = purpose.sub_bounds
         self.zone_data = zone_data
-        self.dest_exps: Dict[str, npt.ArrayLike] = {}
-        self.mode_exps: Dict[str, npt.ArrayLike] = {}
-        self.mode_utils: Dict[str, npt.ArrayLike] = {}
+        self.dest_exps: Dict[str, numpy.ndarray] = {}
+        self.mode_exps: Dict[str, numpy.ndarray] = {}
+        self.mode_utils: Dict[str, numpy.ndarray] = {}
         purpose.name = cast(str, purpose.name) #type checker help
         self.dest_choice_param: Dict[str, Dict[str, Any]] = destination_choice[purpose.name]
         self.mode_choice_param: Dict[str, Dict[str, Any]] | None = mode_choice[purpose.name]
@@ -67,7 +68,7 @@ class LogitModel:
     
     def _calc_dest_util(self, mode, impedance):
         b = self.dest_choice_param[mode]
-        utility: npt.ArrayLike = numpy.zeros_like(next(iter(impedance.values())))
+        utility: npt.NDArray = numpy.zeros_like(next(iter(impedance.values())))
         self._add_zone_util(utility, b["attraction"])
         self._add_impedance(utility, impedance, b["impedance"])
         size = numpy.zeros_like(utility)
@@ -191,7 +192,7 @@ class LogitModel:
         exps *= numpy.power(size, phi)
         return exps
     
-    def _add_zone_util(self, utility, b, generation=False):
+    def _add_zone_util(self, utility: numpy.ndarray, b: dict, generation=False):
         """Adds simple linear zone terms to utility.
 
         If parameter in b is tuple of two terms, they will be added for
@@ -221,7 +222,7 @@ class LogitModel:
                         utility[bounds, :] += b[i][j] * data
         return utility
     
-    def _add_sec_zone_util(self, utility, b, orig=None, dest=None):
+    def _add_sec_zone_util(self, utility: numpy.ndarray, b:dict, orig=None, dest=None):
         for i in b:
             data = self.zone_data.get_data(i, self.bounds, generation=True)
             try: # If only one parameter
@@ -349,6 +350,10 @@ class ModeDestModel(LogitModel):
         self.cumul_dest_prob = {}
         for mode in self.mode_choice_param:
             cumsum = self.dest_exps[mode].T.cumsum(axis=0)
+            if (cumsum[-1] == 0.0).any():
+                log.warn(
+                    f"Mode {mode} might have origins with no reachable destinations."
+                )
             self.cumul_dest_prob[mode] = cumsum / cumsum[-1]
     
     def calc_individual_prob(self, mod_mode, dummy):
@@ -383,7 +388,7 @@ class ModeDestModel(LogitModel):
     
     def calc_individual_mode_prob(self, 
                                   is_car_user: bool, 
-                                  zone: int) -> Tuple[npt.ArrayLike, float]:
+                                  zone: int) -> Tuple[npt.NDArray, float]:
         """Calculate individual choice probabilities with individual dummies.
         
         Calculate mode choice probabilities for individual

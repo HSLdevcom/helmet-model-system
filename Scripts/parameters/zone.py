@@ -291,6 +291,6 @@ pop_share_per_noise_area = {
 }
 
 # Parking time function
-def parking_time(zone_data: 'ZoneData') -> npt.ArrayLike:
+def parking_time(zone_data: 'ZoneData') -> npt.NDArray:
     density: pd.Series = (zone_data['population'] + zone_data['workplaces']) / zone_data['zone_area']
     return 0.05993817*np.sqrt(density) + 5.24176150

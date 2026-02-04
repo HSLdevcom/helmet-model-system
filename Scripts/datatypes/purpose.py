@@ -43,8 +43,11 @@ class Purpose:
     def __init__(self, 
                  specification: Dict[str,Optional[str]], 
                  zone_data: ZoneData, 
-                 resultdata: Optional[ResultsData]=None):
-        self.name = specification["name"]
+                 resultdata: ResultsData|None=None):
+        if specification["name"]:
+            self.name = specification["name"]
+        else:
+            self.name = "nn"
         self.orig = specification["orig"]
         self.dest = specification["dest"]
         self.area = specification["area"]
@@ -63,31 +66,32 @@ class Purpose:
         self.resultdata = resultdata
         self.model = None
         self.modes: List[str] = []
-        self.generated_tours: Dict[str, npt.ArrayLike] = {}
-        self.attracted_tours: Dict[str, npt.ArrayLike] = {}
-        self.park_and_ride_model: ParkAndRideModel = None
+        self.generated_tours: Dict[str, numpy.ndarray] = {}
+        self.attracted_tours: Dict[str, numpy.ndarray] = {}
+        self.park_and_ride_model: ParkAndRideModel | None = None
 
     @property
     def zone_numbers(self):
         return self.zone_data.zone_numbers[self.bounds]
 
     def print_data(self):
-        self.resultdata.print_data(
-            pandas.Series(
-                sum(self.generated_tours.values()), self.zone_numbers),
-            "generation.txt", self.name)
-        self.resultdata.print_data(
-            pandas.Series(
-                sum(self.attracted_tours.values()),
-                self.zone_data.zone_numbers),
-            "attraction.txt", self.name)
-        demsums = {mode: self.generated_tours[mode].sum()
-            for mode in self.modes}
-        demand_all = float(sum(demsums.values()))
-        mode_shares = {mode: demsums[mode] / demand_all for mode in demsums}
-        self.resultdata.print_data(
-            pandas.Series(mode_shares),
-            "mode_share.txt", self.name)
+        if self.resultdata:
+            self.resultdata.print_data(
+                pandas.Series(
+                    sum(self.generated_tours.values()), self.zone_numbers),
+                "generation.txt", self.name)
+            self.resultdata.print_data(
+                pandas.Series(
+                    sum(self.attracted_tours.values()),
+                    self.zone_data.zone_numbers),
+                "attraction.txt", self.name)
+            demsums = {mode: self.generated_tours[mode].sum()
+                for mode in self.modes}
+            demand_all = float(sum(demsums.values()))
+            mode_shares = {mode: demsums[mode] / demand_all for mode in demsums}
+            self.resultdata.print_data(
+                pandas.Series(mode_shares),
+                "mode_share.txt", self.name)
 
 
 class TourPurpose(Purpose):

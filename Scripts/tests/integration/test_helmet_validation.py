@@ -27,7 +27,7 @@ class Args:
     do_not_use_emme = True
 
 
-class ValdidationTest(unittest.TestCase):
+class ValidationTest(unittest.TestCase):
 
     def test_validation(self):
         print("Testing input file validation..")

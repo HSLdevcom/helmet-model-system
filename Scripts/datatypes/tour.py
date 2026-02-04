@@ -160,6 +160,9 @@ class Tour:
         orig_idx = self.position[0]
         orig_rel_idx = orig_idx - self.purpose.bounds.start
         self.purpose.model = cast(ModeDestModel, self.purpose.model) #type checker help
+        col = self.purpose.model.cumul_dest_prob[self.mode][:, orig_rel_idx]
+        if col[-1] == -numpy.inf:
+            print(f"origin: {self.orig[orig_idx]}")
         dest_idx = numpy.searchsorted(
             self.purpose.model.cumul_dest_prob[self.mode][:, orig_rel_idx],
             self._dest_draw)

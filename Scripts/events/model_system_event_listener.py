@@ -81,7 +81,7 @@ class ModelSystemEventListener(ABC):
         """
         pass
     
-    def on_iteration_started(self, iteration: Union[int, str], previous_impedance: Dict[str, Dict[str, 'np.ndarray']]) -> None:
+    def on_iteration_started(self, iteration: Union[int, str], previous_impedance: Dict[str, Dict[str, Dict[str, 'np.ndarray']]]) -> None:
         """
         Event handler that is called when an iteration is started.
 

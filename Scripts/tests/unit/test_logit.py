@@ -79,8 +79,8 @@ class LogitModelTest(unittest.TestCase):
 
     def _validate(self, prob, model):
         self.assertIs(type(prob), numpy.ndarray)
-        self.assertEquals(prob.ndim, 2)
-        self.assertEquals(prob.shape[1], 9)
+        self.assertEqual(prob.ndim, 2)
+        self.assertEqual(prob.shape[1], 9)
         if model not in ["hc", "hu"]:
-            self.assertNotEquals(prob[0, 1], 0)
+            self.assertNotEqual(prob[0, 1], 0)
         assert numpy.isfinite(prob).all()

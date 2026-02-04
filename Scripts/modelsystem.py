@@ -117,7 +117,7 @@ class ModelSystem:
     def _init_demand_model(self):
         return DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=False)
 
-    def _add_internal_demand(self, previous_iter_impedance, is_last_iteration, estimation_mode=False):
+    def _add_internal_demand(self, previous_iter_impedance: Dict[str, Dict[str, Dict[str, npt.NDArray]]], is_last_iteration, estimation_mode=False):
         """Produce mode-specific demand matrices.
 
         Add them for each time-period to container in departure time model.
@@ -198,7 +198,7 @@ class ModelSystem:
     # possibly merge with init
     def assign_base_demand(self, 
                            use_fixed_transit_cost: bool = False, 
-                           is_end_assignment: bool = False) -> Dict[str, Dict[str, numpy.ndarray]]:
+                           is_end_assignment: bool = False) -> Dict[str, Dict[str, Dict[str, npt.NDArray]]]:
         """Assign base demand to network (before first iteration).
 
         Parameters
@@ -213,12 +213,15 @@ class ModelSystem:
         -------
         dict
             key : str
-                Assignment class (car/transit/bike/walk)
+                Time period (aht, pt, iht)
             value : dict
                 key : str
-                    Impedance type (time/cost/dist)
-                value : numpy.ndarray
-                    Impedance (float 2-d matrix)
+                    Assignment class (car/transit/bike/walk)
+                value : dict
+                    key : str
+                        Impedance type (time/cost/dist)
+                    value : numpy.ndarray
+                        Impedance (float 2-d matrix)
         """
         impedance = {}
 
@@ -270,7 +273,7 @@ class ModelSystem:
         return impedance
 
     def run_iteration(self,
-                      previous_iter_impedance: Dict[str, Dict[str, numpy.ndarray]],
+                      previous_iter_impedance: Dict[str, Dict[str, Dict[str, npt.NDArray]]],
                       iteration: Union[int, str],
                       estimation_mode=False):
         """Calculate demand and assign to network.
@@ -334,7 +337,7 @@ class ModelSystem:
             else:
                 int_demand = self._sum_trips_per_zone(mode)
             ext_demand = self.em.calc_external(mode, int_demand)
-            self.event_handler.on_external_demand_calculated(ext_demand)
+            self.event_handler.on_external_demand_calculated({mode: ext_demand})
             self.dtm.add_demand(ext_demand)
         
         # Calculate tour sums and mode shares

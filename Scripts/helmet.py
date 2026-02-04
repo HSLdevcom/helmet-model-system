@@ -8,6 +8,7 @@ import utils.config
 import utils.log as log
 from assignment.emme_assignment import EmmeAssignmentModel
 from assignment.mock_assignment import MockAssignmentModel
+from assignment.emme_bindings.mock_project import MockProject
 from events.event_handler import EventHandler
 from modelsystem import ModelSystem, AgentModelSystem
 from datahandling.matrixdata import MatrixData
@@ -101,7 +102,13 @@ def main(args):
             raise NameError(
                 "Mock Results directory {} does not exist.".format(
                     mock_result_path))
-        ass_model = MockAssignmentModel(MatrixData(mock_result_path))
+        test_network_path = Path("tests") / "test_data" / "Network"
+        scenario_id = args.first_scenario_id
+        if str(scenario_id) == "test" or not scenario_id:
+            scenario_id = 1
+        emme_project = MockProject()
+        emme_project.import_scenario(test_network_path, scenario_id, "test_scenario")
+        ass_model = MockAssignmentModel(emme_project, scenario_id, MatrixData(mock_result_path))
     else:
         if not os.path.isfile(emme_project_path):
             raise NameError(

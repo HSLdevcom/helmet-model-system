@@ -37,8 +37,8 @@ class LinearModelTest(unittest.TestCase):
     
     def _validate(self, prediction):
         self.assertIs(type(prediction), pandas.core.series.Series)
-        self.assertEquals(prediction.ndim, 1)
-        self.assertEquals(prediction.shape[0], 10)
-        self.assertEquals(prediction.size, 10)
-        self.assertNotEquals(prediction.iloc[0], 0)
+        self.assertEqual(prediction.ndim, 1)
+        self.assertEqual(prediction.shape[0], 10)
+        self.assertEqual(prediction.size, 10)
+        self.assertNotEqual(prediction.iloc[0], 0)
         assert numpy.isfinite(prediction).all()

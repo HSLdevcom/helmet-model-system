@@ -2,11 +2,13 @@ from argparse import ArgumentParser
 import os
 import sys
 from typing import List, Union
+from pathlib import Path
 
 import utils.config
 import utils.log as log
 from utils.validate_network import validate
 from assignment.mock_assignment import MockAssignmentModel
+from assignment.emme_bindings.mock_project import MockProject
 from datahandling.matrixdata import MatrixData
 from datahandling.zonedata import ZoneData
 import parameters.assignment as param
@@ -63,7 +65,14 @@ def main(args):
                 mock_result_path)
             log.error(msg)
             raise NameError(msg)
-        assignment_model = MockAssignmentModel(MatrixData(mock_result_path))
+        emme_project = MockProject()
+        first_scenario_id = first_scenario_ids[0]
+        # A new argument for the network path must be added
+        test_network_path = Path("tests") / "test_data" / "Network"
+        if str(first_scenario_id) == "test":
+            scenario_id = 1
+        emme_project.import_scenario(test_network_path, scenario_id, "test_scenario")
+        assignment_model = MockAssignmentModel(emme_project, scenario_id, MatrixData(mock_result_path))
         zone_numbers = assignment_model.zone_numbers
     else:
         emp_path = emme_paths[0]

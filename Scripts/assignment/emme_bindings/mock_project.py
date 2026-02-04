@@ -87,14 +87,15 @@ class MockProject:
                                extra_attribute_default_value: float = 0.0,
                                overwrite: bool = False, 
                                scenario: Optional[Scenario] = None):
-        try:
-            scenario.create_extra_attribute(
-                extra_attribute_type, extra_attribute_name,
-                extra_attribute_default_value)
-        except ExistenceError:
-            if overwrite:
-                scenario.extra_attribute(extra_attribute_name).initialize(
+        if scenario:
+            try:
+                scenario.create_extra_attribute(
+                    extra_attribute_type, extra_attribute_name,
                     extra_attribute_default_value)
+            except ExistenceError:
+                if overwrite:
+                    scenario.extra_attribute(extra_attribute_name).initialize(
+                        extra_attribute_default_value)
 
     def copy_matrix(self, from_matrix, matrix_id, matrix_name,
                     matrix_description):
@@ -194,88 +195,92 @@ class MockProject:
                     link.data3 = float(rec[10])
 
     def vehicle_transaction(self, transaction_file, revert_on_error=True,
-                            scenario=None):
-        network = scenario.get_network()
-        with open(transaction_file) as f:
-            while True:
-                if f.readline() == "t vehicles\n":
-                    break
-            while True:
-                rec = f.readline().split()
-                if not rec:
-                    break
-                if rec[0] == "c":
-                    pass
-                elif rec[0] == "d":
-                    # TODO Implement deletion
-                    pass
-                else:
-                    if rec[0] == "a":
-                        vehicle = network.create_transit_vehicle(
-                            idx=int(rec[1]), mode_id=rec[3])
-                    elif rec[0] == "m":
-                        vehicle = network.transit_vehicle(idx=int(rec[1]))
+                            scenario: Scenario|None=None):
+        if scenario:
+            network = scenario.get_network()
+            with open(transaction_file) as f:
+                while True:
+                    if f.readline() == "t vehicles\n":
+                        break
+                while True:
+                    rec = f.readline().split()
+                    if not rec:
+                        break
+                    if rec[0] == "c":
+                        pass
+                    elif rec[0] == "d":
+                        # TODO Implement deletion
+                        pass
                     else:
-                        raise SyntaxError("Unknown update code")
-                    vehicle.description = rec[2][1:-1]
+                        if rec[0] == "a":
+                            vehicle = network.create_transit_vehicle(
+                                idx=int(rec[1]), mode_id=rec[3])
+                        elif rec[0] == "m":
+                            vehicle = network.transit_vehicle(idx=int(rec[1]))
+                        else:
+                            raise SyntaxError("Unknown update code")
+                        if vehicle:
+                            vehicle.description = rec[2][1:-1]
 
     def transit_line_transaction(self, transaction_file, revert_on_error=True,
-                            scenario=None):
-        network = scenario.get_network()
-        with open(transaction_file) as f:
-            while True:
-                if f.readline() == "t lines\n":
-                    break
-            rec = f.readline().replace("'", " ").split()
-            while True:
-                if not rec:
-                    break
-                if rec[0] == "c":
-                    rec = f.readline().replace("'", " ").split()
-                elif rec[0] == "d":
-                    # TODO Implement deletion
-                    rec = f.readline().replace("'", " ").split()
-                else:
-                    if rec[0] == "a":
-                        line_id = rec[1]
-                        vehicle_id = int(rec[3])
-                        headway = float(rec[4])
-                        itinerary = []
-                        segment_data = []
-                        while True:
-                            segrec = f.readline().replace("'", " ").split()
-                            if not segrec or segrec[0] in "amd":
-                                rec = segrec
-                                break
-                            elif segrec[0] not in ("c", "path=no"):
-                                itinerary.append(segrec[0])
-                                try:
-                                    symbol = segrec[1][4]
-                                    segment_data.append({
-                                        "allow_alightings": symbol in ">+",
-                                        "allow_boardings": symbol in "<+",
-                                        "transit_time_func": int(segrec[2][4:]),
-                                        "data1": float(segrec[3][4:]),
-                                        "data2": float(segrec[4][4:]),
-                                        "data3": float(segrec[5][4:]),
-                                    })
-                                except IndexError:
-                                    pass
-                        line = network.create_transit_line(
-                            line_id, vehicle_id, itinerary)
-                        for data, segment in zip(segment_data, line.segments()):
-                            segment.__dict__.update(data)
-                    elif rec[0] == "m":
-                        line = network.transit_line(idx=rec[1])
-                        vehicle_id = int(rec[3])
-                        headway = float(rec[4])
+                            scenario: Scenario|None=None):
+        if scenario:
+            network = scenario.get_network()
+            with open(transaction_file) as f:
+                while True:
+                    if f.readline() == "t lines\n":
+                        break
+                rec = f.readline().replace("'", " ").split()
+                while True:
+                    if not rec:
+                        break
+                    if rec[0] == "c":
+                        rec = f.readline().replace("'", " ").split()
+                    elif rec[0] == "d":
+                        # TODO Implement deletion
+                        rec = f.readline().replace("'", " ").split()
                     else:
-                        raise SyntaxError("Unknown update code")
-                    line.vehicle = vehicle_id
-                    line.headway = headway
+                        if rec[0] == "a":
+                            line_id = rec[1]
+                            vehicle_id = int(rec[3])
+                            headway = float(rec[4])
+                            itinerary = []
+                            segment_data = []
+                            while True:
+                                segrec = f.readline().replace("'", " ").split()
+                                if not segrec or segrec[0] in "amd":
+                                    rec = segrec
+                                    break
+                                elif segrec[0] not in ("c", "path=no"):
+                                    itinerary.append(segrec[0])
+                                    try:
+                                        symbol = segrec[1][4]
+                                        segment_data.append({
+                                            "allow_alightings": symbol in ">+",
+                                            "allow_boardings": symbol in "<+",
+                                            "transit_time_func": int(segrec[2][4:]),
+                                            "data1": float(segrec[3][4:]),
+                                            "data2": float(segrec[4][4:]),
+                                            "data3": float(segrec[5][4:]),
+                                        })
+                                    except IndexError:
+                                        pass
+                            line = network.create_transit_line(
+                                line_id, vehicle_id, itinerary)
+                            for data, segment in zip(segment_data, line.segments()):
+                                segment.__dict__.update(data)
+                        elif rec[0] == "m":
+                            line = network.transit_line(idx=rec[1])
+                            vehicle_id = int(rec[3])
+                            headway = float(rec[4])
+                        else:
+                            raise SyntaxError("Unknown update code")
+                        if line:
+                            line.vehicle = vehicle_id
+                            line.headway = headway
 
     def import_extra_attributes(self, file_path, revert_on_error=True,
-                                scenario=None, import_definitions=False):
+                                scenario: Scenario|None=None, import_definitions=False):
         with open(file_path) as f:
             f.readline()
             while True:
@@ -368,14 +373,14 @@ class EmmeBank:
         self._matrices = {}
         self._functions = {}
 
-    def scenario(self, idx: int):
+    def scenario(self, idx: int) -> Scenario | None:
         if idx in self._scenarios:
             return self._scenarios[idx]
 
     def scenarios(self):
         return iter(self._scenarios.values())
 
-    def create_scenario(self, idx: int):
+    def create_scenario(self, idx: int) -> Scenario:
         if idx in self._scenarios:
             raise ExistenceError("Scenario already exists: {}".format(idx))
         else:
@@ -383,7 +388,7 @@ class EmmeBank:
             self._scenarios[idx] = scenario
             return scenario
 
-    def copy_scenario(self, source_id: int, destination_id: int):
+    def copy_scenario(self, source_id: int, destination_id: int) -> Scenario | None:
         if self.scenario(source_id) is None:
             raise ExistenceError("Scenario does not exist: {}".format(
                 source_id))
@@ -442,25 +447,25 @@ class Scenario:
     def zone_numbers(self):
         return sorted(self._network._centroids)
 
-    def extra_attribute(self, idx: int):
+    def extra_attribute(self, attr_name: str):
         network = self.get_network()
         for attr_type in network._extra_attr:
-            if idx in network._extra_attr[attr_type]:
-                return network._extra_attr[attr_type][idx]
+            if attr_name in network._extra_attr[attr_type]:
+                return network._extra_attr[attr_type][attr_name]
 
     def create_extra_attribute(self, 
                                attr_type, 
-                               idx: int, 
+                               attr_name: str, 
                                default_value: float=0.0):
         network = self.get_network()
-        if idx in network._extra_attr[attr_type]:
+        if attr_name in network._extra_attr[attr_type]:
             raise ExistenceError("Extra attribute already exists: {}".format(
-                idx))
+                attr_name))
         else:
-            network._extra_attr[attr_type][idx] = ExtraAttribute(
-                idx, attr_type, default_value, self)
+            network._extra_attr[attr_type][attr_name] = ExtraAttribute(
+                attr_name, attr_type, default_value, self)
             for obj in network._objects[attr_type]():
-                obj._extra_attr[idx] = default_value
+                obj._extra_attr[attr_name] = default_value
 
     def get_network(self):
         return self._network
@@ -548,7 +553,7 @@ class Network:
         }
         self._extra_attr = {attr_type: {} for attr_type in self._objects}
 
-    def mode(self, idx: int) -> 'Mode':
+    def mode(self, idx: int) -> Mode | None:
         if idx in self._modes:
             return self._modes[idx]
     
@@ -572,7 +577,7 @@ class Network:
                 self._links[link].modes -= {mode}
         self._modes.pop(idx)
 
-    def node(self, idx: int) -> 'Node':
+    def node(self, idx: int) -> Node | None:
         idx = int(idx)
         if idx in self._nodes:
             return self._nodes[idx]
@@ -612,11 +617,11 @@ class Network:
         self._links["{}-{}".format(i_node_id, j_node_id)] = link
         return link
 
-    def transit_vehicle(self, idx: int) -> 'TransitVehicle':
+    def transit_vehicle(self, idx: int) -> TransitVehicle | None:
         if idx in self._vehicles:
             return self._vehicles[idx]
 
-    def transit_vehicles(self) -> Iterable:
+    def transit_vehicles(self) -> Iterable[TransitVehicle]:
         return iter(self._vehicles.values())
 
     def create_transit_vehicle(self, idx: int, mode_id: str) -> 'TransitVehicle':
@@ -624,14 +629,14 @@ class Network:
         self._vehicles[idx] = vehicle
         return vehicle
 
-    def transit_line(self, idx) -> 'TransitLine':
+    def transit_line(self, idx) -> TransitLine | None:
         if idx in self._lines:
             return self._lines[idx]
 
     def transit_lines(self) -> Iterable['TransitLine']:
         return iter(self._lines.values())
 
-    def transit_segments(self, include_hidden=False) -> Tuple['Segment']:
+    def transit_segments(self, include_hidden=False) -> Iterable[TransitSegment]:
         return (segment for line in self.transit_lines()
             for segment in line.segments(include_hidden))
 
@@ -659,7 +664,7 @@ class Mode:
 
 
 class TransitVehicle:
-    def __init__(self, idx: int, mode: str):
+    def __init__(self, idx: int, mode: Mode):
         self.number = idx
         self.mode = mode
         self.description = ""
@@ -794,7 +799,7 @@ class Turn(NetworkObject):
 
 
 class TransitLine(NetworkObject):
-    def __init__(self, network: Network, idx: str, vehicle: TransitVehicle):
+    def __init__(self, network: Network, idx: str, vehicle: int):
         NetworkObject.__init__(
             self, network, network._extra_attr["TRANSIT_LINE"])
         self.id = idx
@@ -833,7 +838,7 @@ class TransitLine(NetworkObject):
 
 
 class TransitSegment(NetworkObject):
-    def __init__(self, network: Network, line: TransitLine, link: Link):
+    def __init__(self, network: Network, line: TransitLine | None, link: Link | None):
         NetworkObject.__init__(
             self, network, network._extra_attr["TRANSIT_SEGMENT"])
         self.line = line
@@ -849,12 +854,14 @@ class TransitSegment(NetworkObject):
         return "{}-{}".format(self.line, self.link)
 
     @property
-    def i_node(self) -> Node:
-        return self.link.i_node
+    def i_node(self) -> Node | None:
+        if self.link:
+            return self.link.i_node
 
     @property
-    def j_node(self) -> Node:
-        return self.link.j_node
+    def j_node(self) -> Node | None:
+        if self.link:
+            return self.link.j_node
 
 
 class HiddenSegment(TransitSegment):

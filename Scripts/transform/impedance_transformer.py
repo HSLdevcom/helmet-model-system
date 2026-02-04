@@ -3,6 +3,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, TYPE_CHECKING
 import numpy as np
+import numpy.typing as npt
 
 import openmatrix as omx
 
@@ -30,8 +31,8 @@ def transit_cost_to_per_day(cost: np.ndarray, purpose: 'Purpose') -> None:
 class ImpedanceTransformerBase(ABC):
     def transform(self,
                   purpose: 'Purpose',
-                  impedance: Dict[str, Dict[str, Dict[str, np.ndarray]]]
-                  ) -> Dict[str, Dict[str, np.ndarray]]:
+                  impedance: Dict[str, Dict[str, Dict[str, npt.NDArray]]]
+                  ) -> Dict[str, Dict[str, npt.NDArray]]:
         """Perform transformation from time period dependent matrices 
         to aggregate impedance matrices for specific travel purpose.
 
@@ -53,7 +54,7 @@ class ImpedanceTransformerBase(ABC):
         pass
 
 class ImpedanceTransformer(ImpedanceTransformerBase):
-    _export_path: Path
+    _export_path: Path | None
     _extra_transformers: List[ImpedanceTransformerBase]
     _event_handler: EventHandler
     
