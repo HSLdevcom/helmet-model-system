@@ -4,6 +4,8 @@
 
 # Demand shares for different time periods
 from typing import Any, Dict
+from datatypes.literals import TimePeriod
+
 demand_share = {
     "hw": {
         "car": {
@@ -284,7 +286,7 @@ demand_share = {
         }
     }
 }
-backup_demand_share = {
+backup_demand_share: dict[TimePeriod, tuple[float, float]] = {
     "aht": (0.042, 0.028),
     "pt": (0.05, 0.05),
     "iht": (0.045, 0.055),

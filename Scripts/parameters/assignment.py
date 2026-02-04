@@ -7,6 +7,8 @@ import numpy as np
 import pandas as pd
 
 from datahandling.zonedata import ZoneData
+from datatypes.literals import TimePeriod
+
 RoadClass = namedtuple(
     "RoadClass",
     (
@@ -320,7 +322,7 @@ bike_dist = {
 }
 # Factors for 24-h expansion of volumes
 # TODO: Trucks and vans
-volume_factors = {
+volume_factors: dict[str, dict[str, float]] = {
     "car": {
         "aht": 2.1272934078215693,
         "pt": 10.46805441137958,
@@ -405,7 +407,7 @@ noise_zone_width = {
 }
 
 ### ASSIGNMENT REFERENCES ###
-time_periods: List[str] = ["aht", "pt", "iht"]
+time_periods: List[TimePeriod] = ["aht", "pt", "iht"]
 transport_classes = (
     "car_work",
     "car_leisure",

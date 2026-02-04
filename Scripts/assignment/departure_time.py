@@ -8,7 +8,7 @@ from datatypes.tour import Tour
 import utils.log as log
 import parameters.departure_time as param
 from parameters.assignment import transport_classes, assignment_classes
-
+from datatypes.literals import TimePeriod
 
 class DepartureTimeModel:
     """Container for time period and assignment class specific demand.
@@ -22,11 +22,11 @@ class DepartureTimeModel:
     """
     def __init__(self, 
                  nr_zones: int, 
-                 time_periods: List[str]=list(param.backup_demand_share)):
+                 time_periods: List[TimePeriod]=list(param.backup_demand_share.keys())):
         self.nr_zones = nr_zones
         self.time_periods = time_periods
-        self.demand: Optional[Union[int,Dict[str,Dict[str,numpy.ndarray]]]] = None
-        self.old_car_demand: Union[int,numpy.ndarray] = 0
+        self.demand: Dict[TimePeriod,Dict[str,numpy.ndarray]] | None = None
+        self.old_car_demand: int | numpy.ndarray | None = 0
         self.init_demand()
 
     def init_demand(self) -> Dict[str,float]:

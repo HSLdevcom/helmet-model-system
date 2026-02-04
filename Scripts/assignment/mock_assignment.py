@@ -5,6 +5,7 @@ import numpy.typing as npt
 import pandas
 if TYPE_CHECKING:
     from datahandling.matrixdata import MatrixData
+    from datatypes.literals import TimePeriod
 
 
 import utils.log as log
@@ -19,7 +20,7 @@ class MockAssignmentModel(AssignmentModel):
                  emme_context: MockProject, 
                  first_scenario_id: int, 
                  matrices: MatrixData, 
-                 time_periods: List[str]=param.time_periods):
+                 time_periods: List[TimePeriod]=param.time_periods):
         self.matrices = matrices
         log.info("Reading matrices from " + str(self.matrices.path))
         self.mock_project = emme_context
@@ -62,8 +63,8 @@ class MockAssignmentModel(AssignmentModel):
 
 
 class MockPeriod(Period):
-    def __init__(self, name: str, scen_id: int, mock_project: MockProject, matrices: MatrixData):
-        self.name = name
+    def __init__(self, name: TimePeriod, scen_id: int, mock_project: MockProject, matrices: MatrixData):
+        self.name: TimePeriod = name
         self.matrices = matrices
         self.scenario = mock_project.modeller.emmebank.scenario(scen_id)
 

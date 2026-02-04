@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from modelsystem import ModelSystem
     from datatypes.purpose import TourPurpose
     from datatypes.demand import Demand
+    from datatypes.literals import TimePeriod
     from assignment.departure_time import DepartureTimeModel
     from assignment.abstract_assignment import Period
     from assignment.emme_bindings.mock_project import Network
@@ -81,7 +82,7 @@ class ModelSystemEventListener(ABC):
         """
         pass
     
-    def on_iteration_started(self, iteration: Union[int, str], previous_impedance: Dict[str, Dict[str, Dict[str, 'np.ndarray']]]) -> None:
+    def on_iteration_started(self, iteration: Union[int, str], previous_impedance: Dict['TimePeriod', Dict[str, Dict[str, 'np.ndarray']]]) -> None:
         """
         Event handler that is called when an iteration is started.
 

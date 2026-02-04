@@ -72,7 +72,7 @@ class ParkAndRideModel(ImpedanceTransformerBase):
                             for i, num in pnr_centroids]
         self._saved_utilities = None
         
-    def set_impedance(self, impedance: Dict[str, Dict[str, Dict[str, np.ndarray]]]) -> Dict[str, Dict[str, np.ndarray]]:
+    def set_impedance(self, impedance: Dict[str, Dict[str, Dict[str, np.ndarray]]]) -> Dict[str, Dict[str, np.ndarray]] | None:
         """Perform transformation from time period dependent matrices 
         to aggregate impedance matrices for specific travel purpose.
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 import pandas
+import numpy
 from math import log10
 
 import utils.log as log
@@ -12,6 +13,7 @@ from assignment.abstract_assignment import AssignmentModel
 from assignment.assignment_period import AssignmentPeriod
 from events.event_handler import EventHandler
 if TYPE_CHECKING:
+    from datatypes.literals import TimePeriod, TimePeriodDay
     from assignment.emme_bindings.emme_project import EmmeProject
     from assignment.datatypes.transit_fare import TransitFareZoneSpecification
     from datahandling.resultdata import ResultsData
@@ -51,7 +53,7 @@ class EmmeAssignmentModel(AssignmentModel):
                  event_handler: EventHandler,
                  separate_emme_scenarios: bool=False, 
                  save_matrices: bool=False,
-                 time_periods: List[str]=param.time_periods, 
+                 time_periods: List[TimePeriod]=param.time_periods, 
                  first_matrix_id: int=100):
         self.separate_emme_scenarios = separate_emme_scenarios
         self.save_matrices = save_matrices
@@ -85,7 +87,7 @@ class EmmeAssignmentModel(AssignmentModel):
         id_ten = {result_type: i*ten for i, result_type
             in enumerate(matrix_types + param.transit_classes)}
         hundred = max(100, ten*len(matrix_types + param.transit_classes))
-        self.assignment_periods = []
+        self.assignment_periods: list[AssignmentPeriod] = []
         for i, tp in enumerate(self.time_periods):
             if self.separate_emme_scenarios:
                 scen_id = self.mod_scenario.number + i + 2
@@ -117,8 +119,16 @@ class EmmeAssignmentModel(AssignmentModel):
         self.emme_project.create_extra_function_parameters(el1="@kaltevuus")
 
     def init_assign(self, 
-                    demand: Dict[str,List[npt.NDArray]]):
-        """??? types"""
+                    demand: dict[str,npt.NDArray]):
+        """
+        Performs an initial assignment
+
+        Parameters
+        ----------
+        demand : dict
+            key : str, Assignment class (car_work/transit/...)
+            value : numpy.ndarray
+        """
         ap0 = self.assignment_periods[0]
         ap0.assign(demand, iteration="init")
         if self.save_matrices:
@@ -171,9 +181,8 @@ class EmmeAssignmentModel(AssignmentModel):
 
         # Aggregate and print vehicle kms and link lengths
         kms = dict.fromkeys(ass_classes, 0.0)
-        vdfs = {param.roadclasses[linktype].volume_delay_func
-            for linktype in param.roadclasses}
-        vdfs.add(0) # Links with car traffic prohibited
+        vdfs = list({roadclass.volume_delay_func
+            for roadclass in param.roadclasses.values()} | {0})
         vdf_kms = {ass_class: pandas.Series(0.0, vdfs)
             for ass_class in ass_classes}
         areas = zone_param.area_aggregation
@@ -194,16 +203,15 @@ class EmmeAssignmentModel(AssignmentModel):
             else:
                 vdf = 0
             area = belongs_to_area(link.i_node)
+            if area is None or area not in areas:
+                continue
             for ass_class in ass_classes:
                 veh_kms = link[self._extra(ass_class)] * link.length
                 kms[ass_class] += veh_kms
                 if vdf in vdfs:
                     vdf_kms[ass_class][vdf] += veh_kms
-                if area in areas:
-                    area_kms[ass_class][area] += veh_kms
-                if (vdf in vdfs
-                        and area in vdf_area_kms[vdf]
-                        and ass_class not in soft_modes):
+                area_kms[ass_class][area] += veh_kms
+                if vdf in vdf_area_kms and ass_class not in soft_modes:
                     vdf_area_kms[vdf][area] += veh_kms
             if vdf == 0 and linktype in param.railtypes:
                 linklengths[param.railtypes[linktype]] += link.length
@@ -227,7 +235,7 @@ class EmmeAssignmentModel(AssignmentModel):
                 area_kms[ass_class], "vehicle_kms_areas.txt", ass_class)
         for vdf in vdf_area_kms:
             resultdata.print_data(
-                vdf_area_kms[vdf], "vehicle_kms_vdfs_areas.txt", vdf)
+                vdf_area_kms[vdf], "vehicle_kms_vdfs_areas.txt", str(vdf))
         resultdata.print_data(linklengths, "link_lengths.txt", "length")
 
         # Aggregate and print numbers of stations
@@ -332,7 +340,7 @@ class EmmeAssignmentModel(AssignmentModel):
         modified_network: Network = mnw.calculate_gradients(network)
         self.mod_scenario.publish_network(modified_network)
 
-    def _create_matrices(self, time_period, id_hundred, id_ten):
+    def _create_matrices(self, time_period: TimePeriod, id_hundred, id_ten):
         """Create EMME matrices for storing demand and impedance.
 
         Parameters
@@ -391,7 +399,7 @@ class EmmeAssignmentModel(AssignmentModel):
     def _create_attributes(self, 
                            scenario: Any, 
                            extra: Callable[[str], str],
-                           time_period_name:str="") -> Dict[str,Dict[str,str]]:
+                           time_period_name:TimePeriodDay) -> Dict[str,Dict[str,str]]:
         """Create extra attributes needed in assignment.
 
         Parameters
@@ -504,8 +512,8 @@ class EmmeAssignmentModel(AssignmentModel):
 
             # Calculate noise zone area and aggregate to area level
             area = belongs_to_area(link.i_node)
-            if area in noise_areas:
-                noise_areas[area] += 0.001 * zone_width * link.length
+            if area is not None and area in noise_areas.index:
+                noise_areas.loc[area] += 0.001 * zone_width * link.length
         return noise_areas
 
     def _link_24h(self, attr: str):

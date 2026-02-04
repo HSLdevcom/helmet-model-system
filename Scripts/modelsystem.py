@@ -25,6 +25,7 @@ from demand.external import ExternalModel
 from datatypes.purpose import SecDestPurpose
 from datatypes.person import Person
 from datatypes.tour import Tour
+from datatypes.literals import TimePeriod
 from transform.impedance_transformer import ImpedanceTransformer
 from models.linear import CarDensityModel
 from events.event_handler import EventHandler
@@ -73,7 +74,7 @@ class ModelSystem:
                                                 name)
 
         self.ass_model = cast(Union[MockAssignmentModel,EmmeAssignmentModel], assignment_model) #type checker hint
-        self.zone_numbers: npt.ArrayLike = self.ass_model.zone_numbers
+        self.zone_numbers: list = self.ass_model.zone_numbers
         self.travel_modes: Dict[str, bool] = {}  # Dict instead of set, to preserve order
 
         # Input data
@@ -117,7 +118,7 @@ class ModelSystem:
     def _init_demand_model(self):
         return DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=False)
 
-    def _add_internal_demand(self, previous_iter_impedance: Dict[str, Dict[str, Dict[str, npt.NDArray]]], is_last_iteration, estimation_mode=False):
+    def _add_internal_demand(self, previous_iter_impedance: Dict[TimePeriod, Dict[str, Dict[str, npt.NDArray]]], is_last_iteration, estimation_mode=False):
         """Produce mode-specific demand matrices.
 
         Add them for each time-period to container in departure time model.
@@ -126,15 +127,18 @@ class ModelSystem:
         ----------
         previous_iter_impedance : dict
             key : str
-                Assignment class (car/transit/bike/walk)
+                TimePeriod
             value : dict
                 key : str
-                    Impedance type (time/cost/dist)
-                value : numpy.ndarray
-                    Impedance (float 2-d matrix)
-        is_last_iteration : bool (optional)
-            If this is the last iteration, 
-            secondary destinations are calculated for all modes
+                    Assignment class (car/transit/bike/walk)
+                value : dict
+                    key : str
+                        Impedance type (time/cost/dist)
+                    value : numpy.ndarray
+                        Impedance (float 2-d matrix)
+            is_last_iteration : bool (optional)
+                If this is the last iteration, 
+                secondary destinations are calculated for all modes
         """
         log.info("Demand calculation started...")
 
@@ -198,7 +202,7 @@ class ModelSystem:
     # possibly merge with init
     def assign_base_demand(self, 
                            use_fixed_transit_cost: bool = False, 
-                           is_end_assignment: bool = False) -> Dict[str, Dict[str, Dict[str, npt.NDArray]]]:
+                           is_end_assignment: bool = False) -> Dict[TimePeriod, Dict[str, Dict[str, npt.NDArray]]]:
         """Assign base demand to network (before first iteration).
 
         Parameters
@@ -253,7 +257,6 @@ class ModelSystem:
         for ap in self.ass_model.assignment_periods:
             tp = ap.name
             log.info("Assigning base demand for period {}...".format(tp))
-            self.dtm.demand = cast(Dict[str, Any], self.dtm.demand) #type check hint
             with demand.open("demand", tp, self.ass_model.zone_numbers) as mtx:
                 for ass_class in param.transport_classes:
                     self.dtm.demand[tp][ass_class] = mtx[ass_class]
@@ -273,7 +276,7 @@ class ModelSystem:
         return impedance
 
     def run_iteration(self,
-                      previous_iter_impedance: Dict[str, Dict[str, Dict[str, npt.NDArray]]],
+                      previous_iter_impedance: Dict[TimePeriod, Dict[str, Dict[str, npt.NDArray]]],
                       iteration: Union[int, str],
                       estimation_mode=False):
         """Calculate demand and assign to network.
@@ -281,13 +284,15 @@ class ModelSystem:
         Parameters
         ----------
         previous_iter_impedance : dict
-            key : str
-                Assignment class (car/transit/bike/walk)
+            key : TimePeriod
             value : dict
                 key : str
-                    Impedance type (time/cost/dist)
-                value : numpy.ndarray
-                    Impedance (float 2-d matrix)
+                    Assignment class (car/transit/bike/walk)
+                value : dict
+                    key : str
+                        Impedance type (time/cost/dist)
+                    value : numpy.ndarray
+                        Impedance (float 2-d matrix)
         iteration : int or str (optional)
             Iteration number (0, 1, 2, ...) or "last"
             If this is the last iteration, 
@@ -484,7 +489,7 @@ class ModelSystem:
         self.resultdata.print_data(noise_areas, "noise_areas.txt", "area")
         ar = ArrayAggregator(self.zdata_forecast.zone_numbers)
         pop = ar.aggregate(self.zdata_forecast["population"])
-        conversion = pandas.Series(zone_param.pop_share_per_noise_area)
+        conversion = pandas.Series(zone_param.pop_share_per_noise_area, dtype=float)
         noise_pop = conversion * noise_areas * pop
         self.resultdata.print_data(noise_pop, "noise_areas.txt", "population")
 
@@ -575,7 +580,7 @@ class ModelSystem:
             demand = purpose.distribute_tours(mode, impedance[mode], orig)
             container.add_demand(demand)
 
-    def _update_ratios(self, impedance, tp):
+    def _update_ratios(self, impedance, tp: TimePeriod):
         """Calculate time and cost ratios.
         
         Parameters
@@ -583,7 +588,7 @@ class ModelSystem:
         impedance : dict
             Impedance matrices.
         tp : str
-            Time period (usually aht in this function).
+            Time period ["aht", "pt", "iht"] (usually aht in this function).
         """ 
         car_time = numpy.ma.average(
             impedance["time"]["car_work"], axis=1,
@@ -780,7 +785,8 @@ class AgentModelSystem(ModelSystem):
     def _distribute_tours(self, mode, origs, sec_dest_tours, impedance):
         sec_dest_purpose = self.dm.purpose_dict["hoo"]
         for orig in origs:
-                dests = list(sec_dest_tours[orig])
+            dests = list(sec_dest_tours[orig])
+            if type(sec_dest_purpose) == SecDestPurpose:
                 probs = sec_dest_purpose.calc_prob(
                     mode, impedance, orig, dests).cumsum(axis=0)
                 for j, dest in enumerate(dests):

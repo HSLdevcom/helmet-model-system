@@ -97,9 +97,11 @@ class TransitResults(ModelSystemEventListener):
         # If there are any congested lines, print an info log
         if not congested_lines.empty:
             log.info(f"There are {len(congested_lines)} transit lines whose ridership exceeds capacity. Turn on debug logging to see details.")
-            congested_lines.apply(
-                lambda row: log.debug(f"Line {row.name} has a maximum congestion of {row['congestion_max_aht']:.2f} in AHT and {row['congestion_max_iht']:.2f} in IHT."), axis=1
-            )
+            for idx, row in congested_lines.iterrows():
+                log.debug(
+                    f"Line {idx} has a maximum congestion of {row['congestion_max_aht']:.2f} "
+                    f"in AHT and {row['congestion_max_iht']:.2f} in IHT."
+                )
 
         self.transit_line_congestions = self.transit_line_congestions.sort_index()
         self.transit_line_congestions.to_csv(self.transit_result_path, sep=';', float_format='%.3f')

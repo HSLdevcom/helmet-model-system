@@ -208,8 +208,8 @@ def main(args):
             for f in strategy_files:
                 try:
                     os.remove(f)
-                except:
-                    log.info("Not able to remove file {}.".format(f))
+                except (IsADirectoryError, OSError) as e:
+                    log.warn(f"Not able to remove file {f}: {e}")
         log.info("Removed strategy files in {}".format(dbase_path))
     if validation is not None:
         try:

@@ -13,6 +13,7 @@ from assignment.datatypes.transit import TransitSpecification
 from assignment.datatypes.path_analysis import PathAnalysis
 from assignment.abstract_assignment import Period
 if TYPE_CHECKING:
+    from datatypes.literals import TimePeriod
     from assignment.emme_bindings.emme_project import EmmeProject
     from assignment.datatypes.transit_fare import TransitFareZoneSpecification
     from emme_context.modeller.emmebank import Scenario # type: ignore
@@ -48,12 +49,12 @@ class AssignmentPeriod(Period):
         Whether separate scenarios have been created in EMME
         for storing time-period specific network results.
     """
-    def __init__(self, name: str, emme_scenario: int,
+    def __init__(self, name: TimePeriod, emme_scenario: int,
                  emme_context: EmmeProject,
                  emme_matrices: Dict[str, Dict[str, Any]],
                  event_handler: EventHandler,
                  separate_emme_scenarios: bool = False):
-        self.name = name
+        self.name: TimePeriod = name
         self.event_handler = event_handler
         self.emme_scenario: Scenario = emme_context.modeller.emmebank.scenario(
             emme_scenario)
@@ -103,7 +104,7 @@ class AssignmentPeriod(Period):
         self._specify()
         self._fill_h_mode()
 
-    def assign(self, matrices: dict, iteration: Union[int,str]) -> Dict:
+    def assign(self, matrices: dict[str, npt.NDArray], iteration: Union[int,str]) -> Dict:
         """Assign cars, bikes and transit for one time period.
 
         Get travel impedance matrices for one time period from assignment.

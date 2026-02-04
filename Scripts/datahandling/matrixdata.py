@@ -108,8 +108,8 @@ class MatrixFile:
     def close(self):
         self._file.close()
     
-    def __getitem__(self, mode: str):
-        mtx = numpy.array(self._file[mode])
+    def __getitem__(self, mode: str) -> npt.NDArray:
+        mtx = numpy.asarray(self._file[mode])
         nr_zones = len(self.mtx_zone_numbers)
         dim = (nr_zones, nr_zones)
         if mtx.shape != dim:
@@ -128,11 +128,11 @@ class MatrixFile:
             log.error(msg)
             raise ValueError(msg)
         if self.missing_zones:
-            mtx = pandas.DataFrame(mtx, self.mtx_zone_numbers, self.mtx_zone_numbers)
-            mtx = mtx.reindex(
+            df = pandas.DataFrame(mtx, self.mtx_zone_numbers, self.mtx_zone_numbers)
+            df = df.reindex(
                 index=self.new_zone_numbers, columns=self.new_zone_numbers,
                 fill_value=0)
-            mtx = mtx.values
+            mtx = numpy.asarray(df.values)
         return mtx
 
     def __setitem__(self, mode, data):

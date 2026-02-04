@@ -9,12 +9,13 @@ import openmatrix as omx
 
 if TYPE_CHECKING:
     from datatypes.purpose import Purpose
+    from datatypes.literals import TimePeriod
 from events.event_handler import EventHandler
 import parameters.impedance_transformation as param
 from parameters.assignment import assignment_classes
 
 
-def transit_cost_to_per_day(cost: np.ndarray, purpose: 'Purpose') -> None:
+def transit_cost_to_per_day(cost: np.ndarray, purpose: 'Purpose') -> np.ndarray:
     """Converts monthly transit ticket cost to daily cost.
 
     Args:
@@ -31,7 +32,7 @@ def transit_cost_to_per_day(cost: np.ndarray, purpose: 'Purpose') -> None:
 class ImpedanceTransformerBase(ABC):
     def transform(self,
                   purpose: 'Purpose',
-                  impedance: Dict[str, Dict[str, Dict[str, npt.NDArray]]]
+                  impedance: Dict['TimePeriod', Dict[str, Dict[str, npt.NDArray]]]
                   ) -> Dict[str, Dict[str, npt.NDArray]]:
         """Perform transformation from time period dependent matrices 
         to aggregate impedance matrices for specific travel purpose.
@@ -82,7 +83,7 @@ class ImpedanceTransformer(ImpedanceTransformerBase):
                 for type_name, type_imp in mode_imp.items():
                     omx_file[mode_name + '_' + type_name] = type_imp
         
-    def transform(self, purpose, impedance):
+    def transform(self, purpose, impedance: dict['TimePeriod', dict[str, dict[str, npt.NDArray]]]):
         """Perform transformation from time period dependent matrices 
         to aggregate impedance matrices for specific travel purpose.
 
