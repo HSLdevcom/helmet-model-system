@@ -106,13 +106,13 @@ def validate_links(network):
     unofficial_nodes = set()
     disallowed_modes = set()
     interval_data = []
-    for modes, ranges in param.official_node_numbers.items():
-        mode_set = {network.mode(m) for m in modes}
-        for start, end in ranges:
-            interval_data.append((start, end, mode_set))
 
-    interval_data.sort(key=lambda x: x[0])    
-    starts = [start for start, _, _ in interval_data]
+    for modes, ranges in param.official_node_numbers.items():
+        allowed_ids = set(modes)
+        for start, end in ranges:
+            interval_data.append((start, end, allowed_ids))
+    interval_data.sort(key=lambda x: x[0])
+    log.debug("Official node number intervals: {}".format(', '.join(str(i) for i in interval_data)))
 
     nr_links = 0
     nr_zero_gradients = 0
@@ -191,18 +191,19 @@ def validate_links(network):
             log.error(msg)
             errors += 1
         
-        for node in (link.i_node, link.j_node):
+        for node in (link.i_node, link.j_node): 
             matched = False
-            i = bisect.bisect_right(starts, node.number) - 1
-            if i >= 0:
-                start, end, allowed_modes = interval_data[i]
+
+            for start, end, allowed_modes in interval_data:
                 if start <= node.number <= end:
                     matched = True
-                    if not link.modes <= allowed_modes:
+                    link_mode_ids = {m.id for m in link.modes}
+                    if not link_mode_ids.issubset(allowed_modes):
                         disallowed_modes.add(node.id)
+                    break
 
             if not matched:
-                unofficial_nodes.add(node.id)   
+                unofficial_nodes.add(node.id)
         
         if link["@pyoratieluokka"] > MAX_BIKE_INFRASTRUCTURE_CLASS:
             msg = "Link {} with modes {} has attribute @pyoratieluokka set to {}. Maximum is 4.".format(link.id,str(link.modes),link["@pyoratieluokka"])
