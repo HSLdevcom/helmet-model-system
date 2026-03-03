@@ -37,6 +37,7 @@ def validate(network, fares: transit_fare.TransitFareZoneSpecification|None=None
     num_errors += validate_centroids(network)
     num_errors += validate_links(network)
     
+    log.debug(num_errors)
     if num_errors > 0:
         msg = f"Network validation failed with {num_errors} error(s)"
         log.error(msg)
@@ -68,7 +69,7 @@ def validate_fares(network, fares: transit_fare.TransitFareZoneSpecification):
 
 def validate_modes(network):
     errors = 0
-    validate_mode(network, param.main_mode, EMME_AUTO_MODE)
+    errors += validate_mode(network, param.main_mode, EMME_AUTO_MODE)
     for m in list(param.assignment_modes.values()) + [param.bike_mode]:
         errors += validate_mode(network, m, EMME_AUX_AUTO_MODE)
     for m in param.transit_modes:
@@ -127,7 +128,7 @@ def validate_links(network):
             msg = f"No modes defined for link {link.id}. At minimum mode h and one more mode needs to be defined for the simulation to work"
             log.error(msg)
             errors += 1
-        if network.mode(param.main_mode) in link.modes and len(link.modes) == 1:
+        if main_mode in link.modes and len(link.modes) == 1:
             msg = f"Only {param.main_mode} mode defined for link {link.id}. At minimum mode h and one more mode needs to be defined for the simulation to work"
             log.error(msg)
             errors += 1
@@ -181,13 +182,12 @@ def validate_links(network):
                     errors += 1
         
         if (link.i_node.is_centroid or link.j_node.is_centroid) and link.type not in param.connector_link_types:
-            msg = "Link {} is a connector and must be one of the connector link types: {}".format(
-                link.id, param.connector_link_types)
+            msg = f"Link {link.id} is a connector and must be one of the connector link types: {param.connector_link_types}"
             log.error(msg)
             errors += 1
 
         if link.i_node.is_centroid and link.j_node.is_centroid:
-            msg = "Link {} is leading directly from centroid node {} to centroid node {}. This is not allowed.".format(link.id,link.i_node.number,link.j_node.number)
+            msg = f"Link {link.id} is leading directly from centroid node {link.i_node.number} to centroid node {link.j_node.number}. This is not allowed."
             log.error(msg)
             errors += 1
         
@@ -230,15 +230,11 @@ def validate_links(network):
         log.warn(msg)
 
     if unofficial_nodes:
-        log.warn(
-            "Node number(s) {} not consistent with official HSL network".format(
-                ', '.join(unofficial_nodes)
-        ))
+        msg = f"Node number(s) {', '.join(unofficial_nodes)} not consistent with official HSL network."
+        log.warn(msg)
     if disallowed_modes:
-        log.warn(
-            "Node number(s) {} has disallowed modes".format(
-                ', '.join(disallowed_modes)
-        ))
+        msg = f"Node number(s) {', '.join(disallowed_modes)} has disallowed modes."
+        log.warn(msg)
     return errors
 
     
