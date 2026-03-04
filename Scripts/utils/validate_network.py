@@ -90,7 +90,7 @@ def validate_centroids(network):
     unaccessible_centroids = []
     required_modes = {'a', 'f', 'c'}  # Modes for pedestrians, cyclists, and cars
     for centroid in network.centroids():
-        if centroid.id in EXTERNAL_RAILWAY_CENTROIDS:
+        if centroid.number in EXTERNAL_RAILWAY_CENTROIDS:
             continue  # Skip external railway centroids
         accessible_modes = {mode.id for link in centroid.incoming_links() for mode in link.modes}
         if not required_modes.issubset(accessible_modes):
@@ -211,7 +211,7 @@ def validate_links(network):
 
         try:
             gradient = link["@kaltevuus"]
-            if gradient == 0:
+            if gradient == 0 and link.i_node.is_centroid == False and link.j_node.is_centroid == False:
                 nr_zero_gradients += 1
         except KeyError:
             if nr_links == 1:
