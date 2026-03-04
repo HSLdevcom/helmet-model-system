@@ -33,6 +33,10 @@ def main(args):
     errors = 0
     errors += validate_arguments(emme_paths, first_scenario_ids, forecast_zonedata_paths)
     base_input_errors, zone_numbers = validate_base_input_data(base_zonedata_path, base_matrices_path, emme_paths, first_scenario_ids, results_path, scenario_name, do_not_use_emme)
+    if zone_numbers is None:
+        msg = f"Zone numbers could not be determined from EMME or MockAssignmentModel, cannot continue with validation. Input file validation failed with {errors} error(s)."
+        log.error(msg)
+        raise ValueError(msg)
     errors += base_input_errors
     scenario_input_errors, different_zones = validate_scenario_input_data(emme_paths, first_scenario_ids, forecast_zonedata_paths, zone_numbers, do_not_use_emme, separate_emme_scenarios)
     errors += scenario_input_errors
@@ -138,6 +142,7 @@ def validate_database_extra_attrs_size(emmebank, scenario_id, separate_emme_scen
 
 def validate_base_input_data(base_zonedata_path, base_matrices_path, emme_paths, first_scenario_ids, results_path, scenario_name, do_not_use_emme):
     errors = 0
+    zone_numbers = None
     log.info("Checking base inputdata...")
     # Check filepaths (& first .emp path for zone_numbers in base zonedata)
     if not os.path.exists(base_zonedata_path):
