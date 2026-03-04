@@ -27,7 +27,7 @@ def main(args):
     emme_project_path: str = args.emme_path
     
     # The following checks will be moved to helmet_validate_inputfiles.py at a later date
-    if args.separate_emme_matrices:
+    if args.save_emme_matrices:
         final_matrix_id = int(args.first_matrix_id)+299
         log.debug(f"Separate Emme scenarios activated, matrices will be saved with IDs from {args.first_matrix_id} to {final_matrix_id}.")
         import inro.emme.desktop.app as _app # type: ignore
