@@ -16,6 +16,7 @@ import parameters.assignment as param
 
 
 def main(args):
+    # Variables from args
     base_zonedata_path = os.path.join(args.baseline_data_path, "2023_zonedata")
     base_matrices_path = os.path.join(args.baseline_data_path, "base_matrices")
     emme_paths: List[str] = args.emme_paths
@@ -28,12 +29,14 @@ def main(args):
         separate_emme_scenarios = False
     results_path: str = args.results_path
     scenario_name: str = args.scenario_name
+    # Validation
     errors = 0
     errors += validate_arguments(emme_paths, first_scenario_ids, forecast_zonedata_paths)
     base_input_errors, zone_numbers = validate_base_input_data(base_zonedata_path, base_matrices_path, emme_paths, first_scenario_ids, results_path, scenario_name, do_not_use_emme)
     errors += base_input_errors
     scenario_input_errors, different_zones = validate_scenario_input_data(emme_paths, first_scenario_ids, forecast_zonedata_paths, zone_numbers, do_not_use_emme, separate_emme_scenarios)
     errors += scenario_input_errors
+    # Different zones logged separately here to prevent it being printed for every scenario
     if different_zones:
         log.warn("Scenarios with different zones found in EMME bank! Matrices will not be compatible between scenarios with different zones.")
     if errors > 0:
@@ -54,10 +57,12 @@ def main(args):
                 msg = "Project {} has no scenario {}".format(emp_path, scenario_id)
                 log.error(msg)
                 raise ValueError(msg)
+            # NOTE: validate_network.validate() will not go through all scenarios if errors are found in one of them
             validate(scen.get_network(), forecast_zonedata.transit_zone)
 
 def validate_arguments(emme_paths, first_scenario_ids, forecast_zonedata_paths):
     errors = 0
+    # Cheching if arguments exist is not necessary, argparse will already check them and there should not be an issue when using Helmet UI anyway.
     # Check arg lengths
     if not (len(emme_paths) == len(first_scenario_ids)):
         msg = ("Non-matching number of emme-paths (.emp files) "
@@ -116,6 +121,8 @@ def validate_database_extra_attrs_size(emmebank, scenario_id, separate_emme_scen
     for key in nr_attr:
         attr_space_new += dim[key] * nr_new_attr[key]
         attr_space_existing += dim[key] * nr_attr[key]
+    # TODO: A better approach would actually compare all the existing individual extra attributes against extra attributes to be created.
+    # Currently, if a user has created many custom extra_attributes, we might think that there is sufficient space when there actually isn't
     if attr_space_new < attr_space_existing:  # Model has already run and extra attributes have been created
         attr_space = attr_space_existing
     else:  # Model has not run yet and extra attributes need to be created

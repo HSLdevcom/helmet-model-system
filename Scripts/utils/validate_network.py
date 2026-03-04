@@ -37,7 +37,6 @@ def validate(network, fares: transit_fare.TransitFareZoneSpecification|None=None
     num_errors += validate_centroids(network)
     num_errors += validate_links(network)
     
-    log.debug(num_errors)
     if num_errors > 0:
         msg = f"Network validation failed with {num_errors} error(s)"
         log.error(msg)
@@ -262,7 +261,7 @@ def validate_transit(network):
             #         first_stop = seg.id
             #     if seg.data1 > 0:
             #         speed_zero = False
-            #     if seg.number > 0 and seg.allow_boardings == 1 or seg.allow_alightings == 1:
+            #     if seg.number > 0 and (seg.allow_boardings == 1 or seg.allow_alightings == 1):
             #         if speed_zero:
             #             msg = f"One of the segments between stops {first_stop} and {seg.id} on line {line.id} must have a speed greater than zero."
             #             log.error(msg)
