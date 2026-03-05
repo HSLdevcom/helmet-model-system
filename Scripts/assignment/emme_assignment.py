@@ -409,7 +409,8 @@ class EmmeAssignmentModel(AssignmentModel):
             self.emme_project.create_extra_attribute(
                 "LINK", extra(ass_class), ass_class + " volume",
                 overwrite=True, scenario=scenario)
-        for attr_s in ("total_cost", "toll_cost", "car_time", "aux_transit"): #attr_s tp make difference for type checker
+        # These should be in param/assignment.py instead of being defined here
+        for attr_s in ("total_cost", "toll_cost", "car_time", "bike_time", "aux_transit"): #attr_s tp make difference for type checker
             self.emme_project.create_extra_attribute(
                 "LINK", extra(attr_s), attr_s,
                 overwrite=True, scenario=scenario)
