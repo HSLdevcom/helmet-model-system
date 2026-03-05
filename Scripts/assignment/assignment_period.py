@@ -747,9 +747,10 @@ class AssignmentPeriod(Period):
         self.emme_project.bike_assignment(
             specification=spec, scenario=scen)
         network = self.emme_scenario.get_network()
+        time_attr = self.extra("bike_time")
         for link in network.links():
             if link.auto_time > 1e4: link.auto_time = 1e4
-            link[self.extra("bike_time")] = link.auto_time
+            link[time_attr] = link.auto_time
         self.emme_scenario.publish_network(network)
         log.info(f"Bike assignment performed for time period {self.name} on scenario {self.emme_scenario.id}")
 
