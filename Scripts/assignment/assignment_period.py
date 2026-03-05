@@ -698,11 +698,11 @@ class AssignmentPeriod(Period):
         network = self.emme_scenario.get_network()
         time_attr = self.extra("car_time")
         for link in network.links():
+            if link.auto_time > 1e4: link.auto_time = 1e4
             link[time_attr] = link.auto_time
             #prevent errors from non-car links
             #assignment only uses mode-based subnetworks, 
             # these should not be used in practice
-            if link.auto_time > 1e3: link.auto_time = 1e3
         self.emme_scenario.publish_network(network)
         log.info(f"Car assignment performed for time period {self.name} on scenario {self.emme_scenario.id}")
         log.info("Stopping criteria: {}, iteration {} / {}".format(
@@ -746,6 +746,11 @@ class AssignmentPeriod(Period):
         log.info("Bike assignment started...")
         self.emme_project.bike_assignment(
             specification=spec, scenario=scen)
+        network = self.emme_scenario.get_network()
+        for link in network.links():
+            if link.auto_time > 1e4: link.auto_time = 1e4
+            link[self.extra("bike_time")] = link.auto_time
+        self.emme_scenario.publish_network(network)
         log.info(f"Bike assignment performed for time period {self.name} on scenario {self.emme_scenario.id}")
 
     def _fill_h_mode(self):
