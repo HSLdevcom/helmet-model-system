@@ -7,7 +7,11 @@ on: [push, pull_request]
   
 jobs:
   build:
-    if: ${{ !github.event.pull_request.draft }}
+    if: >-
+      github.event_name == 'push' && (github.ref_type == 'branch') &&
+      (github.event.pull_request == null || github.event.pull_request.draft == false)
+      || (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
+
     runs-on: windows-latest
 
     steps:
