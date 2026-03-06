@@ -35,6 +35,7 @@ class GarbageGenerationResult(ModelSystemEventListener):
                                     name: str) -> None:
         # Get result path when model system is initialized
         self.result_path = Path(results_path) / name / 'garbage_generation_municipalities.csv'
+        self.ms = model_system
 
     def on_garbage_trips_generated(self, garbage_generated):
         # Use ArrayAggregator to aggregate by municipality

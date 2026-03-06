@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 
 from events.model_system_event_listener import ModelSystemEventListener
+import parameters.assignment as param
 
 if TYPE_CHECKING:
     from modelsystem import ModelSystem
@@ -12,7 +13,7 @@ if TYPE_CHECKING:
     from assignment.abstract_assignment import AssignmentModel
 
 
-class DemandAnalysis(ModelSystemEventListener):
+class TransitKmsResults(ModelSystemEventListener):
     """
     A class to analyze demand in a model system by listening to specific events.
     """
@@ -36,13 +37,25 @@ class DemandAnalysis(ModelSystemEventListener):
                                     name: str) -> None:
         # Get result path when model system is initialized
         self.result_path = Path(results_path) / name / 'mode_analysis_results.csv'
-    
-    def on_iteration_started(self, iteration: Union[int, str], previous_impedance: Dict[str, Dict[str, np.ndarray]]):
-        # Add new row for each iteration
-        self.mode_demands.append({'iteration': iteration})
-    
-    def on_iteration_complete(self, iteration: Union[str, int], impedance: Dict[str, Dict[str, np.ndarray]], gap: Dict[str, float]):
-        # Print resuts after last iteration
-        if iteration == 'last' or iteration is None:
-            pd.DataFrame(self.mode_demands)\
-                .to_csv(self.result_path, index=False)
+        self.ms = model_system
+
+    def on_daily_results_aggregated(self, assignment_model, day_network, network_aggregations):
+        self.ass_model = self.ms.ass_model
+        # Aggregate and print transit vehicle kms
+        transit_modes = [veh.description for veh in day_network.transit_vehicles()]
+        dists = pd.Series(0.0, transit_modes)
+        times = pd.Series(0.0, transit_modes)
+        for ap in self.ass_model.assignment_periods:
+            network = ap.emme_scenario.get_network()
+            volume_factor = param.volume_factors["bus"][ap.name]
+            for line in network.transit_lines():
+                mode = line.vehicle.description
+                headway = line[ap.extra("hw")]
+                if 0 < headway < 900:
+                    departures = volume_factor * 60/headway
+                    for segment in line.segments():
+                        dists[mode] += departures * segment.link.length
+                        times[mode] += (departures
+                                        * segment[ap.extra("base_timtr")])
+        self.ms.resultdata.print_data(dists, "transit_kms.txt", "dist")
+        self.ms.resultdata.print_data(times, "transit_kms.txt", "time")

@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 
 from events.model_system_event_listener import ModelSystemEventListener
+from utils.zone_interval import ZoneIntervals
 
 if TYPE_CHECKING:
     from modelsystem import ModelSystem
@@ -12,7 +13,7 @@ if TYPE_CHECKING:
     from assignment.abstract_assignment import AssignmentModel
 
 
-class DemandAnalysis(ModelSystemEventListener):
+class CarDensityResults(ModelSystemEventListener):
     """
     A class to analyze demand in a model system by listening to specific events.
     """
@@ -36,13 +37,18 @@ class DemandAnalysis(ModelSystemEventListener):
                                     name: str) -> None:
         # Get result path when model system is initialized
         self.result_path = Path(results_path) / name / 'mode_analysis_results.csv'
-    
-    def on_iteration_started(self, iteration: Union[int, str], previous_impedance: Dict[str, Dict[str, np.ndarray]]):
-        # Add new row for each iteration
-        self.mode_demands.append({'iteration': iteration})
-    
-    def on_iteration_complete(self, iteration: Union[str, int], impedance: Dict[str, Dict[str, np.ndarray]], gap: Dict[str, float]):
-        # Print resuts after last iteration
-        if iteration == 'last' or iteration is None:
-            pd.DataFrame(self.mode_demands)\
-                .to_csv(self.result_path, index=False)
+        self.ms = model_system
+
+    def on_car_density_updated(self, iteration, prediction, model):
+        """ Print results, mainly for calibration purposes"""
+        # Print car density by zone
+        self.ms.resultdata.print_data(prediction, "car_density.txt", "car_density")
+        # In validation data, car density is calculated for the whole
+        # population from ages 0 to 999.
+        population = model.zone_data["population"][model.bounds]
+        # print car density by municipality and area
+        for area_type in ("municipalities", "areas"):
+            aggregation = ZoneIntervals(area_type).averages(prediction, population)
+            self.ms.resultdata.print_data(
+                aggregation, "car_density_{}.txt".format(area_type),
+                "car_density")

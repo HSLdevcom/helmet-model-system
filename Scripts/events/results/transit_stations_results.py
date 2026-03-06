@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 
 from events.model_system_event_listener import ModelSystemEventListener
+import parameters.assignment as param
 
 if TYPE_CHECKING:
     from modelsystem import ModelSystem
@@ -12,7 +13,7 @@ if TYPE_CHECKING:
     from assignment.abstract_assignment import AssignmentModel
 
 
-class DemandAnalysis(ModelSystemEventListener):
+class TransitStationsResults(ModelSystemEventListener):
     """
     A class to analyze demand in a model system by listening to specific events.
     """
@@ -36,13 +37,16 @@ class DemandAnalysis(ModelSystemEventListener):
                                     name: str) -> None:
         # Get result path when model system is initialized
         self.result_path = Path(results_path) / name / 'mode_analysis_results.csv'
-    
-    def on_iteration_started(self, iteration: Union[int, str], previous_impedance: Dict[str, Dict[str, np.ndarray]]):
-        # Add new row for each iteration
-        self.mode_demands.append({'iteration': iteration})
-    
-    def on_iteration_complete(self, iteration: Union[str, int], impedance: Dict[str, Dict[str, np.ndarray]], gap: Dict[str, float]):
-        # Print resuts after last iteration
-        if iteration == 'last' or iteration is None:
-            pd.DataFrame(self.mode_demands)\
-                .to_csv(self.result_path, index=False)
+        self.ms = model_system
+
+    def on_daily_results_aggregated(self, assignment_model, day_network, network_aggregations):
+        self.ass_model = self.ms.ass_model
+        # Aggregate and print numbers of stations
+        stations = pd.Series(0, param.station_ids)
+        for node in day_network.regular_nodes():
+            for mode in param.station_ids:
+                if (node.data2 == param.station_ids[mode]
+                        and node[self.ass_model._extra("transit_won_boa")] > 0):
+                    stations[mode] += 1
+                    break
+        self.ms.resultdata.print_data(stations, "transit_stations.txt", "number")

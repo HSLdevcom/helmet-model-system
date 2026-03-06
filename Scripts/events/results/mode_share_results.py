@@ -12,8 +12,9 @@ if TYPE_CHECKING:
     from assignment.abstract_assignment import AssignmentModel
 
 
-class DemandAnalysis(ModelSystemEventListener):
+class ModeShareResults(ModelSystemEventListener):
     """
+    TODO: Not needed?
     A class to analyze demand in a model system by listening to specific events.
     """
     
@@ -37,12 +38,3 @@ class DemandAnalysis(ModelSystemEventListener):
         # Get result path when model system is initialized
         self.result_path = Path(results_path) / name / 'mode_analysis_results.csv'
     
-    def on_iteration_started(self, iteration: Union[int, str], previous_impedance: Dict[str, Dict[str, np.ndarray]]):
-        # Add new row for each iteration
-        self.mode_demands.append({'iteration': iteration})
-    
-    def on_iteration_complete(self, iteration: Union[str, int], impedance: Dict[str, Dict[str, np.ndarray]], gap: Dict[str, float]):
-        # Print resuts after last iteration
-        if iteration == 'last' or iteration is None:
-            pd.DataFrame(self.mode_demands)\
-                .to_csv(self.result_path, index=False)

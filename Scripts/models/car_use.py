@@ -33,7 +33,6 @@ class CarUseModel(LogitModel):
                  bounds: slice, 
                  age_groups: List[Tuple[int,int]], 
                  resultdata: ResultsData):
-        self.resultdata = resultdata
         self.zone_data = zone_data
         self.bounds = bounds
         self.genders = ("female", "male")
@@ -102,7 +101,6 @@ class CarUseModel(LogitModel):
         prob = no_dummy_prob + dummy_prob
         prob = pandas.Series(
             prob, self.zone_data.zone_numbers[self.bounds])
-        self.print_results(prob)
         return prob
 
     def calc_individual_prob(self, 
@@ -140,20 +138,3 @@ class CarUseModel(LogitModel):
             exp = numpy.exp(b["individual_dummy"][(age_group, gender)]) * exp
         prob = exp / (exp+1)
         return prob
-
-    def print_results(self, 
-                      prob: pandas.Series, 
-                      population_7_99: Optional[pandas.Series]=None):
-        """ Print results, mainly for calibration purposes"""
-        # Print car user share by zone
-        self.resultdata.print_data(prob, "car_use.txt", "car_use")
-        if population_7_99 is None:
-            # Comparison data has car user shares of population
-            # over 6 years old (from HEHA)
-            population_7_99 = (self.zone_data["population"][self.bounds]
-                               * self.zone_data["share_age_7-99"])
-        # print car use share by municipality and area
-        for area_type in ("municipalities", "areas"):
-            prob_area = ZoneIntervals(area_type).averages(prob, population_7_99)
-            self.resultdata.print_data(
-                prob_area, "car_use_{}.txt".format(area_type), "car_use")

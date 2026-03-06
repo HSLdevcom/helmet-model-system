@@ -4,15 +4,15 @@ import pandas as pd
 import numpy as np
 
 from events.model_system_event_listener import ModelSystemEventListener
+from datatypes.demand import Demand
+from datatypes.purpose import TourPurpose
 
 if TYPE_CHECKING:
     from modelsystem import ModelSystem
-    from datatypes.demand import Demand
-    from datatypes.purpose import TourPurpose
     from assignment.abstract_assignment import AssignmentModel
 
 
-class DemandAnalysis(ModelSystemEventListener):
+class AttractionResults(ModelSystemEventListener):
     """
     A class to analyze demand in a model system by listening to specific events.
     """
@@ -36,10 +36,18 @@ class DemandAnalysis(ModelSystemEventListener):
                                     name: str) -> None:
         # Get result path when model system is initialized
         self.result_path = Path(results_path) / name / 'mode_analysis_results.csv'
+        self.ms = model_system
     
     def on_iteration_started(self, iteration: Union[int, str], previous_impedance: Dict[str, Dict[str, np.ndarray]]):
         # Add new row for each iteration
         self.mode_demands.append({'iteration': iteration})
+    
+    def on_purpose_demand_calculated(self, purpose: 'TourPurpose', demand: 'Demand', pnr_iteration=0):
+        self.ms.resultdata.print_data(
+            pd.Series(
+                sum(purpose.attracted_tours.values()),
+                purpose.zone_data.zone_numbers),
+            "attraction.txt", purpose.name)
     
     def on_iteration_complete(self, iteration: Union[str, int], impedance: Dict[str, Dict[str, np.ndarray]], gap: Dict[str, float]):
         # Print resuts after last iteration

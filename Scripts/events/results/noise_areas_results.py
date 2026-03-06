@@ -4,6 +4,8 @@ import pandas as pd
 import numpy as np
 
 from events.model_system_event_listener import ModelSystemEventListener
+from utils.zone_interval import ArrayAggregator
+import parameters.zone as zone_param
 
 if TYPE_CHECKING:
     from modelsystem import ModelSystem
@@ -12,7 +14,7 @@ if TYPE_CHECKING:
     from assignment.abstract_assignment import AssignmentModel
 
 
-class DemandAnalysis(ModelSystemEventListener):
+class NoiseAreasResults(ModelSystemEventListener):
     """
     A class to analyze demand in a model system by listening to specific events.
     """
@@ -36,13 +38,17 @@ class DemandAnalysis(ModelSystemEventListener):
                                     name: str) -> None:
         # Get result path when model system is initialized
         self.result_path = Path(results_path) / name / 'mode_analysis_results.csv'
-    
-    def on_iteration_started(self, iteration: Union[int, str], previous_impedance: Dict[str, Dict[str, np.ndarray]]):
-        # Add new row for each iteration
-        self.mode_demands.append({'iteration': iteration})
+        self.ms = model_system
     
     def on_iteration_complete(self, iteration: Union[str, int], impedance: Dict[str, Dict[str, np.ndarray]], gap: Dict[str, float]):
-        # Print resuts after last iteration
-        if iteration == 'last' or iteration is None:
-            pd.DataFrame(self.mode_demands)\
-                .to_csv(self.result_path, index=False)
+        if iteration=="last":
+            self._calculate_noise_areas()
+
+    def _calculate_noise_areas(self):
+        noise_areas = self.ms.ass_model.calc_noise()
+        self.ms.resultdata.print_data(noise_areas, "noise_areas.txt", "area")
+        ar = ArrayAggregator(self.ms.zdata_forecast.zone_numbers)
+        pop = ar.aggregate(self.ms.zdata_forecast["population"])
+        conversion = pd.Series(zone_param.pop_share_per_noise_area)
+        noise_pop = conversion * noise_areas * pop
+        self.ms.resultdata.print_data(noise_pop, "noise_areas.txt", "population")

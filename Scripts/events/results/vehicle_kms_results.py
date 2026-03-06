@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from assignment.abstract_assignment import AssignmentModel
 
 
-class DemandAnalysis(ModelSystemEventListener):
+class VehicleKmsResults(ModelSystemEventListener):
     """
     A class to analyze demand in a model system by listening to specific events.
     """
@@ -36,13 +36,14 @@ class DemandAnalysis(ModelSystemEventListener):
                                     name: str) -> None:
         # Get result path when model system is initialized
         self.result_path = Path(results_path) / name / 'mode_analysis_results.csv'
-    
-    def on_iteration_started(self, iteration: Union[int, str], previous_impedance: Dict[str, Dict[str, np.ndarray]]):
-        # Add new row for each iteration
-        self.mode_demands.append({'iteration': iteration})
-    
-    def on_iteration_complete(self, iteration: Union[str, int], impedance: Dict[str, Dict[str, np.ndarray]], gap: Dict[str, float]):
-        # Print resuts after last iteration
-        if iteration == 'last' or iteration is None:
-            pd.DataFrame(self.mode_demands)\
-                .to_csv(self.result_path, index=False)
+        self.ms = model_system
+            
+    def on_daily_results_aggregated(self, assignment_model, day_network, network_aggregations):
+        for ass_class in assignment_model.res_ass_classes:
+            self.ms.resultdata.print_data(
+                network_aggregations["vdf_kms"][ass_class], "vehicle_kms_vdfs.txt", ass_class)
+            self.ms.resultdata.print_data(
+                network_aggregations["area_kms"][ass_class], "vehicle_kms_areas.txt", ass_class)
+        for vdf in network_aggregations["vdf_area_kms"]:
+            self.ms.resultdata.print_data(
+                network_aggregations["vdf_area_kms"][vdf], "vehicle_kms_vdfs_areas.txt", vdf)

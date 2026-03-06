@@ -4,15 +4,15 @@ import pandas as pd
 import numpy as np
 
 from events.model_system_event_listener import ModelSystemEventListener
+from datatypes.demand import Demand
+from datatypes.purpose import TourPurpose
 
 if TYPE_CHECKING:
     from modelsystem import ModelSystem
-    from datatypes.demand import Demand
-    from datatypes.purpose import TourPurpose
     from assignment.abstract_assignment import AssignmentModel
 
 
-class DemandAnalysis(ModelSystemEventListener):
+class OwnZoneDemandResults(ModelSystemEventListener):
     """
     A class to analyze demand in a model system by listening to specific events.
     """
@@ -36,13 +36,11 @@ class DemandAnalysis(ModelSystemEventListener):
                                     name: str) -> None:
         # Get result path when model system is initialized
         self.result_path = Path(results_path) / name / 'mode_analysis_results.csv'
+        self.ms = model_system
     
-    def on_iteration_started(self, iteration: Union[int, str], previous_impedance: Dict[str, Dict[str, np.ndarray]]):
-        # Add new row for each iteration
-        self.mode_demands.append({'iteration': iteration})
-    
-    def on_iteration_complete(self, iteration: Union[str, int], impedance: Dict[str, Dict[str, np.ndarray]], gap: Dict[str, float]):
-        # Print resuts after last iteration
-        if iteration == 'last' or iteration is None:
-            pd.DataFrame(self.mode_demands)\
-                .to_csv(self.result_path, index=False)
+    def on_purpose_demand_calculated(self, purpose: 'TourPurpose', demand: 'Demand', pnr_iteration=0):
+        if type(purpose) == TourPurpose:
+            for mode in purpose.histograms:
+                purpose.resultdata.print_data(
+                    purpose.own_zone_aggregates[mode].array,
+                    "own_zone_demand.txt", "{}_{}".format(purpose.name, mode[0]))

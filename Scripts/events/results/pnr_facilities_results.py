@@ -1,3 +1,4 @@
+from dataclasses import asdict
 from pathlib import Path
 from typing import Dict, List, Union, TYPE_CHECKING
 import pandas as pd
@@ -12,7 +13,7 @@ if TYPE_CHECKING:
     from assignment.abstract_assignment import AssignmentModel
 
 
-class DemandAnalysis(ModelSystemEventListener):
+class ParkAndRideFacilitiesResults(ModelSystemEventListener):
     """
     A class to analyze demand in a model system by listening to specific events.
     """
@@ -36,13 +37,27 @@ class DemandAnalysis(ModelSystemEventListener):
                                     name: str) -> None:
         # Get result path when model system is initialized
         self.result_path = Path(results_path) / name / 'mode_analysis_results.csv'
+        self.ms = model_system
     
     def on_iteration_started(self, iteration: Union[int, str], previous_impedance: Dict[str, Dict[str, np.ndarray]]):
         # Add new row for each iteration
         self.mode_demands.append({'iteration': iteration})
     
     def on_iteration_complete(self, iteration: Union[str, int], impedance: Dict[str, Dict[str, np.ndarray]], gap: Dict[str, float]):
-        # Print resuts after last iteration
-        if iteration == 'last' or iteration is None:
-            pd.DataFrame(self.mode_demands)\
-                .to_csv(self.result_path, index=False)
+        if iteration=="last":
+            self._save_pnr_facility_info()
+
+    def _save_pnr_facility_info(self):
+        pnr_data = []
+        for facility in self.ms.dm.purpose_dict['hw'].park_and_ride_model._facilities:
+            pnr_data.append({k: str(v) for k, v in asdict(facility).items()})
+
+        pnr_results = pd.DataFrame(pnr_data)
+        pnr_results['used_capacity'] = pnr_results['used_capacity'].astype(float).round().astype(int)
+        pnr_results['shops'] = pnr_results['shops'].astype(float).round().astype(int)
+        pnr_results.index = pnr_results['zone_id']
+        pnr_results.index.name = None
+        pnr_results = pnr_results[['cost','shops','capacity','used_capacity','time']]
+        for col in pnr_results.columns:
+            self.ms.resultdata.print_data(pnr_results[col], "pnr_facilities.txt", col)
+            

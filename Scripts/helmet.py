@@ -191,29 +191,33 @@ def main(args):
 
     event_handler.on_simulation_complete()
     # delete emme strategy files for scenarios
-    if args.del_strat_files:
-        dbase_path = os.path.join(os.path.dirname(emme_project_path), "database")
-        filepath = os.path.join(dbase_path, "STRAT_s{}*")
-        dirpath = os.path.join(dbase_path, "STRATS_s{}", "*")
-        scenario_ids = range(args.first_scenario_id, args.first_scenario_id+5)
-        for s in scenario_ids:
-            strategy_files = glob(filepath.format(s)) + glob(dirpath.format(s))
-            for f in strategy_files:
-                try:
-                    os.remove(f)
-                except:
-                    log.info("Not able to remove file {}.".format(f))
-        log.info("Removed strategy files in {}".format(dbase_path))
-    if validation is not None:
-        try:
-            validation.to_html(
-                Path(results_path) / args.scenario_name / 'validation.html')
-            validation.save_to_file(
-                Path(results_path) / args.scenario_name / 'validation.pklz')
-        except Exception as e:
-            log.error("Error saving validation data: {}".format(e))
+    if args.del_strat_files: delete_strategy_files(emme_project_path)
+    if validation is not None: save_validation(validation, results_path)
+
     log.info("Simulation ended.", extra=log_extra)
 
+def delete_strategy_files(emme_project_path: str):
+    dbase_path = os.path.join(os.path.dirname(emme_project_path), "database")
+    filepath = os.path.join(dbase_path, "STRAT_s{}*")
+    dirpath = os.path.join(dbase_path, "STRATS_s{}", "*")
+    scenario_ids = range(args.first_scenario_id, args.first_scenario_id+5)
+    for s in scenario_ids:
+        strategy_files = glob(filepath.format(s)) + glob(dirpath.format(s))
+        for f in strategy_files:
+            try:
+                os.remove(f)
+            except:
+                log.info("Not able to remove file {}.".format(f))
+    log.info("Removed strategy files in {}".format(dbase_path))
+
+def save_validation(validation: Validation, results_path: Path):
+    try:
+        validation.to_html(
+            Path(results_path) / args.scenario_name / 'validation.html')
+        validation.save_to_file(
+            Path(results_path) / args.scenario_name / 'validation.pklz')
+    except Exception as e:
+        log.error("Error saving validation data: {}".format(e))
 
 if __name__ == "__main__":
     # Initially read defaults from config file ("dev-config.json")

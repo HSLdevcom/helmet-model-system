@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 
 from events.model_system_event_listener import ModelSystemEventListener
+from utils.zone_interval import ArrayAggregator
 
 if TYPE_CHECKING:
     from modelsystem import ModelSystem
@@ -12,7 +13,7 @@ if TYPE_CHECKING:
     from assignment.abstract_assignment import AssignmentModel
 
 
-class DemandAnalysis(ModelSystemEventListener):
+class OriginsDemand(ModelSystemEventListener):
     """
     A class to analyze demand in a model system by listening to specific events.
     """
@@ -36,13 +37,18 @@ class DemandAnalysis(ModelSystemEventListener):
                                     name: str) -> None:
         # Get result path when model system is initialized
         self.result_path = Path(results_path) / name / 'mode_analysis_results.csv'
-    
-    def on_iteration_started(self, iteration: Union[int, str], previous_impedance: Dict[str, Dict[str, np.ndarray]]):
-        # Add new row for each iteration
-        self.mode_demands.append({'iteration': iteration})
-    
-    def on_iteration_complete(self, iteration: Union[str, int], impedance: Dict[str, Dict[str, np.ndarray]], gap: Dict[str, float]):
-        # Print resuts after last iteration
-        if iteration == 'last' or iteration is None:
-            pd.DataFrame(self.mode_demands)\
-                .to_csv(self.result_path, index=False)
+        self.ms = model_system
+            
+    def on_demand_calculated(self, iteration, dtm):
+                # Calculate tour sums and mode shares
+        tour_sum = {mode: self.ms._sum_trips_per_zone(mode, include_dests=False)
+            for mode in self.ms.travel_modes}
+        sum_all = sum(tour_sum.values())
+        ar = ArrayAggregator(sum_all.index)
+        for mode in tour_sum:
+            self.ms.resultdata.print_data(
+                tour_sum[mode], "origins_demand.txt", mode)
+            self.ms.resultdata.print_data(
+                ar.aggregate(tour_sum[mode]), "origins_demand_areas.txt", mode)
+            self.ms.resultdata.print_data(
+                tour_sum[mode] / sum_all, "origins_shares.txt", mode)
