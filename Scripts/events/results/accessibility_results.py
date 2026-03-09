@@ -116,6 +116,14 @@ class AccessibilityResults(ModelSystemEventListener):
                 "{}:\t{:1.0f}".format(
                     names[model.purpose.name], aggregate["all"]),
                 "result_summary")
+    
+    def on_purpose_demand_calculated(self, purpose, demand, pnr_iteration=0, estimation_mode=False):
+        """
+        Print logsums for each mode
+        """
+        for mode in purpose.modes:
+            self.ms.resultdata.print_data(purpose.model.zone_data._values[purpose.name+"_"+mode[0]], "accessibility.txt", purpose.name+"_"+mode[0])
+        self.ms.resultdata.print_data(purpose.model.zone_data._values[purpose.name], "accessibility.txt", purpose.name)
             
     def on_simulation_complete(self):
         logsum = 0
