@@ -14,17 +14,14 @@ if TYPE_CHECKING:
 
 class MatrixPrinting(ModelSystemEventListener):
     """
-    A class to analyze demand in a model system by listening to specific events.
+    A class for matrix printing. Matrix and estimation folders contain matrices about demand and impedance.
     """
     
-    mode_demands: List[Dict[str, int]]
-    """ A list of dictionaries to store mode demands for each iteration. """
     result_path: Path
     """ The path to the result file. """
     
     def __init__(self):
         super().__init__()
-        self.mode_demands = []
     
     def on_model_system_initialized(self,
                                     model_system: 'ModelSystem',
@@ -40,6 +37,7 @@ class MatrixPrinting(ModelSystemEventListener):
         self.ass_model = assignment_model
     
     def on_purpose_demand_calculated(self, purpose, demand, pnr_iteration=0, estimation_mode = False):
+        if purpose.name == "wh": return
         if estimation_mode:
             omx_file = omx.open_file(f"{purpose.resultdata.path}/estimation/demand_{purpose.name}.omx","w")
             omx_file.create_mapping("zone_number",purpose.zone_data.all_zone_numbers)
@@ -65,7 +63,6 @@ class MatrixPrinting(ModelSystemEventListener):
                     demand = dtm.demand[tp][ass_class]
                     mtx[ass_class] = demand
                     demand_sum_string += "\t{:8.0f}".format(demand.sum())
-            self.ms.resultdata.print_line(demand_sum_string, "result_summary")
         
         #Save park and ride utility matrix
         for purpose in self.ms.dm.tour_purposes:

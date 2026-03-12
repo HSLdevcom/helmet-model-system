@@ -15,17 +15,11 @@ if TYPE_CHECKING:
 
 class TripsAreasResults(ModelSystemEventListener):
     """
-    A class to analyze demand in a model system by listening to specific events.
+    A class to analyze origins of trips.
     """
-    
-    mode_demands: List[Dict[str, int]]
-    """ A list of dictionaries to store mode demands for each iteration. """
-    result_path: Path
-    """ The path to the result file. """
     
     def __init__(self):
         super().__init__()
-        self.mode_demands = []
     
     def on_model_system_initialized(self,
                                     model_system: 'ModelSystem',
@@ -35,12 +29,10 @@ class TripsAreasResults(ModelSystemEventListener):
                                     results_path: str, 
                                     assignment_model: 'AssignmentModel', 
                                     name: str) -> None:
-        # Get result path when model system is initialized
-        self.result_path = Path(results_path) / name / 'mode_analysis_results.csv'
         self.ms = model_system
             
     def on_demand_calculated(self, iteration, dtm):
-                # Calculate tour sums and mode shares
+        # Calculate tour sums and mode shares
         tour_sum = {mode: self.ms._sum_trips_per_zone(mode, include_dests=False)
             for mode in self.ms.travel_modes}
         sum_all = sum(tour_sum.values())

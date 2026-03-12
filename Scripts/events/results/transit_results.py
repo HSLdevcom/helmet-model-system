@@ -23,10 +23,6 @@ class TransitResults(ModelSystemEventListener):
     """
     A class to print calculated transit results to results directory.
     """
-    mode_demands: List[Dict[str, int]]
-    """ A list of dictionaries to store mode demands for each iteration. """
-    result_path: Path
-    """ The path to the result file. """
     
     def __init__(self):
         super().__init__()

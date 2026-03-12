@@ -174,9 +174,7 @@ class ModelSystem:
                     self._distribute_sec_dests(
                         purpose, "car", purpose_impedance)
             else: #hw-hh, hwp-oop
-                if purpose.name == "wh":
-                    continue #don't go to purpose_demand_calculated event
-                else:
+                if purpose.name != "wh":
                     demand = purpose.calc_demand(estimation_mode)
                     if purpose.park_and_ride_model is not None:
                         # Apply penalty for overcrowded park and ride facilities.
@@ -189,6 +187,7 @@ class ModelSystem:
                             log.debug(f"Park and ride crowding penalty iteration {pnr_it+1} modified {modified} facilities.")
                             if modified < 1:                                
                                 break
+                        pnr_it += 1
                         log.debug("Park and ride demand calculation completed.")
                 if purpose.dest != "source":
                     for mode in demand:

@@ -14,30 +14,14 @@ if TYPE_CHECKING:
 
 class TourLengthsResults(ModelSystemEventListener):
     """
-    A class to analyze demand in a model system by listening to specific events.
+    A class to analyze tour lengths. Length based on car distance.
     """
-    
-    mode_demands: List[Dict[str, int]]
-    """ A list of dictionaries to store mode demands for each iteration. """
-    result_path: Path
-    """ The path to the result file. """
     
     def __init__(self):
         super().__init__()
-        self.mode_demands = []
-    
-    def on_model_system_initialized(self,
-                                    model_system: 'ModelSystem',
-                                    zone_data_path: str, 
-                                    base_zone_data_path: str, 
-                                    base_matrices_path: str,
-                                    results_path: str, 
-                                    assignment_model: 'AssignmentModel', 
-                                    name: str) -> None:
-        # Get result path when model system is initialized
-        self.result_path = Path(results_path) / name / 'mode_analysis_results.csv'
     
     def on_purpose_demand_calculated(self, purpose: 'TourPurpose', demand: 'Demand', pnr_iteration=0):
+        if purpose.name == "wh": return
         if type(purpose) == TourPurpose:
             for mode in purpose.histograms:
                 purpose.resultdata.print_data(

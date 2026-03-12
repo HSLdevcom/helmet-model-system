@@ -27,16 +27,11 @@ if TYPE_CHECKING:
 
 class AccessibilityResults(ModelSystemEventListener):
     """
-    A class to print calculated transit results to results directory.
+    A class to print accessibility results.
     """
-    mode_demands: List[Dict[str, int]]
-    """ A list of dictionaries to store mode demands for each iteration. """
-    result_path: Path
-    """ The path to the result file. """
     
     def __init__(self):
         super().__init__()
-        self.transit_line_congestions = pd.DataFrame()
     
     def on_model_system_initialized(self,
                                     model_system: 'ModelSystem',
@@ -46,8 +41,6 @@ class AccessibilityResults(ModelSystemEventListener):
                                     results_path: str, 
                                     assignment_model: 'AssignmentModel', 
                                     name: str):
-        # Get result path when model system is initialized
-        self.accessibility_result_path = Path(results_path) / name / 'accessibility.txt'
         self.ms = model_system
 
     def on_population_segments_created(self,
@@ -108,59 +101,36 @@ class AccessibilityResults(ModelSystemEventListener):
             self.ms.resultdata.print_data(
                 aggregate, "workplace_accessibility_areas.txt",
                 model.purpose.name)
-            names = {
-                "hw": "Workplace effective density",
-                "wh": "Workforce accessibility",
-            }
-            self.ms.resultdata.print_line(
-                "{}:\t{:1.0f}".format(
-                    names[model.purpose.name], aggregate["all"]),
-                "result_summary")
     
     def on_purpose_demand_calculated(self, purpose, demand, pnr_iteration=0, estimation_mode=False):
         """
         Print logsums for each mode
         """
         for mode in purpose.modes:
+            if purpose.name+"_"+mode[0] not in purpose.model.zone_data._values: return #some tours do not contain accessibility values
             self.ms.resultdata.print_data(purpose.model.zone_data._values[purpose.name+"_"+mode[0]], "accessibility.txt", purpose.name+"_"+mode[0])
         self.ms.resultdata.print_data(purpose.model.zone_data._values[purpose.name], "accessibility.txt", purpose.name)
-            
-    def on_simulation_complete(self):
-        logsum = 0
-        sust_logsum = 0
-        car_logsum = 0
-        for purpose in self.dm.tour_purposes:
-            if (purpose.area == "metropolitan" and purpose.orig == "home"
-                    and purpose.dest != "source" and purpose.dest != "home"
-                    and not isinstance(purpose, SecDestPurpose)):
-                zone_numbers = purpose.zone_numbers
-                bounds = purpose.bounds
-                weight = tour_generation[purpose.name]["population"]
-                logsum += weight * purpose.access
-                sust_logsum += weight * purpose.sustainable_access
-                car_logsum += weight * purpose.car_access
-        pop = self.zdata["population"][bounds]
+    
+    def on_iteration_complete(self, iteration, impedance, gap):
+        if iteration == "last":
+            logsum = 0
+            sust_logsum = 0
+            car_logsum = 0
+            for purpose in self.dm.tour_purposes:
+                if (purpose.area == "metropolitan" and purpose.orig == "home"
+                        and purpose.dest != "source" and purpose.dest != "home"
+                        and not isinstance(purpose, SecDestPurpose)):
+                    zone_numbers = purpose.zone_numbers
+                    weight = tour_generation[purpose.name]["population"]
+                    logsum += weight * purpose.access
+                    sust_logsum += weight * purpose.sustainable_access
+                    car_logsum += weight * purpose.car_access
 
-        self.ms.resultdata.print_line(
-            "\nTotal accessibility:\t{:1.2f}".format(
-                np.average(logsum, weights=pop)),
-            "result_summary")
-        self.ms.resultdata.print_data(logsum, "accessibility.txt", "all")
-        avg_sust_logsum = np.average(sust_logsum, weights=pop)
-        self.ms.resultdata.print_line(
-            "Sustainable accessibility:\t{:1.2f}".format(avg_sust_logsum),
-            "result_summary")
-        self.ms.resultdata.print_data(
-            sust_logsum, "sustainable_accessibility.txt", "all")
-        self.ms.resultdata.print_data(car_logsum, "car_accessibility.txt", "all")
-        intervals = savu_intervals
-        savu = np.searchsorted(intervals, sust_logsum) + 1
-        self.ms.resultdata.print_data(
-            pd.Series(savu, zone_numbers), "savu.txt", "savu_zone")
-        avg_savu = np.searchsorted(intervals, avg_sust_logsum) + 1
-        avg_savu += ((avg_sust_logsum - intervals[avg_savu-2])
-                     / (intervals[avg_savu-1] - intervals[avg_savu-2]))
-        self.ms.resultdata.print_line(
-            "Average SAVU:\t{:1.4f}".format(avg_savu),
-            "result_summary")
-        self.ms.resultdata.flush()
+            self.ms.resultdata.print_data(logsum, "accessibility.txt", "all")
+            self.ms.resultdata.print_data(
+                sust_logsum, "sustainable_accessibility.txt", "all")
+            self.ms.resultdata.print_data(car_logsum, "car_accessibility.txt", "all")
+            intervals = savu_intervals
+            savu = np.searchsorted(intervals, sust_logsum) + 1
+            self.ms.resultdata.print_data(
+                pd.Series(savu, zone_numbers), "savu.txt", "savu_zone")

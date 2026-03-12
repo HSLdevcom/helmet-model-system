@@ -26,16 +26,11 @@ if TYPE_CHECKING:
 
 class EventLog(ModelSystemEventListener):
     """
-    A class to print calculated transit results to results directory.
+    A class for debugging and educational purposes that shows the stream of events in the model run
     """
-    mode_demands: List[Dict[str, int]]
-    """ A list of dictionaries to store mode demands for each iteration. """
-    result_path: Path
-    """ The path to the result file. """
     
     def __init__(self):
         super().__init__()
-        self.transit_line_congestions = pd.DataFrame()
 
     def on_validation_initialized(self, validation, validation_path):
         log.debug("EVENT: Validation")

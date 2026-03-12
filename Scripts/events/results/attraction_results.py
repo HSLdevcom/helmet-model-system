@@ -14,17 +14,11 @@ if TYPE_CHECKING:
 
 class AttractionResults(ModelSystemEventListener):
     """
-    A class to analyze demand in a model system by listening to specific events.
+    A class to analyze demand by tour destination. For hoo subtour the extra (second) destination is shown.
     """
-    
-    mode_demands: List[Dict[str, int]]
-    """ A list of dictionaries to store mode demands for each iteration. """
-    result_path: Path
-    """ The path to the result file. """
     
     def __init__(self):
         super().__init__()
-        self.mode_demands = []
     
     def on_model_system_initialized(self,
                                     model_system: 'ModelSystem',
@@ -34,23 +28,12 @@ class AttractionResults(ModelSystemEventListener):
                                     results_path: str, 
                                     assignment_model: 'AssignmentModel', 
                                     name: str) -> None:
-        # Get result path when model system is initialized
-        self.result_path = Path(results_path) / name / 'mode_analysis_results.csv'
         self.ms = model_system
     
-    def on_iteration_started(self, iteration: Union[int, str], previous_impedance: Dict[str, Dict[str, np.ndarray]]):
-        # Add new row for each iteration
-        self.mode_demands.append({'iteration': iteration})
-    
     def on_purpose_demand_calculated(self, purpose: 'TourPurpose', demand: 'Demand', pnr_iteration=0):
+        if purpose.name == "wh": return
         self.ms.resultdata.print_data(
             pd.Series(
                 sum(purpose.attracted_tours.values()),
                 purpose.zone_data.zone_numbers),
             "attraction.txt", purpose.name)
-    
-    def on_iteration_complete(self, iteration: Union[str, int], impedance: Dict[str, Dict[str, np.ndarray]], gap: Dict[str, float]):
-        # Print resuts after last iteration
-        if iteration == 'last' or iteration is None:
-            pd.DataFrame(self.mode_demands)\
-                .to_csv(self.result_path, index=False)

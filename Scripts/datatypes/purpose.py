@@ -180,9 +180,6 @@ class TourPurpose(Purpose):
                               self.zone_data.zone_index(tour.dest)] += 1
         log.info(f"Matrix contains {od_matrix.sum()} park and ride tours")
         demand = {}
-        # if estimation_mode:
-        #     omx_file = omx.open_file(f"{self.resultdata.path}/estimation/demand_{self.name}.omx","w")
-        #     omx_file.create_mapping("zone_number",self.zone_data.all_zone_numbers)
 
         car_demand, transit_demand = self.park_and_ride_model.distribute_demand(od_matrix)
         pnr_purpose = ParkAndRidePseudoPurpose(self)

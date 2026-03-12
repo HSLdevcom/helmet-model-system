@@ -14,17 +14,11 @@ if TYPE_CHECKING:
 
 class TourCombinationsResults(ModelSystemEventListener):
     """
-    A class to analyze demand in a model system by listening to specific events.
+    A class to analyze generated tour combinations.
     """
-    
-    mode_demands: List[Dict[str, int]]
-    """ A list of dictionaries to store mode demands for each iteration. """
-    result_path: Path
-    """ The path to the result file. """
     
     def __init__(self):
         super().__init__()
-        self.mode_demands = []
     
     def on_model_system_initialized(self,
                                     model_system: 'ModelSystem',
@@ -34,8 +28,6 @@ class TourCombinationsResults(ModelSystemEventListener):
                                     results_path: str, 
                                     assignment_model: 'AssignmentModel', 
                                     name: str) -> None:
-        # Get result path when model system is initialized
-        self.result_path = Path(results_path) / name / 'mode_analysis_results.csv'
         self.ms = model_system
     
     def on_demand_model_tours_generated(self, dm):
