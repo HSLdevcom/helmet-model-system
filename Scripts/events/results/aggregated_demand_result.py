@@ -23,7 +23,7 @@ class AggregatedDemandResults(ModelSystemEventListener):
     def on_iteration_started(self, iteration, previous_impedance):
         return super().on_iteration_started(iteration, previous_impedance)
     
-    def on_purpose_demand_calculated(self, purpose: 'TourPurpose', demand: 'Demand', pnr_iteration: int = 0):
+    def on_purpose_demand_calculated(self, purpose: 'TourPurpose', demand: 'Demand', pnr_iteration: int = 0, estimation_mode = False):
         if purpose.name == "wh": return
         if type(purpose) == TourPurpose:
             for mode in purpose.histograms:

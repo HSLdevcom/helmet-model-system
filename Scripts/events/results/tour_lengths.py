@@ -20,7 +20,7 @@ class TourLengthsResults(ModelSystemEventListener):
     def __init__(self):
         super().__init__()
     
-    def on_purpose_demand_calculated(self, purpose: 'TourPurpose', demand: 'Demand', pnr_iteration=0):
+    def on_purpose_demand_calculated(self, purpose: 'TourPurpose', demand: 'Demand', pnr_iteration=0, estimation_mode = False):
         if purpose.name == "wh": return
         if type(purpose) == TourPurpose:
             for mode in purpose.histograms:

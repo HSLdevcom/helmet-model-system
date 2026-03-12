@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import openmatrix as omx
 
+from datatypes.purpose import TourPurpose
 from events.model_system_event_listener import ModelSystemEventListener
 import parameters.assignment as param
 
@@ -39,12 +40,13 @@ class MatrixPrinting(ModelSystemEventListener):
     def on_purpose_demand_calculated(self, purpose, demand, pnr_iteration=0, estimation_mode = False):
         if purpose.name == "wh": return
         if estimation_mode:
-            omx_file = omx.open_file(f"{purpose.resultdata.path}/estimation/demand_{purpose.name}.omx","w")
-            omx_file.create_mapping("zone_number",purpose.zone_data.all_zone_numbers)
-            for mode in purpose.modes:
-                if mode != "park_and_ride":
-                    omx_file[mode] = purpose.orig_purpose_demand
-            omx_file.close()
+            if type(purpose) == TourPurpose:
+                omx_file = omx.open_file(f"{purpose.resultdata.path}/estimation/demand_{purpose.name}.omx","w")
+                omx_file.create_mapping("zone_number",purpose.zone_data.all_zone_numbers)
+                for mode in purpose.modes:
+                    if mode != "park_and_ride":
+                        omx_file[mode] = demand[mode].tour_matrix
+                omx_file.close()
         self.purpose = purpose
             
     def on_time_period_assigned(self, iteration, ap, impedance, tp, previous_iter_impedance):

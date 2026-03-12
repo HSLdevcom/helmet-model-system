@@ -180,7 +180,7 @@ class ModelSystem:
                         # Apply penalty for overcrowded park and ride facilities.
                         MAX_PNR_ITERATIONS = 5 # Maximum number of iterations. Set to 0 for no penalty
                         for pnr_it in range(MAX_PNR_ITERATIONS):
-                            self.event_handler.on_purpose_demand_calculated(purpose, demand, pnr_iteration = pnr_it)
+                            self.event_handler.on_purpose_demand_calculated(purpose, demand, pnr_iteration = pnr_it, estimation_mode=estimation_mode)
                             modified = purpose.park_and_ride_model.apply_crowding_penalty()
                             purpose.calc_prob(saved_pnr_impedance[purpose.name])
                             demand = purpose.calc_demand(estimation_mode=estimation_mode, add_sec_dest=False, pnr_iteration=pnr_it+1)
@@ -193,7 +193,7 @@ class ModelSystem:
                     for mode in demand:
                         self.dtm.add_demand(demand[mode])
                         self.travel_modes[mode] = True
-            self.event_handler.on_purpose_demand_calculated(purpose, demand, pnr_iteration = pnr_it)
+            self.event_handler.on_purpose_demand_calculated(purpose, demand, pnr_iteration = pnr_it, estimation_mode=estimation_mode)
 
     # possibly merge with init
     def assign_base_demand(self, 

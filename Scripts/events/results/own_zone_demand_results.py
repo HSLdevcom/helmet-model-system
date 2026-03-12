@@ -30,7 +30,7 @@ class OwnZoneDemandResults(ModelSystemEventListener):
                                     name: str) -> None:
         self.ms = model_system
     
-    def on_purpose_demand_calculated(self, purpose: 'TourPurpose', demand: 'Demand', pnr_iteration=0):
+    def on_purpose_demand_calculated(self, purpose: 'TourPurpose', demand: 'Demand', pnr_iteration=0, estimation_mode = False):
         if purpose.name == "wh": return
         if type(purpose) == TourPurpose:
             for mode in purpose.histograms:

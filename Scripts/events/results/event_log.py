@@ -53,7 +53,7 @@ class EventLog(ModelSystemEventListener):
     def on_demand_model_tours_generated(self, dm):
         log.debug("EVENT: Demand model tours generated")
     
-    def on_purpose_demand_calculated(self, purpose, demand, pnr_iteration=0):
+    def on_purpose_demand_calculated(self, purpose, demand, pnr_iteration=0, estimation_mode = False):
         log.debug("EVENT: Purpose demand calculated")
     
     def on_base_demand_assigned(self, impedance):
