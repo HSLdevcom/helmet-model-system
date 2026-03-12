@@ -41,6 +41,12 @@ class DemandAnalysis(ModelSystemEventListener):
         # Add new row for each iteration
         self.mode_demands.append({'iteration': iteration})
     
+    def on_purpose_demand_calculated(self, purpose: 'TourPurpose', demand: 'Demand', pnr_iteration: int = 0):
+        # Sum mode demand for each purpose after it has been calculated
+        current_results = self.mode_demands[-1]
+        for m, d in demand.items():
+            current_results[m] = d.matrix.sum() + current_results.get(m, 0)
+    
     def on_iteration_complete(self, iteration: Union[str, int], impedance: Dict[str, Dict[str, np.ndarray]], gap: Dict[str, float]):
         # Print resuts after last iteration
         if iteration == 'last' or iteration is None:

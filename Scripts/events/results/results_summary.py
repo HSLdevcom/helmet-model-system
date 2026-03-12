@@ -137,7 +137,6 @@ class ResultSummary(ModelSystemEventListener):
                 weight = gen_param.tour_generation[purpose.name]["population"]
                 logsum += weight * purpose.access
                 sust_logsum += weight * purpose.sustainable_access
-                log.info(f"WEIGHT \n{weight} \nACC \n{purpose.sustainable_access}")
                 car_logsum += weight * purpose.car_access
         pop = self.zdata["population"][bounds]
 
