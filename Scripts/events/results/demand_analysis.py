@@ -43,7 +43,8 @@ class DemandAnalysis(ModelSystemEventListener):
         self.mode_demands.append({'iteration': iteration})
     
     def on_purpose_demand_calculated(self, purpose: TourPurpose, purpose_demand: 'Demand', pnr_iteration: int = 0, estimation_mode = False):
-        if pnr_iteration > 0 or type(purpose)!=TourPurpose: return
+        if pnr_iteration > 0 or type(purpose)!=TourPurpose: return #sec_dest purposes skipped
+        if purpose_demand is None: return #skip if purpose demand is not calculated (agent based model)
         # Sum mode demand for each purpose after it has been calculated
         current_results = self.mode_demands[-1]
         for m, d in purpose_demand.items():

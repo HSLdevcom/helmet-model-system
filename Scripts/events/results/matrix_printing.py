@@ -39,6 +39,7 @@ class MatrixPrinting(ModelSystemEventListener):
     
     def on_purpose_demand_calculated(self, purpose, demand, pnr_iteration=0, estimation_mode = False):
         if purpose.name == "wh": return
+        if demand == None: return #Agent based model
         if estimation_mode:
             if type(purpose) == TourPurpose:
                 omx_file = omx.open_file(f"{purpose.resultdata.path}/estimation/demand_{purpose.name}.omx","w")

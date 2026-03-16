@@ -79,6 +79,7 @@ class AccessibilityResults(ModelSystemEventListener):
             np.log(sustainable_sum), model.purpose.zone_numbers)
         self.ms.resultdata.print_data(
             logsum, "sustainable_accessibility.txt", model.purpose.name)
+        #Note: Shared results are problematic, but for now we save them through this function
         model.purpose.access = (model.money_utility
                                * model.zone_data[model.purpose.name])
         model.purpose.sustainable_access = model.money_utility * logsum

@@ -97,7 +97,7 @@ def main(args):
         estimation_data_path.mkdir(parents=True, exist_ok=True)
     
     # Initialize event handler and load event listeners
-    event_handler = EventHandler()
+    event_handler = EventHandler(args.strict_mode)
     # Load event listeners from 'events/results' folder
     event_handler.load_listeners(Path(__file__).parent / 'events' / 'results')
 
@@ -352,6 +352,11 @@ if __name__ == "__main__":
         action="store_true",
         default=config.USE_FIXED_TRANSIT_COST,
         help="Using this flag activates use of pre-calculated (fixed) transit costs."),
+    parser.add_argument(
+        "--strict-mode",
+        action="store_true",
+        default=config.STRICT_MODE,
+        help="Using this flag makes the model run fail when an error occurs (especially in events processing)."),
     args = parser.parse_args()
 
     log.initialize(args)

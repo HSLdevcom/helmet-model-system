@@ -149,7 +149,7 @@ class ModelSystemEventListener(ABC):
 
         Args:
             purpose (TourPurpose): Tour purpose.
-            demand (DemandModel): The demand model.
+            demand (DemandModel): The demand model. (agg models only, None for agent based)
             pnr_iteration (int): Park and ride iteration.
             estimation_mode (bool): Estimation mode flag.
         """
@@ -326,6 +326,14 @@ class ModelSystemEventListener(ABC):
         """
         pass
     
+    def on_agent_model_results_calculated(self, previous_iter_impedance: 'np.ndarray') -> None:
+        """
+        Event handler for when agent model results have been calculated.
+        Args:
+            previous_iter_impedance (np.ndarray): The impedance values from the previous iteration.
+        """
+        pass
+
     def on_daily_results_aggregated(self, assignment_model: 'EmmeAssignmentModel', day_network: 'Network', network_aggregations: 'Dict') -> None:
         """
         Event handler for when daily results have been aggregated.

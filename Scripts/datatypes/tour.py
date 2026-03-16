@@ -143,7 +143,9 @@ class Tour:
 
     @property
     def sustainable_access(self):
-        return -self.purpose.sustainable_access[self.orig]
+        if self.orig in self.purpose.sustainable_access:
+            return (-1)*self.purpose.sustainable_access[self.orig]
+        return -1 #Fallback
 
     def choose_destination(self, sec_dest_tours: Dict[str, Dict[int, Dict[int, List['Tour']]]]):
         """Choose primary destination for the tour.

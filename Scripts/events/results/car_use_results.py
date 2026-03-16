@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 
 from events.model_system_event_listener import ModelSystemEventListener
+from utils import log
 from utils.zone_interval import ZoneIntervals
 
 if TYPE_CHECKING:
@@ -33,7 +34,14 @@ class CarUseResults(ModelSystemEventListener):
 
     def on_population_segments_created(self, dm):
         """ Print results, mainly for calibration purposes"""
-        prob = dm.zone_data["car_users"]
+        if "car_users" not in dm.zone_data._values: #agent model
+            car_users = pd.Series(
+            0, dm.zone_data.zone_numbers[dm.car_use_model.bounds])
+            for person in dm.population:
+                car_users[person.zone.number] += person.is_car_user
+            prob = car_users / dm.zone_population
+        else: #agg model
+            prob = dm.zone_data["car_users"]
         # Print car user share by zone
         self.ms.resultdata.print_data(prob, "car_use.txt", "car_use")
         if not hasattr(dm, "zone_population"):

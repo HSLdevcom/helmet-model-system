@@ -527,25 +527,20 @@ class AgentModelSystem(ModelSystem):
                     purpose.init_sums()
                     purpose.calc_basic_prob(purpose_impedance)
                 if is_last_iteration and purpose.dest != "source":
-                    purpose.accessibility_model.calc_accessibility(
-                        purpose_impedance)
+                    self.event_handler.on_calc_accessibility(purpose_impedance, purpose.accessibility_model)
         tour_probs = self.dm.generate_tour_probs()
         log.info("Assigning mode and destination for {} agents ({} % of total population)".format(
             len(self.dm.population), int(zone_param.agent_demand_fraction*100)))
         purpose = self.dm.purpose_dict["hoo"]
         sec_dest_tours = {mode: [defaultdict(list) for _ in purpose.zone_numbers]
             for mode in purpose.modes}
-        car_users = pandas.Series(
-            0, self.zdata_forecast.zone_numbers[self.dm.car_use_model.bounds])
         for person in self.dm.population:
             person.decide_car_use()
-            car_users[person.zone.number] += person.is_car_user
             person.add_tours(self.dm.purpose_dict, tour_probs)
             for tour in person.tours:
                 tour.choose_mode(person.is_car_user)
                 tour.choose_destination(sec_dest_tours)
-        self.dm.car_use_model.print_results(
-            car_users / self.dm.zone_population, self.dm.zone_population)
+        self.event_handler.on_population_segments_created(self.dm)
         log.info("Primary destinations assigned")
         purpose_impedance = self.imptrans.transform(
             purpose, previous_iter_impedance)
@@ -570,7 +565,8 @@ class AgentModelSystem(ModelSystem):
             for thread in threads:
                 thread.join()
         for purpose in self.dm.tour_purposes:
-            purpose.print_data()
+            #None for demand, because agent-based models work differently
+            self.event_handler.on_purpose_demand_calculated(purpose, None, estimation_mode=estimation_mode) 
             #Park and ride
             if purpose.park_and_ride_model is not None:
                 # Apply penalty for overcrowded park and ride facilities.
@@ -591,22 +587,7 @@ class AgentModelSystem(ModelSystem):
             for tour in person.tours:
                 self.dtm.add_demand(tour)
         if is_last_iteration:
-            random.seed(zone_param.population_draw)
-            self.dm.predict_income()
-            random.seed(None)
-            fname0 = "agents"
-            fname1 = "tours"
-            # print person and tour attr to files
-            self.resultdata.print_line("\t".join(Person.attr), fname0)
-            self.resultdata.print_line("\t".join(Tour.attr), fname1)
-            for person in self.dm.population:
-                person.calc_income()
-                self.resultdata.print_line(str(person), fname0)
-                for tour in person.tours:
-                    tour.calc_cost(previous_iter_impedance)
-                    self.resultdata.print_line(str(tour), fname1)
-            log.info("Results printed to files {} and {}".format(
-                fname0, fname1))
+            self.event_handler.on_agent_model_results_calculated(previous_iter_impedance)
         log.info("Demand calculation completed")
 
     def _distribute_tours(self, mode, origs, sec_dest_tours, impedance):
