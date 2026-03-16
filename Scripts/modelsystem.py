@@ -18,9 +18,9 @@ import assignment.departure_time as dt
 from datahandling.resultdata import ResultsData
 from datahandling.zonedata import ZoneData, BaseZoneData
 from datahandling.matrixdata import MatrixData
-from demand.freight import FreightModel
-from demand.trips import DemandModel
-from demand.external import ExternalModel
+from demand.freight_internal import FreightModel
+from demand.personal_internal import DemandModel
+from demand.all_external import ExternalModel
 from datatypes.purpose import SecDestPurpose
 from datatypes.person import Person
 from datatypes.tour import Tour
@@ -153,8 +153,7 @@ class ModelSystem:
                     purpose.park_and_ride_model.set_impedance(previous_iter_impedance)
                 purpose.calc_prob(purpose_impedance)
                 if is_last_iteration and purpose.name not in ("sop", "hh"):
-                    purpose.accessibility_model.calc_accessibility(
-                        purpose_impedance)
+                    self.event_handler.on_calc_accessibility(purpose_impedance, purpose.accessibility_model)
         
         # Tour generation
         self.dm.generate_tours()
@@ -162,7 +161,8 @@ class ModelSystem:
         
         # Assigning of tours to mode, destination and time period
         for purpose in self.dm.tour_purposes:
-            if isinstance(purpose, SecDestPurpose):
+            pnr_it = 0 #park and ride iteration
+            if isinstance(purpose, SecDestPurpose): #hoo
                 purpose_impedance = self.imptrans.transform(
                     purpose, previous_iter_impedance)
                 purpose.generate_tours()
@@ -173,26 +173,27 @@ class ModelSystem:
                 else:
                     self._distribute_sec_dests(
                         purpose, "car", purpose_impedance)
-            else:
+            else: #hw-hh, hwp-oop
                 if purpose.name != "wh":
                     demand = purpose.calc_demand(estimation_mode)
                     if purpose.park_and_ride_model is not None:
                         # Apply penalty for overcrowded park and ride facilities.
                         MAX_PNR_ITERATIONS = 5 # Maximum number of iterations. Set to 0 for no penalty
-                        for i in range(MAX_PNR_ITERATIONS):
+                        for pnr_it in range(MAX_PNR_ITERATIONS):
+                            self.event_handler.on_purpose_demand_calculated(purpose, demand, pnr_iteration = pnr_it, estimation_mode=estimation_mode)
                             modified = purpose.park_and_ride_model.apply_crowding_penalty()
                             purpose.calc_prob(saved_pnr_impedance[purpose.name])
-                            demand = purpose.calc_demand(estimation_mode=estimation_mode, add_sec_dest=False, pnr_iteration=i+1)
-                            log.debug(f"Park and ride crowding penalty iteration {i+1} modified {modified} facilities.")
+                            demand = purpose.calc_demand(estimation_mode=estimation_mode, add_sec_dest=False, pnr_iteration=pnr_it+1)
+                            log.debug(f"Park and ride crowding penalty iteration {pnr_it+1} modified {modified} facilities.")
                             if modified < 1:                                
                                 break
+                        pnr_it += 1
                         log.debug("Park and ride demand calculation completed.")
-
-                self.event_handler.on_purpose_demand_calculated(purpose, demand)
                 if purpose.dest != "source":
                     for mode in demand:
                         self.dtm.add_demand(demand[mode])
                         self.travel_modes[mode] = True
+            self.event_handler.on_purpose_demand_calculated(purpose, demand, pnr_iteration = pnr_it, estimation_mode=estimation_mode)
 
     # possibly merge with init
     def assign_base_demand(self, 
@@ -257,14 +258,15 @@ class ModelSystem:
                 self.dtm.demand[tp],
                 iteration=("last" if is_end_assignment else 0))
             if tp == time_periods[0]:
-                self._update_ratios(impedance[tp], tp)
+                time_ratios, cost_ratios = self._update_ratios(impedance[tp], tp)
+                self.event_handler.on_ratios_updated(time_ratios, cost_ratios)
             if is_end_assignment:
                 self._save_to_omx(impedance[tp], tp)
         if is_end_assignment:
             self.ass_model.aggregate_results(self.resultdata)
             self._calculate_noise_areas()
             self.resultdata.flush()
-        self.dtm.init_demand()
+        self.dtm.init_demand_and_get_gaps()
         self.event_handler.on_base_demand_assigned(impedance)
         return impedance
 
@@ -313,7 +315,7 @@ class ModelSystem:
         prediction = self.cdm.predict()
         self.zdata_forecast["car_density"] = prediction
         self.zdata_forecast["cars_per_1000"] = 1000 * prediction
-        self.event_handler.on_car_density_updated(iteration, prediction)
+        self.event_handler.on_car_density_updated(iteration, prediction, self.cdm)
 
         # Calculate internal demand
         self._add_internal_demand(previous_iter_impedance, iteration=="last", estimation_mode)
@@ -336,191 +338,32 @@ class ModelSystem:
             self.event_handler.on_external_demand_calculated(ext_demand)
             self.dtm.add_demand(ext_demand)
         
-        # Calculate tour sums and mode shares
-        tour_sum = {mode: self._sum_trips_per_zone(mode, include_dests=False)
-            for mode in self.travel_modes}
-        sum_all = sum(tour_sum.values())
-        mode_shares = {}
-        ar = ArrayAggregator(sum_all.index)
-        for mode in tour_sum:
-            self.resultdata.print_data(
-                tour_sum[mode], "origins_demand.txt", mode)
-            self.resultdata.print_data(
-                ar.aggregate(tour_sum[mode]), "origins_demand_areas.txt", mode)
-            self.resultdata.print_data(
-                tour_sum[mode] / sum_all, "origins_shares.txt", mode)
-            mode_shares[mode] = tour_sum[mode].sum() / sum_all.sum()
-        self.mode_share.append(mode_shares)
-        trip_sum = {mode: self._sum_trips_per_zone(mode)
-            for mode in self.travel_modes}
-        for mode in tour_sum:
-            self.resultdata.print_data(
-                ar.aggregate(trip_sum[mode]), "trips_areas.txt", mode)
-        self.resultdata.print_line("\nAssigned demand", "result_summary")
-        self.resultdata.print_line(
-            "\t" + "\t".join(param.transport_classes), "result_summary")
-
         # Add vans and save demand matrices
         for ap in self.ass_model.assignment_periods:
             self.dtm.add_vans(ap.name, self.zdata_forecast.nr_zones)
-            self._save_demand_to_omx(ap.name)
         log.info("Demand matrices saved")
         self.event_handler.on_demand_calculated(iteration, self.dtm)
-
-        #Modes for HS15 region
-        hs15_modes_total = {mode: 0 for mode in self.dm.purpose_dict["hw"].modes}
-        for pur in self.dm.purpose_dict:
-            purpose = self.dm.purpose_dict[pur]
-            if purpose.name in ["hw","hc","hu","hs","ho","hh","wo","oo"]: 
-                for mode in purpose.modes:
-                    demsum = purpose.generated_tours[mode].sum()
-                    if purpose.name == "hh":
-                        hs15_modes_total[mode] += 0.5*demsum
-                    else:
-                        hs15_modes_total[mode] += demsum
-        hs15_modes_shares = {m: hs15_modes_total[m]/sum(hs15_modes_total.values()) for m in hs15_modes_total}
-        hs15_modes = [m for m in hs15_modes_total]
-        self.resultdata.print_line("\nHS15 mode shares (tour-based)", "result_summary")
-        for m in hs15_modes:
-            self.resultdata.print_line(
-                "{}\t{:1.2%}".format(m, hs15_modes_shares[m]),
-                "result_summary")
-            
-        #Modes for HS15 region (including secondary destination)
-        hs15_modes_total = {mode: 0 for mode in self.dm.purpose_dict["hw"].modes}
-        tour_generation = gen_param.tour_generation
-        for pur in self.dm.purpose_dict:
-            purpose = self.dm.purpose_dict[pur]
-            if purpose.name in ["hw","hc","hu","hs","ho","hh","wo","oo"]: 
-                for mode in purpose.modes:
-                    demsum = purpose.generated_tours[mode].sum()
-                    if purpose.name == "hh":
-                        hs15_modes_total[mode] += demsum #one trip only
-                    elif mode=="park_and_ride":
-                        #2 trips split by mode
-                        hs15_modes_total["transit"] += 0.5 * demsum * 2
-                        hs15_modes_total["car"] += 0.5 * demsum * 2
-                    else:
-                        hs15_modes_total[mode] += demsum * (2+tour_generation["hoo"][purpose.name][mode]) #sec_dest included
-        hs15_modes_shares = {m: hs15_modes_total[m]/sum(hs15_modes_total.values()) for m in hs15_modes_total}
-        hs15_modes = [m for m in hs15_modes_total]
-        self.resultdata.print_line("\nHS15 mode shares (trip-based with secondary destinations)", "result_summary")
-        for m in hs15_modes:
-            self.resultdata.print_line(
-                "{}\t{:1.2%}".format(m, hs15_modes_shares[m]),
-                "result_summary")
 
         # Calculate and return traffic impedance
         for ap in self.ass_model.assignment_periods:
             tp = ap.name
             log.info("Assigning period " + tp)
             impedance[tp] = ap.assign(self.dtm.demand[tp], iteration)
-            self.event_handler.on_time_period_assigned(iteration, ap, impedance[tp])
+            self.event_handler.on_time_period_assigned(iteration, ap, impedance[tp], tp, previous_iter_impedance)
             if tp == "aht":
-                self._update_ratios(impedance[tp], tp)
-            if iteration=="last" and param.always_congested:     
-                self._save_to_omx(impedance[tp], tp)
-            elif iteration=="last":
-                impedance[tp]["time"]["transit_uncongested"] = previous_iter_impedance[tp]["time"]["transit_work"]
-                self._save_to_omx(impedance[tp], tp)
+                time_ratios, cost_ratios = self._update_ratios(impedance[tp], tp)
+                self.event_handler.on_ratios_updated(time_ratios, cost_ratios)
+
         if iteration=="last":
             self.ass_model.aggregate_results(self.resultdata)
-            self._save_pnr_facility_info()
-            self._calculate_noise_areas()
-            self._calculate_accessibility_and_savu_zones()
-            self.resultdata.print_line("\nMode shares", "result_summary")
-            for mode in mode_shares:
-                self.resultdata.print_line(
-                    "{}\t{:1.2%}".format(mode, mode_shares[mode]),
-                    "result_summary")
 
         # Reset time-period specific demand matrices (DTM),
         # and empty result buffer
-        gap = self.dtm.init_demand()
-        self.convergence.append(gap)
-        self.resultdata._df_buffer["demand_convergence.txt"] = pandas.DataFrame(self.convergence)
-        self.resultdata.flush()
+        gap = self.dtm.init_demand_and_get_gaps() 
+        self.convergence.append(gap)      
         self.event_handler.on_iteration_complete(iteration, impedance, gap)
+        self.resultdata.flush()
         return impedance
-
-    def _save_demand_to_omx(self, tp):
-        zone_numbers = self.ass_model.zone_numbers
-        demand_sum_string = tp
-        with self.resultmatrices.open("demand", tp, zone_numbers, 'w') as mtx:
-            for ass_class in param.transport_classes:
-                demand = self.dtm.demand[tp][ass_class]
-                mtx[ass_class] = demand
-                demand_sum_string += "\t{:8.0f}".format(demand.sum())
-        self.resultdata.print_line(demand_sum_string, "result_summary")
-
-    def _save_to_omx(self, impedance, tp):
-        zone_numbers = self.ass_model.zone_numbers
-        for mtx_type in impedance:
-            with self.resultmatrices.open(mtx_type, tp, zone_numbers, 'w') as mtx:
-                for ass_class in impedance[mtx_type]:
-                    mtx[ass_class] = impedance[mtx_type][ass_class]
-
-    def _save_pnr_facility_info(self):
-        pnr_data = []
-        for facility in self.dm.purpose_dict['hw'].park_and_ride_model._facilities:
-            pnr_data.append({k: str(v) for k, v in asdict(facility).items()})
-
-        pnr_results = pandas.DataFrame(pnr_data)
-        pnr_results['used_capacity'] = pnr_results['used_capacity'].astype(float).round().astype(int)
-        pnr_results['shops'] = pnr_results['shops'].astype(float).round().astype(int)
-        pnr_results.index = pnr_results['zone_id']
-        pnr_results.index.name = None
-        pnr_results = pnr_results[['cost','shops','capacity','used_capacity','time']]
-        for col in pnr_results.columns:
-            self.resultdata.print_data(pnr_results[col], "pnr_facilities.txt", col)
-
-
-    def _calculate_noise_areas(self):
-        noise_areas = self.ass_model.calc_noise()
-        self.resultdata.print_data(noise_areas, "noise_areas.txt", "area")
-        ar = ArrayAggregator(self.zdata_forecast.zone_numbers)
-        pop = ar.aggregate(self.zdata_forecast["population"])
-        conversion = pandas.Series(zone_param.pop_share_per_noise_area)
-        noise_pop = conversion * noise_areas * pop
-        self.resultdata.print_data(noise_pop, "noise_areas.txt", "population")
-
-    def _calculate_accessibility_and_savu_zones(self):
-        logsum = 0
-        sust_logsum = 0
-        car_logsum = 0
-        for purpose in self.dm.tour_purposes:
-            if (purpose.area == "metropolitan" and purpose.orig == "home"
-                    and purpose.dest != "source" and purpose.dest != "home"
-                    and not isinstance(purpose, SecDestPurpose)):
-                zone_numbers = purpose.zone_numbers
-                bounds = purpose.bounds
-                weight = gen_param.tour_generation[purpose.name]["population"]
-                logsum += weight * purpose.access
-                sust_logsum += weight * purpose.sustainable_access
-                car_logsum += weight * purpose.car_access
-        pop = self.zdata_forecast["population"][bounds]
-        self.resultdata.print_line(
-            "\nTotal accessibility:\t{:1.2f}".format(
-                numpy.average(logsum, weights=pop)),
-            "result_summary")
-        self.resultdata.print_data(logsum, "accessibility.txt", "all")
-        avg_sust_logsum = numpy.average(sust_logsum, weights=pop)
-        self.resultdata.print_line(
-            "Sustainable accessibility:\t{:1.2f}".format(avg_sust_logsum),
-            "result_summary")
-        self.resultdata.print_data(
-            sust_logsum, "sustainable_accessibility.txt", "all")
-        self.resultdata.print_data(car_logsum, "car_accessibility.txt", "all")
-        intervals = zone_param.savu_intervals
-        savu = numpy.searchsorted(intervals, sust_logsum) + 1
-        self.resultdata.print_data(
-            pandas.Series(savu, zone_numbers), "savu.txt", "savu_zone")
-        avg_savu = numpy.searchsorted(intervals, avg_sust_logsum) + 1
-        avg_savu += ((avg_sust_logsum - intervals[avg_savu-2])
-                     / (intervals[avg_savu-1] - intervals[avg_savu-2]))
-        self.resultdata.print_line(
-            "Average SAVU:\t{:1.4f}".format(avg_savu),
-            "result_summary")
 
     def _sum_trips_per_zone(self, mode, include_dests=True):
         int_demand = pandas.Series(0.0, self.zdata_base.zone_numbers)
@@ -562,7 +405,6 @@ class ModelSystem:
             for tp in dtm.demand:
                 for ass_class in dtm.demand[tp]:
                     self.dtm.demand[tp][ass_class] += dtm.demand[tp][ass_class]
-        purpose.print_data()
 
     def _distribute_tours(self, container, purpose, mode, impedance, origs):
         for orig in origs:
@@ -587,9 +429,7 @@ class ModelSystem:
             weights=self.dtm.demand[tp]["transit_work"])
         time_ratio = transit_time / car_time
         time_ratio = time_ratio.clip(0.01, None)
-        self.resultdata.print_data(
-            pandas.Series(time_ratio, self.zone_numbers),
-            "impedance_ratio.txt", "time")
+
         self.zdata_forecast["time_ratio"] = pandas.Series(
             numpy.ma.getdata(time_ratio), self.zone_numbers)
         car_cost = numpy.ma.average(
@@ -604,11 +444,11 @@ class ModelSystem:
             weights=self.dtm.demand[tp]["transit_work"])
         cost_ratio = transit_cost / 44. / car_cost
         cost_ratio = cost_ratio.clip(0.01, None)
-        self.resultdata.print_data(
-            pandas.Series(cost_ratio, self.zone_numbers),
-            "impedance_ratio.txt", "cost")
         self.zdata_forecast["cost_ratio"] = pandas.Series(
             numpy.ma.getdata(cost_ratio), self.zone_numbers)
+        
+        return time_ratio, cost_ratio
+
 
 
 class AgentModelSystem(ModelSystem):
@@ -687,25 +527,20 @@ class AgentModelSystem(ModelSystem):
                     purpose.init_sums()
                     purpose.calc_basic_prob(purpose_impedance)
                 if is_last_iteration and purpose.dest != "source":
-                    purpose.accessibility_model.calc_accessibility(
-                        purpose_impedance)
+                    self.event_handler.on_calc_accessibility(purpose_impedance, purpose.accessibility_model)
         tour_probs = self.dm.generate_tour_probs()
         log.info("Assigning mode and destination for {} agents ({} % of total population)".format(
             len(self.dm.population), int(zone_param.agent_demand_fraction*100)))
         purpose = self.dm.purpose_dict["hoo"]
         sec_dest_tours = {mode: [defaultdict(list) for _ in purpose.zone_numbers]
             for mode in purpose.modes}
-        car_users = pandas.Series(
-            0, self.zdata_forecast.zone_numbers[self.dm.car_use_model.bounds])
         for person in self.dm.population:
             person.decide_car_use()
-            car_users[person.zone.number] += person.is_car_user
             person.add_tours(self.dm.purpose_dict, tour_probs)
             for tour in person.tours:
                 tour.choose_mode(person.is_car_user)
                 tour.choose_destination(sec_dest_tours)
-        self.dm.car_use_model.print_results(
-            car_users / self.dm.zone_population, self.dm.zone_population)
+        self.event_handler.on_population_segments_created(self.dm)
         log.info("Primary destinations assigned")
         purpose_impedance = self.imptrans.transform(
             purpose, previous_iter_impedance)
@@ -730,7 +565,8 @@ class AgentModelSystem(ModelSystem):
             for thread in threads:
                 thread.join()
         for purpose in self.dm.tour_purposes:
-            purpose.print_data()
+            #None for demand, because agent-based models work differently
+            self.event_handler.on_purpose_demand_calculated(purpose, None, estimation_mode=estimation_mode) 
             #Park and ride
             if purpose.park_and_ride_model is not None:
                 # Apply penalty for overcrowded park and ride facilities.
@@ -751,22 +587,7 @@ class AgentModelSystem(ModelSystem):
             for tour in person.tours:
                 self.dtm.add_demand(tour)
         if is_last_iteration:
-            random.seed(zone_param.population_draw)
-            self.dm.predict_income()
-            random.seed(None)
-            fname0 = "agents"
-            fname1 = "tours"
-            # print person and tour attr to files
-            self.resultdata.print_line("\t".join(Person.attr), fname0)
-            self.resultdata.print_line("\t".join(Tour.attr), fname1)
-            for person in self.dm.population:
-                person.calc_income()
-                self.resultdata.print_line(str(person), fname0)
-                for tour in person.tours:
-                    tour.calc_cost(previous_iter_impedance)
-                    self.resultdata.print_line(str(tour), fname1)
-            log.info("Results printed to files {} and {}".format(
-                fname0, fname1))
+            self.event_handler.on_agent_model_results_calculated(previous_iter_impedance)
         log.info("Demand calculation completed")
 
     def _distribute_tours(self, mode, origs, sec_dest_tours, impedance):

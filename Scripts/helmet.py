@@ -97,7 +97,7 @@ def main(args):
         estimation_data_path.mkdir(parents=True, exist_ok=True)
     
     # Initialize event handler and load event listeners
-    event_handler = EventHandler()
+    event_handler = EventHandler(args.strict_mode)
     # Load event listeners from 'events/results' folder
     event_handler.load_listeners(Path(__file__).parent / 'events' / 'results')
 
@@ -203,29 +203,33 @@ def main(args):
 
     event_handler.on_simulation_complete()
     # delete emme strategy files for scenarios
-    if args.del_strat_files:
-        dbase_path = os.path.join(os.path.dirname(emme_project_path), "database")
-        filepath = os.path.join(dbase_path, "STRAT_s{}*")
-        dirpath = os.path.join(dbase_path, "STRATS_s{}", "*")
-        scenario_ids = range(args.first_scenario_id, args.first_scenario_id+5)
-        for s in scenario_ids:
-            strategy_files = glob(filepath.format(s)) + glob(dirpath.format(s))
-            for f in strategy_files:
-                try:
-                    os.remove(f)
-                except:
-                    log.info("Not able to remove file {}.".format(f))
-        log.info("Removed strategy files in {}".format(dbase_path))
-    if validation is not None:
-        try:
-            validation.to_html(
-                Path(results_path) / args.scenario_name / 'validation.html')
-            validation.save_to_file(
-                Path(results_path) / args.scenario_name / 'validation.pklz')
-        except Exception as e:
-            log.error("Error saving validation data: {}".format(e))
+    if args.del_strat_files: delete_strategy_files(emme_project_path)
+    if validation is not None: save_validation(validation, results_path)
+
     log.info("Simulation ended.", extra=log_extra)
 
+def delete_strategy_files(emme_project_path: str):
+    dbase_path = os.path.join(os.path.dirname(emme_project_path), "database")
+    filepath = os.path.join(dbase_path, "STRAT_s{}*")
+    dirpath = os.path.join(dbase_path, "STRATS_s{}", "*")
+    scenario_ids = range(args.first_scenario_id, args.first_scenario_id+5)
+    for s in scenario_ids:
+        strategy_files = glob(filepath.format(s)) + glob(dirpath.format(s))
+        for f in strategy_files:
+            try:
+                os.remove(f)
+            except:
+                log.info("Not able to remove file {}.".format(f))
+    log.info("Removed strategy files in {}".format(dbase_path))
+
+def save_validation(validation: Validation, results_path: Path):
+    try:
+        validation.to_html(
+            Path(results_path) / args.scenario_name / 'validation.html')
+        validation.save_to_file(
+            Path(results_path) / args.scenario_name / 'validation.pklz')
+    except Exception as e:
+        log.error("Error saving validation data: {}".format(e))
 
 if __name__ == "__main__":
     # Initially read defaults from config file ("dev-config.json")
@@ -348,6 +352,11 @@ if __name__ == "__main__":
         action="store_true",
         default=config.USE_FIXED_TRANSIT_COST,
         help="Using this flag activates use of pre-calculated (fixed) transit costs."),
+    parser.add_argument(
+        "--strict-mode",
+        action="store_true",
+        default=config.STRICT_MODE,
+        help="Using this flag makes the model run fail when an error occurs (especially in events processing)."),
     args = parser.parse_args()
 
     log.initialize(args)

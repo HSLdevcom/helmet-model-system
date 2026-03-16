@@ -23,10 +23,6 @@ class TransitResults(ModelSystemEventListener):
     """
     A class to print calculated transit results to results directory.
     """
-    mode_demands: List[Dict[str, int]]
-    """ A list of dictionaries to store mode demands for each iteration. """
-    result_path: Path
-    """ The path to the result file. """
     
     def __init__(self):
         super().__init__()
@@ -91,7 +87,7 @@ class TransitResults(ModelSystemEventListener):
                         [self.transit_line_congestions, pd.DataFrame([transit_line_congestion]).set_index('line_id')], sort=False
                     )     
 
-    def on_daily_results_aggregated(self, assignment_model: 'EmmeAssignmentModel', day_network: 'Network'):
+    def on_daily_results_aggregated(self, assignment_model: 'EmmeAssignmentModel', day_network: 'Network', network_aggregations: 'Dict'):
         # This will run after all the data has been collected from each assignment period
         congested_lines = self.transit_line_congestions[(self.transit_line_congestions['congestion_max_aht'] > 1)|(self.transit_line_congestions['congestion_max_iht'] > 1)]
         # If there are any congested lines, print an info log

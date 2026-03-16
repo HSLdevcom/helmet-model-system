@@ -164,8 +164,7 @@ class DemandModel:
                     self.purpose_dict[purpose].gen_model.tours += nr_tours
                 nr_tours_sums["-".join(combination)] = nr_tours.sum()
             result_data[age] = nr_tours_sums.sort_index()
-        self.resultdata.print_matrix(
-            result_data, "tour_combinations", "tour_combinations")
+        self.tour_generation_model.result = result_data
 
     def generate_tour_probs(self) -> Dict[Tuple[int,int], numpy.ndarray]:
         """Generate matrices of cumulative tour combination probabilities.
