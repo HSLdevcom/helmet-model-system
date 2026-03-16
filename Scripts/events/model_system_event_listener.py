@@ -2,12 +2,11 @@ from abc import ABC
 from typing import TYPE_CHECKING, Dict, Union
 from pathlib import Path
 
-from datahandling.matrixdata import MatrixData
-from datahandling.resultdata import ResultsData
-
 if TYPE_CHECKING:
     import pandas as pd
     import numpy as np
+    from datahandling.matrixdata import MatrixData
+    from datahandling.resultdata import ResultsData
     from datahandling.zonedata import ZoneData
     from modelsystem import ModelSystem
     from datatypes.purpose import TourPurpose

@@ -37,6 +37,7 @@ class OriginsDemand(ModelSystemEventListener):
             for mode in self.ms.travel_modes}
         sum_all = sum(tour_sum.values())
         ar = ArrayAggregator(sum_all.index)
+        mode_shares = {}
         for mode in tour_sum:
             self.ms.resultdata.print_data(
                 tour_sum[mode], "origins_demand.txt", mode)
@@ -44,3 +45,5 @@ class OriginsDemand(ModelSystemEventListener):
                 ar.aggregate(tour_sum[mode]), "origins_demand_areas.txt", mode)
             self.ms.resultdata.print_data(
                 tour_sum[mode] / sum_all, "origins_shares.txt", mode)
+            mode_shares[mode] = tour_sum[mode].sum() / sum_all.sum()
+        self.ms.mode_share.append(mode_shares) #Only for tests to go through
