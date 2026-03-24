@@ -12,6 +12,7 @@ from datahandling.resultdata import ResultsData
 
 class LinkPrinting(_m.Tool()):
     results_path = _m.Attribute(str)
+    scenarios = _m.Attribute(list)
 
     def __init__(self):
         """Tool with click-button that can be imported in the Modeller GUI.
@@ -23,6 +24,9 @@ class LinkPrinting(_m.Tool()):
     def page(self):
         pb = _m.ToolPageBuilder(self)
         pb.title = "Print link attributes to file"
+        pb.add_select_scenario(tool_attribute_name="scenarios",
+            title="Scenario (select only one, otherwise overwritten):",
+            note="Scenario selection for link printing.")
         pb.add_select_file(
             "results_path", "directory", file_filter="", start_path="",
             title="Directory to save file in:")
@@ -36,12 +40,14 @@ class LinkPrinting(_m.Tool()):
     def __call__(self):
         """Print link attributes for current scenario.
         """
-        scen = _m.Modeller().scenario
-        print_links(scen.get_network(), ResultsData(self.results_path))
-        msg = "Link attributes for scenario {} printed to links.txt!".format(
-            scen.id)
-        self.write(msg)
-        self.tool_run_msg = _m.PageBuilder.format_info(msg)
+        if self.scenarios == []:
+            self.scenarios.append(_m.Modeller().scenario)
+        for scen in self.scenarios:
+            print_links(scen.get_network(), ResultsData(self.results_path))
+            msg = "Link attributes for scenario {} printed to links.txt!".format(
+                scen.id)
+            self.write(msg)
+            self.tool_run_msg = _m.PageBuilder.format_info(msg)
 
     def write(self, message):
         _m.logbook_write(message)
