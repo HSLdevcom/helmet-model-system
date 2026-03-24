@@ -16,7 +16,7 @@ class TransitZones(_m.Tool()):
         pb = _m.ToolPageBuilder(self)
         pb.title = "Reassign transit zones"
         pb.add_select_file(
-            "transit_zones", "directory", file_filter="*.json;*.geojson*", start_path="",
+            "transit_zones", "file", file_filter="*.json;*.geojson*", start_path="",
             title="Transit zone area file:"
         )
         if self.tool_run_msg:
