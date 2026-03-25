@@ -29,7 +29,7 @@ class LinkPrinting(_m.Tool()):
             note="Scenario selection for link printing.")
         pb.add_select_file(
             "results_path", "directory", file_filter="", start_path="",
-            title="Directory to save file in:")
+            title="Directory to save file(s) in:")
         if self.tool_run_msg:
             pb.add_html(self.tool_run_msg)
         return pb.render()
@@ -42,11 +42,14 @@ class LinkPrinting(_m.Tool()):
         """
         if self.scenarios == []:
             self.scenarios.append(_m.Modeller().scenario)
+        msg_strings = []
         for scen in self.scenarios:
             print_links(scen, ResultsData(self.results_path))
-            msg = f"Link attributes for scenario {scen.id} printed to links_{scen.id}.txt!"
-            self.write(msg)
-            self.tool_run_msg = _m.PageBuilder.format_info(msg)
+            scen_msg = f"Link attributes for scenario {scen.id} printed to links_{scen.id}.txt!"
+            msg_strings.append(scen_msg)
+        msg = ("<br>").join(msg_strings)
+        self.write(msg)
+        self.tool_run_msg = _m.PageBuilder.format_info(msg, escape=False)
 
     def write(self, message):
         _m.logbook_write(message)
