@@ -6,6 +6,7 @@ from shapely.geometry import shape, Point
 
 class TransitZones(_m.Tool()):
     transit_zones = _m.Attribute(str)
+    percent = 0
 
     def __init__(self):
         """Tool with click-button that can be imported in the Modeller GUI.
@@ -16,7 +17,7 @@ class TransitZones(_m.Tool()):
         pb = _m.ToolPageBuilder(self)
         pb.title = "Reassign transit zones"
         pb.add_select_file(
-            "transit_zones", "file", file_filter="'*.json';'*.geojson'", start_path="",
+            "transit_zones", "file", start_path="",
             title="Transit zone area file:"
         )
         if self.tool_run_msg:
@@ -42,7 +43,6 @@ class TransitZones(_m.Tool()):
             return
         num_features = len(geojson_data["features"])
         increment = 100/num_features
-        self.percent = 0
 
         transit_zone_labels = set()
         processed_nodes = 0
@@ -55,7 +55,7 @@ class TransitZones(_m.Tool()):
                 for node in network.nodes():
                     if Point(node.x, node.y).within(geometry):
                         node.label = zone
-                        processed_zones += 1
+                        processed_nodes += 1
                 self.percent += increment
         except KeyError:
             self.write("The provided GeoJSON has an invalid format.")
