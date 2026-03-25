@@ -25,7 +25,7 @@ class LinkPrinting(_m.Tool()):
         pb = _m.ToolPageBuilder(self)
         pb.title = "Print link attributes to file"
         pb.add_select_scenario(tool_attribute_name="scenarios",
-            title="Scenario (select only one, otherwise overwritten):",
+            title="Scenarios:",
             note="Scenario selection for link printing.")
         pb.add_select_file(
             "results_path", "directory", file_filter="", start_path="",
@@ -43,9 +43,8 @@ class LinkPrinting(_m.Tool()):
         if self.scenarios == []:
             self.scenarios.append(_m.Modeller().scenario)
         for scen in self.scenarios:
-            print_links(scen.get_network(), ResultsData(self.results_path))
-            msg = "Link attributes for scenario {} printed to links.txt!".format(
-                scen.id)
+            print_links(scen, ResultsData(self.results_path))
+            msg = f"Link attributes for scenario {scen.id} printed to links_{scen.id}.txt!"
             self.write(msg)
             self.tool_run_msg = _m.PageBuilder.format_info(msg)
 
