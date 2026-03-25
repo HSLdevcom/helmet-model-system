@@ -260,14 +260,12 @@ class ModelSystem:
             if tp == time_periods[0]:
                 time_ratios, cost_ratios = self._update_ratios(impedance[tp], tp)
                 self.event_handler.on_ratios_updated(time_ratios, cost_ratios)
-            if is_end_assignment:
-                self._save_to_omx(impedance[tp], tp)
         if is_end_assignment:
             self.ass_model.aggregate_results(self.resultdata)
             self._calculate_noise_areas()
             self.resultdata.flush()
         self.dtm.init_demand_and_get_gaps()
-        self.event_handler.on_base_demand_assigned(impedance)
+        self.event_handler.on_base_demand_assigned(impedance,is_end_assignment=False)
         return impedance
 
     def run_iteration(self,

@@ -105,7 +105,7 @@ class ModelSystemEventListener(ABC):
         """
         pass
     
-    def on_base_demand_assigned(self, impedance: Dict[str, Dict[str, 'np.ndarray']]) -> None:
+    def on_base_demand_assigned(self, impedance: Dict[str, Dict[str, 'np.ndarray']], is_end_assignment = False) -> None:
         """
         Event handler that is called when base demand has been assigned.
 

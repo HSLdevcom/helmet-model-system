@@ -56,7 +56,7 @@ class EventLog(ModelSystemEventListener):
     def on_purpose_demand_calculated(self, purpose, demand, pnr_iteration=0, estimation_mode = False):
         log.debug("EVENT: Purpose demand calculated")
     
-    def on_base_demand_assigned(self, impedance):
+    def on_base_demand_assigned(self, impedance, is_end_assignment = False):
         log.debug("EVENT: Base demand assigned")
     
     def on_iteration_started(self, iteration, previous_impedance):

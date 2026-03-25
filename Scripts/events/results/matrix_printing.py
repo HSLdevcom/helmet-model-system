@@ -37,6 +37,11 @@ class MatrixPrinting(ModelSystemEventListener):
         self.ms = model_system
         self.ass_model = assignment_model
     
+    def on_base_demand_assigned(self, impedance, is_end_assignment = False):
+        if is_end_assignment:
+            for tp in impedance:
+                self._save_to_omx(impedance[tp], tp)
+
     def on_purpose_demand_calculated(self, purpose, demand, pnr_iteration=0, estimation_mode = False):
         if purpose.name == "wh": return
         if demand == None: return #Agent based model
