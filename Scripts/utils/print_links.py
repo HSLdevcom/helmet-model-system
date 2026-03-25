@@ -16,7 +16,7 @@ def print_links(scenario, resultdata: ResultsData):
     network = scenario.get_network()
     attr_names = network.attributes("LINK")
     resultdata.print_line(
-        "Link\tnode_i\tnode_j\tmodes" + "\t".join(attr_names) + "\tNoise_zone_width", f"links_{scenario.id}")
+        "Link\tnode_i\tnode_j\tmodes\t" + "\t".join(attr_names) + "\tNoise_zone_width", f"links_{scenario.id}")
     noisemodel = NoiseModel(
         network, ("@car_work_vrk", "@car_leisure_vrk", "@van_vrk"),
         ("@truck_vrk", "@trailer_truck_vrk"))
