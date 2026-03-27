@@ -54,7 +54,7 @@ class TransitZones(_m.Tool()):
                 geometry = shape(feature["geometry"])  # Convert geometry to Shapely object
                 for node in network.nodes():
                     if Point(node.x, node.y).within(geometry):
-                        node.label = zone
+                        node.label = zone.strip().upper()
                         processed_nodes += 1
                 self.percent += increment
         except KeyError:
