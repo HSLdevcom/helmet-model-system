@@ -31,6 +31,7 @@ class Demand:
         """
         self.purpose = purpose
         self.mode = mode
+        self.tour_matrix = matrix #need to also preserve the passenger matrix
         if mode == "car" and purpose.name in param.car_driver_share:
             self.matrix = param.car_driver_share[purpose.name] * matrix
         else:

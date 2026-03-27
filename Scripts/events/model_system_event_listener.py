@@ -5,6 +5,8 @@ from pathlib import Path
 if TYPE_CHECKING:
     import pandas as pd
     import numpy as np
+    from datahandling.matrixdata import MatrixData
+    from datahandling.resultdata import ResultsData
     from datahandling.zonedata import ZoneData
     from modelsystem import ModelSystem
     from datatypes.purpose import TourPurpose
@@ -15,10 +17,12 @@ if TYPE_CHECKING:
     from assignment.emme_bindings.mock_project import Network
     from assignment.emme_bindings.mock_project import Scenario
     from assignment.assignment_period import AssignmentPeriod
-    from demand.trips import DemandModel
+    from demand.personal_internal import DemandModel
     from argparse import Namespace
     from utils.validation import Validation
     from assignment.emme_assignment import EmmeAssignmentModel, AssignmentModel
+    from models.logit import AccessibilityModel
+    from models.linear import CarDensityModel
 
 class ModelSystemEventListener(ABC):
    
@@ -91,13 +95,14 @@ class ModelSystemEventListener(ABC):
         """
         pass
 
-    def on_car_density_updated(self, iteration: Union[int, str], prediction: 'pd.Series' ) -> None:
+    def on_car_density_updated(self, iteration: Union[int, str], prediction: 'pd.Series' , cdm: 'CarDensityModel') -> None:
         """
         Event handler that is called when car density is updated.
 
         Args:
             iteration (int | str): The iteration number.
             prediction (pandas.Series): The updated car density prediction.
+            cdm (CarDensityModel): Car density model
         """
         pass
     
@@ -127,13 +132,26 @@ class ModelSystemEventListener(ABC):
             dm (DemandModel): The demand model.
         """
         pass
+
+    def on_calc_accessibility(self, purpose_impedance, model: 'AccessibilityModel'):
+        """
+        Event handler that is called when accessbility measures should be calculated
+
+        Args:
+            purpose_impedance (): The impedance of the purpose
+            model (AccessibilityModel): AccessibilityModel for obtaining results
+        """
+        pass
     
-    def on_purpose_demand_calculated(self, purpose: 'TourPurpose', demand: Dict[str, 'Demand']) -> None:
+    def on_purpose_demand_calculated(self, purpose: 'TourPurpose', demand: Dict[str, 'Demand'], pnr_iteration=0, estimation_mode=False) -> None:
         """
         Event handler that is called when purpose demand has been calculated.
 
         Args:
-            dm (DemandModel): The demand model.
+            purpose (TourPurpose): Tour purpose.
+            demand (DemandModel): The demand model. (agg models only, None for agent based)
+            pnr_iteration (int): Park and ride iteration.
+            estimation_mode (bool): Estimation mode flag.
         """
         pass
 
@@ -165,7 +183,7 @@ class ModelSystemEventListener(ABC):
         """
         pass
     
-    def on_time_period_assigned(self, iteration: Union[int, str], ap: 'Period', impedance: Dict[str, Dict[str, 'np.ndarray']]) -> None:
+    def on_time_period_assigned(self, iteration: Union[int, str], ap: 'Period', impedance: Dict[str, Dict[str, 'np.ndarray']], tp: str, previous_iter_impedance: Dict[str, Dict[str, 'np.ndarray']]) -> None:
         """
         Event handler that is called when time period has been assigned.
 
@@ -173,6 +191,9 @@ class ModelSystemEventListener(ABC):
             iteration (int | str): The iteration number.
             ap (Period): The assignment period.
             impedance (dict): The impedance matrices.
+            tp (str): time period
+            previous_iter_impedance (np.ndarray): previous iteration impedance
+
         """
         pass
 
@@ -305,12 +326,30 @@ class ModelSystemEventListener(ABC):
         """
         pass
     
-    def on_daily_results_aggregated(self, assignment_model: 'EmmeAssignmentModel', day_network: 'Network') -> None:
+    def on_agent_model_results_calculated(self, previous_iter_impedance: 'np.ndarray') -> None:
+        """
+        Event handler for when agent model results have been calculated.
+        Args:
+            previous_iter_impedance (np.ndarray): The impedance values from the previous iteration.
+        """
+        pass
+
+    def on_daily_results_aggregated(self, assignment_model: 'EmmeAssignmentModel', day_network: 'Network', network_aggregations: 'Dict') -> None:
         """
         Event handler for when daily results have been aggregated.
         Args:
             assignment_model (EmmeAssignmentModel): The assignment model.
             day_network (Network): The Emme network for the daily results.
+            network_aggregations (Dict): Various aggregated data about network
+        """
+        pass
+
+    def on_ratios_updated(self, time_ratios: 'pd.Series', cost_ratios: 'pd.Series'):
+        """
+        Event handler for when impedance ratios were updated. Impedance ratio is the relation between accessibility by pt and car.
+        Args:
+            time_ratios (pd.Series): Time ratios.
+            cost_ratios (pd.Series): Cost ratios.
         """
         pass
 

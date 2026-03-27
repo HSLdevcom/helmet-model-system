@@ -1,11 +1,13 @@
 from __future__ import annotations
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union, TYPE_CHECKING
 import numpy # type: ignore
 import numpy.typing as npt
 import pandas
 
-from events.event_handler import EventHandler
+if TYPE_CHECKING:
+    from events.event_handler import EventHandler
+
 import parameters.zone as param
 from utils.read_csv_file import read_csv_file
 from utils.zone_interval import ZoneIntervals, zone_interval
