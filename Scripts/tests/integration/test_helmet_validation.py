@@ -1,5 +1,6 @@
 import unittest
 import os
+from pathlib import Path
 
 
 from helmet_validate_inputfiles import main
@@ -13,16 +14,15 @@ TEST_DATA_PATH = os.path.join(
 class Args:
     log_format = None
     log_level = "DEBUG"
-    baseline_data_path = os.path.join(TEST_DATA_PATH, "Base_input_data")
+    baseline_data_path = Path(TEST_DATA_PATH) / "Base_input_data"
     emme_paths = [
-        os.path.join(
-            TEST_DATA_PATH, "Scenario_input_data", "2030_test", "2016.cco"),
+        Path(TEST_DATA_PATH) / "Scenario_input_data" / "2030_test" / "2016.cco"
     ]
     first_scenario_ids = ["test"]
     forecast_data_paths = [
-        os.path.join(TEST_DATA_PATH, "Scenario_input_data", "2030_test"),
+        Path(TEST_DATA_PATH) / "Scenario_input_data" / "2030_test",
     ]
-    results_path = os.path.join(TEST_DATA_PATH, "Results")
+    results_path = Path(TEST_DATA_PATH) / "Results"
     scenario_name = "test"
     do_not_use_emme = True
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 import os
 from typing import Any, Dict
+from pathlib import Path
 import pandas
 try:
     from openpyxl import Workbook, load_workbook
@@ -13,7 +14,7 @@ class ResultsData:
     """
     Saves all result data to same folder.
     """
-    def __init__(self, results_directory_path: str):
+    def __init__(self, results_directory_path: Path):
         if not os.path.exists(results_directory_path):
             os.makedirs(results_directory_path)
         self.path = results_directory_path
@@ -28,12 +29,12 @@ class ResultsData:
         self._line_buffer = {}
         for filename in self._df_buffer:
             self._df_buffer[filename].to_csv(
-                os.path.join(self.path, filename),
+                self.path / filename,
                 sep='\t', float_format="%1.5f")
         self._df_buffer = {}
         for filename in self._xlsx_buffer:
             self._xlsx_buffer[filename].save(
-                os.path.join(self.path, "{}.xlsx".format(filename)))
+                self.path / f"{filename}.xlsx")
         self._xlsx_buffer = {}
 
     def print_data(self, data: pandas.Series, filename: str, colname: str):
@@ -70,7 +71,7 @@ class ResultsData:
             buffer = self._line_buffer[filename]
         except KeyError:
             buffer = open(
-                os.path.join(self.path, "{}.txt".format(filename)), 'w')
+                self.path / f"{filename}.txt", 'w')
             self._line_buffer[filename] = buffer
         buffer.write(line + "\n")
 
@@ -91,7 +92,7 @@ class ResultsData:
         if _use_txt:
             # If no Workbook module available (= _use_txt), save data to csv
             data.to_csv(
-                os.path.join(self.path, "{}_{}.txt".format(filename, sheetname)),
+                Path(self.path, "{}_{}.txt".format(filename, sheetname)),
                 sep='\t', float_format="%8.1f")
         else:
             # Get/create new worksheet

@@ -1,5 +1,6 @@
 from argparse import ArgumentTypeError
 import unittest, os, pandas
+from pathlib import Path
 from assignment.emme_bindings.mock_project import MockProject, MODE_TYPES
 from assignment.datatypes.transit_fare import TransitFareZoneSpecification
 from assignment.mock_assignment import MockAssignmentModel
@@ -13,7 +14,7 @@ import copy
 class EmmeAssignmentTest(unittest.TestCase):
     def test_assignment(self):
         context = MockProject()
-        scenario_dir = os.path.join(
+        scenario_dir = Path(
             os.path.dirname(os.path.realpath(__file__)),
             "..", "test_data", "Network")
         scenario_id = 19

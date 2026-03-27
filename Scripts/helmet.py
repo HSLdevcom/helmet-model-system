@@ -21,11 +21,11 @@ def main(args):
         return msg.center(log_width, "-")
 
     # Set up filepaths
-    base_zonedata_path: str = os.path.join(args.baseline_data_path, "2023_zonedata")
-    base_matrices_path: str = os.path.join(args.baseline_data_path, "base_matrices")
-    forecast_zonedata_path: str = args.forecast_data_path
-    results_path: str = args.results_path
-    emme_project_path: str = args.emme_path
+    base_zonedata_path: Path = Path(args.baseline_data_path) / "2023_zonedata"
+    base_matrices_path: Path = Path(args.baseline_data_path) / "base_matrices"
+    forecast_zonedata_path: Path = Path(args.forecast_data_path)
+    results_path: Path = Path(args.results_path)
+    emme_project_path: Path = Path(args.emme_path)
     
     # The following checks will be moved to helmet_validate_inputfiles.py at a later date
     if args.save_matrices:
@@ -42,7 +42,7 @@ def main(args):
             raise ValueError(msg)
     if args.use_fixed_transit_cost:
         # Raise error if there is no cost matrix in results folder
-        cost_matrix_path = os.path.join(results_path, args.scenario_name, "Matrices", "cost_aht.omx")
+        cost_matrix_path = Path(results_path, args.scenario_name, "Matrices", "cost_aht.omx")
         if not os.path.exists(cost_matrix_path):
             msg = "Precalculated transit cost matrix not found. " \
             + "Please uncheck the 'Käytä esilaskettua joukkoliikenteen kustannusmatriisia' " \
@@ -51,8 +51,8 @@ def main(args):
             raise FileNotFoundError(msg)
     if args.end_assignment_only:
         # Raise error if there is no demand matrix in results folder
-        matrix_path = os.path.join(results_path, args.scenario_name, "Matrices")
-        demand_matrix_path = os.path.join(results_path, args.scenario_name, "Matrices", "demand_aht.omx")
+        matrix_path = Path(results_path, args.scenario_name, "Matrices")
+        demand_matrix_path = Path(results_path, args.scenario_name, "Matrices", "demand_aht.omx")
         if not os.path.exists(demand_matrix_path):
             msg = "Matrices not found for this scenario. Please uncheck the " \
             + "'Aja vain loppusijoittelu' option in Helmet UI's scenario settings, " \
@@ -118,8 +118,7 @@ def main(args):
     # Choose and initialize the Traffic Assignment (supply)model
     if args.do_not_use_emme:
         log.info("Initializing MockAssignmentModel...")
-        mock_result_path = os.path.join(
-            results_path, args.scenario_name, "Matrices")
+        mock_result_path = Path(results_path, args.scenario_name, "Matrices")
         if not os.path.exists(mock_result_path):
             raise NameError(
                 "Mock Results directory {} does not exist.".format(
@@ -215,7 +214,7 @@ def main(args):
 
     log.info("Simulation ended.", extra=log_extra)
 
-def delete_strategy_files(emme_project_path: str):
+def delete_strategy_files(emme_project_path: Path):
     dbase_path = os.path.join(os.path.dirname(emme_project_path), "database")
     filepath = os.path.join(dbase_path, "STRAT_s{}*")
     dirpath = os.path.join(dbase_path, "STRATS_s{}", "*")

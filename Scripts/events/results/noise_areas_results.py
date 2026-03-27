@@ -24,10 +24,10 @@ class NoiseAreasResults(ModelSystemEventListener):
     
     def on_model_system_initialized(self,
                                     model_system: 'ModelSystem',
-                                    zone_data_path: str, 
-                                    base_zone_data_path: str, 
-                                    base_matrices_path: str,
-                                    results_path: str, 
+                                    zone_data_path: Path, 
+                                    base_zone_data_path: Path, 
+                                    base_matrices_path: Path,
+                                    results_path: Path, 
                                     assignment_model: 'AssignmentModel', 
                                     name: str) -> None:
         self.ms = model_system
@@ -41,6 +41,6 @@ class NoiseAreasResults(ModelSystemEventListener):
         self.ms.resultdata.print_data(noise_areas, "noise_areas.txt", "area")
         ar = ArrayAggregator(self.ms.zdata_forecast.zone_numbers)
         pop = ar.aggregate(self.ms.zdata_forecast["population"])
-        conversion = pd.Series(zone_param.pop_share_per_noise_area)
+        conversion = pd.Series(zone_param.pop_share_per_noise_area, dtype=float)
         noise_pop = conversion * noise_areas * pop
         self.ms.resultdata.print_data(noise_pop, "noise_areas.txt", "population")

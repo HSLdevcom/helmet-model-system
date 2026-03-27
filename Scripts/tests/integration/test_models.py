@@ -20,7 +20,7 @@ class Config():
     log_format = None
     log_level = "DEBUG"
     scenario_name = "TEST"
-    results_path = os.path.join(TEST_DATA_PATH, "Results")
+    results_path = Path(TEST_DATA_PATH) / "Results"
 
 class ModelTest(unittest.TestCase):
     
@@ -31,23 +31,20 @@ class ModelTest(unittest.TestCase):
         # Load event listeners from 'events/results' folder
         event_handler.load_listeners(Path(__file__).parent.parent.parent / 'events' / 'results')
 
-        results_path = os.path.join(TEST_DATA_PATH, "Results")
-        test_network_path = os.path.join(TEST_DATA_PATH, "Network")
+        results_path = Path(TEST_DATA_PATH) / "Results"
+        test_network_path = Path(TEST_DATA_PATH) / "Network"
         scenario_id = 1
         emme_project = MockProject()
         emme_project.import_scenario(test_network_path, scenario_id, "test_scenario")
         ass_model = MockAssignmentModel(emme_project, scenario_id, MatrixData(
-            os.path.join(results_path, "test", "Matrices")))
+            results_path / "test" / "Matrices"))
         zone_numbers = ass_model.zone_numbers
         print(f"Zone numbers: {zone_numbers}")
 
 
-        zone_data_path = os.path.join(
-            TEST_DATA_PATH, "Scenario_input_data", "2030_test")
-        base_zone_data_path = os.path.join(
-            TEST_DATA_PATH, "Base_input_data", "2023_zonedata")
-        base_matrices_path = os.path.join(
-            TEST_DATA_PATH, "Base_input_data", "base_matrices")
+        zone_data_path = Path(TEST_DATA_PATH) / "Scenario_input_data" / "2030_test"
+        base_zone_data_path = Path(TEST_DATA_PATH) / "Base_input_data" / "2023_zonedata"
+        base_matrices_path = Path(TEST_DATA_PATH) / "Base_input_data" / "base_matrices"
         model = ModelSystem(
             zone_data_path, base_zone_data_path, base_matrices_path,
             results_path, ass_model, "test",
@@ -76,19 +73,16 @@ class ModelTest(unittest.TestCase):
     
     def test_agent_model(self):
         log.initialize(Config())
-        results_path = os.path.join(TEST_DATA_PATH, "Results")
-        test_network_path = os.path.join(TEST_DATA_PATH, "Network")
+        results_path = Path(TEST_DATA_PATH) / "Results"
+        test_network_path = Path(TEST_DATA_PATH) / "Network"
         scenario_id = 1
         emme_project = MockProject()
         emme_project.import_scenario(test_network_path, scenario_id, "test_scenario")
         ass_model = MockAssignmentModel(emme_project, scenario_id, MatrixData(
-            os.path.join(results_path, "test", "Matrices")))
-        zone_data_path = os.path.join(
-            TEST_DATA_PATH, "Scenario_input_data", "2030_test")
-        base_zone_data_path = os.path.join(
-            TEST_DATA_PATH, "Base_input_data", "2023_zonedata")
-        base_matrices_path = os.path.join(
-            TEST_DATA_PATH, "Base_input_data", "base_matrices")
+            results_path / "test" / "Matrices"))
+        zone_data_path = Path(TEST_DATA_PATH) / "Scenario_input_data" / "2030_test"
+        base_zone_data_path = Path(TEST_DATA_PATH) / "Base_input_data" / "2023_zonedata"
+        base_matrices_path = Path(TEST_DATA_PATH) / "Base_input_data" / "base_matrices"
         model = AgentModelSystem(
             zone_data_path, base_zone_data_path, base_matrices_path,
             results_path, ass_model, "test", EventHandler())
@@ -96,7 +90,7 @@ class ModelTest(unittest.TestCase):
         impedance = model.run_iteration(impedance, 1)
         impedance = model.run_iteration(impedance, "last")
 
-    def _validate_impedances(self, impedances):
+    def _validate_impedances(self, impedances: dict):
         self.assertIsNotNone(impedances)
         self.assertIs(type(impedances), dict)
         self.assertEqual(len(impedances), 3)

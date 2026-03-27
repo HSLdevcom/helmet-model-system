@@ -4,6 +4,7 @@ import unittest
 import numpy
 import pandas
 import os
+from pathlib import Path
 
 from events.event_handler import EventHandler
 from utils.validate_network import validate
@@ -16,7 +17,7 @@ from assignment.datatypes.transit_fare import TransitFareZoneSpecification
 class EmmeAssignmentTest(unittest.TestCase):
     def test_assignment(self):
         context = MockProject()
-        scenario_dir = os.path.join(
+        scenario_dir = Path(
             os.path.dirname(os.path.realpath(__file__)),
             "..", "test_data", "Network")
         scenario_id = 19
@@ -51,7 +52,7 @@ class EmmeAssignmentTest(unittest.TestCase):
         }
         ass_model.init_assign(demand)
         ass_model.assignment_periods[0].assign(demand, "last")
-        resultdata = ResultsData(os.path.join(
+        resultdata = ResultsData(Path(
             os.path.dirname(os.path.realpath(__file__)),
             "..", "test_data", "Results", "test"))
         ass_model.aggregate_results(resultdata)

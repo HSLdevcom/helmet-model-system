@@ -2,6 +2,7 @@ import unittest
 import pandas
 import os
 import numpy
+from pathlib import Path
 
 import utils.log as log
 from datahandling.zonedata import ZoneData
@@ -23,21 +24,21 @@ class Config():
     log_format = None
     log_level = "DEBUG"
     scenario_name = "TEST"
-    results_path = os.path.join(TEST_DATA_PATH, "Results")
+    results_path = Path(TEST_DATA_PATH) / "Results"
 
 class MatrixDataTest(unittest.TestCase):
     
     def test_constructor(self):
         log.initialize(Config())
         m = MatrixData(
-            os.path.join(TEST_DATA_PATH, "Base_input_data", "base_matrices"))
+            Path(TEST_DATA_PATH) / "Base_input_data" / "base_matrices")
         # Verify that the base folder exists
         self.assertTrue(os.path.isdir(m.path))
 
     def test_matrix_operations(self):
         log.initialize(Config())
         m = MatrixData(
-            os.path.join(TEST_DATA_PATH, "Base_input_data", "base_matrices"))
+            Path(TEST_DATA_PATH) / "Base_input_data" / "base_matrices")
         MATRIX_TYPES = ["demand"]
         for matrix_type in MATRIX_TYPES:
             print("validating matrix type", matrix_type)
@@ -57,7 +58,7 @@ class ZoneDataTest(unittest.TestCase):
 
     def _get_freight_data(self):
         zdata = ZoneData(
-            os.path.join(TEST_DATA_PATH, "Base_input_data", "2023_zonedata"),
+            Path(TEST_DATA_PATH) / "Base_input_data" / "2023_zonedata",
             ZONE_INDEXES)
         df = zdata.get_freight_data()
         self.assertIsNotNone(df)
@@ -65,13 +66,13 @@ class ZoneDataTest(unittest.TestCase):
 
     def test_csv_file_read(self):
         zdata2016 = ZoneData(
-            os.path.join(TEST_DATA_PATH, "Base_input_data", "2023_zonedata"),
+            Path(TEST_DATA_PATH) / "Base_input_data" / "2023_zonedata",
             ZONE_INDEXES)
         self.assertIsNotNone(zdata2016["population"])
         self.assertIsNotNone(zdata2016["workplaces"])
 
         zdata2030 = ZoneData(
-            os.path.join(TEST_DATA_PATH, "Scenario_input_data", "2030_test"),
+            Path(TEST_DATA_PATH) / "Scenario_input_data" / "2030_test",
             ZONE_INDEXES)
         self.assertIsNotNone(zdata2030["population"])
         self.assertIsNotNone(zdata2030["workplaces"])

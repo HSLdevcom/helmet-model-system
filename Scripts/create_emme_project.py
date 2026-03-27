@@ -51,31 +51,31 @@ def create_emme_project(args):
     scenario_num = args.first_scenario_id
     db_dir = Path(project_dir, project_name, "Database")
     db_dir.mkdir(parents=True, exist_ok=True)
-    eb = _eb.create(db_dir / "emmebank", dim)
-    eb.text_encoding = 'utf-8'
-    eb.title = "Database"
-    eb.coord_unit_length = 0.001
-    eb.create_scenario(scenario_num)
+    emmebank = _eb.create(db_dir / "emmebank", dim)
+    emmebank.text_encoding = 'utf-8'
+    emmebank.title = "Database"
+    emmebank.coord_unit_length = 0.001
+    emmebank.create_scenario(scenario_num)
     #emmebank_path = eb.path
-    eb.dispose()
-    ed = _app.start_dedicated(project=project_path, visible=False, user_initials="HSL")
-    ed.project.name = "HELMET_example_project"
+    emmebank.dispose()
+    emmedatabase = _app.start_dedicated(project=project_path, visible=False, user_initials="HSL")
+    emmedatabase.project.name = "HELMET_example_project"
     #db = ed.data_explorer().add_database(emmebank_path)
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    ed.project.spatial_reference_file = os.path.join(dir_path,"project_data", "Helmet_proj.prj").replace("\\", "/")
+    emmedatabase.project.spatial_reference_file = str(Path(dir_path, "project_data", "Helmet_proj.prj"))
 
     #Set initial view
     box= Box(25487600,
              6664330,
              25508900,
              6680290)
-    ed.project.initial_view = box
+    emmedatabase.project.initial_view = box
 
-    ed.project.save()
+    emmedatabase.project.save()
 
     #Adjust user data in manual, no API seems to be available for that
     # Read in the file
-    user_data_path = os.path.join(project_dir, project_name, "Worksheets","general.emu").replace("\\", "/")
+    user_data_path = str(Path(project_dir, project_name, "Worksheets","general.emu"))
     with open(user_data_path, 'r') as file:
         filedata = file.read()
     # Replace the target string

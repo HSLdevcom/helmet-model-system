@@ -1,6 +1,7 @@
 import os
 from argparse import ArgumentParser
 from collections import defaultdict
+from pathlib import Path
 import numpy
 import numpy.typing as npt
 import pandas
@@ -173,7 +174,7 @@ CELL_INDICES = {
     },
 }
 
-def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
+def run_cost_benefit_analysis(scenario_0: str, scenario_1: str, year: int, workbook):
     """Runs CBA and writes the results to excel file.
 
     Parameters
@@ -197,13 +198,15 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
         Table of zone-wise consumer surplus results
         (travel time, travel cost, distance, revenue)
     """
+    scenario_0_path = Path(scenario_0)
+    scenario_1_path = Path(scenario_1)
     if year not in (1, 2):
         raise ValueError("Evaluation year must be either 1 or 2")
     log.info("Analyse year {}...".format(year))
 
     # Calculate mile differences
-    mile_diff = (read(VEHICLE_KMS_FILE, scenario_1)
-                 - read(VEHICLE_KMS_FILE, scenario_0))
+    mile_diff = (read(VEHICLE_KMS_FILE, scenario_1_path)
+                 - read(VEHICLE_KMS_FILE, scenario_0_path))
     mile_diff["car"] = mile_diff["car_work"] + mile_diff["car_leisure"]
     ws = workbook["Ulkoisvaikutukset"]
     cols = CELL_INDICES["car_miles"]["cols"]
@@ -213,10 +216,10 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
             ws[cols[vdf]+rows[mode]] = mile_diff[mode][vdf]
 
     # Calculate noise effect difference
-    noise_diff = read(NOISE_FILE, scenario_1) - read(NOISE_FILE, scenario_0)
+    noise_diff = read(NOISE_FILE, scenario_1_path) - read(NOISE_FILE, scenario_0_path)
     ws[CELL_INDICES["noise"][year]] = sum(noise_diff["population"])
 
-    transit_vehicle_kms_tables = [read(TRANSIT_KMS_FILE, scenario_0), read(TRANSIT_KMS_FILE, scenario_1)]
+    transit_vehicle_kms_tables = [read(TRANSIT_KMS_FILE, scenario_0_path), read(TRANSIT_KMS_FILE, scenario_1_path)]
     for transit_vehicle_kms in transit_vehicle_kms_tables:
         if all(submode in transit_vehicle_kms.index for submodes in TRANSIT_AGGREGATIONS.values() for submode in submodes):
             transit_aggs = TRANSIT_AGGREGATIONS
@@ -237,15 +240,15 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
     log.info("Mileage differences calculated")
 
     # Calculate link length differences
-    linklength_diff = (read(LINK_LENGTH_FILE, scenario_1)
-                       - read(LINK_LENGTH_FILE, scenario_0))
+    linklength_diff = (read(LINK_LENGTH_FILE, scenario_1_path)
+                       - read(LINK_LENGTH_FILE, scenario_0_path))
     indices = CELL_INDICES["link_lengths"][year]
     for linktype in indices:
         ws[indices[linktype]] = linklength_diff["length"][linktype]
 
     # Calculate transit station differences
-    station_diff = (read(STATION_FILE, scenario_1)
-                    - read(STATION_FILE, scenario_0))
+    station_diff = (read(STATION_FILE, scenario_1_path)
+                    - read(STATION_FILE, scenario_0_path))
     indices = CELL_INDICES["transit_stations"][year]
     for mode in indices:
         ws[indices[mode]] = station_diff["number"][mode]
@@ -254,8 +257,8 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
     results = defaultdict(float)
     for timeperiod in ["aht", "pt", "iht"]:
         data = {
-            "scen_1": MatrixData(os.path.join(scenario_1, "Matrices")),
-            "scen_0": MatrixData(os.path.join(scenario_0, "Matrices")),
+            "scen_1": MatrixData(scenario_1_path / "Matrices"),
+            "scen_0": MatrixData(scenario_0_path / "Matrices"),
         }
         revenues_transit = 0
         revenues_car = 0
@@ -299,10 +302,9 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
     return pandas.DataFrame(results, zone_numbers)
 
 
-def read(file_name, scenario_path):
+def read(file_name: str, scenario_path: Path):
     """Read data from file."""
-    return pandas.read_csv(
-        os.path.join(scenario_path, file_name), delim_whitespace=True)
+    return pandas.read_csv(scenario_path / file_name, sep=r'\s+')
 
 
 def read_costs(matrixdata, time_period, transport_class, mtx_type):
@@ -438,7 +440,7 @@ if __name__ == "__main__":
         msg = "The data structure of transit_kms.txt or vehicle_kms_vdf.txt is different between scenarios. Check the results folders of scenarios being compared."
         log.error(msg)
         raise KeyError(msg)
-    wb = load_workbook(os.path.join(SCRIPT_DIR, "CBA_kehikko.xlsx"))
+    wb = load_workbook(Path(SCRIPT_DIR, "CBA_kehikko.xlsx"))
     results = run_cost_benefit_analysis(
         args.baseline_scenario, args.projected_scenario, 1, wb)
     if (args.baseline_scenario_2 is not None
@@ -448,8 +450,8 @@ if __name__ == "__main__":
     results_filename = "cba_{}_{}".format(
         os.path.basename(args.projected_scenario),
         os.path.basename(args.baseline_scenario))
-    wb.save(os.path.join(args.results_path, results_filename + ".xlsx"))
+    wb.save(Path(args.results_path, results_filename + ".xlsx"))
     results.to_csv(
-        os.path.join(args.results_path, results_filename + ".txt"),
+        Path(args.results_path, results_filename + ".txt"),
         sep='\t', float_format="%8.1f")
     log.info("CBA results saved to file: {}".format(results_filename))

@@ -6,7 +6,7 @@ import parameters.zone as param
 import utils.log as log
 
 
-def zone_interval(division_type, name):
+def zone_interval(division_type: str, name: str):
     """Get interval for given zone division type.
 
     Parameters
@@ -24,7 +24,7 @@ def zone_interval(division_type, name):
     return slice(*param.__dict__[division_type][name])
 
 
-def is_in(interval, zone_number):
+def is_in(interval: tuple[int, int] | tuple[tuple[int, int], tuple[int, int]], zone_number: int):
     """Decide whether zone number is in zone number interval.
 
     If interval consists of several sub-intervals, we check recursively
@@ -42,12 +42,13 @@ def is_in(interval, zone_number):
     bool
         True if zone number is in interval
     """
-    try:
-        return interval[0] <= zone_number <= interval[1]
-    except (TypeError, ValueError):
-        for sub_interval in interval:
-            if is_in(sub_interval, zone_number):
-                return True
+    if isinstance(interval[0], int) and isinstance(interval[1], int):
+        # Single interval case
+        start, end = interval
+        return start <= zone_number <= end
+    elif isinstance(interval[0], tuple):
+        # Multiple sub-intervals case
+        return any(is_in(sub_interval, zone_number) for sub_interval in interval)
     return False
 
 faulty_kela_code_nodes = set()
@@ -102,7 +103,7 @@ class ZoneIntervals:
         else:
             self.keys = self._intervals.keys()
 
-    def __getitem__(self, name):
+    def __getitem__(self, name: str):
         try:
             # If zone grouping consists of several intervals
             return [slice(*i) for i in self._intervals[name]]
@@ -116,7 +117,7 @@ class ZoneIntervals:
     def __contains__(self, item):
         return item in self._intervals
 
-    def _get_slice(self, name, index):
+    def _get_slice(self, name: str, index):
         try:
             # If zone grouping consists of several intervals
             bool_array = pandas.Series(False, index)

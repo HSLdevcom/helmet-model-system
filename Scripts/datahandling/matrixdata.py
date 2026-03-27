@@ -5,6 +5,7 @@ import openmatrix as omx # type: ignore
 import numpy # type: ignore
 import numpy.typing as npt
 import pandas
+from pathlib import Path
 from contextlib import contextmanager
 if TYPE_CHECKING:
     from datahandling.zonedata import BaseZoneData
@@ -17,7 +18,7 @@ import parameters.zone as zone_param
 
 
 class MatrixData:
-    def __init__(self, path: str):
+    def __init__(self, path: Path):
         self.path = path
         if not os.path.exists(self.path):
             os.makedirs(self.path)
@@ -29,7 +30,7 @@ class MatrixData:
              zone_numbers: npt.ArrayLike | None = None, 
              m: str = 'r'):
         zone_numbers = numpy.asarray(zone_numbers)
-        file_name = os.path.join(self.path, mtx_type+'_'+time_period+".omx")
+        file_name = Path(self.path, mtx_type+'_'+time_period+".omx")
         mtxfile = MatrixFile(omx.open_file(file_name, m), zone_numbers)
         yield mtxfile
         mtxfile.close()

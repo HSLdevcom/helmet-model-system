@@ -30,14 +30,14 @@ class TransitResults(ModelSystemEventListener):
     
     def on_model_system_initialized(self,
                                     model_system: 'ModelSystem',
-                                    zone_data_path: str, 
-                                    base_zone_data_path: str, 
-                                    base_matrices_path: str,
-                                    results_path: str, 
+                                    zone_data_path: Path, 
+                                    base_zone_data_path: Path, 
+                                    base_matrices_path: Path,
+                                    results_path: Path, 
                                     assignment_model: 'AssignmentModel', 
                                     name: str):
         # Get result path when model system is initialized
-        self.transit_result_path = Path(results_path) / name / 'transit_congestion.csv'
+        self.transit_result_path = results_path / name / 'transit_congestion.csv'
         self.transit_line_congestions = pd.DataFrame(columns=['line_id', 'congestion_max_aht', 'congestion_max_pt', 'congestion_max_iht', 'congestion_avg_aht', 'congestion_avg_pt', 'congestion_avg_iht', 'total_capacity_aht', 'total_capacity_pt', 'total_capacity_iht', 'mode']).set_index('line_id')
     
     def on_assignment_complete(self,assignment_period: 'AssignmentPeriod',

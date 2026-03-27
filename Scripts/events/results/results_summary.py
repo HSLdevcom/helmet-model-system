@@ -28,10 +28,10 @@ class ResultSummary(ModelSystemEventListener):
     
     def on_model_system_initialized(self,
                                     model_system: 'ModelSystem',
-                                    zone_data_path: str, 
-                                    base_zone_data_path: str, 
-                                    base_matrices_path: str,
-                                    results_path: str, 
+                                    zone_data_path: Path, 
+                                    base_zone_data_path: Path, 
+                                    base_matrices_path: Path,
+                                    results_path: Path, 
                                     assignment_model: 'AssignmentModel', 
                                     name: str) -> None:
         self.ms = model_system

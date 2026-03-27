@@ -55,10 +55,10 @@ class ModelSystem:
     """
 
     def __init__(self, 
-                 zone_data_path: str, 
-                 base_zone_data_path: str, 
-                 base_matrices_path: str,
-                 results_path: str, 
+                 zone_data_path: Path, 
+                 base_zone_data_path: Path, 
+                 base_matrices_path: Path,
+                 results_path: Path, 
                  assignment_model: AssignmentModel, 
                  name: str,
                  event_handler: EventHandler,
@@ -91,8 +91,8 @@ class ModelSystem:
         
         # Output data
         self.resultmatrices = MatrixData(
-            os.path.join(results_path, name, "Matrices"))
-        self.resultdata = ResultsData(os.path.join(results_path, name))
+            Path(results_path, name, "Matrices"))
+        self.resultdata = ResultsData(Path(results_path, name))
 
         self.dm = self._init_demand_model()
         self.fm = FreightModel(

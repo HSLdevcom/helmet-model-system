@@ -1,12 +1,13 @@
 import os
 from typing import Optional
+from pathlib import Path
 import pandas
 import numpy
 
 import utils.log as log
 
 
-def read_csv_file(data_dir: str, 
+def read_csv_file(data_dir: Path, 
                   file_end: str, 
                   zone_numbers: Optional[numpy.ndarray] = None, 
                   dtype: Optional[numpy.dtype] = None, 
@@ -39,7 +40,7 @@ def read_csv_file(data_dir: str,
                 log.error(msg)
                 raise NameError(msg)
             else:
-                path = os.path.join(data_dir, file_name)
+                path = Path(data_dir, file_name)
                 file_found = True
     if not file_found:
         msg = "No {} file found in folder {}".format(file_end, data_dir)
@@ -71,7 +72,7 @@ def read_csv_file(data_dir: str,
         if not data.index.is_monotonic_increasing:
             data.sort_index(inplace=True)
             log.warn("File {} is not sorted in ascending order".format(path))
-        map_path = os.path.join(data_dir, "zone_mapping.txt")
+        map_path = Path(data_dir, "zone_mapping.txt")
         if os.path.exists(map_path):
             log_path = map_path
             mapping = pandas.read_csv(map_path, sep='\s+').squeeze()

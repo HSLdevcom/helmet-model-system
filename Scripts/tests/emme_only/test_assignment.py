@@ -3,6 +3,7 @@
 
 import os
 import logging
+from pathlib import Path
 from events.event_handler import EventHandler
 import utils.log as log
 import numpy
@@ -29,17 +30,17 @@ class EmmeAssignmentTest:
         logging.basicConfig(format='%(asctime)s %(message)s',
                             datefmt='%Y-%m-%d %H:%M:%S',
                             level=logging.INFO)
-        project_dir = os.path.join(
+        project_dir = Path(
             os.path.dirname(os.path.realpath('__file__')),
             "tests", "test_data", "Results")
         log.info(str(project_dir))
         project_name = "test_assignment"
-        db_dir = os.path.join(project_dir, project_name, "Database")
+        db_dir = Path(project_dir, project_name, "Database")
         try:
             project_path = _app.create_project(project_dir, project_name)
             os.makedirs(db_dir)
         except FileExistsError:
-            project_path = os.path.join(
+            project_path = Path(
                 project_dir, project_name, project_name + ".emp")
         dim = {
             "scalar_matrices": 100,
@@ -61,7 +62,7 @@ class EmmeAssignmentTest:
         }
         scenario_num = 19
         try:
-            eb = _eb.create(os.path.join(db_dir, "emmebank"), dim)
+            eb = _eb.create(Path(db_dir, "emmebank"), dim)
             eb.create_scenario(scenario_num)
             emmebank_path = eb.path
             eb.dispose()
@@ -69,7 +70,7 @@ class EmmeAssignmentTest:
             emmebank_path = None
         emme_context = EmmeProject(project_path, emmebank_path)
         emme_context.import_scenario(
-            os.path.join(project_dir, "..", "Network"), scenario_num, "test",
+            Path(project_dir, "..", "Network"), scenario_num, "test",
             overwrite=True)
         self.ass_model = ass.EmmeAssignmentModel(emme_context, scenario_num, EventHandler())
         self.ass_model.prepare_network()
@@ -93,13 +94,13 @@ class EmmeAssignmentTest:
         for ap in self.ass_model.assignment_periods:
             travel_cost[ap.name] = ap.assign(demand, iteration="last")
             travel_cost[ap.name]["time"]["transit_uncongested"] = travel_cost[ap.name]["time"]["transit_work"]
-        resultdata = ResultsData(os.path.join(
+        resultdata = ResultsData(Path(
             os.path.dirname(os.path.realpath(__file__)),
             "..","test_data", "Results", "assignment"))
         self.ass_model.aggregate_results(resultdata)
         self.ass_model.calc_noise()
         resultdata.flush()
-        costs_files = MatrixData(os.path.join(
+        costs_files = MatrixData(Path(
             os.path.dirname(os.path.realpath(__file__)),
             "..","test_data", "Results", "assignment", "Matrices"))
         for time_period in travel_cost:
@@ -111,7 +112,7 @@ class EmmeAssignmentTest:
                         mtx[ass_class] = cost_data
 
     def test_transit_cost(self):
-        zdata = ZoneData(os.path.join(
+        zdata = ZoneData(Path(
             os.path.dirname(os.path.realpath(__file__)), "..", "test_data",
             "Scenario_input_data", "2030_test"), self.ass_model.zone_numbers)
         peripheral_cost = numpy.ones((1, 10))

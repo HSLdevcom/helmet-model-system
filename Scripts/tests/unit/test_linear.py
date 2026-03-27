@@ -2,6 +2,7 @@ import numpy
 import pandas
 import unittest
 import parameters
+from pathlib import Path
 from datahandling.zonedata import BaseZoneData
 from models.linear import CarDensityModel
 from datahandling.resultdata import ResultsData
@@ -14,12 +15,12 @@ EXTERNAL_ZONES = [34102, 34500]
 
 class LinearModelTest(unittest.TestCase):
     def test_linear_calc(self):
-        resultdata = ResultsData(os.path.join(TEST_DATA_PATH, "Results", "test"))
+        resultdata = ResultsData(Path(TEST_DATA_PATH) / "Results" / "test")
         class Purpose:
             pass
         pur = Purpose()
         zi = numpy.array(INTERNAL_ZONES + EXTERNAL_ZONES)
-        zd = BaseZoneData(os.path.join(TEST_DATA_PATH, "Base_input_data", "2023_zonedata"), zi)
+        zd = BaseZoneData(Path(TEST_DATA_PATH) / "Base_input_data"/ "2023_zonedata", zi)
         zd["time_ratio"] = pandas.Series(
             [0.9, 1.5, 1.3, 1.9, 2.0, 3.1, 1.3, 1.9, 2.0, 3.1, 0.0, 0.0],
             zi)

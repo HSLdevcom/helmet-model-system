@@ -1,10 +1,11 @@
 import os
 import json
 import subprocess
+from pathlib import Path
 
 
 def read_from_file(
-        path=os.path.join(os.path.dirname(
+        path=Path(os.path.dirname(
             os.path.realpath(__file__)), "..", "dev-config.json")):
     """Read config parameters from json file.
 

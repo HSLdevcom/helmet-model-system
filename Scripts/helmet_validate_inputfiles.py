@@ -19,17 +19,17 @@ import parameters.assignment as param
 
 def main(args):
     # Variables from args
-    base_zonedata_path = os.path.join(args.baseline_data_path, "2023_zonedata")
-    base_matrices_path = os.path.join(args.baseline_data_path, "base_matrices")
-    emme_paths: List[str] = args.emme_paths
+    base_zonedata_path = Path(args.baseline_data_path) / "2023_zonedata"
+    base_matrices_path = Path(args.baseline_data_path) / "base_matrices"
+    emme_paths: List[Path] = [Path(emme_path) for emme_path in args.emme_paths]
     first_scenario_ids: List[int] = args.first_scenario_ids
-    forecast_zonedata_paths: List[str] = args.forecast_data_paths
+    forecast_zonedata_paths: List[Path] = [Path(forecast_data_path) for forecast_data_path in args.forecast_data_paths]
     do_not_use_emme: bool = args.do_not_use_emme
     if not do_not_use_emme:
         separate_emme_scenarios: bool = args.separate_emme_scenarios
     else: 
         separate_emme_scenarios = False
-    results_path: str = args.results_path
+    results_path: Path = args.results_path
     scenario_name: str = args.scenario_name
     # Validation
     errors = 0
@@ -142,7 +142,7 @@ def validate_database_extra_attrs_size(emmebank, scenario_id, separate_emme_scen
         return errors
     return errors
 
-def validate_base_input_data(base_zonedata_path, base_matrices_path, emme_paths, first_scenario_ids, results_path, scenario_name, do_not_use_emme):
+def validate_base_input_data(base_zonedata_path: Path, base_matrices_path: Path, emme_paths: list[Path], first_scenario_ids: list[int], results_path: Path, scenario_name: str, do_not_use_emme: bool):
     errors = 0
     zone_numbers = None
     log.info("Checking base inputdata...")
@@ -160,14 +160,20 @@ def validate_base_input_data(base_zonedata_path, base_matrices_path, emme_paths,
     
     # Get zone numbers for base zonedata validation, either from EMME or from MockAssiginmentModel
     if do_not_use_emme:
-        mock_result_path = os.path.join(
-            results_path, scenario_name, "Matrices")
+        mock_result_path = results_path / scenario_name / "Matrices"
         if not os.path.exists(mock_result_path):
             msg = "Mock Results directory {} does not exist.".format(
                 mock_result_path)
             log.error(msg)
             errors += 1
-        assignment_model = MockAssignmentModel(MatrixData(mock_result_path))
+        emme_project = MockProject()
+        first_scenario_id = first_scenario_ids[0]
+        # A new argument for the network path must be added
+        test_network_path = Path("tests") / "test_data" / "Network"
+        if str(first_scenario_id) == "test":
+            scenario_id = 1
+        emme_project.import_scenario(test_network_path, scenario_id, "test_scenario")
+        assignment_model = MockAssignmentModel(emme_project, scenario_id, MatrixData(mock_result_path))
         zone_numbers = assignment_model.zone_numbers
     else:
         emp_path = emme_paths[0]

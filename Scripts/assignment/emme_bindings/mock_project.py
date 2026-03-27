@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Dict, Iterable, List, Optional, Tuple, Union
 import numpy # type: ignore
 from collections import namedtuple
+from pathlib import Path
 import copy
 import os
 
@@ -46,23 +47,23 @@ class MockProject:
         for file_name in os.listdir(scenario_dir):
             if file_name.startswith("modes"):
                 self.mode_transaction(
-                    os.path.join(scenario_dir, file_name), scenario=scenario)
+                    Path(scenario_dir, file_name), scenario=scenario)
         for file_name in os.listdir(scenario_dir):
             if file_name.startswith("base_network"):
                 self.base_network_transaction(
-                    os.path.join(scenario_dir, file_name), scenario=scenario)
+                    Path(scenario_dir, file_name), scenario=scenario)
         for file_name in os.listdir(scenario_dir):
             if file_name.startswith("vehicles"):
                 self.vehicle_transaction(
-                    os.path.join(scenario_dir, file_name), scenario=scenario)
+                    Path(scenario_dir, file_name), scenario=scenario)
         for file_name in os.listdir(scenario_dir):
             if file_name.startswith("transit_lines"):
                 self.transit_line_transaction(
-                    os.path.join(scenario_dir, file_name), scenario=scenario)
+                    Path(scenario_dir, file_name), scenario=scenario)
         for file_name in os.listdir(scenario_dir):
             if file_name.startswith("extra"):
                 self.import_extra_attributes(
-                    os.path.join(scenario_dir, file_name), scenario=scenario)
+                    Path(scenario_dir, file_name), scenario=scenario)
 
     def create_matrix(self, 
                       matrix_id: int, 
@@ -756,7 +757,7 @@ class Link(NetworkObject):
     @property
     def reverse_link(self) -> Optional[Link]:
         try:
-            return self.network.link(self.j_node, self.i_node)
+            return self.network.link(self.j_node.number, self.i_node.number)
         except KeyError:
             return None
 
@@ -772,8 +773,8 @@ class Turn(NetworkObject):
                  penalty_func: int
                 ):
         NetworkObject.__init__(self, network, network._extra_attr["TURN"])
-        self.from_link = Network.link(from_node_id, at_node_id)
-        self.to_link = Network.link(at_node_id, to_node_id)
+        self.from_link = network.link(from_node_id, at_node_id)
+        self.to_link = network.link(at_node_id, to_node_id)
         self.penalty_func = penalty_func
         
     def __str__(self):

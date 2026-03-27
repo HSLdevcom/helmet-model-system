@@ -16,7 +16,7 @@ from datatypes.zone import Zone
 from assignment.datatypes.transit_fare import TransitFareZoneSpecification
 
 class ZoneData:
-    def __init__(self, data_dir: str, zone_numbers: npt.ArrayLike, eh: EventHandler | None = None):
+    def __init__(self, data_dir: Path, zone_numbers: npt.ArrayLike, eh: EventHandler | None = None):
         self._values: Dict[str,Any]= {}
         self.share = ShareChecker(self)
         all_zone_numbers = numpy.array(zone_numbers)
@@ -271,7 +271,7 @@ class ZoneData:
 
 
 class BaseZoneData(ZoneData):
-    def __init__(self, data_dir: str, zone_numbers: npt.ArrayLike, eh: EventHandler | None=None):
+    def __init__(self, data_dir: Path, zone_numbers: npt.ArrayLike, eh: EventHandler | None=None):
         ZoneData.__init__(self, data_dir, zone_numbers, eh)
         cardata = read_csv_file(data_dir, ".car", self.zone_numbers)
         self["car_density"] = cardata["cardens"]
