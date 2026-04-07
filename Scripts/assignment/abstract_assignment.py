@@ -1,6 +1,9 @@
 from __future__ import annotations
 from abc import ABCMeta, abstractmethod
 from typing import Any, Dict, List, Union
+from datatypes.literals import ImpedanceType
+
+import numpy.typing as npt
 
 
 class AssignmentModel:
@@ -46,5 +49,5 @@ class Period:
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def assign(self, matrices: Dict[Any, Any], iteration: Union[int, str]) -> Dict[Any, Any]:
+    def assign(self, matrices: Dict[str, npt.NDArray], iteration: Union[int, str]) -> Dict[ImpedanceType, Dict[str, npt.NDArray]]:
         pass

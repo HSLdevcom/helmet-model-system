@@ -3,7 +3,8 @@ import numpy # type: ignore
 import numpy.typing as npt
 import pandas
 
-from typing import TYPE_CHECKING, Any, Dict, Optional, Union
+from typing import TYPE_CHECKING, Any
+from datatypes.literals import ImpedanceType
 from events.event_handler import EventHandler
 import utils.log as log
 import parameters.assignment as param
@@ -29,7 +30,7 @@ class AssignmentPeriod(Period):
 
     Parameters
     ----------
-    name : str
+    name : TimePeriod
         Time period name (aht/pt/iht)
     emme_scenario : int
         EMME scenario linked to the time period
@@ -51,7 +52,7 @@ class AssignmentPeriod(Period):
     """
     def __init__(self, name: TimePeriod, emme_scenario: int,
                  emme_context: EmmeProject,
-                 emme_matrices: Dict[str, Dict[str, Any]],
+                 emme_matrices: dict[str, dict[str, str]],
                  event_handler: EventHandler,
                  separate_emme_scenarios: bool = False):
         self.name: TimePeriod = name
@@ -79,7 +80,7 @@ class AssignmentPeriod(Period):
         """
         return "@{}_{}".format(attr, self.name)
 
-    def prepare(self, segment_results: Dict[str,Dict[str,str]]):
+    def prepare(self, segment_results: dict[str,dict[str,str]]):
         """Prepare network for assignment.
 
         Calculate road toll cost, set boarding penalties,
@@ -104,7 +105,7 @@ class AssignmentPeriod(Period):
         self._specify()
         self._fill_h_mode()
 
-    def assign(self, matrices: dict[str, npt.NDArray], iteration: Union[int,str]) -> Dict:
+    def assign(self, matrices: dict[str, npt.NDArray], iteration: int | str) -> dict[ImpedanceType, dict[str, npt.NDArray]]:
         """Assign cars, bikes and transit for one time period.
 
         Get travel impedance matrices for one time period from assignment.
@@ -173,7 +174,7 @@ class AssignmentPeriod(Period):
             self._assign_congested_transit()
         else:
             raise ValueError("Iteration number not valid")
-
+        mtxs : dict[ImpedanceType, dict[str, npt.NDArray]]
         mtxs = {imp_type: self._get_matrices(imp_type, iteration=="last")
             for imp_type in ("time", "cost", "dist")}
         # fix the emme path analysis results
@@ -200,7 +201,7 @@ class AssignmentPeriod(Period):
 
     def calc_transit_cost(self, 
                           fares: TransitFareZoneSpecification, 
-                          peripheral_cost: numpy.ndarray, 
+                          peripheral_cost: npt.NDArray, 
                           mapping: dict):
         """Calculate transit zone cost matrix.
         
@@ -424,7 +425,7 @@ class AssignmentPeriod(Period):
         self.emme_scenario.publish_network(network)    
 
     def _set_emmebank_matrices(self, 
-                               matrices: Dict[str, npt.NDArray], 
+                               matrices: dict[str, npt.NDArray], 
                                is_last_iteration: bool):
         """Set matrices in emmebank.
 
@@ -458,8 +459,8 @@ class AssignmentPeriod(Period):
 
     def _set_matrix(self,
                     ass_class: str,
-                    matrix: numpy.ndarray,
-                    matrix_type: Optional[str] = "demand"):
+                    matrix: npt.NDArray,
+                    matrix_type: str | None = "demand"):
         if numpy.isnan(matrix).any():
             msg = ("NAs in demand matrix {} ".format(ass_class)
                    + "would cause infinite loop in Emme assignment.")
@@ -472,7 +473,7 @@ class AssignmentPeriod(Period):
 
     def _get_matrices(self, 
                       mtx_type: str, 
-                      is_last_iteration: bool=False) -> Dict[str,numpy.ndarray]:
+                      is_last_iteration: bool=False) -> dict[str,npt.NDArray]:
         """Get all matrices of specified type.
 
         Parameters
@@ -510,7 +511,7 @@ class AssignmentPeriod(Period):
 
     def _get_matrix(self, 
                     ass_class: str, 
-                    matrix_type: str) -> numpy.ndarray:
+                    matrix_type: str) -> npt.NDArray:
         """Get matrix with type pair (e.g., demand, car_work).
 
         Parameters
@@ -689,7 +690,7 @@ class AssignmentPeriod(Period):
         }
 
     def _assign_cars(self, 
-                     stopping_criteria: Dict[str, Union[int, float]], 
+                     stopping_criteria: dict[str, int | float], 
                      lightweight: bool=False):
         """Perform car_work traffic assignment for one scenario."""
         log.info("Car assignment started...")
@@ -716,7 +717,7 @@ class AssignmentPeriod(Period):
             log.warn("Car assignment not fully converged.")
     
     def _assign_bikes(self, 
-                      length_mat_id: Union[float, int, str], 
+                      length_mat_id: float | int | str, 
                       length_for_links: str):
         """Perform bike traffic assignment for one scenario.???TYPES"""
         scen = self.emme_scenario

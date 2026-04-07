@@ -5,6 +5,12 @@ import math
 import parameters.car
 import parameters.income
 from utils.zone_interval import ZoneIntervals
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from datatypes.purpose import Purpose, TourPurpose
+    from datahandling.zonedata import ZoneData
+    from datahandling.resultdata import ResultsData
+
 
 
 class LinearModel(object):
@@ -20,18 +26,18 @@ class LinearModel(object):
     resultdata : datahandling.ResultData
         Writer object for result directory
     """
-    def __init__(self, zone_data, bounds, resultdata):
+    def __init__(self, zone_data: ZoneData, bounds: slice, resultdata: ResultsData):
         self.zone_data = zone_data
         self.bounds = bounds
         self.resultdata = resultdata
 
-    def _add_zone_terms(self, prediction, b, generation=False):
+    def _add_zone_terms(self, prediction: pandas.Series, b: dict, generation=False):
         zdata = self.zone_data
         for i in b:
             prediction += b[i] * zdata.get_data(i, self.bounds, generation)
         return prediction
 
-    def _add_log_zone_terms(self, prediction, b, generation=False):
+    def _add_log_zone_terms(self, prediction: pandas.Series, b: dict, generation=False):
         zdata = self.zone_data
         for i in b:
             prediction += b[i] * numpy.log(zdata.get_data(
@@ -57,7 +63,7 @@ class CarDensityModel(LinearModel):
     resultdata : datahandling.ResultData
         Writer object for result directory
     """
-    def __init__(self, zone_data_base, zone_data_forecast, bounds, resultdata):
+    def __init__(self, zone_data_base: ZoneData, zone_data_forecast: ZoneData, bounds: slice, resultdata: ResultsData):
         LinearModel.__init__(self, zone_data_forecast, bounds, resultdata)
         self.zone_data_base = zone_data_base
         base_pop = self.zone_data_base["population"][bounds]
@@ -130,7 +136,7 @@ class IncomeModel(LinearModel):
     is_helsinki : bool (optional)
         If model is for the municipality of Helsinki
     """
-    def __init__(self, zone_data, bounds, resultdata, age_groups,
+    def __init__(self, zone_data: ZoneData, bounds: slice, resultdata: ResultsData, age_groups: tuple[int, int],
                  is_helsinki=False):
         LinearModel.__init__(self, zone_data, bounds, resultdata)
         self.param = (parameters.income.log_income_helsinki if is_helsinki

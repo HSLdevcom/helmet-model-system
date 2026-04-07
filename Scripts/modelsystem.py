@@ -25,7 +25,7 @@ from demand.all_external import ExternalModel
 from datatypes.purpose import SecDestPurpose
 from datatypes.person import Person
 from datatypes.tour import Tour
-from datatypes.literals import TimePeriod
+from datatypes.literals import TimePeriod, ImpedanceType
 from transform.impedance_transformer import ImpedanceTransformer
 from models.linear import CarDensityModel
 from events.event_handler import EventHandler
@@ -118,7 +118,7 @@ class ModelSystem:
     def _init_demand_model(self):
         return DemandModel(self.zdata_forecast, self.resultdata, is_agent_model=False)
 
-    def _add_internal_demand(self, previous_iter_impedance: Dict[TimePeriod, Dict[str, Dict[str, npt.NDArray]]], is_last_iteration, estimation_mode=False):
+    def _add_internal_demand(self, previous_iter_impedance: dict[TimePeriod, dict[ImpedanceType, dict[str, npt.NDArray]]], is_last_iteration, estimation_mode=False):
         """Produce mode-specific demand matrices.
 
         Add them for each time-period to container in departure time model.
@@ -126,14 +126,13 @@ class ModelSystem:
         Parameters
         ----------
         previous_iter_impedance : dict
-            key : str
-                TimePeriod
+            key : TimePeriod ('aht', 'pt', 'iht')
             value : dict
                 key : str
-                    Assignment class (car/transit/bike/walk)
+                    Impedance type (time/cost/dist)
                 value : dict
                     key : str
-                        Impedance type (time/cost/dist)
+                        Assignment class (car/transit/bike/walk)
                     value : numpy.ndarray
                         Impedance (float 2-d matrix)
             is_last_iteration : bool (optional)
@@ -278,21 +277,21 @@ class ModelSystem:
         return impedance
 
     def run_iteration(self,
-                      previous_iter_impedance: Dict[TimePeriod, Dict[str, Dict[str, npt.NDArray]]],
+                      previous_iter_impedance: Dict[TimePeriod, Dict[ImpedanceType, Dict[str, npt.NDArray]]],
                       iteration: Union[int, str],
-                      estimation_mode=False):
+                      estimation_mode=False) -> Dict[TimePeriod, Dict[ImpedanceType, Dict[str, npt.NDArray]]]:
         """Calculate demand and assign to network.
 
         Parameters
         ----------
         previous_iter_impedance : dict
-            key : TimePeriod
+            key : TimePeriod ('aht', 'pt', 'iht')
             value : dict
                 key : str
-                    Assignment class (car/transit/bike/walk)
+                    Impedance type (time/cost/dist)
                 value : dict
                     key : str
-                        Impedance type (time/cost/dist)
+                        Assignment class (car/transit/bike/walk)
                     value : numpy.ndarray
                         Impedance (float 2-d matrix)
         iteration : int or str (optional)
@@ -304,13 +303,15 @@ class ModelSystem:
         Returns
         -------
         dict
-            key : str
-                Assignment class (car/transit/bike/walk)
+            key : TimePeriod ('aht', 'pt', 'iht')
             value : dict
                 key : str
                     Impedance type (time/cost/dist)
-                value : numpy.ndarray
-                    Impedance (float 2-d matrix)
+                value : dict
+                    key : str
+                        Assignment class (car/transit/bike/walk)
+                    value : numpy.ndarray
+                        Impedance (float 2-d matrix)
         """
         self.event_handler.on_iteration_started(iteration, previous_iter_impedance)
         impedance = {}

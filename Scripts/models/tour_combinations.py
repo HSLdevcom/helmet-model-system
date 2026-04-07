@@ -1,6 +1,11 @@
 import numpy # type: ignore
 
 import parameters.tour_generation as param
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from datatypes.purpose import Purpose, TourPurpose
+    from datahandling.zonedata import ZoneData
+    from datahandling.resultdata import ResultsData
 
 
 class TourCombinationModel:
@@ -17,7 +22,7 @@ class TourCombinationModel:
         Data used for all demand calculations
     """
 
-    def __init__(self, zone_data):
+    def __init__(self, zone_data: ZoneData):
         self.zone_data = zone_data
         self.param = param.tour_combinations
         self.conditions = param.tour_conditions
@@ -25,7 +30,7 @@ class TourCombinationModel:
         self.tour_combinations = [combination for nr_tours in self.param
             for combination in self.param[nr_tours]]
 
-    def calc_prob(self, age_group, is_car_user, zones):
+    def calc_prob(self, age_group: str, is_car_user, zones):
         """Calculate choice probabilities for each tour combination.
 
         Calculation is done for one specific population group

@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from datahandling.zonedata import ZoneData
-from datatypes.literals import TimePeriod
+from datatypes.literals import TimePeriod, ModeCharacter
 
 RoadClass = namedtuple(
     "RoadClass",
@@ -156,7 +156,7 @@ volume_delay_funcs = {
 }
 # Code derived from three-digit link type xyz, where x is the bus lane code,
 # 2 means that bus lane is active during aht and iht periods, etc.
-bus_lane_link_codes = {
+bus_lane_link_codes: dict[TimePeriod, tuple[int, ...]] = {
     "aht": (2, 3, 4, 6),
     "pt": (3, 6),
     "iht": (2, 3, 5, 6),
@@ -164,7 +164,7 @@ bus_lane_link_codes = {
 # Bus lane delay equivalent to 1.5 km per link
 buslane_delay = 60 * 1.5
 # Codes defining whether transit mode stops at node, stored in data2
-stop_codes = {
+stop_codes: dict[ModeCharacter, tuple[int, ...]] = {
     't': (1, 8),
     'p': (8,),
     'b': (2, 3, 4, 5, 11),
@@ -194,7 +194,7 @@ dist_unit_cost = 0.12 * inflation
 # Default distance unit time for trucks and trailer trucks [min/km]
 freight_dist_unit_time = 0.2
 # Boarding penalties for different transit modes
-boarding_penalty = {
+boarding_penalty: dict[ModeCharacter, int] = {
     'b': 3, # Bus
     'g': 3, # Trunk bus
     'd': 5, # Long-distance bus
@@ -207,7 +207,7 @@ boarding_penalty = {
     'j': 2, # Long-distance train
 }
 # Boarding penalties for end assignment
-last_boarding_penalty = {
+last_boarding_penalty: dict[ModeCharacter, int] = {
     'b': 5, # Bus
     'g': 2, # Trunk bus
     'd': 5, # Long-distance bus
@@ -321,7 +321,7 @@ bike_dist = {
 }
 # Factors for 24-h expansion of volumes
 # TODO: Trucks and vans
-volume_factors: dict[str, dict[str, float]] = {
+volume_factors: dict[str, dict[TimePeriod, float]] = {
     "car": {
         "aht": 2.1272934078215693,
         "pt": 10.46805441137958,

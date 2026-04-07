@@ -313,7 +313,7 @@ class EmmeAssignmentModel(AssignmentModel):
 
         Parameters
         ----------
-        time_period : str
+        time_period : TimePeriod
             Time period name (aht, pt, iht)
         id_hundred : int
             A new hundred in the matrix id space marks new assignment period

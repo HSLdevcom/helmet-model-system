@@ -3,7 +3,9 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, NamedTuple, Tuple, TYPE_CHECKING
 import numpy as np
 if TYPE_CHECKING:
+    import numpy.typing as npt
     from datatypes.purpose import Purpose
+    from datatypes.literals import TimePeriod, ImpedanceType
 
 from parameters.assignment import assignment_classes
 from parameters.impedance_transformation import impedance_share
@@ -34,7 +36,7 @@ class ParkAndRideFacility:
     used_capacity: float
     adjustments: int
     shops: int = 0
-    extra_utility: float = None
+    extra_utility: float | None = None
 
 class ParkAndRideUtilities(NamedTuple):
     """Stored utilities for P&R model."""
@@ -72,7 +74,7 @@ class ParkAndRideModel(ImpedanceTransformerBase):
                             for i, num in pnr_centroids]
         self._saved_utilities = None
         
-    def set_impedance(self, impedance: Dict[str, Dict[str, Dict[str, np.ndarray]]]) -> Dict[str, Dict[str, np.ndarray]] | None:
+    def set_impedance(self, impedance: Dict[TimePeriod, Dict[ImpedanceType, Dict[str, npt.NDArray]]]) -> Dict[ImpedanceType, Dict[str, npt.NDArray]] | None:
         """Perform transformation from time period dependent matrices 
         to aggregate impedance matrices for specific travel purpose.
 
@@ -96,7 +98,7 @@ class ParkAndRideModel(ImpedanceTransformerBase):
         car_mode = 'car_' + assignment_class
         transit_mode = 'transit_' + assignment_class
         
-        types = ['cost', 'time']
+        types: list[ImpedanceType] = ['cost', 'time']
         rows = self._purpose.bounds
         cols = (self._purpose.bounds if self._purpose.name == "hoo"
             else slice(0, self._purpose.zone_data.nr_zones))
@@ -148,12 +150,12 @@ class ParkAndRideModel(ImpedanceTransformerBase):
         logsum = np.concatenate(results, axis=0)
         return logsum
     
-    def distribute_demand(self, demand: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def distribute_demand(self, demand: npt.NDArray) -> Tuple[np.ndarray, np.ndarray]:
         """Distribute tour demand to facilities based on utilities.
 
         Parameters
         ----------
-        demand : np.ndarray
+        demand : npt.NDArray
             2d numpy array of shape (nr_zones, nr_zones)
         Return
         ------
@@ -239,7 +241,7 @@ class ParkAndRideModel(ImpedanceTransformerBase):
         facility_time_w = pnr_param['utility']['facility']['time']
         return np.array([f.cost * facility_cost_w + f.time * facility_time_w + f.extra_utility for f in self._facilities])[None, None, :]
 
-    def _calc_extra_utility(self, impedance: Dict[str, Dict[str, Dict[str, np.ndarray]]]):
+    def _calc_extra_utility(self, impedance: Dict[TimePeriod, Dict[ImpedanceType, Dict[str, npt.NDArray]]]):
         """Calculate extra utility for each facility based on the number of shops within x km.
         Does nothing if there are no facilities or if the extra utility has already been calculated.
 
@@ -260,7 +262,7 @@ class ParkAndRideModel(ImpedanceTransformerBase):
             facility.extra_utility = self._zone_data['shops'][dist_mask].sum() * shop_weight
 
     @staticmethod
-    def _calc_logit_slice(s: slice, u: ParkAndRideUtilities) -> np.ndarray:
+    def _calc_logit_slice(s: slice, u: ParkAndRideUtilities) -> npt.NDArray:
         """
         Calculate the utility slice for given car, transit, and facility utilities.
         Parameters:
@@ -272,44 +274,7 @@ class ParkAndRideModel(ImpedanceTransformerBase):
         """
         res = u.car_utility[s,:,:] + u.transit_utility + u.facility_utility
         res = np.clip(res,-50,None) #TODO: Hotfix, car utility sometimes not reasonable
-        return res            
-
-            
-
-
-    def _calc_pnr_utilities(self, day_imp: Dict[str, Dict[str, Dict[str, np.ndarray]]]) -> ParkAndRideUtilities:
-        """
-        Calculate park-and-ride utilities for a given day impedance.
-        Args:
-            day_imp (Dict[str, Dict[str, Dict[str, np.ndarray]]]): A dictionary containing day impedance data for different modes.
-        Returns:
-            ParkAndRideUtilities: An object containing calculated utilities for car, transit, and facilities, 
-                                  as well as facility offsets.
-        Notes:
-            - If the purpose does not have park-and-ride mode, None is returned.
-            - The method calculates extra utility before computing the utilities for car, transit, and facilities.
-        """
-
-        pnr_param = destination_choice[self._purpose.name].get('park_and_ride', None)
-        if not pnr_param: 
-            return None # Skip purposes without park-and-ride mode
-
-        self._calc_extra_utility(day_imp) 
-        car_mode = 'car'
-        transit_mode = 'transit'
-        rows = self._purpose.bounds
-        cols = slice(0, self._purpose.zone_data.nr_zones)
-
-        car_imp = pnr_param['car_impedance']
-        transit_imp = pnr_param['transit_impedance']
-        facility_cost_w = pnr_param['facility']['cost']
-        facility_time_w = pnr_param['facility']['time']
-        facility_offset = np.array([f.zone_offset for f in self._facilities])
-        return ParkAndRideUtilities(
-            car_utility = sum(day_imp[car_mode][t][rows, facility_offset] * w for t, w in car_imp.items()),
-            transit_utility = sum(day_imp[transit_mode][t][facility_offset, cols] * w for t, w in transit_imp.items()),
-            facility_utility = sum(f.cost * facility_cost_w + f.time * facility_time_w + f.extra_utility for f in self._facilities),
-        )
+        return res
 
 
     def _process_slices(self, func: Callable[[slice], Any], max_range: int) -> List[Any]:

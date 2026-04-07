@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Optional
 import numpy # type: ignore
 if TYPE_CHECKING:
     from datatypes.purpose import Purpose
+    from models.park_and_ride_model import ParkAndRidePseudoPurpose
 import parameters.car as param
 
 
@@ -12,7 +13,7 @@ class Demand:
     is_car_passenger = False
 
     def __init__(self, 
-                 purpose: Purpose, 
+                 purpose: Purpose | ParkAndRidePseudoPurpose, 
                  mode: str, 
                  matrix: numpy.ndarray, 
                  origin: Optional[int]=None):

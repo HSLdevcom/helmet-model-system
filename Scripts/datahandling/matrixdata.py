@@ -9,6 +9,7 @@ from pathlib import Path
 from contextlib import contextmanager
 if TYPE_CHECKING:
     from datahandling.zonedata import BaseZoneData
+    from datatypes.literals import TimePeriod
 
 import utils.log as log
 from utils.read_csv_file import read_csv_file
@@ -26,7 +27,7 @@ class MatrixData:
     @contextmanager
     def open(self, 
              mtx_type: str, 
-             time_period: str, 
+             time_period: TimePeriod,  # This should be changed to represent what is actually expected. It ususally is TimePeriod, but it can also be "peripheral" for peripheral transit cost matrix.
              zone_numbers: npt.ArrayLike | None = None, 
              m: str = 'r'):
         zone_numbers = numpy.asarray(zone_numbers)

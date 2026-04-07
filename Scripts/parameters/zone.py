@@ -26,7 +26,7 @@ age_groups: List[Tuple[int, int]] = [ #changed to list for type checker
 
 ### DEMAND MODEL REFERENCES ###
 
-tour_purposes: List[Dict[str, Any]] = [ #changed to list for type checker
+tour_purposes: List[Dict[str, str|tuple[str, ...]]] = [ #changed to list for type checker
     {
         "name": "hw",
         "orig": "home",

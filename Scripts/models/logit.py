@@ -7,7 +7,7 @@ import math
 if TYPE_CHECKING:
     from datahandling.resultdata import ResultsData
     from datahandling.zonedata import ZoneData
-    from datatypes.purpose import TourPurpose
+    from datatypes.purpose import TourPurpose, SecDestPurpose
 
 from parameters.destination_choice import destination_choice, distance_boundary
 from parameters.mode_choice import mode_choice
@@ -31,7 +31,7 @@ class LogitModel:
 
     def __init__(self, 
                  zone_data: ZoneData, 
-                 purpose: TourPurpose, 
+                 purpose: TourPurpose | SecDestPurpose, 
                  resultdata: ResultsData):
         self.resultdata = resultdata
         self.purpose = purpose
@@ -626,7 +626,7 @@ class SecDestModel(LogitModel):
         Whether the model is used for agent-based simulation
     """
 
-    def calc_prob(self, mode, impedance, origin, destination=None):
+    def calc_prob(self, mode: str, impedance: dict, origin: int, destination=None):
         """Calculate matrix of choice probabilities.
         
         Parameters

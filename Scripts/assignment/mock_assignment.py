@@ -5,7 +5,7 @@ import numpy.typing as npt
 import pandas
 if TYPE_CHECKING:
     from datahandling.matrixdata import MatrixData
-    from datatypes.literals import TimePeriod
+    from datatypes.literals import TimePeriod, ImpedanceType
 
 
 import utils.log as log
@@ -74,8 +74,8 @@ class MockPeriod(Period):
         return self.scenario.zone_numbers
 
     def assign(self, 
-               matrices: Dict[str, numpy.ndarray], 
-               iteration: int | str) -> Dict[str,Dict[str,numpy.ndarray]]:
+               matrices: Dict[str, npt.NDArray], 
+               iteration: int | str) -> dict[ImpedanceType, dict[str, npt.NDArray]]:
         """Assign cars, bikes and transit for one time period.
         Get travel impedance matrices for one time period from assignment.
         
@@ -96,6 +96,7 @@ class MockPeriod(Period):
             for ass_class in matrices:
                 mtx[ass_class] = matrices[ass_class]
         log.info("Saved demand matrices for " + str(self.name))
+        mtxs : dict[ImpedanceType, dict[str, npt.NDArray]]
         mtxs = {mtx_type: self._get_matrices(mtx_type)
             for mtx_type in ("time", "cost", "dist")}
         for ass_cl in ("transit_work", "transit_leisure"):
@@ -106,7 +107,7 @@ class MockPeriod(Period):
                                          * mtxs["dist"][ass_cl])
         return mtxs
     
-    def _get_matrices(self, mtx_type: str) -> Dict[str, numpy.ndarray]:
+    def _get_matrices(self, mtx_type: str) -> Dict[str, npt.NDArray]:
         """Get all matrices of specified type.
         
         Parameters

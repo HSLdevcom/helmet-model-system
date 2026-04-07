@@ -10,6 +10,7 @@ from datahandling.zonedata import ZoneData
 
 if TYPE_CHECKING:
     from datatypes.person import Person
+    from datatypes.literals import PurposeType
 from models.park_and_ride_model import ParkAndRideModel, ParkAndRidePseudoPurpose
 import parameters.zone as param
 from parameters.destination_choice import secondary_destination_threshold, destination_choice
@@ -44,6 +45,7 @@ class Purpose:
                  specification: Dict[str,Optional[str]], 
                  zone_data: ZoneData, 
                  resultdata: ResultsData|None=None):
+        self.name: PurposeType
         if specification["name"]:
             self.name = specification["name"]
         else:
@@ -64,7 +66,7 @@ class Purpose:
         self.sub_intervals = sub_intervals[1:]
         self.zone_data = zone_data
         self.resultdata = resultdata
-        self.model = None
+        self.model: Union[logit.OriginModel, logit.DestModeModel, logit.ModeDestModel, logit.SecDestModel]
         self.modes: List[str] = []
         self.generated_tours: Dict[str, numpy.ndarray] = {}
         self.attracted_tours: Dict[str, numpy.ndarray] = {}
@@ -106,14 +108,15 @@ class TourPurpose(Purpose):
             self.model = logit.ModeDestModel(zone_data, self, resultdata)
             self.accessibility_model = logit.AccessibilityModel(
                 zone_data, self, resultdata)
-        self.modes = list(self.model.mode_choice_param)
+        if self.model.mode_choice_param is not None:
+            self.modes = list(self.model.mode_choice_param.keys())
         self.histograms = {mode: TourLengthHistogram() for mode in self.modes}
         self.aggregates = {mode: MatrixAggregator(zone_data.zone_numbers)
             for mode in self.modes}
         self.own_zone_aggregates = {mode: ArrayAggregator(zone_data.zone_numbers)
             for mode in self.modes}
-        self.sec_dest_purpose = None
-        self.park_and_ride_model = None
+        self.sec_dest_purpose: SecDestPurpose | None = None
+        self.park_and_ride_model: ParkAndRideModel | None = None
         if "park_and_ride" in destination_choice[self.name]:
             self.park_and_ride_model = ParkAndRideModel(
                 zone_data, self)
@@ -184,8 +187,8 @@ class TourPurpose(Purpose):
                               self.zone_data.zone_index(tour.dest)] += 1
         log.info(f"Matrix contains {od_matrix.sum()} park and ride tours")
         demand = {}
-
-        car_demand, transit_demand = self.park_and_ride_model.distribute_demand(od_matrix)
+        if self.park_and_ride_model is not None:
+            car_demand, transit_demand = self.park_and_ride_model.distribute_demand(od_matrix)            
         pnr_purpose = ParkAndRidePseudoPurpose(self)
         demand["pnr_car"] = Demand(pnr_purpose, "car", car_demand)
         demand["pnr_transit"] = Demand(pnr_purpose, "transit", transit_demand)
@@ -207,16 +210,14 @@ class TourPurpose(Purpose):
             mtx = (self.prob.pop(mode) * tours).T
             self.orig_purpose_demand = mtx
             if mode == "park_and_ride":
-                car_demand, transit_demand = self.park_and_ride_model.distribute_demand(mtx)
+                car_demand, transit_demand = self.park_and_ride_model.distribute_demand(mtx) # type: ignore
                 pnr_purpose = ParkAndRidePseudoPurpose(self)
                 demand["pnr_car"] = Demand(pnr_purpose, "car", car_demand)
                 demand["pnr_transit"] = Demand(pnr_purpose, "transit", transit_demand)
             else:
                 if add_sec_dest:
-                    try:
+                    if self.sec_dest_purpose is not None:
                         self.sec_dest_purpose.gen_model.add_tours(mtx, mode, self)
-                    except AttributeError: #If the tour does not generate sec_dest tours
-                        pass
                 demand[mode] = Demand(self, mode, mtx)
             self.attracted_tours[mode] = mtx.sum(0)
             self.generated_tours[mode] = mtx.sum(1)
@@ -251,8 +252,8 @@ class SecDestPurpose(Purpose):
     def __init__(self, specification, zone_data, resultdata):
         Purpose.__init__(self, specification, zone_data, resultdata)
         self.gen_model = generation.SecDestGeneration(self, resultdata)
-        self.model = logit.SecDestModel(zone_data, self, resultdata)
-        self.modes = self.model.dest_choice_param.keys()
+        self.model: logit.SecDestModel = logit.SecDestModel(zone_data, self, resultdata)
+        self.modes = list(self.model.dest_choice_param.keys())
 
     def init_sums(self):
         for mode in self.model.dest_choice_param:

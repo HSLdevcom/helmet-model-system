@@ -9,7 +9,7 @@ import openmatrix as omx
 
 if TYPE_CHECKING:
     from datatypes.purpose import Purpose
-    from datatypes.literals import TimePeriod
+    from datatypes.literals import TimePeriod, ImpedanceType
 from events.event_handler import EventHandler
 import parameters.impedance_transformation as param
 from parameters.assignment import assignment_classes
@@ -32,8 +32,8 @@ def transit_cost_to_per_day(cost: np.ndarray, purpose: 'Purpose') -> np.ndarray:
 class ImpedanceTransformerBase(ABC):
     def transform(self,
                   purpose: 'Purpose',
-                  impedance: Dict['TimePeriod', Dict[str, Dict[str, npt.NDArray]]]
-                  ) -> Dict[str, Dict[str, npt.NDArray]]:
+                  impedance: Dict['TimePeriod', Dict['ImpedanceType', Dict[str, npt.NDArray]]]
+                  ) -> Dict[str, Dict[str, npt.NDArray]] | None:
         """Perform transformation from time period dependent matrices 
         to aggregate impedance matrices for specific travel purpose.
 
@@ -44,8 +44,8 @@ class ImpedanceTransformerBase(ABC):
         purpose : TourPurpose
         impedance: dict
             Time period (aht/pt/iht) : dict
-                Type (time/cost/dist) : dict
-                    Assignment class (car_work/transit/...) : numpy 2d matrix
+                Assignment class (car_work/transit/...) : numpy 2d matrix
+                    Type (time/cost/dist) : dict
         Return 
         ------
         dict 
@@ -83,7 +83,7 @@ class ImpedanceTransformer(ImpedanceTransformerBase):
                 for type_name, type_imp in mode_imp.items():
                     omx_file[mode_name + '_' + type_name] = type_imp
         
-    def transform(self, purpose, impedance: dict['TimePeriod', dict[str, dict[str, npt.NDArray]]]):
+    def transform(self, purpose, impedance: dict['TimePeriod', dict['ImpedanceType', dict[str, npt.NDArray]]]):
         """Perform transformation from time period dependent matrices 
         to aggregate impedance matrices for specific travel purpose.
 
@@ -94,8 +94,8 @@ class ImpedanceTransformer(ImpedanceTransformerBase):
         purpose : TourPurpose
         impedance: dict
             Time period (aht/pt/iht) : dict
-                Type (time/cost/dist) : dict
-                    Assignment class (car_work/transit/...) : numpy 2d matrix
+                Assignment class (car_work/transit/...) : numpy 2d matrix
+                    Type (time/cost/dist) : dict
         Return 
         ------
         dict 

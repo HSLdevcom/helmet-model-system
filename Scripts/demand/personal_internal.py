@@ -34,7 +34,7 @@ class DemandModel:
                  is_agent_model: bool=False):
         self.resultdata = resultdata
         self.zone_data = zone_data
-        self.tour_purposes = []
+        self.tour_purposes: list[SecDestPurpose|TourPurpose] = []
         self.purpose_dict: Dict[str,Purpose] = {}
         for purpose_spec in param.tour_purposes:
             args = (purpose_spec, zone_data, resultdata)

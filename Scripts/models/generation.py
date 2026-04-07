@@ -1,6 +1,11 @@
 import pandas
 
 import parameters.tour_generation as param
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from datatypes.purpose import Purpose, TourPurpose
+    from datahandling.zonedata import ZoneData
+    from datahandling.resultdata import ResultsData
 
 
 class GenerationModel:
@@ -18,11 +23,11 @@ class GenerationModel:
         Writer object for result directory
     """
 
-    def __init__(self, purpose, resultdata):
+    def __init__(self, purpose: Purpose, resultdata: ResultsData):
         self.resultdata = resultdata
         self.zone_data = purpose.zone_data
         self.purpose = purpose
-        self.param = param.tour_generation[purpose.name]
+        self.param: dict[str,float] | dict[str, dict[str, float]] = param.tour_generation[purpose.name]
 
     def init_tours(self):
         """Initialize `tours` vector to 0."""
@@ -95,7 +100,7 @@ class SecDestGeneration(GenerationModel):
         for mode in self.tours:
             self.tours[mode] = 0
     
-    def add_tours(self, demand, mode, purpose):
+    def add_tours(self, demand, mode: str, purpose: TourPurpose):
         """Generate matrix of tour numbers from attracted source tours."""
         if mode in self.purpose.modes:
             bounds = self.purpose.bounds
@@ -103,7 +108,7 @@ class SecDestGeneration(GenerationModel):
             b = self.param
             self.tours[mode] += b[purpose.name][mode] * demand[metropolitan, bounds]
     
-    def get_tours(self, mode):
+    def get_tours(self, mode: str):
         """Get vector of tour numbers per od pair.
         
         Return
