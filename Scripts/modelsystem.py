@@ -220,7 +220,10 @@ class ModelSystem:
 
                     for mode in demand:
                         if disruption_mode == "read":
-                            for i, m in enumerate(modes):
+                            i = 0  # Don't convert to enumerate, skipping pnr will cause IndexErrors
+                            for m in modes:
+                                log.debug(f"Redistributing demand for {m}")
+                                log.debug(f"Reference mode shares: {reference_shares[i]}")
                                 if m in ["pnr_car", "pnr_transit"]:
                                     continue
                                 if "ho" in purpose.name:
@@ -230,8 +233,11 @@ class ModelSystem:
                                 else:
                                     prop_new = 0.0
                                 combined_demand = (1 - prop_new) * reference_demand + prop_new * unmodified_demand
+                                log.debug(f"Combined demand shape: {combined_demand.shape}")
+                                log.debug(f"Reference shares shape: {reference_shares.shape}")
                                 mode_demand = combined_demand[:, :] * reference_shares[i]
                                 demand[m].matrix = mode_demand[:,:]
+                                i += 1
                             if mode == "car" and purpose.name in param_car.car_driver_share:
                                 demand[m].matrix = demand[m].matrix * param_car.car_driver_share.get(purpose.name, 1.0)
                     
