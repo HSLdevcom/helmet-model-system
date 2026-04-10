@@ -202,7 +202,7 @@ class ModelSystem:
     # possibly merge with init
     def assign_base_demand(self, 
                            use_fixed_transit_cost: bool = False, 
-                           is_end_assignment: bool = False) -> Dict[TimePeriod, Dict[str, Dict[str, npt.NDArray]]]:
+                           is_end_assignment: bool = False) -> dict[TimePeriod, dict[ImpedanceType, dict[str, npt.NDArray]]]:
         """Assign base demand to network (before first iteration).
 
         Parameters

@@ -144,7 +144,7 @@ def validate_database_extra_attrs_size(emmebank, scenario_id, separate_emme_scen
 
 def validate_base_input_data(base_zonedata_path: Path, base_matrices_path: Path, emme_paths: list[Path], first_scenario_ids: list[int], results_path: Path, scenario_name: str, do_not_use_emme: bool):
     errors = 0
-    zone_numbers = None
+    zone_numbers = []
     log.info("Checking base inputdata...")
     # Check filepaths (& first .emp path for zone_numbers in base zonedata)
     if not os.path.exists(base_zonedata_path):
@@ -191,7 +191,7 @@ def validate_base_input_data(base_zonedata_path: Path, base_matrices_path: Path,
                 log.error(msg)
                 errors += 1
             else:
-                zone_numbers = scen.zone_numbers
+                zone_numbers: list = scen.zone_numbers
     # Check base zonedata
     base_zonedata = ZoneData(base_zonedata_path, zone_numbers)
     # Check base matrices

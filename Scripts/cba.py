@@ -7,6 +7,10 @@ import numpy.typing as npt
 import pandas
 from openpyxl import load_workbook
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from parameters.assignment import TimePeriod
+
 import utils.config
 import utils.log as log
 import parameters.assignment as param
@@ -255,7 +259,8 @@ def run_cost_benefit_analysis(scenario_0: str, scenario_1: str, year: int, workb
 
     # Calculate gains and revenues
     results = defaultdict(float)
-    for timeperiod in ["aht", "pt", "iht"]:
+    timeperiods : list[TimePeriod] = ["aht", "pt", "iht"]
+    for timeperiod in timeperiods:
         data = {
             "scen_1": MatrixData(scenario_1_path / "Matrices"),
             "scen_0": MatrixData(scenario_0_path / "Matrices"),
@@ -292,11 +297,11 @@ def run_cost_benefit_analysis(scenario_0: str, scenario_1: str, year: int, workb
                         results["car_revenue"] += vol_fac * revenue
         ws = workbook["Tuottajahyodyt"]
         rows = CELL_INDICES["transit_revenue"]["rows"][year]
-        ws[cols[timeperiod]+rows] = revenues_transit.sum()
+        ws[cols[timeperiod]+rows] = revenues_transit.sum()  # Possible bug, should perhaps be results["transit_revenue"] instead of revenues_transit.sum()?
         ws = workbook["Julkistaloudelliset"]
         cols = CELL_INDICES["car_revenue"]["cols"]
         rows = CELL_INDICES["car_revenue"]["rows"][year]
-        ws[cols[timeperiod]+rows] = revenues_car.sum()
+        ws[cols[timeperiod]+rows] = revenues_car.sum()  # Possible bug, should perhaps be results["car_revenue"] instead of revenues_transit.sum()?
         log.info("Gains and revenues calculated for {}".format(timeperiod))
     log.info("Year {} completed".format(year))
     return pandas.DataFrame(results, zone_numbers)

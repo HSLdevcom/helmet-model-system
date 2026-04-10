@@ -224,7 +224,7 @@ def delete_strategy_files(emme_project_path: Path):
         for f in strategy_files:
             try:
                 os.remove(f)
-            except (IsADirectoryError, OSError):
+            except (IsADirectoryError, OSError) as e:
                 log.warn(f"Not able to remove file {f}: {e}")
     log.info("Removed strategy files in {}".format(dbase_path))
 
