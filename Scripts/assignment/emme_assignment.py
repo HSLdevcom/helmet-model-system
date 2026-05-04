@@ -164,21 +164,21 @@ class EmmeAssignmentModel(AssignmentModel):
                 if res != "transit_volumes":
                     self._node_24h(
                         transit_class, param.segment_results[res])
-        ass_classes = list(param.emme_matrices) + ["bus", "aux_transit"]
-        ass_classes.remove("walk")
-        for ass_class in ass_classes:
+        self.res_ass_classes = list(param.emme_matrices) + ["bus", "aux_transit"] #result assignment classes
+        self.res_ass_classes.remove("walk")
+        for ass_class in self.res_ass_classes:
             self._link_24h(ass_class)
 
         # Aggregate and print vehicle kms and link lengths
-        kms = dict.fromkeys(ass_classes, 0.0)
+        kms = dict.fromkeys(self.res_ass_classes, 0.0)
         vdfs = {param.roadclasses[linktype].volume_delay_func
             for linktype in param.roadclasses}
         vdfs.add(0) # Links with car traffic prohibited
         vdf_kms = {ass_class: pandas.Series(0.0, vdfs)
-            for ass_class in ass_classes}
+            for ass_class in self.res_ass_classes}
         areas = zone_param.area_aggregation
         area_kms = {ass_class: pandas.Series(0.0, areas)
-            for ass_class in ass_classes}
+            for ass_class in self.res_ass_classes}
         vdf_area_kms = {vdf: pandas.Series(0.0, areas) for vdf in vdfs}
         #The following line only works well in Python 3.7+
         linktypes = list(dict.fromkeys(param.roadtypes.values())) + list(dict.fromkeys(param.railtypes.values()))
@@ -194,7 +194,7 @@ class EmmeAssignmentModel(AssignmentModel):
             else:
                 vdf = 0
             area = belongs_to_area(link.i_node)
-            for ass_class in ass_classes:
+            for ass_class in self.res_ass_classes:
                 veh_kms = link[self._extra(ass_class)] * link.length
                 kms[ass_class] += veh_kms
                 if vdf in vdfs:
@@ -209,55 +209,23 @@ class EmmeAssignmentModel(AssignmentModel):
                 linklengths[param.railtypes[linktype]] += link.length
             else:
                 linklengths[param.roadtypes[vdf]] += link.length / 2
+        
+        network_aggregations = {"kms": kms, 
+                                "vdfs": vdfs,
+                                "areas": areas,
+                                "linktypes": linktypes,
+                                "linklengths": linklengths,
+                                "veh_kms": veh_kms,
+                                "vdf_kms": vdf_kms,
+                                "area_kms": area_kms,
+                                "vdf_area_kms": vdf_area_kms}
 
-        self._event_handler.on_daily_results_aggregated(self, network)
+        self._event_handler.on_daily_results_aggregated(self, network, network_aggregations)
 
         if faulty_kela_code_nodes:
             s = "Municipality KELA code not found for nodes: " + ", ".join(
                 faulty_kela_code_nodes)
             log.warn(s)
-        resultdata.print_line("\nVehicle kilometres", "result_summary")
-        for ass_class in ass_classes:
-            resultdata.print_line(
-                "{}:\t{:1.0f}".format(ass_class, kms[ass_class]),
-                "result_summary")
-            resultdata.print_data(
-                vdf_kms[ass_class], "vehicle_kms_vdfs.txt", ass_class)
-            resultdata.print_data(
-                area_kms[ass_class], "vehicle_kms_areas.txt", ass_class)
-        for vdf in vdf_area_kms:
-            resultdata.print_data(
-                vdf_area_kms[vdf], "vehicle_kms_vdfs_areas.txt", vdf)
-        resultdata.print_data(linklengths, "link_lengths.txt", "length")
-
-        # Aggregate and print numbers of stations
-        stations = pandas.Series(0, param.station_ids)
-        for node in network.regular_nodes():
-            for mode in param.station_ids:
-                if (node.data2 == param.station_ids[mode]
-                        and node[self._extra("transit_won_boa")] > 0):
-                    stations[mode] += 1
-                    break
-        resultdata.print_data(stations, "transit_stations.txt", "number")
-
-        # Aggregate and print transit vehicle kms
-        transit_modes = [veh.description for veh in network.transit_vehicles()]
-        dists = pandas.Series(0.0, transit_modes)
-        times = pandas.Series(0.0, transit_modes)
-        for ap in self.assignment_periods:
-            network = ap.emme_scenario.get_network()
-            volume_factor = param.volume_factors["bus"][ap.name]
-            for line in network.transit_lines():
-                mode = line.vehicle.description
-                headway = line[ap.extra("hw")]
-                if 0 < headway < 900:
-                    departures = volume_factor * 60/headway
-                    for segment in line.segments():
-                        dists[mode] += departures * segment.link.length
-                        times[mode] += (departures
-                                        * segment[ap.extra("base_timtr")])
-        resultdata.print_data(dists, "transit_kms.txt", "dist")
-        resultdata.print_data(times, "transit_kms.txt", "time")
 
     def calc_transit_cost(self, 
                           fares: TransitFareZoneSpecification, 
@@ -403,9 +371,9 @@ class EmmeAssignmentModel(AssignmentModel):
             (e.g., self._extra)
         """
         # Create link attributes
-        ass_classes = list(param.emme_matrices) + ["bus"]
-        ass_classes.remove("walk")
-        for ass_class in ass_classes:
+        self.emme_ass_classes = list(param.emme_matrices) + ["bus"]
+        self.emme_ass_classes.remove("walk")
+        for ass_class in self.emme_ass_classes:
             self.emme_project.create_extra_attribute(
                 "LINK", extra(ass_class), ass_class + " volume",
                 overwrite=True, scenario=scenario)

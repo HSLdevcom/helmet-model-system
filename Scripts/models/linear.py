@@ -108,22 +108,7 @@ class CarDensityModel(LinearModel):
                             .clip(upper=1.0))
         prediction = (self.pop_growth_share * prediction
                       + (1-self.pop_growth_share) * base_car_density)
-        self.print_results(prediction)
         return prediction
-
-    def print_results(self, prediction):
-        """ Print results, mainly for calibration purposes"""
-        # Print car density by zone
-        self.resultdata.print_data(prediction, "car_density.txt", "car_density")
-        # In validation data, car density is calculated for the whole
-        # population from ages 0 to 999.
-        population = self.zone_data["population"][self.bounds]
-        # print car density by municipality and area
-        for area_type in ("municipalities", "areas"):
-            aggregation = ZoneIntervals(area_type).averages(prediction, population)
-            self.resultdata.print_data(
-                aggregation, "car_density_{}.txt".format(area_type),
-                "car_density")
 
 
 class IncomeModel(LinearModel):
