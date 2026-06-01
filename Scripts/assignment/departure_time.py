@@ -27,9 +27,9 @@ class DepartureTimeModel:
         self.time_periods = time_periods
         self.demand: Optional[Union[int,Dict[str,Dict[str,numpy.ndarray]]]] = None
         self.old_car_demand: Union[int,numpy.ndarray] = 0
-        self.init_demand()
+        self.init_demand_and_get_gaps()
 
-    def init_demand(self) -> Dict[str,float]:
+    def init_demand_and_get_gaps(self) -> Dict[str,float]:
         """Initialize/reset demand for all time periods.
 
         Includes all transport classes, each being set to zero.

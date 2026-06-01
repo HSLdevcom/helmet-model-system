@@ -86,7 +86,7 @@ class GpkgResult(ModelSystemEventListener):
         # Write the updated GeoDataFrame to the result path
         zone_gdf.to_file(self.result_path, layer='zone_data', driver='GPKG')
         
-    def on_daily_results_aggregated(self, assignment_model, day_network):
+    def on_daily_results_aggregated(self, assignment_model, day_network, network_aggregations):
         if not self.is_last_iteration:
             return
         try:
