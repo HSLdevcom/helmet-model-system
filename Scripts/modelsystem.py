@@ -192,6 +192,7 @@ class ModelSystem:
                 if purpose.dest != "source":
                     for mode in demand:
                         self.dtm.add_demand(demand[mode])
+                    for mode in purpose.modes:
                         self.travel_modes[mode] = True
             self.event_handler.on_purpose_demand_calculated(purpose, demand, pnr_iteration = pnr_it, estimation_mode=estimation_mode)
 
@@ -519,8 +520,9 @@ class AgentModelSystem(ModelSystem):
                     demand = purpose.calc_demand(estimation_mode)
                     if purpose.dest != "source":
                         for mode in demand:
-                            self.travel_modes[mode] = True
                             self.dtm.add_demand(demand[mode])
+                        for mode in purpose.modes:
+                            self.travel_modes[mode] = True
                 else:
                     for mode in purpose.modes:
                         self.travel_modes[mode] = True
