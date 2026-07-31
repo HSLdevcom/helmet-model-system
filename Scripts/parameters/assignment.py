@@ -10,37 +10,33 @@ from datahandling.zonedata import ZoneData
 RoadClass = namedtuple(
     "RoadClass",
     (
-        "type", "num_lanes", "volume_delay_func", "lane_capacity",
-        "free_flow_speed", "bus_delay",
+        "type", "volume_delay_func", "lane_capacity",
+        "free_flow_speed", "bus_delay", "k",
     ))
 # Code derived from three-digit link type xyz, where yz is the road class code. See dictionary volume_delay_funcs below.
 roadclasses = {
-    21: RoadClass("motorway", "<3", 1, 2100, 113, 0.265),
-    22: RoadClass("motorway", ">=3", 1, 1900, 113, 0.265),
-    23: RoadClass("motorway", "<3", 1, 2000, 97, 0.309),
-    24: RoadClass("motorway", ">=3", 1, 1800, 97, 0.309),
-    25: RoadClass("motorway", "<3", 1, 2000, 81, 0.370),
-    26: RoadClass("motorway", ">=3", 1, 1800, 81, 0.370),
-    27: RoadClass("highway", "<3", 2, 1900, 97, 0.309),
-    28: RoadClass("highway", ">=3", 2, 1800, 97, 0.309),
-    29: RoadClass("highway", "<3", 2, 1850, 81, 0.370),
-    30: RoadClass("highway", ">=3", 2, 1800, 81, 0.370),
-    31: RoadClass("highway", "any", 2, 1600, 73, 0.411),
-    32: RoadClass("highway", "any", 2, 1600, 63, 0.556),
-    33: RoadClass("arterial", "any", 3, 1450, 61, 0.492),
-    34: RoadClass("arterial", "any", 3, 1250, 54, 0.556),
-    35: RoadClass("arterial", "any", 4, 1150, 48, 0.625),
-    36: RoadClass("arterial", "any", 4, 1000, 44, 0.682),
-    37: RoadClass("arterial", "any", 4, 1000, 41, 0.732),
-    38: RoadClass("collector", "any", 5, 900, 41, 0.732),
-    39: RoadClass("collector", "any", 5, 750, 36, 0.833),
-    40: RoadClass("collector", "any", 5, 900, 36, 0.833),
-    41: RoadClass("local", "any", 5, 600, 30, 1.000),
-    42: RoadClass("local", "any", 5, 500, 12, 1.304),
-    43: RoadClass("collector", "any", 5, 750, 30, 0.833),
+    21: RoadClass("motorway", 1, 2100, 113, 0.265, 0.11),
+    23: RoadClass("motorway", 1, 2000, 97, 0.309, 0.11),
+    25: RoadClass("motorway", 1, 2000, 81, 0.370, 0.11),
+    26: RoadClass("motorway", 1, 1900, 73, 0.411, 0.11),
+    27: RoadClass("highway", 2, 1900, 97, 0.309, 0.05),
+    29: RoadClass("highway", 2, 1850, 81, 0.370, 0.05),
+    31: RoadClass("highway", 2, 1600, 73, 0.411, 0.05),
+    32: RoadClass("highway", 2, 1600, 63, 0.556, 0.05),
+    33: RoadClass("arterial", 3, 1450, 61, 0.492, 0.04),
+    34: RoadClass("arterial", 3, 1250, 54, 0.556, 0.04),
+    35: RoadClass("arterial", 4, 1150, 48, 0.625, 0.04),
+    36: RoadClass("arterial", 4, 1000, 44, 0.682, 0.04),
+    37: RoadClass("arterial", 4, 1000, 41, 0.732, 0.04),
+    38: RoadClass("collector", 5, 900, 41, 0.732, 0.02),
+    39: RoadClass("collector", 5, 750, 36, 0.833, 0.02),
+    40: RoadClass("collector", 5, 900, 36, 0.833, 0.02),
+    41: RoadClass("local", 5, 600, 30, 1.000, 0.02),
+    42: RoadClass("local", 5, 500, 12, 1.304, 0.02),
+    43: RoadClass("collector", 5, 750, 30, 0.833, 0.02),
 }
 connector_link_types = (84, 85, 86, 87, 88, 98, 99)
-connector = RoadClass("connector", "any", 99, 0, 0, 0)
+connector = RoadClass("connector", 99, 0, 0, 0, 0)
 roadclasses.update({linktype: connector for linktype in connector_link_types})
 custom_roadtypes = {
     91: "motorway",

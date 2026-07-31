@@ -324,7 +324,7 @@ class AssignmentPeriod(Period):
                 # Car link with standard attributes
                 roadclass = param.roadclasses[linktype]
                 link.volume_delay_func = roadclass.volume_delay_func
-                link.data1 = roadclass.lane_capacity
+                link.data1 = self._lane_capacity(link.num_lanes, roadclass.lane_capacity, roadclass.k)
                 link.data2 = roadclass.free_flow_speed
             elif linktype in param.custom_roadtypes:
                 # Custom car link
@@ -349,10 +349,6 @@ class AssignmentPeriod(Period):
                         buslane_code = link.type // 100
                         if buslane_code in param.bus_lane_link_codes[self.name]:
                             # Bus lane
-                            if (link.num_lanes == 3
-                                    and roadclass.num_lanes == ">=3"):
-                                roadclass = param.roadclasses[linktype - 1]
-                                link.data1 = roadclass.lane_capacity
                             link.volume_delay_func += 5
                             func = funcs["buslane"]
                             try:
@@ -381,6 +377,31 @@ class AssignmentPeriod(Period):
             if link.num_lanes == 0: link.num_lanes = 1
         self.event_handler.on_car_and_transit_vdfs_set(self, network)
         self.emme_scenario.publish_network(network)
+
+    def _lane_capacity(self,lanes, single_lane_capacity, k=0.0):
+        """
+        Total road capacity with diminishing returns from added lanes.
+
+        Parameters
+        ----------
+        lanes : float or array-like
+            Number of lanes.
+        single_lane_capacity : float
+            Capacity of a single lane (veh/h).
+        k : float
+            Diminishing returns parameter.
+
+        Returns
+        -------
+        float or ndarray
+            Total road capacity.
+        """
+        if k == 0:
+            return single_lane_capacity * lanes, single_lane_capacity
+        total_capacity = single_lane_capacity * (1 - numpy.exp(-k * lanes)) / (1 - numpy.exp(-k))
+        per_lane_capacity = total_capacity / lanes
+
+        return per_lane_capacity
 
     def _set_bike_vdfs(self):
         log.info("Sets bike functions for scenario {}".format(
