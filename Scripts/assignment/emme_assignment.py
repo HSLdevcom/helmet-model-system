@@ -97,7 +97,7 @@ class EmmeAssignmentModel(AssignmentModel):
                 scen_id = self.mod_scenario.number
             if i == 0 or self.save_matrices:
                 emme_matrices = self._create_matrices(
-                    tp, i*hundred + self.first_matrix_id, id_ten)
+                    tp, i*hundred + self.first_matrix_id, id_ten, scenario=scen_id)
             self.assignment_periods.append(AssignmentPeriod(
                 tp, scen_id, self.emme_project, emme_matrices,
                 self._event_handler, separate_emme_scenarios=self.separate_emme_scenarios))
@@ -271,9 +271,11 @@ class EmmeAssignmentModel(AssignmentModel):
                      ass_period_2: AssignmentPeriod):
         from_mtx = ass_period_1.emme_matrices[ass_class][mtx_type]
         to_mtx = ass_period_2.emme_matrices[ass_class][mtx_type]
-        description = f"{mtx_type}_{ass_class}_{ass_period_2.name}"
+        description_base = f"{mtx_type}_{ass_class}_{ass_period_2.name}"
+        name = f"{description_base[:34]}_{ass_period_2.emme_scenario.id}"
+        description = f"{description_base}_{ass_period_2.emme_scenario.id}"
         self.emme_project.copy_matrix(
-            from_mtx, to_mtx, description, description)
+            from_mtx, to_mtx, name, description)
 
     def _extra(self, attr: str) -> str:
         """Add prefix "@" and suffix "_vrk".
@@ -300,7 +302,7 @@ class EmmeAssignmentModel(AssignmentModel):
         modified_network: Network = mnw.calculate_gradients(network)
         self.mod_scenario.publish_network(modified_network)
 
-    def _create_matrices(self, time_period, id_hundred, id_ten):
+    def _create_matrices(self, time_period, id_hundred, id_ten, scenario=None) -> Dict[str, Dict[str, str]]:
         """Create EMME matrices for storing demand and impedance.
 
         Parameters
@@ -333,11 +335,13 @@ class EmmeAssignmentModel(AssignmentModel):
             for mtx_type in param.emme_matrices[ass_class]:
                 matrix_ids[mtx_type] = "mf{}".format(
                     id_hundred + id_ten[mtx_type] + i)
-                description = f"{mtx_type}_{ass_class}_{tag}"
+                description_base = f"{mtx_type}_{ass_class}_{tag}"
+                name = f"{description_base[:34]}_{scenario}"
+                description = f"{description_base}_{scenario}"
                 default_value = 0 if mtx_type == "demand" else 999999
                 self.emme_project.create_matrix(
                     matrix_id=matrix_ids[mtx_type],
-                    matrix_name=description, matrix_description=description,
+                    matrix_name=name, matrix_description=description,
                     default_value=default_value, overwrite=True)
             if ass_class in param.transit_classes:
                 j = 0
@@ -348,9 +352,11 @@ class EmmeAssignmentModel(AssignmentModel):
                         id = f"mf{id_hundred + id_ten[ass_class] + j}"
                         matrix_ids[subset][longer_name] = id
                         matrix_ids[longer_name] = id
+                        description_base = f"{mtx_type}_{ass_class}_{tag}"
+                        name = f"{description_base[:34]}_{scenario}"
                         self.emme_project.create_matrix(
                             matrix_id=id,
-                            matrix_name=f"{mtx_type}_{ass_class}_{tag}",
+                            matrix_name=name,
                             matrix_description=longer_name,
                             default_value=999999, overwrite=True)
             emme_matrices[ass_class] = matrix_ids
