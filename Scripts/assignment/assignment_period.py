@@ -378,15 +378,15 @@ class AssignmentPeriod(Period):
         self.event_handler.on_car_and_transit_vdfs_set(self, network)
         self.emme_scenario.publish_network(network)
 
-    def _lane_capacity(self,lanes, single_lane_capacity, k=0.0):
+    def _lane_capacity(self,lanes: int|float, single_lane_capacity: int, k=0.0) -> int:
         """
         Total road capacity with diminishing returns from added lanes.
 
         Parameters
         ----------
-        lanes : float or array-like
+        lanes : numeric
             Number of lanes.
-        single_lane_capacity : float
+        single_lane_capacity : int
             Capacity of a single lane (veh/h).
         k : float
             Diminishing returns parameter.
@@ -397,9 +397,9 @@ class AssignmentPeriod(Period):
             Total road capacity.
         """
         if k == 0:
-            return single_lane_capacity * lanes, single_lane_capacity
+            return single_lane_capacity
         total_capacity = single_lane_capacity * (1 - numpy.exp(-k * lanes)) / (1 - numpy.exp(-k))
-        per_lane_capacity = total_capacity / lanes
+        per_lane_capacity = int(total_capacity / lanes)
 
         return per_lane_capacity
 
