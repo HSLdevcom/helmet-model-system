@@ -1,4 +1,5 @@
 import os
+import re
 from typing import Optional
 import pandas
 import numpy
@@ -46,9 +47,40 @@ def read_csv_file(data_dir: str,
         # This error should not be logged, as it is sometimes excepted
         raise NameError(msg)
     header: Optional[str] = None if squeeze else "infer"
-    data: pandas.DataFrame = pandas.read_csv(
-        path, sep='\s+', keep_default_na=False,
-        na_values="", comment='#', header=header)
+    if not squeeze:
+        with open(path, encoding="utf-8") as f:
+            for lineno, line in enumerate(f):
+                if line.strip() and not line.lstrip().startswith("#"):
+                    # Is first character of the line whitespace? 
+                    has_unnamed_first_column = line[0].isspace()
+
+                    # Works like sep=r"\s+": 
+                    header_cleaned = re.split(r"\s+", line.strip())
+
+                    if has_unnamed_first_column:
+                        header_cleaned.insert(0, "zone")
+
+                    break
+            else:
+                raise ValueError("File does not contain a header row")
+
+        header = header_cleaned
+        index_col = 0 if header and header[0] == "zone" else None
+        data = pandas.read_csv(
+            path,
+            sep='\s+',
+            skiprows=lineno + 1,   # ohita myös header-rivi
+            names=header,
+            header=None,
+            comment="#",
+            index_col=index_col,
+            keep_default_na=False,
+            na_values="",
+        )
+    else:
+        data: pandas.DataFrame = pandas.read_csv(
+            path, sep='\s+', keep_default_na=False,
+            na_values="", comment='#', header=header)
     if squeeze:
         data = data.squeeze()
     if pandas.api.types.is_numeric_dtype(data.index) and data.index.hasnans:
