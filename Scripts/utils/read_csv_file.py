@@ -83,7 +83,6 @@ def read_csv_file(data_dir: str,
             na_values="", comment='#', header=header)
     if squeeze:
         data = data.squeeze()
-    log.info(str(data))
     if pandas.api.types.is_numeric_dtype(data.index) and data.index.hasnans:
         msg = "Row with only spaces or tabs in file {}".format(path)
         log.error(msg)
