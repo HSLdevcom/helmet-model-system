@@ -199,7 +199,8 @@ class ModelSystem:
     # possibly merge with init
     def assign_base_demand(self, 
                            use_fixed_transit_cost: bool = False, 
-                           is_end_assignment: bool = False) -> Dict[str, Dict[str, numpy.ndarray]]:
+                           is_end_assignment: bool = False,
+                           fixed_network: bool = False) -> Dict[str, Dict[str, numpy.ndarray]]:
         """Assign base demand to network (before first iteration).
 
         Parameters
@@ -209,6 +210,8 @@ class ModelSystem:
             found in Results folder, it can be reused to save time
         is_end_assignment : bool (optional)
             If base demand is assigned without demand calculations
+        fixed_network : bool (optional)
+            If the network is fixed and should not be modified
 
         Returns
         -------
@@ -224,7 +227,7 @@ class ModelSystem:
         impedance = {}
 
         # create attributes and background variables to network
-        self.ass_model.prepare_network(self.zdata_forecast.car_dist_cost)
+        self.ass_model.prepare_network(self.zdata_forecast.car_dist_cost, fixed_network=fixed_network)
 
         # Calculate transit cost matrix, and save it to emmebank
         time_periods = self.ass_model.time_periods

@@ -48,7 +48,7 @@ class MockAssignmentModel(AssignmentModel):
     def calc_noise(self):
         return pandas.Series(0.0, zone_param.area_aggregation)
 
-    def prepare_network(self, car_dist_unit_cost: Optional[float]=None):
+    def prepare_network(self, car_dist_unit_cost: Optional[float]=None, fixed_network: bool=False):
         pass
 
     def init_assign(self, demand):

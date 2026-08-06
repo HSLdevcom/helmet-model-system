@@ -63,7 +63,8 @@ class EmmeAssignmentModel(AssignmentModel):
         self._event_handler = event_handler
 
     def prepare_network(self, 
-                        car_dist_unit_cost: Optional[float]=None):
+                        car_dist_unit_cost: Optional[float]=None,
+                        fixed_network: bool=False):
         """Create matrices, extra attributes and calc background variables.
 
         Parameters
@@ -71,7 +72,8 @@ class EmmeAssignmentModel(AssignmentModel):
         car_dist_unit_cost : float (optional)
             Car cost per km in euros
         """
-        self._add_bus_stops()
+        if not fixed_network:
+            self._add_bus_stops()
         if self.separate_emme_scenarios:
             self.day_scenario = self.emme_project.copy_scenario(
                 self.mod_scenario, self.mod_scenario.number + 1,
@@ -113,7 +115,8 @@ class EmmeAssignmentModel(AssignmentModel):
                 pass
             self.emme_project.modeller.emmebank.create_function(
                 idx, param.volume_delay_funcs[idx])
-        self._calculate_gradients()
+        if not fixed_network:
+            self._calculate_gradients()
         self.emme_project.create_extra_function_parameters(el1="@kaltevuus")
 
     def init_assign(self, 
