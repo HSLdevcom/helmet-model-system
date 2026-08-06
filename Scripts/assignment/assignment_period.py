@@ -349,6 +349,8 @@ class AssignmentPeriod(Period):
                         buslane_code = link.type // 100
                         if buslane_code in param.bus_lane_link_codes[self.name]:
                             # Bus lane
+                            if (link.num_lanes > 1) and (link.type % 100 not in param.custom_roadtypes):
+                                link.data1 = self._lane_capacity(link.num_lanes-1, roadclass.lane_capacity, roadclass.k)
                             link.volume_delay_func += 5
                             func = funcs["buslane"]
                             try:
