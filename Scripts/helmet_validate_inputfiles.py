@@ -64,7 +64,8 @@ def main(args):
             # NOTE: validate_network.validate() will not go through all scenarios if errors are found in one of them
             modeller = _m.Modeller(app)
             validate(scen.get_network(), forecast_zonedata.transit_zone)
-            validate_network_connectivity(modeller, scen)
+            if not args.skip_test_network_connectivity:
+                validate_network_connectivity(modeller, scen)
     log.info("Successfully validated all scenario networks")
 
 def validate_arguments(emme_paths, first_scenario_ids, forecast_zonedata_paths):
@@ -344,6 +345,11 @@ if __name__ == "__main__":
         nargs="+",
         required=True,
         help="List of paths to folder containing forecast zonedata"),
+    parser.add_argument(
+        "--skip-test-network-connectivity",
+        action="store_true",
+        default=config.SKIP_NETWORK_CONNECTIVITY_TEST,
+        help="Skip testing network connectivity."),
     args = parser.parse_args()
 
     log.initialize(args)
