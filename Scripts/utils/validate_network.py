@@ -441,10 +441,11 @@ def validate_network_connectivity(modeller, scenario):
                 expected_matrix[numpy.ix_([zone_numbers[z] for z in problematic],[zone_numbers[z] for z in problematic])] = 1
                 expected_matrix[:,zone_numbers[Salo_centroid]] = 0
                 expected_matrix[zone_numbers[Salo_centroid],:] = 0
+        if mode in ["car"]:
             expected_matrix[:,EXTERNAL_RAILWAY_CENTROIDS] = 0
             expected_matrix[EXTERNAL_RAILWAY_CENTROIDS,:] = 0
             #Fix diagonal
-            expected_matrix[numpy.diag_indices_from(expected_matrix)] = 1
+        expected_matrix[numpy.diag_indices_from(expected_matrix)] = 1
         differences = is_connected != expected_matrix
         if differences.any():
             for diff_pair in numpy.argwhere(differences):
