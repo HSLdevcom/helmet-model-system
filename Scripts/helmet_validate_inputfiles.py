@@ -64,7 +64,7 @@ def main(args):
             # NOTE: validate_network.validate() will not go through all scenarios if errors are found in one of them
             modeller = _m.Modeller(app)
             validate(scen.get_network(), forecast_zonedata.transit_zone)
-            validate_network_connectivity(scen.get_network(), app.project, modeller, scen)
+            validate_network_connectivity(modeller, scen)
     log.info("Successfully validated all scenario networks")
 
 def validate_arguments(emme_paths, first_scenario_ids, forecast_zonedata_paths):

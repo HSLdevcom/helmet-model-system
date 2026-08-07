@@ -2,7 +2,6 @@ import bisect
 
 import numpy
 
-from assignment.emme_bindings.emme_project import EmmeProject
 import utils.log as log
 import parameters.assignment as param
 import assignment.datatypes.transit_fare as transit_fare
@@ -288,7 +287,7 @@ def validate_transit(network):
         errors += 1
     return errors
 
-def validate_network_connectivity(network, project: EmmeProject, modeller, scenario):
+def validate_network_connectivity(modeller, scenario):
     """Validate network connectivity in terms of HELMET compatibility.
 
     Check that:
