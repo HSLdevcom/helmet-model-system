@@ -424,7 +424,27 @@ def validate_network_connectivity(modeller, scenario):
     EXTERNAL_RAILWAY_CENTROIDS = [z for z in zone_numbers.values() if z in set(range(34300, 34400))]
     #Make simple assignment to get impedance matrices
     mf1 = modeller.emmebank.matrix("mf1").get_numpy_data(scenario_id=scenario.id)
-    log.info(str(mf1))
+
+    test_func = 50
+    for idx in [f"fd{test_func}", f"ft{test_func}", f"fp{test_func}"]:
+        try:
+            modeller.emmebank.delete_function(idx)
+        except Exception:
+            pass
+        modeller.emmebank.create_function(
+            idx, "1")
+
+    network = scenario.get_network()
+    for link in network.links():
+        link.volume_delay_func = test_func
+        link.num_lanes = 1
+    for segment in network.transit_segments():
+        segment.transit_time_func = test_func
+    for turn in network.turns():
+        turn.penalty_func = test_func
+    
+    scenario.publish_network(network)
+        
     for mode in modes:
         log.info(f"Checking network connectivity for {mode}")
         assignment_methods[mode](specification=emme_specs[mode], scenario=scenario)
@@ -447,6 +467,7 @@ def validate_network_connectivity(modeller, scenario):
             #Fix diagonal
         expected_matrix[numpy.diag_indices_from(expected_matrix)] = 1
         differences = is_connected != expected_matrix
+        missed_zones = {}
         if differences.any():
             for diff_pair in numpy.argwhere(differences):
                 log.info(str(diff_pair))
@@ -454,9 +475,22 @@ def validate_network_connectivity(modeller, scenario):
                 diff_d = scenario.zone_numbers[diff_pair[1]]
                 msg = "Network connectivity check failed for {mode}. The following zone pairs are not connected as expected: {diff_pair}".format(
                     mode=mode, diff_pair=[diff_s,diff_d])
+                #Make errors as useful as possible
+                if diff_s not in missed_zones:
+                    missed_zones[diff_s] = 1
+                else:
+                    missed_zones[diff_s] += 1
+                    if missed_zones[diff_s] > 3:
+                        continue
+                if diff_d not in missed_zones:
+                    missed_zones[diff_d] = 1
+                else:
+                    missed_zones[diff_d] += 1
+                    if missed_zones[diff_d] > 3:
+                        continue
                 log.error(msg)
                 errors += 1
-                if errors > 10:
+                if errors > 100:
                     log.error("Too many connectivity errors, stopping validation")
                     break
     
@@ -464,4 +498,7 @@ def validate_network_connectivity(modeller, scenario):
     modeller.emmebank.matrix("mf1").set_numpy_data(mf1_old, scenario_id=scenario.id)
     modeller.emmebank.matrix("mf2").set_numpy_data(mf2_old, scenario_id=scenario.id)
 
-    raise ValueError("This function is not yet implemented.")
+    if errors > 0:
+        msg = f"Network connectivity validation failed with {errors} error(s)"
+        log.error(msg)
+        raise ValueError(msg)
