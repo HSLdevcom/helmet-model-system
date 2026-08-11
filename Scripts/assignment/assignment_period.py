@@ -375,7 +375,12 @@ class AssignmentPeriod(Period):
                         func = funcs[self.name]
                     break
             for segment in link.segments():
-                segment.transit_time_func = func
+                if segment.line['@custom_line'] == 1:
+                    # Turn user set data3 km/h value to model systems min/km data2 value
+                    segment.data2 = 60/segment.data3
+                    segment.transit_time_func = funcs["buslane"]
+                else:     
+                    segment.transit_time_func = func
             if car_mode in link.modes:
                 link.modes |= {main_mode}
             if link.num_lanes == 0: link.num_lanes = 1

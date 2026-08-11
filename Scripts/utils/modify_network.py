@@ -47,7 +47,7 @@ def add_bus_stops(network):
                              "194397-194395", "212415-204085", "204085-213798","93047-93048"])
     whitelist_line_ids = set(["1094A1"])
     for line in network.transit_lines():
-        if line.mode.id in param.stop_codes:
+        if line.mode.id in param.stop_codes and line["@custom_line"] != 1:
             stop_codes = param.stop_codes[line.mode.id]
             stop_distance = 0
             max_stop_distance = 0
