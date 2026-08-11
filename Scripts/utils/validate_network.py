@@ -421,10 +421,16 @@ def validate_network_connectivity(modeller, scenario):
     Suomenlinna = 1531 #TODO: Accept other island centroids as well
     problematic = [6272,6291,19071] #test network only
     Salo_centroid = 34102 #test network only
-    EXTERNAL_RAILWAY_CENTROIDS = [z for z in zone_numbers.values() if z in set(range(34300, 34400))]
+    EXTERNAL_RAILWAY_CENTROIDS = [z for z in zone_numbers if z in set(range(34300, 34400))]
     #Make simple assignment to get impedance matrices
     mf1 = modeller.emmebank.matrix("mf1").get_numpy_data(scenario_id=scenario.id)
 
+    for idx in param.volume_delay_funcs:
+        try:
+            modeller.emmebank.delete_function(idx)
+        except Exception:
+            pass
+    
     test_func = 50
     for idx in [f"fd{test_func}", f"ft{test_func}", f"fp{test_func}"]:
         try:
@@ -461,9 +467,9 @@ def validate_network_connectivity(modeller, scenario):
                 expected_matrix[numpy.ix_([zone_numbers[z] for z in problematic],[zone_numbers[z] for z in problematic])] = 1
                 expected_matrix[:,zone_numbers[Salo_centroid]] = 0
                 expected_matrix[zone_numbers[Salo_centroid],:] = 0
-        if mode in ["car"]:
-            expected_matrix[:,EXTERNAL_RAILWAY_CENTROIDS] = 0
-            expected_matrix[EXTERNAL_RAILWAY_CENTROIDS,:] = 0
+        if mode in ["car","walk","bike"]:
+            expected_matrix[:,[zone_numbers[z] for z in EXTERNAL_RAILWAY_CENTROIDS]] = 0
+            expected_matrix[[zone_numbers[z] for z in EXTERNAL_RAILWAY_CENTROIDS],:] = 0
             #Fix diagonal
         expected_matrix[numpy.diag_indices_from(expected_matrix)] = 1
         differences = is_connected != expected_matrix
