@@ -222,10 +222,11 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
     ws[CELL_INDICES["noise"][year]] = sum(noise_diff["population"])
 
     transit_vehicle_kms_tables = [read(TRANSIT_KMS_FILE, scenario_0), read(TRANSIT_KMS_FILE, scenario_1)]
-    for transit_vehicle_kms in transit_vehicle_kms_tables:
+    for i, transit_vehicle_kms in enumerate(transit_vehicle_kms_tables):
         missing_vehicle = False
+        log.debug(f"Transit vehicle mileages for scenario {scenario_0 if i == 0 else scenario_1}:")
         for vehicle, values in transit_vehicle_kms.iterrows():
-            log.debug(f"Transit vehicle {vehicle} has {values['dist']} kms")
+            log.debug(f"{vehicle} mileage:\t{values['dist']:.2f} km")
             if values['dist'] > 0 and vehicle not in {submode for submodes in TRANSIT_AGGREGATIONS.values() for submode in submodes}:
                 if vehicle not in missing_vehicle_whitelist:
                     log.error(f"Transit vehicle {vehicle} is used but is not included in the aggregation dictionary. Add the vehicle to the TRANSIT_AGGREGATIONS dictionary in cba.py")
