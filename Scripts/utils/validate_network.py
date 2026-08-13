@@ -259,15 +259,15 @@ def validate_transit(network):
             # for seg in line.segments():
             #     if seg.number == 0:
             #         first_stop = seg.id
-            #     if seg.data1 > 0:
-            #         speed_zero = False
-            #     if seg.number > 0 and (seg.allow_boardings == 1 or seg.allow_alightings == 1):
+            #     elif seg.number > 0 and (seg.allow_boardings == 1 or seg.allow_alightings == 1):
             #         if speed_zero:
             #             msg = f"One of the segments between stops {first_stop} and {seg.id} on line {line.id} must have a speed greater than zero."
             #             log.error(msg)
             #             errors += 1
             #         speed_zero = True
             #         first_stop = seg.id
+            #     if seg.data1 > 0:  # The stop is at the first node of the segment, so the speed of the segment is after the stop, and so should the check be.
+            #         speed_zero = False
             # TODO: Instead of checking the last segment, check all segments between stops and make sure at least one of them has a speed greater than zero
             for seg1, seg2 in zip(list(line.segments()), list(line.segments())[1:]):
                 if seg1.data1 == 0 and (seg2.allow_boardings == 1 or seg2.allow_alightings == 1):
@@ -278,7 +278,16 @@ def validate_transit(network):
                     msg = "Segment id {} must not have non-zero speed if the next segment has boarding/alighting disallowed".format(seg1.id)
                     log.error(msg)
                     errors += 1
-    
+        # If custom_line attribute exists, check that it is set to 0 or 1
+        try:
+            if line["@custom_line"] not in [0, 1]:
+                msg = "Line {} has @custom_line extra attribute set to {}. If used, it must be either 0 or 1.".format(line.id, line["@custom_line"])
+                log.error(msg)
+                errors += 1
+        except KeyError:
+            pass  # If the attribute does not exist, we don't need to check it
+
+        
     if headways_missing:
         msg = "Headway(s) missing for line(s) {}".format(headways_missing)
         log.error(msg)
