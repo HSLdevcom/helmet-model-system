@@ -375,7 +375,7 @@ class AssignmentPeriod(Period):
                         func = funcs[self.name]
                     break
             for segment in link.segments():
-                if segment.line['@custom_line'] == 1:
+                if '@custom_line' in segment.line and segment.line['@custom_line'] == 1 and segment.data3 > 0:
                     # Turn user set data3 km/h value to model systems min/km data2 value
                     segment.data2 = 60/segment.data3
                     segment.transit_time_func = funcs["buslane"]
@@ -790,11 +790,11 @@ class AssignmentPeriod(Period):
                                         + segment.link.auto_time
                                         + segment.dwell_time)
                 # Travel time for buses on bus lanes
-                if segment.transit_time_func == 2:
+                elif segment.transit_time_func == 2:
                     cumulative_time += (segment.data2 * segment.link.length
                                         + segment.dwell_time)
                 # Travel time for trams AHT
-                if segment.transit_time_func == 3:
+                elif segment.transit_time_func == 3:
                     speedstr = str(int(segment.link.data1))
                     # Digits 5-6 from end (1-2 from beg.) represent AHT
                     # speed. If AHT speed is less than 10, data1 will 
@@ -803,14 +803,14 @@ class AssignmentPeriod(Period):
                     cumulative_time += ((segment.link.length / speed) * 60
                                         + segment.dwell_time)
                 # Travel time for trams PT
-                if segment.transit_time_func == 4:
+                elif segment.transit_time_func == 4:
                     speedstr = str(int(segment.link.data1))
                     # Digits 3-4 from end represent PT speed.
                     speed = int(speedstr[-4:-2])
                     cumulative_time += ((segment.link.length / speed) * 60
                                         + segment.dwell_time)
                 # Travel time for trams IHT
-                if segment.transit_time_func == 5:
+                elif segment.transit_time_func == 5:
                     speedstr = str(int(segment.link.data1))
                     # Digits 1-2 from end represent IHT speed.
                     speed = int(speedstr[-2:])
