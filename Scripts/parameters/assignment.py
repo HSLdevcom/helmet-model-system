@@ -152,6 +152,8 @@ volume_delay_funcs = {
     ## Turn penalty function for bikes
     "fp1": "0",
 }
+# Drone uniform-speed VDF (speed 100 km/h)
+volume_delay_funcs["fd80"] = "length/(100/60)"
 # Code derived from three-digit link type xyz, where x is the bus lane code,
 # 2 means that bus lane is active during aht and iht periods, etc.
 bus_lane_link_codes = {
@@ -365,6 +367,21 @@ volume_factors = {
         "pt": 13.6860254358246,
         "iht": 3.45738025301997
     },
+    "drone": {
+        "aht": 1.5975928777573025,
+        "pt": 9.813371947200034,
+        "iht": 2.437985085233379
+    },
+    "drone_work": {
+        "aht": 1.57124974015052,
+        "pt": 8.12146477335452,
+        "iht": 2.08370106051779
+    },
+    "drone_leisure": {
+        "aht": 1.9944008292555,
+        "pt": 13.6860254358246,
+        "iht": 3.45738025301997
+    },
     "trailer_truck": {
         "aht": 3.3333333333333335,
         "pt": 10.0,
@@ -412,6 +429,8 @@ transport_classes = (
     "transit_leisure",
     "bike_work",
     "bike_leisure",
+    "drone_work",
+    "drone_leisure",
     "trailer_truck",
     "truck",
     "van",
@@ -444,6 +463,8 @@ assignment_classes = {
 }
 main_mode = 'h'
 bike_mode = 'f'
+# Drone mode uses bike network where 'f' is allowed
+drone_mode = 'q'
 assignment_modes = {
     "car_work": 'c',
     "car_leisure": 'c',
@@ -500,6 +521,8 @@ emme_matrices = {
     "transit_work": ("demand", "time", "dist", "cost", "congest_time"),
     "transit_leisure": ("demand", "time", "dist", "cost", "congest_time"),
     "bike": ("demand", "time", "dist"),
+    "drone_work": ("demand", "time", "dist", "cost"),
+    "drone_leisure": ("demand", "time", "dist", "cost"),
     "walk": ("time", "dist"),
     "trailer_truck": ("demand", "time", "dist", "cost", "gen_cost"),
     "truck": ("demand", "time", "dist", "cost", "gen_cost"),

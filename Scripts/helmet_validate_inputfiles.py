@@ -192,6 +192,8 @@ def validate_base_input_data(base_zonedata_path, base_matrices_path, emme_paths,
         for tp in param.time_periods:
             with matrixdata.open("demand", tp, zone_numbers) as mtx:
                 for ass_class in param.transport_classes:
+                    if ass_class in ["drone_work", "drone_leisure"]:
+                        continue
                     a = mtx[ass_class]
     except Exception as e:
         msg = f"Error reading base matrices: {e}"

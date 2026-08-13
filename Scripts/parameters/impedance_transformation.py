@@ -292,8 +292,13 @@ impedance_share = {
     },
 }
 
-### IMPEDANCE TRANSFORMATION REFERENCES ###
+# Ensure drone uses same impedance shares as bike
+from copy import deepcopy
+for p in list(impedance_share.keys()):
+    if "bike" in impedance_share[p] and "drone" not in impedance_share[p]:
+        impedance_share[p]["drone"] = deepcopy(impedance_share[p]["bike"])
 
+### IMPEDANCE TRANSFORMATION REFERENCES ###
 divided_classes = (
     "car",
     "transit",

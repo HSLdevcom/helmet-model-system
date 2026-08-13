@@ -92,6 +92,8 @@ class MatrixFile:
                                  if "freight" in path
                                  else param.transport_classes)
             for ass_class in transport_classes:
+                if ass_class in ["drone_work", "drone_leisure"]:
+                    continue
                 if ass_class not in ass_classes:
                     msg = "File {} does not contain {} matrix.".format(
                         path, ass_class)

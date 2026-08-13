@@ -1,5 +1,6 @@
 
 ### TOUR GENERATION PARAMETERS ####
+import copy
 
 # Scale parameter used in upper level of tour pattern model
 tour_number_scale = 0.740981435737
@@ -651,6 +652,12 @@ tour_generation = {
         "shops": 0.005,
     }
 }
+# Ensure modes that behave like bike also include a 'drone' entry
+for purpose_key, purpose_val in tour_generation.items():
+    if isinstance(purpose_val, dict):
+        for subkey, subval in purpose_val.items():
+            if isinstance(subval, dict) and "bike" in subval and "drone" not in subval:
+                subval["drone"] = copy.copy(subval["bike"]) 
 garbage_generation = {
     # Kilograms per person or workplace per year
     "population": 243,

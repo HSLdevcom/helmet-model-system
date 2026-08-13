@@ -1,4 +1,5 @@
 
+import copy
 from typing import Any, Dict
 import numpy as np # type: ignore
 from parameters.assignment import inflation
@@ -844,6 +845,10 @@ destination_choice = {
         }
     }
 }
+# Duplicate bike parameters for drone (behaves like bike)
+for trip_type in destination_choice:
+    if "bike" in destination_choice[trip_type]:
+        destination_choice[trip_type]["drone"] = copy.copy(destination_choice[trip_type]["bike"])
 # Maximum possible distance to destination
 distance_boundary = {
     "car": 9999,
@@ -851,6 +856,7 @@ distance_boundary = {
     "bike": 60,
     "walk": 15,
     "park_and_ride": 9999,
+    "drone": 150,
 }
 # O-D pairs with demand below threshold are neglected in sec dest calculation
 secondary_destination_threshold = 0.1

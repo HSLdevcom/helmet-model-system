@@ -4,6 +4,7 @@
 
 # Demand shares for different time periods
 from typing import Any, Dict
+import copy
 demand_share = {
     "hw": {
         "car": {
@@ -284,6 +285,10 @@ demand_share = {
         }
     }
 }
+# Ensure drone uses same demand shares as bike where missing
+for purpose_key, purpose_val in demand_share.items():
+    if isinstance(purpose_val, dict) and "bike" in purpose_val and "drone" not in purpose_val:
+        purpose_val["drone"] = copy.copy(purpose_val["bike"])
 backup_demand_share = {
     "aht": (0.042, 0.028),
     "pt": (0.05, 0.05),
@@ -296,4 +301,5 @@ divided_classes = (
     "car",
     "transit",
     "bike",
+    "drone",
 )

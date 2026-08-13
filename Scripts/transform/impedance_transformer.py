@@ -105,8 +105,17 @@ class ImpedanceTransformer(ImpedanceTransformerBase):
             else slice(0, purpose.zone_data.nr_zones))
         day_imp = {}
         impedance_share = param.impedance_share
+        # Pre-compute output shapes
+        nrows = rows.stop - rows.start if isinstance(rows, slice) else rows.shape[0]
+        ncols = cols.stop - cols.start if isinstance(cols, slice) else cols.shape[0]
         for mode in impedance_share[purpose.name]:
-            day_imp[mode] = defaultdict(float)
+            # initialize time/cost/dist arrays with zeros so downstream
+            # code can rely on their presence even if no shares are added
+            day_imp[mode] = {
+                "time": np.zeros((nrows, ncols)),
+                "cost": np.zeros((nrows, ncols)),
+                "dist": np.zeros((nrows, ncols)),
+            }
             if mode in param.divided_classes:
                 ass_class = "{}_{}".format(
                     mode, assignment_classes[purpose.name])

@@ -59,6 +59,20 @@ class AssignmentPeriod(Period):
         self.emme_project = emme_context
         self._separate_emme_scenarios = separate_emme_scenarios
         self.emme_matrices = emme_matrices
+        # Ensure drone matrices exist by copying bike matrices as initial placeholders
+        try:
+            if "bike" in self.emme_matrices:
+                bike_map = dict(self.emme_matrices.get("bike", {}))
+                # Create drone work/leisure entries if missing
+                for dk in ("drone_work", "drone_leisure"):
+                    if dk not in self.emme_matrices:
+                        self.emme_matrices[dk] = dict(bike_map)
+                    # Ensure cost matrix exists for drones (use bike dist as placeholder)
+                    if "cost" not in self.emme_matrices[dk]:
+                        self.emme_matrices[dk]["cost"] = self.emme_matrices[dk].get("dist")
+        except Exception:
+            # If anything unexpected, leave emme_matrices unchanged and log
+            log.warn("Could not auto-initialize drone emme_matrices from bike configuration")
         self.dist_unit_cost = param.dist_unit_cost
         self.event_handler.on_assignment_period_initialized(self)
 
@@ -126,6 +140,9 @@ class AssignmentPeriod(Period):
             self._assign_pedestrians()
             self._set_bike_vdfs()
             self._assign_bikes(self.emme_matrices["bike"]["dist"], "all")
+            # drone assignments: work and leisure
+            self._assign_drones(self.emme_matrices["drone_work"]["dist"], "all", "drone_work")
+            self._assign_drones(self.emme_matrices["drone_leisure"]["dist"], "all", "drone_leisure")
             self._set_car_and_transit_vdfs()
             if not self._separate_emme_scenarios:
                 self._calc_background_traffic()
@@ -135,6 +152,8 @@ class AssignmentPeriod(Period):
         elif iteration==0:
             self._set_bike_vdfs()
             self._assign_bikes(self.emme_matrices["bike"]["dist"], "all")
+            self._assign_drones(self.emme_matrices["drone_work"]["dist"], "all", "drone_work")
+            self._assign_drones(self.emme_matrices["drone_leisure"]["dist"], "all", "drone_leisure")
             self._set_car_and_transit_vdfs()
             if not self._separate_emme_scenarios:
                 self._calc_background_traffic()
@@ -144,6 +163,8 @@ class AssignmentPeriod(Period):
         elif iteration==1:
             self._set_bike_vdfs()
             self._assign_bikes(self.emme_matrices["bike"]["dist"], "all")
+            self._assign_drones(self.emme_matrices["drone_work"]["dist"], "all", "drone_work")
+            self._assign_drones(self.emme_matrices["drone_leisure"]["dist"], "all", "drone_leisure")
             self._set_car_and_transit_vdfs()
             if not self._separate_emme_scenarios:
                 self._calc_background_traffic()
@@ -153,6 +174,8 @@ class AssignmentPeriod(Period):
         elif isinstance(iteration, int) and iteration>1:
             self._set_bike_vdfs()
             self._assign_bikes(self.emme_matrices["bike"]["dist"], "all")
+            self._assign_drones(self.emme_matrices["drone_work"]["dist"], "all", "drone_work")
+            self._assign_drones(self.emme_matrices["drone_leisure"]["dist"], "all", "drone_leisure")
             self._set_car_and_transit_vdfs()
             if not self._separate_emme_scenarios:
                 self._calc_background_traffic(include_trucks=True)
@@ -163,6 +186,8 @@ class AssignmentPeriod(Period):
         elif iteration=="last":
             self._set_bike_vdfs()
             self._assign_bikes(self.emme_matrices["bike"]["dist"], "all")
+            self._assign_drones(self.emme_matrices["drone_work"]["dist"], "all", "drone_work")
+            self._assign_drones(self.emme_matrices["drone_leisure"]["dist"], "all", "drone_leisure")
             self._set_car_and_transit_vdfs()
             self._calc_background_traffic()
             self._assign_cars(param.stopping_criteria_fine)
@@ -648,6 +673,55 @@ class AssignmentPeriod(Period):
             },
             "performance_settings": param.performance_settings
         }
+        # Drone specs: use bike network where 'f' is allowed but have their own matrices
+        self.drone_spec_work = {
+            "type": "STANDARD_TRAFFIC_ASSIGNMENT",
+            "classes": [
+                {
+                    "mode": param.bike_mode,
+                    "demand": self.emme_matrices["drone_work"]["demand"],
+                    "results": {
+                        "od_travel_times": {
+                            "shortest_paths": self.emme_matrices["drone_work"]["time"],
+                        },
+                        "link_volumes": None,
+                    },
+                    "analysis": {"results": {"od_values": None}},
+                }
+            ],
+            "path_analysis": PathAnalysis("ul3").spec,
+            "stopping_criteria": {
+                "max_iterations": 1,
+                "best_relative_gap": 1,
+                "relative_gap": 1,
+                "normalized_gap": 1,
+            },
+            "performance_settings": param.performance_settings
+        }
+        self.drone_spec_leisure = {
+            "type": "STANDARD_TRAFFIC_ASSIGNMENT",
+            "classes": [
+                {
+                    "mode": param.bike_mode,
+                    "demand": self.emme_matrices["drone_leisure"]["demand"],
+                    "results": {
+                        "od_travel_times": {
+                            "shortest_paths": self.emme_matrices["drone_leisure"]["time"],
+                        },
+                        "link_volumes": None,
+                    },
+                    "analysis": {"results": {"od_values": None}},
+                }
+            ],
+            "path_analysis": PathAnalysis("ul3").spec,
+            "stopping_criteria": {
+                "max_iterations": 1,
+                "best_relative_gap": 1,
+                "relative_gap": 1,
+                "normalized_gap": 1,
+            },
+            "performance_settings": param.performance_settings
+        }
         self.walk_spec = {
             "type": "STANDARD_TRANSIT_ASSIGNMENT",
             "modes": param.aux_modes,
@@ -747,6 +821,66 @@ class AssignmentPeriod(Period):
         self.emme_project.bike_assignment(
             specification=spec, scenario=scen)
         log.info(f"Bike assignment performed for time period {self.name} on scenario {self.emme_scenario.id}")
+
+    def _set_drone_vdfs(self):
+        """Temporarily set drone VDFs (uniform 100 km/h) on links where bike mode is allowed."""
+        network = self.emme_scenario.get_network()
+        bike_mode = network.mode(param.bike_mode)
+        # remember original vdfs to restore later
+        self._original_vdfs = {}
+        for link in network.links():
+            if bike_mode in link.modes:
+                self._original_vdfs[link.id] = link.volume_delay_func
+                link.volume_delay_func = 80
+        self.emme_scenario.publish_network(network)
+
+    def _restore_vdfs(self):
+        """Restore original VDFs after drone assignment."""
+        if not hasattr(self, "_original_vdfs"):
+            return
+        network = self.emme_scenario.get_network()
+        for link in network.links():
+            if link.id in self._original_vdfs:
+                link.volume_delay_func = self._original_vdfs[link.id]
+        self.emme_scenario.publish_network(network)
+
+    def _assign_drones(self, length_mat_id: Union[float, int, str], length_for_links: str, class_name: str):
+        """Perform drone traffic assignment for one scenario.
+
+        class_name : 'drone_work' or 'drone_leisure'
+        """
+        scen = self.emme_scenario
+        spec = (self.drone_spec_work if class_name == "drone_work"
+                else self.drone_spec_leisure)
+        # Use assignment-class specific extra attribute (e.g. @drone_work_aht)
+        spec["classes"][0]["results"]["link_volumes"] = self.extra(class_name)
+        spec["classes"][0]["analysis"]["results"]["od_values"] = length_mat_id
+        # Reset ul3 to zero
+        netw_spec = {
+            "type": "NETWORK_CALCULATION",
+            "selections": {"link": "all"},
+            "expression": "0",
+            "result": spec["path_analysis"]["link_component"],
+            "aggregation": None,
+        }
+        self.emme_project.network_calc(netw_spec, scen)
+        # Define for which links to calculate length and save in ul3
+        netw_spec = {
+            "type": "NETWORK_CALCULATION",
+            "selections": {"link": length_for_links},
+            "expression": "length",
+            "result": spec["path_analysis"]["link_component"],
+            "aggregation": None,
+        }
+        self.emme_project.network_calc(netw_spec, scen)
+        log.info("Drone assignment started...")
+        # set drone VDFs (uniform speed) on bike-allowed links
+        self._set_drone_vdfs()
+        # reuse bike assignment routine for drones
+        self.emme_project.bike_assignment(specification=spec, scenario=scen)
+        # restore original vdfs
+        self._restore_vdfs()
+        log.info(f"Drone assignment performed for time period {self.name} on scenario {self.emme_scenario.id}")
 
     def _fill_h_mode(self):
         #Add h mode everywhere just to be sure

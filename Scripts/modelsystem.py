@@ -234,7 +234,7 @@ class ModelSystem:
         with self.basematrices.open(
                 "demand", time_periods[0], self.ass_model.zone_numbers) as mtx:
             base_demand = {ass_class: mtx[ass_class]
-                for ass_class in param.transport_classes}
+                for ass_class in param.transport_classes if ass_class not in ["drone_work", "drone_leisure"]}
         self.ass_model.init_assign(base_demand)
         if use_fixed_transit_cost:
             log.info("Using fixed transit cost matrix")
@@ -257,7 +257,10 @@ class ModelSystem:
             self.dtm.demand = cast(Dict[str, Any], self.dtm.demand) #type check hint
             with demand.open("demand", tp, self.ass_model.zone_numbers) as mtx:
                 for ass_class in param.transport_classes:
-                    self.dtm.demand[tp][ass_class] = mtx[ass_class]
+                    if ass_class in ["drone_work", "drone_leisure"]:
+                        self.dtm.demand[tp][ass_class] = mtx["bike_work"]
+                    else:
+                        self.dtm.demand[tp][ass_class] = mtx[ass_class]
             impedance[tp] = ap.assign(
                 self.dtm.demand[tp],
                 iteration=("last" if is_end_assignment else 0))

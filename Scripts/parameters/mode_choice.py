@@ -2,8 +2,10 @@
 ### MODE CHOICE PARAMETERS ###
 
 # Mode choice (generated 2.9.2024)
+import copy
 from typing import Any, Dict, Optional
 from parameters.assignment import inflation
+from utils import log
 
 mode_choice = {
     "hw": {
@@ -913,3 +915,8 @@ mode_choice = {
         }
     }
 }
+# Duplicate bike parameters for drone (behaves like bike)
+for trip_type, params in list(mode_choice.items()):
+    # Only operate on mappings; some entries may be None
+    if isinstance(params, dict) and "bike" in params:
+        params["drone"] = copy.deepcopy(params["bike"]) 
