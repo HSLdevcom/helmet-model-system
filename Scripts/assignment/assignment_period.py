@@ -771,7 +771,7 @@ class AssignmentPeriod(Period):
         headway_attr = self.extra("hw")
         work_boardings_attr = self.extra("transit_wor_boa")
         leisure_boardings_attr = self.extra("transit_lei_boa")
-        
+
         ticket_validation_time_minutes = param.ticket_validation_time / 60  # minutes
 
         # Calculation of cumulative line segment travel time and speed
@@ -782,7 +782,7 @@ class AssignmentPeriod(Period):
             cumulative_speed = 0
             headway_sd = 0
             for segment in line.segments():
-                if line.mode.id == "b":  # All other aspects of dwell times are included in the transit time functions, so we only need to add ticket validation time
+                if line.mode.id == "b" and (segment.allow_boardings):  # All other aspects of dwell times are included in the transit time functions, so we only need to add ticket validation time
                     # Ticket validation time * (number of total boardings per hour / number of buses per hour)
                     segment.dwell_time = ticket_validation_time_minutes * ((segment[work_boardings_attr] + segment[leisure_boardings_attr]) / (60 / line[headway_attr]))
                 cumulative_length += segment.link.length
