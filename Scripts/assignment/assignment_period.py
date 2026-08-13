@@ -784,7 +784,7 @@ class AssignmentPeriod(Period):
             for segment in line.segments():
                 if line.mode.id == "b" and (segment.allow_boardings):  # All other aspects of dwell times are included in the transit time functions, so we only need to add ticket validation time
                     # Ticket validation time * (number of total boardings per hour / number of buses per hour)
-                    segment.dwell_time = ticket_validation_time_minutes * ((segment[work_boardings_attr] + segment[leisure_boardings_attr]) / (60 / line[headway_attr]))
+                    segment.dwell_time = 0.01 + ticket_validation_time_minutes * ((segment[work_boardings_attr] + segment[leisure_boardings_attr]) / (60 / line[headway_attr]))
                 cumulative_length += segment.link.length
                 # Travel time for buses in mixed traffic
                 if segment.transit_time_func == 1:
