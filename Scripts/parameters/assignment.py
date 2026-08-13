@@ -161,6 +161,8 @@ bus_lane_link_codes = {
 }
 # Bus lane delay equivalent to 1.5 km per link
 buslane_delay = 60 * 1.5
+# Mobile transit ticket validation time in seconds
+ticket_validation_time = 1.8  # seconds
 # Codes defining whether transit mode stops at node, stored in data2
 stop_codes = {
     't': (1, 8),

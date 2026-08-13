@@ -769,6 +769,11 @@ class AssignmentPeriod(Period):
         """Calculate extra waiting time for one scenario."""
         network = self.emme_scenario.get_network()
         headway_attr = self.extra("hw")
+        work_boardings_attr = self.extra("transit_wor_boa")
+        leisure_boardings_attr = self.extra("transit_lei_boa")
+        
+        ticket_validation_time_minutes = param.ticket_validation_time / 60  # minutes
+
         # Calculation of cumulative line segment travel time and speed
         log.info(f"Calculates cumulative travel times for time period {self.name} on scenario {self.emme_scenario.id}" )
         for line in network.transit_lines():
@@ -777,6 +782,9 @@ class AssignmentPeriod(Period):
             cumulative_speed = 0
             headway_sd = 0
             for segment in line.segments():
+                if line.mode.id == "b":  # All other aspects of dwell times are included in the transit time functions, so we only need to add ticket validation time
+                    # Ticket validation time * (number of total boardings per hour / number of buses per hour)
+                    segment.dwell_time = ticket_validation_time_minutes * ((segment[work_boardings_attr] + segment[leisure_boardings_attr]) / (60 / line[headway_attr]))
                 cumulative_length += segment.link.length
                 # Travel time for buses in mixed traffic
                 if segment.transit_time_func == 1:
@@ -785,11 +793,11 @@ class AssignmentPeriod(Period):
                                         + segment.link.auto_time
                                         + segment.dwell_time)
                 # Travel time for buses on bus lanes
-                if segment.transit_time_func == 2:
+                elif segment.transit_time_func == 2:
                     cumulative_time += (segment.data2 * segment.link.length
                                         + segment.dwell_time)
                 # Travel time for trams AHT
-                if segment.transit_time_func == 3:
+                elif segment.transit_time_func == 3:
                     speedstr = str(int(segment.link.data1))
                     # Digits 5-6 from end (1-2 from beg.) represent AHT
                     # speed. If AHT speed is less than 10, data1 will 
@@ -798,14 +806,14 @@ class AssignmentPeriod(Period):
                     cumulative_time += ((segment.link.length / speed) * 60
                                         + segment.dwell_time)
                 # Travel time for trams PT
-                if segment.transit_time_func == 4:
+                elif segment.transit_time_func == 4:
                     speedstr = str(int(segment.link.data1))
                     # Digits 3-4 from end represent PT speed.
                     speed = int(speedstr[-4:-2])
                     cumulative_time += ((segment.link.length / speed) * 60
                                         + segment.dwell_time)
                 # Travel time for trams IHT
-                if segment.transit_time_func == 5:
+                elif segment.transit_time_func == 5:
                     speedstr = str(int(segment.link.data1))
                     # Digits 1-2 from end represent IHT speed.
                     speed = int(speedstr[-2:])
@@ -825,7 +833,7 @@ class AssignmentPeriod(Period):
                 segment["@wait_time_dev"] = headway_sd**2 / (2.0*line[headway_attr])
         self.event_handler.on_transit_wait_time_calculated(self, network)
         self.emme_scenario.publish_network(network)
-
+ 
     def _assign_transit(self):
         """Perform transit assignment for one scenario."""
         log.info("Transit assignment started...")
