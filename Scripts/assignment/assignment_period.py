@@ -375,8 +375,11 @@ class AssignmentPeriod(Period):
                         func = funcs[self.name]
                     break
             for segment in link.segments():
-                if '@custom_line' in segment.line and segment.line['@custom_line'] == 1 and segment.data3 > 0:
-                    # Turn user set data3 km/h value to model systems min/km data2 value
+                try:  # Cannot check for missing extra attributes directly, so we need to check for KeyError
+                    is_custom = segment.line['@custom_line'] == 1
+                except KeyError:
+                    is_custom = False
+                if is_custom and segment.data3 > 0:                    # Turn user set data3 km/h value to model systems min/km data2 value
                     segment.data2 = 60/segment.data3
                     segment.transit_time_func = funcs["buslane"]
                 else:     
