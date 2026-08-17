@@ -3,12 +3,14 @@ import numpy # type: ignore
 import pandas
 
 from typing import TYPE_CHECKING, Any, Dict, Optional, Union
+from assignment.datatypes.bike_specification import BikeSpecification
+from assignment.datatypes.walk_specification import WalkSpecification
 from events.event_handler import EventHandler
 import utils.log as log
 import parameters.assignment as param
 import parameters.zone as zone_param
 from assignment.datatypes.car_specification import CarSpecification
-from assignment.datatypes.transit import TransitSpecification
+from assignment.datatypes.transit_specification import TransitSpecification
 from assignment.datatypes.path_analysis import PathAnalysis
 from assignment.abstract_assignment import Period
 if TYPE_CHECKING:
@@ -620,71 +622,8 @@ class AssignmentPeriod(Period):
                 self._segment_results[tc], self.extra("hw"),
                 self.emme_matrices[tc])
             for tc in param.transit_classes}
-        self.bike_spec = {
-            "type": "STANDARD_TRAFFIC_ASSIGNMENT",
-            "classes": [
-                {
-                    "mode": param.bike_mode,
-                    "demand": self.emme_matrices["bike"]["demand"],
-                    "results": {
-                        "od_travel_times": {
-                            "shortest_paths": self.emme_matrices["bike"]["time"],
-                        },
-                        "link_volumes": None, # This is defined later
-                    },
-                    "analysis": {
-                        "results": {
-                            "od_values": None, # This is defined later
-                        },
-                    },
-                }
-            ],
-            "path_analysis": PathAnalysis("ul3").spec,
-            "stopping_criteria": {
-                "max_iterations": 1,
-                "best_relative_gap": 1,
-                "relative_gap": 1,
-                "normalized_gap": 1,
-            },
-            "performance_settings": param.performance_settings
-        }
-        self.walk_spec = {
-            "type": "STANDARD_TRANSIT_ASSIGNMENT",
-            "modes": param.aux_modes,
-            "demand": self.emme_matrices["bike"]["demand"],
-            "waiting_time": {
-                "headway_fraction": 0.01,
-                "effective_headways": "hdw",
-                "perception_factor": 0,
-            },
-            "boarding_time": {
-                "penalty": 0,
-                "perception_factor": 0,
-            },
-            "aux_transit_time": {
-                "perception_factor": 1,
-            },
-            "od_results": {
-                "transit_times": self.emme_matrices["walk"]["time"],
-            },
-            "strategy_analysis": {
-                "sub_path_combination_operator": "+",
-                "sub_strategy_combination_operator": "average",
-                "trip_components": {
-                    "aux_transit": "length",
-                },
-                "selected_demand_and_transit_volumes": {
-                    "sub_strategies_to_retain": "ALL",
-                    "selection_threshold": {
-                        "lower": None,
-                        "upper": None,
-                    },
-                },
-                "results": {
-                    "od_values": self.emme_matrices["walk"]["dist"],
-                },
-            },
-        }
+        self.bike_spec = BikeSpecification(self.emme_matrices["bike"]).bike_spec
+        self.walk_spec = WalkSpecification(self.emme_matrices["walk"])
 
     def _assign_cars(self, 
                      stopping_criteria: Dict[str, Union[int, float]], 
@@ -761,7 +700,8 @@ class AssignmentPeriod(Period):
 
         log.info("Pedestrian assignment started...")
         self.emme_project.pedestrian_assignment(
-            specification=self.walk_spec, scenario=self.emme_scenario)
+            specification=self.walk_spec.walk_spec, scenario=self.emme_scenario)
+        self.emme_project.strategy_analysis(specification=self.walk_spec.strategy_analysis_spec, scenario=self.emme_scenario)
         self.event_handler.on_pedestrian_assignment_complete(self, self.emme_scenario)
         log.info(f"Pedestrian assignment performed for time period {self.name} on scenario {self.emme_scenario.id}")
 

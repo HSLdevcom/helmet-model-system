@@ -500,7 +500,7 @@ emme_matrices = {
     "transit_work": ("demand", "time", "dist", "cost", "congest_time"),
     "transit_leisure": ("demand", "time", "dist", "cost", "congest_time"),
     "bike": ("demand", "time", "dist"),
-    "walk": ("time", "dist"),
+    "walk": ("demand", "time", "dist"),
     "trailer_truck": ("demand", "time", "dist", "cost", "gen_cost"),
     "truck": ("demand", "time", "dist", "cost", "gen_cost"),
     "van": ("demand", "time", "dist", "cost", "gen_cost"),
