@@ -51,6 +51,7 @@ def main(args):
     log.info("Validating scenario networks...")
     for i, emp_path in enumerate(emme_paths):
         scenario_id = first_scenario_ids[i]
+        log.info(f"Validating network for the {number_to_ordinal(i+1)} scenario #{scenario_id} ...")
         forecast_zonedata = ZoneData(forecast_zonedata_paths[i], zone_numbers)
         if do_not_use_emme:
             continue
@@ -63,6 +64,7 @@ def main(args):
                 raise ValueError(msg)
             # NOTE: validate_network.validate() will not go through all scenarios if errors are found in one of them
             validate(scen.get_network(), forecast_zonedata.transit_zone)
+    log.info("Successfully validated all scenario networks")
 
 def validate_arguments(emme_paths, first_scenario_ids, forecast_zonedata_paths):
     errors = 0
