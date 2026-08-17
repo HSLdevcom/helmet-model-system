@@ -47,7 +47,11 @@ def add_bus_stops(network):
                              "194397-194395", "212415-204085", "204085-213798","93047-93048"])
     whitelist_line_ids = set(["1094A1"])
     for line in network.transit_lines():
-        if '@custom_line' in line and line['@custom_line'] == 1:
+        try:
+            is_custom = line['@custom_line'] == 1
+        except KeyError:
+            is_custom = False
+        if is_custom:
             log.debug(f"Bus stops not added to {line.id} because it is marked as a custom line.")
             continue
         if line.mode.id in param.stop_codes:
