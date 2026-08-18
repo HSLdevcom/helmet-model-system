@@ -271,21 +271,33 @@ def validate_transit(network):
             # TODO: Instead of checking the last segment, check all segments between stops and make sure at least one of them has a speed greater than zero
             for seg1, seg2 in zip(list(line.segments()), list(line.segments())[1:]):
                 if seg1.data1 == 0 and (seg2.allow_boardings == 1 or seg2.allow_alightings == 1):
-                    msg = "Segment id {} must not have zero speed if the next segment has boarding/alighting allowed".format(seg1.id)
+                    msg = "Segment id {} must not have zero speed if the next segment has boarding/alighting allowed.".format(seg1.id)
                     log.error(msg)
                     errors += 1
                 if seg1.data1 != 0 and (seg2.allow_boardings == 0 and seg2.allow_alightings == 0):
-                    msg = "Segment id {} must not have non-zero speed if the next segment has boarding/alighting disallowed".format(seg1.id)
+                    msg = "Segment id {} must have zero speed if the next segment forbids boarding/alighting.".format(seg1.id)
                     log.error(msg)
                     errors += 1
-        # If custom_line attribute exists, check that it is set to 0 or 1
-        try:
+        try:  # Only check for custom line issues if it is being used
             if line["@custom_line"] not in [0, 1]:
                 msg = "Line {} has @custom_line extra attribute set to {}. If used, it must be either 0 or 1.".format(line.id, line["@custom_line"])
                 log.error(msg)
                 errors += 1
+            elif line.mode.id in "mrj" and line["@custom_line"] == 1:
+                msg = "Line {} is a rail line and cannot be marked as a custom line.".format(line.id)
+                log.error(msg)
+                errors += 1
+            if line["@custom_line"] == 1:
+                for segment in line.segments():
+                    if segment.data3 > 120 or segment.data3 < 0:
+                        msg = f"Segment {segment.id} of line {line.id} has @custom_line set to 1 and ul3 (segment speed) set to {segment.data3} km/h. The speed must be between 1 and 120 km/h. Set the speed to 0 to follow the speed of other lines of the same type."
+                        log.error(msg)
+                        errors += 1
+                    elif segment.data3 > 100 or segment.data3 < 10:
+                        msg = f"Segment {segment.id} of line {line.id} has @custom_line set to 1 and ul3 (segment speed) set to {segment.data3} km/h. The speed is outside the recommended range of 10-100 km/h."
+                        log.warn(msg)
         except KeyError:
-            pass  # If the attribute does not exist, we don't need to check it
+            pass
 
         
     if headways_missing:
