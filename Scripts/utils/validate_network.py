@@ -268,37 +268,37 @@ def validate_transit(network):
         max_stop_distance = 0
         is_motorway = 0
         loop = 0
-        stop_codes = param.stop_codes[line.mode.id]
+        if line.mode.id in param.stop_codes:
+            stop_codes = param.stop_codes[line.mode.id]
+            for segment in line.segments():
+                # Check looped lines
+                if segment.loop_index > 1 and loop == 0 and segment.link.id not in whitelist_segments:
+                    loop += 1
 
-        for segment in line.segments():
-            # Check looped lines
-            if segment.loop_index > 1 and loop == 0 and segment.link.id not in whitelist_segments:
-                loop += 1
+                    log.debug(segment.link.id + " is looped in line " + line.id)
+                    if (line.id not in whitelist_line_ids) and (line.id not in looped_lines):
+                        looped_lines.append(line.id)
 
-                log.debug(segment.link.id + " is looped in line " + line.id)
-                if (line.id not in whitelist_line_ids) and (line.id not in looped_lines):
-                    looped_lines.append(line.id)
+                # Check 
+                segment_length = segment.link.length
+                linktype = segment.link.type % 100
+                if linktype in param.roadclasses and is_motorway == 0:
+                    # Car link with standard attributes
+                    roadclass = param.roadclasses[linktype]
+                    if roadclass.type == "motorway":
+                        is_motorway = 1
 
-            # Check 
-            segment_length = segment.link.length
-            linktype = segment.link.type % 100
-            if linktype in param.roadclasses and is_motorway == 0:
-                # Car link with standard attributes
-                roadclass = param.roadclasses[linktype]
-                if roadclass.type == "motorway":
-                    is_motorway = 1
+                stop_distance += segment_length
+                is_stop = segment.i_node.data2 in stop_codes
 
-            stop_distance += segment_length
-            is_stop = segment.i_node.data2 in stop_codes
-
-            if is_stop:
-                if stop_distance > max_stop_distance:
-                    max_stop_distance = stop_distance
-                stop_distance = 0
+                if is_stop:
+                    if stop_distance > max_stop_distance:
+                        max_stop_distance = stop_distance
+                    stop_distance = 0
 
         # Append data for the current line
         data["line_id"].append(line.id)
-        # Lines in Kirkkonummi (line id starts with 6) have weird stop period
+        # Some lines in Kirkkonummi (line id starts with 6) have weird stopping behaviour
         if line.id.startswith("6"):
             max_stop_distance = 0
         data["maximum_stop_distance"].append(max_stop_distance)
