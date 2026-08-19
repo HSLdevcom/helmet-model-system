@@ -44,27 +44,11 @@ def main(args):
     if different_zones:
         log.warn("Scenarios with different zones found in EMME bank! Matrices will not be compatible between scenarios with different zones.")
     if errors > 0:
-        msg = f"Input file validation failed with {errors} error(s)."
+        msg = f"Scenario validation failed with {errors} error(s)."
         log.error(msg)
         raise ValueError(msg)            
-    log.info("Successfully validated all input files")
-    log.info("Validating scenario networks...")
-    for i, emp_path in enumerate(emme_paths):
-        scenario_id = first_scenario_ids[i]
-        log.info(f"Validating network for the {number_to_ordinal(i+1)} scenario #{scenario_id} ...")
-        forecast_zonedata = ZoneData(forecast_zonedata_paths[i], zone_numbers)
-        if do_not_use_emme:
-            continue
-        with open_emme(emp_path) as app:
-            emmebank = app.data_explorer().active_database().core_emmebank
-            scen = emmebank.scenario(scenario_id)
-            if scen is None:
-                msg = "Project {} has no scenario {}".format(emp_path, scenario_id)
-                log.error(msg)
-                raise ValueError(msg)
-            # NOTE: validate_network.validate() will not go through all scenarios if errors are found in one of them
-            validate(scen.get_network(), forecast_zonedata.transit_zone)
-    log.info("Successfully validated all scenario networks")
+    log.info("Successfully validated all input files and networks.")
+
 
 def validate_arguments(emme_paths, first_scenario_ids, forecast_zonedata_paths):
     errors = 0
@@ -202,9 +186,10 @@ def validate_base_input_data(base_zonedata_path, base_matrices_path, emme_paths,
     
     return errors, zone_numbers
 
+
 def validate_scenario_input_data(emme_paths, first_scenario_ids, forecast_zonedata_paths, zone_numbers, do_not_use_emme, separate_emme_scenarios):
     # Check scenario based input data
-    log.info("Checking input data for scenarios...")
+    log.info("Checking input data and network(s) for scenario(s)...")
     errors = 0
     different_zones = False 
     for i, emp_path in enumerate(emme_paths):
@@ -256,9 +241,12 @@ def validate_scenario_input_data(emme_paths, first_scenario_ids, forecast_zoneda
                     scen.id)
                 log.error(msg)
                 errors += 1
+            log.info(f"Validating network for the {number_to_ordinal(i+1)} scenario #{scenario_id} ...")
+            network_errors = validate(scen.get_network(), forecast_zonedata.transit_zone)
+            if network_errors > 0:
+                log.error(f"Network validation for scenario #{scenario_id} failed with {network_errors} errors.")
+                errors += network_errors
     return errors, different_zones
-
-
 
 @contextmanager
 def open_emme(emp_path):
