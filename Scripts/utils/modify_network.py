@@ -37,45 +37,14 @@ def calculate_gradients(network):
 
 def add_bus_stops(network):
     # Initialize an empty dictionary to store line IDs and maximum stop distances
-    data = {"line_id": [], "maximum_stop_distance": [], "is_motorway": [], "loops": []}
-    high_distance_lines = []
-    looped_lines = []
-    whitelist_segments = set(["174173-173862","173862-174376","174376-174378","174378-322531",
-                             "322531-173993","82372-83961","322451-322454","321225-322093",
-                             "53199-56670","230810-231182","231182-40353","40353-40352",
-                             "40352-231178","231178-231064","321174-321227", "194395-194397", 
-                             "194397-194395", "212415-204085", "204085-213798","93047-93048"])
-    whitelist_line_ids = set(["1094A1"])
+    
     for line in network.transit_lines():
         if line.mode.id in param.stop_codes:
             stop_codes = param.stop_codes[line.mode.id]
-            stop_distance = 0
-            max_stop_distance = 0
-            is_motorway = 0
-            loop = 0
-
             for segment in line.segments():
-                if segment.loop_index > 1 and loop == 0 and segment.link.id not in whitelist_segments:
-                    loop += 1
 
-                    log.debug(segment.link.id + " is looped in line " + line.id)
-                    if (line.id not in whitelist_line_ids) and (line.id not in looped_lines):
-                        looped_lines.append(line.id)
-                segment_length = segment.link.length
-                linktype = segment.link.type % 100
-                if linktype in param.roadclasses and is_motorway == 0:
-                    # Car link with standard attributes
-                    roadclass = param.roadclasses[linktype]
-                    if roadclass.type == "motorway":
-                        is_motorway = 1
-
-                stop_distance += segment_length
                 is_stop = segment.i_node.data2 in stop_codes
-
-                if is_stop:
-                    if stop_distance > max_stop_distance:
-                        max_stop_distance = stop_distance
-                    stop_distance = 0
+                segment.dwell_time = 0.01 * is_stop
 
                 if line.mode.id in "de":
 
@@ -95,27 +64,5 @@ def add_bus_stops(network):
                 else:
                     segment.allow_alightings = is_stop
                     segment.allow_boardings = is_stop
-
-            # Append data for the current line
-            data["line_id"].append(line.id)
-            # Lines in Kirkkonummi (line id starts with 6) have weird stop period
-            if line.id.startswith("6"):
-                max_stop_distance = 0
-            data["maximum_stop_distance"].append(max_stop_distance)
-            data["is_motorway"].append(is_motorway)
-            data["loops"].append(loop)
-
-            if line.mode.id in "bg" and max_stop_distance > 5 and not is_motorway: # and int(line.id[0]) < 6
-                log.debug(f"Line: {line.id},\t Maximum distance between consecutive stops: {max_stop_distance:.2f}")
-                high_distance_lines.append(line.id)
-
-    # TODO: Print to results folder
-    max_stop_distances = pd.DataFrame(data)
-
-    if high_distance_lines:
-        log.info(f"{len(high_distance_lines)} HSL line(s) have a maximum stop distance greater than 5 km and no motorway sections.")
-    
-    if looped_lines:
-        log.warn(f"Line(s) {looped_lines} traverse over the same links multiple times.")
 
     return network
