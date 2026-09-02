@@ -413,7 +413,7 @@ class EmmeAssignmentModel(AssignmentModel):
         log.debug(f"Created extra attributes for scenario {scenario}, time period {time_period_name}")
         return seg_results
 
-    def calc_noise(self) -> Tuple[pandas.Series, pandas.Series]:
+    def calc_noise(self) -> Tuple[pandas.Series, pandas.Series, pandas.Series]:
         """Calculate noise according to Road Traffic Noise Nordic 1996.
 
         Returns
@@ -421,8 +421,10 @@ class EmmeAssignmentModel(AssignmentModel):
         pandas.Series
             Area (km2) of noise polluted zone, aggregated to area level
         """
+        noise_areas = pandas.Series(0.0, zone_param.area_aggregation)
         noise_areas_55 = pandas.Series(0.0, zone_param.area_aggregation)
         noise_areas_80 = pandas.Series(0.0, zone_param.area_aggregation)
+
         network = self.day_scenario.get_network()
         morning_network = self.assignment_periods[0].emme_scenario.get_network()
         for link in network.links():
@@ -456,6 +458,27 @@ class EmmeAssignmentModel(AssignmentModel):
             speed = max(speed, 50.0)
             
             # Calculate start noise
+            # Old method:
+            # Calculate start noise
+            if speed <= 90:
+                heavy_correction = (10*log10((1-heavy_share)
+                                    + 500*heavy_share/speed))
+            else:
+                heavy_correction = (10*log10((1-heavy_share)
+                                    + 5.6*heavy_share*(90/speed)**3))
+            start_noise = ((68 + 30*log10(speed/50)
+                           + 10*log10(cross_traffic/15/1000)
+                           + heavy_correction)
+                if cross_traffic > 0 else 0)
+
+            # Calculate noise zone width
+            func = param.noise_zone_width
+            for interval in func:
+                if interval[0] <= start_noise < interval[1]:
+                    zone_width = func[interval](start_noise - interval[0])
+                    break            
+
+            # New method:
             if speed >= 50:
                 LAE_light = 73.5 + 25*log10(speed/50) 
                 LAE_heavy = 80.5 + 30*log10(speed/50)
@@ -483,12 +506,14 @@ class EmmeAssignmentModel(AssignmentModel):
 
             # Calculate noise zone area and aggregate to area level
             area = belongs_to_area(link.i_node)
+            if area in noise_areas:
+                noise_areas[area] += 0.001 * zone_width * link.length
             if area in noise_areas_55:
                 noise_areas_55[area] += 0.001 * distance_55 * link.length
             if area in noise_areas_80:
                 noise_areas_80[area] += 0.001 * distance_80 * link.length
         
-        return noise_areas_55, noise_areas_80
+        return noise_areas, noise_areas_55, noise_areas_80
 
     def _noise_zone_distance(self, start_noise: float, threshold: float=55.0):
         """Calculate noise zone width according to Road Traffic Noise Nordic 1996.
