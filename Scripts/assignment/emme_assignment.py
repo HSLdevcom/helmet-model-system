@@ -443,6 +443,8 @@ class EmmeAssignmentModel(AssignmentModel):
             cross_traffic = (param.years_average_day_factor
                              * param.share_7_22_of_day
                              * (traffic+reverse_traffic))
+            if cross_traffic < 0.01:
+                continue
             heavy = (link[self._extra("truck")]
                      + link[self._extra("trailer_truck")])
             traffic = max(traffic, 0.01)
