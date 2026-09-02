@@ -37,10 +37,13 @@ class NoiseAreasResults(ModelSystemEventListener):
             self._calculate_noise_areas()
 
     def _calculate_noise_areas(self):
-        noise_areas = self.ms.ass_model.calc_noise()
-        self.ms.resultdata.print_data(noise_areas, "noise_areas.txt", "area")
+        noise_areas_55, noise_areas_80 = self.ms.ass_model.calc_noise()
+        self.ms.resultdata.print_data(noise_areas_55, "noise_areas.txt", "area>=55")
+        self.ms.resultdata.print_data(noise_areas_80, "noise_areas.txt", "area>=80")
         ar = ArrayAggregator(self.ms.zdata_forecast.zone_numbers)
         pop = ar.aggregate(self.ms.zdata_forecast["population"])
         conversion = pd.Series(zone_param.pop_share_per_noise_area)
-        noise_pop = conversion * noise_areas * pop
-        self.ms.resultdata.print_data(noise_pop, "noise_areas.txt", "population")
+        noise_pop_55 = conversion * noise_areas_55 * pop
+        noise_pop_80 = conversion * noise_areas_80 * pop
+        self.ms.resultdata.print_data(noise_pop_55, "noise_areas.txt", "population>=55")
+        self.ms.resultdata.print_data(noise_pop_80, "noise_areas.txt", "population>=80")

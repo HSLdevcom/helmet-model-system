@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
 import pandas
 from math import log10
 
@@ -413,7 +413,7 @@ class EmmeAssignmentModel(AssignmentModel):
         log.debug(f"Created extra attributes for scenario {scenario}, time period {time_period_name}")
         return seg_results
 
-    def calc_noise(self) -> pandas.Series:
+    def calc_noise(self) -> Tuple[pandas.Series, pandas.Series]:
         """Calculate noise according to Road Traffic Noise Nordic 1996.
 
         Returns
@@ -421,7 +421,8 @@ class EmmeAssignmentModel(AssignmentModel):
         pandas.Series
             Area (km2) of noise polluted zone, aggregated to area level
         """
-        noise_areas = pandas.Series(0.0, zone_param.area_aggregation)
+        noise_areas_55 = pandas.Series(0.0, zone_param.area_aggregation)
+        noise_areas_80 = pandas.Series(0.0, zone_param.area_aggregation)
         network = self.day_scenario.get_network()
         morning_network = self.assignment_periods[0].emme_scenario.get_network()
         for link in network.links():
@@ -453,31 +454,62 @@ class EmmeAssignmentModel(AssignmentModel):
             else:
                 speed = (0.3*(60*link.length/link["@car_time_aht"]) + 0.7*link.data2) if link["@car_time_aht"] > 0.0 else 50.0
             speed = max(speed, 50.0)
-
+            
             # Calculate start noise
-            if speed <= 90:
-                heavy_correction = (10*log10((1-heavy_share)
-                                    + 500*heavy_share/speed))
+            if speed >= 50:
+                LAE_light = 73.5 + 25*log10(speed/50) 
+                LAE_heavy = 80.5 + 30*log10(speed/50)
+            elif speed >= 40:
+                LAE_light = 73.5 + 25*log10(speed/50)
+                LAE_heavy = 80.5
+            elif speed < 40:
+                LAE_light = 71.1
+                LAE_heavy = 80.5
+            if cross_traffic > 0:
+                LAeq_light = LAE_light + 10*log10(cross_traffic/15/3600)
+                LAeq_heavy = LAE_heavy + 10*log10(heavy_share*cross_traffic/15/3600) if heavy_share > 0 else 0
+                start_noise = 10*log10(10**(LAeq_light/10)+10**(LAeq_heavy/10)) if LAeq_heavy > 0 else LAeq_light
             else:
-                heavy_correction = (10*log10((1-heavy_share)
-                                    + 5.6*heavy_share*(90/speed)**3))
-            start_noise = ((68 + 30*log10(speed/50)
-                           + 10*log10(cross_traffic/15/1000)
-                           + heavy_correction)
-                if cross_traffic > 0 else 0)
+                start_noise = 0
+
+            # Calculate noise increase from road gradient
+            gradient_permille = link["@kaltevuus"]*1000 # @kaltevuus is the proportional gradient, not permille so multiply by 1000
+            delta_L_st = (2*gradient_permille/100)+((3*gradient_permille/100)*log10(1+heavy_share))
+            start_noise += delta_L_st
 
             # Calculate noise zone width
-            func = param.noise_zone_width
-            for interval in func:
-                if interval[0] <= start_noise < interval[1]:
-                    zone_width = func[interval](start_noise - interval[0])
-                    break
+            distance_55 = self._noise_zone_distance(start_noise, threshold=55.0)
+            distance_80 = self._noise_zone_distance(start_noise, threshold=80.0)
 
             # Calculate noise zone area and aggregate to area level
             area = belongs_to_area(link.i_node)
-            if area in noise_areas:
-                noise_areas[area] += 0.001 * zone_width * link.length
-        return noise_areas
+            if area in noise_areas_55:
+                noise_areas_55[area] += 0.001 * distance_55 * link.length
+            if area in noise_areas_80:
+                noise_areas_80[area] += 0.001 * distance_80 * link.length
+        
+        return noise_areas_55, noise_areas_80
+
+    def _noise_zone_distance(self, start_noise: float, threshold: float=55.0):
+        """Calculate noise zone width according to Road Traffic Noise Nordic 1996.
+        Attenuation of noise is assumed to be 3 dB per doubling of distance. 
+
+        Parameters
+        ----------
+        start_noise : float
+            Start noise level in dB(A) at 10 m distance
+        threshold : float (optional)
+            Threshold noise level in dB(A), default is 55 dB(A)
+
+        Returns
+        -------
+        float
+            Noise zone width in meters
+        """
+        if start_noise < threshold:
+            return 0.0
+        else:
+            return 10.0 * 10**(0.1 * (start_noise - threshold))
 
     def _link_24h(self, attr: str):
         """ 
