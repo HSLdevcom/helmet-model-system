@@ -39,10 +39,7 @@ def validate(network, fares: transit_fare.TransitFareZoneSpecification|None=None
     num_errors += validate_centroids(network)
     num_errors += validate_links(network)
     
-    if num_errors > 0:
-        msg = f"Network validation failed with {num_errors} error(s)"
-        log.error(msg)
-        raise ValueError(msg)
+    return num_errors
 
 def validate_fares(network, fares: transit_fare.TransitFareZoneSpecification):
     fare_zones = fares.transit_fare_zones
