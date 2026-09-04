@@ -3,12 +3,14 @@ import numpy # type: ignore
 import pandas
 
 from typing import TYPE_CHECKING, Any, Dict, Optional, Union
+from assignment.datatypes.bike_specification import BikeSpecification
+from assignment.datatypes.walk_specification import WalkSpecification
 from events.event_handler import EventHandler
 import utils.log as log
 import parameters.assignment as param
 import parameters.zone as zone_param
 from assignment.datatypes.car_specification import CarSpecification
-from assignment.datatypes.transit import TransitSpecification
+from assignment.datatypes.transit_specification import TransitSpecification
 from assignment.datatypes.path_analysis import PathAnalysis
 from assignment.abstract_assignment import Period
 if TYPE_CHECKING:
@@ -375,7 +377,15 @@ class AssignmentPeriod(Period):
                         func = funcs[self.name]
                     break
             for segment in link.segments():
-                segment.transit_time_func = func
+                try:  # Cannot check for missing extra attributes directly, so we need to check for KeyError
+                    is_custom = segment.line['@custom_line'] == 1
+                except KeyError:
+                    is_custom = False
+                if is_custom and segment.data3 > 0:                    # Turn user set data3 km/h value to model systems min/km data2 value
+                    segment.data2 = 60/segment.data3
+                    segment.transit_time_func = funcs["buslane"]
+                else:     
+                    segment.transit_time_func = func
             if car_mode in link.modes:
                 link.modes |= {main_mode}
             if link.num_lanes == 0: link.num_lanes = 1
@@ -620,71 +630,8 @@ class AssignmentPeriod(Period):
                 self._segment_results[tc], self.extra("hw"),
                 self.emme_matrices[tc])
             for tc in param.transit_classes}
-        self.bike_spec = {
-            "type": "STANDARD_TRAFFIC_ASSIGNMENT",
-            "classes": [
-                {
-                    "mode": param.bike_mode,
-                    "demand": self.emme_matrices["bike"]["demand"],
-                    "results": {
-                        "od_travel_times": {
-                            "shortest_paths": self.emme_matrices["bike"]["time"],
-                        },
-                        "link_volumes": None, # This is defined later
-                    },
-                    "analysis": {
-                        "results": {
-                            "od_values": None, # This is defined later
-                        },
-                    },
-                }
-            ],
-            "path_analysis": PathAnalysis("ul3").spec,
-            "stopping_criteria": {
-                "max_iterations": 1,
-                "best_relative_gap": 1,
-                "relative_gap": 1,
-                "normalized_gap": 1,
-            },
-            "performance_settings": param.performance_settings
-        }
-        self.walk_spec = {
-            "type": "STANDARD_TRANSIT_ASSIGNMENT",
-            "modes": param.aux_modes,
-            "demand": self.emme_matrices["bike"]["demand"],
-            "waiting_time": {
-                "headway_fraction": 0.01,
-                "effective_headways": "hdw",
-                "perception_factor": 0,
-            },
-            "boarding_time": {
-                "penalty": 0,
-                "perception_factor": 0,
-            },
-            "aux_transit_time": {
-                "perception_factor": 1,
-            },
-            "od_results": {
-                "transit_times": self.emme_matrices["walk"]["time"],
-            },
-            "strategy_analysis": {
-                "sub_path_combination_operator": "+",
-                "sub_strategy_combination_operator": "average",
-                "trip_components": {
-                    "aux_transit": "length",
-                },
-                "selected_demand_and_transit_volumes": {
-                    "sub_strategies_to_retain": "ALL",
-                    "selection_threshold": {
-                        "lower": None,
-                        "upper": None,
-                    },
-                },
-                "results": {
-                    "od_values": self.emme_matrices["walk"]["dist"],
-                },
-            },
-        }
+        self.bike_spec = BikeSpecification(self.emme_matrices["bike"]).bike_spec
+        self.walk_spec = WalkSpecification(self.emme_matrices["walk"])
 
     def _assign_cars(self, 
                      stopping_criteria: Dict[str, Union[int, float]], 
@@ -698,11 +645,11 @@ class AssignmentPeriod(Period):
         network = self.emme_scenario.get_network()
         time_attr = self.extra("car_time")
         for link in network.links():
+            if link.auto_time > 1e4: link.auto_time = 1e4
             link[time_attr] = link.auto_time
             #prevent errors from non-car links
             #assignment only uses mode-based subnetworks, 
             # these should not be used in practice
-            if link.auto_time > 1e3: link.auto_time = 1e3
         self.emme_scenario.publish_network(network)
         log.info(f"Car assignment performed for time period {self.name} on scenario {self.emme_scenario.id}")
         log.info("Stopping criteria: {}, iteration {} / {}".format(
@@ -746,6 +693,12 @@ class AssignmentPeriod(Period):
         log.info("Bike assignment started...")
         self.emme_project.bike_assignment(
             specification=spec, scenario=scen)
+        network = self.emme_scenario.get_network()
+        time_attr = self.extra("bike_time")
+        for link in network.links():
+            if link.auto_time > 1e4: link.auto_time = 1e4
+            link[time_attr] = link.auto_time
+        self.emme_scenario.publish_network(network)
         log.info(f"Bike assignment performed for time period {self.name} on scenario {self.emme_scenario.id}")
 
     def _fill_h_mode(self):
@@ -761,7 +714,8 @@ class AssignmentPeriod(Period):
 
         log.info("Pedestrian assignment started...")
         self.emme_project.pedestrian_assignment(
-            specification=self.walk_spec, scenario=self.emme_scenario)
+            specification=self.walk_spec.walk_spec, scenario=self.emme_scenario)
+        self.emme_project.strategy_analysis(specification=self.walk_spec.strategy_analysis_spec, scenario=self.emme_scenario)
         self.event_handler.on_pedestrian_assignment_complete(self, self.emme_scenario)
         log.info(f"Pedestrian assignment performed for time period {self.name} on scenario {self.emme_scenario.id}")
 
@@ -785,11 +739,11 @@ class AssignmentPeriod(Period):
                                         + segment.link.auto_time
                                         + segment.dwell_time)
                 # Travel time for buses on bus lanes
-                if segment.transit_time_func == 2:
+                elif segment.transit_time_func == 2:
                     cumulative_time += (segment.data2 * segment.link.length
                                         + segment.dwell_time)
                 # Travel time for trams AHT
-                if segment.transit_time_func == 3:
+                elif segment.transit_time_func == 3:
                     speedstr = str(int(segment.link.data1))
                     # Digits 5-6 from end (1-2 from beg.) represent AHT
                     # speed. If AHT speed is less than 10, data1 will 
@@ -798,14 +752,14 @@ class AssignmentPeriod(Period):
                     cumulative_time += ((segment.link.length / speed) * 60
                                         + segment.dwell_time)
                 # Travel time for trams PT
-                if segment.transit_time_func == 4:
+                elif segment.transit_time_func == 4:
                     speedstr = str(int(segment.link.data1))
                     # Digits 3-4 from end represent PT speed.
                     speed = int(speedstr[-4:-2])
                     cumulative_time += ((segment.link.length / speed) * 60
                                         + segment.dwell_time)
                 # Travel time for trams IHT
-                if segment.transit_time_func == 5:
+                elif segment.transit_time_func == 5:
                     speedstr = str(int(segment.link.data1))
                     # Digits 1-2 from end represent IHT speed.
                     speed = int(speedstr[-2:])

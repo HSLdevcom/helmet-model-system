@@ -6,7 +6,7 @@ from typing import List, Union
 
 import utils.config
 import utils.log as log
-from utils.validate_network import validate
+from utils.validate_network import validate, validate_network_connectivity
 from assignment.mock_assignment import MockAssignmentModel
 from datahandling.matrixdata import MatrixData
 from datahandling.zonedata import ZoneData
@@ -44,7 +44,7 @@ def main(args):
     if different_zones:
         log.warn("Scenarios with different zones found in EMME bank! Matrices will not be compatible between scenarios with different zones.")
     if errors > 0:
-        msg = f"Input file validation failed with {errors} error(s)."
+        msg = f"Scenario validation failed with {errors} error(s)."
         log.error(msg)
         raise ValueError(msg)            
     log.info("Successfully validated all input files")
@@ -54,7 +54,7 @@ def main(args):
         forecast_zonedata = ZoneData(forecast_zonedata_paths[i], zone_numbers)
         if do_not_use_emme:
             continue
-        with open_emme(emp_path) as app:
+        with open_emme(emp_path) as (app,_m):
             emmebank = app.data_explorer().active_database().core_emmebank
             scen = emmebank.scenario(scenario_id)
             if scen is None:
@@ -62,7 +62,11 @@ def main(args):
                 log.error(msg)
                 raise ValueError(msg)
             # NOTE: validate_network.validate() will not go through all scenarios if errors are found in one of them
+            modeller = _m.Modeller(app)
             validate(scen.get_network(), forecast_zonedata.transit_zone)
+            if not args.skip_test_network_connectivity:
+                validate_network_connectivity(modeller, scen)
+    log.info("Successfully validated all scenario networks")
 
 def validate_arguments(emme_paths, first_scenario_ids, forecast_zonedata_paths):
     errors = 0
@@ -107,7 +111,7 @@ def validate_database_extra_attrs_size(emmebank, scenario_id, separate_emme_scen
     nr_vehicle_classes = len(param.emme_matrices)
     nr_new_attr = {
         "nodes": nr_transit_classes * (nr_segment_results-1),
-        "links": nr_vehicle_classes + 4,
+        "links": nr_vehicle_classes + 5,  # 5 extra attributes for car assignment (total_cost, toll_cost, car_time, bike_time, aux_transit)
         "transit_lines": 0,
         "transit_segments": nr_transit_classes*nr_segment_results + 1,
     }
@@ -174,7 +178,7 @@ def validate_base_input_data(base_zonedata_path, base_matrices_path, emme_paths,
                 emp_path)
             log.error(msg)
             errors += 1
-        with open_emme(emp_path) as app:
+        with open_emme(emp_path) as (app,_):
             log.debug(f"Emme version: {app.version}")
             scen = app.data_explorer().active_database().core_emmebank.scenario(
                 first_scenario_ids[0])
@@ -200,9 +204,10 @@ def validate_base_input_data(base_zonedata_path, base_matrices_path, emme_paths,
     
     return errors, zone_numbers
 
+
 def validate_scenario_input_data(emme_paths, first_scenario_ids, forecast_zonedata_paths, zone_numbers, do_not_use_emme, separate_emme_scenarios):
     # Check scenario based input data
-    log.info("Checking input data for scenarios...")
+    log.info("Checking input data and network(s) for scenario(s)...")
     errors = 0
     different_zones = False 
     for i, emp_path in enumerate(emme_paths):
@@ -221,7 +226,7 @@ def validate_scenario_input_data(emme_paths, first_scenario_ids, forecast_zoneda
         if do_not_use_emme:
             continue
         # Continue validation if EMME is available
-        with open_emme(emp_path) as app:
+        with open_emme(emp_path) as (app,_):
             emmebank = app.data_explorer().active_database().core_emmebank
 
             errors += validate_database_extra_attrs_size(emmebank, scenario_id, separate_emme_scenarios)
@@ -254,17 +259,21 @@ def validate_scenario_input_data(emme_paths, first_scenario_ids, forecast_zoneda
                     scen.id)
                 log.error(msg)
                 errors += 1
+            log.info(f"Validating network for the {number_to_ordinal(i+1)} scenario #{scenario_id} ...")
+            network_errors = validate(scen.get_network(), forecast_zonedata.transit_zone)
+            if network_errors > 0:
+                log.error(f"Network validation for scenario #{scenario_id} failed with {network_errors} errors.")
+                errors += network_errors
     return errors, different_zones
-
-
 
 @contextmanager
 def open_emme(emp_path):
     import inro.emme.desktop.app as _app # type: ignore
+    import inro.modeller as _m # type: ignore
     app = _app.start_dedicated(
         project=emp_path, visible=False, user_initials="HSL")
     try:
-        yield app
+        yield (app,_m)
     finally:
         app.close()
     
@@ -340,6 +349,11 @@ if __name__ == "__main__":
         nargs="+",
         required=True,
         help="List of paths to folder containing forecast zonedata"),
+    parser.add_argument(
+        "--skip-test-network-connectivity",
+        action="store_true",
+        default=config.SKIP_NETWORK_CONNECTIVITY_TEST,
+        help="Skip testing network connectivity."),
     args = parser.parse_args()
 
     log.initialize(args)
