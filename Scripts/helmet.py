@@ -162,7 +162,7 @@ def main(args):
         extra=log_extra)
     log.info(log_header(" Starting base demand assignment "), extra=log_extra)
     impedance = model.assign_base_demand(
-        args.use_fixed_transit_cost, iterations==0)
+        args.use_fixed_transit_cost, iterations==0, fixed_network=args.fixed_network)
     log.info(log_header(" Base demand assignment completed "))
     log_extra["status"]["state"] = "running"
     i = 1
@@ -357,6 +357,11 @@ if __name__ == "__main__":
         action="store_true",
         default=config.STRICT_MODE,
         help="Using this flag makes the model run fail when an error occurs (especially in events processing)."),
+    parser.add_argument(
+        "--fixed-network",
+        action="store_true",
+        default=config.FIXED_NETWORK,
+        help="Using this flag prevents the model from modifying the network's bus stops and slopes. Vdfs are still changed automatically. Use with caution."),
     args = parser.parse_args()
 
     log.initialize(args)
