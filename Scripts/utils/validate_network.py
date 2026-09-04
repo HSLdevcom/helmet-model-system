@@ -1,5 +1,7 @@
 import bisect
 
+import numpy
+
 import utils.log as log
 import parameters.assignment as param
 import assignment.datatypes.transit_fare as transit_fare
@@ -306,3 +308,224 @@ def validate_transit(network):
         errors += 1
     return errors
 
+def validate_network_connectivity(modeller, scenario):
+    """Validate network connectivity in terms of HELMET compatibility.
+
+    Check that:
+    - all nodes are reachable from each other
+    """
+    errors = 0
+
+    #Store mf1 and mf2
+    mf1_old = modeller.emmebank.matrix("mf1").get_numpy_data(scenario_id=scenario.id)
+    mf2_old = modeller.emmebank.matrix("mf2").get_numpy_data(scenario_id=scenario.id)
+
+    #Define unit matrix
+    mf1 = numpy.ones_like(mf1_old, dtype=numpy.float32) * 0.001 #New input
+    mf2 = numpy.zeros_like(mf2_old, dtype=numpy.float32) #New output
+    modeller.emmebank.matrix("mf1").set_numpy_data(mf1, scenario_id=scenario.id)
+    modeller.emmebank.matrix("mf2").set_numpy_data(mf2, scenario_id=scenario.id)
+
+    #Zone numbers
+    zone_numbers = {zone: i for i, zone in enumerate(scenario.zone_numbers)}
+    modes = ["car","bike","walk","transit"]
+    assignment_methods = {
+        "car": modeller.tool("inro.emme.traffic_assignment.sola_traffic_assignment"),
+        "bike": modeller.tool("inro.emme.traffic_assignment.standard_traffic_assignment"),
+        "walk": modeller.tool("inro.emme.transit_assignment.standard_transit_assignment"),
+        "transit": modeller.tool("inro.emme.transit_assignment.standard_transit_assignment")
+    }
+    emme_specs = {
+        "car": {
+            "type": "STANDARD_TRAFFIC_ASSIGNMENT",
+            "classes": [
+                {
+                "mode": "c",
+                "demand": "mf1",
+                "results": {
+                    "od_travel_times": {
+                    "shortest_paths": "mf2"
+                    },
+                },
+                }
+            ],
+            "stopping_criteria": {
+                "max_iterations": 1,
+                "best_relative_gap": 1,
+                "relative_gap": 1,
+                "normalized_gap": 1
+            },
+            "performance_settings": {
+                "number_of_processors": "max"
+            }
+        },
+        "bike": {
+            "type": "STANDARD_TRAFFIC_ASSIGNMENT",
+            "classes": [
+                {
+                "mode": "f",
+                "demand": "mf1",
+                "results": {
+                    "od_travel_times": {
+                    "shortest_paths": "mf2"
+                    },
+                },
+                }
+            ],
+            "stopping_criteria": {
+                "max_iterations": 1,
+                "best_relative_gap": 1,
+                "relative_gap": 1,
+                "normalized_gap": 1
+            },
+            "performance_settings": {
+                "number_of_processors": "max"
+            }
+        },
+        "walk": {
+            "type": "STANDARD_TRANSIT_ASSIGNMENT",
+            "modes": [
+                "a",
+                "s"
+            ],
+            "demand": "mf1",
+            "waiting_time": {
+                "headway_fraction": 0.01,
+                "effective_headways": "hdw",
+                "perception_factor": 0
+            },
+            "boarding_time": {
+                "penalty": 0,
+                "perception_factor": 0
+            },
+            "aux_transit_time": {
+                "perception_factor": 1
+            },
+            "od_results": {
+                "transit_times": "mf2"
+            },
+        },
+        "transit": {
+            "type": "STANDARD_TRANSIT_ASSIGNMENT",
+            "modes": [
+                "b",
+                "d",
+                "e",
+                "g",
+                "j",
+                "m",
+                "p",
+                "r",
+                "t",
+                "w",
+                "a",
+                "s"
+            ],
+            "demand": "mf1",
+            "waiting_time": {
+                "headway_fraction": 0.01,
+                "effective_headways": "hdw",
+                "perception_factor": 0
+            },
+            "boarding_time": {
+                "penalty": 0,
+                "perception_factor": 0
+            },
+            "aux_transit_time": {
+                "perception_factor": 1
+            },
+            "od_results": {
+                "transit_times": "mf2"
+            },
+        },
+        }
+    Suomenlinna = 1531 #TODO: Accept other island centroids as well
+    problematic = [6272,6291,19071] #test network only
+    Salo_centroid = 34102 #test network only
+    EXTERNAL_RAILWAY_CENTROIDS = [z for z in zone_numbers if z in set(range(34300, 34400))]
+    #Make simple assignment to get impedance matrices
+    mf1 = modeller.emmebank.matrix("mf1").get_numpy_data(scenario_id=scenario.id)
+
+    for idx in param.volume_delay_funcs:
+        try:
+            modeller.emmebank.delete_function(idx)
+        except Exception:
+            pass
+    
+    test_func = 50
+    for idx in [f"fd{test_func}", f"ft{test_func}", f"fp{test_func}"]:
+        try:
+            modeller.emmebank.delete_function(idx)
+        except Exception:
+            pass
+        modeller.emmebank.create_function(
+            idx, "1")
+
+    network = scenario.get_network()
+    for link in network.links():
+        link.volume_delay_func = test_func
+        link.num_lanes = 1
+    for segment in network.transit_segments():
+        segment.transit_time_func = test_func
+    for turn in network.turns():
+        turn.penalty_func = test_func
+    
+    scenario.publish_network(network)
+        
+    for mode in modes:
+        log.info(f"Checking network connectivity for {mode}")
+        assignment_methods[mode](specification=emme_specs[mode], scenario=scenario)
+        is_connected = (modeller.emmebank.matrix("mf2").get_numpy_data(scenario_id=scenario.id) < 1e6) * 1
+
+        expected_matrix = numpy.ones_like(mf1, dtype=numpy.int32) #1=connected, 0=not connected
+        if mode in ["bike","walk"]:
+            #TODO: Suomenlinna needs to somehow improved to allow for other island centroids as well
+            expected_matrix[:,zone_numbers[Suomenlinna]] = 0
+            expected_matrix[zone_numbers[Suomenlinna],:] = 0
+            if len(zone_numbers) < 30: #Only test network contains these issues
+                expected_matrix[:,[zone_numbers[z] for z in problematic]] = 0
+                expected_matrix[[zone_numbers[z] for z in problematic],:] = 0
+                expected_matrix[numpy.ix_([zone_numbers[z] for z in problematic],[zone_numbers[z] for z in problematic])] = 1
+                expected_matrix[:,zone_numbers[Salo_centroid]] = 0
+                expected_matrix[zone_numbers[Salo_centroid],:] = 0
+        if mode in ["car","walk","bike"]:
+            expected_matrix[:,[zone_numbers[z] for z in EXTERNAL_RAILWAY_CENTROIDS]] = 0
+            expected_matrix[[zone_numbers[z] for z in EXTERNAL_RAILWAY_CENTROIDS],:] = 0
+            #Fix diagonal
+        expected_matrix[numpy.diag_indices_from(expected_matrix)] = 1
+        differences = is_connected != expected_matrix
+        missed_zones = {}
+        if differences.any():
+            for diff_pair in numpy.argwhere(differences):
+                log.info(str(diff_pair))
+                diff_s = scenario.zone_numbers[diff_pair[0]]
+                diff_d = scenario.zone_numbers[diff_pair[1]]
+                msg = "Network connectivity check failed for {mode}. The following zone pairs are not connected as expected: {diff_pair}".format(
+                    mode=mode, diff_pair=[diff_s,diff_d])
+                #Make errors as useful as possible
+                if diff_s not in missed_zones:
+                    missed_zones[diff_s] = 1
+                else:
+                    missed_zones[diff_s] += 1
+                    if missed_zones[diff_s] > 3:
+                        continue
+                if diff_d not in missed_zones:
+                    missed_zones[diff_d] = 1
+                else:
+                    missed_zones[diff_d] += 1
+                    if missed_zones[diff_d] > 3:
+                        continue
+                log.error(msg)
+                errors += 1
+                if errors > 100:
+                    log.error("Too many connectivity errors, stopping validation")
+                    break
+    
+    #Restore mf1 and mf2
+    modeller.emmebank.matrix("mf1").set_numpy_data(mf1_old, scenario_id=scenario.id)
+    modeller.emmebank.matrix("mf2").set_numpy_data(mf2_old, scenario_id=scenario.id)
+
+    if errors > 0:
+        msg = f"Network connectivity validation failed with {errors} error(s)"
+        log.error(msg)
+        raise ValueError(msg)

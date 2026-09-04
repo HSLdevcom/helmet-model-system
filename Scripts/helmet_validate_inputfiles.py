@@ -6,7 +6,7 @@ from typing import List, Union
 
 import utils.config
 import utils.log as log
-from utils.validate_network import validate
+from utils.validate_network import validate, validate_network_connectivity
 from assignment.mock_assignment import MockAssignmentModel
 from datahandling.matrixdata import MatrixData
 from datahandling.zonedata import ZoneData
@@ -54,7 +54,7 @@ def main(args):
         forecast_zonedata = ZoneData(forecast_zonedata_paths[i], zone_numbers)
         if do_not_use_emme:
             continue
-        with open_emme(emp_path) as app:
+        with open_emme(emp_path) as (app,_m):
             emmebank = app.data_explorer().active_database().core_emmebank
             scen = emmebank.scenario(scenario_id)
             if scen is None:
@@ -62,7 +62,11 @@ def main(args):
                 log.error(msg)
                 raise ValueError(msg)
             # NOTE: validate_network.validate() will not go through all scenarios if errors are found in one of them
+            modeller = _m.Modeller(app)
             validate(scen.get_network(), forecast_zonedata.transit_zone)
+            if not args.skip_test_network_connectivity:
+                validate_network_connectivity(modeller, scen)
+    log.info("Successfully validated all scenario networks")
 
 def validate_arguments(emme_paths, first_scenario_ids, forecast_zonedata_paths):
     errors = 0
@@ -174,7 +178,7 @@ def validate_base_input_data(base_zonedata_path, base_matrices_path, emme_paths,
                 emp_path)
             log.error(msg)
             errors += 1
-        with open_emme(emp_path) as app:
+        with open_emme(emp_path) as (app,_):
             log.debug(f"Emme version: {app.version}")
             scen = app.data_explorer().active_database().core_emmebank.scenario(
                 first_scenario_ids[0])
@@ -221,7 +225,7 @@ def validate_scenario_input_data(emme_paths, first_scenario_ids, forecast_zoneda
         if do_not_use_emme:
             continue
         # Continue validation if EMME is available
-        with open_emme(emp_path) as app:
+        with open_emme(emp_path) as (app,_):
             emmebank = app.data_explorer().active_database().core_emmebank
 
             errors += validate_database_extra_attrs_size(emmebank, scenario_id, separate_emme_scenarios)
@@ -261,10 +265,11 @@ def validate_scenario_input_data(emme_paths, first_scenario_ids, forecast_zoneda
 @contextmanager
 def open_emme(emp_path):
     import inro.emme.desktop.app as _app # type: ignore
+    import inro.modeller as _m # type: ignore
     app = _app.start_dedicated(
         project=emp_path, visible=False, user_initials="HSL")
     try:
-        yield app
+        yield (app,_m)
     finally:
         app.close()
     
@@ -340,6 +345,11 @@ if __name__ == "__main__":
         nargs="+",
         required=True,
         help="List of paths to folder containing forecast zonedata"),
+    parser.add_argument(
+        "--skip-test-network-connectivity",
+        action="store_true",
+        default=config.SKIP_NETWORK_CONNECTIVITY_TEST,
+        help="Skip testing network connectivity."),
     args = parser.parse_args()
 
     log.initialize(args)
