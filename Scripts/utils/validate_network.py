@@ -373,7 +373,7 @@ def validate_transit(network):
 
     return errors
 
-def validate_network_connectivity(modeller, scenario):
+def validate_network_connectivity(_m, app, emmebank, scenario):
     """Validate network connectivity in terms of HELMET compatibility.
 
     Check that:
@@ -381,15 +381,26 @@ def validate_network_connectivity(modeller, scenario):
     """
     errors = 0
 
-    #Store mf1 and mf2
-    mf1_old = modeller.emmebank.matrix("mf1").get_numpy_data(scenario_id=scenario.id)
-    mf2_old = modeller.emmebank.matrix("mf2").get_numpy_data(scenario_id=scenario.id)
+    modeller = _m.Modeller(app)
+
+    # Store mf1 and mf2, creating temporary working matrices when needed.
+    mf1_matrix = emmebank.matrix("mf1")
+    mf2_matrix = emmebank.matrix("mf2")
+    created_matrices = []
+    if mf1_matrix is None:
+        mf1_matrix = emmebank.create_matrix("mf1", 0.0)
+        created_matrices.append("mf1")
+    if mf2_matrix is None:
+        mf2_matrix = emmebank.create_matrix("mf2", 0.0)
+        created_matrices.append("mf2")
+    mf1_old = mf1_matrix.get_numpy_data(scenario_id=scenario.id)
+    mf2_old = mf2_matrix.get_numpy_data(scenario_id=scenario.id)
 
     #Define unit matrix
     mf1 = numpy.ones_like(mf1_old, dtype=numpy.float32) * 0.001 #New input
     mf2 = numpy.zeros_like(mf2_old, dtype=numpy.float32) #New output
-    modeller.emmebank.matrix("mf1").set_numpy_data(mf1, scenario_id=scenario.id)
-    modeller.emmebank.matrix("mf2").set_numpy_data(mf2, scenario_id=scenario.id)
+    emmebank.matrix("mf1").set_numpy_data(mf1, scenario_id=scenario.id)
+    emmebank.matrix("mf2").set_numpy_data(mf2, scenario_id=scenario.id)
 
     #Zone numbers
     zone_numbers = {zone: i for i, zone in enumerate(scenario.zone_numbers)}
@@ -509,21 +520,21 @@ def validate_network_connectivity(modeller, scenario):
     Salo_centroid = 34102 #test network only
     EXTERNAL_RAILWAY_CENTROIDS = [z for z in zone_numbers if z in set(range(34300, 34400))]
     #Make simple assignment to get impedance matrices
-    mf1 = modeller.emmebank.matrix("mf1").get_numpy_data(scenario_id=scenario.id)
+    mf1 = emmebank.matrix("mf1").get_numpy_data(scenario_id=scenario.id)
 
     for idx in param.volume_delay_funcs:
         try:
-            modeller.emmebank.delete_function(idx)
+            emmebank.delete_function(idx)
         except Exception:
             pass
     
     test_func = 50
     for idx in [f"fd{test_func}", f"ft{test_func}", f"fp{test_func}"]:
         try:
-            modeller.emmebank.delete_function(idx)
+            emmebank.delete_function(idx)
         except Exception:
             pass
-        modeller.emmebank.create_function(
+        emmebank.create_function(
             idx, "1")
 
     network = scenario.get_network()
@@ -540,7 +551,7 @@ def validate_network_connectivity(modeller, scenario):
     for mode in modes:
         log.info(f"Checking network connectivity for {mode}")
         assignment_methods[mode](specification=emme_specs[mode], scenario=scenario)
-        is_connected = (modeller.emmebank.matrix("mf2").get_numpy_data(scenario_id=scenario.id) < 1e6) * 1
+        is_connected = (emmebank.matrix("mf2").get_numpy_data(scenario_id=scenario.id) < 1e6) * 1
 
         expected_matrix = numpy.ones_like(mf1, dtype=numpy.int32) #1=connected, 0=not connected
         if mode in ["bike","walk"]:
@@ -586,9 +597,13 @@ def validate_network_connectivity(modeller, scenario):
                     log.error("Too many connectivity errors, stopping validation")
                     break
     
-    #Restore mf1 and mf2
-    modeller.emmebank.matrix("mf1").set_numpy_data(mf1_old, scenario_id=scenario.id)
-    modeller.emmebank.matrix("mf2").set_numpy_data(mf2_old, scenario_id=scenario.id)
+    # Restore only matrices that existed before validation.
+    if "mf1" not in created_matrices:
+        emmebank.matrix("mf1").set_numpy_data(mf1_old, scenario_id=scenario.id)
+    if "mf2" not in created_matrices:
+        emmebank.matrix("mf2").set_numpy_data(mf2_old, scenario_id=scenario.id)
+    for matrix_id in created_matrices:
+        emmebank.delete_matrix(matrix_id)
 
     if errors > 0:
         msg = f"Network connectivity validation failed with {errors} error(s)"
