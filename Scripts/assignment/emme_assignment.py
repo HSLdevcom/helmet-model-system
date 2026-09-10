@@ -423,10 +423,10 @@ class EmmeAssignmentModel(AssignmentModel):
             "transit congestion cost", overwrite=True, scenario=scenario)
         self.emme_project.create_extra_attribute(
             "TRANSIT_SEGMENT", "@" + param.uncongested_transit_time,
-            "uncongested transit time, includes dwell time", overwrite=True, scenario=scenario)
+            "uncongested transit time, includes dwt", overwrite=True, scenario=scenario)
         self.emme_project.create_extra_attribute(
             "TRANSIT_SEGMENT", extra(param.uncongested_transit_time),
-            "uncongested transit time, includes dwell time", overwrite=True, scenario=scenario)
+            "uncongested transit time, includes dwt", overwrite=True, scenario=scenario)
         log.debug(f"Created extra attributes for scenario {scenario}, time period {time_period_name}")
         return seg_results
 
