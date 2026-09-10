@@ -265,7 +265,8 @@ class ModelSystem:
                 time_ratios, cost_ratios = self._update_ratios(impedance[tp], tp)
                 self.event_handler.on_ratios_updated(time_ratios, cost_ratios)
             if is_end_assignment:
-                self._save_to_omx(impedance[tp], tp)
+                #Saving omx matrices
+                self.event_handler.on_time_period_assigned("last", ap, impedance[tp], tp, impedance)
         if is_end_assignment:
             self.ass_model.aggregate_results(self.resultdata)
             self._calculate_noise_areas()
