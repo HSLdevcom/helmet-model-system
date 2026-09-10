@@ -538,6 +538,18 @@ def validate_network_connectivity(_m, app, emmebank, scenario):
             idx, "1")
 
     network = scenario.get_network()
+    backup_links = {
+        link.id: (link.volume_delay_func, link.num_lanes)
+        for link in network.links()
+    }
+    backup_segments = {
+        segment.id: segment.transit_time_func
+        for segment in network.transit_segments()
+    }
+    backup_turns = {
+        turn.id: turn.penalty_func
+        for turn in network.turns()
+    }
     for link in network.links():
         link.volume_delay_func = test_func
         link.num_lanes = 1
@@ -605,6 +617,17 @@ def validate_network_connectivity(_m, app, emmebank, scenario):
     for matrix_id in created_matrices:
         emmebank.delete_matrix(matrix_id)
 
+    restored_network = scenario.get_network()
+    for link in restored_network.links():
+        volume_delay_func, num_lanes = backup_links[link.id]
+        link.volume_delay_func = volume_delay_func
+        link.num_lanes = num_lanes
+    for segment in restored_network.transit_segments():
+        segment.transit_time_func = backup_segments[segment.id]
+    for turn in restored_network.turns():
+        turn.penalty_func = backup_turns[turn.id]
+    scenario.publish_network(restored_network)
+    
     if errors > 0:
         msg = f"Network connectivity validation failed with {errors} error(s)"
         log.error(msg)
