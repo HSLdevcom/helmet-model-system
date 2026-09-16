@@ -278,14 +278,21 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
         rows = CELL_INDICES["gains"]["rows"][year]
         for transport_class in param.transport_classes:
             demand = {}
+            scenario_zone_numbers = {}
             for scenario in data:
                 with data[scenario].open("demand", timeperiod) as mtx:
-                    demand[scenario] = mtx[transport_class]
                     zone_numbers = mtx.zone_numbers
+                    scenario_zone_numbers[scenario] = zone_numbers
+            zone_numbers = numpy.union1d(*scenario_zone_numbers.values())
+            for scenario in data:
+                with data[scenario].open(
+                        "demand", timeperiod, zone_numbers=zone_numbers) as mtx:
+                    demand[scenario] = mtx[transport_class]
             vol_fac = param.volume_factors[transport_class][timeperiod]
             for mtx_type in ["time", "cost", "dist"]:
                 cost = {scenario: read_costs(
-                        data[scenario], timeperiod, transport_class, mtx_type)
+                        data[scenario], timeperiod, transport_class, mtx_type,
+                        zone_numbers)
                     for scenario in data}
                 gains_existing, gains_additional = calc_gains(demand, cost)
                 result_type = transport_class + "_" + mtx_type
@@ -320,13 +327,15 @@ def read(file_name, scenario_path):
         os.path.join(scenario_path, file_name), delim_whitespace=True)
 
 
-def read_costs(matrixdata, time_period, transport_class, mtx_type):
+def read_costs(matrixdata, time_period, transport_class, mtx_type,
+               zone_numbers=None):
     mtx_label = transport_class.split('_')[0]
     ass_class = mtx_label if mtx_label == "bike" else transport_class
     if mtx_label == "bike" and mtx_type == "cost":
         matrix = 0
     else:
-        with matrixdata.open(mtx_type, time_period) as mtx:
+        with matrixdata.open(
+            mtx_type, time_period, zone_numbers=zone_numbers) as mtx:
             matrix = mtx[ass_class]
             zone_numbers = mtx.zone_numbers
     if transport_class == "transit_work" and mtx_type == "cost":
