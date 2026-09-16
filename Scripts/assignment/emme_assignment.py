@@ -444,7 +444,8 @@ class EmmeAssignmentModel(AssignmentModel):
             rlink = link.reverse_link
             if rlink is None:
                 reverse_traffic = 0
-                heavy_share = heavy / (traffic+heavy)
+                if traffic+heavy > 0:
+                    heavy_share = heavy / (traffic+heavy)
             else:
                 reverse_traffic = sum([rlink[mode] for mode in light_modes])
                 heavy = heavy + (rlink[self._extra("truck")]
