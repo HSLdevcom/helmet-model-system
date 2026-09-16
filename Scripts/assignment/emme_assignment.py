@@ -449,7 +449,8 @@ class EmmeAssignmentModel(AssignmentModel):
                 reverse_traffic = sum([rlink[mode] for mode in light_modes])
                 heavy = heavy + (rlink[self._extra("truck")]
                                  + rlink[self._extra("trailer_truck")])
-                heavy_share = heavy / (traffic+reverse_traffic+heavy)
+                if traffic+reverse_traffic+heavy > 0:
+                    heavy_share = heavy / (traffic+reverse_traffic+heavy)
             cross_traffic = (param.years_average_day_factor
                              * param.share_7_22_of_day
                              * (traffic+reverse_traffic))
