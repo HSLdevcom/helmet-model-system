@@ -56,6 +56,7 @@ bikepath_vdfs = (
         "collector": 77,
         "arterial": 77,
         "highway": 76,
+        "connector": 98
     },
     {  # 1 - Bike lane
         None: 75,
@@ -106,10 +107,10 @@ vdf_bikes = ("length * (60/((5.max.({} + (el1.lt.0) * (1.56 * el1) +"
              +" (el1.gt.0) * (1.3 * el1))).min.({}*1.3)))")
 vdf_bikes_baana = ("length*(60/((5.max.({} + (el1.lt.0) * (1.56 * el1) +"
                    +" (el1.gt.0) * (1.3 * el1))).min.35))")
-vdf_bikes_mixed_lane = "length * (60/((5.max.(({flat} + (el1.lt.0) * (1.56 * el1) + (el1.gt.0) * (1.3 * el1)) + (-5).max.{vol}.min.5)).min.({flat}*1.5)))"
+vdf_bikes_mixed_lane = "length * (60/((5.max.(({flat} + (el1.lt.0) * (1.56 * el1) + (el1.gt.0) * (1.3 * el1)) + ((-5).max.{vol}.min.5))).min.({flat}*1.3)))"
 
-b_volume_lane = "(-1.962 * ln(4*(el2+el3+el4+el5+el6+10)/1000) * 0.689)"
-b_volume_mixed = "(-1.962 * ln(4*(el2+el3+el4+el5+el6+10)/1000) * 0.807)"
+b_volume_lane = "(-1.273 * ln(8.3*(el2+el3+el4+el5+el6+10)/1000))"
+b_volume_mixed = "(-1.583 * ln(16.6*(el2+el3+el4+el5+el6+10)/1000))"
 volume_delay_funcs = {
     # Car functions
     "fd1": vdf_temp.format(0.02, "lanes", 0.975, 1.78, 0.0075),
@@ -326,14 +327,14 @@ volume_factors = {
         "iht": 2.577731506269554
     },
     "car_work": {
-        "aht": 2.14566878114414,
-        "pt": 9.74052524764481,
-        "iht": 2.59410282905161
+        "aht": 2.35343459883855,
+        "pt": 10.7638131348892,
+        "iht": 2.4893521185417
     },
     "car_leisure": {
-        "aht": 2.0833818331177,
-        "pt": 11.0480509949332,
-        "iht": 2.55976380243735
+        "aht": 1.97701948515189,
+        "pt": 10.4186051138893,
+        "iht": 2.60717515890032
     },
     "transit": {
         "aht": 1.742307423509389,
@@ -341,14 +342,14 @@ volume_factors = {
         "iht": 2.469485150841794
     },
     "transit_work": {
-        "aht": 1.68690518329483,
-        "pt": 8.93838861854817,
-        "iht": 2.44970371729914
+        "aht": 1.87466950732795,
+        "pt": 9.02304562619832,
+        "iht": 2.41470518456316
     },
     "transit_leisure": {
-        "aht": 2.21681923396875,
-        "pt": 9.86698420488895,
-        "iht": 2.5456525954282
+        "aht": 1.63538019893797,
+        "pt": 9.27751142763618,
+        "iht": 2.49804577796018
     },
     "bike": {
         "aht": 1.5975928777573025,
@@ -356,14 +357,14 @@ volume_factors = {
         "iht": 2.437985085233379
     },
     "bike_work": {
-        "aht": 1.57124974015052,
-        "pt": 8.12146477335452,
-        "iht": 2.08370106051779
+        "aht": 1.59154732878622,
+        "pt": 7.2673918052614,
+        "iht": 1.92225991902645
     },
     "bike_leisure": {
-        "aht": 1.9944008292555,
-        "pt": 13.6860254358246,
-        "iht": 3.45738025301997
+        "aht": 1.60836145814729,
+        "pt": 11.5432665209434,
+        "iht": 2.71743719402467
     },
     "trailer_truck": {
         "aht": 3.3333333333333335,
@@ -500,7 +501,7 @@ emme_matrices = {
     "transit_work": ("demand", "time", "dist", "cost", "congest_time"),
     "transit_leisure": ("demand", "time", "dist", "cost", "congest_time"),
     "bike": ("demand", "time", "dist"),
-    "walk": ("time", "dist"),
+    "walk": ("demand", "time", "dist"),
     "trailer_truck": ("demand", "time", "dist", "cost", "gen_cost"),
     "truck": ("demand", "time", "dist", "cost", "gen_cost"),
     "van": ("demand", "time", "dist", "cost", "gen_cost"),

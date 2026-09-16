@@ -5,7 +5,7 @@ from assignment.datatypes.transit_fare import TransitFareZoneSpecification
 from assignment.mock_assignment import MockAssignmentModel
 from datahandling.matrixdata import MatrixData
 from utils.validate_network import validate
-from utils.validate_loaded_network import validate_loaded
+# from utils.validate_loaded_network import validate_loaded
 from parameters.assignment import time_periods
 import parameters.zone as zone_param
 import copy
@@ -36,9 +36,9 @@ class EmmeAssignmentTest(unittest.TestCase):
         #Mode check
         network1 = copy.deepcopy(network0)
         network1.create_mode(MODE_TYPES["3"],"h")
-        self.assertRaises(ValueError, validate,
-            network1,
-            fares)
+        errors = validate(network1, fares)
+        self.assertEqual(errors, 1)
+
         
         #Link check cases
         cases = [#Link check, link type should not be one
@@ -46,72 +46,69 @@ class EmmeAssignmentTest(unittest.TestCase):
                   "node2_centroid":False,
                   "link_modes":"haf",
                   "link_type":1,
-                  "link_length":1.0},
+                  "link_length":1.0,
+                  "errors": 1},
                 #Link check, link modes must not be empty
                 {"node1_centroid":False,
                   "node2_centroid":False,
                   "link_modes":"",
                   "link_type":142,
-                  "link_length":1.0},
+                  "link_length":1.0,
+                  "errors": 1},
                 #Link check, link modes must not be just h
                 {"node1_centroid":False,
                   "node2_centroid":False,
                   "link_modes":"h",
                   "link_type":142,
-                  "link_length":1.0},
+                  "link_length":1.0,
+                  "errors": 1},
                 #Link check, if link type is not 70 (vaihtokävely), then length must not be zero
                 {"node1_centroid":False,
                   "node2_centroid":False,
                   "link_modes":"haf",
                   "link_type":142,
-                  "link_length":0},
+                  "link_length":0,
+                  "errors": 1},
                 #Link check, link should not have type 100
                 {"node1_centroid":False,
                   "node2_centroid":False,
                   "link_modes":"haf",
                   "link_type":100,
-                  "link_length":1.0},
+                  "link_length":1.0,
+                  "errors": 1},
                 #Link check, link should not have type 999
                 {"node1_centroid":False,
                   "node2_centroid":False,
                   "link_modes":"haf",
                   "link_type":999,
-                  "link_length":1.0},
+                  "link_length":1.0,
+                  "errors": 1},
                 #Link check, link should not have type 613
                 {"node1_centroid":False,
                   "node2_centroid":False,
                   "link_modes":"hbgde",
                   "link_type":613,
-                  "link_length":1.0},
+                  "link_length":1.0,
+                  "errors": 1},
                 #Link check, link must not directly connect two centroids
                 {"node1_centroid":True,
                   "node2_centroid":True,
                   "link_modes":"haf",
                   "link_type":142,
-                  "link_length":1.0},
+                  "link_length":1.0,
+                  "errors": 3},
                   ]
         node1_id = 800900
         node2_id = 800901
-        for case in cases:
+        for i, case in enumerate(cases):
+            print(f"Link test case {i}")
             self.link_check_network(network0, fares, 
                     node1_id, case["node1_centroid"], 
                     node2_id, case["node2_centroid"], 
                     case["link_modes"],
                     case["link_type"],
-                    case["link_length"])
-    
-        # #Link check, link must have VDF if car link
-        # network = copy.deepcopy(network0)
-        # node1 = network.create_node(node1_id, False)
-        # node2 = network.create_node(node2_id, False)
-        # link = network.create_link(node1_id, node2_id, "hc")
-        # #Check if link type equals 1
-        # link.type = 142
-        # link.length = 1.0
-        # link.volume_delay_func = 0
-        # self.assertRaises(ValueError, validate,
-        #     network,
-        #     fares)   
+                    case["link_length"],
+                    case["errors"])
 
         #Link check, tram link must have right AHT speed
         network = copy.deepcopy(network0)
@@ -122,9 +119,9 @@ class EmmeAssignmentTest(unittest.TestCase):
         link.type = 2
         link.length = 1.0
         link.data1 = 1122 #meaning 001122 - aappii format, refer to network description
-        self.assertRaises(ValueError, validate,
-            network,
-            fares)  
+        errors = validate(network, fares)
+        self.assertEqual(errors, 1)
+  
         
         #Link check, tram link must have right PT speed
         network = copy.deepcopy(network0)
@@ -135,9 +132,9 @@ class EmmeAssignmentTest(unittest.TestCase):
         link.type = 2
         link.length = 1.0
         link.data1 = 220022
-        self.assertRaises(ValueError, validate,
-            network,
-            fares)  
+        errors = validate(network, fares)
+        self.assertEqual(errors, 1)
+ 
         
         #Link check, tram link must have right IHT speed
         network = copy.deepcopy(network0)
@@ -148,9 +145,8 @@ class EmmeAssignmentTest(unittest.TestCase):
         link.type = 2
         link.length = 1.0
         link.data1 = 221100
-        self.assertRaises(ValueError, validate,
-            network,
-            fares) 
+        errors = validate(network, fares)
+        self.assertEqual(errors, 1)
         
         #Segment check, train or metro travel time us1=0 before stopping (noalin=0 or noboan=0)
         # Check line encoding, if row's @ccost=1
@@ -179,9 +175,8 @@ class EmmeAssignmentTest(unittest.TestCase):
         line._segments[0].allow_alightings = 0
         line._segments[1].allow_boardings = 1
         line._segments[1].allow_alightings = 1
-        self.assertRaises(ValueError, validate_loaded,
-            network,
-            fares) 
+        errors = validate(network, fares)
+        self.assertEqual(errors, 5)
         
         #Segment check, train or metro travel time us1 is not 0 before stopping (noalin=1 and noboan=1)
         # Check line encoding, if row's @ccost=1
@@ -210,9 +205,9 @@ class EmmeAssignmentTest(unittest.TestCase):
         line._segments[0].allow_alightings = 0
         line._segments[1].allow_boardings = 0
         line._segments[1].allow_alightings = 0
-        self.assertRaises(ValueError, validate_loaded,
-            network,
-            fares) 
+        errors = validate(network, fares)
+        self.assertEqual(errors, 5)
+ 
 
         #Line check, headway should not be 0,1
         network = copy.deepcopy(network0)
@@ -224,15 +219,15 @@ class EmmeAssignmentTest(unittest.TestCase):
         hdw_attrs = [f"@hw_{tp}" for tp in time_periods]
         for hdwy in hdw_attrs:
             line[hdwy] = 0.001
-        self.assertRaises(ValueError, validate,
-            network,
-            fares) 
+        errors = validate(network, fares)
+        self.assertEqual(errors, 1)
+
         
 
         
     def link_check_network(self, network0, fares, node1_id, 
                            node1_iscentroid, node2_id, node2_iscentroid, 
-                           link_modes, link_type, link_length):
+                           link_modes, link_type, link_length, expected_errors:int):
 
         network = copy.deepcopy(network0)
         node1 = network.create_node(node1_id, node1_iscentroid)
@@ -241,10 +236,8 @@ class EmmeAssignmentTest(unittest.TestCase):
         #Check if link type equals 1
         link.type = link_type
         link.length = link_length
-        self.assertRaises(ValueError, validate,
-            network,
-            fares)
-
+        errors = validate(network, fares)
+        self.assertEqual(errors, expected_errors)
         
 if __name__ == "__main__":
     EmmeAssignmentTest().test_assignment()
