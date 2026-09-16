@@ -439,11 +439,15 @@ class EmmeAssignmentModel(AssignmentModel):
             Area (km2) of noise polluted zone, aggregated to area level
         """
         noise_areas = pandas.Series(0.0, zone_param.area_aggregation)
-        noise_areas_55 = pandas.Series(0.0, zone_param.area_aggregation)
-        noise_areas_80 = pandas.Series(0.0, zone_param.area_aggregation)
+        noise_areas_50_54 = pandas.Series(0.0, zone_param.area_aggregation)
+        noise_areas_55_59 = pandas.Series(0.0, zone_param.area_aggregation)
+        noise_areas_60_64 = pandas.Series(0.0, zone_param.area_aggregation)
+        noise_areas_65_69 = pandas.Series(0.0, zone_param.area_aggregation)
+        noise_areas_70_75 = pandas.Series(0.0, zone_param.area_aggregation)
 
         network = self.day_scenario.get_network()
         morning_network = self.assignment_periods[0].emme_scenario.get_network()
+        highest_gradient_delta = 0.0
         for link in network.links():
             # Aggregate traffic
             light_modes = (
@@ -452,20 +456,24 @@ class EmmeAssignmentModel(AssignmentModel):
                 self._extra("van"),
             )
             traffic = sum([link[mode] for mode in light_modes])
+            heavy = (link[self._extra("truck")]
+                     + link[self._extra("trailer_truck")])
             rlink = link.reverse_link
             if rlink is None:
                 reverse_traffic = 0
+                if traffic+heavy > 0:
+                    heavy_share = heavy / (traffic+heavy)
             else:
                 reverse_traffic = sum([rlink[mode] for mode in light_modes])
+                heavy = heavy + (rlink[self._extra("truck")]
+                                 + rlink[self._extra("trailer_truck")])
+                if traffic+reverse_traffic+heavy > 0:
+                    heavy_share = heavy / (traffic+reverse_traffic+heavy)
             cross_traffic = (param.years_average_day_factor
                              * param.share_7_22_of_day
                              * (traffic+reverse_traffic))
             if cross_traffic < 0.01:
                 continue
-            heavy = (link[self._extra("truck")]
-                     + link[self._extra("trailer_truck")])
-            traffic = max(traffic, 0.01)
-            heavy_share = heavy / (traffic+heavy)
 
             # Calculate speed
             link = morning_network.link(link.i_node, link.j_node)
@@ -515,45 +523,67 @@ class EmmeAssignmentModel(AssignmentModel):
                 start_noise = 0
 
             # Calculate noise increase from road gradient
-            gradient_permille = link["@kaltevuus"]*1000 # @kaltevuus is the proportional gradient, not permille so multiply by 1000
-            delta_L_st = (2*gradient_permille/100)+((3*gradient_permille/100)*log10(1+heavy_share))
+            gradient_permille = abs(link["@kaltevuus"])*10000 # @kaltevuus is the proportional gradient*0.1, not permille so multiply by 10000
+            gradient_permille = min(gradient_permille, 100) # limit to below 100 permille
+            delta_L_st = ((2*gradient_permille)/100)+((3*gradient_permille*log10(1+heavy_share*100))/100)
+            if delta_L_st > highest_gradient_delta:
+                highest_gradient_delta = delta_L_st
+            delta_L_st = min(delta_L_st, 6.0) # limit to 6 dB
             start_noise += delta_L_st
+            func = param.noise_zone_width
+            for interval in func:
+                if interval[0] <= start_noise < interval[1]:
+                    distance_55 = func[interval](start_noise - interval[0])
+                    break            
+
 
             # Calculate noise zone width
-            distance_55 = self._noise_zone_distance(start_noise, threshold=55.0)
-            distance_80 = self._noise_zone_distance(start_noise, threshold=80.0)
+            distance_54 = self._noise_zone_distance(start_noise, threshold=54.0)
+            distance_59 = self._noise_zone_distance(start_noise, threshold=59.0)
+            distance_64 = self._noise_zone_distance(start_noise, threshold=64.0)
+            distance_69 = self._noise_zone_distance(start_noise, threshold=69.0)
+            distance_75 = self._noise_zone_distance(start_noise, threshold=75.0)
 
             # Calculate noise zone area and aggregate to area level
             area = belongs_to_area(link.i_node)
             if area in noise_areas:
                 noise_areas[area] += 0.001 * zone_width * link.length
-            if area in noise_areas_55:
-                noise_areas_55[area] += 0.001 * distance_55 * link.length
-            if area in noise_areas_80:
-                noise_areas_80[area] += 0.001 * distance_80 * link.length
-        
-        return noise_areas, noise_areas_55, noise_areas_80
+                noise_areas_50_54[area] += 0.001 * distance_54 * link.length
+                noise_areas_55_59[area] += 0.001 * distance_59 * link.length
+                noise_areas_60_64[area] += 0.001 * distance_64 * link.length
+                noise_areas_65_69[area] += 0.001 * distance_69 * link.length
+                noise_areas_70_75[area] += 0.001 * distance_75 * link.length
+
+        log.debug("Highest noise gradient delta: {}".format(highest_gradient_delta))
+        return noise_areas, noise_areas_50_54, noise_areas_55_59, noise_areas_60_64, noise_areas_65_69, noise_areas_70_75
 
     def _noise_zone_distance(self, start_noise: float, threshold: float=55.0):
-        """Calculate noise zone width according to Road Traffic Noise Nordic 1996.
-        Attenuation of noise is assumed to be 3 dB per doubling of distance. 
+        """Calculate the distance from a road link where the noise level
+        falls to the requested threshold.
+
+        The repository documentation describes attenuation as 3 dB per
+        doubling of the distance. With a 10 m reference distance, the
+        distance in meters therefore follows
+            10 * 2 ** ((start_noise - threshold) / 3)
+        for any `start_noise >= threshold`, else the distance is 0.
+        However, to try to better match methods that include attenuation from ground and buildings,
+        the attenuation is set to 4 dB instead.
 
         Parameters
         ----------
         start_noise : float
-            Start noise level in dB(A) at 10 m distance
+            Start noise level in dB(A) at 10 m distance.
         threshold : float (optional)
-            Threshold noise level in dB(A), default is 55 dB(A)
+            Threshold noise level in dB(A), default is 55 dB(A).
 
         Returns
         -------
         float
-            Noise zone width in meters
+            Noise zone width in meters.
         """
         if start_noise < threshold:
             return 0.0
-        else:
-            return 10.0 * 10**(0.1 * (start_noise - threshold))
+        return 10.0 * 2 ** ((start_noise - threshold) / 4)
 
     def _link_24h(self, attr: str, day_network=None, period_networks=None,
                  extras=None, publish=True):
