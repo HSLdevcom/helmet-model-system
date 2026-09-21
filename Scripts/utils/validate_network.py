@@ -134,8 +134,8 @@ def validate_links(network):
             msg = f"Link id {link.id} type must not be 100, please refer to the helmet-docs manual"
             log.error(msg)
             errors += 1
-        if link.type == 999:
-            msg = f"Link id {link.id} type must not be 999, please refer to the helmet-docs manual"
+        if link.type > 699:
+            msg = f"Link id {link.id} type must not be greater than 699, please refer to the helmet-docs manual"
             log.error(msg)
             errors += 1
         if link.length > MAX_LINK_LENGTH:
@@ -143,20 +143,20 @@ def validate_links(network):
             log.warn(msg)
         
         linktype = link.type % 100
-        if (linktype != 70 and link.length == 0): 
+        if linktype != 70 and link.length == 0: 
             msg = f"Link {link.id} has zero length. Link length can be zero only if linktype is 70. (vaihtokävelyt)"
             log.error(msg)
             errors += 1
-        if (linktype == 1):
+        if linktype == 1:
             msg = f"Link type 1 for link {link.id}. Link type 1 is out of use in Helmet 4+ versions"
             log.error(msg)
             errors += 1
         for mode in link.modes:  # TODO: Should check all modes, like walking, biking and rail modes
-            if mode.id in param.main_mode: 
+            if mode.id in param.main_mode:  # Mode h, always required
                 continue
-            elif str(mode.id) in "cvkybgdew":
+            elif str(mode.id) in "cvkybgdew":  # Car modes
                 if linktype == None or linktype == 0:
-                    msg = f"Link type missing for link {link.id} with modes {str(link.modes)}"
+                    msg = f"Link type missing for road link {link.id} with modes {str(link.modes)}"
                     log.error(msg)
                     errors += 1
                 if (linktype not in param.roadclasses
@@ -165,19 +165,28 @@ def validate_links(network):
                     log.error(msg)
                     errors += 1
                 break
-        if tram_mode in link.modes or light_rail_mode in link.modes:
-            speedstr = str(int(link.data1)).zfill(6)
-            speed = {
-                "aht": int(speedstr[:-4]),
-                "pt": int(speedstr[-4:-2]),
-                "iht": int(speedstr[-2:]),
-            }
-            for timeperiod in speed:
-                if speed[timeperiod] == 0:
-                    msg = "Speed is zero for time period {} on link {}".format(
-                        timeperiod, link.id)
+            elif str(mode.id) in "tp":  # Tram and light rail modes
+                if linktype == None or linktype == 0:
+                    msg = f"Link type missing for tram link {link.id} with modes {str(link.modes)}"
                     log.error(msg)
                     errors += 1
+                speedstr = str(int(link.data1)).zfill(6)
+                speed = {
+                    "aht": int(speedstr[:-4]),
+                    "pt": int(speedstr[-4:-2]),
+                    "iht": int(speedstr[-2:]),
+                }
+                if link.type not in [2, 5, 6]:
+                    msg = f"Link type {link.type} for link {link.id} with modes {str(link.modes)} is invalid"
+                    log.error(msg)
+                    errors += 1
+                for timeperiod in speed:
+                    if speed[timeperiod] == 0:
+                        msg = "Speed is zero for time period {} on link {}".format(
+                            timeperiod, link.id)
+                        log.error(msg)
+                        errors += 1
+                break
         
         if (link.i_node.is_centroid or link.j_node.is_centroid) and link.type not in param.connector_link_types:
             msg = f"Link {link.id} is a connector and must be one of the connector link types: {param.connector_link_types}"
