@@ -56,6 +56,7 @@ bikepath_vdfs = (
         "collector": 77,
         "arterial": 77,
         "highway": 76,
+        "connector": 98
     },
     {  # 1 - Bike lane
         None: 75,
@@ -106,10 +107,10 @@ vdf_bikes = ("length * (60/((5.max.({} + (el1.lt.0) * (1.56 * el1) +"
              +" (el1.gt.0) * (1.3 * el1))).min.({}*1.3)))")
 vdf_bikes_baana = ("length*(60/((5.max.({} + (el1.lt.0) * (1.56 * el1) +"
                    +" (el1.gt.0) * (1.3 * el1))).min.35))")
-vdf_bikes_mixed_lane = "length * (60/((5.max.(({flat} + (el1.lt.0) * (1.56 * el1) + (el1.gt.0) * (1.3 * el1)) + (-5).max.{vol}.min.5)).min.({flat}*1.5)))"
+vdf_bikes_mixed_lane = "length * (60/((5.max.(({flat} + (el1.lt.0) * (1.56 * el1) + (el1.gt.0) * (1.3 * el1)) + ((-5).max.{vol}.min.5))).min.({flat}*1.3)))"
 
-b_volume_lane = "(-1.962 * ln(4*(el2+el3+el4+el5+el6+10)/1000) * 0.689)"
-b_volume_mixed = "(-1.962 * ln(4*(el2+el3+el4+el5+el6+10)/1000) * 0.807)"
+b_volume_lane = "(-1.273 * ln(8.3*(el2+el3+el4+el5+el6+10)/1000))"
+b_volume_mixed = "(-1.583 * ln(16.6*(el2+el3+el4+el5+el6+10)/1000))"
 volume_delay_funcs = {
     # Car functions
     "fd1": vdf_temp.format(0.02, "lanes", 0.975, 1.78, 0.0075),

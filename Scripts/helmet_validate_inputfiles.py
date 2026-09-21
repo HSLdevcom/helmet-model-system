@@ -111,7 +111,7 @@ def validate_database_extra_attrs_size(emmebank, scenario_id, separate_emme_scen
     nr_vehicle_classes = len(param.emme_matrices)
     nr_new_attr = {
         "nodes": nr_transit_classes * (nr_segment_results-1),
-        "links": nr_vehicle_classes + 4,
+        "links": nr_vehicle_classes + 5,  # 5 extra attributes for car assignment (total_cost, toll_cost, car_time, bike_time, aux_transit)
         "transit_lines": 0,
         "transit_segments": nr_transit_classes*nr_segment_results + 1,
     }
