@@ -31,12 +31,14 @@ TRANSIT_AGGREGATIONS = {
     "trunk": ("HSL-runkob","nivelbussi"),
     "train": ("HSL-juna-2", "muu_juna", "HSL-juna-1", "HSL-juna-3"),
     "tram": ("ratikka", "pikaratikk"),
+    "metro": ("metro", ),
 }
 TRANSIT_AGGREGATIONS_FALLBACK = {
     "bus": ("HSL-bussi", "ValluVakio", "ValluPika"),
     "trunk": ("HSL-runkob", ),
     "train": ("HSL-juna", "muu_juna"),
     "tram": ("ratikka", "pikaratikk"),
+    "metro": ("metro", ),
 }
 
 TRANSLATIONS = {
@@ -196,6 +198,10 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
         Table of zone-wise consumer surplus results
         (travel time, travel cost, distance, revenue)
     """
+    # Vehicles that can be skipped for the aggregation check.
+    # Should be taken into account in special occasions, such as scenarios with major ferry traffic.
+    missing_vehicle_whitelist = ["lautta"]
+
     if year not in (1, 2):
         raise ValueError("Evaluation year must be either 1 or 2")
     log.info("Analyse year {}...".format(year))
@@ -216,7 +222,17 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
     ws[CELL_INDICES["noise"][year]] = sum(noise_diff["population"])
 
     transit_vehicle_kms_tables = [read(TRANSIT_KMS_FILE, scenario_0), read(TRANSIT_KMS_FILE, scenario_1)]
-    for transit_vehicle_kms in transit_vehicle_kms_tables:
+    for i, transit_vehicle_kms in enumerate(transit_vehicle_kms_tables):
+        missing_vehicle = False
+        log.debug(f"Transit vehicle mileages for scenario {scenario_0 if i == 0 else scenario_1}:")
+        for vehicle, values in transit_vehicle_kms.iterrows():
+            log.debug(f"{vehicle} mileage:\t{values['dist']:.2f} km")
+            if values['dist'] > 0 and vehicle not in {submode for submodes in TRANSIT_AGGREGATIONS.values() for submode in submodes}:
+                if vehicle not in missing_vehicle_whitelist:
+                    log.error(f"Transit vehicle {vehicle} is used but is not included in the aggregation dictionary. Add the vehicle to the TRANSIT_AGGREGATIONS dictionary in cba.py")
+                    missing_vehicle = True
+        if missing_vehicle:
+            raise KeyError("Missing transit vehicle(s) in TRANSIT_AGGREGATIONS dictionary. See log for details.")
         if all(submode in transit_vehicle_kms.index for submodes in TRANSIT_AGGREGATIONS.values() for submode in submodes):
             transit_aggs = TRANSIT_AGGREGATIONS
         else:
