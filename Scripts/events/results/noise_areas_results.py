@@ -37,10 +37,33 @@ class NoiseAreasResults(ModelSystemEventListener):
             self._calculate_noise_areas()
 
     def _calculate_noise_areas(self):
-        noise_areas = self.ms.ass_model.calc_noise()
-        self.ms.resultdata.print_data(noise_areas, "noise_areas.txt", "area")
+        noise_areas, noise_areas_50_, noise_areas_55_, noise_areas_60_, noise_areas_65_, noise_areas_70_75 = self.ms.ass_model.calc_noise()
+        # Since areas include each other, we need to subtract the smaller areas 
+        # from the larger ones to get the population only within the specific noise range.
+        noise_areas_50_54 = noise_areas_50_ - (noise_areas_55_ + noise_areas_60_ + noise_areas_65_ + noise_areas_70_75)
+        noise_areas_55_59 = noise_areas_55_ - (noise_areas_60_ + noise_areas_65_ + noise_areas_70_75)
+        noise_areas_60_64 = noise_areas_60_ - (noise_areas_65_ + noise_areas_70_75)
+        noise_areas_65_69 = noise_areas_65_ - (noise_areas_70_75)
+        self.ms.resultdata.print_data(noise_areas, "noise_areas.txt", "area_old")
+        self.ms.resultdata.print_data(noise_areas_50_54, "noise_areas.txt", "area_50_54")
+        self.ms.resultdata.print_data(noise_areas_55_59, "noise_areas.txt", "area_55_59")
+        self.ms.resultdata.print_data(noise_areas_60_64, "noise_areas.txt", "area_60_64")
+        self.ms.resultdata.print_data(noise_areas_65_69, "noise_areas.txt", "area_65_69")
+        self.ms.resultdata.print_data(noise_areas_70_75, "noise_areas.txt", "area_70_75")
         ar = ArrayAggregator(self.ms.zdata_forecast.zone_numbers)
         pop = ar.aggregate(self.ms.zdata_forecast["population"])
         conversion = pd.Series(zone_param.pop_share_per_noise_area)
         noise_pop = conversion * noise_areas * pop
-        self.ms.resultdata.print_data(noise_pop, "noise_areas.txt", "population")
+        noise_pop_50_54 = conversion * noise_areas_50_54 * pop
+        noise_pop_55_59 = conversion * noise_areas_55_59 * pop
+        noise_pop_60_64 = conversion * noise_areas_60_64 * pop
+        noise_pop_65_69 = conversion * noise_areas_65_69 * pop
+        noise_pop_70_75 = conversion * noise_areas_70_75 * pop
+        noise_pop_total = noise_pop_50_54 + noise_pop_55_59 + noise_pop_60_64 + noise_pop_65_69 + noise_pop_70_75
+        self.ms.resultdata.print_data(noise_pop, "noise_areas.txt", "population_old")
+        self.ms.resultdata.print_data(noise_pop_50_54, "noise_areas.txt", "population_50_54")
+        self.ms.resultdata.print_data(noise_pop_55_59, "noise_areas.txt", "population_55_59")
+        self.ms.resultdata.print_data(noise_pop_60_64, "noise_areas.txt", "population_60_64")
+        self.ms.resultdata.print_data(noise_pop_65_69, "noise_areas.txt", "population_65_69")
+        self.ms.resultdata.print_data(noise_pop_70_75, "noise_areas.txt", "population_70_75")
+        self.ms.resultdata.print_data(noise_pop_total, "noise_areas.txt", "population_total")
