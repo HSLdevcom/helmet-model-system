@@ -34,6 +34,7 @@ class Person:
     person_attr = ["id", "age_group", "gender", "is_car_user", "income"]
     zone_attr =  ["number", "area", "municipality"]
     attr = person_attr + zone_attr
+    wage_index_2018_2023 = 1.138 #StatFin, Wage index 2018-2023
     
     def __init__(self, 
                  zone: Zone, 
@@ -73,6 +74,7 @@ class Person:
                 log_income += param["age_dummies"][self.age_group]
             log_income += random.gauss(0, param["standard_deviation"])
             self.income = numpy.exp(log_income)
+            self.income *= Person.wage_index_2018_2023
 
     @property
     def gender(self) -> str:
