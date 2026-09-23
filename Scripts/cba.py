@@ -378,12 +378,19 @@ def calc_gains(demands, costs):
     demand_change = demands["scen_1"] - demands["scen_0"]
     demand_incr = demand_change >= 0
     demand_decr = demand_change < 0
+    #hotfix for park and ride facilities
+    gain_possible = gain < 1000
+    demand_incr = numpy.logical_and(demand_incr, gain_possible)
+    demand_decr = numpy.logical_and(demand_decr, gain_possible)
     gains_existing = numpy.zeros_like(demand_change)
     gains_existing[demand_incr] = (demands["scen_0"]*gain)[demand_incr]
     gains_existing[demand_decr] = (demands["scen_1"]*gain)[demand_decr]
     gains_additional = numpy.zeros_like(demand_change)
     gains_additional[demand_incr] = 0.5*(demand_change*gain)[demand_incr]
     gains_additional[demand_decr] = -0.5*(demand_change*gain)[demand_decr]
+    if gains_additional.sum() > 1e9: 
+        log.warn("Gains for additional users are very high: {:.2f} €".format(gains_additional.sum()))
+        exit()
     return gains_existing.sum(0), gains_additional.sum(0)
 
 
@@ -411,6 +418,10 @@ def calc_revenue(demands, costs):
     demand_change = demands["scen_1"] - demands["scen_0"]
     demand_incr = demand_change >= 0
     demand_decr = demand_change < 0
+    #hotfix for areas, where base cost does not make sense (e.g. park and ride facilities)
+    if type(costs["scen_0"]) == numpy.ndarray:
+        costs["scen_0"][costs["scen_0"] > 1e3] = 0
+        costs["scen_1"][costs["scen_1"] > 1e3] = 0 
     cost_change = costs["scen_1"] - costs["scen_0"]
     revenue = numpy.zeros_like(demand_change)
     revenue[demand_incr] = ((costs["scen_1"]*demand_change)[demand_incr]
