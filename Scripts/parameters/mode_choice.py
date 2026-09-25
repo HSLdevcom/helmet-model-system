@@ -685,7 +685,7 @@ mode_choice = {
     },
     "wh": {
         "car": {
-            "constant": (0.23100097186810603, 0.208565625679477),
+            "constant": (0.0, 0.16722762461943327),
             "generation": {
 
             },
@@ -696,14 +696,14 @@ mode_choice = {
 
             },
             "log": {
-                "logsum": 0.830938747727
+                "logsum": 0.884331048466
             },
             "individual_dummy": {
 
             }
         },
         "transit": {
-            "constant": (2.6998874096268315, 2.3484376591912706),
+            "constant": (3.8193799368103605, 3.585180484302631),
             "generation": {
 
             },
@@ -714,14 +714,14 @@ mode_choice = {
 
             },
             "log": {
-                "logsum": 0.830938747727
+                "logsum": 0.884331048466
             },
             "individual_dummy": {
 
             }
         },
         "bike": {
-            "constant": (3.148907265438679, 3.6170161206362916),
+            "constant": (3.163321706084375, 4.035304380321256),
             "generation": {
 
             },
@@ -732,14 +732,14 @@ mode_choice = {
 
             },
             "log": {
-                "logsum": 0.830938747727
+                "logsum": 0.884331048466
             },
             "individual_dummy": {
 
             }
         },
         "walk": {
-            "constant": (5.184886160179416, 5.072700877314392),
+            "constant": (4.9065912897381, 5.229553351275655),
             "generation": {
 
             },
@@ -750,7 +750,7 @@ mode_choice = {
 
             },
             "log": {
-                "logsum": 0.830938747727
+                "logsum": 0.884331048466
             },
             "individual_dummy": {
 
