@@ -51,7 +51,14 @@ class MatrixPrinting(ModelSystemEventListener):
         self.purpose = purpose
             
     def on_time_period_assigned(self, iteration, ap, impedance, tp, previous_iter_impedance):
-        if iteration=="last" and param.always_congested:     
+        if iteration == "last":
+            transit_classes = (
+                param.transit_classes if param.always_congested
+                else ("transit_work",)
+            )
+            for ass_class in transit_classes:
+                impedance["time"][f"transit_{ass_class}_avg_boardings"] = ap._get_matrix(ass_class, "avg_boardings")
+        if iteration=="last" and param.always_congested:
             self._save_to_omx(impedance, tp)
         elif iteration=="last":
             impedance["time"]["transit_uncongested"] = previous_iter_impedance[tp]["time"]["transit_work"]
