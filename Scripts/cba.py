@@ -219,7 +219,7 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
 
     # Calculate noise effect difference
     noise_diff = read(NOISE_FILE, scenario_1) - read(NOISE_FILE, scenario_0)
-    ws[CELL_INDICES["noise"][year]] = sum(noise_diff["population"])
+    ws[CELL_INDICES["noise"][year]] = sum(noise_diff["population_old"])
 
     transit_vehicle_kms_tables = [read(TRANSIT_KMS_FILE, scenario_0), read(TRANSIT_KMS_FILE, scenario_1)]
     for i, transit_vehicle_kms in enumerate(transit_vehicle_kms_tables):
