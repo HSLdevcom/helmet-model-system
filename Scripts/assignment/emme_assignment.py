@@ -549,8 +549,7 @@ class EmmeAssignmentModel(AssignmentModel):
         log.debug("Highest noise gradient delta: {}".format(highest_gradient_delta))
         return noise_areas, noise_areas_50_54, noise_areas_55_59, noise_areas_60_64, noise_areas_65_69, noise_areas_70_75
 
-    def _noise_zone_distance(
-        self,
+    def _noise_zone_distance(self,
         start_noise: float,
         threshold: float = 50.0,
         reference_distance: float = 10.0,
@@ -560,6 +559,11 @@ class EmmeAssignmentModel(AssignmentModel):
         max_distance: float = 10_000.0,
     ) -> float:
         """
+        Calculate the distance at which noise falls to `threshold`.
+
+        The attenuation rate changes smoothly from
+        `near_db_per_doubling` near the reference distance to
+        `far_db_per_doubling` at long distances.
         Calculate the distance at which noise falls to `threshold`.
 
         The attenuation rate changes smoothly from
@@ -654,32 +658,6 @@ class EmmeAssignmentModel(AssignmentModel):
 
         return (lower + upper) / 2.0
 
-
-    # def _noise_zone_distance(self, start_noise: float, threshold: float=55.0):
-    #     """Calculate the distance from a road link where the noise level
-    #     falls to the requested threshold.
-
-    #     We're assuming the attenuation as 3 dB per
-    #     doubling of the distance, as per the Nordic model's specification.
-    #     With a 10 m reference distance, the
-    #     distance in meters therefore follows
-    #         10 * 2 ** ((start_noise - threshold) / 3)
-
-    #     Parameters
-    #     ----------
-    #     start_noise : float
-    #         Start noise level in dB(A) at 10 m distance.
-    #     threshold : float (optional)
-    #         Threshold noise level in dB(A), default is 55 dB(A).
-
-    #     Returns
-    #     -------
-    #     float
-    #         Noise zone width in meters.
-    #     """
-    #     if start_noise < threshold:
-    #         return 0.0
-    #     return 10.0 * 2 ** ((start_noise - threshold) / 3)
 
     def _link_24h(self, attr: str, day_network=None, period_networks=None,
                  extras=None, publish=True):
