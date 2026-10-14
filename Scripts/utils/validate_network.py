@@ -346,11 +346,11 @@ def validate_transit(network):
                 if (seg1.allow_boardings == 1 or seg1.allow_alightings == 1):
                     ui2_code = seg1.i_node.data2
                     if line.mode.id == "m" and ui2_code != 13:
-                        msg = f"Node {seg1.node.id} is a metro station, but the ui2 value is {ui2_code}. It should be 13 for metro stops for CBA to work."
+                        msg = f"Node {seg1.i_node.id} is a metro station, but the ui2 value is {ui2_code}. It should be 13 for metro stops for CBA to work."
                         log.error(msg)
                         errors += 1
                     elif line.mode.id in "rj" and ui2_code != 14:
-                        msg = f"Node {seg1.node.id} is a rail station, but the ui2 value is {ui2_code}. It should be 14 for rail stops for CBA to work."
+                        msg = f"Node {seg1.i_node.id} is a rail station, but the ui2 value is {ui2_code}. It should be 14 for rail stops for CBA to work."
                         log.error(msg)
                         errors += 1
         try:  # Only check for custom line issues if it is being used
