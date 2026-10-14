@@ -381,8 +381,8 @@ class AssignmentPeriod(Period):
                     is_custom = segment.line['@custom_line'] == 1
                 except KeyError:
                     is_custom = False
-                if is_custom and segment.data3 > 0:                    # Turn user set data3 km/h value to model systems min/km data2 value
-                    segment.data2 = 60/segment.data3
+                if is_custom and segment.data1 > 0:                    # Turn user set data1 km/h value to model systems min/km data2 value
+                    segment.data2 = 60/segment.data1
                     segment.transit_time_func = funcs["buslane"]
                 else:     
                     segment.transit_time_func = func

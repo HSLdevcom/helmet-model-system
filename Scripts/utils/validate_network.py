@@ -353,13 +353,19 @@ def validate_transit(network):
                 log.error(msg)
                 errors += 1
             if line["@custom_line"] == 1:
+                if line.mode.id not in "bgde":
+                    msg = "Line {} has @custom_line set to 1, but it is not a bus line.".format(line.id)
+                    log.error(msg)
+                    errors += 1
                 for segment in line.segments():
-                    if segment.data3 > 120 or segment.data3 < 0:
-                        msg = f"Segment {segment.id} of line {line.id} has @custom_line set to 1 and ul3 (segment speed) set to {segment.data3} km/h. The speed must be between 1 and 120 km/h. Set the speed to 0 to follow the speed of other lines of the same type."
+                    if segment.data1 == 0:
+                        continue  # Speed of 0 is allowed, as it means the speed of other lines of the same type is used
+                    if segment.data1 > 120 or segment.data1 < 0:
+                        msg = f"Segment {segment.id} of line {line.id} has @custom_line set to 1 and us1 (segment speed) set to {segment.data1} km/h. The speed must be between 1 and 120 km/h. Set the speed to 0 to follow the speed of other lines of the same type."
                         log.error(msg)
                         errors += 1
-                    elif segment.data3 > 100 or segment.data3 < 10:
-                        msg = f"Segment {segment.id} of line {line.id} has @custom_line set to 1 and ul3 (segment speed) set to {segment.data3} km/h. The speed is outside the recommended range of 10-100 km/h."
+                    elif segment.data1 > 100 or segment.data1 < 10:
+                        msg = f"Segment {segment.id} of line {line.id} has @custom_line set to 1 and us1 (segment speed) set to {segment.data1} km/h. The speed is outside the recommended range of 10-100 km/h."
                         log.warn(msg)
         except KeyError:
             pass
