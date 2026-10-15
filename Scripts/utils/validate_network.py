@@ -187,7 +187,7 @@ def validate_links(network):
                         log.error(msg)
                         errors += 1
                 break
-        
+            # Metro and rail stops are checked in transit validation
         if (link.i_node.is_centroid or link.j_node.is_centroid) and link.type not in param.connector_link_types:
             msg = f"Link {link.id} is a connector and must be one of the connector link types: {param.connector_link_types}"
             log.error(msg)
@@ -343,6 +343,16 @@ def validate_transit(network):
                     msg = "Segment id {} must have zero speed if the next segment forbids boarding/alighting.".format(seg1.id)
                     log.error(msg)
                     errors += 1
+                if (seg1.allow_boardings == 1 or seg1.allow_alightings == 1):
+                    ui2_code = seg1.i_node.data2
+                    if line.mode.id == "m" and ui2_code != 13:
+                        msg = f"Node {seg1.i_node.id} is a metro station, but the ui2 value is {ui2_code}. It should be 13 for metro stops for CBA to work."
+                        log.error(msg)
+                        errors += 1
+                    elif line.mode.id in "rj" and ui2_code != 14:
+                        msg = f"Node {seg1.i_node.id} is a rail station, but the ui2 value is {ui2_code}. It should be 14 for rail stops for CBA to work."
+                        log.error(msg)
+                        errors += 1
         try:  # Only check for custom line issues if it is being used
             if line["@custom_line"] not in [0, 1]:
                 msg = "Line {} has @custom_line extra attribute set to {}. If used, it must be either 0 or 1.".format(line.id, line["@custom_line"])
@@ -353,13 +363,19 @@ def validate_transit(network):
                 log.error(msg)
                 errors += 1
             if line["@custom_line"] == 1:
+                if line.mode.id not in "bgde":
+                    msg = "Line {} has @custom_line set to 1, but it is not a bus line.".format(line.id)
+                    log.error(msg)
+                    errors += 1
                 for segment in line.segments():
-                    if segment.data3 > 120 or segment.data3 < 0:
-                        msg = f"Segment {segment.id} of line {line.id} has @custom_line set to 1 and ul3 (segment speed) set to {segment.data3} km/h. The speed must be between 1 and 120 km/h. Set the speed to 0 to follow the speed of other lines of the same type."
+                    if segment.data1 == 0:  # Follow the normal speed of other bus lines on the link
+                        continue
+                    if segment.data1 > 120 or segment.data1 < 0:
+                        msg = f"Segment {segment.id} of line {line.id} has @custom_line set to 1 and us1 (segment speed) set to {segment.data1} km/h. The speed must be between 1 and 120 km/h. Set the speed to 0 to follow the speed of other lines of the same type."
                         log.error(msg)
                         errors += 1
-                    elif segment.data3 > 100 or segment.data3 < 10:
-                        msg = f"Segment {segment.id} of line {line.id} has @custom_line set to 1 and ul3 (segment speed) set to {segment.data3} km/h. The speed is outside the recommended range of 10-100 km/h."
+                    elif segment.data1 > 100 or segment.data1 < 10:
+                        msg = f"Segment {segment.id} of line {line.id} has @custom_line set to 1 and us1 (segment speed) set to {segment.data1} km/h. The speed is outside the recommended range of 10-100 km/h."
                         log.warn(msg)
         except KeyError:
             pass
@@ -599,7 +615,7 @@ def validate_network_connectivity(_m, app, emmebank, scenario):
                 diff_d = scenario.zone_numbers[diff_pair[1]]
                 msg = "Network connectivity check failed for {mode}. The following zone pairs are not connected as expected: {diff_pair}".format(
                     mode=mode, diff_pair=[diff_s,diff_d])
-                #Make errors as useful as possible
+                # Make errors as useful as possible
                 if diff_s not in missed_zones:
                     missed_zones[diff_s] = 1
                 else:
