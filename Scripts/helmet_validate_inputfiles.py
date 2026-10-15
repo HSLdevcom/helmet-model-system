@@ -27,68 +27,41 @@ def main(args):
     do_not_use_emme: bool = args.do_not_use_emme
     if not do_not_use_emme:
         separate_emme_scenarios: bool = args.separate_emme_scenarios
+        network_connectivity_validation: bool = not args.skip_test_network_connectivity
     else: 
         separate_emme_scenarios = False
+        network_connectivity_validation = False
     results_path: str = args.results_path
     scenario_name: str = args.scenario_name
-    # Validation
-    errors = 0
-    errors += validate_arguments(emme_paths, first_scenario_ids, forecast_zonedata_paths)
+
+    # Project wide validation
+    scenario_errors = { scenario_id: 0 for scenario_id in first_scenario_ids }
+    scenario_errors.update({"general": 0})
+    scenario_errors["general"] += validate_arguments(emme_paths, first_scenario_ids, forecast_zonedata_paths)
     base_input_errors, zone_numbers = validate_base_input_data(base_zonedata_path, base_matrices_path, emme_paths, first_scenario_ids, results_path, scenario_name, do_not_use_emme)
     if zone_numbers is None:
-        msg = f"Zone numbers could not be determined from EMME or MockAssignmentModel, cannot continue with validation. Input file validation failed with {errors} error(s)."
+        msg = f"Zone numbers could not be determined from EMME or MockAssignmentModel, cannot continue with validation. Input file validation failed with {scenario_errors['general']} error(s)."
         log.error(msg)
         raise ValueError(msg)
-    errors += base_input_errors
-    scenario_input_errors, different_zones = validate_scenario_input_data(emme_paths, first_scenario_ids, forecast_zonedata_paths, zone_numbers, do_not_use_emme, separate_emme_scenarios)
-    errors += scenario_input_errors
+    scenario_errors["general"] += base_input_errors
+
+    # Scenario specific validation
+    scenario_errors, different_zones = validate_scenario_input_data(emme_paths, first_scenario_ids, forecast_zonedata_paths, zone_numbers, do_not_use_emme, separate_emme_scenarios, network_connectivity_validation, scenario_errors)
     # Different zones logged separately here to prevent it being printed for every scenario
     if different_zones:
         log.warn("Scenarios with different zones found in EMME bank! Matrices will not be compatible between scenarios with different zones.")
-    if errors > 0:
-        msg = f"Scenario validation failed with {errors} error(s)."
-        log.error(msg)
-        raise ValueError(msg)            
-    log.info("Successfully validated all input files")
-    log.info("Validating scenario networks...")
-    if not do_not_use_emme: #can use emme
-        for i, emp_path in enumerate(emme_paths):
-            scenario_id = first_scenario_ids[i]
-            forecast_zonedata = ZoneData(forecast_zonedata_paths[i], zone_numbers)
-            validate_scenario_network(emp_path, scenario_id, forecast_zonedata)
-            if not args.skip_test_network_connectivity:
-                #We need subprocess because only allows one modeller instance per process. At the same time, the modeller is tied to the project, so this is necessary to keep it flexible.
-                log.info("Running network connectivity validation for scenario {} in project {}".format(scenario_id, emp_path))
-                subprocess.run(
-                    [
-                        sys.executable,
-                        os.path.abspath(__file__),
-                        "--validate-network-connectivity",
-                        "--emme-path",
-                        emp_path,
-                        "--scenario-id",
-                        str(scenario_id),
-                    ],
-                    check=True,
-                )
-    else:
-        for i, emp_path in enumerate(emme_paths):
-            scenario_id = first_scenario_ids[i]
-            forecast_zonedata = ZoneData(forecast_zonedata_paths[i], zone_numbers)
+
+    for scenario_id, errors in scenario_errors.items():
+        if errors > 0:
+            if scenario_id == "general":
+                log.error(f"Base input file validation failed with {errors} error(s).")
+            else:
+                log.error(f"Validation for scenario #{scenario_id} failed with {errors} error(s).")
+    if sum(scenario_errors.values()) > 0:
+        raise ValueError(f"Validation failed with {sum(scenario_errors.values())} error(s).")
+
 
     log.info("Successfully validated all scenario networks")
-
-def validate_scenario_network(emp_path, scenario_id, forecast_zonedata):
-    with open_emme(emp_path) as (app, _m):
-        emmebank = app.data_explorer().active_database().core_emmebank
-        scenario = emmebank.scenario(scenario_id)
-        if scenario is None:
-            msg = "Project {} has no scenario {}".format(emp_path, scenario_id)
-            log.error(msg)
-            raise ValueError(msg)
-        # NOTE: validate_network.validate() will not go through all scenarios if errors are found in one of them
-        validate(scenario.get_network(), forecast_zonedata.transit_zone)
-        emmebank.dispose()
 
 def validate_arguments(emme_paths, first_scenario_ids, forecast_zonedata_paths):
     errors = 0
@@ -106,7 +79,140 @@ def validate_arguments(emme_paths, first_scenario_ids, forecast_zonedata_paths):
         errors += 1
     return errors
 
-def validate_database_extra_attrs_size(emmebank, scenario_id, separate_emme_scenarios):
+def validate_base_input_data(base_zonedata_path, base_matrices_path, emme_paths, first_scenario_ids, results_path, scenario_name, do_not_use_emme):
+    errors = 0
+    zone_numbers = None
+    log.info("Checking base inputdata...")
+    # Check filepaths (& first .emp path for zone_numbers in base zonedata)
+    if not os.path.exists(base_zonedata_path):
+        msg = "Baseline zonedata directory '{}' does not exist.".format(
+            base_zonedata_path)
+        log.error(msg)
+        errors += 1
+    if not os.path.exists(base_matrices_path):
+        msg = "Baseline matrices' directory '{}' does not exist.".format(
+            base_matrices_path)
+        log.error(msg)
+        errors += 1
+    
+    # Get zone numbers for base zonedata validation, either from EMME or from MockAssiginmentModel
+    if do_not_use_emme:
+        mock_result_path = os.path.join(
+            results_path, scenario_name, "Matrices")
+        if not os.path.exists(mock_result_path):
+            msg = "Mock Results directory {} does not exist.".format(
+                mock_result_path)
+            log.error(msg)
+            errors += 1
+        assignment_model = MockAssignmentModel(MatrixData(mock_result_path))
+        zone_numbers = assignment_model.zone_numbers
+    else:
+        emme_to_scenarios = join_emme_paths_to_scenarios(emme_paths, first_scenario_ids)
+        for emp_path, scenario_ids in emme_to_scenarios.items():
+            if not os.path.isfile(emp_path):
+                msg = ".emp project file not found in given '{}' location.".format(
+                    emp_path)
+                log.error(msg)
+                errors += 1
+            with open_emme(emp_path) as (app,_):
+                log.debug(f"Emme version: {app.version}")
+                for scenario_id in scenario_ids:
+                    scen = app.data_explorer().active_database().core_emmebank.scenario(
+                        scenario_id)
+                    if scen is None:
+                        msg = "Project {} has no scenario {}".format(emp_path, scenario_id)
+                        log.error(msg)
+                        errors += 1
+                    else:
+                        base_zonedata = ZoneData(base_zonedata_path, scen.zone_numbers)
+                        if zone_numbers is None:
+                            zone_numbers = scen.zone_numbers
+    # Check base matrices
+    try: 
+        matrixdata = MatrixData(base_matrices_path)
+        for tp in param.time_periods:
+            with matrixdata.open("demand", tp, zone_numbers) as mtx:
+                for ass_class in param.transport_classes:
+                    a = mtx[ass_class]
+    except Exception as e:
+        msg = f"Error reading base matrices: {e}"
+        log.error(msg)
+        errors += 1
+    
+    return errors, zone_numbers
+
+
+def validate_scenario_input_data(emme_paths, first_scenario_ids, forecast_zonedata_paths, zone_numbers, do_not_use_emme, separate_emme_scenarios, network_connectivity_validation: bool, scenario_errors: dict):
+    # Check scenario based input data
+    log.info("Checking input data and network(s) for scenario(s)...")
+    different_zones = False 
+    if do_not_use_emme:
+        for scenario_id, forecast_zonedata_path in zip(first_scenario_ids, forecast_zonedata_paths):
+            log.info(f"Checking input data for the {number_to_ordinal(first_scenario_ids.index(scenario_id)+1)} scenario #{scenario_id} ...")
+            if not os.path.exists(forecast_zonedata_path):
+                log.error(f"Forecast data directory '{forecast_zonedata_path}' does not exist.")
+                scenario_errors[scenario_id] += 1
+            forecast_zonedata = ZoneData(forecast_zonedata_path, zone_numbers)
+    else:
+        emme_to_scenarios = join_emme_paths_to_scenarios(emme_paths, first_scenario_ids, forecast_zonedata_paths)
+        for emp_path, scenario_info in emme_to_scenarios.items():
+            with open_emme(emp_path) as (app,_m):
+                modeller = _m.Modeller(app)
+                emmebank = app.data_explorer().active_database().core_emmebank
+                for scenario_id, forecast_zonedata_path in scenario_info:
+                    log.info(f"Checking input data for the {number_to_ordinal(first_scenario_ids.index(scenario_id)+1)} scenario #{scenario_id} ...")
+                    if not os.path.exists(forecast_zonedata_path):
+                        log.error(f"Forecast data directory '{forecast_zonedata_path}' does not exist.")
+                        scenario_errors[scenario_id] += 1
+                    forecast_zonedata = ZoneData(forecast_zonedata_path, zone_numbers)
+
+                    scenario = emmebank.scenario(scenario_id)
+                    if scenario is None:
+                        log.error(f"Project {emp_path} has no scenario {scenario_id}")
+                        scenario_errors[scenario_id] += 1
+                    scenario_errors[scenario_id] += validate_database_extra_attrs_size(emmebank, scenario, separate_emme_scenarios)
+                    
+                    # Check if scenario name is too long
+                    sc_name = scenario.title
+                    if len(sc_name)>56 and separate_emme_scenarios:
+                        msg = "Scenario name: {} too long, time period extension might exceed Emme's 60 characters limit.".format(
+                            sc_name)
+                        log.error(msg)
+                        scenario_errors[scenario_id] += 1
+
+                    # Check if emmebank has scenarios with different zone numbers
+                    scenarios_with_different_zones = 0
+                    for scen in emmebank.scenarios():
+                        compared_zone_numbers = scen.zone_numbers
+                        if len(compared_zone_numbers) < 1:  # Skip empty scenarios
+                            continue
+                        if compared_zone_numbers != zone_numbers:
+                            scenarios_with_different_zones += 1
+                    if scenarios_with_different_zones > 0:
+                        different_zones = True
+                    scen = emmebank.scenario(scenario_id)
+                    if scen is None:
+                        msg = "Project {} has no scenario {}".format(emp_path, scenario_id)
+                        log.error(msg)
+                        scenario_errors[scenario_id] += 1
+                    elif scen.zone_numbers != zone_numbers:
+                        msg = "Zone numbers do not match for EMME scenario {}".format(
+                            scen.id)
+                        log.error(msg)
+                        scenario_errors[scenario_id] += 1
+                    log.info(f"Validating network for the {number_to_ordinal(first_scenario_ids.index(scenario_id)+1)} scenario #{scenario_id} ...")
+                    network_errors = validate(scen.get_network(), forecast_zonedata.transit_zone)
+                    if network_errors > 0:
+                        log.error(f"Network validation for scenario #{scenario_id} failed with {network_errors} errors.")
+                        scenario_errors[scenario_id] += network_errors
+                    if network_connectivity_validation:
+                        connectivity_errors = validate_network_connectivity(modeller, emmebank, scenario)
+                        scenario_errors[scenario_id] += connectivity_errors
+
+    return scenario_errors, different_zones
+
+
+def validate_database_extra_attrs_size(emmebank, scenario, separate_emme_scenarios):
     errors = 0
     # Count extra attributes and their space requirements
     nr_attr = {
@@ -119,7 +225,7 @@ def validate_database_extra_attrs_size(emmebank, scenario_id, separate_emme_scen
         "transit_segments": 0,
     }
 
-    for extra_attribute in emmebank.scenario(scenario_id).extra_attributes():
+    for extra_attribute in scenario.extra_attributes():
         if extra_attribute.type == "NODE":
             nr_attr["nodes"] += 1
         elif extra_attribute.type == "LINK":
@@ -166,127 +272,6 @@ def validate_database_extra_attrs_size(emmebank, scenario_id, separate_emme_scen
         return errors
     return errors
 
-def validate_base_input_data(base_zonedata_path, base_matrices_path, emme_paths, first_scenario_ids, results_path, scenario_name, do_not_use_emme):
-    errors = 0
-    zone_numbers = None
-    log.info("Checking base inputdata...")
-    # Check filepaths (& first .emp path for zone_numbers in base zonedata)
-    if not os.path.exists(base_zonedata_path):
-        msg = "Baseline zonedata directory '{}' does not exist.".format(
-            base_zonedata_path)
-        log.error(msg)
-        errors += 1
-    if not os.path.exists(base_matrices_path):
-        msg = "Baseline matrices' directory '{}' does not exist.".format(
-            base_matrices_path)
-        log.error(msg)
-        errors += 1
-    
-    # Get zone numbers for base zonedata validation, either from EMME or from MockAssiginmentModel
-    if do_not_use_emme:
-        mock_result_path = os.path.join(
-            results_path, scenario_name, "Matrices")
-        if not os.path.exists(mock_result_path):
-            msg = "Mock Results directory {} does not exist.".format(
-                mock_result_path)
-            log.error(msg)
-            errors += 1
-        assignment_model = MockAssignmentModel(MatrixData(mock_result_path))
-        zone_numbers = assignment_model.zone_numbers
-    else:
-        emp_path = emme_paths[0]
-        if not os.path.isfile(emp_path):
-            msg = ".emp project file not found in given '{}' location.".format(
-                emp_path)
-            log.error(msg)
-            errors += 1
-        with open_emme(emp_path) as (app,_):
-            log.debug(f"Emme version: {app.version}")
-            scen = app.data_explorer().active_database().core_emmebank.scenario(
-                first_scenario_ids[0])
-            if scen is None:
-                msg = "Project {} has no scenario {}".format(emp_path, first_scenario_ids[0])
-                log.error(msg)
-                errors += 1
-            else:
-                zone_numbers = scen.zone_numbers
-    # Check base zonedata
-    base_zonedata = ZoneData(base_zonedata_path, zone_numbers)
-    # Check base matrices
-    try: 
-        matrixdata = MatrixData(base_matrices_path)
-        for tp in param.time_periods:
-            with matrixdata.open("demand", tp, zone_numbers) as mtx:
-                for ass_class in param.transport_classes:
-                    a = mtx[ass_class]
-    except Exception as e:
-        msg = f"Error reading base matrices: {e}"
-        log.error(msg)
-        errors += 1
-    
-    return errors, zone_numbers
-
-
-def validate_scenario_input_data(emme_paths, first_scenario_ids, forecast_zonedata_paths, zone_numbers, do_not_use_emme, separate_emme_scenarios):
-    # Check scenario based input data
-    log.info("Checking input data and network(s) for scenario(s)...")
-    errors = 0
-    different_zones = False 
-    for i, emp_path in enumerate(emme_paths):
-        scenario_id = first_scenario_ids[i]
-        log.info(f"Checking input data for the {number_to_ordinal(i+1)} scenario #{scenario_id} ...")
-
-        # Check forecasted zonedata
-        if not os.path.exists(forecast_zonedata_paths[i]):
-            msg = "Forecast data directory '{}' does not exist.".format(
-                forecast_zonedata_paths[i])
-            log.error(msg)
-            errors += 1
-        forecast_zonedata = ZoneData(forecast_zonedata_paths[i], zone_numbers)
-
-        # Stop validation if EMME is not being used
-        if do_not_use_emme:
-            continue
-        # Continue validation if EMME is available
-        with open_emme(emp_path) as (app,_):
-            emmebank = app.data_explorer().active_database().core_emmebank
-
-            errors += validate_database_extra_attrs_size(emmebank, scenario_id, separate_emme_scenarios)
-            
-            # Check if scenario name is too long
-            sc_name = emmebank.scenario(scenario_id).title
-            if len(sc_name)>56 and separate_emme_scenarios:
-                msg = "Scenario name: {} too long, time period extension might exceed Emme's 60 characters limit.".format(
-                    sc_name)
-                log.error(msg)
-                errors += 1
-
-            # Check if emmebank has scenarios with different zone numbers
-            scenarios_with_different_zones = 0
-            for scen in emmebank.scenarios():
-                compared_zone_numbers = scen.zone_numbers
-                if len(compared_zone_numbers) < 1:  # Skip empty scenarios
-                    continue
-                if compared_zone_numbers != zone_numbers:
-                    scenarios_with_different_zones += 1
-            if scenarios_with_different_zones > 0:
-                different_zones = True
-            scen = emmebank.scenario(scenario_id)
-            if scen is None:
-                msg = "Project {} has no scenario {}".format(emp_path, scenario_id)
-                log.error(msg)
-                errors += 1
-            elif scen.zone_numbers != zone_numbers:
-                msg = "Zone numbers do not match for EMME scenario {}".format(
-                    scen.id)
-                log.error(msg)
-                errors += 1
-            log.info(f"Validating network for the {number_to_ordinal(i+1)} scenario #{scenario_id} ...")
-            network_errors = validate(scen.get_network(), forecast_zonedata.transit_zone)
-            if network_errors > 0:
-                log.error(f"Network validation for scenario #{scenario_id} failed with {network_errors} errors.")
-                errors += network_errors
-    return errors, different_zones
 
 @contextmanager
 def open_emme(emp_path):
@@ -298,6 +283,21 @@ def open_emme(emp_path):
         yield (app,_m)
     finally:
         app.close()
+
+def join_emme_paths_to_scenarios(emme_paths, first_scenario_ids, forecast_zonedata_paths=None):
+    # Create a dictionary mapping unique EMME paths to their corresponding scenario IDs
+    emme_to_scenarios = {}
+    if forecast_zonedata_paths is not None:
+        for emme_path, scenario_id, forecast_path in zip(emme_paths, first_scenario_ids, forecast_zonedata_paths):
+            if emme_path not in emme_to_scenarios:
+                emme_to_scenarios[emme_path] = []
+            emme_to_scenarios[emme_path].append((scenario_id, forecast_path))
+    else:
+        for emme_path, scenario_id in zip(emme_paths, first_scenario_ids):
+            if emme_path not in emme_to_scenarios:
+                emme_to_scenarios[emme_path] = []
+            emme_to_scenarios[emme_path].append(scenario_id)
+    return emme_to_scenarios
     
 def number_to_ordinal(n):
     if 10 <= n % 100 <= 20:
@@ -321,18 +321,6 @@ def run_network_connectivity_validation(emme_path, scenario_id):
 
 
 if __name__ == "__main__":
-    if "--validate-network-connectivity" in sys.argv:
-        connectivity_parser = ArgumentParser()
-        connectivity_parser.add_argument("--validate-network-connectivity", action="store_true")
-        connectivity_parser.add_argument("--emme-path", required=True)
-        connectivity_parser.add_argument("--scenario-id", required=True, type=int)
-        connectivity_args = connectivity_parser.parse_args()
-        run_network_connectivity_validation(
-            connectivity_args.emme_path,
-            connectivity_args.scenario_id,
-        )
-        sys.exit(0)
-
     # Initially read defaults from config file ("dev-config.json")
     # but allow override via command-line arguments
     config = utils.config.read_from_file()

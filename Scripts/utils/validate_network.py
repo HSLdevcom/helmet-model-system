@@ -103,7 +103,7 @@ def validate_centroids(network):
 def validate_links(network):
     errors = 0
     unofficial_nodes = set()
-    disallowed_modes = set()
+    disallowed_modes = []
     interval_data = []
 
     for modes, ranges in param.official_node_numbers.items():
@@ -141,6 +141,8 @@ def validate_links(network):
         if link.length > MAX_LINK_LENGTH:
             msg = f"Link id {link.id} has length {link.length} km. Project settings might be incorrect"
             log.warn(msg)
+
+        validate_road_charges(link)
         
         linktype = link.type % 100
         if linktype != 70 and link.length == 0: 
@@ -206,7 +208,7 @@ def validate_links(network):
                     matched = True
                     link_mode_ids = {m.id for m in link.modes}
                     if not link_mode_ids.issubset(allowed_modes):
-                        disallowed_modes.add(node.id)
+                        disallowed_modes.append((node.id, link.id, link_mode_ids - allowed_modes))
                     break
 
             if not matched:
@@ -240,8 +242,9 @@ def validate_links(network):
         msg = f"Node number(s) {', '.join(unofficial_nodes)} not consistent with official HSL network."
         log.warn(msg)
     if disallowed_modes:
-        msg = f"Node number(s) {', '.join(disallowed_modes)} has disallowed modes."
-        log.warn(msg)
+        for node_id, link_id, modes in disallowed_modes:
+            msg = f"Link {link_id} connected to node {node_id} has disallowed modes: {', '.join(modes)}."
+            log.warn(msg)
     return errors
 
     
@@ -382,15 +385,78 @@ def validate_transit(network):
 
     return errors
 
-def validate_network_connectivity(_m, app, emmebank, scenario):
+def validate_road_charges(link):
+    if link["@hinta_aht"] > 0 or link["@hinta_pt"] > 0 or link["@hinta_iht"] > 0:
+        if link["@hinta_aht"] == 0 or link["@hinta_pt"] == 0 or link["@hinta_iht"] == 0:
+            log.warn(f"Link {link.id} has road charges defined for some time periods but not all.")
+        if round((link["@hinta_aht"] * link.length) % 0.1, 3) not in [0.0, 0.1] or round((link["@hinta_pt"] * link.length) % 0.1, 3) not in [0.0, 0.1] or round((link["@hinta_iht"] * link.length) % 0.1, 3) not in [0.0, 0.1]:
+            log.warn(f"Link {link.id} has road charges that are not multiples of 0.1 EUR/km.")
+
+
+def _connectivity_issue_counts(differences, is_connected, zone_numbers):
+    """Count connectivity mismatches against the smaller disconnected component."""
+    zone_count = len(zone_numbers)
+    unassigned = set(range(zone_count))
+    components = []
+    while unassigned:
+        seed = unassigned.pop()
+        component = {seed}
+        frontier = [seed]
+        while frontier:
+            current = frontier.pop()
+            connected = {
+                index for index in unassigned
+                if is_connected[current, index] and is_connected[index, current]
+            }
+            component.update(connected)
+            unassigned.difference_update(connected)
+            frontier.extend(connected)
+        components.append(component)
+
+    component_sizes = [len(component) for component in components]
+    component_for_zone = {}
+    for component_index, component in enumerate(components):
+        for zone_index in component:
+            component_for_zone[zone_index] = component_index
+
+    issue_counts = {}
+    for source in range(zone_count):
+        if differences[source, source]:
+            zone = zone_numbers[source]
+            issue_counts[zone] = issue_counts.get(zone, 0) + 1
+        for destination in range(source + 1, zone_count):
+            if not differences[source, destination] and not differences[destination, source]:
+                continue
+
+            source_zone = zone_numbers[source]
+            destination_zone = zone_numbers[destination]
+            if is_connected[source, destination] and is_connected[destination, source]:
+                affected_zones = (source_zone, destination_zone)
+            else:
+                source_component = component_for_zone[source]
+                destination_component = component_for_zone[destination]
+                source_size = component_sizes[source_component]
+                destination_size = component_sizes[destination_component]
+                if source_size < destination_size:
+                    affected_zones = (source_zone,)
+                elif destination_size < source_size:
+                    affected_zones = (destination_zone,)
+                else:
+                    affected_zones = (source_zone, destination_zone)
+
+            for zone in affected_zones:
+                issue_counts[zone] = issue_counts.get(zone, 0) + 1
+
+    return issue_counts
+
+
+def validate_network_connectivity(modeller, emmebank, scenario):
     """Validate network connectivity in terms of HELMET compatibility.
 
     Check that:
     - all nodes are reachable from each other
     """
     errors = 0
-
-    modeller = _m.Modeller(app)
 
     # Store mf1 and mf2, creating temporary working matrices when needed.
     mf1_matrix = emmebank.matrix("mf1")
@@ -579,7 +645,7 @@ def validate_network_connectivity(_m, app, emmebank, scenario):
             #TODO: Suomenlinna needs to somehow improved to allow for other island centroids as well
             expected_matrix[:,zone_numbers[Suomenlinna]] = 0
             expected_matrix[zone_numbers[Suomenlinna],:] = 0
-            if len(zone_numbers) < 30: #Only test network contains these issues
+            if len(zone_numbers) < 50: #Only test network contains these issues
                 expected_matrix[:,[zone_numbers[z] for z in problematic]] = 0
                 expected_matrix[[zone_numbers[z] for z in problematic],:] = 0
                 expected_matrix[numpy.ix_([zone_numbers[z] for z in problematic],[zone_numbers[z] for z in problematic])] = 1
@@ -591,32 +657,15 @@ def validate_network_connectivity(_m, app, emmebank, scenario):
             #Fix diagonal
         expected_matrix[numpy.diag_indices_from(expected_matrix)] = 1
         differences = is_connected != expected_matrix
-        missed_zones = {}
         if differences.any():
-            for diff_pair in numpy.argwhere(differences):
-                log.info(str(diff_pair))
-                diff_s = scenario.zone_numbers[diff_pair[0]]
-                diff_d = scenario.zone_numbers[diff_pair[1]]
-                msg = "Network connectivity check failed for {mode}. The following zone pairs are not connected as expected: {diff_pair}".format(
-                    mode=mode, diff_pair=[diff_s,diff_d])
-                #Make errors as useful as possible
-                if diff_s not in missed_zones:
-                    missed_zones[diff_s] = 1
-                else:
-                    missed_zones[diff_s] += 1
-                    if missed_zones[diff_s] > 3:
-                        continue
-                if diff_d not in missed_zones:
-                    missed_zones[diff_d] = 1
-                else:
-                    missed_zones[diff_d] += 1
-                    if missed_zones[diff_d] > 3:
-                        continue
-                log.error(msg)
+            missed_zones = _connectivity_issue_counts(
+                differences, is_connected, scenario.zone_numbers
+            )
+            log.error(f"Network connectivity check failed for {mode} network.")
+            for zone, issue_count in missed_zones.items():
+                issue_word = "issue" if issue_count == 1 else "issues"
+                log.error(f"Zone {zone} has {issue_count} connectivity {issue_word}.")
                 errors += 1
-                if errors > 100:
-                    log.error("Too many connectivity errors, stopping validation")
-                    break
     
     # Restore only matrices that existed before validation.
     if "mf1" not in created_matrices:
@@ -637,7 +686,4 @@ def validate_network_connectivity(_m, app, emmebank, scenario):
         turn.penalty_func = backup_turns[turn.id]
     scenario.publish_network(restored_network)
     
-    if errors > 0:
-        msg = f"Network connectivity validation failed with {errors} error(s)"
-        log.error(msg)
-        raise ValueError(msg)
+    return errors
