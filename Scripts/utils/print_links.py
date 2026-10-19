@@ -66,13 +66,13 @@ def linkwise_transit_capacity(link):
             vehicle_seated_capacity = transit_segment.line.vehicle.seated_capacity
             vehicle_total_capacity = transit_segment.line.vehicle.total_capacity
             if time_period == "aht":
-                link_total_capacity_aht += (60/transit_segment[f"@hw_{time_period}"]) * vehicle_total_capacity if 0 < transit_segment[f"@hw_{time_period}"] < 999 else 0
-                link_seated_capacity_aht += (60/transit_segment[f"@hw_{time_period}"]) * vehicle_seated_capacity if 0 < transit_segment[f"@hw_{time_period}"] < 999 else 0
+                link_total_capacity_aht += (60/transit_segment.line[f"@hw_{time_period}"]) * vehicle_total_capacity if 0 < transit_segment.line[f"@hw_{time_period}"] < 999 else 0
+                link_seated_capacity_aht += (60/transit_segment.line[f"@hw_{time_period}"]) * vehicle_seated_capacity if 0 < transit_segment.line[f"@hw_{time_period}"] < 999 else 0
             elif time_period == "pt":
-                link_total_capacity_pt += (60/transit_segment[f"@hw_{time_period}"]) * vehicle_total_capacity if 0 < transit_segment[f"@hw_{time_period}"] < 999 else 0
-                link_seated_capacity_pt += (60/transit_segment[f"@hw_{time_period}"]) * vehicle_seated_capacity if 0 < transit_segment[f"@hw_{time_period}"] < 999 else 0
+                link_total_capacity_pt += (60/transit_segment.line[f"@hw_{time_period}"]) * vehicle_total_capacity if 0 < transit_segment.line[f"@hw_{time_period}"] < 999 else 0
+                link_seated_capacity_pt += (60/transit_segment.line[f"@hw_{time_period}"]) * vehicle_seated_capacity if 0 < transit_segment.line[f"@hw_{time_period}"] < 999 else 0
             elif time_period == "iht":
-                link_total_capacity_iht += (60/transit_segment[f"@hw_{time_period}"]) * vehicle_total_capacity if 0 < transit_segment[f"@hw_{time_period}"] < 999 else 0
-                link_seated_capacity_iht += (60/transit_segment[f"@hw_{time_period}"]) * vehicle_seated_capacity if 0 < transit_segment[f"@hw_{time_period}"] < 999 else 0
+                link_total_capacity_iht += (60/transit_segment.line[f"@hw_{time_period}"]) * vehicle_total_capacity if 0 < transit_segment.line[f"@hw_{time_period}"] < 999 else 0
+                link_seated_capacity_iht += (60/transit_segment.line[f"@hw_{time_period}"]) * vehicle_seated_capacity if 0 < transit_segment.line[f"@hw_{time_period}"] < 999 else 0
     return round(link_total_capacity_aht), round(link_seated_capacity_aht), round(link_total_capacity_pt), round(link_seated_capacity_pt), round(link_total_capacity_iht), round(link_seated_capacity_iht)
  
