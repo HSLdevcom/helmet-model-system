@@ -1,6 +1,6 @@
 from __future__ import annotations
 from abc import ABCMeta, abstractmethod
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
 
 
 class AssignmentModel:
@@ -31,7 +31,12 @@ class AssignmentModel:
         pass
 
     @abstractmethod
-    def calc_noise(self):
+    def calc_noise(
+        self,
+        near_db_per_doubling: Optional[float] = None,
+        far_db_per_doubling: Optional[float] = None,
+        transition_doublings: Optional[float] = None,
+    ):
         pass
 
     @abstractmethod
