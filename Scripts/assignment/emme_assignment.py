@@ -430,7 +430,19 @@ class EmmeAssignmentModel(AssignmentModel):
         log.debug(f"Created extra attributes for scenario {scenario}, time period {time_period_name}")
         return seg_results
 
-    def calc_noise(self) -> Tuple[pandas.Series, pandas.Series, pandas.Series]:
+    def calc_noise(
+        self,
+        near_db_per_doubling: Optional[float] = None,
+        far_db_per_doubling: Optional[float] = None,
+        transition_doublings: Optional[float] = None,
+    ) -> Tuple[
+        pandas.Series,
+        pandas.Series,
+        pandas.Series,
+        pandas.Series,
+        pandas.Series,
+        pandas.Series,
+    ]:
         """Calculate noise according to Road Traffic Noise Nordic 1996.
 
         Returns
@@ -438,16 +450,31 @@ class EmmeAssignmentModel(AssignmentModel):
         pandas.Series
             Area (km2) of noise polluted zone, aggregated to area level
         """
-        noise_areas = pandas.Series(0.0, zone_param.area_aggregation)
-        noise_areas_50_54 = pandas.Series(0.0, zone_param.area_aggregation)
-        noise_areas_55_59 = pandas.Series(0.0, zone_param.area_aggregation)
-        noise_areas_60_64 = pandas.Series(0.0, zone_param.area_aggregation)
-        noise_areas_65_69 = pandas.Series(0.0, zone_param.area_aggregation)
-        noise_areas_70_75 = pandas.Series(0.0, zone_param.area_aggregation)
+        noise_areas_50_plus = pandas.Series(0.0, zone_param.area_aggregation)
+        noise_areas_55_plus = pandas.Series(0.0, zone_param.area_aggregation)
+        noise_areas_60_plus = pandas.Series(0.0, zone_param.area_aggregation)
+        noise_areas_65_plus = pandas.Series(0.0, zone_param.area_aggregation)
+        noise_areas_70_plus = pandas.Series(0.0, zone_param.area_aggregation)
+        noise_areas_75_plus = pandas.Series(0.0, zone_param.area_aggregation)
+        near_db_per_doubling = (
+            zone_param.noise_near_db_per_doubling
+            if near_db_per_doubling is None else near_db_per_doubling
+        )
+        far_db_per_doubling = (
+            zone_param.noise_far_db_per_doubling
+            if far_db_per_doubling is None else far_db_per_doubling
+        )
+        transition_doublings = (
+            zone_param.noise_transition_doublings
+            if transition_doublings is None else transition_doublings
+        )
 
         network = self.day_scenario.get_network()
         morning_network = self.assignment_periods[0].emme_scenario.get_network()
         highest_gradient_delta = 0.0
+        noise_gradient_deltas = []
+        start_noises = []
+        speeds = []
         for link in network.links():
             # Aggregate traffic
             light_modes = (
@@ -455,115 +482,186 @@ class EmmeAssignmentModel(AssignmentModel):
                 self._extra("car_leisure"),
                 self._extra("van"),
             )
-            traffic = sum([link[mode] for mode in light_modes])
-            heavy = (link[self._extra("truck")]
-                     + link[self._extra("trailer_truck")])
+            traffic = sum(link[mode] for mode in light_modes)
+            heavy_traffic = (
+                link[self._extra("truck")]
+                + link[self._extra("trailer_truck")]
+            )
             rlink = link.reverse_link
             if rlink is None:
                 reverse_traffic = 0
-                if traffic+heavy > 0:
-                    heavy_share = heavy / (traffic+heavy)
+                reverse_heavy_traffic = 0
             else:
-                reverse_traffic = sum([rlink[mode] for mode in light_modes])
-                heavy = heavy + (rlink[self._extra("truck")]
-                                 + rlink[self._extra("trailer_truck")])
-                if traffic+reverse_traffic+heavy > 0:
-                    heavy_share = heavy / (traffic+reverse_traffic+heavy)
-            cross_traffic = (param.years_average_day_factor
-                             * param.share_7_22_of_day
-                             * (traffic+reverse_traffic))
+                reverse_traffic = sum(
+                    rlink[mode] for mode in light_modes
+                )
+                reverse_heavy_traffic = (
+                    rlink[self._extra("truck")]
+                    + rlink[self._extra("trailer_truck")]
+                )
+            total_light_traffic = traffic + reverse_traffic
+            total_heavy_traffic = heavy_traffic + reverse_heavy_traffic
+            total_traffic = total_light_traffic + total_heavy_traffic
+            if total_traffic <= 0:
+                continue
+
+            heavy_share = total_heavy_traffic / total_traffic
+            daytime_factor = (
+                param.years_average_day_factor
+                * param.share_7_22_of_day
+            )
+            cross_light_traffic = daytime_factor * total_light_traffic
+            cross_heavy_traffic = daytime_factor * total_heavy_traffic
+            cross_traffic = cross_light_traffic + cross_heavy_traffic
             if cross_traffic < 0.01:
                 continue
 
             # Calculate speed
             link = morning_network.link(link.i_node, link.j_node)
             rlink = link.reverse_link
-            if reverse_traffic > 0:
-                speed = (60 * 2 * link.length/(link["@car_time_aht"]+rlink["@car_time_aht"])) if rlink["@car_time_aht"] > 0.0 else 50.0
+            if reverse_traffic + reverse_heavy_traffic > 0:
+                speed = ((0.5*(60*link.length/link["@car_time_aht"]) + 0.5*link.data2)+(0.5*(60*rlink.length/rlink["@car_time_aht"]) + 0.5*rlink.data2))/2
             else:
-                speed = (0.3*(60*link.length/link["@car_time_aht"]) + 0.7*link.data2) if link["@car_time_aht"] > 0.0 else 50.0
-            speed = max(speed, 50.0)
-            
-            # Calculate start noise
-            # Old method:
-            # Calculate start noise
-            if speed <= 90:
-                heavy_correction = (10*math.log10((1-heavy_share)
-                                    + 500*heavy_share/speed))
-            else:
-                heavy_correction = (10*math.log10((1-heavy_share)
-                                    + 5.6*heavy_share*(90/speed)**3))
-            start_noise = ((68 + 30*math.log10(speed/50)
-                           + 10*math.log10(cross_traffic/15/1000)
-                           + heavy_correction)
-                if cross_traffic > 0 else 0)
+                speed = (0.5*(60*link.length/link["@car_time_aht"]) + 0.5*link.data2)
 
-            # Calculate noise zone width
-            func = param.noise_zone_width
-            for interval in func:
-                if interval[0] <= start_noise < interval[1]:
-                    zone_width = func[interval](start_noise - interval[0])
-                    break            
+            speeds.append(speed)
 
             # New method:
             if speed >= 50:
                 LAE_light = 73.5 + 25*math.log10(speed/50) 
-                LAE_heavy = 80.5 + 30*math.log10(speed/50)
+                LAE_heavy = 80.5 + 30*math.log10(min(speed, 90)/50)
             elif speed >= 40:
                 LAE_light = 73.5 + 25*math.log10(speed/50)
                 LAE_heavy = 80.5
             elif speed < 40:
                 LAE_light = 71.1
                 LAE_heavy = 80.5
-            if cross_traffic > 0:
-                LAeq_light = LAE_light + 10*math.log10(cross_traffic/15/3600)
-                LAeq_heavy = LAE_heavy + 10*math.log10(heavy_share*cross_traffic/15/3600) if heavy_share > 0 else 0
-                start_noise = 10*math.log10(10**(LAeq_light/10)+10**(LAeq_heavy/10)) if LAeq_heavy > 0 else LAeq_light
-            else:
-                start_noise = 0
+            start_noise = self._noise_level_from_traffic(
+                light_event_level=LAE_light,
+                heavy_event_level=LAE_heavy,
+                light_traffic=cross_light_traffic,
+                heavy_traffic=cross_heavy_traffic,
+                averaging_seconds=15 * 3600,
+            )
 
             # Calculate noise increase from road gradient
             gradient_permille = abs(link["@kaltevuus"])*10 # @kaltevuus is the gradient in percent
+            gradient_permille = min(gradient_permille, 30) # Limit the effect of gradient to 30 permille
             delta_L_st = ((2*gradient_permille)/100)+((3*gradient_permille*math.log10(1+heavy_share*100))/100)
-            if delta_L_st > highest_gradient_delta:
-                highest_gradient_delta = delta_L_st
+            noise_gradient_deltas.append(delta_L_st)
             start_noise += delta_L_st
+            start_noises.append(start_noise)
 
             # Calculate noise zone width
-            distance_54 = self._noise_zone_distance(start_noise, threshold=50.0)
-            distance_59 = self._noise_zone_distance(start_noise, threshold=55.0)
-            distance_64 = self._noise_zone_distance(start_noise, threshold=60.0)
-            distance_69 = self._noise_zone_distance(start_noise, threshold=65.0)
-            distance_75 = self._noise_zone_distance(start_noise, threshold=70.0)
+            distance_54 = self._noise_zone_distance(
+                start_noise, threshold=50.0,
+                reference_distance=zone_param.noise_reference_distance,
+                near_db_per_doubling=near_db_per_doubling,
+                far_db_per_doubling=far_db_per_doubling,
+                transition_doublings=transition_doublings,
+            )
+            distance_59 = self._noise_zone_distance(
+                start_noise, threshold=55.0,
+                reference_distance=zone_param.noise_reference_distance,
+                near_db_per_doubling=near_db_per_doubling,
+                far_db_per_doubling=far_db_per_doubling,
+                transition_doublings=transition_doublings,
+            )
+            distance_64 = self._noise_zone_distance(
+                start_noise, threshold=60.0,
+                reference_distance=zone_param.noise_reference_distance,
+                near_db_per_doubling=near_db_per_doubling,
+                far_db_per_doubling=far_db_per_doubling,
+                transition_doublings=transition_doublings,
+            )
+            distance_69 = self._noise_zone_distance(
+                start_noise, threshold=65.0,
+                reference_distance=zone_param.noise_reference_distance,
+                near_db_per_doubling=near_db_per_doubling,
+                far_db_per_doubling=far_db_per_doubling,
+                transition_doublings=transition_doublings,
+            )
+            distance_70 = self._noise_zone_distance(
+                start_noise, threshold=70.0,
+                reference_distance=zone_param.noise_reference_distance,
+                near_db_per_doubling=near_db_per_doubling,
+                far_db_per_doubling=far_db_per_doubling,
+                transition_doublings=transition_doublings,
+            )
+            distance_75 = self._noise_zone_distance(
+                start_noise, threshold=75.0,
+                reference_distance=zone_param.noise_reference_distance,
+                near_db_per_doubling=near_db_per_doubling,
+                far_db_per_doubling=far_db_per_doubling,
+                transition_doublings=transition_doublings,
+            )
 
             # Calculate noise zone area and aggregate to area level
             area = belongs_to_area(link.i_node)
-            if area in noise_areas:
-                noise_areas[area] += 0.001 * zone_width * link.length
-                noise_areas_50_54[area] += 0.001 * distance_54 * link.length
-                noise_areas_55_59[area] += 0.001 * distance_59 * link.length
-                noise_areas_60_64[area] += 0.001 * distance_64 * link.length
-                noise_areas_65_69[area] += 0.001 * distance_69 * link.length
-                noise_areas_70_75[area] += 0.001 * distance_75 * link.length
+            if area in noise_areas_50_plus:
+                noise_areas_50_plus[area] += 0.001 * distance_54 * link.length
+                noise_areas_55_plus[area] += 0.001 * distance_59 * link.length
+                noise_areas_60_plus[area] += 0.001 * distance_64 * link.length
+                noise_areas_65_plus[area] += 0.001 * distance_69 * link.length
+                noise_areas_70_plus[area] += 0.001 * distance_70 * link.length
+                noise_areas_75_plus[area] += 0.001 * distance_75 * link.length
 
-        log.debug("Highest noise gradient delta: {}".format(highest_gradient_delta))
-        return noise_areas, noise_areas_50_54, noise_areas_55_59, noise_areas_60_64, noise_areas_65_69, noise_areas_70_75
+        log.debug("Highest speed: {}".format(max(speeds) if speeds else 0))
+        log.debug("Mean speed: {}".format(sum(speeds)/len(speeds) if speeds else 0))
+        log.debug("Highest start noise: {}".format(max(start_noises) if start_noises else 0))
+        log.debug("Mean start noise: {}".format(sum(start_noises)/len(start_noises) if start_noises else 0))
+        log.debug("Highest noise gradient delta: {}".format(max(noise_gradient_deltas) if noise_gradient_deltas else 0))
+        log.debug("Mean noise gradient delta: {}".format(sum(noise_gradient_deltas)/len(noise_gradient_deltas) if noise_gradient_deltas else 0))
+        return (
+            noise_areas_50_plus,
+            noise_areas_55_plus,
+            noise_areas_60_plus,
+            noise_areas_65_plus,
+            noise_areas_70_plus,
+            noise_areas_75_plus,
+        )
 
-    def _noise_zone_distance(self,
+    @staticmethod
+    def _noise_level_from_traffic(
+        light_event_level: float,
+        heavy_event_level: float,
+        light_traffic: float,
+        heavy_traffic: float,
+        averaging_seconds: float,
+    ) -> float:
+        if averaging_seconds <= 0.0:
+            raise ValueError("averaging_seconds must be positive")
+        if light_traffic < 0.0 or heavy_traffic < 0.0:
+            raise ValueError("Noise traffic volumes must be non-negative")
+
+        acoustic_energy = 0.0
+        if light_traffic > 0.0:
+            acoustic_energy += (
+                10.0 ** (light_event_level / 10.0)
+                * light_traffic
+                / averaging_seconds
+            )
+        if heavy_traffic > 0.0:
+            acoustic_energy += (
+                10.0 ** (heavy_event_level / 10.0)
+                * heavy_traffic
+                / averaging_seconds
+            )
+        if acoustic_energy == 0.0:
+            return 0.0
+        return 10.0 * math.log10(acoustic_energy)
+
+    @staticmethod
+    def _noise_zone_distance(
         start_noise: float,
-        threshold: float = 50.0,
-        reference_distance: float = 10.0,
-        near_db_per_doubling: float = 2.5,
-        far_db_per_doubling: float = 5.0,
-        transition_doublings: float = 2.0,
+        threshold: float,
+        reference_distance: float,
+        near_db_per_doubling: float,
+        far_db_per_doubling: float,
+        transition_doublings: float,
         max_distance: float = 10_000.0,
     ) -> float:
         """
-        Calculate the distance at which noise falls to `threshold`.
-
-        The attenuation rate changes smoothly from
-        `near_db_per_doubling` near the reference distance to
-        `far_db_per_doubling` at long distances.
         Calculate the distance at which noise falls to `threshold`.
 
         The attenuation rate changes smoothly from
@@ -592,7 +690,7 @@ class EmmeAssignmentModel(AssignmentModel):
         -------
         float
             Distance in metres to the threshold contour. Returns 0.0
-            when the threshold is not exceeded at the reference distance.
+            below the threshold at the reference distance.
         """
         if reference_distance <= 0.0:
             raise ValueError("reference_distance must be positive")
@@ -613,9 +711,12 @@ class EmmeAssignmentModel(AssignmentModel):
 
         required_attenuation = start_noise - threshold
 
-        # No threshold zone outside the source/reference location.
-        if required_attenuation <= 0.0:
+        # No threshold contour beyond the reference point when its level is
+        # below threshold. At equality, the contour is exactly at that point.
+        if required_attenuation < 0.0:
             return 0.0
+        if required_attenuation == 0.0:
+            return reference_distance
 
         def attenuation(distance: float) -> float:
             doublings = math.log2(distance / reference_distance)

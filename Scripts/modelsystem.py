@@ -269,10 +269,11 @@ class ModelSystem:
                 self.event_handler.on_time_period_assigned("last", ap, impedance[tp], tp, impedance)
         if is_end_assignment:
             self.ass_model.aggregate_results(self.resultdata)
-            self._calculate_noise_areas()
-            self.resultdata.flush()
-        self.dtm.init_demand_and_get_gaps()
+        gap = self.dtm.init_demand_and_get_gaps()
         self.event_handler.on_base_demand_assigned(impedance)
+        if is_end_assignment:
+            self.event_handler.on_iteration_complete("last", impedance, gap)
+            self.resultdata.flush()
         return impedance
 
     def run_iteration(self,
