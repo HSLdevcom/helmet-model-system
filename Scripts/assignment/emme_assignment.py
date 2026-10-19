@@ -1,7 +1,7 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
 import pandas
-from math import log10
+import math
 
 import utils.log as log
 import utils.modify_network as mnw
@@ -63,7 +63,8 @@ class EmmeAssignmentModel(AssignmentModel):
         self._event_handler = event_handler
 
     def prepare_network(self, 
-                        car_dist_unit_cost: Optional[float]=None):
+                        car_dist_unit_cost: Optional[float]=None,
+                        fixed_network: bool=False):
         """Create matrices, extra attributes and calc background variables.
 
         Parameters
@@ -71,7 +72,8 @@ class EmmeAssignmentModel(AssignmentModel):
         car_dist_unit_cost : float (optional)
             Car cost per km in euros
         """
-        self._add_bus_stops()
+        if not fixed_network:
+            self._add_bus_stops()
         if self.separate_emme_scenarios:
             self.day_scenario = self.emme_project.copy_scenario(
                 self.mod_scenario, self.mod_scenario.number + 1,
@@ -97,7 +99,7 @@ class EmmeAssignmentModel(AssignmentModel):
                 scen_id = self.mod_scenario.number
             if i == 0 or self.save_matrices:
                 emme_matrices = self._create_matrices(
-                    tp, i*hundred + self.first_matrix_id, id_ten)
+                    tp, i*hundred + self.first_matrix_id, id_ten, scenario=scen_id)
             self.assignment_periods.append(AssignmentPeriod(
                 tp, scen_id, self.emme_project, emme_matrices,
                 self._event_handler, separate_emme_scenarios=self.separate_emme_scenarios))
@@ -113,7 +115,8 @@ class EmmeAssignmentModel(AssignmentModel):
                 pass
             self.emme_project.modeller.emmebank.create_function(
                 idx, param.volume_delay_funcs[idx])
-        self._calculate_gradients()
+        if not fixed_network:
+            self._calculate_gradients()
         self.emme_project.create_extra_function_parameters(el1="@kaltevuus")
 
     def init_assign(self, 
@@ -157,17 +160,26 @@ class EmmeAssignmentModel(AssignmentModel):
         # Aggregate results to 24h
         for ap in self.assignment_periods:
             ap.transit_results_links_nodes()
+        period_networks = {ap.name: ap.emme_scenario.get_network()
+            for ap in self.assignment_periods}
+        day_network = self.day_scenario.get_network()
         for transit_class in param.transit_classes:
             for res in param.segment_results:
                 self._transit_segment_24h(
-                    transit_class, param.segment_results[res])
+                    transit_class, param.segment_results[res],
+                    day_network=day_network, period_networks=period_networks,
+                    publish=False)
                 if res != "transit_volumes":
                     self._node_24h(
-                        transit_class, param.segment_results[res])
+                        transit_class, param.segment_results[res],
+                        day_network=day_network, period_networks=period_networks,
+                        publish=False)
         self.res_ass_classes = list(param.emme_matrices) + ["bus", "aux_transit"] #result assignment classes
         self.res_ass_classes.remove("walk")
         for ass_class in self.res_ass_classes:
-            self._link_24h(ass_class)
+            self._link_24h(ass_class, day_network=day_network,
+                           period_networks=period_networks, publish=False)
+        self.day_scenario.publish_network(day_network)
 
         # Aggregate and print vehicle kms and link lengths
         kms = dict.fromkeys(self.res_ass_classes, 0.0)
@@ -184,7 +196,8 @@ class EmmeAssignmentModel(AssignmentModel):
         linktypes = list(dict.fromkeys(param.roadtypes.values())) + list(dict.fromkeys(param.railtypes.values()))
         linklengths = pandas.Series(0.0, linktypes)
         soft_modes = param.transit_classes + ("bike",)
-        network = self.day_scenario.get_network()
+        network = day_network
+        veh_kms = 0.0
         for link in network.links():
             linktype = link.type % 100
             if linktype in param.roadclasses:
@@ -271,9 +284,11 @@ class EmmeAssignmentModel(AssignmentModel):
                      ass_period_2: AssignmentPeriod):
         from_mtx = ass_period_1.emme_matrices[ass_class][mtx_type]
         to_mtx = ass_period_2.emme_matrices[ass_class][mtx_type]
-        description = f"{mtx_type}_{ass_class}_{ass_period_2.name}"
+        description_base = f"{mtx_type}_{ass_class}_{ass_period_2.name}"
+        name = f"{description_base[:34]}_{ass_period_2.emme_scenario.id}"
+        description = f"{description_base}_{ass_period_2.emme_scenario.id}"
         self.emme_project.copy_matrix(
-            from_mtx, to_mtx, description, description)
+            from_mtx, to_mtx, name, description)
 
     def _extra(self, attr: str) -> str:
         """Add prefix "@" and suffix "_vrk".
@@ -300,7 +315,7 @@ class EmmeAssignmentModel(AssignmentModel):
         modified_network: Network = mnw.calculate_gradients(network)
         self.mod_scenario.publish_network(modified_network)
 
-    def _create_matrices(self, time_period, id_hundred, id_ten):
+    def _create_matrices(self, time_period, id_hundred, id_ten, scenario=None) -> Dict[str, Dict[str, str]]:
         """Create EMME matrices for storing demand and impedance.
 
         Parameters
@@ -333,11 +348,13 @@ class EmmeAssignmentModel(AssignmentModel):
             for mtx_type in param.emme_matrices[ass_class]:
                 matrix_ids[mtx_type] = "mf{}".format(
                     id_hundred + id_ten[mtx_type] + i)
-                description = f"{mtx_type}_{ass_class}_{tag}"
+                description_base = f"{mtx_type}_{ass_class}_{tag}"
+                name = f"{description_base[:34]}_{scenario}"
+                description = f"{description_base}_{scenario}"
                 default_value = 0 if mtx_type == "demand" else 999999
                 self.emme_project.create_matrix(
                     matrix_id=matrix_ids[mtx_type],
-                    matrix_name=description, matrix_description=description,
+                    matrix_name=name, matrix_description=description,
                     default_value=default_value, overwrite=True)
             if ass_class in param.transit_classes:
                 j = 0
@@ -348,9 +365,11 @@ class EmmeAssignmentModel(AssignmentModel):
                         id = f"mf{id_hundred + id_ten[ass_class] + j}"
                         matrix_ids[subset][longer_name] = id
                         matrix_ids[longer_name] = id
+                        description_base = f"{mtx_type}_{ass_class}_{tag}"
+                        name = f"{description_base[:34]}_{scenario}"
                         self.emme_project.create_matrix(
                             matrix_id=id,
-                            matrix_name=f"{mtx_type}_{ass_class}_{tag}",
+                            matrix_name=name,
                             matrix_description=longer_name,
                             default_value=999999, overwrite=True)
             emme_matrices[ass_class] = matrix_ids
@@ -377,7 +396,8 @@ class EmmeAssignmentModel(AssignmentModel):
             self.emme_project.create_extra_attribute(
                 "LINK", extra(ass_class), ass_class + " volume",
                 overwrite=True, scenario=scenario)
-        for attr_s in ("total_cost", "toll_cost", "car_time", "aux_transit"): #attr_s tp make difference for type checker
+        # These should be in param/assignment.py instead of being defined here
+        for attr_s in ("total_cost", "toll_cost", "car_time", "bike_time", "aux_transit"): #attr_s tp make difference for type checker
             self.emme_project.create_extra_attribute(
                 "LINK", extra(attr_s), attr_s,
                 overwrite=True, scenario=scenario)
@@ -403,14 +423,26 @@ class EmmeAssignmentModel(AssignmentModel):
             "transit congestion cost", overwrite=True, scenario=scenario)
         self.emme_project.create_extra_attribute(
             "TRANSIT_SEGMENT", "@" + param.uncongested_transit_time,
-            "uncongested transit time", overwrite=True, scenario=scenario)
+            "uncongested transit time, includes dwt", overwrite=True, scenario=scenario)
         self.emme_project.create_extra_attribute(
             "TRANSIT_SEGMENT", extra(param.uncongested_transit_time),
-            "uncongested transit time", overwrite=True, scenario=scenario)
+            "uncongested transit time, includes dwt", overwrite=True, scenario=scenario)
         log.debug(f"Created extra attributes for scenario {scenario}, time period {time_period_name}")
         return seg_results
 
-    def calc_noise(self) -> pandas.Series:
+    def calc_noise(
+        self,
+        near_db_per_doubling: Optional[float] = None,
+        far_db_per_doubling: Optional[float] = None,
+        transition_doublings: Optional[float] = None,
+    ) -> Tuple[
+        pandas.Series,
+        pandas.Series,
+        pandas.Series,
+        pandas.Series,
+        pandas.Series,
+        pandas.Series,
+    ]:
         """Calculate noise according to Road Traffic Noise Nordic 1996.
 
         Returns
@@ -418,9 +450,31 @@ class EmmeAssignmentModel(AssignmentModel):
         pandas.Series
             Area (km2) of noise polluted zone, aggregated to area level
         """
-        noise_areas = pandas.Series(0.0, zone_param.area_aggregation)
+        noise_areas_50_plus = pandas.Series(0.0, zone_param.area_aggregation)
+        noise_areas_55_plus = pandas.Series(0.0, zone_param.area_aggregation)
+        noise_areas_60_plus = pandas.Series(0.0, zone_param.area_aggregation)
+        noise_areas_65_plus = pandas.Series(0.0, zone_param.area_aggregation)
+        noise_areas_70_plus = pandas.Series(0.0, zone_param.area_aggregation)
+        noise_areas_75_plus = pandas.Series(0.0, zone_param.area_aggregation)
+        near_db_per_doubling = (
+            zone_param.noise_near_db_per_doubling
+            if near_db_per_doubling is None else near_db_per_doubling
+        )
+        far_db_per_doubling = (
+            zone_param.noise_far_db_per_doubling
+            if far_db_per_doubling is None else far_db_per_doubling
+        )
+        transition_doublings = (
+            zone_param.noise_transition_doublings
+            if transition_doublings is None else transition_doublings
+        )
+
         network = self.day_scenario.get_network()
         morning_network = self.assignment_periods[0].emme_scenario.get_network()
+        highest_gradient_delta = 0.0
+        noise_gradient_deltas = []
+        start_noises = []
+        speeds = []
         for link in network.links():
             # Aggregate traffic
             light_modes = (
@@ -428,55 +482,286 @@ class EmmeAssignmentModel(AssignmentModel):
                 self._extra("car_leisure"),
                 self._extra("van"),
             )
-            traffic = sum([link[mode] for mode in light_modes])
+            traffic = sum(link[mode] for mode in light_modes)
+            heavy_traffic = (
+                link[self._extra("truck")]
+                + link[self._extra("trailer_truck")]
+            )
             rlink = link.reverse_link
             if rlink is None:
                 reverse_traffic = 0
+                reverse_heavy_traffic = 0
             else:
-                reverse_traffic = sum([rlink[mode] for mode in light_modes])
-            cross_traffic = (param.years_average_day_factor
-                             * param.share_7_22_of_day
-                             * (traffic+reverse_traffic))
-            heavy = (link[self._extra("truck")]
-                     + link[self._extra("trailer_truck")])
-            traffic = max(traffic, 0.01)
-            heavy_share = heavy / (traffic+heavy)
+                reverse_traffic = sum(
+                    rlink[mode] for mode in light_modes
+                )
+                reverse_heavy_traffic = (
+                    rlink[self._extra("truck")]
+                    + rlink[self._extra("trailer_truck")]
+                )
+            total_light_traffic = traffic + reverse_traffic
+            total_heavy_traffic = heavy_traffic + reverse_heavy_traffic
+            total_traffic = total_light_traffic + total_heavy_traffic
+            if total_traffic <= 0:
+                continue
+
+            heavy_share = total_heavy_traffic / total_traffic
+            daytime_factor = (
+                param.years_average_day_factor
+                * param.share_7_22_of_day
+            )
+            cross_light_traffic = daytime_factor * total_light_traffic
+            cross_heavy_traffic = daytime_factor * total_heavy_traffic
+            cross_traffic = cross_light_traffic + cross_heavy_traffic
+            if cross_traffic < 0.01:
+                continue
 
             # Calculate speed
             link = morning_network.link(link.i_node, link.j_node)
             rlink = link.reverse_link
-            if reverse_traffic > 0:
-                speed = (60 * 2 * link.length/(link["@car_time_aht"]+rlink["@car_time_aht"])) if rlink["@car_time_aht"] > 0.0 else 50.0
+            if reverse_traffic + reverse_heavy_traffic > 0:
+                speed = ((0.5*(60*link.length/link["@car_time_aht"]) + 0.5*link.data2)+(0.5*(60*rlink.length/rlink["@car_time_aht"]) + 0.5*rlink.data2))/2
             else:
-                speed = (0.3*(60*link.length/link["@car_time_aht"]) + 0.7*link.data2) if link["@car_time_aht"] > 0.0 else 50.0
-            speed = max(speed, 50.0)
+                speed = (0.5*(60*link.length/link["@car_time_aht"]) + 0.5*link.data2)
 
-            # Calculate start noise
-            if speed <= 90:
-                heavy_correction = (10*log10((1-heavy_share)
-                                    + 500*heavy_share/speed))
-            else:
-                heavy_correction = (10*log10((1-heavy_share)
-                                    + 5.6*heavy_share*(90/speed)**3))
-            start_noise = ((68 + 30*log10(speed/50)
-                           + 10*log10(cross_traffic/15/1000)
-                           + heavy_correction)
-                if cross_traffic > 0 else 0)
+            speeds.append(speed)
+
+            # New method:
+            if speed >= 50:
+                LAE_light = 73.5 + 25*math.log10(speed/50) 
+                LAE_heavy = 80.5 + 30*math.log10(min(speed, 90)/50)
+            elif speed >= 40:
+                LAE_light = 73.5 + 25*math.log10(speed/50)
+                LAE_heavy = 80.5
+            elif speed < 40:
+                LAE_light = 71.1
+                LAE_heavy = 80.5
+            start_noise = self._noise_level_from_traffic(
+                light_event_level=LAE_light,
+                heavy_event_level=LAE_heavy,
+                light_traffic=cross_light_traffic,
+                heavy_traffic=cross_heavy_traffic,
+                averaging_seconds=15 * 3600,
+            )
+
+            # Calculate noise increase from road gradient
+            gradient_permille = abs(link["@kaltevuus"])*10 # @kaltevuus is the gradient in percent
+            gradient_permille = min(gradient_permille, 30) # Limit the effect of gradient to 30 permille
+            delta_L_st = ((2*gradient_permille)/100)+((3*gradient_permille*math.log10(1+heavy_share*100))/100)
+            noise_gradient_deltas.append(delta_L_st)
+            start_noise += delta_L_st
+            start_noises.append(start_noise)
 
             # Calculate noise zone width
-            func = param.noise_zone_width
-            for interval in func:
-                if interval[0] <= start_noise < interval[1]:
-                    zone_width = func[interval](start_noise - interval[0])
-                    break
+            distance_54 = self._noise_zone_distance(
+                start_noise, threshold=50.0,
+                reference_distance=zone_param.noise_reference_distance,
+                near_db_per_doubling=near_db_per_doubling,
+                far_db_per_doubling=far_db_per_doubling,
+                transition_doublings=transition_doublings,
+            )
+            distance_59 = self._noise_zone_distance(
+                start_noise, threshold=55.0,
+                reference_distance=zone_param.noise_reference_distance,
+                near_db_per_doubling=near_db_per_doubling,
+                far_db_per_doubling=far_db_per_doubling,
+                transition_doublings=transition_doublings,
+            )
+            distance_64 = self._noise_zone_distance(
+                start_noise, threshold=60.0,
+                reference_distance=zone_param.noise_reference_distance,
+                near_db_per_doubling=near_db_per_doubling,
+                far_db_per_doubling=far_db_per_doubling,
+                transition_doublings=transition_doublings,
+            )
+            distance_69 = self._noise_zone_distance(
+                start_noise, threshold=65.0,
+                reference_distance=zone_param.noise_reference_distance,
+                near_db_per_doubling=near_db_per_doubling,
+                far_db_per_doubling=far_db_per_doubling,
+                transition_doublings=transition_doublings,
+            )
+            distance_70 = self._noise_zone_distance(
+                start_noise, threshold=70.0,
+                reference_distance=zone_param.noise_reference_distance,
+                near_db_per_doubling=near_db_per_doubling,
+                far_db_per_doubling=far_db_per_doubling,
+                transition_doublings=transition_doublings,
+            )
+            distance_75 = self._noise_zone_distance(
+                start_noise, threshold=75.0,
+                reference_distance=zone_param.noise_reference_distance,
+                near_db_per_doubling=near_db_per_doubling,
+                far_db_per_doubling=far_db_per_doubling,
+                transition_doublings=transition_doublings,
+            )
 
             # Calculate noise zone area and aggregate to area level
             area = belongs_to_area(link.i_node)
-            if area in noise_areas:
-                noise_areas[area] += 0.001 * zone_width * link.length
-        return noise_areas
+            if area in noise_areas_50_plus:
+                noise_areas_50_plus[area] += 0.001 * distance_54 * link.length
+                noise_areas_55_plus[area] += 0.001 * distance_59 * link.length
+                noise_areas_60_plus[area] += 0.001 * distance_64 * link.length
+                noise_areas_65_plus[area] += 0.001 * distance_69 * link.length
+                noise_areas_70_plus[area] += 0.001 * distance_70 * link.length
+                noise_areas_75_plus[area] += 0.001 * distance_75 * link.length
 
-    def _link_24h(self, attr: str):
+        log.debug("Highest speed: {}".format(max(speeds) if speeds else 0))
+        log.debug("Mean speed: {}".format(sum(speeds)/len(speeds) if speeds else 0))
+        log.debug("Highest start noise: {}".format(max(start_noises) if start_noises else 0))
+        log.debug("Mean start noise: {}".format(sum(start_noises)/len(start_noises) if start_noises else 0))
+        log.debug("Highest noise gradient delta: {}".format(max(noise_gradient_deltas) if noise_gradient_deltas else 0))
+        log.debug("Mean noise gradient delta: {}".format(sum(noise_gradient_deltas)/len(noise_gradient_deltas) if noise_gradient_deltas else 0))
+        return (
+            noise_areas_50_plus,
+            noise_areas_55_plus,
+            noise_areas_60_plus,
+            noise_areas_65_plus,
+            noise_areas_70_plus,
+            noise_areas_75_plus,
+        )
+
+    @staticmethod
+    def _noise_level_from_traffic(
+        light_event_level: float,
+        heavy_event_level: float,
+        light_traffic: float,
+        heavy_traffic: float,
+        averaging_seconds: float,
+    ) -> float:
+        if averaging_seconds <= 0.0:
+            raise ValueError("averaging_seconds must be positive")
+        if light_traffic < 0.0 or heavy_traffic < 0.0:
+            raise ValueError("Noise traffic volumes must be non-negative")
+
+        acoustic_energy = 0.0
+        if light_traffic > 0.0:
+            acoustic_energy += (
+                10.0 ** (light_event_level / 10.0)
+                * light_traffic
+                / averaging_seconds
+            )
+        if heavy_traffic > 0.0:
+            acoustic_energy += (
+                10.0 ** (heavy_event_level / 10.0)
+                * heavy_traffic
+                / averaging_seconds
+            )
+        if acoustic_energy == 0.0:
+            return 0.0
+        return 10.0 * math.log10(acoustic_energy)
+
+    @staticmethod
+    def _noise_zone_distance(
+        start_noise: float,
+        threshold: float,
+        reference_distance: float,
+        near_db_per_doubling: float,
+        far_db_per_doubling: float,
+        transition_doublings: float,
+        max_distance: float = 10_000.0,
+    ) -> float:
+        """
+        Calculate the distance at which noise falls to `threshold`.
+
+        The attenuation rate changes smoothly from
+        `near_db_per_doubling` near the reference distance to
+        `far_db_per_doubling` at long distances.
+
+        Parameters
+        ----------
+        start_noise
+            Noise level in dB at `reference_distance`.
+        threshold
+            Threshold noise level in dB.
+        reference_distance
+            Distance in metres at which `start_noise` is defined.
+        near_db_per_doubling
+            Attenuation rate near the reference distance.
+        far_db_per_doubling
+            Attenuation rate approached at long distances.
+        transition_doublings
+            Controls how quickly the attenuation rate changes.
+            The unit is distance doublings.
+        max_distance
+            Maximum returned/searchable distance in metres.
+
+        Returns
+        -------
+        float
+            Distance in metres to the threshold contour. Returns 0.0
+            below the threshold at the reference distance.
+        """
+        if reference_distance <= 0.0:
+            raise ValueError("reference_distance must be positive")
+
+        if near_db_per_doubling <= 0.0:
+            raise ValueError("near_db_per_doubling must be positive")
+
+        if far_db_per_doubling <= 0.0:
+            raise ValueError("far_db_per_doubling must be positive")
+
+        if transition_doublings <= 0.0:
+            raise ValueError("transition_doublings must be positive")
+
+        if max_distance < reference_distance:
+            raise ValueError(
+                "max_distance must be at least reference_distance"
+            )
+
+        required_attenuation = start_noise - threshold
+
+        # No threshold contour beyond the reference point when its level is
+        # below threshold. At equality, the contour is exactly at that point.
+        if required_attenuation < 0.0:
+            return 0.0
+        if required_attenuation == 0.0:
+            return reference_distance
+
+        def attenuation(distance: float) -> float:
+            doublings = math.log2(distance / reference_distance)
+
+            transition_component = (
+                doublings
+                - transition_doublings
+                * (
+                    1.0
+                    - math.exp(
+                        -doublings / transition_doublings
+                    )
+                )
+            )
+
+            return (
+                near_db_per_doubling * doublings
+                + (
+                    far_db_per_doubling
+                    - near_db_per_doubling
+                )
+                * transition_component
+            )
+
+        # The requested threshold is not reached before max_distance.
+        if attenuation(max_distance) < required_attenuation:
+            return max_distance
+
+        # Monotonic bisection search.
+        lower = reference_distance
+        upper = max_distance
+
+        for _ in range(60):
+            midpoint = (lower + upper) / 2.0
+
+            if attenuation(midpoint) < required_attenuation:
+                lower = midpoint
+            else:
+                upper = midpoint
+
+        return (lower + upper) / 2.0
+
+
+    def _link_24h(self, attr: str, day_network=None, period_networks=None,
+                 extras=None, publish=True):
         """ 
         Sums and expands link volumes to 24h.
 
@@ -485,27 +770,32 @@ class EmmeAssignmentModel(AssignmentModel):
         attr : str
             Attribute name that is usually key in param.emme_demand_mtx
         """
-        networks = {ap.name: ap.emme_scenario.get_network()
-            for ap in self.assignment_periods}
-        extras = {ap.name: ap.extra(attr) for ap in self.assignment_periods}
-        network = self.day_scenario.get_network()
+        if period_networks is None:
+            period_networks = {ap.name: ap.emme_scenario.get_network()
+                for ap in self.assignment_periods}
+        if extras is None:
+            extras = {ap.name: ap.extra(attr) for ap in self.assignment_periods}
+        if day_network is None:
+            day_network = self.day_scenario.get_network()
         extra = self._extra(attr)
         # save link volumes to result network
-        for link in network.links():
+        for link in day_network.links():
             day_attr = 0
-            for tp in networks:
+            for tp in period_networks:
                 try:
-                    tp_link = networks[tp].link(link.i_node, link.j_node)
+                    tp_link = period_networks[tp].link(link.i_node, link.j_node)
                     day_attr += (tp_link[extras[tp]]
                                  * param.volume_factors[attr][tp])
                 except (AttributeError, TypeError):
                     pass
             link[extra] = day_attr
-        self.day_scenario.publish_network(network)
+        if publish:
+            self.day_scenario.publish_network(day_network)
         log.info("Link attribute {} aggregated to 24h (scenario {})".format(
             extra, self.day_scenario.id))
 
-    def _node_24h(self, transit_class: str, attr: str):
+    def _node_24h(self, transit_class: str, attr: str, day_network=None,
+                  period_networks=None, extras=None, publish=True):
         """ 
         Sums and expands node attributes to 24h.
 
@@ -517,27 +807,33 @@ class EmmeAssignmentModel(AssignmentModel):
             Attribute name that is usually in param.segment_results
         """
         attr = transit_class[:10] + 'n_' + attr
-        networks = {ap.name: ap.emme_scenario.get_network()
-            for ap in self.assignment_periods}
-        extras = {ap.name: ap.extra(attr) for ap in self.assignment_periods}
-        network = self.day_scenario.get_network()
+        if period_networks is None:
+            period_networks = {ap.name: ap.emme_scenario.get_network()
+                for ap in self.assignment_periods}
+        if extras is None:
+            extras = {ap.name: ap.extra(attr) for ap in self.assignment_periods}
+        if day_network is None:
+            day_network = self.day_scenario.get_network()
         extra = self._extra(attr)
         # save node volumes to result network
-        for node in network.nodes():
+        for node in day_network.nodes():
             day_attr = 0
-            for tp in networks:
+            for tp in period_networks:
                 try:
-                    tp_node = networks[tp].node(node.id)
+                    tp_node = period_networks[tp].node(node.id)
                     day_attr += (tp_node[extras[tp]]
                                  * param.volume_factors[transit_class][tp])
                 except (AttributeError, TypeError):
                     pass
             node[extra] = day_attr
-        self.day_scenario.publish_network(network)
+        if publish:
+            self.day_scenario.publish_network(day_network)
         log.info("Node attribute {} aggregated to 24h (scenario {})".format(
             extra, self.day_scenario.id))
 
-    def _transit_segment_24h(self, transit_class: str, attr: str):
+    def _transit_segment_24h(self, transit_class: str, attr: str,
+                             day_network=None, period_networks=None,
+                             extras=None, publish=True):
         """ 
         Sums and expands transit attributes to 24h.
 
@@ -549,23 +845,27 @@ class EmmeAssignmentModel(AssignmentModel):
             Attribute name that is usually in param.segment_results
         """
         attr = transit_class[:11] + '_' + attr
-        networks = {ap.name: ap.emme_scenario.get_network()
-            for ap in self.assignment_periods}
-        extras = {ap.name: ap.extra(attr) for ap in self.assignment_periods}
-        network = self.day_scenario.get_network()
+        if period_networks is None:
+            period_networks = {ap.name: ap.emme_scenario.get_network()
+                for ap in self.assignment_periods}
+        if extras is None:
+            extras = {ap.name: ap.extra(attr) for ap in self.assignment_periods}
+        if day_network is None:
+            day_network = self.day_scenario.get_network()
         extra = self._extra(attr)
         # save segment volumes to result network
-        for segment in network.transit_segments():
+        for segment in day_network.transit_segments():
             day_attr = 0
-            for tp in networks:
+            for tp in period_networks:
                 try:
-                    tp_segment = networks[tp].transit_line(
+                    tp_segment = period_networks[tp].transit_line(
                         segment.line.id).segment(segment.number)
                     day_attr += (tp_segment[extras[tp]]
                                  * param.volume_factors[transit_class][tp])
                 except (AttributeError, TypeError):
                     pass
             segment[extra] = day_attr
-        self.day_scenario.publish_network(network)
+        if publish:
+            self.day_scenario.publish_network(day_network)
         log.info("Transit attribute {} aggregated to 24h (scenario {})".format(
             extra, self.day_scenario.id))

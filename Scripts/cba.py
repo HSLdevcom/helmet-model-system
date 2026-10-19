@@ -31,12 +31,14 @@ TRANSIT_AGGREGATIONS = {
     "trunk": ("HSL-runkob","nivelbussi"),
     "train": ("HSL-juna-2", "muu_juna", "HSL-juna-1", "HSL-juna-3"),
     "tram": ("ratikka", "pikaratikk"),
+    "metro": ("metro", ),
 }
 TRANSIT_AGGREGATIONS_FALLBACK = {
     "bus": ("HSL-bussi", "ValluVakio", "ValluPika"),
     "trunk": ("HSL-runkob", ),
     "train": ("HSL-juna", "muu_juna"),
     "tram": ("ratikka", "pikaratikk"),
+    "metro": ("metro", ),
 }
 
 TRANSLATIONS = {
@@ -139,8 +141,20 @@ CELL_INDICES = {
         },
     },
     "noise": {
-        1: "I24",
-        2: "I36",
+        1: {
+            "50_54": "I25",
+            "55_59": "J25",
+            "60_64": "K25",
+            "65_69": "L25",
+            "70_74": "M25",
+        },
+        2: {
+            "50_54": "I39",
+            "55_59": "J39",
+            "60_64": "K39",
+            "65_69": "L39",
+            "70_74": "M39",
+        }
     },
     "transit_stations": {
         1: {
@@ -196,6 +210,10 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
         Table of zone-wise consumer surplus results
         (travel time, travel cost, distance, revenue)
     """
+    # Vehicles that can be skipped for the aggregation check.
+    # Should be taken into account in special occasions, such as scenarios with major ferry traffic.
+    missing_vehicle_whitelist = ["lautta"]
+
     if year not in (1, 2):
         raise ValueError("Evaluation year must be either 1 or 2")
     log.info("Analyse year {}...".format(year))
@@ -213,10 +231,21 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
 
     # Calculate noise effect difference
     noise_diff = read(NOISE_FILE, scenario_1) - read(NOISE_FILE, scenario_0)
-    ws[CELL_INDICES["noise"][year]] = sum(noise_diff["population"])
+    for noise_level in CELL_INDICES["noise"][year]:
+        ws[CELL_INDICES["noise"][year][noise_level]] = sum(noise_diff[f"population_{noise_level}_dB"])
 
     transit_vehicle_kms_tables = [read(TRANSIT_KMS_FILE, scenario_0), read(TRANSIT_KMS_FILE, scenario_1)]
-    for transit_vehicle_kms in transit_vehicle_kms_tables:
+    for i, transit_vehicle_kms in enumerate(transit_vehicle_kms_tables):
+        missing_vehicle = False
+        log.debug(f"Transit vehicle mileages for scenario {scenario_0 if i == 0 else scenario_1}:")
+        for vehicle, values in transit_vehicle_kms.iterrows():
+            log.debug(f"{vehicle} mileage:\t{values['dist']:.2f} km")
+            if values['dist'] > 0 and vehicle not in {submode for submodes in TRANSIT_AGGREGATIONS.values() for submode in submodes}:
+                if vehicle not in missing_vehicle_whitelist:
+                    log.error(f"Transit vehicle {vehicle} is used but is not included in the aggregation dictionary. Add the vehicle to the TRANSIT_AGGREGATIONS dictionary in cba.py")
+                    missing_vehicle = True
+        if missing_vehicle:
+            raise KeyError("Missing transit vehicle(s) in TRANSIT_AGGREGATIONS dictionary. See log for details.")
         if all(submode in transit_vehicle_kms.index for submodes in TRANSIT_AGGREGATIONS.values() for submode in submodes):
             transit_aggs = TRANSIT_AGGREGATIONS
         else:
@@ -262,14 +291,21 @@ def run_cost_benefit_analysis(scenario_0, scenario_1, year, workbook):
         rows = CELL_INDICES["gains"]["rows"][year]
         for transport_class in param.transport_classes:
             demand = {}
+            scenario_zone_numbers = {}
             for scenario in data:
                 with data[scenario].open("demand", timeperiod) as mtx:
-                    demand[scenario] = mtx[transport_class]
                     zone_numbers = mtx.zone_numbers
+                    scenario_zone_numbers[scenario] = zone_numbers
+            zone_numbers = numpy.union1d(*scenario_zone_numbers.values())
+            for scenario in data:
+                with data[scenario].open(
+                        "demand", timeperiod, zone_numbers=zone_numbers) as mtx:
+                    demand[scenario] = mtx[transport_class]
             vol_fac = param.volume_factors[transport_class][timeperiod]
             for mtx_type in ["time", "cost", "dist"]:
                 cost = {scenario: read_costs(
-                        data[scenario], timeperiod, transport_class, mtx_type)
+                        data[scenario], timeperiod, transport_class, mtx_type,
+                        zone_numbers)
                     for scenario in data}
                 gains_existing, gains_additional = calc_gains(demand, cost)
                 result_type = transport_class + "_" + mtx_type
@@ -304,13 +340,15 @@ def read(file_name, scenario_path):
         os.path.join(scenario_path, file_name), delim_whitespace=True)
 
 
-def read_costs(matrixdata, time_period, transport_class, mtx_type):
+def read_costs(matrixdata, time_period, transport_class, mtx_type,
+               zone_numbers=None):
     mtx_label = transport_class.split('_')[0]
     ass_class = mtx_label if mtx_label == "bike" else transport_class
     if mtx_label == "bike" and mtx_type == "cost":
         matrix = 0
     else:
-        with matrixdata.open(mtx_type, time_period) as mtx:
+        with matrixdata.open(
+            mtx_type, time_period, zone_numbers=zone_numbers) as mtx:
             matrix = mtx[ass_class]
             zone_numbers = mtx.zone_numbers
     if transport_class == "transit_work" and mtx_type == "cost":
@@ -353,12 +391,19 @@ def calc_gains(demands, costs):
     demand_change = demands["scen_1"] - demands["scen_0"]
     demand_incr = demand_change >= 0
     demand_decr = demand_change < 0
+    #hotfix for park and ride facilities
+    gain_possible = gain < 1000
+    demand_incr = numpy.logical_and(demand_incr, gain_possible)
+    demand_decr = numpy.logical_and(demand_decr, gain_possible)
     gains_existing = numpy.zeros_like(demand_change)
     gains_existing[demand_incr] = (demands["scen_0"]*gain)[demand_incr]
     gains_existing[demand_decr] = (demands["scen_1"]*gain)[demand_decr]
     gains_additional = numpy.zeros_like(demand_change)
     gains_additional[demand_incr] = 0.5*(demand_change*gain)[demand_incr]
     gains_additional[demand_decr] = -0.5*(demand_change*gain)[demand_decr]
+    if gains_additional.sum() > 1e9: 
+        log.warn("Gains for additional users are very high: {:.2f} €".format(gains_additional.sum()))
+        exit()
     return gains_existing.sum(0), gains_additional.sum(0)
 
 
@@ -386,6 +431,10 @@ def calc_revenue(demands, costs):
     demand_change = demands["scen_1"] - demands["scen_0"]
     demand_incr = demand_change >= 0
     demand_decr = demand_change < 0
+    #hotfix for areas, where base cost does not make sense (e.g. park and ride facilities)
+    if type(costs["scen_0"]) == numpy.ndarray:
+        costs["scen_0"][costs["scen_0"] > 1e3] = 0
+        costs["scen_1"][costs["scen_1"] > 1e3] = 0 
     cost_change = costs["scen_1"] - costs["scen_0"]
     revenue = numpy.zeros_like(demand_change)
     revenue[demand_incr] = ((costs["scen_1"]*demand_change)[demand_incr]

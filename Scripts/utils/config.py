@@ -64,6 +64,8 @@ class Config:
         self.USE_FIXED_TRANSIT_COST = False
         self.EXPORT_ESTIMATION_DATA = False
         self.STRICT_MODE = False
+        self.FIXED_NETWORK = False
+        self.SKIP_NETWORK_CONNECTIVITY_TEST = False
         for key in config.pop("OPTIONAL_FLAGS"):
             self.__dict__[key] = True
         for key in config:

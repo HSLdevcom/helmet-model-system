@@ -45,10 +45,18 @@ class MockAssignmentModel(AssignmentModel):
     def aggregate_results(self, resultdata):
         pass
 
-    def calc_noise(self):
-        return pandas.Series(0.0, zone_param.area_aggregation)
+    def calc_noise(
+        self,
+        near_db_per_doubling: Optional[float] = None,
+        far_db_per_doubling: Optional[float] = None,
+        transition_doublings: Optional[float] = None,
+    ):
+        return tuple(
+            pandas.Series(0.0, zone_param.area_aggregation)
+            for _ in range(6)
+        )
 
-    def prepare_network(self, car_dist_unit_cost: Optional[float]=None):
+    def prepare_network(self, car_dist_unit_cost: Optional[float]=None, fixed_network: bool=False):
         pass
 
     def init_assign(self, demand):

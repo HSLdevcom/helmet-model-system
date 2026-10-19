@@ -1,5 +1,7 @@
 import bisect
 
+import numpy
+
 import utils.log as log
 import parameters.assignment as param
 import assignment.datatypes.transit_fare as transit_fare
@@ -37,10 +39,7 @@ def validate(network, fares: transit_fare.TransitFareZoneSpecification|None=None
     num_errors += validate_centroids(network)
     num_errors += validate_links(network)
     
-    if num_errors > 0:
-        msg = f"Network validation failed with {num_errors} error(s)"
-        log.error(msg)
-        raise ValueError(msg)
+    return num_errors
 
 def validate_fares(network, fares: transit_fare.TransitFareZoneSpecification):
     fare_zones = fares.transit_fare_zones
@@ -104,7 +103,7 @@ def validate_centroids(network):
 def validate_links(network):
     errors = 0
     unofficial_nodes = set()
-    disallowed_modes = set()
+    disallowed_modes = []
     interval_data = []
 
     for modes, ranges in param.official_node_numbers.items():
@@ -135,29 +134,31 @@ def validate_links(network):
             msg = f"Link id {link.id} type must not be 100, please refer to the helmet-docs manual"
             log.error(msg)
             errors += 1
-        if link.type == 999:
-            msg = f"Link id {link.id} type must not be 999, please refer to the helmet-docs manual"
+        if link.type > 699:
+            msg = f"Link id {link.id} type must not be greater than 699, please refer to the helmet-docs manual"
             log.error(msg)
             errors += 1
         if link.length > MAX_LINK_LENGTH:
             msg = f"Link id {link.id} has length {link.length} km. Project settings might be incorrect"
             log.warn(msg)
+
+        validate_road_charges(link)
         
         linktype = link.type % 100
-        if (linktype != 70 and link.length == 0): 
+        if linktype != 70 and link.length == 0: 
             msg = f"Link {link.id} has zero length. Link length can be zero only if linktype is 70. (vaihtokävelyt)"
             log.error(msg)
             errors += 1
-        if (linktype == 1):
+        if linktype == 1:
             msg = f"Link type 1 for link {link.id}. Link type 1 is out of use in Helmet 4+ versions"
             log.error(msg)
             errors += 1
         for mode in link.modes:  # TODO: Should check all modes, like walking, biking and rail modes
-            if mode.id in param.main_mode: 
+            if mode.id in param.main_mode:  # Mode h, always required
                 continue
-            elif str(mode.id) in "cvkybgdew":
+            elif str(mode.id) in "cvkybgdew":  # Car modes
                 if linktype == None or linktype == 0:
-                    msg = f"Link type missing for link {link.id} with modes {str(link.modes)}"
+                    msg = f"Link type missing for road link {link.id} with modes {str(link.modes)}"
                     log.error(msg)
                     errors += 1
                 if (linktype not in param.roadclasses
@@ -166,20 +167,29 @@ def validate_links(network):
                     log.error(msg)
                     errors += 1
                 break
-        if tram_mode in link.modes or light_rail_mode in link.modes:
-            speedstr = str(int(link.data1)).zfill(6)
-            speed = {
-                "aht": int(speedstr[:-4]),
-                "pt": int(speedstr[-4:-2]),
-                "iht": int(speedstr[-2:]),
-            }
-            for timeperiod in speed:
-                if speed[timeperiod] == 0:
-                    msg = "Speed is zero for time period {} on link {}".format(
-                        timeperiod, link.id)
+            elif str(mode.id) in "tp":  # Tram and light rail modes
+                if linktype == None or linktype == 0:
+                    msg = f"Link type missing for tram link {link.id} with modes {str(link.modes)}"
                     log.error(msg)
                     errors += 1
-        
+                speedstr = str(int(link.data1)).zfill(6)
+                speed = {
+                    "aht": int(speedstr[:-4]),
+                    "pt": int(speedstr[-4:-2]),
+                    "iht": int(speedstr[-2:]),
+                }
+                if link.type not in [2, 5, 6]:
+                    msg = f"Link type {link.type} for link {link.id} with modes {str(link.modes)} is invalid"
+                    log.error(msg)
+                    errors += 1
+                for timeperiod in speed:
+                    if speed[timeperiod] == 0:
+                        msg = "Speed is zero for time period {} on link {}".format(
+                            timeperiod, link.id)
+                        log.error(msg)
+                        errors += 1
+                break
+            # Metro and rail stops are checked in transit validation
         if (link.i_node.is_centroid or link.j_node.is_centroid) and link.type not in param.connector_link_types:
             msg = f"Link {link.id} is a connector and must be one of the connector link types: {param.connector_link_types}"
             log.error(msg)
@@ -198,7 +208,7 @@ def validate_links(network):
                     matched = True
                     link_mode_ids = {m.id for m in link.modes}
                     if not link_mode_ids.issubset(allowed_modes):
-                        disallowed_modes.add(node.id)
+                        disallowed_modes.append((node.id, link.id, link_mode_ids - allowed_modes))
                     break
 
             if not matched:
@@ -232,8 +242,9 @@ def validate_links(network):
         msg = f"Node number(s) {', '.join(unofficial_nodes)} not consistent with official HSL network."
         log.warn(msg)
     if disallowed_modes:
-        msg = f"Node number(s) {', '.join(disallowed_modes)} has disallowed modes."
-        log.warn(msg)
+        for node_id, link_id, modes in disallowed_modes:
+            msg = f"Link {link_id} connected to node {node_id} has disallowed modes: {', '.join(modes)}."
+            log.warn(msg)
     return errors
 
     
@@ -245,13 +256,70 @@ def validate_transit(network):
     - all rail links have speed defined
     """
     errors = 0
+    data = {"line_id": [], "maximum_stop_distance": [], "is_motorway": [], "loops": []}
+    high_distance_lines = []
+    looped_lines = []
     headways_missing = []
     hdw_attrs = [f"@hw_{tp}" for tp in param.time_periods]
+
+    whitelist_segments = whitelist_segments = set(["174173-173862","173862-174376","174376-174378","174378-322531",
+                                 "322531-173993","82372-83961","322451-322454","321225-322093",
+                                 "53199-56670","230810-231182","231182-40353","40353-40352",
+                                 "40352-231178","231178-231064","321174-321227", "194395-194397", 
+                                 "194397-194395", "212415-204085", "204085-213798","93047-93048"])
+    whitelist_line_ids = set(["1094A1"])
+
     for line in network.transit_lines():
         # Check headways
         for hdwy in hdw_attrs:
             if line[hdwy] < 0.02:
                 headways_missing.append(line.id)
+
+        stop_distance = 0
+        max_stop_distance = 0
+        is_motorway = 0
+        loop = 0
+        if line.mode.id in param.stop_codes:
+            stop_codes = param.stop_codes[line.mode.id]
+            for segment in line.segments():
+                # Check looped lines
+                if segment.loop_index > 1 and loop == 0 and segment.link.id not in whitelist_segments:
+                    loop += 1
+
+                    log.debug(segment.link.id + " is looped in line " + line.id)
+                    if (line.id not in whitelist_line_ids) and (line.id not in looped_lines):
+                        looped_lines.append(line.id)
+
+                # Check 
+                segment_length = segment.link.length
+                linktype = segment.link.type % 100
+                if linktype in param.roadclasses and is_motorway == 0:
+                    # Car link with standard attributes
+                    roadclass = param.roadclasses[linktype]
+                    if roadclass.type == "motorway":
+                        is_motorway = 1
+
+                stop_distance += segment_length
+                is_stop = segment.i_node.data2 in stop_codes
+
+                if is_stop:
+                    if stop_distance > max_stop_distance:
+                        max_stop_distance = stop_distance
+                    stop_distance = 0
+
+        # Append data for the current line
+        data["line_id"].append(line.id)
+        # Some lines in Kirkkonummi (line id starts with 6) have weird stopping behaviour
+        if line.id.startswith("6"):
+            max_stop_distance = 0
+        data["maximum_stop_distance"].append(max_stop_distance)
+        data["is_motorway"].append(is_motorway)
+        data["loops"].append(loop)
+
+        if line.mode.id in "bg" and max_stop_distance > 5 and not is_motorway: # and int(line.id[0]) < 6
+            log.debug(f"Line: {line.id},\t Maximum distance between consecutive stops: {max_stop_distance:.2f}")
+            high_distance_lines.append(line.id)
+
         # Check speeds for rail lines         
         if line.mode.id in "mrj":
             # TODO: Test this improvement: Instead of checking only the last segment before the stop, check all segments between stops and make sure at least one of them has a speed greater than zero
@@ -259,29 +327,379 @@ def validate_transit(network):
             # for seg in line.segments():
             #     if seg.number == 0:
             #         first_stop = seg.id
-            #     if seg.data1 > 0:
-            #         speed_zero = False
-            #     if seg.number > 0 and (seg.allow_boardings == 1 or seg.allow_alightings == 1):
+            #     elif seg.number > 0 and (seg.allow_boardings == 1 or seg.allow_alightings == 1):
             #         if speed_zero:
             #             msg = f"One of the segments between stops {first_stop} and {seg.id} on line {line.id} must have a speed greater than zero."
             #             log.error(msg)
             #             errors += 1
             #         speed_zero = True
             #         first_stop = seg.id
+            #     if seg.data1 > 0:  # The stop is at the first node of the segment, so the speed of the segment is after the stop, and so should the check be.
+            #         speed_zero = False
             # TODO: Instead of checking the last segment, check all segments between stops and make sure at least one of them has a speed greater than zero
             for seg1, seg2 in zip(list(line.segments()), list(line.segments())[1:]):
                 if seg1.data1 == 0 and (seg2.allow_boardings == 1 or seg2.allow_alightings == 1):
-                    msg = "Segment id {} must not have zero speed if the next segment has boarding/alighting allowed".format(seg1.id)
+                    msg = "Segment id {} must not have zero speed if the next segment has boarding/alighting allowed.".format(seg1.id)
                     log.error(msg)
                     errors += 1
                 if seg1.data1 != 0 and (seg2.allow_boardings == 0 and seg2.allow_alightings == 0):
-                    msg = "Segment id {} must not have non-zero speed if the next segment has boarding/alighting disallowed".format(seg1.id)
+                    msg = "Segment id {} must have zero speed if the next segment forbids boarding/alighting.".format(seg1.id)
                     log.error(msg)
                     errors += 1
-    
+                if (seg1.allow_boardings == 1 or seg1.allow_alightings == 1):
+                    ui2_code = seg1.i_node.data2
+                    if line.mode.id == "m" and ui2_code != 13:
+                        msg = f"Node {seg1.i_node.id} is a metro station, but the ui2 value is {ui2_code}. It should be 13 for metro stops for CBA to work."
+                        log.error(msg)
+                        errors += 1
+                    elif line.mode.id in "rj" and ui2_code != 14:
+                        msg = f"Node {seg1.i_node.id} is a rail station, but the ui2 value is {ui2_code}. It should be 14 for rail stops for CBA to work."
+                        log.error(msg)
+                        errors += 1
+        try:  # Only check for custom line issues if it is being used
+            if line["@custom_line"] not in [0, 1]:
+                msg = "Line {} has @custom_line extra attribute set to {}. If used, it must be either 0 or 1.".format(line.id, line["@custom_line"])
+                log.error(msg)
+                errors += 1
+            elif line.mode.id in "mrj" and line["@custom_line"] == 1:
+                msg = "Line {} is a rail line and cannot be marked as a custom line.".format(line.id)
+                log.error(msg)
+                errors += 1
+            if line["@custom_line"] == 1:
+                if line.mode.id not in "bgde":
+                    msg = "Line {} has @custom_line set to 1, but it is not a bus line.".format(line.id)
+                    log.error(msg)
+                    errors += 1
+                for segment in line.segments():
+                    if segment.data1 == 0:  # Follow the normal speed of other bus lines on the link
+                        continue
+                    if segment.data1 > 120 or segment.data1 < 0:
+                        msg = f"Segment {segment.id} of line {line.id} has @custom_line set to 1 and us1 (segment speed) set to {segment.data1} km/h. The speed must be between 1 and 120 km/h. Set the speed to 0 to follow the speed of other lines of the same type."
+                        log.error(msg)
+                        errors += 1
+                    elif segment.data1 > 100 or segment.data1 < 10:
+                        msg = f"Segment {segment.id} of line {line.id} has @custom_line set to 1 and us1 (segment speed) set to {segment.data1} km/h. The speed is outside the recommended range of 10-100 km/h."
+                        log.warn(msg)
+        except KeyError:
+            pass
+
+        
+
+    # Report missing headways
     if headways_missing:
         msg = "Headway(s) missing for line(s) {}".format(headways_missing)
         log.error(msg)
         errors += 1
+    # Report long stop distances
+    # TODO: Print to results folder
+    # max_stop_distances = pd.DataFrame(data)
+    if high_distance_lines:
+        log.info(f"{len(high_distance_lines)} HSL line(s) have a maximum stop distance greater than 5 km and no motorway sections.")
+    # Report looped lines
+    if looped_lines:
+        log.warn(f"Line(s) {looped_lines} traverse over the same links multiple times.")
+
     return errors
 
+def validate_road_charges(link):
+    if link["@hinta_aht"] > 0 or link["@hinta_pt"] > 0 or link["@hinta_iht"] > 0:
+        if link["@hinta_aht"] == 0 or link["@hinta_pt"] == 0 or link["@hinta_iht"] == 0:
+            log.warn(f"Link {link.id} has road charges defined for some time periods but not all.")
+        if round((link["@hinta_aht"] * link.length) % 0.1, 3) not in [0.0, 0.1] or round((link["@hinta_pt"] * link.length) % 0.1, 3) not in [0.0, 0.1] or round((link["@hinta_iht"] * link.length) % 0.1, 3) not in [0.0, 0.1]:
+            log.warn(f"Link {link.id} has road charges that are not multiples of 0.1 EUR/km.")
+
+
+def _connectivity_issue_counts(differences, is_connected, zone_numbers):
+    """Count connectivity mismatches against the smaller disconnected component."""
+    zone_count = len(zone_numbers)
+    unassigned = set(range(zone_count))
+    components = []
+    while unassigned:
+        seed = unassigned.pop()
+        component = {seed}
+        frontier = [seed]
+        while frontier:
+            current = frontier.pop()
+            connected = {
+                index for index in unassigned
+                if is_connected[current, index] and is_connected[index, current]
+            }
+            component.update(connected)
+            unassigned.difference_update(connected)
+            frontier.extend(connected)
+        components.append(component)
+
+    component_sizes = [len(component) for component in components]
+    component_for_zone = {}
+    for component_index, component in enumerate(components):
+        for zone_index in component:
+            component_for_zone[zone_index] = component_index
+
+    issue_counts = {}
+    for source in range(zone_count):
+        if differences[source, source]:
+            zone = zone_numbers[source]
+            issue_counts[zone] = issue_counts.get(zone, 0) + 1
+        for destination in range(source + 1, zone_count):
+            if not differences[source, destination] and not differences[destination, source]:
+                continue
+
+            source_zone = zone_numbers[source]
+            destination_zone = zone_numbers[destination]
+            if is_connected[source, destination] and is_connected[destination, source]:
+                affected_zones = (source_zone, destination_zone)
+            else:
+                source_component = component_for_zone[source]
+                destination_component = component_for_zone[destination]
+                source_size = component_sizes[source_component]
+                destination_size = component_sizes[destination_component]
+                if source_size < destination_size:
+                    affected_zones = (source_zone,)
+                elif destination_size < source_size:
+                    affected_zones = (destination_zone,)
+                else:
+                    affected_zones = (source_zone, destination_zone)
+
+            for zone in affected_zones:
+                issue_counts[zone] = issue_counts.get(zone, 0) + 1
+
+    return issue_counts
+
+
+def validate_network_connectivity(modeller, emmebank, scenario):
+    """Validate network connectivity in terms of HELMET compatibility.
+
+    Check that:
+    - all nodes are reachable from each other
+    """
+    errors = 0
+
+    # Store mf1 and mf2, creating temporary working matrices when needed.
+    mf1_matrix = emmebank.matrix("mf1")
+    mf2_matrix = emmebank.matrix("mf2")
+    created_matrices = []
+    if mf1_matrix is None:
+        mf1_matrix = emmebank.create_matrix("mf1", 0.0)
+        created_matrices.append("mf1")
+    if mf2_matrix is None:
+        mf2_matrix = emmebank.create_matrix("mf2", 0.0)
+        created_matrices.append("mf2")
+    mf1_old = mf1_matrix.get_numpy_data(scenario_id=scenario.id)
+    mf2_old = mf2_matrix.get_numpy_data(scenario_id=scenario.id)
+
+    #Define unit matrix
+    mf1 = numpy.ones_like(mf1_old, dtype=numpy.float32) * 0.001 #New input
+    mf2 = numpy.zeros_like(mf2_old, dtype=numpy.float32) #New output
+    emmebank.matrix("mf1").set_numpy_data(mf1, scenario_id=scenario.id)
+    emmebank.matrix("mf2").set_numpy_data(mf2, scenario_id=scenario.id)
+
+    #Zone numbers
+    zone_numbers = {zone: i for i, zone in enumerate(scenario.zone_numbers)}
+    modes = ["car","bike","walk","transit"]
+    assignment_methods = {
+        "car": modeller.tool("inro.emme.traffic_assignment.sola_traffic_assignment"),
+        "bike": modeller.tool("inro.emme.traffic_assignment.standard_traffic_assignment"),
+        "walk": modeller.tool("inro.emme.transit_assignment.standard_transit_assignment"),
+        "transit": modeller.tool("inro.emme.transit_assignment.standard_transit_assignment")
+    }
+    emme_specs = {
+        "car": {
+            "type": "STANDARD_TRAFFIC_ASSIGNMENT",
+            "classes": [
+                {
+                "mode": "c",
+                "demand": "mf1",
+                "results": {
+                    "od_travel_times": {
+                    "shortest_paths": "mf2"
+                    },
+                },
+                }
+            ],
+            "stopping_criteria": {
+                "max_iterations": 1,
+                "best_relative_gap": 1,
+                "relative_gap": 1,
+                "normalized_gap": 1
+            },
+            "performance_settings": {
+                "number_of_processors": "max"
+            }
+        },
+        "bike": {
+            "type": "STANDARD_TRAFFIC_ASSIGNMENT",
+            "classes": [
+                {
+                "mode": "f",
+                "demand": "mf1",
+                "results": {
+                    "od_travel_times": {
+                    "shortest_paths": "mf2"
+                    },
+                },
+                }
+            ],
+            "stopping_criteria": {
+                "max_iterations": 1,
+                "best_relative_gap": 1,
+                "relative_gap": 1,
+                "normalized_gap": 1
+            },
+            "performance_settings": {
+                "number_of_processors": "max"
+            }
+        },
+        "walk": {
+            "type": "STANDARD_TRANSIT_ASSIGNMENT",
+            "modes": [
+                "a",
+                "s"
+            ],
+            "demand": "mf1",
+            "waiting_time": {
+                "headway_fraction": 0.01,
+                "effective_headways": "hdw",
+                "perception_factor": 0
+            },
+            "boarding_time": {
+                "penalty": 0,
+                "perception_factor": 0
+            },
+            "aux_transit_time": {
+                "perception_factor": 1
+            },
+            "od_results": {
+                "transit_times": "mf2"
+            },
+        },
+        "transit": {
+            "type": "STANDARD_TRANSIT_ASSIGNMENT",
+            "modes": [
+                "b",
+                "d",
+                "e",
+                "g",
+                "j",
+                "m",
+                "p",
+                "r",
+                "t",
+                "w",
+                "a",
+                "s"
+            ],
+            "demand": "mf1",
+            "waiting_time": {
+                "headway_fraction": 0.01,
+                "effective_headways": "hdw",
+                "perception_factor": 0
+            },
+            "boarding_time": {
+                "penalty": 0,
+                "perception_factor": 0
+            },
+            "aux_transit_time": {
+                "perception_factor": 1
+            },
+            "od_results": {
+                "transit_times": "mf2"
+            },
+        },
+        }
+    Suomenlinna = 1531 #TODO: Accept other island centroids as well
+    problematic = [6272,6291,19071] #test network only
+    Salo_centroid = 34102 #test network only
+    EXTERNAL_RAILWAY_CENTROIDS = [z for z in zone_numbers if z in set(range(34300, 34400))]
+    #Make simple assignment to get impedance matrices
+    mf1 = emmebank.matrix("mf1").get_numpy_data(scenario_id=scenario.id)
+
+    for idx in param.volume_delay_funcs:
+        try:
+            emmebank.delete_function(idx)
+        except Exception:
+            pass
+    
+    test_func = 50
+    for idx in [f"fd{test_func}", f"ft{test_func}", f"fp{test_func}"]:
+        try:
+            emmebank.delete_function(idx)
+        except Exception:
+            pass
+        emmebank.create_function(
+            idx, "1")
+
+    network = scenario.get_network()
+    backup_links = {
+        link.id: (link.volume_delay_func, link.num_lanes)
+        for link in network.links()
+    }
+    backup_segments = {
+        segment.id: segment.transit_time_func
+        for segment in network.transit_segments()
+    }
+    backup_turns = {
+        turn.id: turn.penalty_func
+        for turn in network.turns()
+    }
+    for link in network.links():
+        link.volume_delay_func = test_func
+        link.num_lanes = 1
+    for segment in network.transit_segments():
+        segment.transit_time_func = test_func
+    for turn in network.turns():
+        turn.penalty_func = test_func
+    
+    scenario.publish_network(network)
+        
+    for mode in modes:
+        log.info(f"Checking network connectivity for {mode}")
+        assignment_methods[mode](specification=emme_specs[mode], scenario=scenario)
+        is_connected = (emmebank.matrix("mf2").get_numpy_data(scenario_id=scenario.id) < 1e6) * 1
+
+        expected_matrix = numpy.ones_like(mf1, dtype=numpy.int32) #1=connected, 0=not connected
+        if mode in ["bike","walk"]:
+            #TODO: Suomenlinna needs to somehow improved to allow for other island centroids as well
+            expected_matrix[:,zone_numbers[Suomenlinna]] = 0
+            expected_matrix[zone_numbers[Suomenlinna],:] = 0
+            if len(zone_numbers) < 50: #Only test network contains these issues
+                expected_matrix[:,[zone_numbers[z] for z in problematic]] = 0
+                expected_matrix[[zone_numbers[z] for z in problematic],:] = 0
+                expected_matrix[numpy.ix_([zone_numbers[z] for z in problematic],[zone_numbers[z] for z in problematic])] = 1
+                expected_matrix[:,zone_numbers[Salo_centroid]] = 0
+                expected_matrix[zone_numbers[Salo_centroid],:] = 0
+        if mode in ["car","walk","bike"]:
+            expected_matrix[:,[zone_numbers[z] for z in EXTERNAL_RAILWAY_CENTROIDS]] = 0
+            expected_matrix[[zone_numbers[z] for z in EXTERNAL_RAILWAY_CENTROIDS],:] = 0
+            #Fix diagonal
+        expected_matrix[numpy.diag_indices_from(expected_matrix)] = 1
+        differences = is_connected != expected_matrix
+        if differences.any():
+            missed_zones = _connectivity_issue_counts(
+                differences, is_connected, scenario.zone_numbers
+            )
+            log.error(f"Network connectivity check failed for {mode} network.")
+            for zone, issue_count in missed_zones.items():
+                issue_word = "issue" if issue_count == 1 else "issues"
+                log.error(f"Zone {zone} has {issue_count} connectivity {issue_word}.")
+                errors += 1
+    
+    # Restore only matrices that existed before validation.
+    if "mf1" not in created_matrices:
+        emmebank.matrix("mf1").set_numpy_data(mf1_old, scenario_id=scenario.id)
+    if "mf2" not in created_matrices:
+        emmebank.matrix("mf2").set_numpy_data(mf2_old, scenario_id=scenario.id)
+    for matrix_id in created_matrices:
+        emmebank.delete_matrix(matrix_id)
+
+    restored_network = scenario.get_network()
+    for link in restored_network.links():
+        volume_delay_func, num_lanes = backup_links[link.id]
+        link.volume_delay_func = volume_delay_func
+        link.num_lanes = num_lanes
+    for segment in restored_network.transit_segments():
+        segment.transit_time_func = backup_segments[segment.id]
+    for turn in restored_network.turns():
+        turn.penalty_func = backup_turns[turn.id]
+    scenario.publish_network(restored_network)
+    
+    return errors

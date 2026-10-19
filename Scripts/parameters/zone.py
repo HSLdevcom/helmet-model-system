@@ -276,18 +276,43 @@ helsinki_cbd = (
     (25499538.96, 6669673.01),
     (25500485.22, 6670292.79),
 )
-savu_intervals = (-172.85, -169.77, -167.11, -161.52, -156.85, -152.07, 9999)
+savu_intervals = (-88.77957,-86.55685,-84.52870,-80.08194,-75.85278,-70.95986,9999)
 tour_length_intervals = (0, 1, 3, 5, 10, 20, 30, 40, float("inf"))
-# Population in noise zones as share of total area population as
-# function only of zone area, calculated by Ramboll Feb 2021
+# Population in noise zones as share of total area population as function only of zone area
 pop_share_per_noise_area = {
-    "helsinki_cbd": 0.028816313,
-    "helsinki_other": 0.005536503,
-    "espoo_vant_kau": 0.002148004,
-    "surround_train": 0.0019966,
-    "surround_other": 0.001407824,
+    "helsinki_cbd": 0.057446589,
+    "helsinki_other": 0.016258403,
+    "espoo_vant_kau": 0.004377058,
+    "surround_train": 0.003477061,
+    "surround_other": 0.002512424,
     "peripheral": 0,  # Not calculated
 }
+
+# Noise attenuation settings used by EmmeAssignmentModel.calc_noise.
+noise_reference_distance = 10.0
+noise_near_db_per_doubling = 9.5
+noise_far_db_per_doubling = 3.5
+noise_transition_doublings = 1.6
+
+# Enable to calibrate attenuation using assigned traffic at the last iteration.
+noise_calibration_enabled = False
+noise_calibration_areas = (
+    "helsinki_cbd",
+    "helsinki_other",
+    "espoo_vant_kau",
+)
+# Shares for 55-59, 60-64, 65-69, 70-74, and 75+ dB, respectively.
+noise_calibration_targets = (0.51, 0.34, 0.14, 0.0099, 0.0001)
+# Adaptive weights use the symmetric target/prediction ratio, capped to avoid
+# a zero predicted share overwhelming the other bands.
+noise_calibration_max_relative_weight = 10.0
+noise_calibration_bounds = {
+    "near_db_per_doubling": (0.5, 10.0),
+    "far_db_per_doubling": (2.0, 10.0),
+    "transition_doublings": (0.1, 7.0),
+}
+noise_calibration_grid_points = 5
+noise_calibration_passes = 4
 
 # Parking time function
 def parking_time(zone_data: 'ZoneData') -> pd.Series:

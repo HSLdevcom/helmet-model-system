@@ -21,7 +21,7 @@ class NoiseModel:
         self.car_morning = "@car_time_aht"
 
     def calc_noise(self, link):
-        """Calculate noise zone width.
+        """Calculate noise zone width. Uses the old method (pre HELMET 5.1) for calculating noise level from traffic.
 
         Parameters
         ----------
@@ -33,22 +33,36 @@ class NoiseModel:
         float
             Noise zone width (m)
         """
-        traffic = max(sum([link[mode] for mode in self.light_modes]), 0.01)
+        traffic = sum(link[mode] for mode in self.light_modes)
+        heavy = sum(link[mode] for mode in self.heavy_modes)
         rlink = link.reverse_link
         if rlink is None:
             reverse_traffic = 0
+            reverse_heavy = 0
         else:
-            reverse_traffic = sum([rlink[mode] for mode in self.light_modes])
-        cross_traffic = (param.years_average_day_factor
-                         * param.share_7_22_of_day
-                         * (traffic+reverse_traffic))
-        heavy = sum([link[mode] for mode in self.heavy_modes])
-        heavy_share = heavy / (traffic+heavy)
+            reverse_traffic = sum(
+                rlink[mode] for mode in self.light_modes
+            )
+            reverse_heavy = sum(
+                rlink[mode] for mode in self.heavy_modes
+            )
+        total_light_traffic = traffic + reverse_traffic
+        total_heavy_traffic = heavy + reverse_heavy
+        total_traffic = total_light_traffic + total_heavy_traffic
+        if total_traffic <= 0.0:
+            return 0.0
+
+        cross_traffic = (
+            param.years_average_day_factor
+            * param.share_7_22_of_day
+            * total_traffic
+        )
+        heavy_share = total_heavy_traffic / total_traffic
 
         # Calculate speed
         link = self.morning_network.link(link.i_node, link.j_node)
         rlink = link.reverse_link
-        if reverse_traffic > 0:
+        if reverse_traffic + reverse_heavy > 0:
             speed = (60 * 2 * link.length/(link[self.car_morning]+rlink[self.car_morning])) if rlink[self.car_morning] > 0 else 50.0
         else:
             speed = (0.3*(60*link.length/link[self.car_morning]) + 0.7*link.data2) if link[self.car_morning] > 0 else 50.0

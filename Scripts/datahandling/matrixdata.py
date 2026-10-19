@@ -88,10 +88,17 @@ class MatrixFile:
                              ", adding zero row(s) and column(s)"))
                 self.new_zone_numbers = zone_numbers
             ass_classes = self.matrix_list
-            transport_classes = (("truck", "trailer_truck") 
-                                 if "freight" in path
-                                 else param.transport_classes)
-            for ass_class in transport_classes:
+            matrix_type = os.path.basename(path).split("_", 1)[0]
+            if "freight" in path:
+                required_matrices = ("truck", "trailer_truck")
+            elif matrix_type == "demand":
+                required_matrices = param.transport_classes
+            else:
+                required_matrices = tuple(
+                    ass_class for ass_class, matrix_types
+                    in param.emme_matrices.items()
+                    if matrix_type in matrix_types)
+            for ass_class in required_matrices:
                 if ass_class not in ass_classes:
                     msg = "File {} does not contain {} matrix.".format(
                         path, ass_class)

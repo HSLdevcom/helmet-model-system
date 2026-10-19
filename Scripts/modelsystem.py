@@ -192,13 +192,15 @@ class ModelSystem:
                 if purpose.dest != "source":
                     for mode in demand:
                         self.dtm.add_demand(demand[mode])
+                    for mode in purpose.modes:
                         self.travel_modes[mode] = True
             self.event_handler.on_purpose_demand_calculated(purpose, demand, pnr_iteration = pnr_it, estimation_mode=estimation_mode)
 
     # possibly merge with init
     def assign_base_demand(self, 
                            use_fixed_transit_cost: bool = False, 
-                           is_end_assignment: bool = False) -> Dict[str, Dict[str, numpy.ndarray]]:
+                           is_end_assignment: bool = False,
+                           fixed_network: bool = False) -> Dict[str, Dict[str, numpy.ndarray]]:
         """Assign base demand to network (before first iteration).
 
         Parameters
@@ -208,6 +210,8 @@ class ModelSystem:
             found in Results folder, it can be reused to save time
         is_end_assignment : bool (optional)
             If base demand is assigned without demand calculations
+        fixed_network : bool (optional)
+            If the network is fixed and should not be modified
 
         Returns
         -------
@@ -223,7 +227,7 @@ class ModelSystem:
         impedance = {}
 
         # create attributes and background variables to network
-        self.ass_model.prepare_network(self.zdata_forecast.car_dist_cost)
+        self.ass_model.prepare_network(self.zdata_forecast.car_dist_cost, fixed_network=fixed_network)
 
         # Calculate transit cost matrix, and save it to emmebank
         time_periods = self.ass_model.time_periods
@@ -261,13 +265,15 @@ class ModelSystem:
                 time_ratios, cost_ratios = self._update_ratios(impedance[tp], tp)
                 self.event_handler.on_ratios_updated(time_ratios, cost_ratios)
             if is_end_assignment:
-                self._save_to_omx(impedance[tp], tp)
+                #Saving omx matrices
+                self.event_handler.on_time_period_assigned("last", ap, impedance[tp], tp, impedance)
         if is_end_assignment:
             self.ass_model.aggregate_results(self.resultdata)
-            self._calculate_noise_areas()
-            self.resultdata.flush()
-        self.dtm.init_demand_and_get_gaps()
+        gap = self.dtm.init_demand_and_get_gaps()
         self.event_handler.on_base_demand_assigned(impedance)
+        if is_end_assignment:
+            self.event_handler.on_iteration_complete("last", impedance, gap)
+            self.resultdata.flush()
         return impedance
 
     def run_iteration(self,
@@ -519,8 +525,9 @@ class AgentModelSystem(ModelSystem):
                     demand = purpose.calc_demand(estimation_mode)
                     if purpose.dest != "source":
                         for mode in demand:
-                            self.travel_modes[mode] = True
                             self.dtm.add_demand(demand[mode])
+                        for mode in purpose.modes:
+                            self.travel_modes[mode] = True
                 else:
                     for mode in purpose.modes:
                         self.travel_modes[mode] = True
