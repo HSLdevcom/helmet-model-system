@@ -99,7 +99,7 @@ class NoiseAreasResults(ModelSystemEventListener):
             "55_59": area_55_plus - area_60_plus,
             "60_64": area_60_plus - area_65_plus,
             "65_69": area_65_plus - area_70_plus,
-            "70_75": area_70_plus - area_75_plus,
+            "70_74": area_70_plus - area_75_plus,
             "75_plus": area_75_plus,
         }
 
@@ -120,7 +120,7 @@ class NoiseAreasResults(ModelSystemEventListener):
                 "55_59",
                 "60_64",
                 "65_69",
-                "70_75",
+                "70_74",
                 "75_plus",
             )
         )
@@ -180,7 +180,7 @@ class NoiseAreasResults(ModelSystemEventListener):
         else:
             cumulative_areas = self.ms.ass_model.calc_noise(**noise_parameters)
         exclusive_areas = self._exclusive_noise_areas(cumulative_areas)
-        for band in ("50_54", "55_59", "60_64", "65_69", "70_75", "75_plus"):
+        for band in ("50_54", "55_59", "60_64", "65_69", "70_74", "75_plus"):
             self.ms.resultdata.print_data(
                 exclusive_areas[band], "noise_areas.txt", f"area_{band}_dB"
             )
