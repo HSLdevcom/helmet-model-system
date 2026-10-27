@@ -519,8 +519,23 @@ class EmmeAssignmentModel(AssignmentModel):
             # Calculate speed
             link = morning_network.link(link.i_node, link.j_node)
             rlink = link.reverse_link
-            if reverse_traffic + reverse_heavy_traffic > 0:
+            forward_has_traffic = traffic + heavy_traffic > 0
+            reverse_has_traffic = (
+                reverse_traffic + reverse_heavy_traffic > 0
+            )
+            if reverse_has_traffic and rlink is None:
+                raise ValueError(
+                    "Reverse link with traffic is missing from the morning "
+                    "network for link {}".format(link.id)
+                )
+            if forward_has_traffic and reverse_has_traffic:
                 speed = ((0.5*(60*link.length/link["@car_time_aht"]) + 0.5*link.data2)+(0.5*(60*rlink.length/rlink["@car_time_aht"]) + 0.5*rlink.data2))/2
+            elif reverse_has_traffic:
+                speed = (
+                    0.5 * (60 * rlink.length / rlink["@car_time_aht"])
+                    + 0.5 * rlink.data2
+                    if rlink["@car_time_aht"] > 0 else 50.0
+                )
             else:
                 speed = (0.5*(60*link.length/link["@car_time_aht"]) + 0.5*link.data2)
 
