@@ -71,6 +71,7 @@ class ParkAndRideModel(ImpedanceTransformerBase):
                                                 adjustments=0)
                             for i, num in pnr_centroids]
         self._saved_utilities = None
+        self._day_impedance = None
         
     def set_impedance(self, impedance: Dict[str, Dict[str, Dict[str, np.ndarray]]]) -> Dict[str, Dict[str, np.ndarray]]:
         """Perform transformation from time period dependent matrices 
@@ -122,6 +123,7 @@ class ParkAndRideModel(ImpedanceTransformerBase):
                     day_imp[mode][mtx_type] += imp_share[time_period][1] * imp.T
         
         day_imp[transit_mode]['cost'] = transit_cost_to_per_day(day_imp[transit_mode]['cost'], self._purpose)
+        self._day_impedance = day_imp
         
         car_cost     = np.stack([day_imp[car_mode]['cost'][:,f.zone_offset][rows,None] for f in self._facilities], axis=2)
         transit_cost = np.stack([day_imp[transit_mode]['cost'][f.zone_offset, :][None, cols] for f in self._facilities], axis=2)
@@ -135,6 +137,36 @@ class ParkAndRideModel(ImpedanceTransformerBase):
             transit_utility = transit_cost * transit_imp['cost'] + transit_time * transit_imp['time'],
             facility_utility = self._get_facility_utilities(),
         )
+
+    def get_tour_impedance(self, origin: int, destination: int) -> Dict[str, float]:
+        """Return expected daily cost and time for a P+R tour across facilities."""
+        if self._day_impedance is None or self._saved_utilities is None:
+            raise RuntimeError("Park-and-ride impedance has not been initialized")
+
+        origin_row = origin - self._purpose.bounds.start
+        utilities = self._calc_logit_slice(
+            slice(origin_row, origin_row + 1), self._saved_utilities
+        )[0, destination, :]
+        facility_shares = np.exp(utilities)
+        facility_shares /= facility_shares.sum()
+
+        assignment_class = assignment_classes[self._purpose.name]
+        car_mode = "car_" + assignment_class
+        transit_mode = "transit_" + assignment_class
+        facility_offsets = np.array([f.zone_offset for f in self._facilities])
+
+        results = {}
+        for impedance_type in ("cost", "time"):
+            car_impedance = self._day_impedance[car_mode][impedance_type]
+            transit_impedance = self._day_impedance[transit_mode][impedance_type]
+            facility_impedance = (
+                car_impedance[origin, facility_offsets]
+                + transit_impedance[facility_offsets, destination]
+            )
+            results[impedance_type] = float(
+                np.dot(facility_shares, facility_impedance)
+            )
+        return results
         
     def get_logsum(self) -> np.ndarray:
         """
