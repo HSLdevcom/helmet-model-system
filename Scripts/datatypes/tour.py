@@ -136,6 +136,10 @@ class Tour:
         """
         utils = self.purpose.model.calc_individual_mode_prob(
                 is_car_user, self.position[0]) + self._mode_draw
+        if not numpy.isfinite(utils).any():
+            raise ValueError(
+                "No available travel modes for purpose {} from origin zone {}"
+                .format(self.purpose.name, self.orig))
         self._mode_idx = utils.argmax()
         self.purpose.generated_tours[self.mode][self.position[0]] += 1
         self.total_access = (-self.purpose.model.money_utility

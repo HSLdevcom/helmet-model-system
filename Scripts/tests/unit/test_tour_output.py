@@ -4,6 +4,7 @@ import unittest
 import numpy
 
 from datatypes.tour import Tour
+from models.logit import ModeDestModel
 
 
 class TourOutputTest(unittest.TestCase):
@@ -81,6 +82,42 @@ class TourOutputTest(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "No valid destination probabilities"):
             self.tour.choose_destination({})
+
+    def test_individual_mode_choice_excludes_modes_without_destinations(self):
+        model = ModeDestModel.__new__(ModeDestModel)
+        model.purpose = SimpleNamespace(modes=["car", "walk"])
+        model.mode_utils = {
+            "car": numpy.array([1.0]),
+            "walk": numpy.array([10.0]),
+        }
+        model.mode_choice_param = {
+            "car": {"individual_dummy": {}},
+            "walk": {"individual_dummy": {}},
+        }
+        model.dest_expsums = {
+            "car": {"logsum": numpy.array([1.0])},
+            "walk": {"logsum": numpy.array([0.0])},
+        }
+
+        utils = model.calc_individual_mode_prob(False, 0)
+
+        self.assertEqual(utils[0], 1.0)
+        self.assertEqual(utils[1], -numpy.inf)
+
+    def test_basic_destination_probabilities_are_zero_when_unavailable(self):
+        model = ModeDestModel.__new__(ModeDestModel)
+        model._calc_utils = lambda impedance: None
+        model.mode_choice_param = {"car": {}}
+        model.dest_exps = {
+            "car": numpy.array([[0.0, 0.0], [1.0, 1.0]])
+        }
+
+        model.calc_basic_prob({})
+
+        numpy.testing.assert_array_equal(
+            model.cumul_dest_prob["car"],
+            numpy.array([[0.0, 0.5], [0.0, 1.0]]),
+        )
 
 
 if __name__ == "__main__":
