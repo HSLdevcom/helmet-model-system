@@ -210,8 +210,15 @@ class Tour:
                 Type (time/cost/dist) : dict
                     Assignment class (car_work/transit/...) : numpy 2d matrix
         """
-        time = self._get_cost(impedance, "time")
-        self.cost = self._get_cost(impedance, "cost")
+        if self.mode == "park_and_ride":
+            tour_impedance = self.purpose.park_and_ride_model.get_tour_impedance(
+                *self.position
+            )
+            time = tour_impedance["time"]
+            self.cost = tour_impedance["cost"]
+        else:
+            time = self._get_cost(impedance, "time")
+            self.cost = self._get_cost(impedance, "cost")
         self.purpose_name = cast(str, self.purpose_name) #type checker help
         vot = 1 / vot_inv[assignment_classes[self.purpose_name]]
         self.gen_cost = self.cost + time * vot
