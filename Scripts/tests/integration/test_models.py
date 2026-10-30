@@ -4,6 +4,7 @@ import numpy
 
 from datahandling.zonedata import ZoneData
 from events.event_handler import EventHandler
+from events.results.origins_demand import OriginsDemand
 import utils.log as log
 from modelsystem import ModelSystem, AgentModelSystem
 from assignment.mock_assignment import MockAssignmentModel
@@ -55,18 +56,20 @@ class ModelTest(unittest.TestCase):
         print("Adding demand and assigning")
         impedance = model.run_iteration(impedance)
 
-        self.assertEquals(len(ass_model.assignment_periods), len(impedance))
+        self.assertEqual(len(ass_model.assignment_periods), len(impedance))
         self._validate_impedances(impedance["aht"])
         self._validate_impedances(impedance["pt"])
         self._validate_impedances(impedance["iht"])
 
         # Check that model result does not change
-        self.assertAlmostEquals(model.mode_share[0]["car"], 0.2146765684835828)
+        self.assertAlmostEqual(model.mode_share[0]["car"], 0.2146765684835828)
         
         print("Model system test done")
     
     def test_agent_model(self):
         log.initialize(Config())
+        event_handler = EventHandler(strict_mode=True)
+        event_handler.register_listener(OriginsDemand())
         results_path = os.path.join(TEST_DATA_PATH, "Results")
         ass_model = MockAssignmentModel(MatrixData(
             os.path.join(results_path, "test", "Matrices")))
@@ -78,29 +81,47 @@ class ModelTest(unittest.TestCase):
             TEST_DATA_PATH, "Base_input_data", "base_matrices")
         model = AgentModelSystem(
             zone_data_path, base_zone_data_path, base_matrices_path,
-            results_path, ass_model, "test", EventHandler())
+            results_path, ass_model, "test", event_handler)
         impedance = model.assign_base_demand()
         impedance = model.run_iteration(impedance)
         impedance = model.run_iteration(impedance, "last")
 
+        # Absolute share bounds allow stochastic population and tour choices
+        # to vary with the random seed while still catching mode-share regressions.
+        mode_share_bounds = {
+            "car": (0.19, 0.25),
+            "park_and_ride": (0.0001, 0.003),
+            "transit": (0.18, 0.23),
+            "bike": (0.05, 0.08),
+            "walk": (0.48, 0.55),
+        }
+        self.assertEqual(len(model.mode_share), 2)
+        for iteration, mode_shares in enumerate(model.mode_share):
+            self.assertEqual(set(mode_shares), set(mode_share_bounds))
+            self.assertAlmostEqual(sum(mode_shares.values()), 1.0)
+            for mode, (lower, upper) in mode_share_bounds.items():
+                with self.subTest(iteration=iteration, mode=mode):
+                    self.assertGreaterEqual(mode_shares[mode], lower)
+                    self.assertLessEqual(mode_shares[mode], upper)
+
     def _validate_impedances(self, impedances):
         self.assertIsNotNone(impedances)
         self.assertIs(type(impedances), dict)
-        self.assertEquals(len(impedances), 3)
+        self.assertEqual(len(impedances), 3)
         self.assertIsNotNone(impedances["time"])
         self.assertIsNotNone(impedances["cost"])
         self.assertIsNotNone(impedances["dist"])
         self.assertIs(type(impedances["time"]), dict)
-        self.assertEquals(len(impedances["time"]), 11)
+        self.assertEqual(len(impedances["time"]), 11)
         self.assertIsNotNone(impedances["time"]["transit_work"])
         self.assertIs(type(impedances["time"]["transit_work"]), numpy.ndarray)
-        self.assertEquals(impedances["time"]["transit_work"].ndim, 2)
-        self.assertEquals(len(impedances["time"]["transit_work"]), 13)
+        self.assertEqual(impedances["time"]["transit_work"].ndim, 2)
+        self.assertEqual(len(impedances["time"]["transit_work"]), 13)
 
     def _validate_demand(self, demand):
         self.assertIsNotNone(demand)
         self.assertIsNotNone(demand)
         self.assertIsInstance(demand, Demand)
         self.assertIs(type(demand.matrix), numpy.ndarray)
-        self.assertEquals(demand.matrix.ndim, 2)
-        self.assertEquals(demand.matrix.shape[1], 6)
+        self.assertEqual(demand.matrix.ndim, 2)
+        self.assertEqual(demand.matrix.shape[1], 6)
