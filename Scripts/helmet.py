@@ -10,11 +10,15 @@ from assignment.emme_assignment import EmmeAssignmentModel
 from assignment.mock_assignment import MockAssignmentModel
 from events.event_handler import EventHandler
 from modelsystem import ModelSystem, AgentModelSystem
+import parameters.assignment as assignment_params
 from datahandling.matrixdata import MatrixData
 from utils.validation import Validation
 
 
 def main(args):
+    if args.number_of_processors is not None:
+        assignment_params.performance_settings['number_of_processors'] = args.number_of_processors
+
     # Used to format major iteration log messages
     def log_header(msg, log_width=72):
         return msg.center(log_width, "-")
@@ -153,6 +157,8 @@ def main(args):
             results_path, ass_model, args.scenario_name, event_handler,
             estimation_data_path)
     log_extra["status"]["results"] = model.mode_share
+    model.cdm.set_car_growth(constant=args.car_growth_constant,
+                             factor=args.car_growth_factor)
 
     # Run traffic assignment simulation for N iterations,
     # on last iteration model-system will save the results
@@ -332,6 +338,21 @@ if __name__ == "__main__":
         type=str,
         default=config.FORECAST_DATA_PATH,
         help="Path to folder containing forecast zonedata"),
+    parser.add_argument(
+        "--car-growth-constant",
+        type=float,
+        default=0.0,
+        help="Constant added to predicted car ownership density."),
+    parser.add_argument(
+        "--car-growth-factor",
+        type=float,
+        default=1.0,
+        help="Factor applied to predicted car ownership density."),
+    parser.add_argument(
+        "--number-of-processors",
+        type=int,
+        default=None,
+        help="Number of processors used by assignment and demand calculations."),
     parser.add_argument(
         "--iterations",
         type=int,
