@@ -2,6 +2,7 @@ from pathlib import Path
 import threading
 import multiprocessing
 import os
+import shutil
 from typing import Any, Dict, List, Union, cast
 import numpy
 import pandas
@@ -91,6 +92,11 @@ class ModelSystem:
         self.resultmatrices = MatrixData(
             os.path.join(results_path, name, "Matrices"))
         self.resultdata = ResultsData(os.path.join(results_path, name))
+        forecast_path = Path(zone_data_path)
+        shutil.copytree(
+            forecast_path,
+            Path(self.resultdata.path) / "inputs" / forecast_path.name,
+            dirs_exist_ok=True)
 
         self.dm = self._init_demand_model()
         self.fm = FreightModel(
