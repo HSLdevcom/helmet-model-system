@@ -77,6 +77,10 @@ Then, you need data for the forecast scenario.
 This data will also not be written over at any point - it is read-only.
 The location of this data is defined in `FORECAST_DATA_PATH` key.
 
+At model initialization, the complete forecast folder (including any subfolders)
+is copied to `RESULTS_PATH/SCENARIO_NAME/inputs/<forecast folder name>`.
+Rerunning a scenario overwrites matching files in this copy.
+
 If you are trying the test model, try
 `"C:\\FILL_YOUR_PATH\\helmet-model-system\\Scripts\\tests\\test_data\\Scenario_input_data\\2030_test"`.
 If you are trying another model, fill in whatever the path is.
