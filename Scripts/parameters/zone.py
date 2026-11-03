@@ -290,9 +290,9 @@ pop_share_per_noise_area = {
 
 # Noise attenuation settings used by EmmeAssignmentModel.calc_noise.
 noise_reference_distance = 10.0
-noise_near_db_per_doubling = 9.5
-noise_far_db_per_doubling = 3.5
-noise_transition_doublings = 1.6
+noise_near_db_per_doubling = 8.2
+noise_far_db_per_doubling = 4.0
+noise_transition_doublings = 1.4
 
 # Enable to calibrate attenuation using assigned traffic at the last iteration.
 noise_calibration_enabled = False
