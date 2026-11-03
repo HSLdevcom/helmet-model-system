@@ -347,7 +347,13 @@ class ModeDestModel(LogitModel):
         self.cumul_dest_prob = {}
         for mode in self.mode_choice_param:
             cumsum = self.dest_exps[mode].T.cumsum(axis=0)
-            self.cumul_dest_prob[mode] = cumsum / cumsum[-1]
+            totals = cumsum[-1]
+            self.cumul_dest_prob[mode] = numpy.divide(
+                cumsum,
+                totals,
+                out=numpy.zeros_like(cumsum),
+                where=totals[None, :] > 0,
+            )
     
     def calc_individual_prob(self, mod_mode, dummy):
         """Calculate matrix of probabilities with individual dummies.
@@ -417,6 +423,8 @@ class ModeDestModel(LogitModel):
                     j = self.purpose.sub_intervals.searchsorted(
                         zone, side="right")
                     mode_utils[i] += b["car_users"][j]
+            if self.dest_expsums[mode]["logsum"][zone] <= 0:
+                mode_utils[i] = -numpy.inf
         return mode_utils
 
     def _calc_utils(self, impedance):

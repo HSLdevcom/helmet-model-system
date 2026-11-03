@@ -80,7 +80,13 @@ class CarDensityModel(LinearModel):
             out=numpy.array(forecast_sh_detached), where=pop_growth!=0)
         self.zone_data._values["share_detached_houses_new"] = pandas.Series(
             share_detached_new, self.zone_data.zone_numbers[self.bounds])
+        self.set_car_growth()
     
+    def set_car_growth(self, constant=0.0, factor=1.0):
+        """Set the constant and factor for car ownership sensitivity runs."""
+        self._growth_constant = constant
+        self._growth_factor = factor
+
     def predict(self):
         """Get car ownership prediction for zones.
         
@@ -108,6 +114,8 @@ class CarDensityModel(LinearModel):
                             .clip(upper=1.0))
         prediction = (self.pop_growth_share * prediction
                       + (1-self.pop_growth_share) * base_car_density)
+        prediction += self._growth_constant
+        prediction *= self._growth_factor
         return prediction
 
 

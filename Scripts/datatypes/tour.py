@@ -29,7 +29,7 @@ class Tour:
     matrix = numpy.array([[1 / zone_param.agent_demand_fraction]])
     attr = ["person_id", "purpose_name", "mode", 
             "total_access", "sustainable_access",
-            "cost", "gen_cost"]
+            "cost", "gen_cost", "orig", "dest", "sec_dest"]
 
     def __init__(self, 
                  purpose: TourPurpose, 
@@ -62,7 +62,7 @@ class Tour:
 
     @property
     def orig(self):
-        return self.purpose.zone_data.zone_numbers[self.position[0]]
+        return self.purpose.zone_data.all_zone_numbers[self.position[0]]
 
     @orig.setter
     def orig(self, origin):
@@ -76,7 +76,7 @@ class Tour:
     @property
     def dest(self) -> Optional[int]:
         if len(self.position) > 1:
-            return self.purpose.zone_data.zone_numbers[self.position[1]]
+            return self.purpose.zone_data.all_zone_numbers[self.position[1]]
         else:
             return None
 
@@ -91,7 +91,7 @@ class Tour:
     def sec_dest(self) -> Optional[int]:
         if len(self.position) > 2:
             self.position = cast(Tuple[int,int,int], self.position) #help for the type checker
-            return self.purpose.zone_data.zone_numbers[self.position[2]]
+            return self.purpose.zone_data.all_zone_numbers[self.position[2]]
         else:
             return None
 
@@ -136,6 +136,10 @@ class Tour:
         """
         utils = self.purpose.model.calc_individual_mode_prob(
                 is_car_user, self.position[0]) + self._mode_draw
+        if not numpy.isfinite(utils).any():
+            raise ValueError(
+                "No available travel modes for purpose {} from origin zone {}"
+                .format(self.purpose.name, self.orig))
         self._mode_idx = utils.argmax()
         self.purpose.generated_tours[self.mode][self.position[0]] += 1
         self.total_access = (-self.purpose.model.money_utility
@@ -162,9 +166,25 @@ class Tour:
         orig_idx = self.position[0]
         orig_rel_idx = orig_idx - self.purpose.bounds.start
         self.purpose.model = cast(ModeDestModel, self.purpose.model) #type checker help
-        dest_idx = numpy.searchsorted(
-            self.purpose.model.cumul_dest_prob[self.mode][:, orig_rel_idx],
-            self._dest_draw)
+        dest_cumulative_prob = self.purpose.model.cumul_dest_prob[
+            self.mode][:, orig_rel_idx]
+        nr_destinations = len(self.purpose.attracted_tours[self.mode])
+        if nr_destinations == 0 or dest_cumulative_prob.size < nr_destinations:
+            raise ValueError(
+                "Destination probabilities for purpose {} and mode {} "
+                "contain {} zones, but {} destinations are modeled".format(
+                    self.purpose.name, self.mode, dest_cumulative_prob.size,
+                    nr_destinations))
+        dest_cumulative_prob = dest_cumulative_prob[:nr_destinations]
+        if (not numpy.isfinite(dest_cumulative_prob).all()
+                or dest_cumulative_prob[-1] <= 0):
+            raise ValueError(
+                "No valid destination probabilities for purpose {} and "
+                "mode {} from origin zone {}".format(
+                    self.purpose.name, self.mode, self.orig))
+        dest_cumulative_prob = dest_cumulative_prob / dest_cumulative_prob[-1]
+        dest_cumulative_prob[-1] = 1.0
+        dest_idx = numpy.searchsorted(dest_cumulative_prob, self._dest_draw)
         self.position = (orig_idx, dest_idx)
         self.purpose.attracted_tours[self.mode][dest_idx] += 1
         self.purpose.histograms[self.mode].add(
@@ -210,8 +230,15 @@ class Tour:
                 Type (time/cost/dist) : dict
                     Assignment class (car_work/transit/...) : numpy 2d matrix
         """
-        time = self._get_cost(impedance, "time")
-        self.cost = self._get_cost(impedance, "cost")
+        if self.mode == "park_and_ride":
+            tour_impedance = self.purpose.park_and_ride_model.get_tour_impedance(
+                *self.position
+            )
+            time = tour_impedance["time"]
+            self.cost = tour_impedance["cost"]
+        else:
+            time = self._get_cost(impedance, "time")
+            self.cost = self._get_cost(impedance, "cost")
         self.purpose_name = cast(str, self.purpose_name) #type checker help
         vot = 1 / vot_inv[assignment_classes[self.purpose_name]]
         self.gen_cost = self.cost + time * vot
