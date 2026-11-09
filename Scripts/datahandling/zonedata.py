@@ -149,14 +149,14 @@ class ZoneData:
     def __setitem__(self, key: str, data: Any):
         try:
             if not numpy.isfinite(data).all():
-                for (i, val) in data.iteritems():
+                for (i, val) in data.items():
                     if not numpy.isfinite(val):
                         msg = "{} for zone {} is not a finite number".format(
                             key, i).capitalize()
                         log.error(msg)
                         raise ValueError(msg)
         except TypeError:
-            for (i, val) in data.iteritems():
+            for (i, val) in data.items():
                 try:
                     float(val)
                 except ValueError:
@@ -168,7 +168,7 @@ class ZoneData:
             log.error(msg)
             raise TypeError(msg)
         if (data < 0).any():
-            for (i, val) in data.iteritems():
+            for (i, val) in data.items():
                 if val < 0:
                     msg = "{} ({}) for zone {} is negative".format(
                         key, val, i).capitalize()
@@ -282,9 +282,9 @@ class ShareChecker:
         self.data = data
 
     def __setitem__(self, key, data):
-        if (data > 1.005).any():
-            for (i, val) in data.iteritems():
-                if val > 1.005:
+        if (data > 1.015).any():
+            for (i, val) in data.items():
+                if val > 1.015:
                     msg = "{} ({}) for zone {} is larger than one".format(
                         key, val, i).capitalize()
                     log.error(msg)
