@@ -65,6 +65,7 @@ class Config:
         self.EXPORT_ESTIMATION_DATA = False
         self.STRICT_MODE = False
         self.FIXED_NETWORK = False
+        self.FAST_CONVERGE = False
         self.SKIP_NETWORK_CONNECTIVITY_TEST = False
         for key in config.pop("OPTIONAL_FLAGS"):
             self.__dict__[key] = True
