@@ -108,6 +108,13 @@ class Person:
         tour_comb_idx = numpy.searchsorted(
             tour_probs[self.age_group][self.is_car_user][self.zone.index, :],
             self._tour_combination_draw)
+        if tour_comb_idx >= len(self.generation_model.tour_combinations):
+            raise ValueError(
+                f"Invalid tour index: agent={self.id}, zone={self.zone.number}, "
+                f"age={self.age_group}, car_user={self.is_car_user}, "
+                f"draw={self._tour_combination_draw}, index={tour_comb_idx}, "
+                f"cdf={tour_probs[self.age_group][self.is_car_user][self.zone.index, :]!r}"
+            )
         new_tours = list(self.generation_model.tour_combinations[tour_comb_idx])
         old_tours = self.tours
         self.tours = []

@@ -215,6 +215,14 @@ class Tour:
         cumulative_probs : numpy.ndarray
             1d array with cumulative probabilities for destinations
         """
+        if (cumulative_probs.size == 0
+                or not numpy.isfinite(cumulative_probs).all()
+                or cumulative_probs[-1] <= 0):
+            raise ValueError(
+                f"No valid secondary destination probabilities for purpose {self.purpose.name} "
+                f"from origin zone {self.orig}")
+        cumulative_probs = cumulative_probs / cumulative_probs[-1]
+        cumulative_probs[-1] = 1.0
         dest_idx = (self.purpose.sec_dest_purpose.bounds.start
                     + numpy.searchsorted(cumulative_probs, self._sec_dest_draw))
         self.position = (self.position[0], self.position[1], dest_idx)
