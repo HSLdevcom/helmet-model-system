@@ -1,5 +1,6 @@
 from pathlib import Path
 import threading
+from concurrent.futures import ThreadPoolExecutor
 import multiprocessing
 import os
 import shutil
@@ -565,18 +566,16 @@ class AgentModelSystem(ModelSystem):
         bounds = next(iter(purpose.sources)).bounds
         modes = purpose.modes if param.always_congested or is_last_iteration else ["car"]
         for mode in modes:
-            threads = []
-            for i in range(nr_threads):
-                origs = range(i, bounds.stop - bounds.start, nr_threads)
-                thread = threading.Thread(
-                    target=self._distribute_tours,
-                    args=(
-                        mode, origs, sec_dest_tours[mode],
-                        purpose_impedance[mode]))
-                threads.append(thread)
-                thread.start()
-            for thread in threads:
-                thread.join()
+            with ThreadPoolExecutor(max_workers=nr_threads) as executor:
+                futures = [
+                    executor.submit(
+                        self._distribute_tours, mode,
+                        range(i, bounds.stop - bounds.start, nr_threads),
+                        sec_dest_tours[mode], purpose_impedance[mode])
+                    for i in range(nr_threads)
+                ]
+                for future in futures:
+                    future.result()
         for purpose in self.dm.tour_purposes:
             #None for demand, because agent-based models work differently
             self.event_handler.on_purpose_demand_calculated(purpose, None, estimation_mode=estimation_mode) 

@@ -188,4 +188,10 @@ class DemandModel:
     def _get_probs(self, age: str, is_car_user: bool) -> pandas.DataFrame:
         probs = self.tour_generation_model.calc_prob(
             age, is_car_user, self.bounds)
-        return pandas.DataFrame(probs).to_numpy().cumsum(axis=1)
+        cumulative_probs = pandas.DataFrame(probs).to_numpy().cumsum(axis=1)
+        if (not numpy.isfinite(cumulative_probs).all()
+                or not numpy.allclose(cumulative_probs[:, -1], 1.0, rtol=0, atol=1e-5)):
+            raise ValueError(
+                f"Invalid tour combination probabilities for {age}, car_user={is_car_user}")
+        cumulative_probs[:, -1] = 1.0
+        return cumulative_probs
