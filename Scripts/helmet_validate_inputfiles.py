@@ -3,6 +3,7 @@ import subprocess
 import sys
 from argparse import ArgumentParser
 from contextlib import contextmanager
+from datetime import datetime
 from time import sleep
 from typing import List, Union
 
@@ -46,7 +47,7 @@ def main(args):
     scenario_errors["general"] += base_input_errors
 
     # Scenario specific validation
-    scenario_errors, different_zones = validate_scenario_input_data(emme_paths, first_scenario_ids, forecast_zonedata_paths, zone_numbers, do_not_use_emme, separate_emme_scenarios, network_connectivity_validation, scenario_errors)
+    scenario_errors, different_zones = validate_scenario_input_data(emme_paths, first_scenario_ids, forecast_zonedata_paths, zone_numbers, do_not_use_emme, separate_emme_scenarios, network_connectivity_validation, scenario_errors, results_path, scenario_name)
     # Different zones logged separately here to prevent it being printed for every scenario
     if different_zones:
         log.warn("Scenarios with different zones found in EMME bank! Matrices will not be compatible between scenarios with different zones.")
@@ -142,7 +143,7 @@ def validate_base_input_data(base_zonedata_path, base_matrices_path, emme_paths,
     return errors, zone_numbers
 
 
-def validate_scenario_input_data(emme_paths, first_scenario_ids, forecast_zonedata_paths, zone_numbers, do_not_use_emme, separate_emme_scenarios, network_connectivity_validation: bool, scenario_errors: dict):
+def validate_scenario_input_data(emme_paths, first_scenario_ids, forecast_zonedata_paths, zone_numbers, do_not_use_emme, separate_emme_scenarios, network_connectivity_validation: bool, scenario_errors: dict, results_path: str, scenario_name: str):
     # Check scenario based input data
     log.info("Checking input data and network(s) for scenario(s)...")
     different_zones = False 
@@ -200,6 +201,11 @@ def validate_scenario_input_data(emme_paths, first_scenario_ids, forecast_zoneda
                             scen.id)
                         log.error(msg)
                         scenario_errors[scenario_id] += 1
+                    backup_dir = os.path.join(results_path, scenario_name, "inputs", f"scenario_{scenario_id}_{datetime.now():%Y%m%d_%H%M%S_%f}")
+                    os.makedirs(backup_dir)
+                    modeller.tool("inro.emme.data.scenario.export_scenario")(
+                        export_path=backup_dir, scenario=scen)
+                    log.info(f"Network backup for scenario #{scenario_id} saved to {backup_dir}")
                     log.info(f"Validating network for the {number_to_ordinal(first_scenario_ids.index(scenario_id)+1)} scenario #{scenario_id} ...")
                     network_errors = validate(scen.get_network(), forecast_zonedata.transit_zone)
                     if network_errors > 0:
