@@ -13,6 +13,7 @@ from modelsystem import ModelSystem, AgentModelSystem
 import parameters.assignment as assignment_params
 from datahandling.matrixdata import MatrixData
 from utils.validation import Validation
+from utils.fast_converge import FastConvergence
 
 
 def main(args):
@@ -171,9 +172,13 @@ def main(args):
         args.use_fixed_transit_cost, iterations==0, fixed_network=args.fixed_network)
     log.info(log_header(" Base demand assignment completed "))
     log_extra["status"]["state"] = "running"
+    fast_convergence = FastConvergence(args.fast_converge and iterations > 0)
+    if fast_convergence.active:
+        log.info("FAST_CONVERGE: 50/50 car impedance feedback until both demand-gap thresholds pass")
     i = 1
     while i <= iterations:
         log_extra["status"]["current"] = i
+        previous_impedance = impedance
         try:
             if i == iterations:
                 log.info(log_header(f" Starting final iteration "), extra=log_extra)
@@ -190,13 +195,26 @@ def main(args):
             break
         gap = model.convergence[-1] # Last iteration convergence
         convergence_criteria_fulfilled = gap["max_gap"] < args.max_gap and gap["rel_gap"] < args.rel_gap
+        was_relaxed = fast_convergence.active
+        impedance, convergence_eligible = fast_convergence.update(
+            previous_impedance, impedance, convergence_criteria_fulfilled,
+            is_final=i == iterations)
+        if was_relaxed and not fast_convergence.active:
+            if i == iterations:
+                log.info("FAST_CONVERGE: thresholds first met in final iteration; no unrelaxed verification was possible")
+            else:
+                log.info("FAST_CONVERGE: thresholds met; released 50/50 feedback. Checking convergence with raw impedance next.")
         if i == iterations:
             log_extra["status"]['state'] = 'finished'
-        elif convergence_criteria_fulfilled:
+        elif convergence_eligible:
             iterations = i + 1  # Set iterations to current iteration + 1, so that the last iteration is run
         #This is here separately because the model can converge in the last iteration as well
-        if convergence_criteria_fulfilled: 
+        if convergence_eligible:
             log_extra["status"]["converged"] = 1
+        if i == iterations and fast_convergence.enabled:
+            # In fast mode the final raw run must pass too. A threshold pass
+            # that only releases relaxation on the final iteration is not enough.
+            log_extra["status"]["converged"] = int(convergence_eligible)
         if i == iterations:
             log.info(log_header(f" Final iteration completed "))
         else:
@@ -368,6 +386,11 @@ if __name__ == "__main__":
         type=float,
         default=config.REL_GAP,
         help="Car work matrix relative change between iterations"),
+    parser.add_argument(
+        "--fast-converge",
+        action="store_true",
+        default=config.FAST_CONVERGE,
+        help="Use 50/50 car impedance feedback until the normal convergence thresholds first pass, then verify with raw feedback."),
     parser.add_argument(
         "-t", "--use-fixed-transit-cost",
         action="store_true",
