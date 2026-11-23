@@ -5,6 +5,8 @@ import numpy as np
 
 from events.model_system_event_listener import ModelSystemEventListener
 import parameters.assignment as param
+import parameters.zone as zone_param
+from utils.zone_interval import belongs_to_area
 
 if TYPE_CHECKING:
     from modelsystem import ModelSystem
@@ -37,6 +39,15 @@ class TransitKmsResults(ModelSystemEventListener):
         transit_modes = [veh.description for veh in day_network.transit_vehicles()]
         dists = pd.Series(0.0, transit_modes)
         times = pd.Series(0.0, transit_modes)
+        areas = zone_param.area_aggregation
+        area_dists = {
+            mode: pd.Series(0.0, areas)
+            for mode in transit_modes
+        }
+        area_times = {
+            mode: pd.Series(0.0, areas)
+            for mode in transit_modes
+        }
         for ap in self.ass_model.assignment_periods:
             network = ap.emme_scenario.get_network()
             volume_factor = param.volume_factors["bus"][ap.name]
@@ -46,8 +57,18 @@ class TransitKmsResults(ModelSystemEventListener):
                 if 0 < headway < 900:
                     departures = volume_factor * 60/headway
                     for segment in line.segments():
-                        dists[mode] += departures * segment.link.length
-                        times[mode] += (departures
-                                        * segment[ap.extra("base_timtr")])
+                        distance = departures * segment.link.length
+                        time = departures * segment[ap.extra("base_timtr")]
+                        dists[mode] += distance
+                        times[mode] += time
+                        area = belongs_to_area(segment.link.i_node)
+                        if area in areas:
+                            area_dists[mode][area] += distance
+                            area_times[mode][area] += time
         self.ms.resultdata.print_data(dists, "transit_kms.txt", "dist")
         self.ms.resultdata.print_data(times, "transit_kms.txt", "time")
+        for mode in transit_modes:
+            self.ms.resultdata.print_data(
+                area_dists[mode], "transit_kms_areas.txt", mode)
+            self.ms.resultdata.print_data(
+                area_times[mode], "transit_time_areas.txt", mode)
